@@ -1,16 +1,16 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.transaction.xa.GlobalTransaction;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * A representation of a transaction that is suitable for transferring between a StateProvider and a StateConsumer

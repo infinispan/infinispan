@@ -1,5 +1,7 @@
 package org.infinispan.scripting.impl;
 
+import java.util.Optional;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
@@ -7,8 +9,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Optional;
 
 public final class DataTypedCacheManager extends AbstractDelegatingEmbeddedCacheManager {
 

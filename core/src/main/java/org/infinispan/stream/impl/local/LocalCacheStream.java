@@ -1,15 +1,48 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.Collector;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
-import org.infinispan.stream.impl.intops.object.*;
+import org.infinispan.stream.impl.intops.object.DistinctOperation;
+import org.infinispan.stream.impl.intops.object.FilterOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToIntOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToLongOperation;
+import org.infinispan.stream.impl.intops.object.LimitOperation;
+import org.infinispan.stream.impl.intops.object.MapOperation;
+import org.infinispan.stream.impl.intops.object.MapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.MapToIntOperation;
+import org.infinispan.stream.impl.intops.object.MapToLongOperation;
+import org.infinispan.stream.impl.intops.object.PeekOperation;
+import org.infinispan.stream.impl.intops.object.SkipOperation;
+import org.infinispan.stream.impl.intops.object.SortedComparatorOperation;
+import org.infinispan.stream.impl.intops.object.SortedOperation;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -22,18 +55,6 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
-
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.concurrent.TimeUnit;
-import java.util.function.*;
-import java.util.stream.Collector;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * CacheStream that is to be used locally.  This allows for full functionality of a regular stream but also has options

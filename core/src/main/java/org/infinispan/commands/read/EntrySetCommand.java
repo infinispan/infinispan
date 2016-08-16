@@ -1,5 +1,10 @@
 package org.infinispan.commands.read;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Spliterator;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -18,11 +23,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.

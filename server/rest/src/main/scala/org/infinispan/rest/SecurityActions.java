@@ -1,11 +1,11 @@
 package org.infinispan.rest;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * SecurityActions for the org.infinispan.server.hotrod package.

@@ -1,8 +1,6 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -18,7 +16,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import org.infinispan.Cache;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that cache

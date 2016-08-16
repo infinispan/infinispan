@@ -1,7 +1,5 @@
 package org.infinispan.test.fwk;
 
-import org.testng.annotations.Test;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -13,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.testng.annotations.Test;
 
 /**
  * Class that tests that test names are correctly set for each test.

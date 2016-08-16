@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached;
 
 import java.util.Properties;
+
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;

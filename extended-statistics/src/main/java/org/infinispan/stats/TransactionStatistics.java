@@ -1,14 +1,21 @@
 package org.infinispan.stats;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_ABORTED_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
+
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.ExtendedStatisticsContainer;
 import org.infinispan.stats.logging.Log;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
 
 
 /**

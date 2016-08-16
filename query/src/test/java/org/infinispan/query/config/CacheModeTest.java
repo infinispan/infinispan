@@ -1,5 +1,7 @@
 package org.infinispan.query.config;
 
+import static org.testng.AssertJUnit.assertNotNull;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.CacheContainer;
@@ -8,8 +10,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertNotNull;
 
 @Test(groups = "functional", testName = "query.config.CacheModeTest")
 public class CacheModeTest extends AbstractInfinispanTest {

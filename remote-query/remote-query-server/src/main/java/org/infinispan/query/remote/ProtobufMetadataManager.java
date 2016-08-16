@@ -1,11 +1,11 @@
 package org.infinispan.query.remote;
 
+import javax.management.ObjectName;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
-
-import javax.management.ObjectName;
 
 /**
  * A clustered repository of protobuf definition files. All protobuf types and their marshallers must be registered with

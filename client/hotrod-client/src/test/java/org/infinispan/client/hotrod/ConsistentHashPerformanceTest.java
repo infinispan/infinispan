@@ -1,10 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
-import org.infinispan.commons.hash.MurmurHash3;
-import org.testng.annotations.Test;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -14,6 +9,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
+import org.infinispan.commons.hash.MurmurHash3;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.

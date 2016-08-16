@@ -1,14 +1,14 @@
 package org.infinispan.query.clustered;
 
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
-import org.infinispan.commons.util.CollectionFactory;
-
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
 
 /**
  * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators

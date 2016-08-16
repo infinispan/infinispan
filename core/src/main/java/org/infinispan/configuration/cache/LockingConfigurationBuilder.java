@@ -1,6 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.LockingConfiguration.*;
+import static org.infinispan.configuration.cache.LockingConfiguration.CONCURRENCY_LEVEL;
+import static org.infinispan.configuration.cache.LockingConfiguration.ISOLATION_LEVEL;
+import static org.infinispan.configuration.cache.LockingConfiguration.LOCK_ACQUISITION_TIMEOUT;
+import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_STRIPING;
+import static org.infinispan.configuration.cache.LockingConfiguration.WRITE_SKEW_CHECK;
 
 import java.util.concurrent.TimeUnit;
 

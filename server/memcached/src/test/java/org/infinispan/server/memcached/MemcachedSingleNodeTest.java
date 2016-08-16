@@ -1,10 +1,10 @@
 package org.infinispan.server.memcached;
 
-import net.spy.memcached.MemcachedClient;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,11 +14,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+
+import net.spy.memcached.MemcachedClient;
 
 /**
  * Base class for single node tests.

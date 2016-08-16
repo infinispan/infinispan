@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy}.

@@ -1,11 +1,11 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.List;
+
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-
-import java.util.List;
 
 
 /**

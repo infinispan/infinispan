@@ -1,10 +1,10 @@
 package org.infinispan.query.test;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-
-import java.io.Serializable;
 
 /**
  * Indexed class which index name is very long - taken from the bug description (ISPN-3092).

@@ -1,5 +1,12 @@
 package org.infinispan.test.concurrent;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
+
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
@@ -7,13 +14,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.ExceptionResponse;
-
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
 
 /**
  * Replaces the {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} with a wrapper that can interact with a {@link StateSequencer} when a

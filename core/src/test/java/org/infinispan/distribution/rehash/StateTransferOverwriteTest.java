@@ -1,10 +1,11 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.commands.VisitableCommand;
-import org.testng.annotations.Test;
+import java.util.concurrent.Callable;
 
 import javax.transaction.TransactionManager;
-import java.util.concurrent.Callable;
+
+import org.infinispan.commands.VisitableCommand;
+import org.testng.annotations.Test;
 
 /**
  * Test that ensures that state transfer values aren't overridden with a non tx without L1 enabled.

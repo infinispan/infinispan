@@ -1,5 +1,8 @@
 package org.infinispan.stats.topK;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -19,9 +22,6 @@ import org.infinispan.stats.wrappers.TopKeyLockManager;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Intercepts the VisitableCommands to calculate the corresponding top-key values.

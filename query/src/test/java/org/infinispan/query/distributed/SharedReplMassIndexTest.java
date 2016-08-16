@@ -1,13 +1,13 @@
 package org.infinispan.query.distributed;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Test the mass indexer on a REPL cache and shared index

@@ -1,8 +1,5 @@
 package org.infinispan.util.logging.events;
 
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageBundle;
-
 import static org.jboss.logging.Messages.getBundle;
 
 import java.util.Collection;
@@ -10,6 +7,8 @@ import java.util.Collection;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageBundle;
 
 /**
  * Messages.

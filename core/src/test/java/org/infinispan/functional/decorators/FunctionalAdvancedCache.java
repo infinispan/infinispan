@@ -1,5 +1,24 @@
 package org.infinispan.functional.decorators;
 
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -42,24 +61,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.util.AbstractDelegatingCollection;
 import org.infinispan.util.AbstractDelegatingSet;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 

@@ -1,18 +1,8 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.remote.RemoteStore;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.gracefulShutdown;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.migrateEntriesWithMetadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -26,7 +16,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.*;
+import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.RemoteStore;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class MigrationTask implements DistributedCallable<Object, Object, Integer> {
 

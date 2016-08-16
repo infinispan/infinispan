@@ -1,8 +1,8 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
-
 import java.util.concurrent.ThreadFactory;
+
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 
 /**
  * @author Galder Zamarreño

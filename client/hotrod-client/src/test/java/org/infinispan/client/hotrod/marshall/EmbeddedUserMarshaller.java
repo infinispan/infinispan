@@ -1,16 +1,16 @@
 package org.infinispan.client.hotrod.marshall;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 
 /**
  * @author anistor@redhat.com

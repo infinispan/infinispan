@@ -1,15 +1,11 @@
 package org.infinispan.jmx;
 
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.factories.components.JmxAttributeMetadata;
-import org.infinispan.factories.components.JmxOperationMetadata;
-import org.infinispan.factories.components.JmxOperationParameter;
-import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -22,12 +18,17 @@ import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.ReflectionException;
 import javax.management.ServiceNotFoundException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
+
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.factories.components.JmxAttributeMetadata;
+import org.infinispan.factories.components.JmxOperationMetadata;
+import org.infinispan.factories.components.JmxOperationParameter;
+import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not

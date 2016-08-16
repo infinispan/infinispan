@@ -1,22 +1,8 @@
 package org.infinispan.stream.stress;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.stream.CacheCollectors;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.infinispan.test.fwk.TransportFlags;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -34,9 +20,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.stream.CacheCollectors;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.fwk.TransportFlags;
+import org.testng.annotations.Test;
 
 /**
  * Stress test designed to test to verify that distributed stream works properly when constant rehashes occur

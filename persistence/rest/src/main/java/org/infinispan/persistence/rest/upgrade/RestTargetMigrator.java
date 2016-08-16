@@ -1,5 +1,11 @@
 package org.infinispan.persistence.rest.upgrade;
 
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
@@ -12,12 +18,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @MetaInfServices
 public class RestTargetMigrator implements TargetMigrator {

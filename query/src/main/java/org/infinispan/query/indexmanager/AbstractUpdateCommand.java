@@ -1,5 +1,11 @@
 package org.infinispan.query.indexmanager;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
@@ -18,12 +24,6 @@ import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Base class for index commands

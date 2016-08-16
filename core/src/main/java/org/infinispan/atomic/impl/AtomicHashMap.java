@@ -1,6 +1,13 @@
 package org.infinispan.atomic.impl;
 
-import net.jcip.annotations.NotThreadSafe;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
@@ -14,13 +21,7 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * The default implementation of {@link AtomicMap}.  Note that this map cannot be constructed directly, and callers

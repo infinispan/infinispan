@@ -1,5 +1,7 @@
 package org.infinispan.test.integration.as.jms;
 
+import javax.persistence.SharedCacheMode;
+
 import org.infinispan.test.integration.as.jms.controller.RegistrationController;
 import org.infinispan.test.integration.as.jms.controller.RegistrationMdb;
 import org.infinispan.test.integration.as.jms.controller.StatisticsController;
@@ -15,8 +17,6 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.PersistenceDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.PersistenceUnit;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.Properties;
-
-import javax.persistence.SharedCacheMode;
 
 /**
  * Create deployments for JMS Master/Slave configuration integration tests using infinispan as index storage. Make sure

@@ -1,12 +1,12 @@
 package org.infinispan.tx.locking;
 
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import javax.transaction.Transaction;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * @author Martin Gencur

@@ -1,19 +1,20 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.context.Flag;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LockingMode;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
-import javax.transaction.TransactionManager;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
+import org.infinispan.context.Flag;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncL1PessimisticFuncTest")
 public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {

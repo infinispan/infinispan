@@ -1,5 +1,8 @@
 package org.infinispan.lock;
 
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -10,9 +13,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
 
 /**
  * Test the failures after lock acquired for Optimistic transactional caches.

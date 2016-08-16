@@ -1,5 +1,10 @@
 package org.infinispan.test.integration.as.jms;
 
+import static org.infinispan.test.integration.as.VersionTestHelper.addHibernateSearchManifestDependencies;
+import static org.junit.Assert.assertTrue;
+
+import javax.inject.Inject;
+
 import org.infinispan.test.integration.as.jms.controller.StatisticsController;
 import org.infinispan.test.integration.as.jms.model.RegisteredMember;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -9,11 +14,6 @@ import org.jboss.arquillian.junit.InSequence;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-
-import static org.infinispan.test.integration.as.VersionTestHelper.addHibernateSearchManifestDependencies;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test the the combination of JMS+Infinispan as backend and the use of Infinispan as second level cache.

@@ -1,11 +1,11 @@
 package org.infinispan.it.osgi.persistence.jdbc;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class that assures concurrent access to the in memory database.

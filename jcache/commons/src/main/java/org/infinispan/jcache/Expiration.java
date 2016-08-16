@@ -1,10 +1,10 @@
 package org.infinispan.jcache;
 
-import org.infinispan.jcache.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
+
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.logging.Log;
 
 /**
  * Utility class for expiration calculations.

@@ -1,5 +1,13 @@
 package org.infinispan.transaction.impl;
 
+import static javax.transaction.xa.XAResource.XA_OK;
+import static javax.transaction.xa.XAResource.XA_RDONLY;
+
+import java.util.List;
+
+import javax.transaction.Transaction;
+import javax.transaction.xa.XAException;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -17,13 +25,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.xa.XAException;
-import java.util.List;
-
-import static javax.transaction.xa.XAResource.XA_OK;
-import static javax.transaction.xa.XAResource.XA_RDONLY;
 
 /**
  * Coordinates transaction prepare/commits as received from the {@link javax.transaction.TransactionManager}.

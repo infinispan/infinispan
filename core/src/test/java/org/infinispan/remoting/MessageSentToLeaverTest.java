@@ -1,13 +1,16 @@
 package org.infinispan.remoting;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.infinispan.Cache;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -17,9 +20,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * Test that CommandAwareRpcManager detects members who left the cluster and throws an exception.

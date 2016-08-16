@@ -1,6 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.*;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.CHUNK_SIZE;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;

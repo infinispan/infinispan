@@ -1,5 +1,10 @@
 package org.infinispan.query.projection;
 
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -18,11 +23,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 @Test(groups = "functional", testName = "query.projection.ProjectionTest")
 public class ProjectionTest extends SingleCacheManagerTest {

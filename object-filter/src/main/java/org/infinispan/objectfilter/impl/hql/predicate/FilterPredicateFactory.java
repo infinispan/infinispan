@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
+import java.util.List;
+
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate.Type;
 import org.hibernate.hql.ast.spi.predicate.ConjunctionPredicate;
@@ -17,8 +19,6 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 import org.jboss.logging.Logger;
-
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

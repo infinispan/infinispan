@@ -1,20 +1,28 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.util.Arrays.asList;
+import static org.infinispan.configuration.global.TransportConfiguration.CLUSTER_NAME;
+import static org.infinispan.configuration.global.TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT;
+import static org.infinispan.configuration.global.TransportConfiguration.INITIAL_CLUSTER_SIZE;
+import static org.infinispan.configuration.global.TransportConfiguration.INITIAL_CLUSTER_TIMEOUT;
+import static org.infinispan.configuration.global.TransportConfiguration.MACHINE_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.NODE_NAME;
+import static org.infinispan.configuration.global.TransportConfiguration.PROPERTIES;
+import static org.infinispan.configuration.global.TransportConfiguration.RACK_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.SITE_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.TRANSPORT;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Arrays.asList;
-
-import static org.infinispan.configuration.global.TransportConfiguration.*;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures the transport used for network communications across the cluster.

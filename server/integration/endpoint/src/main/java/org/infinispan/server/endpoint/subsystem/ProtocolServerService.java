@@ -18,6 +18,19 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import static java.util.Optional.ofNullable;
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -38,18 +51,6 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-
-import javax.net.ssl.SSLContext;
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 /**
  * The service that configures and starts the endpoints supported by data grid.

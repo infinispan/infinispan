@@ -1,9 +1,9 @@
 package org.infinispan.persistence.sifs;
 
+import java.io.IOException;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.marshall.core.MarshalledEntry;
-
-import java.io.IOException;
 
 /**
  * Request to persist entry in log file or request executed by the log appender thread.

@@ -1,5 +1,9 @@
 package org.infinispan.test.integration.as.cdi;
 
+import static org.junit.Assert.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.Version;
 import org.infinispan.eviction.EvictionStrategy;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -14,10 +18,6 @@ import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011

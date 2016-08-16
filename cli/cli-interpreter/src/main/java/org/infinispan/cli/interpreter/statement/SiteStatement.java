@@ -1,5 +1,9 @@
 package org.infinispan.cli.interpreter.statement;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
@@ -11,10 +15,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Performs operation related to Cross-Site Replication

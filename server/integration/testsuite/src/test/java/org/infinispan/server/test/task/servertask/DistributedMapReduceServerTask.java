@@ -1,6 +1,5 @@
 package org.infinispan.server.test.task.servertask;
 
-import org.infinispan.Cache;
 import org.infinispan.tasks.TaskExecutionMode;
 
 /**

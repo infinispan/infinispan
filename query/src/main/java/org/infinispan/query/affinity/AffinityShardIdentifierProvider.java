@@ -1,5 +1,12 @@
 package org.infinispan.query.affinity;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.apache.lucene.document.Document;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.filter.FullTextFilterImplementor;
@@ -14,13 +21,6 @@ import org.infinispan.query.backend.ComponentRegistryService;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Dynamic sharding based on the segment associated with the key

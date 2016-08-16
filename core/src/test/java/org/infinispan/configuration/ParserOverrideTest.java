@@ -3,9 +3,6 @@ package org.infinispan.configuration;
 import static org.infinispan.test.TestingUtil.JGROUPS_CONFIG;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
-
-
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;

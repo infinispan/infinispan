@@ -1,5 +1,10 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
+import static org.mockito.Mockito.mock;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
@@ -8,10 +13,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.List;
-import static org.mockito.Mockito.*;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierImplTest")
 public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {

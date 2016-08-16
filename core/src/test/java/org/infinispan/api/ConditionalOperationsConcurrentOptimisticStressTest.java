@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
-import org.testng.annotations.Test;
-
 import java.util.List;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

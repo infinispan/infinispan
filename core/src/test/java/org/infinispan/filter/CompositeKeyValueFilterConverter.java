@@ -1,8 +1,8 @@
 package org.infinispan.filter;
 
-import org.infinispan.metadata.Metadata;
-
 import java.io.Serializable;
+
+import org.infinispan.metadata.Metadata;
 
 /**
  * Allows to composite a KeyValueFilter and a Converter together to form a KeyValueFilterConverter.  There are no

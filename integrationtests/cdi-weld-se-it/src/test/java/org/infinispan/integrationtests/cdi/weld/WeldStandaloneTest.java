@@ -1,10 +1,10 @@
 package org.infinispan.integrationtests.cdi.weld;
 
+import static org.testng.Assert.assertEquals;
+
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests Weld integration in standalone (desktop) app.

@@ -1,9 +1,10 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Array;
+
+import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
+
+import sun.misc.Unsafe;
 
 /**
  * Entry Size calculator that returns an approximation of how much various primitives, primitive wrappers, Strings,

@@ -1,7 +1,8 @@
 package org.infinispan.jmx;
 
-import javax.management.MBeanServer;
 import java.util.Properties;
+
+import javax.management.MBeanServer;
 
 /**
  * Implementors of this should return an MBeanServer to which MBeans will be registered.

@@ -1,6 +1,7 @@
 package org.infinispan.scripting;
 
 import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.InputStream;
 
 import org.infinispan.Cache;

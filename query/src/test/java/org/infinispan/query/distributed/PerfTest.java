@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
@@ -17,8 +19,6 @@ import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Stress test running on an indexed Cache which is storing the index in a distributed Lucene Directory

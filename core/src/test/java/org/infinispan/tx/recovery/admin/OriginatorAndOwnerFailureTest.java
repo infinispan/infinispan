@@ -1,15 +1,15 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.Assert.assertEquals;
+
+import java.util.List;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests the following scenario: the transaction originator fails and it also part of the transactions.

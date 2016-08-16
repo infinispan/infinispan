@@ -1,13 +1,13 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.test.data.Key;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.test.data.Key;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 
 /**
  * A test pojo with references to variables that are marshalled in different

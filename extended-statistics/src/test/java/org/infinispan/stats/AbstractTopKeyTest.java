@@ -1,5 +1,10 @@
 package org.infinispan.stats;
 
+import static java.lang.String.format;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -9,11 +14,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
-
-import java.util.concurrent.CompletableFuture;
-
-import static java.lang.String.format;
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 
 /**
  * @author Pedro Ruivo

@@ -1,8 +1,8 @@
 package org.infinispan.query.api.continuous;
 
-import org.infinispan.query.dsl.Query;
-
 import java.util.List;
+
+import org.infinispan.query.dsl.Query;
 
 /**
  * A container of continuous query listeners for a cache.

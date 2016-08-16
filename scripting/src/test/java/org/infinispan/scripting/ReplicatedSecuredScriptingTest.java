@@ -1,5 +1,16 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.List;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,16 +28,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import javax.security.auth.Subject;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.List;
-
-import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
-import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests verifying the script execution in secured clustered ispn environment.

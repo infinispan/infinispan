@@ -1,8 +1,9 @@
 package org.infinispan.jmx;
 
+import java.util.Properties;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
-import java.util.Properties;
 
 /**
  * Creates an MBeanServer on each thread.

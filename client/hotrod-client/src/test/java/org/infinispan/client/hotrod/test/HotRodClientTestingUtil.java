@@ -1,8 +1,16 @@
 package org.infinispan.client.hotrod.test;
 
-import io.netty.channel.ChannelException;
-import io.netty.channel.unix.Errors;
-import io.netty.channel.unix.Errors.NativeIoException;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -25,16 +33,8 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.BindException;
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
-import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import io.netty.channel.ChannelException;
+import io.netty.channel.unix.Errors.NativeIoException;
 
 /**
  * Utility methods for the Hot Rod client

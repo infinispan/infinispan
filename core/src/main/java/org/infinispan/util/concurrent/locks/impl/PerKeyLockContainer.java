@@ -1,5 +1,7 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.ByRef;
@@ -8,8 +10,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * A lock container that creates and maintains a new lock per entry.

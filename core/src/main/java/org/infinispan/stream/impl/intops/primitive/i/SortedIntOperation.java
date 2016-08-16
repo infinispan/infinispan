@@ -1,8 +1,8 @@
 package org.infinispan.stream.impl.intops.primitive.i;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.stream.IntStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs sorted operation on a {@link IntStream}

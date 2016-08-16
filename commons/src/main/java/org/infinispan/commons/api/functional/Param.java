@@ -1,8 +1,8 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.util.Experimental;
-
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commons.util.Experimental;
 
 /**
  * An easily extensible parameter that allows functional map operations to be

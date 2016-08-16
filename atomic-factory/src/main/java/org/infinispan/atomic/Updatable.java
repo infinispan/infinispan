@@ -1,7 +1,8 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
 import java.io.Externalizable;
+
+import org.infinispan.Cache;
 
 /**
  *

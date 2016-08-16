@@ -1,5 +1,16 @@
 package org.infinispan.tx;
 
+import static org.jgroups.util.Util.assertFalse;
+import static org.jgroups.util.Util.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -7,17 +18,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-import static org.jgroups.util.Util.assertFalse;
-import static org.jgroups.util.Util.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * This test is to ensure that values in the context are properly counted for various cache operations

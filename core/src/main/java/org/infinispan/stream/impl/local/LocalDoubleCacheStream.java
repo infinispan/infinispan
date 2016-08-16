@@ -1,20 +1,49 @@
 package org.infinispan.stream.impl.local;
 
-import org.infinispan.Cache;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.CacheAware;
-import org.infinispan.stream.impl.intops.primitive.d.*;
-import org.infinispan.util.function.*;
-
 import java.util.DoubleSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.TimeUnit;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleFunction;
+import java.util.function.DoublePredicate;
+import java.util.function.DoubleToIntFunction;
+import java.util.function.DoubleToLongFunction;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.ObjDoubleConsumer;
+import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
+
+import org.infinispan.Cache;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.CacheAware;
+import org.infinispan.stream.impl.intops.primitive.d.BoxedDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.DistinctDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.FilterDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.FlatMapDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.LimitDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.MapDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.MapToIntDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.MapToLongDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.MapToObjDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.PeekDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.SkipDoubleOperation;
+import org.infinispan.stream.impl.intops.primitive.d.SortedDoubleOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableDoubleBinaryOperator;
+import org.infinispan.util.function.SerializableDoubleConsumer;
+import org.infinispan.util.function.SerializableDoubleFunction;
+import org.infinispan.util.function.SerializableDoublePredicate;
+import org.infinispan.util.function.SerializableDoubleToIntFunction;
+import org.infinispan.util.function.SerializableDoubleToLongFunction;
+import org.infinispan.util.function.SerializableDoubleUnaryOperator;
+import org.infinispan.util.function.SerializableObjDoubleConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * DoubleStream that wraps a given stream to allow for additional functionality such as injection of values into

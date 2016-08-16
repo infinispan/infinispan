@@ -4,10 +4,18 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.*;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventWithStateLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogWithStateListener;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;

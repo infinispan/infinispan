@@ -1,13 +1,13 @@
 package org.infinispan.api.mvcc;
 
-import org.infinispan.Cache;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.LockManager;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
+
+import org.infinispan.Cache;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 
 /**
  * Helper class to assert lock status in MVCC

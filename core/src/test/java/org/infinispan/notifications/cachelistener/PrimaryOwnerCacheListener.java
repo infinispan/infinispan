@@ -1,5 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -13,9 +16,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
 import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
 import org.infinispan.notifications.cachelistener.event.Event;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Listener(primaryOnly = true)
 public class PrimaryOwnerCacheListener {

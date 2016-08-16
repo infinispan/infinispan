@@ -1,18 +1,18 @@
 package org.infinispan.api.batch;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.Cache;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = {"functional", "smoke"}, testName = "api.batch.BatchWithoutTMTest")
 public class BatchWithoutTMTest extends AbstractBatchTest {

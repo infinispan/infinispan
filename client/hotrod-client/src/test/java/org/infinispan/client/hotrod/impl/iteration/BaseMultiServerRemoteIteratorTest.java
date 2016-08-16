@@ -1,5 +1,9 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -22,11 +26,6 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-
-import static org.infinispan.client.hotrod.impl.iteration.BaseMultiServerRemoteIteratorTest.SubstringFilterFactory.DEFAULT_LENGTH;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -107,7 +106,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       // Omitting param, filter should use default value
       entries = extractEntries(stringCache.retrieveEntries(factoryName, 10));
       values = extractValues(entries);
-      assertForAll(values, s -> s.length() == DEFAULT_LENGTH);
+      assertForAll(values, s -> s.length() == SubstringFilterFactory.DEFAULT_LENGTH);
    }
 
 

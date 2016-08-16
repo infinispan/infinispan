@@ -1,5 +1,12 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.Assert.assertEquals;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -19,13 +26,6 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests remote query using two caches and a shared index

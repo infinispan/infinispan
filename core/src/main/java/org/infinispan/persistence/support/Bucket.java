@@ -1,19 +1,18 @@
 package org.infinispan.persistence.support;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.util.TimeService;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.util.TimeService;
 
 /**
  * A bucket is where entries are stored.

@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**

@@ -1,11 +1,11 @@
 package org.infinispan.stream;
 
+import java.io.Serializable;
+
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
-
-import java.io.Serializable;
 
 /**
  * @author anistor@redhat.com

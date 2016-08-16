@@ -1,11 +1,11 @@
 package org.infinispan.commons.marshall;
 
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalize;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalize;
 
 /**
  * A test pojo that is marshalled using JBoss Marshalling's

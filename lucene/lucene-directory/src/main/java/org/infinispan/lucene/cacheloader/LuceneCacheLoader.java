@@ -1,5 +1,13 @@
 package org.infinispan.lucene.cacheloader;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -14,14 +22,6 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).

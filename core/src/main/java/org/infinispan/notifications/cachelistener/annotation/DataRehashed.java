@@ -1,14 +1,14 @@
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.notifications.IncorrectListenerException;
-import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.notifications.IncorrectListenerException;
+import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
 
 /**
  * This annotation should be used on methods that need to be notified when a rehash starts or ends.  This is only fired

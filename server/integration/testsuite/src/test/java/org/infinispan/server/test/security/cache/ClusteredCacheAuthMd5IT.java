@@ -1,9 +1,9 @@
 package org.infinispan.server.test.security.cache;
 
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;

@@ -1,10 +1,10 @@
 package org.infinispan.cache.impl;
 
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.context.Flag;
-
-import java.util.Set;
 
 /**
  * Utility methods for dealing with caches.

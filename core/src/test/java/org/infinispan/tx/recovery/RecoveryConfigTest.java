@@ -1,5 +1,13 @@
 package org.infinispan.tx.recovery;
 
+import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -12,10 +20,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryInfoKey;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.testng.annotations.Test;
-
-import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
-import static org.testng.Assert.*;
 
 /**
  * @author Mircea.Markus@jboss.com

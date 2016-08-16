@@ -1,5 +1,10 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
+
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,12 +17,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
 
 @Test(testName = "tx.RollbackBeforePrepareTest", groups = "functional")
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})

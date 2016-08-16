@@ -1,5 +1,9 @@
 package org.infinispan.lock;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.Collections;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,10 +13,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * This test makes sure that once a remote lock has been acquired, this acquisition attempt won't happen again during

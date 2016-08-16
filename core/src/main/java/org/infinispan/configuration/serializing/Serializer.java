@@ -1,5 +1,17 @@
 package org.infinispan.configuration.serializing;
 
+import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
+import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ThreadFactory;
+
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.Version;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -45,17 +57,6 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.xml.stream.XMLStreamException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ThreadFactory;
-
-import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
-import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 
 /**
  * Serializes an Infinispan configuration to an {@link XMLExtendedStreamWriter}

@@ -1,5 +1,12 @@
 package org.infinispan.server.test.cache.container;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Scanner;
+
+import javax.management.ObjectName;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -15,12 +22,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.management.ObjectName;
-import java.util.Scanner;
-
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.junit.Assert.assertTrue;
 
 /**
  * - test start, default-cache, eviction-executor, listener-executor and replication-queue-executor attributes of cache-container element

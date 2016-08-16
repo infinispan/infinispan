@@ -1,13 +1,13 @@
 package org.infinispan.lucene.impl;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.lucene.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.lucene.ExternalizerIds;
 
 /**
  * Delete operation associated to {@link org.infinispan.lucene.impl.FileListCacheValueDelta}

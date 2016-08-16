@@ -1,19 +1,20 @@
 package org.infinispan.distribution;
 
-import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
-import org.infinispan.Cache;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
+import org.infinispan.Cache;
+import org.testng.annotations.Test;
 
 /**
  * Test that emulates transactions being started in a thread and then being

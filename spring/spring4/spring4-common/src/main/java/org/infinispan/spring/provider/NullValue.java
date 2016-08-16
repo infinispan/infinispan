@@ -1,12 +1,12 @@
 package org.infinispan.spring.provider;
 
-import org.infinispan.commons.marshall.SerializeWith;
-import org.springframework.cache.Cache.ValueWrapper;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.commons.marshall.SerializeWith;
+import org.springframework.cache.Cache.ValueWrapper;
 
 /**
  * A placeholder value for storing {@literal null} in a cache.

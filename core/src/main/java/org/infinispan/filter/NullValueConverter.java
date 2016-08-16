@@ -1,13 +1,13 @@
 package org.infinispan.filter;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.metadata.Metadata;
-
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Converter that returns null for the value.  This can be useful when retrieving all the keys or counting

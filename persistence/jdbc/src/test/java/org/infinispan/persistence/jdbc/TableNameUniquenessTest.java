@@ -2,23 +2,23 @@ package org.infinispan.persistence.jdbc;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.Serializable;
+import java.sql.Connection;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.jdbc.table.management.TableName;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
+import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.sql.Connection;
 
 /**
  * Test to make sure that no two caches will use the same table for storing data.

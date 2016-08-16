@@ -1,5 +1,10 @@
 package org.infinispan.distribution.ch;
 
+import static org.infinispan.test.TestingUtil.assertBetween;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Map;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
@@ -9,11 +14,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-
-import static org.infinispan.test.TestingUtil.assertBetween;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test the capacity factors with the full stack.

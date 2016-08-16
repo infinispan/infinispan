@@ -1,14 +1,14 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.dsl.QueryFactory;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * A query that does not return any results because the query filter is a boolean contradiction.

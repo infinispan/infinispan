@@ -15,7 +15,6 @@ import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
-import org.infinispan.security.Security;
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.core.security.SubjectUserInfo;

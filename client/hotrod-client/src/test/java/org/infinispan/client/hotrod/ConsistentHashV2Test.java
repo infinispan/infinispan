@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
-import org.infinispan.commons.hash.Hash;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -12,7 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
+import org.infinispan.commons.hash.Hash;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

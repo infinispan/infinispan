@@ -1,9 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.EvictionConfiguration.TYPE;
 import static org.infinispan.configuration.cache.EvictionConfiguration.SIZE;
 import static org.infinispan.configuration.cache.EvictionConfiguration.STRATEGY;
 import static org.infinispan.configuration.cache.EvictionConfiguration.THREAD_POLICY;
+import static org.infinispan.configuration.cache.EvictionConfiguration.TYPE;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;

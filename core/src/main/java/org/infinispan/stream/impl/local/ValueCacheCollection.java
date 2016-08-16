@@ -1,5 +1,11 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -11,12 +17,6 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.StreamMarshalling;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.stream.Stream;
 
 /**
  * CacheCollection that can be used for the values method of a cache.  Backs all the calls to the cacheSet version

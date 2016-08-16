@@ -1,5 +1,9 @@
 package org.infinispan.all.embeddedquery.testdomain;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.hibernate.search.exception.ErrorContext;
 import org.hibernate.search.exception.ErrorHandler;
 import org.hibernate.search.spi.SearchIntegrator;
@@ -7,10 +11,6 @@ import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.junit.Assert;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticTestingErrorHandler implements ErrorHandler {
 

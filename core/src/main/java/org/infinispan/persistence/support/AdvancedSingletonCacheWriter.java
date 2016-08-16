@@ -1,10 +1,10 @@
 package org.infinispan.persistence.support;
 
+import java.util.concurrent.Executor;
+
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheWriter;
-
-import java.util.concurrent.Executor;
 
 /**
  * @author Mircea Markus

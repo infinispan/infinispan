@@ -1,5 +1,9 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertFalse;
+
+import java.io.IOException;
+
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -12,10 +16,6 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.junit.After;
 import org.junit.Before;
-
-import java.io.IOException;
-
-import static org.junit.Assert.assertFalse;
 
 /**
  * Base class for tests for remote queries over HotRod.

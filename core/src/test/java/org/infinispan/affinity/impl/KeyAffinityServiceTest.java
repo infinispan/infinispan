@@ -1,18 +1,18 @@
 package org.infinispan.affinity.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.affinity.KeyAffinityServiceFactory;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com

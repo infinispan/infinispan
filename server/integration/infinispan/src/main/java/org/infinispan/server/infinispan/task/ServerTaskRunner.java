@@ -1,8 +1,8 @@
 package org.infinispan.server.infinispan.task;
 
-import org.infinispan.tasks.TaskContext;
-
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.tasks.TaskContext;
 
 /**
  * Used by ServerTaskEngine to executed ServerTasks

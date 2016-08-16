@@ -1,13 +1,15 @@
 package org.infinispan.functional;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener;
-import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnReadWrite;
-import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnWriteOnly;
-import org.testng.annotations.Test;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,11 +20,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.infinispan.functional.FunctionalTestUtils.*;
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
+import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener;
+import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnReadWrite;
+import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnWriteOnly;
+import org.testng.annotations.Test;
 
 /**
  * Test suite for verifying functional map listener functionality.

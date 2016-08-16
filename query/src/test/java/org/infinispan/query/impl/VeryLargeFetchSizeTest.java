@@ -1,16 +1,16 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.infinispan.AdvancedCache;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.testng.annotations.Test;
 
 /**
  * Test whether LazyIterator and EagerIterator can handle a very large fetch size (Integer.MAX_VALUE). This makes sure

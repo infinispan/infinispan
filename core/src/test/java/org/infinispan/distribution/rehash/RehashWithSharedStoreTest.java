@@ -1,18 +1,18 @@
 package org.infinispan.distribution.rehash;
 
+import static java.lang.String.format;
+
+import java.util.Arrays;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-
-import static java.lang.String.format;
 
 /**
  * Should ensure that persistent state is not rehashed if the cache store is shared.  See ISPN-861

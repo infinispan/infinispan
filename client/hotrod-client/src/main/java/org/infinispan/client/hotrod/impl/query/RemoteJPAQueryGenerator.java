@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import java.util.Date;
+
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
-
-import java.util.Date;
 
 /**
  * @author anistor@redhat.com

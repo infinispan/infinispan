@@ -1,5 +1,73 @@
 package org.infinispan.stats;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_EXEC_NO_CONT;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMIT_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PREPARE_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ROLLBACK_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WRITE_SKEW;
+import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_GET_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_PUT_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.ROLLBACK_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_ABORTED_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
+import static org.infinispan.stats.percentiles.PercentileStatistic.RO_LOCAL_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.RO_REMOTE_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.WR_LOCAL_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.WR_REMOTE_EXECUTION;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.EnumMap;
+
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.StatisticsSnapshot;
@@ -8,15 +76,6 @@ import org.infinispan.stats.percentiles.PercentileStatistic;
 import org.infinispan.stats.percentiles.ReservoirSampler;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.EnumMap;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
-import static org.infinispan.stats.percentiles.PercentileStatistic.*;
 
 
 /**

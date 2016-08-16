@@ -1,23 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.BaseCacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
-import org.infinispan.stream.impl.local.LocalDoubleCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
-import org.infinispan.util.function.SerializableDoubleConsumer;
-import org.infinispan.util.function.SerializableDoubleFunction;
-import org.infinispan.util.function.SerializableDoublePredicate;
-import org.infinispan.util.function.SerializableDoubleToIntFunction;
-import org.infinispan.util.function.SerializableDoubleToLongFunction;
-import org.infinispan.util.function.SerializableDoubleUnaryOperator;
-import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.DoubleSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.PrimitiveIterator;
@@ -35,6 +17,24 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
+
+import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
+import org.infinispan.stream.impl.local.LocalDoubleCacheStream;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableDoubleBinaryOperator;
+import org.infinispan.util.function.SerializableDoubleConsumer;
+import org.infinispan.util.function.SerializableDoubleFunction;
+import org.infinispan.util.function.SerializableDoublePredicate;
+import org.infinispan.util.function.SerializableDoubleToIntFunction;
+import org.infinispan.util.function.SerializableDoubleToLongFunction;
+import org.infinispan.util.function.SerializableDoubleUnaryOperator;
+import org.infinispan.util.function.SerializableObjDoubleConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate double cache stream used when an intermediate operation that requires both a remote and local portion

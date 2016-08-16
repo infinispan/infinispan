@@ -1,20 +1,10 @@
 package org.infinispan.stream;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
-import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.CompositeKeyValueFilterConverter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.filter.KeyValueFilterConverter;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -22,15 +12,16 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * Test to verify distributed stream iterator works properly when they key is a byte[] which has issues with normal

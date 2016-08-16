@@ -1,5 +1,8 @@
 package org.infinispan.distribution;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,9 +15,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Tests distributed caches with shared cache stores under transactional

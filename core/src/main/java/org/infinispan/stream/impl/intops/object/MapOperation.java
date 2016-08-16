@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl.intops.object;
 
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs map to operation on a regular {@link Stream}

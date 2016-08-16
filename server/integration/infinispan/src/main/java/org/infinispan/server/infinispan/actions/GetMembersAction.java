@@ -1,9 +1,9 @@
 package org.infinispan.server.infinispan.actions;
 
+import java.util.List;
+
 import org.infinispan.remoting.transport.Address;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
-
-import java.util.List;
 
 /**
  * GetMembersAction.

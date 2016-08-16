@@ -3,8 +3,8 @@ package org.infinispan.factories;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

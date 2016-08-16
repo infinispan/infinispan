@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.TestDeltaAware;
 import org.infinispan.configuration.cache.CacheMode;
@@ -8,8 +10,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author gustavonalle

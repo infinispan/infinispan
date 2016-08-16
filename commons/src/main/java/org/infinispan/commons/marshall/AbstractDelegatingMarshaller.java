@@ -1,12 +1,12 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.io.ByteBuffer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+
+import org.infinispan.commons.io.ByteBuffer;
 
 /**
  * With the introduction of global and cache marshallers, there's a need to

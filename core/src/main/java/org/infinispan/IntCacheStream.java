@@ -1,16 +1,5 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableIntBinaryOperator;
-import org.infinispan.util.function.SerializableIntConsumer;
-import org.infinispan.util.function.SerializableIntPredicate;
-import org.infinispan.util.function.SerializableIntToDoubleFunction;
-import org.infinispan.util.function.SerializableIntToLongFunction;
-import org.infinispan.util.function.SerializableIntUnaryOperator;
-import org.infinispan.util.function.SerializableObjIntConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +14,17 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableIntBinaryOperator;
+import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializableIntPredicate;
+import org.infinispan.util.function.SerializableIntToDoubleFunction;
+import org.infinispan.util.function.SerializableIntToLongFunction;
+import org.infinispan.util.function.SerializableIntUnaryOperator;
+import org.infinispan.util.function.SerializableObjIntConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * A {@link IntStream} that has additional methods to allow for Serializable instances.  Please see

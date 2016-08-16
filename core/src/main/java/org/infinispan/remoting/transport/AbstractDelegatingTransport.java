@@ -13,7 +13,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.protocols.tom.DeliveryManager;
 
 /**
  * Designed to be overwrite.

@@ -1,6 +1,8 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AsyncStoreConfiguration.*;
+import static org.infinispan.configuration.cache.AsyncStoreConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFICATION_QUEUE_SIZE;
+import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
 import java.util.concurrent.TimeUnit;
 

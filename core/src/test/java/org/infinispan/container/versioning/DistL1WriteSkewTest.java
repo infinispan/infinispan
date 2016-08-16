@@ -1,16 +1,15 @@
 package org.infinispan.container.versioning;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "container.versioning.DistL1WriteSkewTest", groups = "functional")
 public class DistL1WriteSkewTest extends DistWriteSkewTest {

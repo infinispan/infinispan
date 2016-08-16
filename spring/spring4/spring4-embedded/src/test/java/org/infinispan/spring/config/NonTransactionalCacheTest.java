@@ -1,13 +1,13 @@
 package org.infinispan.spring.config;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.annotation.Resource;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
-
-import javax.annotation.Resource;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Non transaction cacheable test.

@@ -1,14 +1,14 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
 import org.infinispan.remoting.responses.Response;
 import org.jgroups.blocks.UnicastRequest;
 import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * @author Dan Berindei

@@ -1,8 +1,8 @@
 package org.infinispan.server.hotrod.configuration;
 
-import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Radim Vansa &ltrvansa@redhat.com&gt;

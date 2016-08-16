@@ -1,12 +1,11 @@
 package org.infinispan.jcache;
 
-import javax.cache.Cache;
+import java.util.Set;
+
 import javax.cache.CacheException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-
-import java.util.Set;
 
 /**
  * A convenience class for registering CacheStatisticsMBeans with an

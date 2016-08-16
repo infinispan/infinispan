@@ -1,5 +1,12 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distexec.DistributedCallable;
@@ -15,13 +22,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * This DistributedCallable is used to install a {@link RemoteClusterListener} on the resulting node.  This class

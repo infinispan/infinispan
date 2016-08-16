@@ -1,11 +1,11 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.factories.ComponentRegistry;
-
 import java.util.Collection;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 
 /**
  * A terminal operation for a {@link org.infinispan.CacheStream} that allows tracking keys during a rehash event.

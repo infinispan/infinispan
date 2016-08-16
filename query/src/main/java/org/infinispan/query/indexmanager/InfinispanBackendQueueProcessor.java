@@ -11,11 +11,10 @@ import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.infinispan.hibernate.search.spi.CacheManagerService;
-
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.ComponentRegistryService;
 import org.infinispan.query.logging.Log;

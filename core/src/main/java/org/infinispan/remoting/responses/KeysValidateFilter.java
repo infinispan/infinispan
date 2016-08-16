@@ -1,14 +1,14 @@
 package org.infinispan.remoting.responses;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Used in Total Order based commit protocol in Distributed Mode

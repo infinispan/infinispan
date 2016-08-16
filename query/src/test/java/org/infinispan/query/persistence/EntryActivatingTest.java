@@ -1,5 +1,7 @@
 package org.infinispan.query.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.List;
 
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -10,10 +12,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
@@ -25,8 +27,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.

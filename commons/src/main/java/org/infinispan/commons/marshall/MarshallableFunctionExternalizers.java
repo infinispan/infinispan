@@ -1,15 +1,37 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.util.Util;
-import org.jboss.marshalling.util.IdentityIntMap;
+import static org.infinispan.commons.marshall.MarshallableFunctions.LambdaWithMetas;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetas;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfAbsentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfPresentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasReturnView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteFind;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteGet;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnView;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
+import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.util.Util;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 public class MarshallableFunctionExternalizers {
 

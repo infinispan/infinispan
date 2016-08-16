@@ -1,12 +1,12 @@
 package org.infinispan.server.infinispan.task;
 
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

@@ -1,11 +1,11 @@
 package org.infinispan.commons.marshall;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Abstract Marshaller implementation containing shared implementations.

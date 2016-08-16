@@ -1,13 +1,13 @@
 package org.infinispan.statetransfer;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.transaction.impl.RemoteTransaction;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * With the Non-Blocking State Transfer (NBST) in place it is possible for a transactional command to be forwarded

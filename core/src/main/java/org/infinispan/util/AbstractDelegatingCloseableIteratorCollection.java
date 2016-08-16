@@ -4,14 +4,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableSpliterator;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
 /**
  * Delegating collection that produces closeable iterators and spliterators from the collection returned from
  * {@link AbstractDelegatingCloseableIteratorCollection#delegate()} method.

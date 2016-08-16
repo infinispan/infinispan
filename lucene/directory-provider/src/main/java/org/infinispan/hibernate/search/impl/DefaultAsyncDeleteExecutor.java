@@ -1,5 +1,10 @@
 package org.infinispan.hibernate.search.impl;
 
+import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.hibernate.search.engine.service.spi.Startable;
 import org.hibernate.search.engine.service.spi.Stoppable;
 import org.hibernate.search.spi.BuildContext;
@@ -7,11 +12,6 @@ import org.hibernate.search.util.impl.Executors;
 import org.hibernate.search.util.logging.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Properties;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A shared service used among all InfinispanDirectoryProvider instances to delete segments asynchronously.

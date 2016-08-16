@@ -1,12 +1,12 @@
 package org.infinispan.stream.impl.termop;
 
-import org.infinispan.stream.impl.TerminalOperation;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
+
+import org.infinispan.stream.impl.TerminalOperation;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Runs the provided function once only and returns the result.  This is useful for operations that can be performed

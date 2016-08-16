@@ -1,11 +1,11 @@
 package org.infinispan.commands.read;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * @author Mircea.Markus@jboss.com

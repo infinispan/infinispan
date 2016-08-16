@@ -1,14 +1,14 @@
 package org.infinispan.test.concurrent;
 
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertFalse;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 /**
  * {@link StateSequencer} test.

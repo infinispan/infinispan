@@ -1,5 +1,12 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,13 +24,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
-import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Pedro Ruivo

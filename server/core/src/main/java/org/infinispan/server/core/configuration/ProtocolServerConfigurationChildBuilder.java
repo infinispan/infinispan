@@ -1,8 +1,8 @@
 package org.infinispan.server.core.configuration;
 
-import org.infinispan.commons.configuration.Self;
-
 import java.util.Set;
+
+import org.infinispan.commons.configuration.Self;
 
 /**
  * ProtocolServerConfigurationChildBuilder.

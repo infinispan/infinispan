@@ -1,9 +1,10 @@
 package org.infinispan.cdi.common.util.annotatedtypebuilder;
 
-import javax.enterprise.inject.spi.AnnotatedField;
-import javax.enterprise.inject.spi.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+
+import javax.enterprise.inject.spi.AnnotatedField;
+import javax.enterprise.inject.spi.AnnotatedType;
 
 /**
  * @author Stuart Douglas

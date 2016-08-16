@@ -1,5 +1,12 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.antlr.runtime.tree.Tree;
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
 import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
@@ -8,13 +15,6 @@ import org.hibernate.hql.ast.spi.SingleEntityQueryRendererDelegate;
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

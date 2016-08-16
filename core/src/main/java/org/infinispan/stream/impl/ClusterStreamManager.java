@@ -1,15 +1,15 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.CacheStream;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import org.infinispan.CacheStream;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Manages distribution of various stream operations that are sent to remote nodes.  Note usage of any operations

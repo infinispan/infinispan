@@ -1,12 +1,20 @@
 package org.infinispan.persistence;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -15,14 +23,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Tests the interceptor chain and surrounding logic

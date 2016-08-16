@@ -2,8 +2,8 @@ package org.infinispan.lucene;
 
 import java.util.regex.Pattern;
 
-import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.lucene.logging.Log;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.util.logging.LogFactory;
 
 /**

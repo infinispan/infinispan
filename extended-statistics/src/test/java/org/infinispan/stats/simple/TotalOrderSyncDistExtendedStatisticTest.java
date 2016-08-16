@@ -1,7 +1,6 @@
 package org.infinispan.stats.simple;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.stats.BaseClusteredExtendedStatisticTest;
 import org.infinispan.stats.BaseTotalOrderClusteredExtendedStatisticsTest;
 import org.testng.annotations.Test;
 

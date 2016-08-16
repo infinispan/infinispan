@@ -1,5 +1,12 @@
 package org.infinispan.persistence.remote.upgrade;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -20,13 +27,6 @@ import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "upgrade.hotrod.HotRodMultiServerUpdateSynchronizerTest", groups = "functional")
 public class HotRodMultiServerUpdateSynchronizerTest extends AbstractInfinispanTest {

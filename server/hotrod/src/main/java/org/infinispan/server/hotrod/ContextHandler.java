@@ -1,7 +1,16 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.BitSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -12,20 +21,13 @@ import org.infinispan.server.hotrod.logging.JavaLog;
 import org.infinispan.server.hotrod.util.BulkUtil;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import scala.None$;
 import scala.Option;
 import scala.Tuple2;
 import scala.Tuple4;
-
-import javax.security.auth.Subject;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.BitSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executor;
-
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 /**
  * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than

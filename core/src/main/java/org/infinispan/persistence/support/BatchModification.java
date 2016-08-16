@@ -1,12 +1,12 @@
 package org.infinispan.persistence.support;
 
-import org.infinispan.marshall.core.MarshalledEntry;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * A simple wrapper class, necessary for Transactional stores, which allows MarshalledEntries and Object keys to be passed

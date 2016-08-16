@@ -1,5 +1,14 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
@@ -23,15 +32,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.util.concurrent.atomic.LongAdder;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Test for interaction of activation and preload on indexing

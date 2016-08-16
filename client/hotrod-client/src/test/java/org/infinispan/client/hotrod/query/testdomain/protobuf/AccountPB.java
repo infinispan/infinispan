@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
-import org.infinispan.query.dsl.embedded.testdomain.Account;
-
 import java.util.Date;
+
+import org.infinispan.query.dsl.embedded.testdomain.Account;
 
 /**
  * @author anistor@redhat.com

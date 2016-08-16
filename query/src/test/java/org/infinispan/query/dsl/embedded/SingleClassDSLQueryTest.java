@@ -1,5 +1,9 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.List;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -14,10 +18,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author gustavonalle

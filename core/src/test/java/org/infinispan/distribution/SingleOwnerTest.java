@@ -1,16 +1,8 @@
 package org.infinispan.distribution;
 
 
-import org.infinispan.Cache;
-import org.infinispan.commons.marshall.NotSerializableException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.Exceptions;
-import org.infinispan.test.TestException;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -19,8 +11,15 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Exceptions;
+import org.infinispan.test.TestException;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * Test single owner distributed cache configurations.

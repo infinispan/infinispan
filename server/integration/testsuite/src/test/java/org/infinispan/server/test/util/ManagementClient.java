@@ -1,15 +1,15 @@
 package org.infinispan.server.test.util;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
 import org.wildfly.extras.creaper.core.online.OnlineManagementClient;
 import org.wildfly.extras.creaper.core.online.OnlineOptions;
 import org.wildfly.extras.creaper.core.online.operations.Address;
 import org.wildfly.extras.creaper.core.online.operations.Operations;
 import org.wildfly.extras.creaper.core.online.operations.Values;
 import org.wildfly.extras.creaper.core.online.operations.admin.Administration;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 /**
  * The client connects to a running WildFly/EAP server and performs operations on DMR using

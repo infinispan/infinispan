@@ -1,16 +1,14 @@
 package org.infinispan.server.core;
 
+import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.core.test.Stoppable;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
 
 /**
  * Abstract protocol server test.

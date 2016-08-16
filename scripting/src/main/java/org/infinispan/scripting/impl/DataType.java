@@ -1,15 +1,15 @@
 package org.infinispan.scripting.impl;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Immutables;
-
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Immutables;
 
 public enum DataType {
    UTF8(new Utf8Transformer()),

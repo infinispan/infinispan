@@ -1,10 +1,10 @@
 package org.infinispan.cli.impl;
 
-import org.infinispan.cli.CommandBuffer;
-import org.infinispan.cli.commands.ProcessedCommand;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.cli.CommandBuffer;
+import org.infinispan.cli.commands.ProcessedCommand;
 
 
 public class CommandBufferImpl implements CommandBuffer {

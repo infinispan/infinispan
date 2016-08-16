@@ -1,11 +1,11 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.configuration.cache.CacheMode;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.infinispan.configuration.cache.CacheMode;
 
 /**
  * Mark which cache modes should the test be executed upon. This will be used to fill in

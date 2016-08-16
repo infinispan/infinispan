@@ -1,13 +1,13 @@
 package org.infinispan.context;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.interceptors.impl.BaseAsyncInvocationContext;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Mircea Markus

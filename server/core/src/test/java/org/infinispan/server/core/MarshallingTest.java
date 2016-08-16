@@ -1,10 +1,10 @@
 package org.infinispan.server.core;
 
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.Arrays;
+
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 
 /**

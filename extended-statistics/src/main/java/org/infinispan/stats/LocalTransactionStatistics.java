@@ -1,9 +1,23 @@
 package org.infinispan.stats;
 
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_EXEC_NO_CONT;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
+
 import org.infinispan.stats.container.LocalExtendedStatisticsContainer;
 import org.infinispan.util.TimeService;
-
-import static org.infinispan.stats.container.ExtendedStatistic.*;
 
 /**
  * Represents the statistics collected for a local transaction

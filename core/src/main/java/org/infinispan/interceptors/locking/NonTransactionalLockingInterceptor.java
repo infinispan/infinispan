@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.locking;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -8,8 +10,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Locking interceptor to be used for non-transactional caches.

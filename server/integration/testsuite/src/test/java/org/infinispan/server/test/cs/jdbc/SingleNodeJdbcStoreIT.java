@@ -1,5 +1,16 @@
 package org.infinispan.server.test.cs.jdbc;
 
+import static org.infinispan.server.test.util.ITestUtils.createMBeans;
+import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.getRealKeyStored;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -23,11 +34,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.IOException;
-
-import static org.infinispan.server.test.util.ITestUtils.*;
-import static org.junit.Assert.*;
 
 /**
  * These are the tests for various JDBC stores (string, binary, mixed) with a single server.

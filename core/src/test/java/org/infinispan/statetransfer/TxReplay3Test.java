@@ -1,5 +1,14 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.wrapComponent;
+import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -23,15 +32,6 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for https://issues.jboss.org/browse/ISPN-6047

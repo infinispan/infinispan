@@ -1,16 +1,15 @@
 package org.infinispan.jcache.annotation;
 
+import java.lang.annotation.Annotation;
+
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 
-import org.infinispan.commons.logging.BasicLogFactory;
-import org.jboss.logging.BasicLogger;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.CacheConfigurationException;
-
-import java.lang.annotation.Annotation;
-
+import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.util.Util;
+import org.jboss.logging.BasicLogger;
 import org.kohsuke.MetaInfServices;
 
 /**

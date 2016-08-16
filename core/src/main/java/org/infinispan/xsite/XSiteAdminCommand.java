@@ -1,14 +1,14 @@
 package org.infinispan.xsite;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
+
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Command used for handling XSiteReplication administrative operations.

@@ -1,13 +1,13 @@
 package org.infinispan.query.impl.externalizers;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.infinispan.commons.marshall.AbstractExternalizer;
 
 /**
  *

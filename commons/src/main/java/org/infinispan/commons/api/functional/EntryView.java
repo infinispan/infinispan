@@ -1,11 +1,11 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.util.Experimental;
-
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.infinispan.commons.util.Experimental;
 
 /**
  * Entry views expose cached entry information to the user. Depending on the

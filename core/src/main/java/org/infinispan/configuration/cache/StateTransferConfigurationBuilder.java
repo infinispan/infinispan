@@ -1,6 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.StateTransferConfiguration.*;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.AWAIT_INITIAL_TRANSFER;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.CHUNK_SIZE;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.FETCH_IN_MEMORY_STATE;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.TIMEOUT;
 
 import java.util.concurrent.TimeUnit;
 

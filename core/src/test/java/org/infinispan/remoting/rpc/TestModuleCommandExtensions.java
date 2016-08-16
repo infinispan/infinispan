@@ -1,5 +1,8 @@
 package org.infinispan.remoting.rpc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
@@ -8,9 +11,6 @@ import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.ByteString;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

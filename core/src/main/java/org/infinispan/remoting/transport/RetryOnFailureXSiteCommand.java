@@ -1,14 +1,14 @@
 package org.infinispan.remoting.transport;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Invokes a command in a remote site. This class allows to set a {@link org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy}

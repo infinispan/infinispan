@@ -1,8 +1,8 @@
 package org.infinispan.query.test;
 
-import org.infinispan.query.Transformable;
-
 import java.io.Serializable;
+
+import org.infinispan.query.Transformable;
 
 @Transformable
 public class CustomKey2 implements Serializable {

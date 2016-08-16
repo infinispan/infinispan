@@ -1,5 +1,8 @@
 package org.infinispan.statetransfer;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -9,9 +12,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A component that manages the state transfer when the topology of the cluster changes.

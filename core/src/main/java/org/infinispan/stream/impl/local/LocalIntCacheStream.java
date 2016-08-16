@@ -1,32 +1,5 @@
 package org.infinispan.stream.impl.local;
 
-import org.infinispan.Cache;
-import org.infinispan.IntCacheStream;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.CacheAware;
-import org.infinispan.stream.impl.intops.primitive.i.BoxedIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.DistinctIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.FilterIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.FlatMapIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.LimitIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.MapIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.MapToDoubleIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.MapToLongIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.MapToObjIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.PeekIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.SkipIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.SortedIntOperation;
-import org.infinispan.util.function.SerializableIntBinaryOperator;
-import org.infinispan.util.function.SerializableIntConsumer;
-import org.infinispan.util.function.SerializableIntPredicate;
-import org.infinispan.util.function.SerializableIntToDoubleFunction;
-import org.infinispan.util.function.SerializableIntToLongFunction;
-import org.infinispan.util.function.SerializableIntUnaryOperator;
-import org.infinispan.util.function.SerializableObjIntConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.IntSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -45,6 +18,33 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+
+import org.infinispan.Cache;
+import org.infinispan.IntCacheStream;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.CacheAware;
+import org.infinispan.stream.impl.intops.primitive.i.BoxedIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.DistinctIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.FilterIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.FlatMapIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.LimitIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.MapIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.MapToDoubleIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.MapToLongIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.MapToObjIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.PeekIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.SkipIntOperation;
+import org.infinispan.stream.impl.intops.primitive.i.SortedIntOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableIntBinaryOperator;
+import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializableIntPredicate;
+import org.infinispan.util.function.SerializableIntToDoubleFunction;
+import org.infinispan.util.function.SerializableIntToLongFunction;
+import org.infinispan.util.function.SerializableIntUnaryOperator;
+import org.infinispan.util.function.SerializableObjIntConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * IntStream that wraps a given stream to allow for additional functionality such as injection of values into

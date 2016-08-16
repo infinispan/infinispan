@@ -1,15 +1,15 @@
 package org.infinispan.server.memcached;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.versioning.EntryVersion;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.versioning.EntryVersion;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * @author wburns

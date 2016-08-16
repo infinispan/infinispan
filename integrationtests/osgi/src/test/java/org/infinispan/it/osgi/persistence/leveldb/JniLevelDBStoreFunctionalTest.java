@@ -1,5 +1,8 @@
 package org.infinispan.it.osgi.persistence.leveldb;
 
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
@@ -19,9 +22,6 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
-
-import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
-import static org.ops4j.pax.exam.CoreOptions.options;
 
 /**
  * @author mgencur

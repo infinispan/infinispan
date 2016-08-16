@@ -1,5 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -14,12 +20,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Test to ensure when a rehash occurs that cluster listeners are not notified.

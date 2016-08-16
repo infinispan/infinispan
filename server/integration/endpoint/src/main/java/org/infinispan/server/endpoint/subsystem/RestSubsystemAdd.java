@@ -18,8 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;

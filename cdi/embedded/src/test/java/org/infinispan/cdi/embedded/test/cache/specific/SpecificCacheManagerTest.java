@@ -1,5 +1,13 @@
 package org.infinispan.cdi.embedded.test.cache.specific;
 
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
@@ -8,14 +16,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
-
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests that a specific cache manager can be used for one or more caches.

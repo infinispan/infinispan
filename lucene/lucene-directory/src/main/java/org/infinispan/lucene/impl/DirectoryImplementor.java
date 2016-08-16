@@ -1,5 +1,8 @@
 package org.infinispan.lucene.impl;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
@@ -14,9 +17,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * Common code for different Directory implementations.

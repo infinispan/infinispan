@@ -1,13 +1,14 @@
 package org.infinispan.server.websocket.handlers;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.server.websocket.json.JsonObject;
 import org.infinispan.server.websocket.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.lang.invoke.MethodHandles;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Cache "get" operation handler.

@@ -1,15 +1,8 @@
 package org.infinispan.integrationtests.cdijcache.interceptor;
 
-import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
-import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
-import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheResultService;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.testng.annotations.Test;
+import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
+import static org.testng.Assert.fail;
 
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -17,8 +10,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
-import static org.testng.Assert.fail;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+
+import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
+import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
+import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheResultService;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.Test;
 
 /**
  * Checks if methods annotated with <code>@CacheResult</code> might be safely accessed with multiple threads.

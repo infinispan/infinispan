@@ -1,10 +1,10 @@
 package org.infinispan.transaction.synchronization;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * {@link LocalTransaction} implementation to be used with {@link SynchronizationAdapter}.

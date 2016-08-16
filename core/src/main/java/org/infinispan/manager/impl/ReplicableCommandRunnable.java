@@ -1,12 +1,11 @@
 package org.infinispan.manager.impl;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.context.InvocationContext;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.Callable;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.context.InvocationContext;
 
 /**
  * Replicable Command that runs the given Runnable

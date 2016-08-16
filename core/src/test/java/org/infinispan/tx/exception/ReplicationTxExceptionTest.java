@@ -1,5 +1,8 @@
 package org.infinispan.tx.exception;
 
+import javax.transaction.RollbackException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -10,9 +13,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com

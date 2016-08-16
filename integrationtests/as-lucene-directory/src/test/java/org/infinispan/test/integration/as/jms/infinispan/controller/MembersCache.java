@@ -1,10 +1,10 @@
 package org.infinispan.test.integration.as.jms.infinispan.controller;
 
-import org.infinispan.manager.CacheContainer;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
+
+import org.infinispan.manager.CacheContainer;
 
 /**
  * A simple cache to store some information about a newly registered member.

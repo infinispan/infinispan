@@ -1,12 +1,12 @@
 package org.infinispan.server.test.task.servertask;
 
-import org.infinispan.tasks.ServerTask;
-import org.infinispan.tasks.TaskContext;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Optional;
+
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
 
 /**
  * ServerTask getting a custom mojo as parameter and processing it.

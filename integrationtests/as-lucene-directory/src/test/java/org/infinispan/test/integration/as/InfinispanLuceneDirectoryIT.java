@@ -1,6 +1,9 @@
 package org.infinispan.test.integration.as;
 
-import com.google.common.base.Joiner;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -46,9 +49,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
+import com.google.common.base.Joiner;
 
 
 /**

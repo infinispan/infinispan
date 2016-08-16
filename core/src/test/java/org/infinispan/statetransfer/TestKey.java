@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.distribution.ch.ConsistentHash;
-
 import java.io.Serializable;
 import java.util.Random;
+
+import org.infinispan.distribution.ch.ConsistentHash;
 
 /**
  * A key that maps to a given data segment of the ConsistentHash.

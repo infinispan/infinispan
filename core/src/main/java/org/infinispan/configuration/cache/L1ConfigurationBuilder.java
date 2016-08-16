@@ -1,6 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.L1Configuration.*;
+import static org.infinispan.configuration.cache.L1Configuration.CLEANUP_TASK_FREQUENCY;
+import static org.infinispan.configuration.cache.L1Configuration.ENABLED;
+import static org.infinispan.configuration.cache.L1Configuration.INVALIDATION_THRESHOLD;
+import static org.infinispan.configuration.cache.L1Configuration.LIFESPAN;
 
 import java.util.concurrent.TimeUnit;
 

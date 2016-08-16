@@ -1,10 +1,10 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.util.CollectionFactory;
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.util.concurrent.ConcurrentMap;
+import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * Class providing hints about marshallable types, such as whether a particular

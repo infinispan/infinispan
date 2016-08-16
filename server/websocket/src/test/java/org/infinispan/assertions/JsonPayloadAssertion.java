@@ -1,10 +1,10 @@
 package org.infinispan.assertions;
 
-import org.infinispan.server.websocket.OpHandler;
-import org.infinispan.server.websocket.json.JsonObject;
-
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+
+import org.infinispan.server.websocket.OpHandler;
+import org.infinispan.server.websocket.json.JsonObject;
 
 /**
  * Custom assertion for easier testing OpHandlers

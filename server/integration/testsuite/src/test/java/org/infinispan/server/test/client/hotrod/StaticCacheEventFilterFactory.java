@@ -1,12 +1,12 @@
 package org.infinispan.server.test.client.hotrod;
 
+import java.io.Serializable;
+
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-
-import java.io.Serializable;
 
 @NamedFactory(name = "static-filter-factory")
 public class StaticCacheEventFilterFactory implements CacheEventFilterFactory {

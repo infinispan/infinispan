@@ -1,9 +1,9 @@
 package org.infinispan.scripting.impl;
 
+import java.util.Set;
+
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import java.util.Set;
 
 public class ScriptTask implements Task {
 

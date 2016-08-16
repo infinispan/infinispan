@@ -1,10 +1,7 @@
 package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 

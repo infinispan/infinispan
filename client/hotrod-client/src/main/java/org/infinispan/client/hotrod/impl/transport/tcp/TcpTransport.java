@@ -1,18 +1,11 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.Util;
+import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedLong;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedLong;
 
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.security.sasl.SaslClient;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,8 +18,19 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.*;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.security.sasl.SaslClient;
+
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 
 /**
  * Transport implementation based on TCP.

@@ -1,5 +1,13 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
+import static org.infinispan.client.hotrod.Flag.SKIP_INDEXING;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -16,14 +24,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
-import static org.infinispan.client.hotrod.Flag.SKIP_INDEXING;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * Tests if the {@link org.infinispan.client.hotrod.Flag#SKIP_INDEXING} flag is received on HotRod server.

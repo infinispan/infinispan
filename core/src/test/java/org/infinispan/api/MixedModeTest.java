@@ -1,10 +1,10 @@
 package org.infinispan.api;
 
-import org.infinispan.AdvancedCache;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;

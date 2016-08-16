@@ -1,10 +1,10 @@
 package org.infinispan.notifications.cachelistener.event;
 
+import java.util.Collection;
+
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
 
 /**
  * An event passed in to methods annotated with {@link DataRehashed}.

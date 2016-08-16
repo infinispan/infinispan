@@ -1,6 +1,8 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
 
+import java.util.Properties;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
@@ -27,8 +29,6 @@ import org.infinispan.configuration.cache.TransactionConfigurationBuilder;
 import org.infinispan.configuration.cache.UnsafeConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-
-import java.util.Properties;
 
 public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilder {
 

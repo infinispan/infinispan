@@ -1,5 +1,9 @@
 package org.infinispan.client.hotrod.retry;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -10,10 +14,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.jgroups.SuspectedException;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test different server error situations and check how clients behave under

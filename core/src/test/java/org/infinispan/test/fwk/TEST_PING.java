@@ -1,5 +1,10 @@
 package org.infinispan.test.fwk;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.PhysicalAddress;
@@ -13,11 +18,6 @@ import org.jgroups.stack.Protocol;
 import org.jgroups.util.Responses;
 import org.jgroups.util.Tuple;
 import org.jgroups.util.UUID;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * This protocol allows for discovery to happen via data structures maintained

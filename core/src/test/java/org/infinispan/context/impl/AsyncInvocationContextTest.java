@@ -1,5 +1,12 @@
 package org.infinispan.context.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -13,13 +20,6 @@ import org.infinispan.interceptors.InterceptorChainTest;
 import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author Dan Berindei

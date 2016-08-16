@@ -1,6 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.*;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURGE_ON_STARTUP;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
 
 import java.lang.reflect.Method;
 import java.util.Properties;

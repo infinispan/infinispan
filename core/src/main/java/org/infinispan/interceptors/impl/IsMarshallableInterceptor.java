@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -18,9 +21,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables

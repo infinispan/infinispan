@@ -1,22 +1,6 @@
 package org.infinispan.factories;
 
-import org.infinispan.IllegalLifecycleStateException;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
+import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,7 +20,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
+import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered

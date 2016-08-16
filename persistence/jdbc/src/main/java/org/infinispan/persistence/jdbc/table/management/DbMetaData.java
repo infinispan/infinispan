@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.table.management;
 
-import org.infinispan.persistence.jdbc.DatabaseType;
-
 import java.util.Objects;
+
+import org.infinispan.persistence.jdbc.DatabaseType;
 
 /**
  * @author Ryan Emerson

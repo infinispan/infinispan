@@ -1,9 +1,9 @@
 package org.infinispan.commons.test;
 
 
-import org.jboss.logging.Logger;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.jboss.logging.Logger;
 
 
 /**

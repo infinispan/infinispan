@@ -1,5 +1,13 @@
 package org.infinispan.server.eventlogger;
 
+import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -11,14 +19,6 @@ import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 import org.testng.annotations.Test;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 
 /**

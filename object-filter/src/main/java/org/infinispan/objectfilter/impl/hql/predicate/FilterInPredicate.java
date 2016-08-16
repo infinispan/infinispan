@@ -1,11 +1,11 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
+import java.util.List;
+
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.hibernate.hql.ast.spi.predicate.InPredicate;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
-
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

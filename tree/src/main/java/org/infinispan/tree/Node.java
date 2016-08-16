@@ -1,11 +1,12 @@
 package org.infinispan.tree;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 
-import java.util.Map;
-import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A Node is a {@link Fqn named} logical grouping of data in the {@link TreeCache} API of JBoss {@link Cache}. A node

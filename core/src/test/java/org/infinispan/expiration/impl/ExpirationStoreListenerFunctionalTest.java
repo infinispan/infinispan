@@ -1,5 +1,12 @@
 package org.infinispan.expiration.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
@@ -8,10 +15,6 @@ import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationStoreFunctionalTest")
 public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFunctionalTest {

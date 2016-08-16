@@ -1,7 +1,6 @@
 package org.infinispan.util.function;
 
 import java.io.Serializable;
-import java.util.function.DoubleFunction;
 import java.util.function.DoubleToIntFunction;
 
 /**

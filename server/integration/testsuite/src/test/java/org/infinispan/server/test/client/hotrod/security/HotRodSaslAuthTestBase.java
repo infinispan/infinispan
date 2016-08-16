@@ -1,9 +1,9 @@
 package org.infinispan.server.test.client.hotrod.security;
 
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 
 import java.security.PrivilegedActionException;
 

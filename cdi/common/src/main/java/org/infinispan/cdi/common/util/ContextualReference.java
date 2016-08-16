@@ -1,10 +1,11 @@
 package org.infinispan.cdi.common.util;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 
 /**
  * Represents a non-contextual instance

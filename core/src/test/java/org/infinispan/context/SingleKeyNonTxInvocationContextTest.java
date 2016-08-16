@@ -1,5 +1,7 @@
 package org.infinispan.context;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -9,8 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * SingleKeyNonTxInvocationContextTest

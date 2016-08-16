@@ -1,8 +1,9 @@
 package org.infinispan.server.hotrod;
 
+import org.infinispan.server.core.transport.ExtendedByteBufJava;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
-import org.infinispan.server.core.transport.ExtendedByteBufJava;
 import scala.Enumeration;
 
 /**

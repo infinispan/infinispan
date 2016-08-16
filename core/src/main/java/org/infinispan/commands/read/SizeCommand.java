@@ -1,12 +1,12 @@
 package org.infinispan.commands.read;
 
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-
-import java.util.Set;
 
 /**
  * Command to calculate the size of the cache

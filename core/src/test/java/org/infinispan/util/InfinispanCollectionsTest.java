@@ -1,13 +1,13 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.util.InfinispanCollections;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.testng.annotations.Test;
 
 /**
  * Tests for the {@link InfinispanCollections} helpers.

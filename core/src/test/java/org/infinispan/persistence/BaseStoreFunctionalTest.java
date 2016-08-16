@@ -1,10 +1,16 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertArrayEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;

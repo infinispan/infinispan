@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import java.util.List;
+
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
-
-import java.util.List;
 
 /**
  * Keeps track of all predicates and all projections from all filters of an entity type and determines efficiently which

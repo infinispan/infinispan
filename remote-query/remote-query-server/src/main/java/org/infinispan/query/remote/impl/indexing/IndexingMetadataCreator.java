@@ -1,12 +1,12 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

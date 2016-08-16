@@ -1,15 +1,15 @@
 package org.infinispan.persistence.leveldb;
 
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.MultiStoresFunctionalTest;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
-import org.infinispan.persistence.MultiStoresFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 @Test(groups = "unit", testName = "persistence.leveldb.LevelDBMultiCacheStoreFunctionalTest")
 public class LevelDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalTest<LevelDBStoreConfigurationBuilder> {

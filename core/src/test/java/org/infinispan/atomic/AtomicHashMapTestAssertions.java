@@ -1,9 +1,9 @@
 package org.infinispan.atomic;
 
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.test.AbstractInfinispanTest;
-
-import java.util.Map;
 
 public class AtomicHashMapTestAssertions extends AbstractInfinispanTest {
 

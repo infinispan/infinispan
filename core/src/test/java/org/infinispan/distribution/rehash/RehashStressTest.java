@@ -1,5 +1,18 @@
 package org.infinispan.distribution.rehash;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
@@ -11,18 +24,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.logging.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author esalter

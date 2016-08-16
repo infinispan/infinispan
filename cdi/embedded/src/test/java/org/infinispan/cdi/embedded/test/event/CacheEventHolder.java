@@ -1,11 +1,11 @@
 package org.infinispan.cdi.embedded.test.event;
 
-import org.infinispan.notifications.cachemanagerlistener.event.Event;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.notifications.cachemanagerlistener.event.Event;
 
 /**
  * Collects all events from observer and allows to extract them.

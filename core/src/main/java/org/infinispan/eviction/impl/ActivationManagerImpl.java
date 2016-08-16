@@ -1,5 +1,12 @@
 package org.infinispan.eviction.impl;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
+
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.eviction.ActivationManager;
@@ -13,13 +20,6 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
 /**
  * Concrete implementation of activation logic manager.

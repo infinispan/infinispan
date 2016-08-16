@@ -1,12 +1,5 @@
 package org.infinispan.stats.topK;
 
-import com.clearspring.analytics.stream.Counter;
-import com.clearspring.analytics.stream.StreamSummary;
-import org.infinispan.Cache;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -15,6 +8,14 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import com.clearspring.analytics.stream.Counter;
+import com.clearspring.analytics.stream.StreamSummary;
 
 /**
  * This contains all the stream lib top keys. Stream lib is a space efficient technique to obtains the top-most

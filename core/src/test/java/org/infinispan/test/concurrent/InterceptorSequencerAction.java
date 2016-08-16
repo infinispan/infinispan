@@ -1,5 +1,8 @@
 package org.infinispan.test.concurrent;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
@@ -7,9 +10,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Replaces a {@link CommandInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a

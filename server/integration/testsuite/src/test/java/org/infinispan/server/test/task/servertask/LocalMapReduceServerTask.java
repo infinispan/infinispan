@@ -1,16 +1,16 @@
 package org.infinispan.server.test.task.servertask;
 
-import org.infinispan.Cache;
-import org.infinispan.stream.CacheCollectors;
-import org.infinispan.tasks.ServerTask;
-import org.infinispan.tasks.TaskContext;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.Cache;
+import org.infinispan.stream.CacheCollectors;
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
 
 /**
  * MapReduce Server task to run in local mode.

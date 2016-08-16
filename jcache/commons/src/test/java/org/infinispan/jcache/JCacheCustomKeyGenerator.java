@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import java.lang.annotation.Annotation;
 import java.util.Objects;
+
 import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.GeneratedCacheKey;

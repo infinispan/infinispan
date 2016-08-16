@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.filter.Filters;
@@ -7,8 +9,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.query.dsl.Query;
-
-import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 public class ClientEvents {
 

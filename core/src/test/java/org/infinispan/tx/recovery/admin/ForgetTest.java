@@ -1,5 +1,13 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -10,12 +18,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.PostCommitRecoveryStateTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 
 /**
  * @author Mircea Markus

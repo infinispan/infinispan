@@ -1,13 +1,13 @@
 package org.infinispan.query.indexmanager;
 
+import java.util.List;
+
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.util.ByteString;
-
-import java.util.List;
 
 /**
  * Execute a stream operation

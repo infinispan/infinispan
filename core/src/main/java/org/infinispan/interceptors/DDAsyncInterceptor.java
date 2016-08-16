@@ -1,5 +1,7 @@
 package org.infinispan.interceptors;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.control.LockControlCommand;
@@ -35,8 +37,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for async interceptors using double-dispatch.

@@ -1,10 +1,10 @@
 package org.infinispan.batch;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.factories.annotations.Inject;
-
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.factories.annotations.Inject;
 
 /**
  * A container for holding thread locals for batching, to be used with the {@link org.infinispan.Cache#startBatch()} and

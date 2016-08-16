@@ -1,17 +1,17 @@
 package org.infinispan.persistence.jdbc.table.management;
 
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.persistence.spi.PersistenceException;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+
+import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * @author Ryan Emerson

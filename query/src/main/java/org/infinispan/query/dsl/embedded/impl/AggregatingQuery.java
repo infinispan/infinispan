@@ -1,16 +1,16 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.aggregation.Grouper;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
-
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

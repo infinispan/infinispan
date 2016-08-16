@@ -1,18 +1,5 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableBiFunction;
-import org.infinispan.util.function.SerializableBinaryOperator;
-import org.infinispan.util.function.SerializableComparator;
-import org.infinispan.util.function.SerializableConsumer;
-import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializablePredicate;
-import org.infinispan.util.function.SerializableSupplier;
-import org.infinispan.util.function.SerializableToDoubleFunction;
-import org.infinispan.util.function.SerializableToIntFunction;
-import org.infinispan.util.function.SerializableToLongFunction;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -35,6 +22,19 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableBinaryOperator;
+import org.infinispan.util.function.SerializableComparator;
+import org.infinispan.util.function.SerializableConsumer;
+import org.infinispan.util.function.SerializableFunction;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializablePredicate;
+import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.function.SerializableToDoubleFunction;
+import org.infinispan.util.function.SerializableToIntFunction;
+import org.infinispan.util.function.SerializableToLongFunction;
 
 /**
  * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.

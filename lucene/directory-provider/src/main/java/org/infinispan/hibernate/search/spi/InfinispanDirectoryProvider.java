@@ -1,5 +1,9 @@
 package org.infinispan.hibernate.search.spi;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.hibernate.search.cfg.Environment;
@@ -17,10 +21,6 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * A DirectoryProvider using Infinispan to store the Index. This depends on the CacheManagerServiceProvider to get a

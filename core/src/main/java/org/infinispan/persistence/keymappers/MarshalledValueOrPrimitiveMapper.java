@@ -5,9 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Base64;
+import org.infinispan.marshall.core.MarshalledValue;
 
 /**
  * This class is an implementation for {@link TwoWayKey2StringMapper} that supports both primitives

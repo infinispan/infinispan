@@ -1,5 +1,7 @@
 package org.infinispan.scripting.impl;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -8,8 +10,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.scripting.ScriptingManager;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Intercepts updates to the script caches, extracts metadata and updates the compiled scripts

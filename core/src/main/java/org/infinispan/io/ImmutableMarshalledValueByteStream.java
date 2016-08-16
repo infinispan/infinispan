@@ -1,8 +1,8 @@
 package org.infinispan.io;
 
-import net.jcip.annotations.ThreadSafe;
-
 import java.io.IOException;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A byte stream that is immutable.  Bytes are captured during construction and cannot be written to thereafter.

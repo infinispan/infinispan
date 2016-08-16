@@ -1,10 +1,19 @@
 package org.infinispan.persistence.jdbc.stores;
 
+import static javax.transaction.Status.STATUS_ROLLEDBACK;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
@@ -19,16 +28,6 @@ import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertEquals;
-import static javax.transaction.Status.STATUS_ROLLEDBACK;
 
 /**
  * Test to check that a transactional store commits/rollsback stored values as expected. Also ensures that a failed

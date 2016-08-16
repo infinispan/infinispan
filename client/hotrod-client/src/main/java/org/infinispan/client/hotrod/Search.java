@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.event.ContinuousQueryImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * @author anistor@redhat.com

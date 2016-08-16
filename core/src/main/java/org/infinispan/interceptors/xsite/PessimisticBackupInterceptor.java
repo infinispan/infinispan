@@ -1,9 +1,9 @@
 package org.infinispan.interceptors.xsite;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.context.impl.TxInvocationContext;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Handles x-site data backups for pessimistic transactional caches.

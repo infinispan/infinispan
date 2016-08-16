@@ -1,14 +1,14 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Handles outbound state transfers.

@@ -1,13 +1,23 @@
 package org.infinispan.marshall.core;
 
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaAnnotationObj;
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaBothObj;
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaConfigObj;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -16,14 +26,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import static org.infinispan.marshall.AdvancedExternalizerTest.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.commons.marshall.StreamingMarshaller} implementation

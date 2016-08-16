@@ -1,19 +1,11 @@
 package org.infinispan.functional;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.functional.decorators.FunctionalJCache;
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
-import javax.cache.Cache;
-import javax.cache.processor.EntryProcessor;
-import javax.cache.processor.EntryProcessorException;
-import javax.cache.processor.EntryProcessorResult;
-import javax.cache.processor.MutableEntry;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
@@ -22,9 +14,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.*;
+import javax.cache.Cache;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.EntryProcessorResult;
+import javax.cache.processor.MutableEntry;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.functional.decorators.FunctionalJCache;
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Test suite for verifying that the jcache implementation

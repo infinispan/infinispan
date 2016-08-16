@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 
 public class FailoverEventLogListener<K> extends EventLogListener<K> {
    public BlockingQueue<ClientCacheFailoverEvent> failoverEvents = new ArrayBlockingQueue<>(128);

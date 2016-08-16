@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
-import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
+import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
 
 /**
  * A matcher for projection rows. This matcher is not stateless so it cannot be reused.

@@ -1,13 +1,13 @@
 package org.infinispan.tx;
 
+import javax.transaction.RollbackException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "tx.MarkAsRollbackTest")
 public class MarkAsRollbackTest extends SingleCacheManagerTest {

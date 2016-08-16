@@ -9,8 +9,8 @@ import java.util.WeakHashMap;
 import javax.cache.CacheManager;
 import javax.cache.spi.CachingProvider;
 
-import org.infinispan.jcache.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.logging.Log;
 
 /**
  * Shared behavior for the embedded and client-server implementations.

@@ -1,5 +1,11 @@
 package org.infinispan.query.remote.impl;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.search.engine.impl.nullencoding.KeywordBasedNullCodec;
 import org.hibernate.search.engine.impl.nullencoding.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
@@ -13,12 +19,6 @@ import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A query facade implementation for both Lucene based queries and non-indexed queries.

@@ -1,14 +1,14 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.jgroups.stack.DiagnosticsHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
+import org.jgroups.stack.DiagnosticsHandler;
 
 /**
  * A probe handler for {@link org.jgroups.tests.Probe} protocol is JGroups.

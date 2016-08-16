@@ -1,16 +1,16 @@
 package org.infinispan.commands.tx;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 /**
  * Same as {@link PrepareCommand} except that the transaction originator makes evident the versions of entries touched

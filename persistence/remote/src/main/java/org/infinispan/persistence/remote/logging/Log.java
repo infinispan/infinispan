@@ -1,5 +1,7 @@
 package org.infinispan.persistence.remote.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -7,8 +9,6 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Log abstraction for the remote cache store. For this module, message ids

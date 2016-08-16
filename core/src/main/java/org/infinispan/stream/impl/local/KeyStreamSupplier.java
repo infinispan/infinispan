@@ -1,5 +1,11 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.BitSet;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -8,12 +14,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.BitSet;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * Stream supplier that is to be used when the underlying stream is composed by key instances.  This supplier will do

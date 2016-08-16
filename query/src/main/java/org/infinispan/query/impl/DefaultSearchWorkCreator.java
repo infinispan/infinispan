@@ -1,12 +1,12 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.backend.spi.Work;
-import org.hibernate.search.backend.spi.WorkType;
-import org.infinispan.query.backend.SearchWorkCreator;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
+import org.infinispan.query.backend.SearchWorkCreator;
 
 /**
  * @author Marko Luksa

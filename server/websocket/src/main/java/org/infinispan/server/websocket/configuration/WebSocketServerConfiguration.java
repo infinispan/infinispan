@@ -1,10 +1,10 @@
 package org.infinispan.server.websocket.configuration;
 
+import java.util.Set;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
-
-import java.util.Set;
 
 /**
  * WebSocketServerConfiguration.

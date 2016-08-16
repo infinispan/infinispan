@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl;
 
+import java.io.IOException;
+
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commons.CacheException;
@@ -7,8 +9,6 @@ import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
-
-import java.io.IOException;
 
 /**
  * A sub-class of ReflectionMatcher that is able to lookup classes by their protobuf type name and can work when

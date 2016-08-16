@@ -1,12 +1,12 @@
 package org.infinispan.commands.remote;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Aggregates a single command for replication.

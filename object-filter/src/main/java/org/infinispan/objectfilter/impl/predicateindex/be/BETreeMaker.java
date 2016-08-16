@@ -1,5 +1,9 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.EqualsCondition;
 import org.infinispan.objectfilter.impl.predicateindex.IntervalPredicate;
@@ -19,10 +23,6 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PrimaryPredicateExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.util.Interval;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Creates a BETree out of a BooleanExpr.

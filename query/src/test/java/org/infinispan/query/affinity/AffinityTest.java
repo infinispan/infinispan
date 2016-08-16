@@ -1,10 +1,7 @@
 package org.infinispan.query.affinity;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.infinispan.Cache;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.Search;
-import org.testng.annotations.Test;
+import static java.util.stream.IntStream.rangeClosed;
+import static org.testng.Assert.assertEquals;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -14,8 +11,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static java.util.stream.IntStream.rangeClosed;
-import static org.testng.Assert.assertEquals;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.infinispan.Cache;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
+import org.testng.annotations.Test;
 
 /**
  * Test index affinity for the AffinityIndexManager

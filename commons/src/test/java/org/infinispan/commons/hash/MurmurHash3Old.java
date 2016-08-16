@@ -1,15 +1,15 @@
 package org.infinispan.commons.hash;
 
-import net.jcip.annotations.Immutable;
-import net.jcip.annotations.ThreadSafe;
-
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.commons.marshall.Ids;
-
 import java.io.ObjectInput;
 import java.nio.charset.Charset;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.commons.util.Util;
+
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * MurmurHash3 implementation in Java, based on Austin Appleby's <a href=

@@ -1,5 +1,10 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.util.Set;
+
+import javax.transaction.Status;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -7,10 +12,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-import javax.transaction.xa.Xid;
-import java.util.Set;
 
 /**
  * Admin utility class for allowing management of in-doubt transactions (e.g. transactions for which the

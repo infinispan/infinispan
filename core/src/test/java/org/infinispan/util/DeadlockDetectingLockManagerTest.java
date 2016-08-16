@@ -1,5 +1,10 @@
 package org.infinispan.util;
 
+import static org.testng.Assert.fail;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -12,11 +17,6 @@ import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.Assert.fail;
 
 /**
  * Tests functionality in {@link org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager}.

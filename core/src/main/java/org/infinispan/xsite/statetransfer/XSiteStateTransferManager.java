@@ -1,9 +1,9 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * It manages the state transfer between sites.

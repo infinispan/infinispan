@@ -10,8 +10,8 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.RebalancingStatus;
 
 /**

@@ -1,11 +1,20 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.AttributeKey;
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+
+import java.net.InetSocketAddress;
+import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.security.auth.Subject;
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
+
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.security.Security;
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.InetAddressPrincipal;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
@@ -15,20 +24,11 @@ import org.infinispan.server.core.transport.SaslQopHandler;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.JavaLog;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.ssl.SslHandler;
 import scala.Tuple2;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.auth.Subject;
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
-import java.net.InetSocketAddress;
-import java.security.Principal;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 /**
  * Handler that when added will make sure authentication is applied to requests.

@@ -1,15 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
@@ -20,6 +10,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * One of the assumptions people made on consistent hashing involves thinking

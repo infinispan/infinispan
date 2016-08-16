@@ -1,6 +1,11 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.*;
+import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -13,10 +18,6 @@ import org.testng.TestException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.AbstractCacheTest.*;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 
 @Test(groups = "unstable", testName = "distribution.UnknownCacheStartTest", description = "original group: functional")
 public class UnknownCacheStartTest extends AbstractInfinispanTest {

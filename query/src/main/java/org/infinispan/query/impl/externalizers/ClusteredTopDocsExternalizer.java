@@ -1,15 +1,15 @@
 package org.infinispan.query.impl.externalizers;
 
-import org.apache.lucene.search.TopDocs;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.query.clustered.NodeTopDocs;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.apache.lucene.search.TopDocs;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.query.clustered.NodeTopDocs;
 
 public class ClusteredTopDocsExternalizer extends AbstractExternalizer<NodeTopDocs> {
 

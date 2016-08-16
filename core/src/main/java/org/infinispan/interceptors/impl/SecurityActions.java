@@ -1,11 +1,10 @@
 package org.infinispan.interceptors.impl;
 
-import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetSystemPropertyAsBooleanAction;
-import org.infinispan.security.actions.GetSystemPropertyAsIntegerAction;
-
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetSystemPropertyAsBooleanAction;
 
 /**
  * Privileged actions for the package

@@ -1,14 +1,14 @@
 package org.infinispan.query.remote.impl.filter;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.query.remote.client.FilterResult;
-import org.infinispan.query.remote.impl.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.query.remote.client.FilterResult;
+import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
  * A 'remote' FilterResult needs jboss-marshalling serializability between nodes when running in compat mode.

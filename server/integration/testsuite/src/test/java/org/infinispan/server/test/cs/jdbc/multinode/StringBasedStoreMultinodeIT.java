@@ -1,13 +1,5 @@
 package org.infinispan.server.test.cs.jdbc.multinode;
 
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
-import org.infinispan.server.test.category.CacheStore;
-import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreMultinodeIT;
-import org.infinispan.server.test.util.ITestUtils.Condition;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
 import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
 import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.infinispan.server.test.util.ITestUtils.startContainer;
@@ -15,6 +7,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import org.infinispan.arquillian.core.RunningServer;
+import org.infinispan.arquillian.core.WithRunningServer;
+import org.infinispan.server.test.category.CacheStore;
+import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreMultinodeIT;
+import org.infinispan.server.test.util.ITestUtils.Condition;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Tests fetch-state and singleton attributes of a string-based jdbc cache store.

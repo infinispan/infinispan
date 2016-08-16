@@ -1,13 +1,14 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.ExecutorFactoryConfiguration.FACTORY;
+import static org.infinispan.configuration.global.ExecutorFactoryConfiguration.PROPERTIES;
+
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
-
-import static org.infinispan.configuration.global.ExecutorFactoryConfiguration.*;
 /**
  * Configures executor factory.
  */

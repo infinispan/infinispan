@@ -1,5 +1,8 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -19,9 +22,6 @@ import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.logging.Log;
-
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

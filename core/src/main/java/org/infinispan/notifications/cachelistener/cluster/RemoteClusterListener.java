@@ -8,8 +8,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
-import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.notifications.Listener;
@@ -28,6 +26,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A listener that installed locally on each node when a cluster listener is installed on a given node.

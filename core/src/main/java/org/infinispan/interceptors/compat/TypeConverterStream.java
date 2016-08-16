@@ -1,15 +1,15 @@
 package org.infinispan.interceptors.compat;
 
+import java.util.Iterator;
+import java.util.Spliterator;
+
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.AbstractDelegatingCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
-
-import java.util.Iterator;
-import java.util.Spliterator;
+import org.infinispan.util.AbstractDelegatingCacheStream;
 
 /**
  * Delegating stream that converts elements or CacheEntries.  Note this stream specifically doesn't specify generics as

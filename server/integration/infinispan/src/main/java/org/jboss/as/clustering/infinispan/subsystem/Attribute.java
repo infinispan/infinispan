@@ -22,11 +22,12 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.AttributeDefinition;
-
-import javax.xml.XMLConstants;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.XMLConstants;
+
+import org.jboss.as.controller.AttributeDefinition;
 
 /**
  * Enumerates the attributes used in the Infinispan subsystem schema.

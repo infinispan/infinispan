@@ -1,9 +1,5 @@
 package org.infinispan.server.test.security.rest;
 
-import javax.servlet.http.HttpServletResponse;
-
-import org.infinispan.server.test.client.rest.RESTHelper;
-
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
@@ -13,6 +9,10 @@ import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
 import static org.infinispan.server.test.client.rest.RESTHelper.put;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.infinispan.server.test.client.rest.RESTHelper;
 
 /**
  * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>

@@ -1,12 +1,12 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus

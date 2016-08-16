@@ -1,12 +1,12 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
+import java.util.List;
+
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.List;
 
 /**
  * Notifications for the cache manager

@@ -1,5 +1,14 @@
 package org.infinispan.partitionhandling;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Status;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -9,14 +18,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
-
-import javax.transaction.Status;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * It tests multiple scenarios where a split can happen during a transaction.

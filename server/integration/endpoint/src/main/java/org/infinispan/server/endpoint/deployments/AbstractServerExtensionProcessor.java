@@ -1,5 +1,10 @@
 package org.infinispan.server.endpoint.deployments;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
+import java.lang.reflect.Constructor;
+import java.util.List;
+
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -8,11 +13,6 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.ServicesAttachment;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
-
-import java.lang.reflect.Constructor;
-import java.util.List;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public abstract class AbstractServerExtensionProcessor<T> implements DeploymentUnitProcessor {
 

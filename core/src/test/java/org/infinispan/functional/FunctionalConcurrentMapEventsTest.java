@@ -1,10 +1,19 @@
 package org.infinispan.functional;
 
-import org.testng.annotations.Test;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertNoEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertOrderedEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertUnorderedEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.create;
+import static org.infinispan.functional.FunctionalListenerAssertions.createAllRemoveAll;
+import static org.infinispan.functional.FunctionalListenerAssertions.createModify;
+import static org.infinispan.functional.FunctionalListenerAssertions.createModifyRemove;
+import static org.infinispan.functional.FunctionalListenerAssertions.createRemove;
+import static org.infinispan.functional.FunctionalListenerAssertions.write;
+import static org.infinispan.functional.FunctionalListenerAssertions.writeRemove;
 
 import java.util.Arrays;
 
-import static org.infinispan.functional.FunctionalListenerAssertions.*;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.FunctionalConcurrentMapEventsTest")
 public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTest {

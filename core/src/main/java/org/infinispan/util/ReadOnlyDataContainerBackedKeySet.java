@@ -1,10 +1,10 @@
 package org.infinispan.util;
 
-import org.infinispan.container.DataContainer;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.infinispan.container.DataContainer;
 
 /**
  * A Set view of keys in a data container, which is read-only and has efficient contains(), unlike some data container

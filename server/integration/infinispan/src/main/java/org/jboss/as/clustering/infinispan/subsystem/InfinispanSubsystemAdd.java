@@ -22,7 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
+
 import org.infinispan.server.infinispan.task.ServerTaskProcessor;
+import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheLoaderExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheWriterExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedLoadWriteStoreExtensionProcessor;
@@ -31,7 +34,6 @@ import org.jboss.as.clustering.infinispan.cs.deployment.CacheWriterExtensionProc
 import org.jboss.as.clustering.infinispan.cs.deployment.ExternalStoreExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.ServerExtensionDependenciesProcessor;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactoryService;
-import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -41,8 +43,6 @@ import org.jboss.as.server.AbstractDeploymentChainStep;
 import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
-
-import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 
 /**
  * @author Paul Ferraro

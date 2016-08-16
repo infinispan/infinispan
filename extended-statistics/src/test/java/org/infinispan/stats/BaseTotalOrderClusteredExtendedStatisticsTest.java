@@ -1,11 +1,11 @@
 package org.infinispan.stats;
 
+import java.util.Collection;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 /**
  * Implements the await methods for the total order caches (transactional and non-transactional)

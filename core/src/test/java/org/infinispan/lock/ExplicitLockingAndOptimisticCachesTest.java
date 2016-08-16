@@ -1,5 +1,9 @@
 package org.infinispan.lock;
 
+import static org.infinispan.test.TestingUtil.withTx;
+
+import java.util.concurrent.Callable;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -8,10 +12,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-
-import static org.infinispan.test.TestingUtil.withTx;
 
 /**
  * @author Mircea Markus

@@ -1,5 +1,11 @@
 package org.infinispan.tx.dld;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -9,12 +15,6 @@ import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional")
 public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManagersTest {

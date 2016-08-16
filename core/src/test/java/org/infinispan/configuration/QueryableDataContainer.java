@@ -1,10 +1,6 @@
 package org.infinispan.configuration;
 
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
+import static java.util.Collections.synchronizedCollection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +8,11 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import static java.util.Collections.synchronizedCollection;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.metadata.Metadata;
 
 public class QueryableDataContainer implements DataContainer<Object, Object> {
 

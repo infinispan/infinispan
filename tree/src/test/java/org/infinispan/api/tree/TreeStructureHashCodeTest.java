@@ -1,5 +1,10 @@
 package org.infinispan.api.tree;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.tree.Fqn;
@@ -7,11 +12,6 @@ import org.infinispan.tree.impl.NodeKey;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Tests the degree to which hash codes get spread

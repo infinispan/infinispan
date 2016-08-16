@@ -1,8 +1,8 @@
 package org.infinispan.rest.configuration;
 
-import org.infinispan.commons.configuration.BuiltBy;
-
 import java.util.Set;
+
+import org.infinispan.commons.configuration.BuiltBy;
 
 @BuiltBy(RestServerConfigurationBuilder.class)
 public class RestServerConfiguration {

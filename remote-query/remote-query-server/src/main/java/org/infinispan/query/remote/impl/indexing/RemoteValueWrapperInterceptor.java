@@ -1,13 +1,13 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import java.util.Set;
+
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.compat.BaseTypeConverterInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-
-import java.util.Set;
 
 /**
  * Converts the (Protobuf encoded) binary values put in remote caches to a hibernate-search indexing-enabled wrapper object

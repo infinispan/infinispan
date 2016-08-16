@@ -1,5 +1,9 @@
 package org.infinispan.spring.provider;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -9,8 +13,6 @@ import org.infinispan.spring.builders.SpringEmbeddedCacheManagerFactoryBeanBuild
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>

@@ -1,10 +1,10 @@
 package org.infinispan.commons.io;
 
-import net.jcip.annotations.NotThreadSafe;
-
 import java.io.ByteArrayOutputStream;
 
 import org.jboss.marshalling.ByteOutput;
+
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Extends ByteArrayOutputStream, but exposes the internal buffer. Using this, callers don't need to call toByteArray()

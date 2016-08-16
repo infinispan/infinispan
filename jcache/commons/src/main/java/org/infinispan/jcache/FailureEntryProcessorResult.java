@@ -1,10 +1,10 @@
 package org.infinispan.jcache;
 
-import org.infinispan.jcache.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
+
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.logging.Log;
 
 /**
  * Failure entry processor result wrapper.

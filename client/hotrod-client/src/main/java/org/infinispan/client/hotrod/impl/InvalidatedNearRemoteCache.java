@@ -1,12 +1,12 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.near.NearCacheService;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Near {@link org.infinispan.client.hotrod.RemoteCache} implementation

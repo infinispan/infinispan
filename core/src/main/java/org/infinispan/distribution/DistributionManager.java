@@ -1,13 +1,13 @@
 package org.infinispan.distribution;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A component that manages the distribution of elements across a cache cluster

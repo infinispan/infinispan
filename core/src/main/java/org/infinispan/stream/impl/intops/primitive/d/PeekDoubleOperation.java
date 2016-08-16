@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.d;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.DoubleConsumer;
 import java.util.stream.DoubleStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs peek operation on a {@link DoubleStream}

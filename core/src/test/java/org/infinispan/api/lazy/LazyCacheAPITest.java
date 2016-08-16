@@ -1,5 +1,8 @@
 package org.infinispan.api.lazy;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -7,9 +10,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.lang.reflect.Method;
 
 /**
  * Cache API test with lazy deserialization turned on.

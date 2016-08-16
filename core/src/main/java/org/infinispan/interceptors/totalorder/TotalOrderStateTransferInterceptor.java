@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
@@ -7,8 +9,6 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Synchronizes the incoming totally ordered transactions with the state transfer.

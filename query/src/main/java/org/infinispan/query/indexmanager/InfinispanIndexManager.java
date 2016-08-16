@@ -1,5 +1,7 @@
 package org.infinispan.query.indexmanager;
 
+import java.util.Properties;
+
 import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
@@ -7,8 +9,6 @@ import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
 
 /**
  * A custom IndexManager to store indexes in the grid itself.

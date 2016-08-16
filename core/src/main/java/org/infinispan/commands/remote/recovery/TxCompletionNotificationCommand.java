@@ -1,5 +1,14 @@
 package org.infinispan.commands.remote.recovery;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -11,15 +20,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.xa.Xid;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Command for removing recovery related information from the cluster.

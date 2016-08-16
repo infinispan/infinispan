@@ -1,7 +1,12 @@
 package org.infinispan.jcache;
 
-import org.infinispan.jcache.util.JCacheRunnable;
-import org.testng.annotations.Test;
+import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -10,10 +15,9 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.spi.CachingProvider;
-import java.lang.reflect.Method;
 
-import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
-import static org.testng.AssertJUnit.*;
+import org.infinispan.jcache.util.JCacheRunnable;
+import org.testng.annotations.Test;
 
 /**
  * JCache expiry tests not covered by the TCK.

@@ -27,7 +27,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;

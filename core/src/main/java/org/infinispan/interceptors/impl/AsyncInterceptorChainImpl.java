@@ -1,5 +1,14 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.commons.util.Immutables.immutableListAdd;
+import static org.infinispan.commons.util.Immutables.immutableListRemove;
+import static org.infinispan.commons.util.Immutables.immutableListReplace;
+
+import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -16,15 +25,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static org.infinispan.commons.util.Immutables.immutableListAdd;
-import static org.infinispan.commons.util.Immutables.immutableListRemove;
-import static org.infinispan.commons.util.Immutables.immutableListReplace;
 
 /**
  * Knows how to build and manage a chain of interceptors. Also in charge with invoking methods on the chain.

@@ -1,5 +1,7 @@
 package org.infinispan.container;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.configuration.cache.Configuration;
@@ -19,8 +21,6 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * {@link EntryFactory} implementation to be used for optimistic locking scheme.

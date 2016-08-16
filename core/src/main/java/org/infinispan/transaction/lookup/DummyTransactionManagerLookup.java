@@ -1,10 +1,10 @@
 package org.infinispan.transaction.lookup;
 
 
-import org.infinispan.transaction.tm.DummyTransactionManager;
-
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
+
+import org.infinispan.transaction.tm.DummyTransactionManager;
 
 
 /**

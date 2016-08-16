@@ -1,7 +1,9 @@
 package org.infinispan.stats.container;
 
 
-import org.infinispan.util.TimeService;
+import static org.infinispan.stats.container.ExtendedStatistic.NO_INDEX;
+import static org.infinispan.stats.container.ExtendedStatistic.getLocalStatsSize;
+import static org.infinispan.stats.container.ExtendedStatistic.getRemoteStatsSize;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -10,7 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.infinispan.stats.container.ExtendedStatistic.*;
+import org.infinispan.util.TimeService;
 
 /**
  * Thread safe cache statistics that allows multiple writers and reader at the same time.

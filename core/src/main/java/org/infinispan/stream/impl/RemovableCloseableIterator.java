@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl;
 
+import java.util.function.Function;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
-
-import java.util.function.Function;
 
 /**
  * A CloseableIterator implementation that allows for a CloseableIterator that doesn't allow remove operations to

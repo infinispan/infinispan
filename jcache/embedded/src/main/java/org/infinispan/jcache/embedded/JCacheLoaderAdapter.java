@@ -1,17 +1,16 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.jcache.Exceptions;
-import org.infinispan.jcache.Expiration;
-import org.infinispan.jcache.Expiration.Operation;
-import org.infinispan.jcache.logging.Log;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.commons.logging.LogFactory;
-
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
+
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.Exceptions;
+import org.infinispan.jcache.Expiration;
+import org.infinispan.jcache.logging.Log;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 
 public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi.CacheLoader {
 

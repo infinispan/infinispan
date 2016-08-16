@@ -1,8 +1,8 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;

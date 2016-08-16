@@ -1,13 +1,13 @@
 package org.infinispan.query.indexmanager;
 
+import java.util.List;
+
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * The IndexingBackend which directly couples to the Hibernate Search WorkspaceHolder.

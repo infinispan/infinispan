@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.util.Collection;
+
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -7,8 +9,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.RangeConditionContext;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.Collection;
 
 /**
  * @author anistor@redhat.com

@@ -1,11 +1,5 @@
 package org.infinispan.stream.impl.termop;
 
-import org.infinispan.commons.util.ByRef;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +7,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * This is a base operation class for the use of the for each terminal operator.  This class can be used for any

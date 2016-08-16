@@ -1,19 +1,19 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.impl.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.impl.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
+import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesManualEvictionTest")
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {

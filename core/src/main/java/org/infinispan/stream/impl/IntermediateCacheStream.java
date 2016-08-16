@@ -1,25 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.BaseCacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
-import org.infinispan.stream.impl.local.LocalCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableBiFunction;
-import org.infinispan.util.function.SerializableBinaryOperator;
-import org.infinispan.util.function.SerializableComparator;
-import org.infinispan.util.function.SerializableConsumer;
-import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializablePredicate;
-import org.infinispan.util.function.SerializableSupplier;
-import org.infinispan.util.function.SerializableToDoubleFunction;
-import org.infinispan.util.function.SerializableToIntFunction;
-import org.infinispan.util.function.SerializableToLongFunction;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -42,6 +22,26 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+
+import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
+import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableBinaryOperator;
+import org.infinispan.util.function.SerializableComparator;
+import org.infinispan.util.function.SerializableConsumer;
+import org.infinispan.util.function.SerializableFunction;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializablePredicate;
+import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.function.SerializableToDoubleFunction;
+import org.infinispan.util.function.SerializableToIntFunction;
+import org.infinispan.util.function.SerializableToLongFunction;
 
 /**
  * An intermediate cache stream used when an intermediate operation that requires both a remote and local portion

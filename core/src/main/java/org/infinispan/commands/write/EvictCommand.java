@@ -1,5 +1,7 @@
 package org.infinispan.commands.write;
 
+import java.util.Collections;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
@@ -9,8 +11,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
 
 /**
  * @author Mircea.Markus@jboss.com

@@ -1,5 +1,13 @@
 package org.infinispan.tx;
 
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.UUID;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -20,13 +28,6 @@ import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.util.UUID;
-
-import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

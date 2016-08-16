@@ -1,23 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.BaseCacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
-import org.infinispan.stream.impl.local.LocalIntCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableIntBinaryOperator;
-import org.infinispan.util.function.SerializableIntConsumer;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializableIntPredicate;
-import org.infinispan.util.function.SerializableIntToDoubleFunction;
-import org.infinispan.util.function.SerializableIntToLongFunction;
-import org.infinispan.util.function.SerializableIntUnaryOperator;
-import org.infinispan.util.function.SerializableObjIntConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.IntSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -36,6 +18,24 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+
+import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
+import org.infinispan.stream.impl.local.LocalIntCacheStream;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableIntBinaryOperator;
+import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializableIntPredicate;
+import org.infinispan.util.function.SerializableIntToDoubleFunction;
+import org.infinispan.util.function.SerializableIntToLongFunction;
+import org.infinispan.util.function.SerializableIntUnaryOperator;
+import org.infinispan.util.function.SerializableObjIntConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate int cache stream used when an intermediate operation that requires both a remote and local portion

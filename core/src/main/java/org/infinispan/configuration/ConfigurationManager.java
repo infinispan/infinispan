@@ -1,10 +1,6 @@
 package org.infinispan.configuration;
 
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +10,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 
 /**
  * It manages all the configuration for a specific container.

@@ -1,9 +1,9 @@
 package org.infinispan.factories;
 
-import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.core.GlobalMarshaller;
 
 /**

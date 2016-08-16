@@ -1,5 +1,15 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
+import static org.jgroups.Message.Flag.NO_FC;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -34,16 +44,6 @@ import org.jgroups.util.Buffer;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
-import static org.jgroups.Message.Flag.NO_FC;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.

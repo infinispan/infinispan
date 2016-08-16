@@ -1,10 +1,10 @@
 package org.infinispan.commons.util;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 
 /**

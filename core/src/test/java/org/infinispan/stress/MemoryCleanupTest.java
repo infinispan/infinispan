@@ -1,11 +1,11 @@
 package org.infinispan.stress;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import org.infinispan.Cache;
 
 /**
  * @author Mircea.Markus@jboss.com

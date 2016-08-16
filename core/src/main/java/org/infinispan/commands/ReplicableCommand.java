@@ -1,10 +1,10 @@
 package org.infinispan.commands;
 
-import org.infinispan.context.InvocationContext;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.context.InvocationContext;
 
 /**
  * The core of the command-based cache framework.  Commands correspond to specific areas of functionality in the cache,

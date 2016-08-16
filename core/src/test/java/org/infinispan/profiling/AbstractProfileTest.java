@@ -1,5 +1,13 @@
 package org.infinispan.profiling;
 
+import static org.infinispan.configuration.cache.CacheMode.DIST_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,11 +18,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
-
-import static org.infinispan.configuration.cache.CacheMode.*;
 
 @Test(groups = "profiling", testName = "profiling.AbstractProfileTest")
 public abstract class AbstractProfileTest extends SingleCacheManagerTest {

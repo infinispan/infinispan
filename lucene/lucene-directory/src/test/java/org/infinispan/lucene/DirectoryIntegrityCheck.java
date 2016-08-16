@@ -1,15 +1,15 @@
 package org.infinispan.lucene;
 
-import org.infinispan.Cache;
-import org.infinispan.lucene.impl.FileListCacheValue;
-import org.testng.AssertJUnit;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.Set;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.lucene.impl.FileListCacheValue;
+import org.testng.AssertJUnit;
 
 /**
  * DirectoryIntegrityCheck contains helpers to assert assumptions we make on the structure of an

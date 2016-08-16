@@ -1,8 +1,8 @@
 package org.infinispan.jcache;
 
-import org.infinispan.commons.util.ReflectionUtil;
-
 import javax.cache.Cache.Entry;
+
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * Infinispan implementation of {@link javax.cache.Cache.Entry<K, V>}.

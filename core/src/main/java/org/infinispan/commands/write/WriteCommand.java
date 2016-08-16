@@ -1,9 +1,9 @@
 package org.infinispan.commands.write;
 
+import java.util.Set;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-
-import java.util.Set;
 
 /**
  * A command that modifies the cache in some way

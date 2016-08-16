@@ -1,16 +1,16 @@
 package org.infinispan.stats.wrappers;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.topK.StreamSummaryContainer;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
-
-import java.util.Collection;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Top-key stats about locks.

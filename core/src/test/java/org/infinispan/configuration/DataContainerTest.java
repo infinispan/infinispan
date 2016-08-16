@@ -1,11 +1,18 @@
 package org.infinispan.configuration;
 
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -15,15 +22,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-
-import static org.infinispan.test.AbstractInfinispanTest.TIME_SERVICE;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest extends AbstractInfinispanTest {

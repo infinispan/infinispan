@@ -1,11 +1,6 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.jgroups.JChannel;
-import org.jgroups.View;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +16,12 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-import static org.testng.Assert.fail;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.jgroups.JChannel;
+import org.jgroups.View;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
 /**
  * The purpose of this class is to test that/if tcp + mping works fine in the given environment.

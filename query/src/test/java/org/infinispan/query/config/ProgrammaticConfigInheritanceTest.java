@@ -1,10 +1,10 @@
 package org.infinispan.query.config;
 
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(testName = "query.config.ProgrammaticConfigInheritanceTest", groups = "functional")
 public class ProgrammaticConfigInheritanceTest {

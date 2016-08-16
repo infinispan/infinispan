@@ -1,5 +1,10 @@
 package org.infinispan.lucene.readlocks;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
@@ -18,11 +23,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.concurrent.atomic.LongAdder;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * DistributedSegmentReadLockerTest represents a quick check on the functionality

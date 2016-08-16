@@ -1,12 +1,14 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogWithStateListener;
-import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.RawStaticCacheEventFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogWithStateListener;
@@ -16,8 +18,6 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientFilterEventsTest")
 public class ClientFilterEventsTest extends SingleHotRodServerTest {

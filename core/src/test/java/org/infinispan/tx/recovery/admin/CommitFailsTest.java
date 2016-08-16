@@ -1,5 +1,13 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.Assert.assertEquals;
+
+import java.util.List;
+
+import javax.transaction.xa.XAException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -8,13 +16,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAException;
-import java.util.List;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.Assert.assertEquals;
 
 /**
  * This test makes sure that when a tx fails during commit it can still be completed.

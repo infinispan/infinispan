@@ -1,12 +1,12 @@
 package org.infinispan.persistence.remote;
 
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.persistence.remote.upgrade.MigrationTask;
-
-import java.util.Map;
 
 /**
  * @author gustavonalle

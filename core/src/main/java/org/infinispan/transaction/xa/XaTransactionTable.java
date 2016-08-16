@@ -1,5 +1,11 @@
 package org.infinispan.transaction.xa;
 
+import java.util.concurrent.ConcurrentMap;
+
+import javax.transaction.Transaction;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -11,13 +17,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
-
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * {@link TransactionTable} to be used with {@link TransactionXaAdapter}.

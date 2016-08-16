@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,7 +11,6 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import java.io.File;
 
 /**
  * Run the basic set of operations with filesystem-based index storage in replicated mode

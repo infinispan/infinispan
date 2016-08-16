@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Version;
-
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;

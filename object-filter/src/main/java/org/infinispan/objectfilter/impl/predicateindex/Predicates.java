@@ -1,11 +1,11 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 import org.infinispan.objectfilter.impl.util.IntervalTree;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Holds all predicates that are subscribed for a certain attribute. This class is not thread safe and leaves this

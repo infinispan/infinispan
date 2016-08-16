@@ -1,13 +1,13 @@
 package org.infinispan.util;
 
+import java.util.function.Function;
+
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
-
-import java.util.function.Function;
 
 /**
  * A {@link CacheCollection} that allows for a different set to be mapped as

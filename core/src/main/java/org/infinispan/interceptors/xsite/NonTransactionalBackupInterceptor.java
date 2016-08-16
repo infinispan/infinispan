@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.xsite;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -10,8 +12,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Handles x-site data backups for non-transactional caches.

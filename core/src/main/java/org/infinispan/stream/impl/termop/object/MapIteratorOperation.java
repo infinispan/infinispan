@@ -1,12 +1,5 @@
 package org.infinispan.stream.impl.termop.object;
 
-import org.infinispan.commons.util.ByRef;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.stream.impl.termop.BaseTerminalOperation;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +7,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.termop.BaseTerminalOperation;
 
 /**
  * Terminal rehash aware operation that handles an iterator when a map intermediate operation was performed on

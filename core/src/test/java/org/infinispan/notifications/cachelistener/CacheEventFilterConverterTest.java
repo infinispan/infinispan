@@ -1,5 +1,14 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
@@ -7,9 +16,6 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test class that verifies the optimization for using a CacheEventFilterConverter works properly.

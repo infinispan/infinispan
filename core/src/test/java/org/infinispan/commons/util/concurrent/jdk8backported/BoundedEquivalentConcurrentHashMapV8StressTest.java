@@ -1,15 +1,15 @@
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.fail;
-import static org.testng.AssertJUnit.assertNotNull;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 /**
 * @author William Burns

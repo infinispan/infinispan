@@ -1,13 +1,12 @@
 package org.infinispan.functional.impl;
 
+import java.util.function.Supplier;
+
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-
-import java.util.function.Supplier;
 
 /**
  * Listener notifier.

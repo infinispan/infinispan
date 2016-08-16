@@ -1,13 +1,7 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.context.Flag;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
@@ -16,8 +10,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
+import org.infinispan.context.Flag;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.testng.annotations.Test;
 
 /**
  * Transactional tests for asynchronous methods in a distributed

@@ -1,13 +1,14 @@
 package org.infinispan.jcache.util;
 
+import java.net.URI;
+import java.util.Iterator;
+import java.util.Properties;
+
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
-import java.net.URI;
-import java.util.Iterator;
-import java.util.Properties;
 
 /**
  * Testing utilities for JCache tests.

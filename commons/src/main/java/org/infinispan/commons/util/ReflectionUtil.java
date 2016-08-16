@@ -1,9 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +9,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 /**
  * Basic reflection utilities to enhance what the JDK provides.
  *

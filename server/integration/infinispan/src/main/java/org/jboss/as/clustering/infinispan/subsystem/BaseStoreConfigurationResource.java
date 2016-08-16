@@ -23,7 +23,6 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.commons.util.Util;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;

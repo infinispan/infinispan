@@ -3,11 +3,6 @@ package org.infinispan.client.hotrod.test;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.commons.executors.ExecutorFactory;
-import org.infinispan.commons.marshall.Marshaller;
-
-import java.net.URL;
-import java.util.Properties;
 
 /**
  * RemoteCacheManager that exposes internal components such as transportFactory.

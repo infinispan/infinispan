@@ -1,14 +1,15 @@
 package org.infinispan.container.versioning;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * A simple versioning scheme that is cluster-aware

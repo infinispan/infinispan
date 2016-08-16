@@ -1,17 +1,27 @@
 package org.infinispan.server.test.client.rest;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
+import static org.infinispan.server.test.client.rest.RESTHelper.delete;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.getWithoutAssert;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.ITestUtils.Condition;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
-import java.util.List;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
-import static org.infinispan.server.test.util.ITestUtils.*;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for the REST client putAsync header.

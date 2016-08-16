@@ -1,9 +1,9 @@
 package org.infinispan.distribution;
 
+import static org.testng.AssertJUnit.assertFalse;
+
 import org.infinispan.Cache;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Test distribution when L1 is disabled and return values are needed.

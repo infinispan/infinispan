@@ -1,5 +1,7 @@
 package org.infinispan.server.test.util.jdbc;
 
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -10,8 +12,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

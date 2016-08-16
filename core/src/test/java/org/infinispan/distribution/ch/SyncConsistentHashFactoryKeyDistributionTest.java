@@ -1,5 +1,8 @@
 package org.infinispan.distribution.ch;
 
+import static java.lang.Math.sqrt;
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,9 +19,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
-
-import static java.lang.Math.sqrt;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the uniformity of the SyncConsistentHashFactory algorithm, which is very similar to the 5.1

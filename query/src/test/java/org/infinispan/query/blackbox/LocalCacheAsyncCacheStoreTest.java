@@ -1,13 +1,13 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.File;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Testing the ISPN Directory configuration with Async. FileCacheStore. The tests are performed on Local cache.

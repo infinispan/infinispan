@@ -1,21 +1,19 @@
 package org.infinispan.it.compatibility;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getSplitIntKeyForServer;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getSplitIntKeyForServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "it.compatibility.DistL1EmbeddedHotRodTest")
 public class DistL1EmbeddedHotRodTest extends AbstractInfinispanTest {

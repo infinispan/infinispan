@@ -1,5 +1,9 @@
 package org.infinispan.lucene.impl;
 
+import java.io.IOException;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
+
 import org.apache.lucene.store.BufferedChecksum;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
@@ -10,10 +14,6 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 
 /**
  * Responsible for writing to a <code>Directory</code>

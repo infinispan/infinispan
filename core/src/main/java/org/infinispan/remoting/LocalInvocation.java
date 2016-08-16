@@ -1,17 +1,16 @@
 package org.infinispan.remoting;
 
+import java.util.concurrent.Callable;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.concurrent.Callable;
 
 /**
  * Simulates a remote invocation on the local node. This is needed because the transport does not redirect to itself the

@@ -1,7 +1,6 @@
 package org.infinispan.stress;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 /**

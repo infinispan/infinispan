@@ -1,5 +1,10 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.AUDIT_LOGGER;
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ENABLED;
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.PRINCIPAL_ROLE_MAPPER;
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ROLES;
+
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +20,6 @@ import org.infinispan.security.impl.LoggingAuditLogger;
 import org.infinispan.security.impl.NullAuditLogger;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.*;
 
 /**
  * GlobalAuthorizationConfigurationBuilder.

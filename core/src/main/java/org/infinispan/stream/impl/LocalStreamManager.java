@@ -1,8 +1,8 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Set;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Stream manager that is invoked on a local node.  This is normally called due to a {@link ClusterStreamManager} from

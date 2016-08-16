@@ -1,11 +1,11 @@
 package org.infinispan.context;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.interceptors.AsyncInterceptor;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
  * Invocation context for the sequential interceptors.

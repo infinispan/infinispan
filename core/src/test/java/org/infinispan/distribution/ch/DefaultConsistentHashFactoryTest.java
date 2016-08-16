@@ -1,14 +1,8 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.OwnershipStatistics;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,9 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.OwnershipStatistics;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 /**
  * Test the even distribution and number of moved segments after rebalance for {@link DefaultConsistentHashFactory}

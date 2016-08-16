@@ -1,5 +1,11 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClustered;
@@ -11,12 +17,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 
 /**
  * Tests for the HotRod client RemoteCache class in standalone mode.

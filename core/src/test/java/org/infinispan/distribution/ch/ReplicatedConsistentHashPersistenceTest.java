@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.profiling.testinternals.Generator;

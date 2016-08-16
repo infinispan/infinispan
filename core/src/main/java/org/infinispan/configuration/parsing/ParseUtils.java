@@ -1,14 +1,15 @@
 package org.infinispan.configuration.parsing;
 
-import javax.xml.XMLConstants;
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import javax.xml.XMLConstants;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

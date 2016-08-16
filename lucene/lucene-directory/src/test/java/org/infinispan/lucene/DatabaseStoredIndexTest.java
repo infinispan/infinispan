@@ -1,5 +1,9 @@
 package org.infinispan.lucene;
 
+import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
+import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
+import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,18 +11,14 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
-import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
-import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
-
 import org.apache.lucene.store.Directory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.lucene.testutils.TestSegmentReadLocker;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.testutils.TestSegmentReadLocker;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;

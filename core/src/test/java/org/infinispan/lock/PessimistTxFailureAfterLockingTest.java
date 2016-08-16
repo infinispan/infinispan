@@ -1,5 +1,9 @@
 package org.infinispan.lock;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -17,10 +21,6 @@ import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test the failures after lock acquired for Pessimistic transactional caches.

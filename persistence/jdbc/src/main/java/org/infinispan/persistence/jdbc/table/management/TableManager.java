@@ -1,10 +1,8 @@
 package org.infinispan.persistence.jdbc.table.management;
 
-import org.infinispan.persistence.spi.PersistenceException;
-
 import java.sql.Connection;
-import java.util.List;
-import java.util.Set;
+
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * @author Ryan Emerson

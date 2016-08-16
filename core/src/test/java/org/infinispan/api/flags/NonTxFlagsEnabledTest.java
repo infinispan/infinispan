@@ -1,5 +1,9 @@
 package org.infinispan.api.flags;
 
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+
+import java.lang.reflect.Method;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,10 +12,6 @@ import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 
 /**
  * FlagsEnabledTest for non transactional caches.

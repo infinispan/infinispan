@@ -1,9 +1,9 @@
 package org.infinispan.query.impl;
 
+import java.util.NoSuchElementException;
+
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.query.ResultIterator;
-
-import java.util.NoSuchElementException;
 
 /**
  * This is the abstract superclass of the 2 iterators. Since some of the methods have the same implementations they have

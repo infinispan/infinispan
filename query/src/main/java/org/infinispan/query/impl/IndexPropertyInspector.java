@@ -1,18 +1,18 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.cfg.Environment;
-import org.infinispan.query.affinity.AffinityIndexManager;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
-
-import java.util.Properties;
-import java.util.Set;
-
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DATA_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.LOCKING_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.METADATA_CACHENAME;
+
+import java.util.Properties;
+import java.util.Set;
+
+import org.hibernate.search.cfg.Environment;
+import org.infinispan.query.affinity.AffinityIndexManager;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 /**
  * Extract useful information from indexing configuration

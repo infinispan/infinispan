@@ -1,19 +1,18 @@
 package org.infinispan.stream.impl.local;
 
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.stream.impl.intops.UnorderedOperation;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.BaseStream;
-import java.util.stream.Stream;
+
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.UnorderedOperation;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implements the base operations required for a local stream.

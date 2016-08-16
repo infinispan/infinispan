@@ -1,9 +1,9 @@
 package org.infinispan.xsite;
 
-import org.infinispan.remoting.RpcException;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.remoting.RpcException;
 
 /**
  * Exception to be used to signal failures to backup to remote sites.

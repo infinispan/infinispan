@@ -1,5 +1,18 @@
 package org.infinispan.xsite.statetransfer.failures;
 
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.test.TestingUtil.WrapFactory;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.wrapComponent;
+import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
+import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManager;
+
+import java.util.Collection;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
@@ -14,16 +27,6 @@ import org.infinispan.xsite.statetransfer.XSiteProviderDelegator;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
-import static org.infinispan.test.TestingUtil.*;
-import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManager;
 
 /**
  * Cross-Site replication state transfer tests. It tests topology changes in producer site.

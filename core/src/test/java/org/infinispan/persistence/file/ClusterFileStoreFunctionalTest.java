@@ -1,5 +1,9 @@
 package org.infinispan.persistence.file;
 
+import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.io.File;
 import java.lang.reflect.Method;
 
@@ -16,10 +20,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Galder Zamarreño

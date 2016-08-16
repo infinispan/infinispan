@@ -1,11 +1,5 @@
 package org.infinispan.executors;
 
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +10,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.BlockingRunnable;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 
 /**
  * A delegating executor that lazily constructs and initializes the underlying executor.

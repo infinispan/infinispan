@@ -1,11 +1,11 @@
 package org.infinispan.transaction.xa;
 
+import javax.transaction.Transaction;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
-
-import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
 
 /**
  * {@link LocalTransaction} implementation to be used with {@link TransactionXaAdapter}.

@@ -1,5 +1,12 @@
 package org.infinispan.xsite.offline;
 
+import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -7,13 +14,6 @@ import org.infinispan.util.ControlledTimeService;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.notification.SiteStatusListener;
 import org.testng.annotations.Test;
-
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
-
-import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea Markus

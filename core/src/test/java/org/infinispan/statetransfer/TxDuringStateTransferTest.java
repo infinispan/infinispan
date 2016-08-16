@@ -1,5 +1,12 @@
 package org.infinispan.statetransfer;
 
+import static java.lang.String.valueOf;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import javax.transaction.Status;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,11 +19,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-
-import static java.lang.String.valueOf;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Checks if the transactions are forward correctly to the new owners

@@ -1,5 +1,8 @@
 package org.infinispan.hibernate.search;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.Transaction;
@@ -14,9 +17,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Verifies we're able to start from an existing index in Infinispan, stored in a CacheLoader. Requires a persistent

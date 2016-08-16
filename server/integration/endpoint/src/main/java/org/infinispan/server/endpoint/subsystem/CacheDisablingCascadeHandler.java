@@ -1,5 +1,8 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
+
 import org.infinispan.server.commons.controller.Operations;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -9,9 +12,6 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
-
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 /**
  * @author gustavonalle

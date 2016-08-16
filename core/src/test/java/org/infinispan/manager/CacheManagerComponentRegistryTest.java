@@ -1,5 +1,7 @@
 package org.infinispan.manager;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,8 +18,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 /**
  * @author Manik Surtani

@@ -1,11 +1,11 @@
 package org.infinispan.stream.impl;
 
+import java.util.Set;
+import java.util.stream.BaseStream;
+
 import org.infinispan.BaseCacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
-
-import java.util.Set;
-import java.util.stream.BaseStream;
 
 /**
  * Stream supplier that is used when a local intermediate operation is invoked, requiring a combined remote and local

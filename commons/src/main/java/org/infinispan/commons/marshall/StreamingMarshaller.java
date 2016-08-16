@@ -1,12 +1,12 @@
 package org.infinispan.commons.marshall;
 
-import net.jcip.annotations.ThreadSafe;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A specialization of {@link Marshaller} that supports streams.

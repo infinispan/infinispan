@@ -1,14 +1,16 @@
 package org.infinispan.xsite.backupfailure;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.*;
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

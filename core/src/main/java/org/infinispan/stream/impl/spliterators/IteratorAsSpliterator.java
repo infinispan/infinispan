@@ -1,9 +1,5 @@
 package org.infinispan.stream.impl.spliterators;
 
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Objects;
@@ -11,6 +7,10 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 
 /**
  * A Spliterator using the provided iterator for supplying values.

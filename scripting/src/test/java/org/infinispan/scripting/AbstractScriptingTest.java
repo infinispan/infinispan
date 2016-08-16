@@ -1,11 +1,11 @@
 package org.infinispan.scripting;
 
+import java.io.InputStream;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import java.io.InputStream;
 
 /**
  * Abstract class providing all general methods.

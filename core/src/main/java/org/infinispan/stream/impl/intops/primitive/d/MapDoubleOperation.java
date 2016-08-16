@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.d;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs map operation on a {@link DoubleStream}

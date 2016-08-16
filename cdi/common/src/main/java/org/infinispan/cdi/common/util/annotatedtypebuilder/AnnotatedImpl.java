@@ -1,13 +1,14 @@
 package org.infinispan.cdi.common.util.annotatedtypebuilder;
 
-import org.infinispan.cdi.common.util.HierarchyDiscovery;
-
-import javax.enterprise.inject.spi.Annotated;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.enterprise.inject.spi.Annotated;
+
+import org.infinispan.cdi.common.util.HierarchyDiscovery;
 
 /**
  * The base class for all New Annotated types.

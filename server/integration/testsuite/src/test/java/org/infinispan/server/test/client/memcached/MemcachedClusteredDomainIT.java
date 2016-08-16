@@ -1,5 +1,7 @@
 package org.infinispan.server.test.client.memcached;
 
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,8 +16,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
 
 /**
  * Tests for the Memcached client. Clustered test cases.

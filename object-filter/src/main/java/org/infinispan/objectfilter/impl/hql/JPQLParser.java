@@ -1,5 +1,10 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.AstProcessingChain;
 import org.hibernate.hql.ast.spi.AstProcessor;
@@ -10,11 +15,6 @@ import org.infinispan.objectfilter.impl.hql.predicate.FilterPredicateFactory;
 import org.infinispan.objectfilter.impl.hql.predicate.SingleEntityHavingQueryBuilderImpl;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

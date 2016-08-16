@@ -1,15 +1,7 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.Cache;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +11,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.testng.Assert.assertEquals;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
+import org.infinispan.Cache;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * A base test for all rehashing tests

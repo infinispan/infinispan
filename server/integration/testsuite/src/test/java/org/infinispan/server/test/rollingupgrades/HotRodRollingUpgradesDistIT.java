@@ -1,5 +1,8 @@
 package org.infinispan.server.test.rollingupgrades;
 
+import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
+
 import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -21,9 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static junit.framework.TestCase.assertNull;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests for rolling upgrades functionality, distribution mode.

@@ -1,15 +1,15 @@
 package org.infinispan.tools.customs;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.function.BiConsumer;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.function.BiConsumer;
 
 /**
  * Custom DataContainer for testing the configuration converter.

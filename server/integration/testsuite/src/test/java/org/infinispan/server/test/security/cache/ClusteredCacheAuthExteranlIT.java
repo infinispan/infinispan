@@ -1,5 +1,15 @@
 package org.infinispan.server.test.security.cache;
 
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_CACHE_NAME;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_SERVER_NAME;
+
+import java.security.PrivilegedActionException;
+
+import javax.security.auth.login.LoginException;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -15,13 +25,6 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.security.PrivilegedActionException;
-import javax.security.auth.login.LoginException;
-
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.*;
 
 /**
  *

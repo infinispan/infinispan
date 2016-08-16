@@ -1,14 +1,14 @@
 package org.infinispan.profiling;
 
-import org.infinispan.profiling.testinternals.Generator;
-import org.infinispan.profiling.testinternals.TaskRunner;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.profiling.testinternals.Generator;
+import org.infinispan.profiling.testinternals.TaskRunner;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.

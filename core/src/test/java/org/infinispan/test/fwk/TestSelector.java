@@ -1,13 +1,13 @@
 package org.infinispan.test.fwk;
 
-import org.testng.IMethodInstance;
-import org.testng.IMethodInterceptor;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.function.Predicate;
+
+import org.testng.IMethodInstance;
+import org.testng.IMethodInterceptor;
 
 /**
  * See {@link ChainMethodInterceptor}. Works in a similar way as annotating test class

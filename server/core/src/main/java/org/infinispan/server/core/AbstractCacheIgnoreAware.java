@@ -1,8 +1,8 @@
 package org.infinispan.server.core;
 
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-
 import java.util.Set;
+
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 /**
  * Abstract class providing stock implementations for {@link CacheIgnoreAware} so all that is required is to extend

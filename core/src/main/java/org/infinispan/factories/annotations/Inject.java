@@ -1,12 +1,12 @@
 package org.infinispan.factories.annotations;
 
-import org.infinispan.factories.AbstractComponentFactory;
-import org.infinispan.factories.ComponentRegistry;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.infinispan.factories.AbstractComponentFactory;
+import org.infinispan.factories.ComponentRegistry;
 
 
 /**

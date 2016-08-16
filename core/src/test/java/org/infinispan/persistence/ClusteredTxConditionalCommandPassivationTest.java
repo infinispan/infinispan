@@ -1,9 +1,9 @@
 package org.infinispan.persistence;
 
-import org.testng.annotations.Test;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+
+import org.testng.annotations.Test;
 
 /**
  * Tests if the conditional commands correctly fetch the value from cache loader even with the skip cache load/store

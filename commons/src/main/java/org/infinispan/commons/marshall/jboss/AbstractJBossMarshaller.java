@@ -1,5 +1,18 @@
 package org.infinispan.commons.marshall.jboss;
 
+import static org.infinispan.commons.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
+import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.net.URL;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
@@ -13,19 +26,6 @@ import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.net.URL;
-
-import static org.infinispan.commons.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
-import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
 
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.

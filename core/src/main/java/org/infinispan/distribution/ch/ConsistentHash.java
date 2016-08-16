@@ -1,14 +1,14 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A consistent hash algorithm implementation. Implementations would typically be constructed via a

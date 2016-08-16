@@ -1,5 +1,10 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.testng.Assert.assertEquals;
+
+import java.util.concurrent.Executor;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -14,26 +19,21 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Executor;
-
-import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
-import static org.testng.Assert.assertEquals;
 
 /**
  * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory, or if the

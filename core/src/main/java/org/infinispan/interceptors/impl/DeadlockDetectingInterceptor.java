@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -13,9 +16,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor populates the {@link DldGlobalTransaction} with

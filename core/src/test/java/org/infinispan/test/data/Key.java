@@ -1,15 +1,13 @@
 package org.infinispan.test.data;
 
-import org.infinispan.util.concurrent.ReclosableLatch;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.util.concurrent.ReclosableLatch;
 
 public class Key implements Externalizable {
    private static final long serialVersionUID = 4745232904453872125L;

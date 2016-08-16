@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,8 +13,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationSingleFileStoreDistListenerFunctionalTest")
 public class ExpirationSingleFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {

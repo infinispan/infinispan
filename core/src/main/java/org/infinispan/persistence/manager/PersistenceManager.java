@@ -4,16 +4,16 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
-
-import javax.transaction.Transaction;
 
 /**
  * Defines the logic for interacting with the chain of external storage.

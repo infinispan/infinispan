@@ -1,11 +1,11 @@
 package org.infinispan.hibernate.search.util.configuration.impl;
 
+import java.util.Properties;
+
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.util.StringHelper;
 import org.infinispan.hibernate.search.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
-
-import java.util.Properties;
 
 /**
  * Provides functionality for dealing with configuration values.

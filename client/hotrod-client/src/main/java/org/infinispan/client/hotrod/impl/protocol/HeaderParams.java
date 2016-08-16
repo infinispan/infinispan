@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.Flag;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.Flag;
 
 /**
  * Hot Rod request header parameters

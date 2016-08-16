@@ -1,14 +1,16 @@
 package org.infinispan.server.test.cs.jdbc;
 
+import static org.infinispan.server.test.util.ITestUtils.createMBeans;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
-import org.infinispan.server.test.util.jdbc.DBServer;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
+import org.infinispan.server.test.util.jdbc.DBServer;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -16,8 +18,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.util.ITestUtils.createMBeans;
 
 /**
  * @author <a href="mailto:jmarkos@redhat.com">Jakub Markos</a>

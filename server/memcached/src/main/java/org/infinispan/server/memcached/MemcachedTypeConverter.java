@@ -1,12 +1,12 @@
 package org.infinispan.server.memcached;
 
+import java.io.IOException;
+
 import org.infinispan.commons.CacheException;
-import org.infinispan.compat.TypeConverter;
-import org.infinispan.context.Flag;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
-
-import java.io.IOException;
+import org.infinispan.compat.TypeConverter;
+import org.infinispan.context.Flag;
 
 /**
  * Type converter that transforms Memcached data so that it can be accessible

@@ -1,8 +1,8 @@
 package org.infinispan.persistence.spi;
 
-import net.jcip.annotations.ThreadSafe;
-
 import java.util.concurrent.Executor;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Defines advanced functionality for persisting data to an external storage.

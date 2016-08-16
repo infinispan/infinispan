@@ -18,8 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
 import org.infinispan.server.websocket.WebSocketServer;
 import org.infinispan.server.websocket.configuration.WebSocketServerConfigurationBuilder;
 import org.jboss.as.controller.AttributeDefinition;
@@ -29,7 +27,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
-import org.jboss.msc.service.ServiceController;
 
 /**
  * WebSocketSubsystemAdd.

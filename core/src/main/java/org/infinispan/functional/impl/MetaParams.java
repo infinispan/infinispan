@@ -1,12 +1,5 @@
 package org.infinispan.functional.impl;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Experimental;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Experimental;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
+
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Represents a {@link MetaParam} collection.

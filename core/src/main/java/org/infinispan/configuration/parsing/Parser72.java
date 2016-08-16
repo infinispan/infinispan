@@ -1,8 +1,8 @@
 package org.infinispan.configuration.parsing;
 
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-
 import javax.xml.stream.XMLStreamException;
+
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 
 /**
  * This class just acts as a bridge to the unified {@link Parser} for external cache stores. All uses of it should be

@@ -2,10 +2,11 @@ package org.infinispan.query.impl;
 
 import java.io.IOException;
 
-import net.jcip.annotations.NotThreadSafe;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.commons.CacheException;
+
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Implementation for {@link org.infinispan.query.ResultIterator}. This loads the results only when required

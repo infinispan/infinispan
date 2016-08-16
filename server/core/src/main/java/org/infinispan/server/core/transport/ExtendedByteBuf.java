@@ -3,9 +3,6 @@ package org.infinispan.server.core.transport;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
-import org.infinispan.commons.io.SignedNumeric;
-
-import java.util.Optional;
 
 /**
  * Static helper class that provides methods to be used with a {@link ByteBuf} that are useful for Infinispan.

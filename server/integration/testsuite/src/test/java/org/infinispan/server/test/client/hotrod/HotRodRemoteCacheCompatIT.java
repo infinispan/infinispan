@@ -1,5 +1,13 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.IntStream;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -15,14 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Arquillian.class)
 @Category({HotRodSingleNode.class, HotRodClustered.class})

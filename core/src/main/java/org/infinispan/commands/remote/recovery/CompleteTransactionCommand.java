@@ -1,12 +1,13 @@
 package org.infinispan.commands.remote.recovery;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-
-import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import javax.transaction.xa.Xid;
+
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Command used by the recovery tooling for forcing transaction completion .

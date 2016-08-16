@@ -1,15 +1,15 @@
 package org.infinispan.xsite;
 
+import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Collections;
+
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test (groups = "xsite", testName = "xsite.NoFailureAsyncReplWarnFailurePolicyTest")
 public class NoFailureAsyncReplWarnFailurePolicyTest extends BaseSiteUnreachableTest {

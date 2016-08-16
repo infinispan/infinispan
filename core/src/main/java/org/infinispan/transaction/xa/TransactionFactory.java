@@ -1,6 +1,9 @@
 package org.infinispan.transaction.xa;
 
+import java.util.Random;
+
 import javax.transaction.Transaction;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
@@ -21,8 +24,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Random;
 
 /**
  * Factory for transaction related sate.

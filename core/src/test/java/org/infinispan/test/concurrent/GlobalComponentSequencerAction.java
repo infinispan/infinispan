@@ -1,12 +1,12 @@
 package org.infinispan.test.concurrent;
 
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
+
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
 
 /**
  * Replaces a global component with a dynamic proxy that can interact with a {@link StateSequencer} when a method that

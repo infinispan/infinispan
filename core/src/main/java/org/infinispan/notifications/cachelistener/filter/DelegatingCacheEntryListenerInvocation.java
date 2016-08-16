@@ -1,12 +1,12 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import java.lang.annotation.Annotation;
+import java.util.UUID;
+
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-
-import java.lang.annotation.Annotation;
-import java.util.UUID;
 
 /**
  * A wrapper around a {@link CacheEntryListenerInvocation} that keeps a reference to the {@link

@@ -1,8 +1,12 @@
 package org.infinispan.cache.impl;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
@@ -11,12 +15,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.stats.impl.StatsImpl;
 import org.infinispan.util.TimeService;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * Wraps existing {@link AdvancedCache} to collect statistics

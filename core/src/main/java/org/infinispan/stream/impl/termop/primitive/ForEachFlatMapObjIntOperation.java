@@ -1,16 +1,16 @@
 package org.infinispan.stream.impl.termop.primitive;
 
-import org.infinispan.Cache;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.stream.impl.termop.AbstractForEachOperation;
-
 import java.util.List;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import org.infinispan.Cache;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.termop.AbstractForEachOperation;
 
 /**
  * Terminal rehash aware operation that handles for each where flat map operation is performed on a

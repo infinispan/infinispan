@@ -1,10 +1,10 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.util.DistinctFunction;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Function;
+
+import org.infinispan.commons.util.DistinctFunction;
 
 /**
  * A set that maps another one to a new one of a possibly different type.  Note this set is read only

@@ -1,5 +1,17 @@
 package org.infinispan.tx.recovery;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.assertPrepared;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
+import static org.testng.Assert.assertEquals;
+
+import java.util.List;
+import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
@@ -11,14 +23,6 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.Xid;
-
-import java.util.List;
-import java.util.Set;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

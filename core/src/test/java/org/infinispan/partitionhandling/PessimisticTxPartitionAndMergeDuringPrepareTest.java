@@ -1,14 +1,14 @@
 package org.infinispan.partitionhandling;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 /**
  * It tests multiple scenarios where a split can happen during a transaction.

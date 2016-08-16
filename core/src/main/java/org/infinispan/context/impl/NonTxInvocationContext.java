@@ -1,14 +1,14 @@
 package org.infinispan.context.impl;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Context to be used for non transactional calls, both remote and local.

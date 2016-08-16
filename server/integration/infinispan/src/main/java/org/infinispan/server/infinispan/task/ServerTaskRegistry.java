@@ -1,9 +1,9 @@
 package org.infinispan.server.infinispan.task;
 
+import java.util.List;
+
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.Task;
-
-import java.util.List;
 
 /**
  * Server task registry.

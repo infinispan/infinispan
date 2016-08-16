@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * We use the state transfer lock for three different things:

@@ -1,9 +1,9 @@
 package org.infinispan.query;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Component to rebuild the indexes from the existing data.

@@ -1,5 +1,7 @@
 package org.infinispan.distribution.rehash;
 
+import java.util.Collections;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -9,8 +11,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
-
-import java.util.Collections;
 
 /**
 * Represents a write operation to test.

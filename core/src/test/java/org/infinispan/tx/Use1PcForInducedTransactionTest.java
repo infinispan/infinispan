@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -8,8 +10,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 @Test (groups = "functional", testName = "tx.Use1PcForInducedTransactionTest")
 public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {

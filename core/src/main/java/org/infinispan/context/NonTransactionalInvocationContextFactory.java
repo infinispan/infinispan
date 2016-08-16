@@ -1,5 +1,7 @@
 package org.infinispan.context;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -13,8 +15,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Invocation Context container to be used for non-transactional caches.

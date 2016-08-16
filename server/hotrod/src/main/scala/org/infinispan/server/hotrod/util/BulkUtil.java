@@ -1,12 +1,12 @@
 package org.infinispan.server.hotrod.util;
 
+import java.util.Iterator;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.server.hotrod.HotRodTypeConverter;
-
-import java.util.Iterator;
 
 /**
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>

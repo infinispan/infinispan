@@ -1,10 +1,10 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.concurrent.Executor;
+
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
-
-import java.util.concurrent.Executor;
 
 public class CustomCacheWriter implements AdvancedCacheWriter {
 

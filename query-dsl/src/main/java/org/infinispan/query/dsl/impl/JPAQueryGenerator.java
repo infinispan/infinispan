@@ -1,9 +1,5 @@
 package org.infinispan.query.dsl.impl;
 
-import org.infinispan.query.dsl.Expression;
-import org.infinispan.query.dsl.impl.logging.Log;
-import org.jboss.logging.Logger;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -13,6 +9,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+
+import org.infinispan.query.dsl.Expression;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * Generates a JPA query to satisfy the condition created with the builder.

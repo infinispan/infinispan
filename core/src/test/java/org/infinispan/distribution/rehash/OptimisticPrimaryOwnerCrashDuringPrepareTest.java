@@ -1,5 +1,12 @@
 package org.infinispan.distribution.rehash;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.concurrent.Future;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,13 +18,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Future;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Test that if the primary owner crashes while two transactions are in the prepare phase, only one of them will be able

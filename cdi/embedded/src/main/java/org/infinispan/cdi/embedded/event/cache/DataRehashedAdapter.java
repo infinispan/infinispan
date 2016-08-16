@@ -1,15 +1,16 @@
 package org.infinispan.cdi.embedded.event.cache;
 
+import java.util.Collection;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.remoting.transport.Address;
-
-import javax.enterprise.event.Event;
-import javax.enterprise.util.TypeLiteral;
-import java.util.Collection;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.DataRehashed}.

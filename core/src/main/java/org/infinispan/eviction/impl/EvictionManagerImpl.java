@@ -1,6 +1,7 @@
 package org.infinispan.eviction.impl;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.Map;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -11,7 +12,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
-import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {

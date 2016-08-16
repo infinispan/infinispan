@@ -1,14 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Configures indexing of entries in the cache for searching.

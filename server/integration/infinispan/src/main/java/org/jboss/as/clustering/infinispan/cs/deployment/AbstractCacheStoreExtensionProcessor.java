@@ -1,5 +1,8 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
+import java.lang.reflect.Constructor;
+import java.util.List;
+
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactory;
@@ -19,9 +22,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-
-import java.lang.reflect.Constructor;
-import java.util.List;
 
 public abstract class AbstractCacheStoreExtensionProcessor<T> implements DeploymentUnitProcessor {
 

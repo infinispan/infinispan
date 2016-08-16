@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.Map;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -28,8 +30,6 @@ import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

@@ -1,9 +1,9 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.Map;
+
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-
-import java.util.Map;
 
 /**
  * A filter that rejects all inputs. Does not support sorting and projections.

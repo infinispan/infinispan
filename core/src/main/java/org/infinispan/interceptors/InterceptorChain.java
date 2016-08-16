@@ -1,13 +1,13 @@
 package org.infinispan.interceptors;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.

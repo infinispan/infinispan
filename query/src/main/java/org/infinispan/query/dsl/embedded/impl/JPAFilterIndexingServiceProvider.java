@@ -1,13 +1,13 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.Map;
+
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

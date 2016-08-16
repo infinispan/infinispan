@@ -1,7 +1,8 @@
 package org.infinispan.xsite;
 
-import javax.transaction.Transaction;
 import java.util.Map;
+
+import javax.transaction.Transaction;
 
 /**
  * @author Mircea Markus

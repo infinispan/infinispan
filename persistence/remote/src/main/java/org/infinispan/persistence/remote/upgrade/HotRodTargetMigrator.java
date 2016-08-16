@@ -1,5 +1,26 @@
 package org.infinispan.persistence.remote.upgrade;
 
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.DEFAULT_READ_BATCH_SIZE;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.gracefulShutdown;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.migrateEntriesWithMetadata;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.range;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.split;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.supportsIteration;
+
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -17,21 +38,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
-
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.*;
 
 @MetaInfServices
 public class HotRodTargetMigrator implements TargetMigrator {

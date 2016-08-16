@@ -1,5 +1,47 @@
 package org.infinispan.functional;
 
+import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteFind;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteGet;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnView;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadOnlyViewEmpty;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadOnlyViewEquals;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEmpty;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEquals;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.functional.FunctionalTestUtils.ro;
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -21,30 +63,6 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
-import static org.infinispan.functional.FunctionalTestUtils.*;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Test suite for verifying basic functional map functionality,

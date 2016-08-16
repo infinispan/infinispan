@@ -1,7 +1,5 @@
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.configuration.cache.Configuration;
-
 /**
  * Represents different handling mechanisms when dealing with remote command responses.
  * These include waiting for responses from all nodes in the cluster ({@link ResponseMode#SYNCHRONOUS}}),

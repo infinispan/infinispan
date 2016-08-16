@@ -1,5 +1,8 @@
 package org.infinispan.all.embeddedquery;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -22,10 +25,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.transaction.TransactionMode;
-
-import static org.junit.Assert.*;
 
 /**
  * Abstract class for query tests for uber jars.

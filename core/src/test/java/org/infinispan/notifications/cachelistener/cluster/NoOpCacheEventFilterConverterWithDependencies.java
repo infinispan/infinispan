@@ -1,12 +1,12 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.Serializable;
+
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-
-import java.io.Serializable;
 
 /**
  * @author anistor@redhat.com

@@ -1,11 +1,11 @@
 package org.infinispan.test.concurrent;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Generic {@link CommandMatcher} implementation that can use both {@link CacheRpcCommand} criteria (cache name, origin)

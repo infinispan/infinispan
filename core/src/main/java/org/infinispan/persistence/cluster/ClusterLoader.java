@@ -1,5 +1,10 @@
 package org.infinispan.persistence.cluster;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -7,11 +12,11 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -23,11 +28,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is

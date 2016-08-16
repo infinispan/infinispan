@@ -1,12 +1,17 @@
 package org.infinispan.jcache.remote;
 
-import org.infinispan.client.hotrod.RemoteCacheContainer;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.jcache.remote.logging.Log;
-import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.dmr.ModelNode;
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADD;
+import static org.jboss.as.controller.client.helpers.ClientConstants.COMPOSITE;
+import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OP_ADDR;
+import static org.jboss.as.controller.client.helpers.ClientConstants.OUTCOME;
+import static org.jboss.as.controller.client.helpers.ClientConstants.READ_ATTRIBUTE_OPERATION;
+import static org.jboss.as.controller.client.helpers.ClientConstants.REMOVE_OPERATION;
+import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
+import static org.jboss.as.controller.client.helpers.ClientConstants.STEPS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.SUBSYSTEM;
+import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,8 +19,13 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.jboss.as.controller.client.helpers.ClientConstants.*;
-import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.jcache.remote.logging.Log;
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.dmr.ModelNode;
 
 interface RemoteCacheAccess {
 

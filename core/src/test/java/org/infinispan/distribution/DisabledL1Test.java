@@ -1,14 +1,14 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+
+import java.lang.reflect.Method;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "distribution.DisabledL1Test")
 public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {

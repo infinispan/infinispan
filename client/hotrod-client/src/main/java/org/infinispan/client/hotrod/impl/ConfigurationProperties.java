@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.Objects;
+import java.util.Properties;
+import java.util.regex.Pattern;
+
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-
-import java.util.Objects;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 /**
  * Encapsulate all config properties here

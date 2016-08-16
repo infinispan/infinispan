@@ -1,5 +1,8 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +17,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
-import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 /**
  * Tests for the HotRod client RemoteCacheManager class in domain mode.
  *

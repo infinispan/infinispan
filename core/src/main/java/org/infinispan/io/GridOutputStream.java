@@ -1,9 +1,9 @@
 package org.infinispan.io;
 
-import org.infinispan.Cache;
-
 import java.io.IOException;
 import java.io.OutputStream;
+
+import org.infinispan.Cache;
 
 /**
  * @author Bela Ban

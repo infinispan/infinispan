@@ -1,5 +1,7 @@
 package org.infinispan.spring.provider.sample;
 
+import java.util.Random;
+
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.spring.provider.sample.entity.Book;
 import org.infinispan.spring.provider.sample.service.CachedBookService;
@@ -12,8 +14,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.util.Random;
 
 /**
  * Abstract template for running a set of tests under different configurations, in order to illustrate how Spring handles

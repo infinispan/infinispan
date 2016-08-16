@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import java.util.Set;
+
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
-
-import java.util.Set;
 
 /**
  * Tracks all keys seen during iteration. Depends on ISPN-5451 to be done more efficiently, by discarding segments as

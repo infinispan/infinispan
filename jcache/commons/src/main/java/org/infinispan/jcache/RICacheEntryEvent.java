@@ -1,10 +1,10 @@
 package org.infinispan.jcache;
 
-import org.infinispan.commons.util.ReflectionUtil;
-
 import javax.cache.Cache;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.EventType;
+
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * The reference implementation of the {@link CacheEntryEvent}.

@@ -1,5 +1,7 @@
 package org.infinispan.context;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -10,8 +12,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Factory for {@link InvocationContext} objects.

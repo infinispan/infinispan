@@ -1,5 +1,17 @@
 package org.infinispan.query.affinity;
 
+import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static java.util.stream.IntStream.range;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,18 +24,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static java.util.stream.IntStream.range;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests behaviour of the AffinityIndexManager under topology changes.

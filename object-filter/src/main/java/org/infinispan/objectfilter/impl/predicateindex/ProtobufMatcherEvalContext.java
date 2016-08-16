@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -9,8 +11,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

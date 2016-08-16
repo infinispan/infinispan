@@ -1,8 +1,5 @@
 package org.infinispan.cli.shell;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -30,6 +27,9 @@ import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
 import org.jboss.aesh.console.Console;
 import org.jboss.aesh.console.settings.SettingsBuilder;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 /**
  *

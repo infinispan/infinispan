@@ -1,5 +1,12 @@
 package org.infinispan.distribution;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -10,13 +17,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncFuncTest")
 public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {

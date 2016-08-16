@@ -1,5 +1,11 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+import java.util.concurrent.Callable;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
@@ -8,12 +14,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for query conditions (filtering) on cache without indexing. Exercises the whole query DSL on the sample domain

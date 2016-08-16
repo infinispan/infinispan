@@ -1,19 +1,19 @@
 package org.infinispan.client.hotrod;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TransportObjectFactory;
 import org.testng.annotations.Test;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.AssertJUnit.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Mircea Markus

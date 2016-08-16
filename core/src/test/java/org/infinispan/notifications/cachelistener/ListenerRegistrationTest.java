@@ -1,5 +1,14 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -15,11 +24,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.ListenerRegistrationTest")
 public class ListenerRegistrationTest extends AbstractInfinispanTest {

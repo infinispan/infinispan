@@ -1,14 +1,16 @@
 package org.infinispan.atomic;
 
+import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
+import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
+
+import java.lang.reflect.Method;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-import static org.infinispan.atomic.AtomicHashMapTestAssertions.*;
-
-import java.lang.reflect.Method;
 
 @Test(groups = "functional", testName = "atomic.AtomicMapReplTest")
 public class AtomicMapReplTest extends MultipleCacheManagersTest {

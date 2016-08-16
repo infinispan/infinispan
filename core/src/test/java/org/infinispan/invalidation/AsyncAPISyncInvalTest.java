@@ -1,20 +1,19 @@
 package org.infinispan.invalidation;
 
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.Util;
-
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
 public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {   

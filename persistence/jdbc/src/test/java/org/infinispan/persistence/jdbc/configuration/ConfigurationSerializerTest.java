@@ -1,11 +1,11 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "persistence.jdbc.configuration.ConfigurationSerializerTest", groups = "functional")
 public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {

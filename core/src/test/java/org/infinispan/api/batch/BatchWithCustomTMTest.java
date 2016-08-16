@@ -1,7 +1,8 @@
 package org.infinispan.api.batch;
 
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;

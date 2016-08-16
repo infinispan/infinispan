@@ -1,10 +1,6 @@
 package org.infinispan.distribution.groups;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import java.util.Map;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -13,7 +9,12 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Map;
+
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * It tests the grouping advanced interface for transactional caches.

@@ -1,5 +1,9 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.TestingUtil.extractComponentRegistry;
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
@@ -10,10 +14,6 @@ import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.extractComponentRegistry;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "partitionhandling.DelayedAvailabilityUpdateTest")
 public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {

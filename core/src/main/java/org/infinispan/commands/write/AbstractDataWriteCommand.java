@@ -1,13 +1,13 @@
 package org.infinispan.commands.write;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Stuff common to WriteCommands

@@ -1,5 +1,7 @@
 package org.infinispan.api;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,8 +14,6 @@ import org.infinispan.util.CountingRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 /**
  * @author Pedro Ruivo

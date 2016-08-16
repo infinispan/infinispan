@@ -1,15 +1,15 @@
 package org.infinispan.cdi.common.util.annotatedtypebuilder;
 
-import org.infinispan.cdi.common.util.Reflections;
-import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.common.util.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Helper class used to build annotation stores

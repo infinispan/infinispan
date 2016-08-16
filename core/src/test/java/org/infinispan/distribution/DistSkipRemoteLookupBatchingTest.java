@@ -1,9 +1,9 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+
 import org.infinispan.test.AbstractCacheTest;
 import org.testng.annotations.Test;
-
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
 /**
  * @author Mircea Markus

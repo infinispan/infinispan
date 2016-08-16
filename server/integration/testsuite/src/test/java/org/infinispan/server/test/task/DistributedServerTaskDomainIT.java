@@ -1,5 +1,16 @@
 package org.infinispan.server.test.task;
 
+import static java.util.Arrays.asList;
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClusteredDomain;
@@ -14,17 +25,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Arrays.asList;
-import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
-import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
 
 /**
  * Tests running the remote task execution tests in Domain mode.

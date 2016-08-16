@@ -1,8 +1,8 @@
 package org.infinispan.query.test;
 
-import org.infinispan.query.Transformer;
-
 import java.util.StringTokenizer;
+
+import org.infinispan.query.Transformer;
 
 public class CustomTransformer implements Transformer {
    @Override

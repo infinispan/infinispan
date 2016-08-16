@@ -1,17 +1,17 @@
 package org.infinispan.persistence.leveldb;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "persistence.leveldb.JavaLevelDBStoreFunctionalTest")
 public class JavaLevelDBStoreFunctionalTest extends LevelDBStoreFunctionalTest {

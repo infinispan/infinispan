@@ -1,9 +1,10 @@
 package org.infinispan.server.websocket.handlers;
 
-import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.server.websocket.json.JsonObject;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Cache "remove" operation handler.

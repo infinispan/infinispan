@@ -1,6 +1,7 @@
 package org.infinispan.security;
 
 import static org.testng.AssertJUnit.assertEquals;
+
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 

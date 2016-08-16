@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
-import org.infinispan.query.dsl.embedded.testdomain.Transaction;
-
 import java.math.BigDecimal;
 import java.util.Date;
+
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 /**
  * @author anistor@redhat.com

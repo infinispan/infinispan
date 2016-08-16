@@ -1,9 +1,9 @@
 package org.infinispan.stress;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Pedro Ruivo

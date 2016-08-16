@@ -1,5 +1,11 @@
 package org.infinispan.functional.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Optional;
+
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.MetaParam.MetaCreated;
 import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
@@ -7,10 +13,6 @@ import org.infinispan.commons.api.functional.MetaParam.MetaLastUsed;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.testng.annotations.Test;
-
-import java.util.Optional;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * Unit test for metadata parameters collection.

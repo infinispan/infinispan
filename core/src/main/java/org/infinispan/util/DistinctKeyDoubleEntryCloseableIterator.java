@@ -1,12 +1,10 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.container.entries.CacheEntry;
-
-import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
+
+import org.infinispan.commons.util.CloseableIterator;
 
 public class DistinctKeyDoubleEntryCloseableIterator<E, K> implements CloseableIterator<E> {
    private final CloseableIterator<E> iterator1;

@@ -1,5 +1,9 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.util.Collection;
+
+import javax.transaction.Status;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.remoting.transport.Address;
@@ -7,10 +11,6 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-
-import java.util.Collection;
 
 /**
  * Extends {@link org.infinispan.transaction.impl.RemoteTransaction} and adds recovery related information and functionality.

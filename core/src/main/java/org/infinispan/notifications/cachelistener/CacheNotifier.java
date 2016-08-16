@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.util.Collection;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -13,8 +15,6 @@ import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import java.util.Collection;
 
 /**
  * Public interface with all allowed notifications.

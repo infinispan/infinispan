@@ -1,5 +1,9 @@
 package org.infinispan.commons.test;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.jboss.logging.Logger;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
@@ -8,10 +12,6 @@ import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Logs TestNG test progress.

@@ -1,9 +1,9 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentHashMap;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.AssertJUnit.*;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentHashMap;
+import org.testng.annotations.Test;
 
 /**
  * Tests that {@link EquivalentHashMap} is functionally correct.

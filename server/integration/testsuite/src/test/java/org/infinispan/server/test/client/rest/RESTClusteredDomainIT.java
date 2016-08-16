@@ -1,5 +1,11 @@
 package org.infinispan.server.test.client.rest;
 
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClusteredDomain;
@@ -10,12 +16,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
 
 /**
  * Tests for the REST client.

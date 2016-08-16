@@ -1,5 +1,36 @@
 package org.infinispan.server.core.transport;
 
+import java.io.Serializable;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.jmx.JmxUtil;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.logging.Log;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -18,35 +49,6 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4JLoggerFactory;
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.jmx.JmxUtil;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.core.logging.Log;
-
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A Netty based transport.

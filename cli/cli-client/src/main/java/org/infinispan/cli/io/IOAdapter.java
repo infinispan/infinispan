@@ -1,9 +1,9 @@
 package org.infinispan.cli.io;
 
-import org.infinispan.cli.commands.ProcessedCommand;
-
 import java.io.IOException;
 import java.util.List;
+
+import org.infinispan.cli.commands.ProcessedCommand;
 
 public interface IOAdapter {
    boolean isInteractive();

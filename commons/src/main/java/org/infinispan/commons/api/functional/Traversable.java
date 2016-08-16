@@ -1,7 +1,5 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.util.Experimental;
-
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -12,6 +10,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+
+import org.infinispan.commons.util.Experimental;
 
 /**
  * Unsorted traversable stream for sequential and aggregating operations.

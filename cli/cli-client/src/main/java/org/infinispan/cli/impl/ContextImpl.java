@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.CommandRegistry;
 import org.infinispan.cli.Context;

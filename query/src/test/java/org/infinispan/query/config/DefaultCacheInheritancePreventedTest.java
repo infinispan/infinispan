@@ -1,5 +1,7 @@
 package org.infinispan.query.config;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
 import java.io.IOException;
 
 import org.infinispan.Cache;
@@ -13,8 +15,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Similar to QueryParsingTest but that one only looks at the configuration; in this case we check the components are actually

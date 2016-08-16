@@ -1,6 +1,19 @@
 package org.infinispan.container;
 
-import net.jcip.annotations.ThreadSafe;
+import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -25,21 +38,15 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
-
-import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.

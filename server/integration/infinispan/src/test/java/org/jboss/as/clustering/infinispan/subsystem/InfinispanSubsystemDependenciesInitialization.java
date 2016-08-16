@@ -31,12 +31,8 @@ import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.extension.ExtensionRegistryType;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
-import org.jboss.as.domain.management.CoreManagementResourceDefinition;
-import org.jboss.as.domain.management.audit.AccessAuditResourceDefinition;
-import org.jboss.as.jmx.JMXExtension;
 import org.jboss.as.subsystem.test.AdditionalInitialization;
 import org.jboss.as.txn.subsystem.TransactionExtension;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FILE_HANDLER;
 
 
 /**

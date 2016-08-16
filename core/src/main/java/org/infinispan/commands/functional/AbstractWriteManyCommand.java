@@ -1,5 +1,7 @@
 package org.infinispan.commands.functional;
 
+import java.util.Set;
+
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
@@ -7,8 +9,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
-
-import java.util.Set;
 
 public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCommand {
 

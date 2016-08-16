@@ -1,23 +1,21 @@
 package org.infinispan.cdi.embedded.test.distexec;
 
-import org.infinispan.Cache;
-import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
-import org.infinispan.cdi.embedded.Input;
-import org.infinispan.distexec.DistributedExecutorTest;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.shrinkwrap.api.Archive;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
 
-import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import javax.inject.Inject;
+
+import org.infinispan.Cache;
+import org.infinispan.cdi.embedded.Input;
+import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
+import org.infinispan.distexec.DistributedExecutorTest;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.shrinkwrap.api.Archive;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * Tests CDI integration with org.infinispan.distexec.DistributedExecutorService

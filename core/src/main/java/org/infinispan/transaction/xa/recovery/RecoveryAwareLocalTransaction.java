@@ -1,10 +1,10 @@
 package org.infinispan.transaction.xa.recovery;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Extends {@link org.infinispan.transaction.xa.LocalXaTransaction} and adds recovery related information.

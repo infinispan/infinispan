@@ -23,13 +23,9 @@ package org.infinispan.server.jgroups.subsystem;
 
 import static org.infinispan.server.jgroups.logging.JGroupsLogger.ROOT_LOGGER;
 
-import java.util.Iterator;
-import java.util.ServiceLoader;
-
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
 import org.infinispan.server.commons.service.AliasServiceBuilder;
-import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceName;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceNameFactory;

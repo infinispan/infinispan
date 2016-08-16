@@ -1,14 +1,14 @@
 package org.infinispan.query.impl;
 
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Marko Luksa

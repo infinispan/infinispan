@@ -1,17 +1,18 @@
 package org.infinispan.jcache.remote;
 
-import org.infinispan.commons.util.FileLookupFactory;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.spi.CachingProvider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
 
-import static org.testng.AssertJUnit.assertEquals;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
+
+import org.infinispan.commons.util.FileLookupFactory;
+import org.testng.annotations.Test;
 
 @Test(testName = "jcache.remote.JCacheConfigurationPropertiesFileTest", groups = "functional")
 public class JCacheConfigurationPropertiesFileTest {

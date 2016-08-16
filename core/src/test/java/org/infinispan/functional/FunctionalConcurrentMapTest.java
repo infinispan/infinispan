@@ -1,8 +1,9 @@
 package org.infinispan.functional;
 
-import org.infinispan.functional.decorators.FunctionalConcurrentMap;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,8 +14,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.testng.AssertJUnit.*;
+import org.infinispan.functional.decorators.FunctionalConcurrentMap;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Test suite for verifying that the concurrent map implementation

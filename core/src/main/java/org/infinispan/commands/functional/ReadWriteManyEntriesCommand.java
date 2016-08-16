@@ -1,12 +1,6 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commands.Visitor;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,7 +11,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.lifecycle.ComponentStatus;
 
 public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteManyCommand {
 

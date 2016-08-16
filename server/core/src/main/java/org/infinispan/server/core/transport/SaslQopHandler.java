@@ -1,5 +1,11 @@
 package org.infinispan.server.core.transport;
 
+import java.net.SocketAddress;
+import java.util.List;
+
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslServer;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -7,12 +13,6 @@ import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.TooLongFrameException;
-
-import java.net.SocketAddress;
-import java.util.List;
-
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslServer;
 
 /**
   * Handles QOP of the SASL protocol.

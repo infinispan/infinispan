@@ -1,5 +1,9 @@
 package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
 import org.infinispan.test.fwk.TestResourceTrackingListener;
@@ -8,10 +12,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-
-import static org.testng.Assert.assertEquals;
 
 
 /**

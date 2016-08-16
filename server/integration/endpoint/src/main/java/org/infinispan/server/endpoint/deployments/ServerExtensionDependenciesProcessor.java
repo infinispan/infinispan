@@ -1,5 +1,7 @@
 package org.infinispan.server.endpoint.deployments;
 
+import java.util.List;
+
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -16,8 +18,6 @@ import org.jboss.as.server.deployment.module.ModuleSpecification;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
-
-import java.util.List;
 
 public class ServerExtensionDependenciesProcessor implements DeploymentUnitProcessor {
 

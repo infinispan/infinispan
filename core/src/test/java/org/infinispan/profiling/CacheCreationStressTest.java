@@ -1,15 +1,15 @@
 package org.infinispan.profiling;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Test class that verifies how quickly Cache instances are created under different scenarios

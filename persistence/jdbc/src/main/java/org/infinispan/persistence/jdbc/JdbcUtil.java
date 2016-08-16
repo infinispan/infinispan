@@ -1,12 +1,12 @@
 package org.infinispan.persistence.jdbc;
 
-import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Contains common methods used by JDBC CacheStores.

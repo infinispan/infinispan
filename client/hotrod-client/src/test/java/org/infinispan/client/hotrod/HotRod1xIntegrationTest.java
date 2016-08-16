@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod;
 
 import org.testng.annotations.Test;
 
-import java.util.Properties;
-
 /**
  * @author mmarkus
  * @since 4.1

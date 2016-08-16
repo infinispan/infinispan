@@ -1,8 +1,8 @@
 package org.infinispan.commands;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.util.Collections;
 import java.util.HashMap;
