@@ -3,6 +3,7 @@ package org.infinispan.marshall.exts;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
@@ -32,7 +34,10 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int FASTCOPYHASHMAP = 2;
    private static final int EQUIVALENTHASHMAP = 3;
    private static final int CONCURRENTHASHMAP = 4;
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(4);
+   private static final int ENTRYVERSIONMAP = 5;
+   private static final int SINGLETONMAP = 6;
+   private static final int EMPTYMAP = 7;
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(9);
 
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
@@ -41,6 +46,9 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
       numbers.put(EquivalentHashMap.class, EQUIVALENTHASHMAP);
       numbers.put(ConcurrentHashMap.class, CONCURRENTHASHMAP);
+      numbers.put(EntryVersionsMap.class, ENTRYVERSIONMAP);
+      numbers.put(getPrivateSingletonMapClass(), SINGLETONMAP);
+      numbers.put(getPrivateEmptyMapClass(), EMPTYMAP);
    }
 
    @Override
@@ -48,6 +56,12 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       int number = numbers.get(map.getClass(), -1);
       output.write(number);
       switch (number) {
+         case HASHMAP:
+         case TREEMAP:
+         case CONCURRENTHASHMAP:
+         case ENTRYVERSIONMAP:
+            MarshallUtil.marshallMap(map, output);
+            break;
          case EQUIVALENTHASHMAP:
             EquivalentHashMap equivalentMap = (EquivalentHashMap) map;
             output.writeObject(equivalentMap.getKeyEquivalence());
@@ -56,11 +70,15 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
          case FASTCOPYHASHMAP:
             //copy the map to avoid ConcurrentModificationException
             MarshallUtil.marshallMap(((FastCopyHashMap<?, ?>) map).clone(), output);
-            return;
+            break;
+         case SINGLETONMAP:
+            Map.Entry singleton = (Map.Entry) map.entrySet().iterator().next();
+            output.writeObject(singleton.getKey());
+            output.writeObject(singleton.getValue());
+            break;
          default:
             break;
       }
-      MarshallUtil.marshallMap(map, output);
    }
 
    @Override
@@ -80,6 +98,12 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
             return MarshallUtil.unmarshallMap(input, size -> new EquivalentHashMap<>(keyEq, valueEq));
          case CONCURRENTHASHMAP:
             return MarshallUtil.unmarshallMap(input, ConcurrentHashMap::new);
+         case ENTRYVERSIONMAP:
+            return MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
+         case SINGLETONMAP:
+            return Collections.singletonMap(input.readObject(), input.readObject());
+         case EMPTYMAP:
+            return Collections.emptyMap();
          default:
             throw new IllegalStateException("Unknown Map type: " + magicNumber);
       }
@@ -94,6 +118,20 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    public Set<Class<? extends Map>> getTypeClasses() {
       return Util.<Class<? extends Map>>asSet(
             HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class,
-            ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class);
+            ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class,
+            EntryVersionsMap.class, getPrivateSingletonMapClass(), getPrivateEmptyMapClass());
    }
+
+   private static Class<Map> getPrivateSingletonMapClass() {
+      return getMapClass("java.util.Collections$SingletonMap");
+   }
+
+   private static Class<Map> getPrivateEmptyMapClass() {
+      return getMapClass("java.util.Collections$EmptyMap");
+   }
+
+   private static Class<Map> getMapClass(String className) {
+      return Util.<Map>loadClass(className, Map.class.getClassLoader());
+   }
+
 }

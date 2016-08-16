@@ -5,7 +5,8 @@ final class InternalIds {
    static final int PRIMITIVE         = 0x00; // primitives, including null
    static final int NON_PRIMITIVE     = 0x01; // internal and predefined user externalizers
    static final int ANNOTATED         = 0x02; // annotated with @SerializeWith or @SerializeFunctionWith
-   static final int EXTERNAL          = 0x03; // external
+   static final int PRE_CONFIGURED    = 0x03; // preconfigured externalizers
+   static final int EXTERNAL          = 0x04; // external
 
    private InternalIds() {
    }
