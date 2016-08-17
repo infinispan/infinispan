@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.query.affinity.AffinityUpdateCommand;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
@@ -18,7 +18,7 @@ import org.infinispan.util.ByteString;
 * @author Israel Lacerra <israeldl@gmail.com>
 * @since 5.1
 */
-public class CommandFactory implements ExtendedModuleCommandFactory {
+public class CommandFactory implements ModuleCommandFactory {
 
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
