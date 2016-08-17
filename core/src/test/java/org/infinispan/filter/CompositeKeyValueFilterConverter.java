@@ -8,7 +8,6 @@ import java.io.Serializable;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadata;
 
 /**
  * Allows to composite a KeyValueFilter and a Converter together to form a KeyValueFilterConverter.  There are no
