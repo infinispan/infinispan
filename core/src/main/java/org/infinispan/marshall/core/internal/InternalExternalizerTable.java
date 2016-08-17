@@ -9,7 +9,6 @@ import org.infinispan.atomic.impl.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -52,7 +51,22 @@ import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.marshall.exts.*;
+import org.infinispan.marshall.exts.ArrayExternalizer;
+import org.infinispan.marshall.exts.CacheEventTypeExternalizer;
+import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
+import org.infinispan.marshall.exts.DoubleSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.EnumSetExternalizer;
+import org.infinispan.marshall.exts.IntSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.ListExternalizer;
+import org.infinispan.marshall.exts.LongSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.MapExternalizer;
+import org.infinispan.marshall.exts.MetaParamExternalizers;
+import org.infinispan.marshall.exts.OptionalExternalizer;
+import org.infinispan.marshall.exts.QueueExternalizers;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.marshall.exts.SetExternalizer;
+import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -349,7 +363,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new OptionalExternalizer());
       addInternalExternalizer(new PersistentUUID.Externalizer());
       addInternalExternalizer(new PutOperation.Externalizer());
-      addInternalExternalizer(new QueueExternalizers()); // new
+      addInternalExternalizer(new QueueExternalizers());
       addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer());
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer());
       addInternalExternalizer(new RemoveOperation.Externalizer());
@@ -372,7 +386,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
       addInternalExternalizer(new UnsuccessfulResponse.Externalizer());
       addInternalExternalizer(new UnsureResponse.Externalizer());
-      addInternalExternalizer(new UuidExternalizer()); // new
+      addInternalExternalizer(new UuidExternalizer());
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer());
    }
 
