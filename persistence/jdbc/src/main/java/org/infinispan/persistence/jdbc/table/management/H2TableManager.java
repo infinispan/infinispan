@@ -1,8 +1,11 @@
 package org.infinispan.persistence.jdbc.table.management;
 
+import java.sql.Connection;
+
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -23,5 +26,11 @@ class H2TableManager extends AbstractTableManager {
                                       config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
       }
       return upsertRowSql;
+   }
+
+   @Override
+   protected void dropTimestampIndex(Connection conn) throws PersistenceException {
+      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true));
+      executeUpdateSql(conn, dropIndexDdl);
    }
 }
