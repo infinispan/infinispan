@@ -104,25 +104,6 @@
 
     </module>
 
-    <!--&lt;!&ndash; We are not using NewLineAtEndOfFile because the new line chars change-->
-        <!--on different operating systems and that rule allows only one type. This rule-->
-        <!--is not actually checking for new lines, but it will work if we check that-->
-        <!--there are not white spaces at the end of a line with another rule. &ndash;&gt;-->
-    <!--<module name="RegexpMultiline">-->
-        <!--<property name="format" value="\S\z" />-->
-        <!--<property name="message" value="Missing new line at the end of file" />-->
-    <!--</module>-->
-
-    <!--<module name="RegexpMultiline">-->
-        <!--<property name="format" value="((\r\n){2,}|(\n){2,}|(\r){2,})\z" />-->
-        <!--<property name="message" value="Only one new line is allowed at the end of a file" />-->
-    <!--</module>-->
-
-    <!--<module name="RegexpSingleline">-->
-        <!--<property name="format" value="\s+$" />-->
-        <!--<property name="message" value="White spaces at the end of line" />-->
-    <!--</module>-->
-
     <!--<module name="SuppressionCommentFilter" />-->
 
     <!-- Allow for some code sanity rules to be violated by test code -->
