@@ -23,12 +23,10 @@ public abstract class AbstractTableManager implements TableManager {
    protected final TableManipulationConfiguration config;
    protected final String timestampIndexExt = "timestamp_index";
 
-   protected boolean timestampIndexExists = false;
    protected String identifierQuoteString = "\"";
    protected String cacheName;
    protected DbMetaData metaData;
    protected TableName tableName;
-   protected String timestampIndexName;
 
    protected String insertRowSql;
    protected String updateRowSql;
@@ -126,34 +124,35 @@ public abstract class AbstractTableManager implements TableManager {
    protected void createTimestampIndex(Connection conn) throws PersistenceException {
       if (metaData.isIndexingDisabled()) return;
 
+      boolean indexExists = timestampIndexExists(conn);
+      if (!indexExists) {
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true), getTableName(), config.timestampColumnName());
+         if (log.isTraceEnabled()) {
+            log.tracef("Adding timestamp index with following DDL: '%s'.", ddl);
+         }
+         executeUpdateSql(conn, ddl);
+      }
+   }
+
+   protected boolean timestampIndexExists(Connection conn) throws PersistenceException {
       ResultSet rs = null;
       try {
          TableName table = getTableName();
          DatabaseMetaData meta = conn.getMetaData();
          rs = meta.getIndexInfo(null, table.getSchema(), table.getName(), false, false);
 
-         boolean indexExists = false;
          while (rs.next()) {
             String indexName = rs.getString("INDEX_NAME");
-            if (indexName.equalsIgnoreCase(getIndexName())) {
-               indexExists = true;
-               break;
+            if (indexName.equalsIgnoreCase(getIndexName(false))) {
+               return true;
             }
          }
-
-         if (!indexExists) {
-            String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(), getTableName(), config.timestampColumnName());
-            if (log.isTraceEnabled()) {
-               log.tracef("Adding timestamp index with following DDL: '%s'.", ddl);
-            }
-            executeUpdateSql(conn, ddl);
-         }
-         timestampIndexExists = true;
       } catch (SQLException e) {
-        throw new PersistenceException(e);
+         throw new PersistenceException(e);
       } finally {
          JdbcUtil.safeClose(rs);
       }
+      return false;
    }
 
    public void executeUpdateSql(Connection conn, String sql) throws PersistenceException {
@@ -181,9 +180,9 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected void dropTimestampIndex(Connection conn) throws PersistenceException {
-      if (!timestampIndexExists) return;
+      if (!timestampIndexExists(conn)) return;
 
-      String dropIndexDdl = String.format("DROP INDEX %s ON %s", getIndexName(), getTableName());
+      String dropIndexDdl = String.format("DROP INDEX %s ON %s", getIndexName(true), getTableName());
       executeUpdateSql(conn, dropIndexDdl);
    }
 
@@ -211,13 +210,14 @@ public abstract class AbstractTableManager implements TableManager {
       return tableName;
    }
 
-   public String getIndexName() {
-      if (timestampIndexName == null) {
-         TableName table = getTableName();
-         String tableName = table.toString().replace(table.getIdentifierQuote(), "");
-         timestampIndexName = tableName + "_" + timestampIndexExt;
+   public String getIndexName(boolean withIdentifier) {
+      TableName table = getTableName();
+      String tableName = table.toString().replace(identifierQuoteString, "");
+      String indexName = tableName + "_" + timestampIndexExt;
+      if (withIdentifier) {
+         return identifierQuoteString + indexName + identifierQuoteString;
       }
-      return timestampIndexName;
+      return indexName;
    }
 
    @Override
