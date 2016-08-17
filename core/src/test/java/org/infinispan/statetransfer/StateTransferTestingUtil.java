@@ -6,7 +6,7 @@ import org.infinispan.test.TestingUtil;
 
 /**
  * StateTransferTestingUtil.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

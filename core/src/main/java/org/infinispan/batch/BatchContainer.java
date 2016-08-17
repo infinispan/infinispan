@@ -53,7 +53,7 @@ public class BatchContainer {
             bd.nestedInvocationCount++;
             batchDetailsTl.set(bd);
             return false;
-         }         
+         }
       } catch (Exception e) {
          batchDetailsTl.remove();
          throw new CacheException("Unable to start batch", e);

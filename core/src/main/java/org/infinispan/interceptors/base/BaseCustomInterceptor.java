@@ -9,10 +9,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Anyone using the {@link org.infinispan.AdvancedCache#addInterceptor(CommandInterceptor, int)} method (or any of its
- * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
+ * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own
  * custom interceptors.
  * <p />
- * As of Infinispan 5.1, annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop} 
+ * As of Infinispan 5.1, annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop}
  * will not be respected and callbacks will not be made.
  * <p />
  * Instead, custom interceptor authors should extend this base class to gain access to {@link Cache} and {@link EmbeddedCacheManager},

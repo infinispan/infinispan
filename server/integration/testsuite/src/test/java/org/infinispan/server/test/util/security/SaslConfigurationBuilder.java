@@ -12,10 +12,10 @@ import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.server.test.util.ITestUtils;
 
 /**
- * 
+ *
  * SaslConfigurationBuilder is a convenient class for various security tests which provides remote
  * configuration builders for various means of authentication.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */

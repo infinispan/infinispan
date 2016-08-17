@@ -54,7 +54,7 @@ public interface Visitor {
    Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable;
 
    Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable;
-   
+
    Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable;
 
    // read commands
@@ -80,7 +80,7 @@ public interface Visitor {
    Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable;
 
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
-   
+
    Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable;
 
    // locking commands

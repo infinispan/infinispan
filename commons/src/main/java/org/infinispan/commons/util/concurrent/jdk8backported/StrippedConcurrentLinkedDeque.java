@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
  */
 /**
  * This is a subset of the java.util.concurrent.ConcurrentLinkedDeque to only have
- * methods for maintaining a doubly linked list but without maintaining the 
+ * methods for maintaining a doubly linked list but without maintaining the
  * java.util.Collection or java.util.Deque contracts.  This is useful to keep a linked
  * list that will never be iterated upon but instead will have references to elements
  * directly in the list that will be removed or moved as needed.
@@ -46,7 +46,7 @@ class StrippedConcurrentLinkedDeque<E> {
     * - tail may not be reachable from the first or last node, or from head
     */
    transient volatile DequeNode<E> tail;
-   
+
    static final DequeNode<Object> PREV_TERMINATOR, NEXT_TERMINATOR;
 
    final DequeNode<E> DEFAULT;
@@ -226,7 +226,7 @@ class StrippedConcurrentLinkedDeque<E> {
 
    /**
     * Returns whether a node was polled or not.  If a node was polled then the provided
-    * array will contain the Node that was removed (with it's item set to null) in the 
+    * array will contain the Node that was removed (with it's item set to null) in the
     * 0th position of the array and the item value in the 1st position of the array.
     * @return A boolean whether or not a node was polled
     */

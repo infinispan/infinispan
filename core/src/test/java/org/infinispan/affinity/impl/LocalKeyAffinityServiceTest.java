@@ -32,7 +32,7 @@ public class LocalKeyAffinityServiceTest extends BaseFilterKeyAffinityServiceTes
    }
 
    public void testFilteredSingleKey() throws InterruptedException {
-      super.testSingleKey();  
+      super.testSingleKey();
    }
 
    @Test(dependsOnMethods = "testFilteredSingleKey")

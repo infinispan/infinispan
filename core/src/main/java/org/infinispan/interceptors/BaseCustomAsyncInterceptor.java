@@ -8,7 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Anyone using the {@link AsyncInterceptorChain#addInterceptor(AsyncInterceptor, int)} method (or any of its
- * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
+ * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own
  * custom interceptors.
  * <p />
  * Annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop}

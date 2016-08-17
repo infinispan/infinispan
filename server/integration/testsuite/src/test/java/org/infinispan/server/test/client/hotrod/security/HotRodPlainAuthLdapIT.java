@@ -16,12 +16,12 @@ import org.junit.runner.RunWith;
 @Category({ Security.class })
 @WithRunningServer(@RunningServer(name = "hotrodAuthLdap"))
 public class HotRodPlainAuthLdapIT extends HotRodSaslAuthTestBase {
-   
+
    private static ApacheDsLdap ldap;
-   
+
    @InfinispanResource("hotrodAuthLdap")
    private RemoteInfinispanServer server;
-   
+
    @BeforeClass
    public static void kerberosSetup() throws Exception {
       ldap = new ApacheDsLdap();
@@ -32,7 +32,7 @@ public class HotRodPlainAuthLdapIT extends HotRodSaslAuthTestBase {
    public static void ldapTearDown() throws Exception {
       ldap.stop();
    }
-   
+
    @Override
    public String getTestedMech() {
       return "PLAIN";

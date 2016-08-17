@@ -6,7 +6,7 @@ import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
- * FineGrainedAtomicMap is a special type of Map geared for use in Infinispan.  FineGrainedAtomicMap has 
+ * FineGrainedAtomicMap is a special type of Map geared for use in Infinispan.  FineGrainedAtomicMap has
  * two major characteristics:
  *
  * <ol>
@@ -16,7 +16,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  *
  * <b><u>1.  Fine-grained atomic locking and isolation</u></b>
  * <p>
- * FineGrainedAtomicMap allows fine grained locking of entries within the map; it also isolates the map for safe 
+ * FineGrainedAtomicMap allows fine grained locking of entries within the map; it also isolates the map for safe
  * reading (see {@link IsolationLevel} while concurrent writes may be going on.
  * </p>
  * <br />

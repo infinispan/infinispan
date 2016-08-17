@@ -23,7 +23,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
    public DistributedStreamIteratorExceptionTest() {
       super(false, CacheMode.DIST_SYNC);
    }
-   
+
    public void ensureDataContainerRemoteExceptionPropagated() {
       Cache cache0 = cache(0, CACHE_NAME);
       Cache cache1 = cache(1, CACHE_NAME);
@@ -33,7 +33,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
          Throwable t = new AssertionError();
          DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache1, DataContainer.class, mockContainer, true);
-         
+
          try {
             cache0.entrySet().stream().iterator().hasNext();
             fail("We should have gotten a CacheException");

@@ -32,7 +32,7 @@ import org.testng.annotations.BeforeMethod;
 public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    protected static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa";
-   
+
    protected EmbeddedCacheManager cm;
 
    protected AdvancedLoadWriteStore cs;

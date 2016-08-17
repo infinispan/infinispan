@@ -28,7 +28,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest<Object, St
       int i = 0;
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
       log.infof("Initialized with keys %s", keys);
-      
+
       EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager();
       joinerManager.defineConfiguration(cacheName, configuration.build());
       Cache joiner = joinerManager.getCache(cacheName);

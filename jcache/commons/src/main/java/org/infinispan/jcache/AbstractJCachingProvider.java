@@ -14,7 +14,7 @@ import org.infinispan.jcache.logging.Log;
 
 /**
  * Shared behavior for the embedded and client-server implementations.
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
  */

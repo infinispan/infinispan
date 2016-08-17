@@ -15,7 +15,7 @@ public class MavenUtils {
 
    /**
     * Get the Maven properties defined in the project.
-    * 
+    *
     * @return a Properties object containing the Maven project properties.
     * @throws Exception
     */

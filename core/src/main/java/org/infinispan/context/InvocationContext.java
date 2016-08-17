@@ -21,7 +21,7 @@ public interface InvocationContext extends EntryLookup, AsyncInvocationContext, 
     * Returns true if the call was originated locally, false if it is the result of a remote rpc.
     */
    boolean isOriginLocal();
-   
+
    /**
     * @return the origin of the command, or null if the command originated locally
     */

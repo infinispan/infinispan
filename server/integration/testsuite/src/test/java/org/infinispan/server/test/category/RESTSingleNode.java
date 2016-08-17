@@ -4,9 +4,9 @@ import org.junit.experimental.categories.Category;
 
 /**
  * {@link Category} tag for local RESTLocal tests.
- * 
+ *
  * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
- * 
+ *
  */
 public class RESTSingleNode extends ClientSingleNode {
 

@@ -61,7 +61,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       // Check that there are no locked keys or remote transactions on B and C
       StateSequencer sequencer = new StateSequencer();
       sequencer.logicalThread("main", "main:start", "main:check");
-      sequencer.logicalThread("primary", "primary:block_prepare", "primary:after_rollback", "primary:resume_prepare", 
+      sequencer.logicalThread("primary", "primary:block_prepare", "primary:after_rollback", "primary:resume_prepare",
             "primary:after_prepare");
       sequencer.logicalThread("backup", "backup:block_prepare", "backup:after_rollback", "backup:resume_prepare",
             "backup:after_prepare");

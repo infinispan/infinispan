@@ -10,19 +10,19 @@ public interface ClusterEventManager<K, V> {
    /**
     * Adds additional cluster events that need to be sent remotely for an event originating locally.
     * These events are not sent at time of registering but rather after the {@link ClusterEventManager#sendEvents()} is invoked.
-    * These events are gathered on a per thread basis and batched to reduce number of RPCs required. 
+    * These events are gathered on a per thread basis and batched to reduce number of RPCs required.
     * @param target The target node this event was meant for
     * @param identifier The cluster listener that is identified for these events
     * @param events The events that were generated
     * @param sync Whether these events need to be sent synchronously or not
     */
    public void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
-   
+
    /**
     * Sends all previously added events on this thread
     */
    public void sendEvents() throws CacheException;
-   
+
    /**
     * Drops and ignores all previously added events on this thread.
     */

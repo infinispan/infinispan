@@ -34,7 +34,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
       this.cdl = cdl;
       this.stateTransferManager = stateTransferManager;
    }
-   
+
    @Start(priority = 15)
    private void startClusteredCacheLoaderInterceptor() {
       transactional = cacheConfiguration.transaction().transactionMode().isTransactional();

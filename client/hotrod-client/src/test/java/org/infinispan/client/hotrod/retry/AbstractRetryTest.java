@@ -26,7 +26,7 @@ import org.testng.annotations.AfterMethod;
  * @since 4.1
  */
 public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
-   
+
    protected HotRodServer hotRodServer1;
    protected HotRodServer hotRodServer2;
    protected HotRodServer hotRodServer3;

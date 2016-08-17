@@ -100,7 +100,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
          tm(nodeThatPuts).resume(tx);
          dummyTm(nodeThatPuts).getTransaction().runCommit(false);
       }
-      
+
       for (Object key : key2Tx.keySet()) {
          Object value = getValue(key);//make sure that data from the container, just to make sure all replicas are correctly set
          assertEquals(key, value);

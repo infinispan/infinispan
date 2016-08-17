@@ -175,7 +175,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          index = nextIndex(index, length);
       }
    }
-   
+
    /**
     * Returns a string representation of this map.  The string representation
     * consists of a list of key-value mappings in the order returned by the

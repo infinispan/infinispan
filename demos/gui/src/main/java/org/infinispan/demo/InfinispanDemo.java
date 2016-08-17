@@ -381,7 +381,7 @@ public class InfinispanDemo {
                   } finally {
                      Util.close(stream);
                   }
-               } 
+               }
                cache = cacheManager.getCache();
                cache.start();
 

@@ -21,7 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Test the behaivour of JBoss Marshalling library itself. This class has been created to 
+ * Test the behaivour of JBoss Marshalling library itself. This class has been created to
  * ease the creation of tests that check specific behaivour at this level.
  */
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallingTest")
@@ -30,14 +30,14 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
    private MarshallerFactory factory;
    private Marshaller marshaller;
    private Unmarshaller unmarshaller;
-   
+
    @BeforeClass
    public void setUp() throws Exception {
       factory = (MarshallerFactory) Thread.currentThread().getContextClassLoader().loadClass("org.jboss.marshalling.river.RiverMarshallerFactory").newInstance();
       MarshallingConfiguration configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setClassResolver(new ContextClassResolver());
-      
+
       marshaller = factory.createMarshaller(configuration);
       unmarshaller = factory.createUnmarshaller(configuration);
    }
@@ -45,7 +45,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
    }
-   
+
    public void testSerObjWithRefToSerObjectWithCustomReadObj() throws Exception {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
       ByteOutput byteOutput = Marshalling.createByteOutput(baos);
@@ -57,9 +57,9 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       } finally {
          marshaller.finish();
       }
-      
+
       byte[] bytes = baos.toByteArray();
-      
+
       ByteInput byteInput = Marshalling.createByteInput(new ByteArrayInputStream(bytes));
       unmarshaller.start(byteInput);
       try {
@@ -112,7 +112,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       private static final long serialVersionUID = 1L;
       public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
       Integer balance;
-      
+
       public boolean equals(Object obj) {
          if (obj == this)
             return true;
@@ -132,7 +132,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
          result = result * 31 + safeHashCode(anObjectWithCustomReadObjectMethod);
          return result;
       }
-      
+
       private static int safeHashCode(Object obj) {
          return obj == null ? 0 : obj.hashCode();
       }

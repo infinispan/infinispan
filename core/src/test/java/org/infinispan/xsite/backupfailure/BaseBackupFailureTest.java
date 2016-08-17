@@ -37,9 +37,9 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
    void resetFailureInterceptor() {
       failureInterceptor.reset();
    }
-   
+
    public static class FailureInterceptor extends CommandInterceptor {
-      
+
       protected volatile boolean isFailing = true;
 
       protected volatile boolean rollbackFailed;

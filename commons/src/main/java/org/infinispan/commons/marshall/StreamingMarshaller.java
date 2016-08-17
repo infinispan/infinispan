@@ -22,25 +22,25 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public interface StreamingMarshaller extends Marshaller {
-   
+
    /**
-    * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data 
+    * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data
     * outputs when multiple objectToObjectStream() calls will be made before the stream is closed by calling finishObjectOutput().</p>
-    * 
-    * <p>This method also takes a boolean that represents whether this particular call to startObjectOutput() is reentrant 
-    * or not. A call to startObjectOutput() should be marked reentrant whenever a 2nd or more calls to this method are made 
-    * without having called finishObjectOutput() first.     
-    * 
-    * <p>To potentially speed up calling startObjectOutput multiple times in a non-reentrant way, i.e. 
-    * startObjectOutput/finishObjectOutput...startObjectOutput/finishObjectOutput...etc, which is is the most common case, the 
+    *
+    * <p>This method also takes a boolean that represents whether this particular call to startObjectOutput() is reentrant
+    * or not. A call to startObjectOutput() should be marked reentrant whenever a 2nd or more calls to this method are made
+    * without having called finishObjectOutput() first.
+    *
+    * <p>To potentially speed up calling startObjectOutput multiple times in a non-reentrant way, i.e.
+    * startObjectOutput/finishObjectOutput...startObjectOutput/finishObjectOutput...etc, which is is the most common case, the
     * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectOutput call.
-    *  
-    * <p>On the other hand, when a call is reentrant, i.e. startObjectOutput/startObjectOutput(reentrant)...finishObjectOutput/finishObjectOutput, 
+    *
+    * <p>On the other hand, when a call is reentrant, i.e. startObjectOutput/startObjectOutput(reentrant)...finishObjectOutput/finishObjectOutput,
     * the StreamingMarshaller implementation might treat it differently. An example of reentrancy would be marshalling of {@link MarshalledValue}.
-    * When sending or storing a MarshalledValue, a call to startObjectOutput() would occur so that the stream is open and 
-    * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent across. 
+    * When sending or storing a MarshalledValue, a call to startObjectOutput() would occur so that the stream is open and
+    * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent across.
     * This enables storing as binary on the receiver side which is performance gain. The StreamingMarshaller implementation could decide
-    * that it needs a separate ObjectOutput or similar for the 2nd call since it's aim is only to get the raw byte array version 
+    * that it needs a separate ObjectOutput or similar for the 2nd call since it's aim is only to get the raw byte array version
     * and the close finish with it.</p>
     *
     * @param os output stream
@@ -70,15 +70,15 @@ public interface StreamingMarshaller extends Marshaller {
    /**
     * <p>Create and open a new ObjectInput for the given input stream. This method should be used for opening data inputs
     * when multiple objectFromObjectStream() calls will be made before the stream is closed.</p>
-    * 
-    * <p>This method also takes a boolean that represents whether this particular call to startObjectInput() is reentrant 
-    * or not. A call to startObjectInput() should be marked reentrant whenever a 2nd or more calls to this method are made 
-    * without having called finishObjectInput() first.</p>     
-    * 
-    * <p>To potentially speed up calling startObjectInput multiple times in a non-reentrant way, i.e. 
-    * startObjectInput/finishObjectInput...startObjectInput/finishObjectInput...etc, which is is the most common case, the 
-    * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p> 
-    *  
+    *
+    * <p>This method also takes a boolean that represents whether this particular call to startObjectInput() is reentrant
+    * or not. A call to startObjectInput() should be marked reentrant whenever a 2nd or more calls to this method are made
+    * without having called finishObjectInput() first.</p>
+    *
+    * <p>To potentially speed up calling startObjectInput multiple times in a non-reentrant way, i.e.
+    * startObjectInput/finishObjectInput...startObjectInput/finishObjectInput...etc, which is is the most common case, the
+    * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p>
+    *
     * @param is input stream
     * @param isReentrant whether the call is reentrant or not.
     * @return ObjectInput to read from

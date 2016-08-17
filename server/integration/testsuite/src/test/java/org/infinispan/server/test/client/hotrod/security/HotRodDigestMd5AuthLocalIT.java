@@ -10,9 +10,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * HotRodDigestMd5AuthLocalIT tests DIGEST-MD5 SASL authentication of HotRod client against local cache.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */

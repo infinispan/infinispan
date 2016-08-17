@@ -59,7 +59,7 @@ public interface CacheTransaction {
    void clearLookedUpEntries();
 
    boolean ownsLock(Object key);
-   
+
    void clearLockedKeys();
 
    Set<Object> getLockedKeys();

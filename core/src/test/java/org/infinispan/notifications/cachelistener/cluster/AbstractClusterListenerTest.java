@@ -661,7 +661,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertEquals(key, event.getKey());
       assertEquals(expectedValue, event.getValue());
    }
-   
+
    @Test
    public void testSimpleExpirationFilterNotOwner() {
       testSimpleExpirationFilter(new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)));

@@ -4,12 +4,12 @@ import java.util.List;
 
 /**
  * ModificationsList contains a List<Modification>
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 public class ModificationsList implements Modification {
-   
+
    private final List<? extends Modification> list;
 
    public ModificationsList(List<? extends Modification> list) {
@@ -49,7 +49,7 @@ public class ModificationsList implements Modification {
          return false;
       return true;
    }
-   
+
    @Override
    public String toString() {
       return "ModificationsList: [" + list + "]";

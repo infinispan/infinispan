@@ -69,7 +69,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
-      
+
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
          String key = "key" + j;

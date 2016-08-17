@@ -57,7 +57,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
    protected Configuration cacheConfiguration;
 
    private static final Log log = LogFactory.getLog(CommandInterceptor.class);
-   
+
    protected Log getLog() {
       return log;
    }

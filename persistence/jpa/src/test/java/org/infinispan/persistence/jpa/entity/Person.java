@@ -84,12 +84,12 @@ public class Person implements Serializable {
          return false;
       if (name != null ? !name.equals(person.getName()) : person.getName() != null)
          return false;
-      if ( (nickNames != null && !nickNames.isEmpty()) ? !nickNames.equals(person.getNickNames()) : 
+      if ( (nickNames != null && !nickNames.isEmpty()) ? !nickNames.equals(person.getNickNames()) :
          (person.getNickNames() != null && !person.getNickNames().isEmpty()))
          return false;
       if (address != null ? !address.equals(person.getAddress()) : person.getAddress() != null)
          return false;
-      if ( (secondaryAdresses != null  && !secondaryAdresses.isEmpty() ) ? !secondaryAdresses.equals(person.getSecondaryAdresses()) : 
+      if ( (secondaryAdresses != null  && !secondaryAdresses.isEmpty() ) ? !secondaryAdresses.equals(person.getSecondaryAdresses()) :
          (person.getSecondaryAdresses() != null && !person.getSecondaryAdresses().isEmpty()))
          return false;
 

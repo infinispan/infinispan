@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
@@ -44,7 +44,7 @@ public class NodeAuthenticationMD5PassIT extends AbstractNodeAuthentication {
    public static WebArchive getCoordinatorDeployment() {
       return Deployments.createNodeAuthTestDeployment(COORDINATOR_JGROUSP_CONFIG_MD5);
    }
-   
+
    @Deployment(name = JOINING_NODE, managed = false)
    @TargetsContainer(JOINING_NODE)
    public static WebArchive getJoiningNodeDeployment() {

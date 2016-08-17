@@ -16,26 +16,26 @@ public final class Deployments {
       WebArchive war = createBaseTestDeployment();
       return war;
    }
-   
+
    public static WebArchive createKrbLdapTestDeployment() {
-      WebArchive war = createBaseTestDeployment()            
+      WebArchive war = createBaseTestDeployment()
             .addAsWebInfResource(new File("target/test-classes/jboss-deployment-structure.xml"));
       return war;
    }
-   
+
    public static WebArchive createNodeAuthTestDeployment(String jgroupsConfig) {
       WebArchive war = createBaseTestDeployment()
             .addAsLibraries(new File("target/test-libs/jgroups.jar"))
             .addAsResource(new File("target/test-classes/" + jgroupsConfig));
       return war;
    }
-   
+
    public static WebArchive createNodeAuthKrbTestDeployment(String jgroupsConfig) {
       WebArchive war = createNodeAuthTestDeployment(jgroupsConfig)
             .addAsWebInfResource(new File("target/test-classes/jboss-deployment-structure.xml"));
       return war;
    }
-   
+
    public static WebArchive createBaseTestDeployment() {
       WebArchive war = ShrinkWrap
             .create(WebArchive.class)

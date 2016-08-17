@@ -64,7 +64,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                   (v, view) -> write.accept(view)).join()),
       WO_EVAL_MANY((key, wo, rw, read, write) ->
             wo.evalMany(Collections.singleton(key), write).join()),
-      WO_EVAL_MANY_ENTRIES((key, wo, rw, read, write) -> 
+      WO_EVAL_MANY_ENTRIES((key, wo, rw, read, write) ->
             wo.evalMany(Collections.singletonMap(key, null), (BiConsumer<String, WriteEntryView<String>> & Serializable)
                   (v, view) -> write.accept(view)).join()),
       RW_EVAL((key, wo, rw, read, write) ->

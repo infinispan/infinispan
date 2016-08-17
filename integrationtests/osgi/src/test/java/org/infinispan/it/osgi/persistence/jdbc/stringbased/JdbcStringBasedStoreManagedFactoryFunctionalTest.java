@@ -34,7 +34,7 @@ public class JdbcStringBasedStoreManagedFactoryFunctionalTest extends JdbcString
    public void setUp() {
       Bundle bundle = FrameworkUtil.getBundle(getClass());
       BundleContext bundleContext = bundle.getBundleContext();
-      
+
       org.h2.jdbcx.JdbcDataSource service = new org.h2.jdbcx.JdbcDataSource();
       service.setURL("jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1");
       service.setUser("sa");

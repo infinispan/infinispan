@@ -164,8 +164,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     * which would make it impossible to obtain an accurate result.
     */
    static final int RETRIES_BEFORE_LOCK = 2;
-   
-   
+
+
    private static final int CANCELLATION_CHECK_FREQUENCY = 64;
 
    /* ---------------- Fields -------------- */
@@ -194,7 +194,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    private transient final Equivalence<? super V> valueEquivalence;
    private transient final EvictionListener<? super K, ? super V> evictionListener;
    private final int evictCap;
-   
+
    private final ExecutorService executor;
 
    /* ---------------- Small Utilities -------------- */
@@ -595,13 +595,13 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    }
 
    /**
-    * Adapted to Infinispan BoundedConcurrentHashMap using LIRS implementation ideas from Charles Fry (fry@google.com)   
+    * Adapted to Infinispan BoundedConcurrentHashMap using LIRS implementation ideas from Charles Fry (fry@google.com)
     * See http://code.google.com/p/concurrentlinkedhashmap/source/browse/trunk/src/test/java/com/googlecode/concurrentlinkedhashmap/caches/LirsMap.java
     * for original sources
-    * 
+    *
     */
    private static final class LIRSHashEntry<K,V> extends HashEntry<K,V> {
-      
+
       // LIRS stack S
       private LIRSHashEntry<K, V> previousInStack;
       private LIRSHashEntry<K, V> nextInStack;
@@ -610,15 +610,15 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private LIRSHashEntry<K, V> previousInQueue;
       private LIRSHashEntry<K, V> nextInQueue;
       volatile Recency state;
-      
+
       LIRS<K, V> owner;
-      
+
 
       LIRSHashEntry(LIRS<K, V> owner, K key, int hash, HashEntry<K, V> next, V value) {
          super(key,hash,next,value);
          this.owner = owner;
          this.state = Recency.HIR_RESIDENT;
-         
+
          // initially point everything back to self
          this.previousInStack = this;
          this.nextInStack = this;
@@ -741,7 +741,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         if (owner.hotSize < owner.maximumHotSize) {
           warmupMiss();
         } else {
-          evicted = new HashSet<HashEntry<K,V>>(); 
+          evicted = new HashSet<HashEntry<K,V>>();
           fullMiss(evicted);
         }
 
@@ -774,7 +774,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         if (owner.size >= owner.maximumSize) {
           // "We remove the HIR resident block at the front of list Q (it then
           // becomes a non-resident block), and replace it out of the cache."
-          LIRSHashEntry<K, V> evictedNode = owner.queueFront();          
+          LIRSHashEntry<K, V> evictedNode = owner.queueFront();
           evicted.add(evictedNode);
         }
 
@@ -795,7 +795,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
           // "(2) If X is not in stack S, we leave its status in HIR and place
           // it in the end of list Q."
           cold();
-        }   
+        }
       }
 
       /**
@@ -834,7 +834,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         }
         state = Recency.HIR_NONRESIDENT;
       }
-      
+
       /**
        * Returns true if this entry is resident in the cache, false otherwise.
        */
@@ -963,7 +963,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private void evict() {
         removeFromQueue();
         removeFromStack();
-        nonResident();    
+        nonResident();
         owner = null;
       }
 
@@ -978,7 +978,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         evict();
 
         // attempt to maintain a constant number of hot entries
-        if (wasHot) {         
+        if (wasHot) {
           if (end != null) {
             end.migrateToStack();
           }
@@ -990,19 +990,19 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
 
    static final class LIRS<K, V> implements EvictionPolicy<K, V> {
-              
+
       /**
        * The percentage of the cache which is dedicated to hot blocks.
        * See section 5.1
        */
       private static final float L_LIRS = 0.95f;
-      
+
       /** The owning segment */
       private final Segment<K,V> segment;
-      
+
       /** The number of LIRS entries in a segment */
       private int size;
-      
+
       /**
        * This header encompasses two data structures:
        *
@@ -1032,14 +1032,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       /** The actual number of hot entries. */
       private int hotSize = 0;
 
-            
+
 
       public LIRS(Segment<K,V> s, int capacity) {
          this.segment = s;
          this.maximumSize = capacity;
          this.maximumHotSize = calculateLIRSize(capacity);
       }
-      
+
       private static int calculateLIRSize(int maximumSize) {
          int result = (int) (L_LIRS * maximumSize);
          return (result == maximumSize) ? maximumSize - 1 : result;
@@ -1069,7 +1069,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
           bottom = stackBottom();
         }
       }
-      
+
       @Override
       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> en) {
          LIRSHashEntry<K, V> e = (LIRSHashEntry<K, V>) en;
@@ -1077,7 +1077,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          removeFromSegment(evicted);
          return evicted;
       }
-     
+
       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
          for (HashEntry<K, V> e : evicted) {
             ((LIRSHashEntry<K, V>)e).evict();
@@ -1126,7 +1126,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         return (end == header) ? null : end;
       }
 
-      
+
       @Override
       public HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value) {
          return new LIRSHashEntry<K, V>(this,key, hash, next, value);
@@ -1627,7 +1627,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       if (evictionStrategy == null || evictionListener == null) {
          throw new IllegalArgumentException();
       }
-      
+
       executor = ForkJoinPool.commonPool();
 
       this.evictionListener = evictionListener;
@@ -2538,7 +2538,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          put(key, value);
       }
    }
-   
+
    public void forEach(long parallelismThreshold,  BiConsumer<? super K,? super V> action) throws InterruptedException{
       if (size() > parallelismThreshold){
          execute(executor, action);

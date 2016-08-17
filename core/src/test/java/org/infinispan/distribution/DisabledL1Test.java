@@ -17,14 +17,14 @@ public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
       testRetVals = false;
       l1CacheEnabled = false;
    }
-   
+
    public void testRemoveFromNonOwner() {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
-      
+
       Object retval = getFirstNonOwner("k1").put("k1", "value");
       asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert retval == null;
-      
+
       retval = getOwners("k1")[0].remove("k1");
       asyncWait("k1", RemoveCommand.class, getFirstNonOwner("k1"));
       if (testRetVals) assert "value".equals(retval);

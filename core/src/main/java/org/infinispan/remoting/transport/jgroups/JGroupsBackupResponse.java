@@ -52,7 +52,7 @@ public class JGroupsBackupResponse implements BackupResponse {
       errors = new HashMap<String, Throwable>(syncBackupCalls.size());
       long elapsedTime = 0;
       for (Map.Entry<XSiteBackup, Future<Object>> entry : syncBackupCalls.entrySet()) {
-                  
+
          long timeout = entry.getKey().getTimeout();
          String siteName = entry.getKey().getSiteName();
 

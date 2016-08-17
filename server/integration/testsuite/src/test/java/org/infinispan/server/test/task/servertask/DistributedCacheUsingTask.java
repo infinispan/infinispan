@@ -36,7 +36,7 @@ public class DistributedCacheUsingTask implements ServerTask {
         TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
         transactionManager.begin();
         cache.getCacheManager().getCache(CACHE_NAME).getAdvancedCache().lock(entry.getKey());
-        
+
         cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(),
                 VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
         transactionManager.commit();

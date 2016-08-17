@@ -47,7 +47,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
          listenerLookup.put(rl.getCache(), rl);
       }
    }
-  
+
    @Override
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
       if (cachesOnWhichKeyShouldInval == null) cachesOnWhichKeyShouldInval = new Cache[0];

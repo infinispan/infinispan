@@ -10,10 +10,10 @@ import org.infinispan.commons.util.Base64;
 import org.infinispan.persistence.jpa.JpaStoreException;
 
 /**
- * 
+ *
  * Embedded entity which serves as primary key for metadata. Bytes representing the key are hashed
  * via SHA-256.
- * 
+ *
  * @author vjuranek
  */
 @Embeddable
@@ -30,7 +30,7 @@ public class MetadataEntityKey implements Serializable {
    public MetadataEntityKey(byte[] keyBytes) {
       keySha = getKeyBytesSha(keyBytes);
    }
-   
+
    public String getKeySha() {
       return keySha;
    }
@@ -50,7 +50,7 @@ public class MetadataEntityKey implements Serializable {
    public int hashCode() {
       return keySha.hashCode();
    }
-   
+
    public static String getKeyBytesSha(byte[] keyBytes) {
       String keyBytesSha;
       try {

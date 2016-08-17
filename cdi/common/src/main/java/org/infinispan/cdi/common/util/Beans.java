@@ -27,7 +27,7 @@ public class Beans {
 
     private Beans() {
     }
-    
+
     /**
      * Returns a new set with @Default and @Any added as needed
      * @return
@@ -71,7 +71,7 @@ public class Beans {
             }
         }
     }
-    
+
     /**
      * Given a method, and the bean on which the method is declared, create a
      * collection of injection points representing the parameters of the method.

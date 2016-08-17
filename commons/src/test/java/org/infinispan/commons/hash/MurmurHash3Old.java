@@ -28,14 +28,14 @@ import net.jcip.annotations.ThreadSafe;
 @Immutable
 public class MurmurHash3Old implements Hash {
    private final static MurmurHash3Old instance = new MurmurHash3Old();
-   
+
    public static MurmurHash3Old getInstance() {
       return instance;
    }
-   
+
    private MurmurHash3Old() {
    }
-   
+
    private static final Charset UTF8 = Charset.forName("UTF-8");
 
    static class State {

@@ -22,26 +22,26 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
    }
    private static ThreadLocal<ReusableData> cachedWriteObjects = new ThreadLocal<ReusableData>();
    private static ThreadLocal<List<Object>> cachedReadObjects = new ThreadLocal<List<Object>>();
-   
+
    private static final int ID_NO_REPEAT                 = 0x01;
    private static final int ID_REPEAT_OBJECT_NEAR        = 0x02;
    private static final int ID_REPEAT_OBJECT_NEARISH     = 0x03;
    private static final int ID_REPEAT_OBJECT_FAR         = 0x04;
-   
+
    public InstanceReusingAdvancedExternalizer() {
       this(true);
    }
-   
+
    public InstanceReusingAdvancedExternalizer(boolean hasChildren) {
       this.hasChildren = hasChildren;
    }
-   
+
    /**
     * This boolean controls whether or not it makes sense to actually create the context or not.  In the case of
     * classes that don't expect to have children that support this they shouldn't do the creation
     */
    private final boolean hasChildren;
-   
+
    @Override
    public final void writeObject(ObjectOutput output, T object) throws IOException {
       ReusableData data = cachedWriteObjects.get();
@@ -81,9 +81,9 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
          }
       }
    }
-   
+
    public abstract void doWriteObject(ObjectOutput output, T object) throws IOException;
-   
+
    @Override
    public final T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       List<Object> data = cachedReadObjects.get();
@@ -121,7 +121,7 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
          }
       }
    }
-   
+
    private T getFromCache(List<Object> data, int index) throws InvalidObjectException {
       try {
          Object obj = data.get(index);
@@ -130,9 +130,9 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
          }
      } catch (IndexOutOfBoundsException e) {
      }
-     throw new InvalidObjectException("Attempt to read a backreference for " + getClass() + " with an invalid ID (absolute " 
+     throw new InvalidObjectException("Attempt to read a backreference for " + getClass() + " with an invalid ID (absolute "
            + index + ")");
    }
-   
+
    public abstract T doReadObject(ObjectInput input) throws IOException, ClassNotFoundException;
 }

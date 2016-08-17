@@ -8,7 +8,7 @@ import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * The reference implementation of the {@link CacheEntryEvent}.
- * 
+ *
  * @param <K> the type of keys maintained by this cache
  * @param <V> the type of cached values
  * @author Greg Luck
@@ -18,7 +18,7 @@ public class RICacheEntryEvent<K, V> extends CacheEntryEvent<K, V> {
 
     /** The serialVersionUID */
     private static final long serialVersionUID = 6515030413069752679L;
-    
+
     private K key;
     private V value;
     private V oldValue;

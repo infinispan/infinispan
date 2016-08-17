@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -16,19 +16,19 @@ import javax.persistence.Table;
 @Table(name="Users")
 public class User implements Serializable {
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 2787355123291122478L;
 
    @Id
    private String username;
-   
+
    @Column(nullable=false)
    private String firstName;
-   
+
    @Column(nullable=false)
    private String lastName;
-   
+
    private String note;
 
    public String getUsername() {
@@ -114,6 +114,6 @@ public class User implements Serializable {
       return "User [username=" + username + ", firstName=" + firstName
             + ", lastName=" + lastName + ", note=" + note + "]";
    }
-   
-   
+
+
 }

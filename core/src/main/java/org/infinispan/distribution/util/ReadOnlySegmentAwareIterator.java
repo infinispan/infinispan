@@ -12,7 +12,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * <p>
  * This iterator is used with the other various SegmentAware Collections such as
  * {@link ReadOnlySegmentAwareSet}
- * 
+ *
  * @author wburns
  * @since 7.2
  */

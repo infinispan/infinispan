@@ -70,7 +70,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
-    */   
+    */
    @Override
    public void rollback(Xid externalXid) throws XAException {
       txTable.rollback(externalXid);

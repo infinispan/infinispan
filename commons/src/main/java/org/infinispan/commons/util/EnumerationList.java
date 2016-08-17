@@ -7,17 +7,17 @@ import java.util.List;
 
 /**
  * An Enumeration -> List adaptor
- *  
+ *
  * @author Pete Muir
  */
 public class EnumerationList<T> extends ForwardingList<T>
 {
    // The enumeration as a list
    private final List<T> list = new LinkedList<T>();
-   
+
    /**
     * Constructor
-    * 
+    *
     * @param enumeration The enumeration
     */
    public EnumerationList(Enumeration<T> enumeration)

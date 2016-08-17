@@ -19,10 +19,10 @@ import org.junit.After;
 import org.junit.Test;
 
 /**
- * 
+ *
  * Base class for tests of HotRod client SASL authentication. For supported SASL mechanisms see
  * {@code endpoint-7.0.xml} or later.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */

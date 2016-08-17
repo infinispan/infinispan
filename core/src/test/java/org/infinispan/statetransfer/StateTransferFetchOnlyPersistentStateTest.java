@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 /**
  * StateTransferFetchOnlyPersistentStateTest.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

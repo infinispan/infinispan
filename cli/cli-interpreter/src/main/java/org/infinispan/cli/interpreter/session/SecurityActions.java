@@ -30,7 +30,7 @@ final class SecurityActions {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
       return doPrivileged(action);
    }
-   
+
    interface SetThreadContextClassLoaderAction {
 
       ClassLoader setThreadContextClassLoader(Class cl);

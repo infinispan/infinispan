@@ -17,7 +17,7 @@ import org.infinispan.distexec.DefaultExecutorService;
 /**
  * Qualifier indicating the injected Cache should be the input Cache used to create
  * {@link DefaultExecutorService}
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 5.2
  */

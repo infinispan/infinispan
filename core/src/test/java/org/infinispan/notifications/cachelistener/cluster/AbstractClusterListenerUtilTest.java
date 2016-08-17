@@ -309,7 +309,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       assertEquals(key, event.getKey());
       assertEquals(expectedValue, event.getValue());
    }
-   
+
    protected void waitUntilListenerInstalled(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       CacheNotifier cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(cn);

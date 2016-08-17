@@ -7,13 +7,13 @@ import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Proxies is a collection of useful dynamic profixes. Internal use only.
- * 
+ *
  * @author vladimir
  * @since 4.0
  */
 public class Proxies {
    public static Object newCatchThrowableProxy(Object obj) {
-        return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
+        return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(),
                         getInterfaces(obj.getClass()), new CatchThrowableProxy(obj));
     }
 
@@ -36,13 +36,13 @@ public class Proxies {
          return superclass.getInterfaces();
       return ReflectionUtil.EMPTY_CLASS_ARRAY;
    }
-    
+
    /**
     * CatchThrowableProxy is a wrapper around interface that does not allow any exception to be
     * thrown when invoking methods on that interface. All exceptions are logged but not propagated
     * to the caller.
-    * 
-    * 
+    *
+    *
     */
    static class CatchThrowableProxy implements java.lang.reflect.InvocationHandler {
 
@@ -51,7 +51,7 @@ public class Proxies {
         private Object obj;
 
         public static Object newInstance(Object obj) {
-            return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
+            return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(),
                             obj.getClass().getInterfaces(), new CatchThrowableProxy(obj));
         }
 

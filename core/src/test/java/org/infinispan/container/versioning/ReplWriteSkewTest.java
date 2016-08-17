@@ -24,7 +24,7 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
    protected int clusterSize() {
       return 2;
    }
-   
+
    public void testWriteSkew() throws Exception {
       Cache<Object, Object> cache0 = cache(0);
       Cache<Object, Object> cache1 = cache(1);
@@ -125,7 +125,7 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
       assert null == cache0.get("hello");
       assert null == cache1.get("hello");
    }
-   
+
    public void testResendPrepare() throws Exception {
       Cache<Object, Object> cache0 = cache(0);
       Cache<Object, Object> cache1 = cache(1);
@@ -163,19 +163,19 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
       localOnlyPut(this.<Integer, String>cache(0), 1, "v1");
       localOnlyPut(this.<Integer, String>cache(1), 2, "v2");
    }
-   
-   public void testSameNodeKeyCreation() throws Exception {      
+
+   public void testSameNodeKeyCreation() throws Exception {
       tm(0).begin();
       Assert.assertEquals(cache(0).get("NewKey"), null);
       cache(0).put("NewKey", "v1");
       Transaction tx0 = tm(0).suspend();
-      
+
       //other transaction do the same thing
       tm(0).begin();
       Assert.assertEquals(cache(0).get("NewKey"), null);
       cache(0).put("NewKey", "v2");
       tm(0).commit();
-      
+
       tm(0).resume(tx0);
       try {
          tm(0).commit();
@@ -183,7 +183,7 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
       } catch (RollbackException|HeuristicRollbackException expected) {
          //expected
       }
-      
+
       Assert.assertEquals(cache(0).get("NewKey"), "v2");
       Assert.assertEquals(cache(1).get("NewKey"), "v2");
    }

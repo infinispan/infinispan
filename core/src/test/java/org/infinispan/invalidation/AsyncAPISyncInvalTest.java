@@ -16,7 +16,7 @@ import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
-public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {   
+public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(sync() ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);

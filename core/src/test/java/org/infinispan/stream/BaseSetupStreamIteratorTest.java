@@ -35,11 +35,11 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       this.tx = tx;
       cacheMode = mode;
    }
-   
+
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       // Do nothing to config by default, used by people who extend this
    }
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
@@ -72,7 +72,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return stream.collect(CacheCollectors.serializableCollector(
               () -> Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
    }
-   
+
    protected static class StringTruncator implements Converter<Object, String, String>, Serializable {
       private final int beginning;
       private final int length;

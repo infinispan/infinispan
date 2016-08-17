@@ -124,7 +124,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       assertEquals(cache(0).get(k), "v");
       assertEquals(cache(1).get(k), "v");
    }
-   
+
 
    @Override
    protected void assertLocking() {

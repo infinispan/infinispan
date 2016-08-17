@@ -122,7 +122,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       waitForServerToDie(2);
 
-      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
+      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
 
       try {
          expectTopologyChange(server3Address, false);
@@ -139,13 +139,13 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
-         remoteCache.put("k" + i, "v" + i);         
+         remoteCache.put("k" + i, "v" + i);
          if (added == tcpTransportFactory.getServers().contains(server1Address)) break;
       }
       Collection<SocketAddress> addresses = tcpTransportFactory.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
-   
+
    protected void waitForServerToDie(int memberCount) {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }

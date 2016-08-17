@@ -89,12 +89,12 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       cache1.clear();
       cache2.clear();
    }
-   
+
    public void testReplaceNonExistentKey() throws Exception {
       Cache cache1 = cache(0, "testcache");
       Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-     
+
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
 
@@ -119,7 +119,7 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       cache1.clear();
       cache2.clear();
    }
-   
+
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx) throws Exception {
       log.debugf("sameNode=%s, useTx=%s", sameNode, useTx);
       final Cache cache1 = cache(0, "testcache");
@@ -194,10 +194,10 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
    private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut, boolean useCommit)
          throws Exception {
       log.debugf("lockPriorToPut=%s, useCommit=%s", lockPriorToPut, useCommit);
-      
+
       Cache cache1 = cache(0, "testcache");
       Cache cache2 = cache(1, "testcache");
-      
+
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));

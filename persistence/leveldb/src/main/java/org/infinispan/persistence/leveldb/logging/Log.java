@@ -13,7 +13,7 @@ import org.jboss.logging.annotations.MessageLogger;
 /**
  * Log abstraction for the LevelDB cache store. For this module, message ids ranging from 23001 to
  * 24000 inclusively have been reserved.
- * 
+ *
  * @author Mircea Markus
  * @since 5.2
  */

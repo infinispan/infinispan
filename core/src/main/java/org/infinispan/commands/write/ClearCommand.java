@@ -20,7 +20,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 4.0
  */
 public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
-   
+
    public static final byte COMMAND_ID = 5;
    private CacheNotifier<Object, Object> notifier;
    private DataContainer<?,?> dataContainer;

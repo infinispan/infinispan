@@ -47,8 +47,8 @@ public class GrantDenyTest extends SingleCacheManagerTest {
       authConfig.role("reader").role("writer").role("admin").jmxStatistics().enable();
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
-   
-   
+
+
 
    @Override
    protected void setup() throws Exception {

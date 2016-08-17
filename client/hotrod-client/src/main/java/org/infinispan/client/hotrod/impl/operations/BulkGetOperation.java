@@ -25,7 +25,7 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.entryCount = entryCount;
    }
-   
+
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
       return transportFactory.getTransport(failedServers, cacheName);

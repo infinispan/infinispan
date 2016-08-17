@@ -140,7 +140,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
 
    protected ConcurrentMap<byte[], byte[]> createComparingConcurrentMap() {
       return new BoundedEquivalentConcurrentHashMapV8<>(64,
-            evictionPolicy(), BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+            evictionPolicy(), BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(),
             EQUIVALENCE, EQUIVALENCE);
    }
 
@@ -209,9 +209,9 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       // fill the cache (note: <=, i.e. including an entry for COUNT)
       for (int i = 0; i < COUNT; i++)
          bchm.put(i, i);
-      
+
       final int THREADS = 10;
-      
+
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
       @SuppressWarnings("unchecked")
       Future<Void>[] futures = new Future[THREADS];
@@ -264,10 +264,10 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       try {
          final int COUNT = 5;
          final Map<String, String> bchm = createMap(COUNT, evictionPolicy());
-         
+
          // How high the write will go up to
          final int WRITE_OFFSET = 6;
-         
+
          for (int i = 0; i < THREADS / 2; ++i) {
             completion.submit(() -> {
                for (int j = 0; j < COUNT * WRITE_OFFSET; j++ ) {
@@ -282,7 +282,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                   return null;
             });
          }
-   
+
          for (int i = 0; i < THREADS; ++i) {
             Future<Void> future = completion.poll(10, TimeUnit.SECONDS);
             if (future == null) {
@@ -290,7 +290,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
             }
             future.get();
          }
-   
+
          int manualCount = 0;
          for (Entry<String, String> entry : bchm.entrySet()) {
             if (entry.getValue() != null) {
@@ -301,7 +301,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
             System.currentTimeMillis();
          }
          assertEquals(COUNT, manualCount);
-   
+
          if (COUNT != bchm.size()) {
             System.currentTimeMillis();
          }
@@ -316,7 +316,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       final Map<Integer, Integer> bchm = createMap(2, evictionPolicy());
       bchm.put(0, 0);
       bchm.put(1, 1);
-      
+
       assertEquals(0, bchm.get(0).intValue());
    }
 
@@ -325,7 +325,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       bchm.put(0, 0);
       bchm.put(1, 1);
       bchm.put(2, 2);
-      
+
       assertEquals(1, bchm.get(1).intValue());
    }
 
@@ -333,7 +333,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       final Map<Integer, Integer> bchm = createMap(2, evictionPolicy());
       bchm.put(0, 0);
       bchm.put(1, 1);
-      
+
       assertEquals(1, bchm.get(1).intValue());
    }
 
@@ -344,7 +344,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
     */
    static class HashCodeControlled {
       private final int hashCode;
-      
+
       public HashCodeControlled(int hashCode) {
          this.hashCode = hashCode;
       }
@@ -396,7 +396,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final int COUNT = INSERTIONCOUNT >> 4;
          final int hash = 23;
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
-   
+
          for (int i = 0; i < WRITE_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < INSERTIONCOUNT; ++j) {
@@ -406,7 +406,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < READ_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < READCOUNT; ++j) {
@@ -418,7 +418,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < WRITE_THREADS + READ_THREADS; ++i) {
             Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
             if (future == null) {
@@ -455,7 +455,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       try {
          final int COUNT = 4;
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
-   
+
          for (int i = 0; i < WRITE_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < INSERTIONCOUNT; ++j) {
@@ -465,7 +465,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < REMOVE_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < REMOVECOUNT; ++j) {
@@ -477,7 +477,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < WRITE_THREADS + REMOVE_THREADS; ++i) {
             Future<Void> future = service.poll(10, TimeUnit.SECONDS);
             if (future == null) {
@@ -523,7 +523,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final int COUNT = INSERTIONCOUNT >> 4;
          final int hash = 23;
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
-   
+
          for (int i = 0; i < WRITE_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < INSERTIONCOUNT; ++j) {
@@ -533,7 +533,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < READ_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < READCOUNT; ++j) {
@@ -557,7 +557,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < WRITE_THREADS + READ_THREADS + REMOVE_THREADS; ++i) {
             Future<Void> future = service.poll(10, TimeUnit.SECONDS);
             if (future == null) {
@@ -590,18 +590,18 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
     * Test that constantly inserts values into the map for different tables, which will
     * hopefully detect a deadlock when a new values is inserted in 1 table that has to
     * evict the value from another table
-    * @throws TimeoutException 
-    * @throws BrokenBarrierException 
-    * @throws InterruptedException 
-    * @throws ExecutionException 
+    * @throws TimeoutException
+    * @throws BrokenBarrierException
+    * @throws InterruptedException
+    * @throws ExecutionException
     */
    public void testDeadlockEvictingElementInOtherTable() throws InterruptedException,
          BrokenBarrierException, TimeoutException, ExecutionException {
-      Map<HashCodeControlled, Object> bchm = 
+      Map<HashCodeControlled, Object> bchm =
             createMap(2, evictionPolicy());
       CyclicBarrier barrier = new CyclicBarrier(3);
       ExecutorService service = Executors.newFixedThreadPool(2);
-      
+
       try {
          // Now we do a bunch of puts trying to interleave them
          for (int i = 0; i < 5000; i++) {
@@ -634,9 +634,9 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final int COUNT = INSERTIONCOUNT >> 4;
          final int hash = 23;
          final int hash2 = 24;
-         final BoundedEquivalentConcurrentHashMapV8<HashCodeControlled, HashCodeControlled> bchm = 
+         final BoundedEquivalentConcurrentHashMapV8<HashCodeControlled, HashCodeControlled> bchm =
                createMap(COUNT, evictionPolicy());
-   
+
          for (int i = 0; i < WRITE_THREADS; ++i) {
             service.submit(() -> {
                for (int j = 0; j < INSERTIONCOUNT; ++j) {
@@ -646,7 +646,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < READ_THREADS; ++i) {
             service.submit(() -> {
                final long currentTime = System.currentTimeMillis();
@@ -661,7 +661,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                return null;
             });
          }
-   
+
          for (int i = 0; i < WRITE_THREADS + READ_THREADS; ++i) {
             Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
             if (future == null) {
@@ -687,14 +687,14 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
 
    protected <K, V> BoundedEquivalentConcurrentHashMapV8<K, V> createMap(int maxSize,
          Eviction eviction) {
-      return createMap(maxSize, eviction, 
+      return createMap(maxSize, eviction,
             BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener());
    }
 
    protected <K, V> BoundedEquivalentConcurrentHashMapV8<K, V> createMap(int maxSize,
          Eviction eviction, EvictionListener<? super K, ? super V> listener) {
       return new BoundedEquivalentConcurrentHashMapV8<K, V>(
-            maxSize, maxSize >> 1, eviction, listener, 
+            maxSize, maxSize >> 1, eviction, listener,
             AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
    }
 }

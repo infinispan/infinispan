@@ -120,7 +120,7 @@ public class HashFunctionComparisonTest {
       int lastPos = lastEntry(pos).getKey();
       int firstPos = -1;
       for (int currentPos: pos.keySet()) {
-         if (firstPos == -1) firstPos = currentPos;         
+         if (firstPos == -1) firstPos = currentPos;
          totalDist += Math.abs(currentPos - lastPos);
          lastPos = currentPos;
       }

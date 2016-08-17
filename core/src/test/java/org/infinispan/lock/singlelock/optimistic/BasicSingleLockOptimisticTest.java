@@ -31,7 +31,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       operation.perform(k, 0);
       DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
       dtm.runPrepare();
-      
+
       assert !lockManager(0).isLocked(k);
       assert lockManager(1).isLocked(k);
       assert !lockManager(2).isLocked(k);

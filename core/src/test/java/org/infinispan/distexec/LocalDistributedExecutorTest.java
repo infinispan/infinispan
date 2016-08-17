@@ -31,19 +31,19 @@ import org.testng.annotations.Test;
 
 /**
  * Test for verifying that the DistributedExecutors also work on the Local Cache.
- * 
+ *
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "distexec.LocalDistributedExecutorTest")
 public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
-   
+
    protected DistributedExecutorService cleanupService;
    protected static final Map<String, AtomicInteger> counterMap = new ConcurrentHashMap<String, AtomicInteger>();
 
    public LocalDistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
-   
+
    protected CacheMode getCacheMode() {
       return CacheMode.LOCAL;
    }
@@ -53,7 +53,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), false);
       createClusteredCaches(1, cacheName(), builder);
    }
-   
+
    @AfterMethod(alwaysRun = true)
    public void shutDownDistributedExecutorService() {
       if (cleanupService != null) {
@@ -77,7 +77,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
    /**
     * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method
-    * 
+    *
     * @param call
     * @throws Exception
     */
@@ -88,7 +88,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       Integer r = future.get();
       assert r == 1;
    }
-   
+
    protected DistributedExecutorService createDES(Cache<?,?> cache){
       ExecutorService executorService = Executors.newCachedThreadPool(getTestThreadFactory("DistributedExecutorZ"));
       DistributedExecutorService des = new DefaultExecutorService(cache, executorService);
@@ -255,7 +255,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       Object result = des.invokeAny(tasks);
       assert ((Integer) result) == 1;
    }
-   
+
    @Test(expectedExceptions = TimeoutException.class)
    public void testInvokeAnyTimedSleepingTasks() throws Exception {
       DistributedExecutorService des = createDES(getCache());
@@ -288,7 +288,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    /**
     * Tests Callable isolation as it gets invoked across the cluster
     * https://issues.jboss.org/browse/ISPN-1041
-    * 
+    *
     * @throws Exception
     */
    public void testCallableIsolation() throws Exception {
@@ -334,7 +334,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = TimeoutException.class)
    public void testSleepingCallableWithTimeoutExc() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      Future<Integer> future = des.submit(new SleepingSimpleCallable());     
+      Future<Integer> future = des.submit(new SleepingSimpleCallable());
       future.get(1000, TimeUnit.MILLISECONDS);
    }
 
@@ -380,7 +380,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       DistributedTask<Boolean> distributedTask = taskBuilder.build();
       Future<Boolean> future = des.submit(distributedTask);
    }
-   
+
    @Test(expectedExceptions = NullPointerException.class)
    public void testBasicTargetCallableWithNullTarget() {
       Cache<Object, Object> cache1 = getCache();

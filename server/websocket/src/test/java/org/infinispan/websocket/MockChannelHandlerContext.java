@@ -18,11 +18,11 @@ import io.netty.util.concurrent.EventExecutor;
 
 /**
  * Mock Server Handler Context.
- * 
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MockChannelHandlerContext implements ChannelHandlerContext {
-   
+
    private final Channel channel;
 
    public MockChannelHandlerContext(MockChannel channel) {

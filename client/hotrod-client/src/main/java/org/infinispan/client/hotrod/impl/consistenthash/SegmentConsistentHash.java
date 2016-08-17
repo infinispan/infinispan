@@ -68,7 +68,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
       });
       return Immutables.immutableMapWrap(map);
    }
-   
+
    public int getNumSegments() {
       return numSegments;
    }

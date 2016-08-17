@@ -60,7 +60,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the class and break on first found match.
-    * 
+    *
     * TODO: Should this throw a different exception or warn if multiple classes were found? Naming
     * collisions can and do happen in OSGi...
     */
@@ -92,7 +92,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the resource and break on first found match.
-    * 
+    *
     * TODO: Should this throw a different exception or warn if multiple resources were found? Naming
     * collisions can and do happen in OSGi...
     */
@@ -101,7 +101,7 @@ public class OsgiClassLoader extends ClassLoader {
       if (resourceCache.containsKey(name)) {
          return resourceCache.get(name);
       }
-      
+
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
          if (bundle.getState() == Bundle.ACTIVE) {
@@ -122,7 +122,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the resources and return an Enumeration
-    * 
+    *
     * Note: Since they're Enumerations, do not cache these results!
     */
    @Override

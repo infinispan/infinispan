@@ -11,8 +11,8 @@ import org.testng.annotations.Test;
 /**
  * See ISPN-919 : It's possible we try to release a lock we didn't acquire.
  * This is by design, so that we don't have to keep track of them:
- * @see org.infinispan.util.concurrent.locks.LockManager#possiblyLocked(org.infinispan.container.entries.CacheEntry) 
- * 
+ * @see org.infinispan.util.concurrent.locks.LockManager#possiblyLocked(org.infinispan.container.entries.CacheEntry)
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.0
  */
@@ -31,7 +31,7 @@ public class IllegalMonitorTest extends BaseDistFunctionalTest<Object, String> {
    /**
     * This test would throw many IllegalMonitorStateException if they where not hidden by the
     * implementation of the LockManager
-    * 
+    *
     * @throws InterruptedException
     */
    @Test(threadPoolSize = 7, invocationCount = 21)

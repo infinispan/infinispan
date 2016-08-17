@@ -36,7 +36,7 @@ public class UnitTestDatabaseManager {
          throw new RuntimeException(e);
       }
    }
-   
+
    public static void setDialect(AbstractJdbcStoreConfigurationBuilder<?, ?> builder) {
       builder.dialect(dt);
    }

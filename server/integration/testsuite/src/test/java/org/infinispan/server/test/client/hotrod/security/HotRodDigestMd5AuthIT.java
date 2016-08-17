@@ -11,9 +11,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * HotRodDigestMd5AuthIT tests DIGEST-MD5 SASL authentication of HotRod client against distributed cache.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */
@@ -24,10 +24,10 @@ public class HotRodDigestMd5AuthIT  extends HotRodSaslAuthTestBase {
 
    @InfinispanResource("hotrodAuthClustered")
    RemoteInfinispanServer server1;
-   
+
    @InfinispanResource("hotrodAuthClustered-2")
    RemoteInfinispanServer server2;
-   
+
    @Override
    public String getTestedMech() {
       return "DIGEST-MD5";
@@ -37,7 +37,7 @@ public class HotRodDigestMd5AuthIT  extends HotRodSaslAuthTestBase {
    public RemoteInfinispanServer getRemoteServer() {
       return server1;
    }
-   
+
    @Override
    public void initAsAdmin() {
       initialize(ADMIN_LOGIN, ADMIN_PASSWD);

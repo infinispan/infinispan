@@ -7,7 +7,7 @@ import org.jboss.marshalling.ByteOutput;
 
 /**
  * A stream of bytes which can be written to, and the underlying byte array can be directly accessed.
- * 
+ *
  * By implementing {@link org.jboss.marshalling.ByteOutput} we avoid the need for the byte stream to be wrapped by
  * {@link org.jboss.marshalling.Marshalling#createByteOutput(OutputStream)}
  *

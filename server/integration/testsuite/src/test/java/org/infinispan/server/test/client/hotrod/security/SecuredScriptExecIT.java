@@ -48,7 +48,7 @@ public class SecuredScriptExecIT {
 
    @InfinispanResource("hotrodAuthClustered-2")
    RemoteInfinispanServer server2;
-   
+
    private static RemoteCacheManager adminRCM = null;
 
    @Before

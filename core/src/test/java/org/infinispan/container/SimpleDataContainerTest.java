@@ -84,7 +84,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.purgeExpired();
       assert dc.size() == 0;
    }
-   
+
    public void testResetOfCreationTime() throws Exception {
       long now = System.currentTimeMillis();
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
@@ -216,7 +216,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }
-   
+
    public void testKeys() {
       dc.put("k1", "v1", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       dc.put("k2", "v2", new EmbeddedMetadata.Builder().build());
@@ -282,5 +282,5 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       }
 
       assert i == 10 : "Expected the loop to run 10 times, only ran " + i;
-   }   
+   }
 }

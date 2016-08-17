@@ -79,7 +79,7 @@ public class KnownComponentNames {
    public static int getDefaultThreadPrio(String componentName) {
       return DEFAULT_THREAD_PRIORITY.get(componentName);
    }
-   
+
    public static int getDefaultQueueSize(String componentName) {
       return DEFAULT_QUEUE_SIZE.get(componentName);
    }

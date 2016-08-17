@@ -10,7 +10,7 @@ public class ConcurrentParallelHashMapV8<K, V> extends EquivalentConcurrentHashM
       ParallelIterableMap<K, V> {
 
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 7306507951179792494L;
 

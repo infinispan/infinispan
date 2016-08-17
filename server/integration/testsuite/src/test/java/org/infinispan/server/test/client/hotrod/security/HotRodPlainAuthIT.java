@@ -23,15 +23,15 @@ public class HotRodPlainAuthIT extends HotRodSaslAuthTestBase {
 
    @InfinispanResource("hotrodAuthClustered")
    RemoteInfinispanServer server1;
-   
+
    @InfinispanResource("hotrodAuthClustered-2")
    RemoteInfinispanServer server2;
-   
+
    @Override
    public String getTestedMech() {
       return "PLAIN";
    }
-   
+
    @Override
    public RemoteInfinispanServer getRemoteServer() {
       return server1;

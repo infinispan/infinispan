@@ -28,7 +28,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  * Cache listener.
  * <p/>
  * Used to notify websocket clients of cache entry updates.
- * 
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 @Listener
@@ -52,12 +52,12 @@ public class CacheListener {
    public void cacheEntryRemoved(CacheEntryRemovedEvent<Object, Object> event) {
       notifyChannels(event, event.getType());
    }
-   
+
    private void notifyChannels(CacheEntryEvent<Object, Object> event, Event.Type eventType) {
       if(event.isPre()) {
          return;
       }
-      
+
       JsonObject jsonObject;
 
       Cache<Object, Object> cache = event.getCache();
@@ -90,41 +90,41 @@ public class CacheListener {
                if(event.getKey().equals(channel.key) || channel.key.equals("*")) {
                   channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString), channel.channel.voidPromise());
                }
-            } else {             
+            } else {
                channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString), channel.channel.voidPromise());
             }
          }
       }
    }
-   
+
    public void addChannel(ChannelNotifyParams channel) {
       if(!channels.contains(channel)) {
          channels.add(channel);
          channel.channel.closeFuture().addListener(new ChannelCloseFutureListener());
       }
    }
-   
+
    public void removeChannel(ChannelNotifyParams channel) {
       channels.remove(channel);
    }
-   
+
    public static class ChannelNotifyParams {
-      
+
       private static final String[] DEFAULT_EVENTS = {Event.Type.CACHE_ENTRY_MODIFIED.toString(), Event.Type.CACHE_ENTRY_REMOVED.toString()};
-      
+
       private Channel channel;
       private String key;
-      private List<Event.Type> onEvents = new ArrayList<Event.Type>();     
-      
+      private List<Event.Type> onEvents = new ArrayList<Event.Type>();
+
       public ChannelNotifyParams(Channel channel, String key, String[] onEvents) {
          if(channel == null) {
             logger.invalidNullArgument("channel");
          }
          String[] onEventsSpec = onEvents;
-         
+
          this.channel = channel;
          this.key = key;
-         
+
          if(onEventsSpec ==  null) {
             onEventsSpec = DEFAULT_EVENTS;
          }
@@ -136,10 +136,10 @@ public class CacheListener {
                logger.debug("Runtime exception on adding events", e);
             }
          }
-         
+
          if(onEvents == null && key.equals("*")) {
             this.onEvents.add(Event.Type.CACHE_ENTRY_CREATED);
-         }        
+         }
       }
 
       @Override
@@ -154,20 +154,20 @@ public class CacheListener {
                }
             }
          }
-         
+
          return false;
       }
 
       @Override
       public int hashCode() {
-         if(key != null) {          
+         if(key != null) {
             return super.hashCode() + channel.hashCode() + key.hashCode();
-         } else {          
+         } else {
             return super.hashCode() + channel.hashCode();
          }
       }
    }
-   
+
    private class ChannelCloseFutureListener implements ChannelFutureListener {
 
       @Override
@@ -177,6 +177,6 @@ public class CacheListener {
                removeChannel(channel);
             }
          }
-      }     
+      }
    }
 }

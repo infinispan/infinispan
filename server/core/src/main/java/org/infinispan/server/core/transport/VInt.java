@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Reads and writes unsigned variable length integer values. Even though it's deprecated, do not
  * remove from source code for the moment because it's a good scala example and could be used
- * as reference. 
+ * as reference.
  *
  * @author Galder Zamarreño
  * @since 4.1

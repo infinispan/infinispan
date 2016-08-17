@@ -174,7 +174,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertRemoveHits(3);
       assertRemoveMisses(1);
    }
-   
+
    public void testGetAll() throws Exception {
       assertEquals(0, advanced.getStats().getMisses());
       assertEquals(0, advanced.getStats().getHits());

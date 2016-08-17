@@ -4,7 +4,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 
 /**
  * Node in a single-linked list of interceptors.
- * 
+ *
  * @author Dan Berindei
  * @since 9.0
  */

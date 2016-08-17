@@ -19,20 +19,20 @@ import org.infinispan.remoting.transport.Address;
 
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V>{
    private final Cache<K, V> cache;
-   
+
    private DistributedExecutorService distExecService;
-   
+
    private final ThreadLocal<EventContext<K, V>> localContext = new ThreadLocal<>();
-   
+
    public BatchingClusterEventManagerImpl(Cache<K, V> cache) {
       this.cache = cache;
    }
-   
+
    @Start
    public void start() {
       distExecService = SecurityActions.getDefaultExecutorService(cache);
    }
-   
+
    @Override
    public void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
       EventContext<K, V> ctx = localContext.get();
@@ -51,18 +51,18 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
          localContext.remove();
       }
    }
-   
+
    @Override
    public void dropEvents() {
       localContext.remove();
    }
-   
+
    private static interface EventContext<K, V> {
       public void addTargets(Address address, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
-      
+
       public void sendToTargets(DistributedExecutorService service);
    }
-   
+
    protected static class UnicastEventContext<K, V> implements EventContext<K, V> {
       protected final Map<Address, TargetEvents<K, V>> targets = new HashMap<>();
 
@@ -73,7 +73,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
             targetEvents = new TargetEvents<>();
             targets.put(address, targetEvents);
          }
-         
+
          Map<UUID, Collection<ClusterEvent<K, V>>> listenerEvents = targetEvents.events;
          // This shouldn't be set before, so do put instead of doing get then put
          Collection<ClusterEvent<K, V>> prevEvents = listenerEvents.put(identifier, events);
@@ -85,7 +85,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
             targetEvents.sync = true;
          }
       }
-      
+
       @Override
       public void sendToTargets(DistributedExecutorService service) {
          DistributedExecutionCompletionService<Void> completion = new DistributedExecutionCompletionService<Void>(service);
@@ -109,7 +109,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
                }
             }
          }
-         
+
          try {
             for (int i = 0; i < syncCount; ++i) {
                completion.take();
@@ -120,7 +120,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
          }
       }
    }
-   
+
    private static class TargetEvents<K, V> {
       final Map<UUID, Collection<ClusterEvent<K, V>>> events = new HashMap<>();
       boolean sync = false;

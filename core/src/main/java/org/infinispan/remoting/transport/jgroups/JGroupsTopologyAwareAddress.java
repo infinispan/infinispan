@@ -69,11 +69,11 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
    }
 
    public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsTopologyAwareAddress> {
-      
+
       public Externalizer() {
          super(false);
       }
-      
+
       @Override
       public void doWriteObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {

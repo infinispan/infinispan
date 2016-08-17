@@ -17,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 */
 class RebalanceConfirmationCollector {
    private final static Log log = LogFactory.getLog(RebalanceConfirmationCollector.class);
-   
+
    private final String cacheName;
    private final int topologyId;
    private final Set<Address> confirmationsNeeded;

@@ -48,7 +48,7 @@ public class CollectionFactory {
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(int initCapacity, int concurrencyLevel) {
       return new ConcurrentHashMap<>(initCapacity, 0.75f, concurrencyLevel);
    }
-   
+
    public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(int initCapacity, int concurrencyLevel) {
       return new ConcurrentParallelHashMapV8<>(initCapacity, AnyEquivalence.getInstance(),
             AnyEquivalence.getInstance());
@@ -81,7 +81,7 @@ public class CollectionFactory {
       else
          return makeConcurrentMap(initCapacity, concurrencyLevel);
    }
-   
+
    public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(
          int initCapacity, int concurrencyLevel, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))

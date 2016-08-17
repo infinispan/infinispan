@@ -12,7 +12,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * <p>
  * This iterator is used with specifically with the {@link ReadOnlySegmentAwareEntrySet}
  * to properly filter the entry by the key instead of the entry instance itself.
- * 
+ *
  * @author wburns
  * @since 7.2
  */

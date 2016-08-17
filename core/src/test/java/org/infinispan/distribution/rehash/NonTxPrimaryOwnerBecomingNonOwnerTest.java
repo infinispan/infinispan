@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 /**
  * Tests that a conditional write is retried properly if the write is unsuccessful on the primary owner
  * because it became a non-owner and doesn't have the entry any more.
- * 
+ *
  * See https://issues.jboss.org/browse/ISPN-3830
  *
  * @author Dan Berindei

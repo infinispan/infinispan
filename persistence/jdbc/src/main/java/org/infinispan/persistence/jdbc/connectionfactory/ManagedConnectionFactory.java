@@ -94,7 +94,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    @Override
    public void releaseConnection(Connection conn) {
-      try {         
+      try {
          if (conn != null) // Could be null if getConnection failed
             conn.close();
       } catch (SQLException e) {

@@ -17,9 +17,9 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
-   
+
    private static final int CACHE_SIZE=128;
-   
+
    protected BaseEvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -45,7 +45,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
       assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
    }
-   
+
    public void testSimpleExpirationMaxIdle() throws Exception {
 
       for (int i = 0; i < CACHE_SIZE*2; i++) {
@@ -78,7 +78,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          Thread.sleep(100);
       }
 
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); // this is what we expect the cache to be pruned to      
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); // this is what we expect the cache to be pruned to
    }
 
    private class Writer extends Thread {
@@ -106,8 +106,8 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
             } catch (InterruptedException e) {
                // ignore
             }
-            
-            //mix mortal and immortal entries 
+
+            //mix mortal and immortal entries
             if (Math.random() < 0.5) {
                cache.put("key" + r.nextInt(), "value");
             } else {
@@ -116,17 +116,17 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          }
       }
    }
-   
+
    @Listener
    public static class EvictionListener {
-      
+
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e){
          assert e.isPre() || !e.isPre();
          Object key = e.getEntries().keySet().iterator().next();
          assert key != null;
          assert e.getCache() != null;
-         assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;         
+         assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;
       }
    }
 }

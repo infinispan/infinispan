@@ -201,13 +201,13 @@ public class RestStore implements AdvancedLoadWriteStore {
    private class HttpResponseHandler extends SimpleChannelInboundHandler<HttpResponse> {
 
       private FullHttpResponse response;
-      
+
       private boolean retainResponse;
-      
+
       public HttpResponseHandler() {
          this(false);
       }
-      
+
       public HttpResponseHandler(boolean retainResponse) {
          this.retainResponse = retainResponse;
       }

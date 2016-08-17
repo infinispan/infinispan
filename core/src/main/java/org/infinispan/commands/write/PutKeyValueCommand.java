@@ -225,10 +225,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       Object o;
 
       if (e.isCreated()) {
-         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, 
+         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx,
                                            this);
       } else {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, 
+         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx,
                                            this);
       }
 

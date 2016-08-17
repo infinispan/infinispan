@@ -57,7 +57,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       if (testRetVals) assert retval == null;
       assertOnAllCachesAndOwnership(key, value);
    }
-   
+
    public void testGetFromNonOwnerWithFlags(Method m) throws Exception {
       String key = k(m), value = "value2";
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
@@ -74,7 +74,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       assertOnAllCaches(key, value);
       assertOwnershipAndNonOwnership(key, true);
    }
-   
+
    public void testAsyncGetCleansContextFlags(Method m) throws Exception {
       String key = k(m), value = "value2";
 
@@ -189,7 +189,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          assertFalse(store.contains(key));
       }
    }
-   
+
    public void testRemoveFromNonOwnerWithFlags() throws Exception {
       String key = "k1", value = "value";
       initAndTest();
@@ -230,7 +230,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          }
       }
    }
-   
+
    public void testReplaceFromNonOwnerWithFlag() throws Exception {
       String key = "k1", value = "value", value2 = "v2";
       initAndTest();
@@ -247,7 +247,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          }
       }
    }
-   
+
    public void testAtomicReplaceFromNonOwner() throws Exception {
       String key = "k1", value = "value", value2 = "v2";
       initAndTest();
@@ -264,7 +264,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          }
       }
    }
-   
+
    public void testAtomicReplaceFromNonOwnerWithFlag() throws Exception {
       String key = "k1", value = "value", value2 = "v2";
       initAndTest();
@@ -297,7 +297,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          }
       }
    }
-   
+
    public void testAtomicPutIfAbsentFromNonOwnerWithFlag(Method m) throws Exception {
       String key = k(m), value = "value";
       String replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(key, value);
@@ -356,7 +356,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
 
       assertEquals(v1, c3.get(k));
    }
-   
+
    /*---    test helpers      ---*/
 
    private Map<String, String> makePutAllTestData() {
@@ -367,7 +367,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       data.put(k4, v4);
       return data;
    }
-   
+
    private void prepareClearTest() throws PersistenceException {
       for (Cache<Object, String> c : caches) assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
       for (int i = 0; i < 5; i++) {
@@ -386,5 +386,5 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
          }
       }
    }
-   
+
 }

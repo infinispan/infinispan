@@ -24,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * A wrapper around a cached entry that encapsulates DeltaAware and Delta semantics when writes are
  * initiated, committed or rolled back.
- * 
+ *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 5.1
  */
@@ -95,7 +95,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
 
    /**
     * Tests whether a flag is set.
-    * 
+    *
     * @param flag
     *           flag to test
     * @return true if set, false otherwise.
@@ -106,7 +106,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
 
    /**
     * Utility method that sets the value of the given flag to true.
-    * 
+    *
     * @param flag
     *           flag to set
     */
@@ -116,7 +116,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
 
    /**
     * Utility method that sets the value of the flag to false.
-    * 
+    *
     * @param flag
     *           flag to unset
     */

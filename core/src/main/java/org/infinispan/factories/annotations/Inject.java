@@ -42,10 +42,10 @@ import org.infinispan.factories.ComponentRegistry;
  * <pre>
  *       MyClass myClass = componentFactory.construct(MyClass.class); // instance will have dependencies injected.
  * </pre>
- * 
+ *
  * Methods annotated with this Inject annotation should *only* set class fields. They should do nothing else.
- * If you need to do some work to prepare the component for use, do it in a {@link @Start} method since this is only 
- * called once when a component starts.  
+ * If you need to do some work to prepare the component for use, do it in a {@link @Start} method since this is only
+ * called once when a component starts.
  *
  * @author Manik Surtani
  * @since 4.0

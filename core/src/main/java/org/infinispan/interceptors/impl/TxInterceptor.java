@@ -383,7 +383,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       enlistIfNeeded(ctx);
       return ctx.continueInvocation();
    }
-   
+
    @Override
    public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       enlistIfNeeded(ctx);

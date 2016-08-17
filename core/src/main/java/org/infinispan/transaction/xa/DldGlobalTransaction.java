@@ -78,7 +78,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    /**
-    * Returns the key this transaction intends to lock. 
+    * Returns the key this transaction intends to lock.
     */
    public Collection<Object> getLockIntention() {
       return lockIntention;

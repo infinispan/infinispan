@@ -136,7 +136,7 @@ public class TypedProperties extends Properties {
     * @param key new key
     * @param value new value
     * @return this TypedProperties instance for method chaining
-    *              
+    *
     */
    public synchronized TypedProperties putIfAbsent(String key, String value) {
       if (getProperty(key) == null) {

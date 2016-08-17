@@ -33,7 +33,7 @@ public class ComponentsJmxRegistration {
    private Set<AbstractComponentRegistry.Component> components;
 
    public static String COMPONENT_KEY = "component";
-   public static String NAME_KEY = "name";   
+   public static String NAME_KEY = "name";
 
    /**
     * C-tor.

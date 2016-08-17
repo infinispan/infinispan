@@ -7,7 +7,7 @@ import java.util.Set;
 public abstract class AbstractDelegatingMap<K, V> implements Map<K, V> {
 
    protected abstract Map<K, V> delegate();
-   
+
    @Override
    public int size() {
       return delegate().size();

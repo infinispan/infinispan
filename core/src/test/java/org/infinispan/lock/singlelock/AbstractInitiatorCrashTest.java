@@ -49,7 +49,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
 
       Object k = getKeyForCache(2);
-      
+
       tm(1).begin();
       cache(1).put(k,"v");
       final DummyTransaction transaction = (DummyTransaction) tm(1).getTransaction();

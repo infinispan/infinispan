@@ -38,7 +38,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * ClusteredCacheAuthMd5IT test authentication and authorization with distributed cache and state transfer.
  * Test scenario is as follows:
  * 1. Start ISPN server
@@ -46,8 +46,8 @@ import org.junit.runner.RunWith;
  * 3. Authenticate via HR client to the first server
  * 4. Shut down first server
  * 5. Do operation on remote cache via HR and verify it authorization works as expected. This remote operation
- *    happens on the second server. 
- * 
+ *    happens on the second server.
+ *
  * @author vjuranek
  * @since 7.0
  */
@@ -55,7 +55,7 @@ import org.junit.runner.RunWith;
 @Category({ Security.class })
 @WithRunningServer({@RunningServer(name="hotrodAuthClustered-2")})
 public class ClusteredCacheAuthMd5IT {
-   
+
    private static final String SASL_MECH = "DIGEST-MD5";
    private static final String ARQ_NODE_1_ID = "hotrodAuthClustered";
 
@@ -67,10 +67,10 @@ public class ClusteredCacheAuthMd5IT {
 
    @InfinispanResource("hotrodAuthClustered-2")
    RemoteInfinispanServer server2;
-   
+
    private static Map<String, RemoteCacheManager> rcms;
    private static boolean isInitialized = false; //Arquillian is not able to inject to static fields, so the ISPN server cannot be used in @BeforeClass method
-   
+
    public void initRCMs() {
       controller.start(ARQ_NODE_1_ID);
       final SaslConfigurationBuilder cb = new SaslConfigurationBuilder(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME);
@@ -82,7 +82,7 @@ public class ClusteredCacheAuthMd5IT {
       controller.stop(ARQ_NODE_1_ID);
       isInitialized = true;
    }
-   
+
    @AfterClass
    public static void release() {
       for(String rcmKey : rcms.keySet()) {
@@ -92,14 +92,14 @@ public class ClusteredCacheAuthMd5IT {
          }
       }
    }
-   
+
    private synchronized RemoteCache<String, String> getRemoteCacheFor(String login) {
       if(!isInitialized) {
          initRCMs();
       }
       return rcms.get(login).getCache(TEST_CACHE_NAME);
    }
-   
+
    @Test
    public void testAdmin() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(ADMIN_LOGIN);
@@ -136,6 +136,6 @@ public class ClusteredCacheAuthMd5IT {
       RemoteCache<String, String> cache = getRemoteCacheFor(SUPERVISOR_LOGIN);
       testPutGet(cache);
       testSize(cache);
-   } 
-   
+   }
+
 }

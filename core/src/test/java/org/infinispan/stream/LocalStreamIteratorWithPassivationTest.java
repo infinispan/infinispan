@@ -114,7 +114,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          sm.stop();
       }
    }
-   
+
    @Test
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
@@ -175,7 +175,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          sm.stop();
       }
    }
-   
+
    @Test(enabled = false, description = "This requires supporting concurrent activation in cache loader interceptor")
    public void testConcurrentActivationWithConverter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
@@ -189,7 +189,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       final String loaderValue = "loader0";
 
       cache.putAll(originalValues);
-      
+
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 

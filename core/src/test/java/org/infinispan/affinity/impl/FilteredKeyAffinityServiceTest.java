@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 /**
  *
  *  This class just overrides the methods in the base class as TestNG behaves funny with depending methods and inheritance.
- * 
+ *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -36,7 +36,7 @@ public class FilteredKeyAffinityServiceTest extends BaseFilterKeyAffinityService
 
    @Override
    public void testSingleKey() throws InterruptedException {
-      super.testSingleKey();  
+      super.testSingleKey();
    }
 
    @Test(dependsOnMethods = "testSingleKey")
@@ -52,5 +52,5 @@ public class FilteredKeyAffinityServiceTest extends BaseFilterKeyAffinityService
    @Test (dependsOnMethods = "testRemoveServers")
    public void testShutdownOwnManager() {
       super.testShutdownOwnManager();
-   }   
+   }
 }

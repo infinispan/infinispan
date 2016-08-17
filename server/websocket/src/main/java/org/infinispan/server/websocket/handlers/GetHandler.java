@@ -9,7 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Cache "get" operation handler.
- * 
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class GetHandler implements OpHandler {

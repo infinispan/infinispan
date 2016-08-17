@@ -7,11 +7,11 @@ import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Websocket cache operation handler.
- * 
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public interface OpHandler {
-   
+
    String OP_CODE = "opCode";
    String CACHE_NAME = "cacheName";
    String KEY = "key";
@@ -21,7 +21,7 @@ public interface OpHandler {
 
    /**
     * Handle a websocket channel operation.
-    * 
+    *
     * @param opPayload Operation payload.
     * @param cache The target cache.
     * @param ctx The Netty websocket channel handler.

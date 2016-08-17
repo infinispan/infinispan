@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 @Category({ Security.class })
 @WithRunningServer({@RunningServer(name="hotrodAuthQop")})
 public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
-   
+
    @InfinispanResource("hotrodAuthQop")
    RemoteInfinispanServer server;
 
@@ -43,7 +43,7 @@ public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
    public RemoteInfinispanServer getRemoteServer() {
       return server;
    }
-   
+
    @Override
    public void initAsAdmin() {
       initialize(ADMIN_LOGIN, ADMIN_PASSWD);

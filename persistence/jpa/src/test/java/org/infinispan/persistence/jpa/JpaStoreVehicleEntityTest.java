@@ -5,7 +5,7 @@ import org.infinispan.persistence.jpa.entity.VehicleId;
 import org.testng.annotations.Test;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
@@ -22,7 +22,7 @@ public class JpaStoreVehicleEntityTest extends BaseJpaStoreTest {
       Vehicle v = new Vehicle();
       v.setId(id);
       v.setColor("c_" + key);
-      
+
       return new TestObject(v.getId(), v);
    }
 }

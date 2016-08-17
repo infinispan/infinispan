@@ -23,7 +23,7 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       createCluster(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true), 2);
       waitForClusterToForm();
-   }                                                                        
+   }
 
    public void testPutThrowsLocalException() throws Exception {
       tm(0).begin();

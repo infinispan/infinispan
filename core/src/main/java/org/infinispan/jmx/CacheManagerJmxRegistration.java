@@ -65,7 +65,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
-      // Quote group name, to handle invalid ObjectName characters      
+      // Quote group name, to handle invalid ObjectName characters
       String groupName = CACHE_MANAGER_JMX_GROUP
             + "," + ComponentsJmxRegistration.NAME_KEY
             + "=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());

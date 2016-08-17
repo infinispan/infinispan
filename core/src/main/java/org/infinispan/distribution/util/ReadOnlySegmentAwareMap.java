@@ -144,7 +144,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
 
    @Override
    public String toString() {
-      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + ch + 
+      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + ch +
             ", allowedSegments=" + allowedSegments + "]";
    }
 }

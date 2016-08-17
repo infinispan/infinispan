@@ -59,11 +59,11 @@ public class JGroupsAddress implements Address {
    }
 
    public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsAddress> {
-      
+
       public Externalizer() {
          super(false);
       }
-      
+
       @Override
       public void doWriteObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          try {

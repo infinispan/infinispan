@@ -23,7 +23,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
    public LocalStreamIteratorExceptionTest() {
       super(false, CacheMode.LOCAL);
    }
-   
+
    public void ensureDataContainerExceptionPropagated() {
       Cache cache = cache(0, CACHE_NAME);
       // Extract real one to replace after
@@ -32,7 +32,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
          Throwable t = new CacheException();
          DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, DataContainer.class, mockContainer, true);
-         
+
          try {
             cache.entrySet().stream().iterator().hasNext();
             fail("We should have gotten a CacheException");

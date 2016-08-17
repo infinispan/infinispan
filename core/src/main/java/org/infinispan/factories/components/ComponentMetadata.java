@@ -19,11 +19,11 @@ import org.infinispan.factories.scopes.Scope;
 
 /**
  * This class contains all of the metadata and implications expressed via the {@link Scope}, {@link SurvivesRestarts},
- * {@link DefaultFactoryFor}, {@link ComponentName}, {@link Inject}, {@link Start} and {@link Stop} annotations.  Instead 
+ * {@link DefaultFactoryFor}, {@link ComponentName}, {@link Inject}, {@link Start} and {@link Stop} annotations.  Instead
  * of scanning for these annotations and working out dependency chains at runtime "on-demand", since Infinispan 5.1, this
- * process now happens offline, at build-time.  
+ * process now happens offline, at build-time.
  * <p />
- * When compiling Infinispan, components and their dependency chains are inspected and the information expressed by the 
+ * When compiling Infinispan, components and their dependency chains are inspected and the information expressed by the
  * annotations above are denormalized and a series of {@link ComponentMetadata} objects are created and persisted in the
  * Infinispan jar.
  * <p />
@@ -84,9 +84,9 @@ public class ComponentMetadata implements Serializable {
          this.dependencies = new HashMap<String, String>(injectMethods.size() * 2);
          int j=0;
          for (Method m : injectMethods) {
-            
+
             InjectMetadata injectMetadata = new InjectMetadata(m.getName());
-            
+
             Class<?>[] parameterTypes = m.getParameterTypes();
 
             // Need to use arrays instead of Map due to JDK bug see ISPN-3611
@@ -112,7 +112,7 @@ public class ComponentMetadata implements Serializable {
          }
       }
    }
-   
+
    private String findComponentName(Annotation[][] annotations, int position) {
       if (annotations != null && annotations.length > position) {
          Annotation[] paramAnnotations = annotations[position];
@@ -238,7 +238,7 @@ public class ComponentMetadata implements Serializable {
       public String[] getParameters() {
          return parameters;
       }
-      
+
       public String getParameterName(int subscript) {
          String name = parameterNames == null ? null : parameterNames[subscript];
          return name == null ? parameters[subscript] : name;
@@ -247,7 +247,7 @@ public class ComponentMetadata implements Serializable {
       public boolean isParameterNameSet(int subscript) {
          return parameterNames != null && parameterNames[subscript] != null;
       }
-      
+
       public synchronized Method getMethod() {
          return method;
       }

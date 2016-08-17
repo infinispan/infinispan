@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
  * caches in the example configuration have purge=true).
  *
  * @author Martin Gencur
- * 
+ *
  */
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)

@@ -11,11 +11,11 @@ import org.jboss.security.SimpleGroup;
 import org.jboss.security.SimplePrincipal;
 
 /**
- * 
+ *
  * SimplePrincipalGroupRoleMapper maps names of principals contained in {@link SimpleGroup} to
  * roles. These principals are assumed to be {@link SimplePrincipal}s. {@link SimpleGroup} of
  * {@link SimplePrincipal}s is returned by WildFly logging modules, e.g. AdvancedLdapLoginModule.
- * 
+ *
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
@@ -35,11 +35,11 @@ public class SimplePrincipalGroupRoleMapper implements PrincipalRoleMapper {
                }
             }
             return roles;
-         } 
+         }
       }
       return null;
    }
-   
+
    @Override
    public void setContext(PrincipalRoleMapperContext context) {
       // Do nothing

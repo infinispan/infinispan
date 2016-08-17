@@ -555,7 +555,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assert null != treeCache.getNode(D_B_C);
       assert "v".equals(treeCache.get(D_B_C, "k"));
    }
-   
+
    private Set<Object> asSet(Object... names) {
       return Util.asSet(names);
    }

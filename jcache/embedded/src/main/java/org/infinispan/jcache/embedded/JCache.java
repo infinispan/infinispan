@@ -186,7 +186,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          return Collections.emptyMap();
       }
 
-      AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache : 
+      AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache :
          this.skipCacheLoadCache;
       return cache.getAll(keys);
    }

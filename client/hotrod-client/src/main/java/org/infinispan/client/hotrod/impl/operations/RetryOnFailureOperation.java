@@ -19,7 +19,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import net.jcip.annotations.Immutable;
 
 /**
- * Base class for all the operations that need retry logic: if the operation fails due to connection problems, try with 
+ * Base class for all the operations that need retry logic: if the operation fails due to connection problems, try with
  * another available connection.
  *
  * @author Mircea.Markus@jboss.com

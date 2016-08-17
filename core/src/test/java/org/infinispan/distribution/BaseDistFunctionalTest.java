@@ -144,7 +144,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected Cache<K, V> getFirstNonOwner(Object key) {
       return DistributionTestHelper.getFirstNonOwner(key, caches);
    }
-   
+
    protected Cache<K, V> getFirstOwner(Object key) {
       return DistributionTestHelper.getFirstOwner(key, caches);
    }

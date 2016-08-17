@@ -110,7 +110,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream im
       else
          return Math.max(curSize + (curSize >> 2), minNewSize);
    }
-   
+
    /**
     * Overriden only to avoid unneeded synchronization
     */

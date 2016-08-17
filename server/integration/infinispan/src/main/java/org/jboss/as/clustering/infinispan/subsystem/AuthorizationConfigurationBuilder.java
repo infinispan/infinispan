@@ -21,7 +21,7 @@ public class AuthorizationConfigurationBuilder implements Value<AuthorizationCon
     public void setPrincipalMapper(String principalMapper) {
         this.principalMapper = principalMapper;
     }
-    
+
     public void setAuditLogger(String auditLogger) {
        this.auditLogger = auditLogger;
     }
@@ -38,7 +38,7 @@ public class AuthorizationConfigurationBuilder implements Value<AuthorizationCon
     public String getAuditLogger(){
        return auditLogger;
     }
-    
+
     @Override
     public Map<String, List<String>> getRoles() {
         return roles;

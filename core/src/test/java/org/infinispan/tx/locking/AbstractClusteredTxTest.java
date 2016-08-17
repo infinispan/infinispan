@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional")
 public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest {
-   
+
    Object k;
 
    public void testPut() throws Exception {

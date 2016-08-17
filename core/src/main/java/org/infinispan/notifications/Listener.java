@@ -142,7 +142,7 @@ import java.lang.annotation.Target;
  *       {
  *          map.put(event.getGlobalTransaction(), new ConcurrentLinkedQueue&lt;Event&gt;());
  *       }
- * 
+ *
  *       &#064;CacheEntryCreated
  *       &#064;CacheEntryModified
  *       &#064;CacheEntryRemoved
@@ -150,15 +150,15 @@ import java.lang.annotation.Target;
  *       {
  *          map.get(event.getGlobalTransaction()).add(event);
  *       }
- *  
+ *
  *       &#064;TransactionCompleted
  *       public void endTransaction(TransactionCompletedEvent event)
  *       {
  *          Queue&lt;Event&gt; events = map.get(event.getGlobalTransaction());
  *          map.remove(event.getGlobalTransaction());
- *    
+ *
  *          System.out.println("Ended transaction " + event.getGlobalTransaction().getId());
- *    
+ *
  *          if(event.isTransactionSuccessful())
  *          {
  *             for(Event e : events)

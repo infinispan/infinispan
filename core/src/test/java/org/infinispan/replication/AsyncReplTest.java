@@ -17,7 +17,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder asyncConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
-      createClusteredCaches(2, "asyncRepl", asyncConfiguration);   
+      createClusteredCaches(2, "asyncRepl", asyncConfiguration);
    }
 
    public void testWithNoTx() throws Exception {
@@ -46,7 +46,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    public void testWithTx() throws Exception {
       Cache<String, String> cache1 = cache(0,"asyncRepl");
       Cache<String, String> cache2 = cache(1,"asyncRepl");
-      
+
       String key = "key";
       replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value1");
@@ -87,7 +87,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    public void simpleTest() throws Exception {
       Cache<String, String> cache1 = cache(0,"asyncRepl");
       cache(1, "asyncRepl");
-      
+
       String key = "key";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
 

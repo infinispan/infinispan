@@ -53,7 +53,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
-  
+
    public void testSyncTxRepl() throws Exception {
       Integer age;
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);

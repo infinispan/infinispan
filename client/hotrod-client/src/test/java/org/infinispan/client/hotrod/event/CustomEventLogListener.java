@@ -80,7 +80,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       E event = pollEvent(type);
       assertAnyEquals(expected, event);
    }
-   
+
    public void expectCreatedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -192,12 +192,12 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          assertNotNull(event.timestamp); // check only custom field, value can be null
          assertAnyEquals(expected, event);
       }
-      
+
       public void expectOrderedEventQueue(ClientEvent.Type type) {
          BlockingQueue<CustomEvent> queue = queue(type);
-         if (queue.size() < 2) 
+         if (queue.size() < 2)
             return;
-         
+
          try {
             CustomEvent before = queue.poll(10, TimeUnit.SECONDS);
             Iterator<CustomEvent> iter = queue.iterator();
@@ -210,7 +210,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
             throw new AssertionError(e);
          }
       }
-      
+
       private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
          assertTrue("Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp,
             before.timestamp < after.timestamp);

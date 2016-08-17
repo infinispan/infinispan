@@ -6,20 +6,20 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
 @Entity
 public class Vehicle implements Serializable {
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 3726691096915715402L;
 
    @EmbeddedId
    private VehicleId id;
-   
+
    private String color;
 
    public VehicleId getId() {

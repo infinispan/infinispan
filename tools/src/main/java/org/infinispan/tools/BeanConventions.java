@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 /**
  * BeanConventions.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */

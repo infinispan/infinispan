@@ -88,10 +88,10 @@ public class RemoteCacheStoreIT {
     }
 
     /*
-     * 1. store 3 entries in the local cache 
-     * 2. verify that there are only 2 in the local cache (third one evicted) 
-     * 3. verify the evicted entry (and not anything else) is in the remote cache 
-     * 4. retrieve the evicted entry from local cache (should call remote cache internally) 
+     * 1. store 3 entries in the local cache
+     * 2. verify that there are only 2 in the local cache (third one evicted)
+     * 3. verify the evicted entry (and not anything else) is in the remote cache
+     * 4. retrieve the evicted entry from local cache (should call remote cache internally)
      * 5. verify the evicted entry was removed from the remote cache
      */
     @Test

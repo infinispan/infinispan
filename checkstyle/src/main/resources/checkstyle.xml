@@ -118,10 +118,10 @@
         <!--<property name="message" value="Only one new line is allowed at the end of a file" />-->
     <!--</module>-->
 
-    <!--<module name="RegexpSingleline">-->
-        <!--<property name="format" value="\s+$" />-->
-        <!--<property name="message" value="White spaces at the end of line" />-->
-    <!--</module>-->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$" />
+        <property name="message" value="White spaces at the end of line" />
+    </module>
 
     <!--<module name="SuppressionCommentFilter" />-->
 

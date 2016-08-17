@@ -36,9 +36,9 @@ import org.junit.runner.RunWith;
 
 /**
  * Tests LevelDB cache store.
- * 
+ *
  * @author Michal Linhard (mlinhard@redhat.com)
- * 
+ *
  */
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)

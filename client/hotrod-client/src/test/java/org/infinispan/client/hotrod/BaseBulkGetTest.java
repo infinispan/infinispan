@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 /**
  * Tests functionality related to getting multiple entries from a HotRod server
  * in bulk.
- * 
+ *
  * @author Jiri Holusa [jholusa@redhat.com]
  * @since 5.2
  */

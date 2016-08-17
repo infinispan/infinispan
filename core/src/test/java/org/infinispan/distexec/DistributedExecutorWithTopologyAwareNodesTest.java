@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests dist.exec module using topology aware addresses.
- * 
+ *
  * @author anna.manukyan
  * @since 5.2
  */
@@ -39,7 +39,7 @@ public class DistributedExecutorWithTopologyAwareNodesTest extends DistributedEx
 
       waitForClusterToForm(cacheName());
    }
-   
+
    protected String cacheName() {
       return "DistributedExecutorWithTopologyAwareNodesTest";
    }

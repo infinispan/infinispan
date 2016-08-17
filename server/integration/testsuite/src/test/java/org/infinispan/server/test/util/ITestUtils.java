@@ -33,7 +33,7 @@ public class ITestUtils {
             + File.separator + "configuration";
     private static final String SERVER_CONFIG_PROPERTY = "serverConfig";
     private static final String DEFAULT_CLUSTERING_MODE = "dist";
-    
+
     public static final int SERVER1_MGMT_PORT = 9990;
     public static final int SERVER2_MGMT_PORT = 10090;
     public static final int SERVER3_MGMT_PORT = 10190;
@@ -74,7 +74,7 @@ public class ITestUtils {
     }
 
     public static String getAttribute(MBeanServerConnectionProvider provider, String mbean, String attr) throws Exception {
-        Object jmxAttr = provider.getConnection().getAttribute(new ObjectName(mbean), attr); 
+        Object jmxAttr = provider.getConnection().getAttribute(new ObjectName(mbean), attr);
         return jmxAttr != null ? jmxAttr.toString() : null;
     }
 

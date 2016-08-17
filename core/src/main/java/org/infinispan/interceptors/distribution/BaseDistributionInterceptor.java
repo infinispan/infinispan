@@ -203,7 +203,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return CompletableFutures.completedNull();
       }
-      
+
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
       ClusteredGetCommand getCommand =
             cf.buildClusteredGetCommand(key, command.getFlagsBitSet(), acquireRemoteLock, gtx);

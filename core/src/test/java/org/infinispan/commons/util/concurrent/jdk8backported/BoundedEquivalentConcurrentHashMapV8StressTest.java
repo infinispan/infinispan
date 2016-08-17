@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @Test(groups = "stress", testName = "util.concurrent.BoundedEquivalentConcurrentHashMapV8StressTest")
 public class BoundedEquivalentConcurrentHashMapV8StressTest extends AbstractInfinispanTest {
    protected static final int COUNT = 10_000_000;
-   
+
    protected void testRemovePerformance(int count, Map<Integer, Integer> bchm,
          String evictionName) {
       long startIncludePut = System.currentTimeMillis();
@@ -34,7 +34,7 @@ public class BoundedEquivalentConcurrentHashMapV8StressTest extends AbstractInfi
       for (; j < count; j++)
          bchm.put(j, j);
       secondHalfNano = System.nanoTime() - secondHalfNano;
-      
+
       // force a single cache hit (so that accessQueue has a head item)
       bchm.get(0);
 
@@ -57,11 +57,11 @@ public class BoundedEquivalentConcurrentHashMapV8StressTest extends AbstractInfi
                fail(evictionName + ": removing " + count + " entries takes more than 50 seconds!");
          }
       }
-      System.out.println("BCHM Stress Test " + evictionName + " took " + 
+      System.out.println("BCHM Stress Test " + evictionName + " took " +
             (System.currentTimeMillis() - start) + " milliseconds");
-      System.out.println("BCHM Entire Stress Test " + evictionName + " took " + 
+      System.out.println("BCHM Entire Stress Test " + evictionName + " took " +
             (System.currentTimeMillis() - startIncludePut) + " milliseconds");
-      
+
       System.out.println("First half of puts took " + firstHalfNano + " nanoseconds");
       System.out.println("Second half of puts took " + secondHalfNano + " nanoseconds");
       System.out.println("Gets took: " + getNano + " nanoseconds");

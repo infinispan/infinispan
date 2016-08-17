@@ -5,7 +5,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService in REPL_SYNC mode
- * 
+ *
  * @author Vladimir Blagojevic
  */
 @Test(groups = {"functional", "smoke"}, testName = "distexec.ReplSyncDistributedExecutorTest")

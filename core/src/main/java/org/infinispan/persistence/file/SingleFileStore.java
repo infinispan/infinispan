@@ -128,7 +128,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
-         
+
          // Initialize the fragmentation factor
          fragmentationFactor = configuration.fragmentationFactor();
       } catch (Exception e) {
@@ -569,7 +569,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private void truncateFile(List<FileEntry> entries) {
       long startTime = 0;
       if (trace) startTime = timeService.wallClockTime();
-        
+
       int reclaimedSpace = 0;
       int removedEntries = 0;
       long truncateOffset = -1;
@@ -644,7 +644,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          lastEntry = fe;
       }
-      
+
       if (newEntry != null) {
          try {
             addNewFreeEntry(newEntry);
@@ -656,7 +656,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
       if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
    }
-   
+
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
       long now = timeService.wallClockTime();

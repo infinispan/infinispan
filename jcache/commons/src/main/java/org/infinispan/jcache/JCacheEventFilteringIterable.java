@@ -8,7 +8,7 @@ import javax.cache.event.CacheEntryEventFilter;
 /**
  * An adapter to provide {@link Iterable}s over Cache Entries, those of which
  * are filtered using a {@link CacheEntryEventFilter}.
- * 
+ *
  * @author Galder Zamarreño
  * @param <K> the type of keys
  * @param <V> the type of values
@@ -22,15 +22,15 @@ public class JCacheEventFilteringIterable<K, V>
      * The underlying {@link Iterable} to filter.
      */
     private Iterable<CacheEntryEvent<? extends K, ? extends V>> iterable;
-    
+
     /**
      * The filter to apply to entries in the produced {@link Iterator}s.
      */
     private CacheEntryEventFilter<? super K, ? super V> filter;
-    
+
     /**
      * Constructs an {@link JCacheEventFilteringIterable}.
-     * 
+     *
      * @param iterable the underlying iterable to filter
      * @param filter   the filter to apply to entries in the iterable
      */
@@ -40,7 +40,7 @@ public class JCacheEventFilteringIterable<K, V>
         this.iterable = iterable;
         this.filter = filter;
     }
-    
+
     /**
      * {@inheritDoc}
      */

@@ -75,7 +75,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
          String value = "converted-value";
          values.put(key, value);
          cache.put(key, "converted-value");
-         
+
          try (Stream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream().
                  filter(CacheFilters.predicate(AcceptAllKeyValueFilter.getInstance())).
                  map(CacheFilters.function(new StringTruncator(2, 5)))) {
@@ -107,7 +107,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
             iter.next();
             iter.remove();
          }
-         
+
          Object key = "converted-key";
          String value = "converted-value";
          values.put(key, value);
@@ -116,8 +116,8 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
          Collection<Object> acceptedKeys = new ArrayList<>();
          acceptedKeys.add(key);
          acceptedKeys.add(extraEntry.getKey());
-         
-         KeyValueFilterConverter<Object, String, String> filterConverter = 
+
+         KeyValueFilterConverter<Object, String, String> filterConverter =
                new CompositeKeyValueFilterConverter<>(
                      new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(acceptedKeys, true)),
                      new StringTruncator(2, 5));

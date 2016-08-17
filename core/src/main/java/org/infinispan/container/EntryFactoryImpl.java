@@ -32,7 +32,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final static boolean trace = log.isTraceEnabled();
-   
+
    private boolean useRepeatableRead;
    private DataContainer container;
    private boolean isL1Enabled; //cache the value

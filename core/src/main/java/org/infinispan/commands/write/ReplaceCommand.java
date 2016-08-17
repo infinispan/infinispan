@@ -50,7 +50,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
       this.valueEquivalence = valueEquivalence;
    }
-   
+
    public void init(CacheNotifier notifier, Configuration cfg) {
       this.notifier = notifier;
       this.valueEquivalence = cfg.dataContainer().valueEquivalence();
@@ -93,7 +93,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
          InvocationContext ctx) {
       this.successful = successful;
-      
+
       Object previousValue = oldValue == null ? beingReplaced : oldValue;
 
       if (successful) {

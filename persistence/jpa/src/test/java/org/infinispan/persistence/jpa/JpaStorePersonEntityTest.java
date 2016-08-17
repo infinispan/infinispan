@@ -19,12 +19,12 @@ public class JpaStorePersonEntityTest extends BaseJpaStoreTest {
       adr.setCity("Brno");
       adr.setStreet("Purkynova 2855");
       adr.setZipCode(61200);
-      
+
       Address secAdr1 = new Address();
       secAdr1.setCity("Brno - Kralovo Pole");
       secAdr1.setStreet("Purkynova 97");
       secAdr1.setZipCode(12345);
-      
+
       Address secAdr2 = new Address();
       secAdr2.setCity("Kralovo Pole");
       secAdr2.setStreet("Purkynova 97a");

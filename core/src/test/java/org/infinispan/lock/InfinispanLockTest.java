@@ -193,7 +193,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       } catch (DeadlockDetectedException e) {
          //expected
       }
-      
+
       lock.release(lockOwner1);
 
       assertNull(lock.getLockOwner());

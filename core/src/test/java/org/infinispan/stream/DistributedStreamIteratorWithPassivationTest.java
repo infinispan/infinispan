@@ -55,7 +55,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
    protected DistributedStreamIteratorWithPassivationTest(boolean tx, CacheMode mode) {
       super(tx, mode);
    }
-   
+
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       builder.clustering().hash().numOwners(1);
@@ -124,7 +124,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          sm.stop();
       }
    }
-   
+
    @Test
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
@@ -138,7 +138,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
       final MagicKey loaderKey = new MagicKey(cache0);
       final String loaderValue = "loader0";
-      
+
       cache0.putAll(originalValues);
 
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
@@ -201,9 +201,9 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
       final MagicKey loaderKey = new MagicKey(cache0);
       final String loaderValue = "loader0";
-      
+
       cache0.putAll(originalValues);
-      
+
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 

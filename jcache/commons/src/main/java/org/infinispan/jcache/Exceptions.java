@@ -24,7 +24,7 @@ public class Exceptions {
    public static RuntimeException launderCacheLoaderException(Exception e) {
       if (!(e instanceof CacheLoaderException))
          return new CacheLoaderException("Exception in CacheLoader", e);
-      else 
+      else
          return (CacheLoaderException) e;
    }
 

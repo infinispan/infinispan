@@ -286,7 +286,7 @@ public class Reflections {
     public static boolean isSerializable(Class<?> clazz) {
         return clazz.isPrimitive() || Serializable.class.isAssignableFrom(clazz);
     }
-    
+
     /**
      * Check the assignability of one type to another, taking into account the
      * actual type arguements
@@ -556,7 +556,7 @@ public class Reflections {
         }
         return qualifiers;
     }
-    
+
     /**
      * Get all the declared fields on the class hierarchy. This <b>will</b>
      * return overridden fields.
