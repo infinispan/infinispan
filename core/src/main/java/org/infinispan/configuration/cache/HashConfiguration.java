@@ -10,7 +10,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
+import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -26,7 +26,7 @@ public class HashConfiguration {
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments", 256).xmlName("segments").immutable().build();
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().xmlName("capacity").build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
-         .builder("keyPartitioner", new HashFunctionPartitioner(), KeyPartitioner.class)
+         .builder("keyPartitioner", new AffinityPartitioner(), KeyPartitioner.class)
          .copier(SimpleInstanceAttributeCopier.INSTANCE).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
