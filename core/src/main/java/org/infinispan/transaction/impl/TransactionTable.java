@@ -111,7 +111,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
-   private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
+   protected ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
    private Lock minTopologyRecalculationLock;
    protected boolean clustered = false;
    protected volatile boolean running = false;
@@ -273,33 +273,37 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       if (remoteTransactions == null)
          return;
 
-      if (trace) log.tracef("Checking for transactions originated on leavers. Current cache members are %s, remote transactions: %d",
-            members, remoteTransactions.size());
-      HashSet<Address> membersSet = new HashSet<>(members);
-      List<GlobalTransaction> toKill = new ArrayList<>();
-      for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
-         GlobalTransaction gt = e.getKey();
-         if (trace) log.tracef("Checking transaction %s", gt);
-         if (!membersSet.contains(gt.getAddress())) {
-            toKill.add(gt);
-         }
-      }
-
-      if (toKill.isEmpty()) {
-         if (trace) log.tracef("No remote transactions pertain to originator(s) who have left the cluster.");
-      } else {
-         log.debugf("The originating node left the cluster for %d remote transactions", toKill.size());
-         for (GlobalTransaction gtx : toKill) {
-            if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(gtx)) {
-               log.debugf("Rolling back transaction %s because originator %s left the cluster", gtx, gtx.getAddress());
-               killTransaction(gtx);
-            } else {
-               log.debugf("Keeping transaction %s after the originator %s left the cluster.", gtx, gtx.getAddress());
+      try {
+         if (trace) log.tracef("Checking for transactions originated on leavers. Current cache members are %s, remote transactions: %d",
+               members, remoteTransactions.size());
+         HashSet<Address> membersSet = new HashSet<>(members);
+         List<GlobalTransaction> toKill = new ArrayList<>();
+         for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
+            GlobalTransaction gt = e.getKey();
+            if (trace) log.tracef("Checking transaction %s", gt);
+            if (!membersSet.contains(gt.getAddress())) {
+               toKill.add(gt);
             }
          }
 
-         if (trace) log.tracef("Completed cleaning transactions originating on leavers. Remote transactions remaining: %d",
-                               remoteTransactions.size());
+         if (toKill.isEmpty()) {
+            if (trace) log.tracef("No remote transactions pertain to originator(s) who have left the cluster.");
+         } else {
+            log.debugf("The originating node left the cluster for %d remote transactions", toKill.size());
+            for (GlobalTransaction gtx : toKill) {
+               if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(gtx)) {
+                  log.debugf("Rolling back transaction %s because originator %s left the cluster", gtx, gtx.getAddress());
+                  killTransaction(gtx);
+               } else {
+                  log.debugf("Keeping transaction %s after the originator %s left the cluster.", gtx, gtx.getAddress());
+               }
+            }
+
+            if (trace) log.tracef("Completed cleaning transactions originating on leavers. Remote transactions remaining: %d",
+                                  remoteTransactions.size());
+         }
+      } catch (Throwable t) {
+         log.unableToRollbackGlobalTx(null, t);
       }
    }
 

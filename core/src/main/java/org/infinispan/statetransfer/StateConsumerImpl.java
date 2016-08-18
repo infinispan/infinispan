@@ -418,14 +418,16 @@ public class StateConsumerImpl implements StateConsumer {
             waitingForState.set(true);
          }
 
-         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
-
          // Remove the transactions whose originators have left the cache.
-         // Need to do it now, after we have applied any transactions from other nodes,
+         // Need to do it after we have applied any transactions from other nodes,
          // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
+         // We also need to do it before sending the rebalance confirmations back to the coordinator,
+         // so that we clean up old transactions before starting the rebalance after a merge.
          if (transactionTable != null) {
             transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
          }
+
+         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
 
          commandAckCollector.onMembersChange(newWriteCh.getMembers());
 

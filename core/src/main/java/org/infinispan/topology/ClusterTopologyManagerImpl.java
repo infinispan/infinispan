@@ -56,6 +56,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -106,6 +107,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private LimitedExecutor viewHandlingExecutor;
    private EventLogManager eventLogManager;
    private PersistentUUIDManager persistentUUIDManager;
+   private TimeService timeService;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
@@ -125,7 +127,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
                       CacheManagerNotifier cacheManagerNotifier, EmbeddedCacheManager cacheManager,
-                      EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
+                      EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager,
+                      TimeService timeService) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.globalConfiguration = globalConfiguration;
@@ -134,6 +137,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       this.cacheManager = cacheManager;
       this.eventLogManager = eventLogManager;
       this.persistentUUIDManager = persistentUUIDManager;
+      this.timeService = timeService;
    }
 
    @Start(priority = 100)
@@ -447,25 +451,34 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       Map<Address, Object> statusResponses = null;
       // Assume any timeout is because one of the nodes didn't have a CommandAwareRpcDispatcher
       // installed at the time (possible with JGroupsChannelLookup and shouldConnect == false), and retry.
-      for (int i = CLUSTER_RECOVERY_ATTEMPTS - 1; i >= 0; i--) {
+      long expectedEndTime = timeService.expectedEndTime(getGlobalTimeout(), TimeUnit.MILLISECONDS);
+      while (true) {
          try {
             statusResponses =
                   executeOnClusterSync(command, getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS, false, false,
                         new CacheTopologyFilterReuser());
             break;
          } catch (ExecutionException e) {
-            if (i != 0) {
-               if (e.getCause() instanceof TimeoutException) {
-                  log.debug("Timed out waiting for cluster status responses, trying again");
-               } else if (e.getCause() instanceof SuspectException) {
-                  if (transport.getMembers().containsAll(clusterMembers)) {
-                     log.debug("Received a CacheNotFoundResponse from one of the members, trying again");
-                     Thread.sleep(getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS / 2);
-                  }
+            if (timeService.isTimeExpired(expectedEndTime))
+               throw e;
+            if (e.getCause() instanceof TimeoutException) {
+               log.debug("Timed out waiting for cluster status responses, trying again");
+            } else if (e.getCause() instanceof SuspectException) {
+               // There are 3 situations that can lead to a SuspectException:
+               // 1. A node is shutting down. We should stop the cluster recovery for this view, as we already
+               //    received a new one.
+               // 2. RequestCorrelator hasn't installed this view yet. We must retry the cluster recovery here, as
+               //    we won't receive a new view.
+               // 3. The cluster is running on a FORK, and the remote node has only started the main channel so far.
+               //    Again, we won't receive a new view when the FORK is properly started on the suspected node.
+               if (!transport.getMembers().containsAll(clusterMembers)) {
+                  // We already have a newer view
+                  throw e;
+               } else {
+                  log.debugf("Member %s suspected, trying again", ((SuspectException) e.getCause()).getSuspect());
+                  Thread.sleep(100);
                }
-               continue;
             }
-            throw e;
          }
       }
 

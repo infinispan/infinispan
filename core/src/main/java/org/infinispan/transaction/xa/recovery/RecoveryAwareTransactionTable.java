@@ -61,15 +61,24 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
     */
    @Override
    public void cleanupLeaverTransactions(List<Address> members) {
-      Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
-      while (it.hasNext()) {
-         RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) it.next();
-         recTx.computeOrphan(members);
-         if (recTx.isInDoubt()) {
-            recoveryManager.registerInDoubtTransaction(recTx);
-            it.remove();
-         }
+      try {
+         // cleanupLeaverTransactions is can be called concurrently from StateConsumerImpl and from the view change event
+         // Use computeIfPresent to ensure that we don't call registerInDoubtTransaction twice
+         remoteTransactions.forEach((globalTransaction, remoteTransaction) -> {
+            remoteTransactions.computeIfPresent(globalTransaction, (globalTransaction1, remoteTransaction1) -> {
+               RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) remoteTransaction1;
+               recTx.computeOrphan(members);
+               if (recTx.isInDoubt()) {
+                  recoveryManager.registerInDoubtTransaction(recTx);
+                  return null;
+               }
+               return recTx;
+            });
+         });
+      } catch (Throwable t) {
+         log.unableToRollbackGlobalTx(null, t);
       }
+
       //this cleans up the transactions that are not yet prepared
       super.cleanupLeaverTransactions(members);
    }
