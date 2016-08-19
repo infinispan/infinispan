@@ -22,7 +22,7 @@ public class AuthenticationConfiguration {
    private final Subject serverSubject;
 
    AuthenticationConfiguration(boolean enabled, Set<String> set, ServerAuthenticationProvider serverAuthenticationProvider,
-         Map<String, String> mechProperties, String serverName, Subject serverSubject) {
+                               Map<String, String> mechProperties, String serverName, Subject serverSubject) {
       this.enabled = enabled;
       this.allowedMechs = set;
       this.serverAuthenticationProvider = serverAuthenticationProvider;

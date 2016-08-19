@@ -1,8 +1,9 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * @author Galder Zamarreño
@@ -38,7 +39,7 @@ class Events {
       protected final byte[] key;
 
       protected KeyEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
-              byte[] key) {
+                         byte[] key) {
          super(version, messageId, op, listenerId, isRetried, (byte) 0);
          this.key = key;
       }
@@ -68,7 +69,7 @@ class Events {
       protected final long dataVersion;
 
       protected KeyWithVersionEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
-              byte[] key, long dataVersion) {
+                                    byte[] key, long dataVersion) {
          super(version, messageId, op, listenerId, isRetried, (byte) 0);
          this.key = key;
          this.dataVersion = dataVersion;
@@ -100,7 +101,7 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
-              byte[] eventData) {
+                            byte[] eventData) {
          super(version, messageId, op, listenerId, isRetried, (byte) 1);
          this.eventData = eventData;
       }
@@ -129,7 +130,7 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomRawEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
-              byte[] eventData) {
+                               byte[] eventData) {
          super(version, messageId, op, listenerId, isRetried, (byte) 2);
          this.eventData = eventData;
       }

@@ -1,6 +1,25 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.Channel;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -38,25 +57,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import io.netty.channel.Channel;
 
 /**
  * @author Galder Zamarreño
@@ -73,7 +74,7 @@ class ClientListenerRegistry {
 
    private final AtomicLong messageId = new AtomicLong();
    private final ConcurrentMap<byte[], Object> eventSenders = new EquivalentConcurrentHashMapV8<>(
-      ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+         ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
 
    volatile private Optional<Marshaller> marshaller = Optional.empty();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
@@ -81,8 +82,8 @@ class ClientListenerRegistry {
    private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
 
    private final ExecutorService addListenerExecutor = new ThreadPoolExecutor(
-      0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
-      new DefaultThreadFactory(null, 1, "add-listener-thread-%t", null, null));
+         0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
+         new DefaultThreadFactory(null, 1, "add-listener-thread-%t", null, null));
 
    void setEventMarshaller(Optional<Marshaller> eventMarshaller) {
       // Set a custom marshaller or reset to default if none
@@ -120,9 +121,9 @@ class ClientListenerRegistry {
    }
 
    void addClientListener(VersionedDecoder decoder, Channel ch, HotRodHeader h, byte[] listenerId,
-           AdvancedCache<byte[], byte[]> cache, boolean includeState,
-           KeyValuePair<Optional<KeyValuePair<String, List<byte[]>>>, Optional<KeyValuePair<String, List<byte[]>>>> namedFactories,
-           boolean useRawData) {
+                          AdvancedCache<byte[], byte[]> cache, boolean includeState,
+                          KeyValuePair<Optional<KeyValuePair<String, List<byte[]>>>, Optional<KeyValuePair<String, List<byte[]>>>> namedFactories,
+                          boolean useRawData) {
       ClientEventType eventType = ClientEventType.createType(namedFactories.getValue().isPresent(), useRawData, h.version);
       Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType);
       List<byte[]> binaryFilterParams = namedFactories.getKey().map(KeyValuePair::getValue).orElse(Collections.emptyList());
@@ -137,11 +138,11 @@ class ClientListenerRegistry {
             if (filterFactory.getKey().equals(converterFactory.getKey())) {
                List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
                CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(
-                       filterFactory.getKey(), compatEnabled, useRawData, binaryParams);
+                     filterFactory.getKey(), compatEnabled, useRawData, binaryParams);
                kvp = new KeyValuePair<>(filterConverter, filterConverter);
             } else {
                kvp = new KeyValuePair<>(getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams),
-                       getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams));
+                     getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams));
             }
          } else {
             kvp = new KeyValuePair<>(getFilter(namedFactories.getKey().get().getKey(), compatEnabled, useRawData, binaryFilterParams), null);
@@ -159,7 +160,7 @@ class ClientListenerRegistry {
       if (includeState) {
          // If state included, do it async
          CompletableFuture<Void> cf = CompletableFuture.runAsync(() ->
-            cache.addListener(clientEventSender, kvp.getKey(), kvp.getValue()), addListenerExecutor);
+               cache.addListener(clientEventSender, kvp.getKey(), kvp.getValue()), addListenerExecutor);
 
          cf.whenComplete((t, cause) -> {
             Response resp;
@@ -182,27 +183,27 @@ class ClientListenerRegistry {
 
    CacheEventFilter<byte[], byte[]> getFilter(String name, Boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {
       KeyValuePair<CacheEventFilterFactory, Marshaller> factory =
-              findFactory(name, compatEnabled, cacheEventFilterFactories, "key/value filter", useRawData);
+            findFactory(name, compatEnabled, cacheEventFilterFactories, "key/value filter", useRawData);
       List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
       return factory.getKey().getFilter(params.toArray());
    }
 
    CacheEventConverter<byte[], byte[], byte[]> getConverter(String name, boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {
       KeyValuePair<CacheEventConverterFactory, Marshaller> factory =
-              findConverterFactory(name, compatEnabled, cacheEventConverterFactories, "converter", useRawData);
+            findConverterFactory(name, compatEnabled, cacheEventConverterFactories, "converter", useRawData);
       List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
       return factory.getKey().getConverter(params.toArray());
    }
 
    CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(String name, boolean compatEnabled, boolean useRawData, List<byte[]> binaryParams) {
       KeyValuePair<CacheEventFilterConverterFactory, Marshaller> factory =
-              findFactory(name, compatEnabled, cacheEventFilterConverterFactories, "converter", useRawData);
+            findFactory(name, compatEnabled, cacheEventFilterConverterFactories, "converter", useRawData);
       List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
       return factory.getKey().getFilterConverter(params.toArray());
    }
 
    KeyValuePair<CacheEventConverterFactory, Marshaller> findConverterFactory(String name, boolean compatEnabled,
-         ConcurrentMap<String, CacheEventConverterFactory> factories, String factoryType, boolean useRawData) {
+                                                                             ConcurrentMap<String, CacheEventConverterFactory> factories, String factoryType, boolean useRawData) {
       if (name.equals("___eager-key-value-version-converter"))
          return new KeyValuePair<>(KeyValueVersionConverterFactory.SINGLETON, new GenericJBossMarshaller());
       else
@@ -210,7 +211,7 @@ class ClientListenerRegistry {
    }
 
    <T> KeyValuePair<T, Marshaller> findFactory(String name, boolean compatEnabled,
-         ConcurrentMap<String, T> factories, String factoryType, boolean useRawData) {
+                                               ConcurrentMap<String, T> factories, String factoryType, boolean useRawData) {
 
       T factory = factories.get(name);
       if (factory == null) throw log.missingCacheEventFactory(factoryType, name);
@@ -243,8 +244,7 @@ class ClientListenerRegistry {
                throw new CacheException(e);
             }
          }).collect(Collectors.toList());
-      }
-      else return binaryParams;
+      } else return binaryParams;
    }
 
    boolean removeClientListener(byte[] listenerId, Cache cache) {
@@ -265,11 +265,11 @@ class ClientListenerRegistry {
    void findAndWriteEvents(Channel channel) {
       // Make sure we write any event in main event loop
       channel.eventLoop().execute(() -> eventSenders.values().forEach(s -> {
-            if (s instanceof BaseClientEventSender) {
-               BaseClientEventSender bces = (BaseClientEventSender) s;
-               if (bces.hasChannel(channel)) bces.writeEventsIfPossible();
-            }
-         }));
+         if (s instanceof BaseClientEventSender) {
+            BaseClientEventSender bces = (BaseClientEventSender) s;
+            if (bces.hasChannel(channel)) bces.writeEventsIfPossible();
+         }
+      }));
    }
 
    // Do not make sync=false, instead move cache operation causing
@@ -278,7 +278,7 @@ class ClientListenerRegistry {
    private class StatefulClientEventSender extends BaseClientEventSender {
 
       protected StatefulClientEventSender(Channel ch, byte[] listenerId, byte version,
-              org.infinispan.server.hotrod.ClientEventType targetEventType) {
+                                          org.infinispan.server.hotrod.ClientEventType targetEventType) {
          super(ch, listenerId, version, targetEventType);
       }
    }
@@ -312,7 +312,7 @@ class ClientListenerRegistry {
 
       void writeEventsIfPossible() {
          boolean written = false;
-         while(!eventQueue.isEmpty() && ch.isWritable()) {
+         while (!eventQueue.isEmpty() && ch.isWritable()) {
             Object event = eventQueue.poll();
             if (isTrace) log.tracef("Write event: %s to channel %s", event, ch);
             ch.write(event);
@@ -348,7 +348,8 @@ class ClientListenerRegistry {
          } else {
             switch (event.getType()) {
                case CACHE_ENTRY_CREATED:
-               case CACHE_ENTRY_MODIFIED: return !event.isPre();
+               case CACHE_ENTRY_MODIFIED:
+                  return !event.isPre();
                case CACHE_ENTRY_REMOVED:
                   CacheEntryRemovedEvent removedEvent = (CacheEntryRemovedEvent) event;
                   return !event.isPre() && removedEvent.getOldValue() != null;
@@ -416,16 +417,17 @@ class ClientListenerRegistry {
          switch (event.getType()) {
             case CACHE_ENTRY_CREATED:
                return new KeyValuePair<>(OperationResponse.CacheEntryCreatedEventResponse,
-                       ((CacheEntryCreatedEvent) event).isCommandRetried());
+                     ((CacheEntryCreatedEvent) event).isCommandRetried());
             case CACHE_ENTRY_MODIFIED:
                return new KeyValuePair<>(OperationResponse.CacheEntryModifiedEventResponse,
-                       ((CacheEntryModifiedEvent) event).isCommandRetried());
+                     ((CacheEntryModifiedEvent) event).isCommandRetried());
             case CACHE_ENTRY_REMOVED:
                return new KeyValuePair<>(OperationResponse.CacheEntryRemovedEventResponse,
-                       ((CacheEntryRemovedEvent) event).isCommandRetried());
+                     ((CacheEntryRemovedEvent) event).isCommandRetried());
             case CACHE_ENTRY_EXPIRED:
                return new KeyValuePair<>(OperationResponse.CacheEntryExpiredEventResponse, false);
-            default: throw log.unexpectedEvent(event);
+            default:
+               throw log.unexpectedEvent(event);
          }
       }
 
@@ -436,7 +438,7 @@ class ClientListenerRegistry {
    }
 
    Object getClientEventSender(boolean includeState, Channel ch, byte version,
-              Cache cache, byte[] listenerId, ClientEventType eventType) {
+                               Cache cache, byte[] listenerId, ClientEventType eventType) {
       CompatibilityModeConfiguration compatibility = cache.getCacheConfiguration().compatibility();
       if (compatibility.enabled()) {
          if (includeState) {
@@ -465,7 +467,7 @@ class ClientListenerRegistry {
    @Listener(clustered = true, includeCurrentState = false)
    private class StatelessCompatibilityClientEventSender extends BaseCompatibilityClientEventSender {
       protected StatelessCompatibilityClientEventSender(BaseClientEventSender delegate,
-              org.infinispan.server.hotrod.HotRodTypeConverter converter) {
+                                                        org.infinispan.server.hotrod.HotRodTypeConverter converter) {
          super(delegate, converter);
       }
    }
@@ -588,7 +590,7 @@ class ClientListenerRegistry {
       }
    }
 
-   private static <T> Marshaller constructMarshaller(T t, Class <? extends Marshaller> marshallerClass) {
+   private static <T> Marshaller constructMarshaller(T t, Class<? extends Marshaller> marshallerClass) {
       Constructor<? extends Marshaller> constructor = findClassloaderConstructor(marshallerClass);
       try {
          if (constructor != null) {
@@ -669,7 +671,7 @@ class ClientListenerRegistry {
             Object unmarshalledPrevValue = oldValue != null ? marshaller.objectFromByteBuffer(oldValue) : null;
             Object unmarshalledValue = newValue != null ? marshaller.objectFromByteBuffer(newValue) : null;
             Object converted = filterConverter.filterAndConvert(unmarshalledKey, unmarshalledPrevValue,
-               oldMetadata, unmarshalledValue, newMetadata, eventType);
+                  oldMetadata, unmarshalledValue, newMetadata, eventType);
             return marshaller.objectToByteBuffer(converted);
          } catch (IOException | ClassNotFoundException | InterruptedException e) {
             throw new CacheException(e);
@@ -687,7 +689,7 @@ class ClientListenerRegistry {
       @Override
       public UnmarshallFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          CacheEventFilterConverter<Object, Object, Object> filterConverter =
-                 (CacheEventFilterConverter<Object, Object, Object>) input.readObject();
+               (CacheEventFilterConverter<Object, Object, Object>) input.readObject();
          Class<? extends Marshaller> marshallerClass = (Class<? extends Marshaller>) input.readObject();
          Marshaller marshaller = constructMarshaller(filterConverter, marshallerClass);
          return new UnmarshallFilterConverter(filterConverter, marshaller);

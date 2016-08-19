@@ -1,5 +1,15 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.server.core.ExternalizerIds.BINARY_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER;
+import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
+import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.SERVER_ADDRESS;
+
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -10,19 +20,9 @@ import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterExter
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
 import org.infinispan.server.hotrod.iteration.IterationFilter;
 
-import java.util.Map;
-
-import static org.infinispan.server.core.ExternalizerIds.BINARY_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER;
-import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
-import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.SERVER_ADDRESS;
-
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
+ * Module lifecycle callbacks implementation that enables module specific {@link org.infinispan.marshall.AdvancedExternalizer}
+ * implementations to be registered.
  *
  * @author Galder Zamarreño
  * @since 5.0

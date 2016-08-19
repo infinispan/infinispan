@@ -1,12 +1,12 @@
 package org.infinispan.server.hotrod.iteration;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Optional;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.filter.KeyValueFilterConverter;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.Optional;
 
 /**
  * @author gustavonalle

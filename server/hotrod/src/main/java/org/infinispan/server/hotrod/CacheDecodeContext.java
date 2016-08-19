@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
@@ -18,12 +20,8 @@ import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.security.auth.Subject;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Invokes operations against the cache based on the state kept during decoding process
- *
  */
 public class CacheDecodeContext {
    static final long MillisecondsIn30days = 60 * 60 * 24 * 30 * 1000l;
@@ -113,13 +111,13 @@ public class CacheDecodeContext {
          InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
-               String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
-               header.version, header.messageId);
+                  String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
+                  header.version, header.messageId);
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             if (!cacheManager.getCacheManagerConfiguration().security().authorization().enabled() && !loopback) {
                throw new RequestParsingException(
-                  String.format("Remote requests are allowed to protected caches only over loopback or if authorization is enabled. Do no send remote requests to cache '%s'", cacheName),
-                  header.version, header.messageId);
+                     String.format("Remote requests are allowed to protected caches only over loopback or if authorization is enabled. Do no send remote requests to cache '%s'", cacheName),
+                     header.version, header.messageId);
             } else {
                // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
                // expensive, but these caches should not be accessed frequently
@@ -127,8 +125,8 @@ public class CacheDecodeContext {
             }
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
-               String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
-               header.version, header.messageId);
+                  String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
+                  header.version, header.messageId);
          } else {
             cache = server.getCacheInstance(cacheName, cacheManager, true, true);
          }
@@ -161,12 +159,12 @@ public class CacheDecodeContext {
          int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
          long version = entryVersion != null ? entryVersion.getVersion() : 0;
          return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                 OperationResponse.GetWithMetadataResponse, OperationStatus.Success, header.topologyId, v, version,
-                 ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
+               OperationResponse.GetWithMetadataResponse, OperationStatus.Success, header.topologyId, v, version,
+               ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
       } else {
          return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                 OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, header.topologyId, null,
-                 -1, -1, -1, -1, -1);
+               OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, header.topologyId, null,
+               -1, -1, -1, -1, -1);
       }
    }
 
@@ -220,7 +218,7 @@ public class CacheDecodeContext {
          // The reason for that is that if no other component depends on the
          // version generator, the factory does not get invoked.
          NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-         .clustered(registry.getComponent(RpcManager.class) != null);
+               .clustered(registry.getComponent(RpcManager.class) != null);
          registry.registerComponent(newVersionGenerator, VersionGenerator.class);
          return newVersionGenerator.generateNew();
       } else {
@@ -260,7 +258,7 @@ public class CacheDecodeContext {
       return successResp(null);
    }
 
-   Response successResp(byte[] prev){
+   Response successResp(byte[] prev) {
       return decoder.createSuccessResponse(header, prev);
    }
 
@@ -275,8 +273,6 @@ public class CacheDecodeContext {
    Response createGetResponse(CacheEntry<byte[], byte[]> entry) {
       return decoder.createGetResponse(header, entry);
    }
-
-//   Object createMultiGetResponse(pairs: Map[Bytes, CacheEntry[Bytes, Bytes]]): AnyRef = null
 
    ComponentRegistry getCacheRegistry(String cacheName) {
       return server.getCacheRegistry(cacheName);
@@ -327,16 +323,12 @@ public class CacheDecodeContext {
    }
 
    /**
-    * Transforms lifespan pass as seconds into milliseconds
-    * following this rule (inspired by Memcached):
-    *
-    * If lifespan is bigger than number of seconds in 30 days,
-    * then it is considered unix time. After converting it to
-    * milliseconds, we subtract the current time in and the
-    * result is returned.
-    *
-    * Otherwise it's just considered number of seconds from
-    * now and it's returned in milliseconds unit.
+    * Transforms lifespan pass as seconds into milliseconds following this rule (inspired by Memcached):
+    * <p>
+    * If lifespan is bigger than number of seconds in 30 days, then it is considered unix time. After converting it to
+    * milliseconds, we subtract the current time in and the result is returned.
+    * <p>
+    * Otherwise it's just considered number of seconds from now and it's returned in milliseconds unit.
     */
    static long toMillis(ExpirationParam param, HotRodHeader h) {
       if (param.duration > 0) {

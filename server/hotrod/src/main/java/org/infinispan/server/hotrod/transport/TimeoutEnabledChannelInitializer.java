@@ -1,16 +1,17 @@
 package org.infinispan.server.hotrod.transport;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.transport.IdleStateHandlerProvider;
 import org.infinispan.server.core.transport.NettyInitializer;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.timeout.IdleStateHandler;
+
 /**
- * A channel pipeline factory for environments where idle timeout is enabled.  This is a trait, useful to extend
- * by an implementation channel initializer.
+ * A channel pipeline factory for environments where idle timeout is enabled.  This is a trait, useful to extend by an
+ * implementation channel initializer.
  *
  * @author Galder Zamarreño
  * @author William Burns

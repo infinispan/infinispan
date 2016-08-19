@@ -87,8 +87,8 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
                ms = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now());
             }
             log.tracef("%s [%s] \"%s %s\" \"%s\" %s %d %d %d ms", remoteAddress,
-                    checkForNull(startTime), checkForNull(op), checkForNull(cacheName),
-                    status, checkForNull(key), bytesRead, bytesWritten, ms);
+                  checkForNull(startTime), checkForNull(op), checkForNull(cacheName),
+                  status, checkForNull(key), bytesRead, bytesWritten, ms);
          }));
       } else {
          super.write(ctx, msg, promise);
@@ -96,10 +96,10 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
    }
 
    String checkForNull(Object obj) {
-      if (obj == null || obj instanceof String && ((String)obj).isEmpty()) {
+      if (obj == null || obj instanceof String && ((String) obj).isEmpty()) {
          return "-";
       } else if (obj instanceof byte[]) {
-         return Util.printArray((byte[])obj);
+         return Util.printArray((byte[]) obj);
       } else {
          return obj.toString();
       }

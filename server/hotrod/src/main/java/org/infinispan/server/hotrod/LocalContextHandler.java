@@ -1,18 +1,20 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+
+import java.security.PrivilegedExceptionAction;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 
-import javax.security.auth.Subject;
-import java.security.PrivilegedExceptionAction;
-
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
- * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than
- * the decoder.
+ * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than the
+ * decoder.
  *
  * @author wburns
  * @since 9.0
@@ -55,7 +57,7 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
             break;
          case PingRequest:
             writeResponse(cdc, ctx.channel(), new Response(h.version, h.messageId, h.cacheName,
-                    h.clientIntel, OperationResponse.PingResponse, OperationStatus.Success, h.topologyId));
+                  h.clientIntel, OperationResponse.PingResponse, OperationStatus.Success, h.topologyId));
             break;
          case StatsRequest:
             writeResponse(cdc, ctx.channel(), cdc.decoder.createStatsResponse(cdc, transport));

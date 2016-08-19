@@ -12,8 +12,8 @@ public class TestResponse extends Response {
    public final AbstractTestTopologyAwareResponse topologyResponse;
 
    protected TestResponse(byte version, long messageId, String cacheName, short clientIntel,
-           OperationResponse operation, OperationStatus status, int topologyId,
-           AbstractTestTopologyAwareResponse topologyResponse) {
+                          OperationResponse operation, OperationStatus status, int topologyId,
+                          AbstractTestTopologyAwareResponse topologyResponse) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
       this.topologyResponse = topologyResponse;
    }
@@ -21,13 +21,13 @@ public class TestResponse extends Response {
    @Override
    public String toString() {
       return new StringBuilder().append("Response").append("{")
-         .append("version=").append(version)
-         .append(", messageId=").append(messageId)
-         .append(", operation=").append(operation)
-         .append(", status=").append(status)
-         .append(", cacheName=").append(cacheName)
-         .append(", topologyResponse=").append(topologyResponse)
-         .append("}").toString();
+            .append("version=").append(version)
+            .append(", messageId=").append(messageId)
+            .append(", operation=").append(operation)
+            .append(", status=").append(status)
+            .append(", cacheName=").append(cacheName)
+            .append(", topologyResponse=").append(topologyResponse)
+            .append("}").toString();
    }
 
    public AbstractTestTopologyAwareResponse asTopologyAwareResponse() {

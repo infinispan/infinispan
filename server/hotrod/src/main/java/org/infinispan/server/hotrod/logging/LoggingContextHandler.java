@@ -19,7 +19,8 @@ import io.netty.util.AttributeKey;
  */
 @ChannelHandler.Sharable
 public class LoggingContextHandler extends ChannelDuplexHandler {
-   public LoggingContextHandler() { }
+   public LoggingContextHandler() {
+   }
 
    private static final LoggingContextHandler INSTANCE = new LoggingContextHandler();
 

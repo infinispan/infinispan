@@ -1,14 +1,14 @@
 package org.infinispan.server.hotrod;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.remoting.transport.Address;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A Hot Rod server address

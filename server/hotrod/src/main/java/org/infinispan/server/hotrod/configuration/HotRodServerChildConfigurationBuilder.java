@@ -25,23 +25,27 @@ public interface HotRodServerChildConfigurationBuilder {
    HotRodServerChildConfigurationBuilder proxyPort(int proxyPort);
 
    /**
-    * Configures the lock acquisition timeout for the topology cache. See {@link LockingConfigurationBuilder#lockAcquisitionTimeout(long)}. Defaults to 10 seconds
+    * Configures the lock acquisition timeout for the topology cache. See {@link LockingConfigurationBuilder#lockAcquisitionTimeout(long)}.
+    * Defaults to 10 seconds
     */
    HotRodServerChildConfigurationBuilder topologyLockTimeout(long topologyLockTimeout);
 
    /**
-    * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}. Defaults to 10 seconds
+    * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}.
+    * Defaults to 10 seconds
     */
    HotRodServerChildConfigurationBuilder topologyReplTimeout(long topologyReplTimeout);
 
    /**
-    * Configures whether to enable waiting for initial state transfer for the topology cache. See {@link StateTransferConfigurationBuilder#awaitInitialTransfer(boolean)}
+    * Configures whether to enable waiting for initial state transfer for the topology cache. See {@link
+    * StateTransferConfigurationBuilder#awaitInitialTransfer(boolean)}
     */
    HotRodServerChildConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer);
 
    /**
-    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the other nodes.
-    * Defaults to true.
+    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
+    * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the
+    * other nodes. Defaults to true.
     */
    HotRodServerChildConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer);
 

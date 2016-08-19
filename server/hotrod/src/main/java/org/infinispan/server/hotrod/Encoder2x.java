@@ -1,6 +1,13 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.logging.LogFactory;
@@ -17,13 +24,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.topology.CacheTopology;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import io.netty.buffer.ByteBuf;
 
 /**
  * @author Galder Zamarreño
@@ -84,7 +85,7 @@ class Encoder2x implements VersionedEncoder {
          buf.writeByte(r.status.getCode());
       else {
          Configuration cfg = r.cacheName.isEmpty() ? server.getCacheManager().getDefaultCacheConfiguration() :
-                 server.getCacheManager().getCacheConfiguration(r.cacheName);
+               server.getCacheManager().getCacheConfiguration(r.cacheName);
          OperationStatus st = OperationStatus.withCompatibility(r.status, cfg.compatibility().enabled());
          buf.writeByte(st.getCode());
       }
@@ -117,7 +118,7 @@ class Encoder2x implements VersionedEncoder {
       // Calculate members first, in case there are no members
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
       Map<Address, ServerAddress> members = h.serverEndpointsMap.entrySet().stream().filter(e ->
-              ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       if (isTrace) {
          log.trace("Topology cache contains: " + h.serverEndpointsMap);
@@ -170,7 +171,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private Optional<AbstractTopologyResponse> getTopologyResponse(Response r, Cache<Address, ServerAddress> addressCache,
-           CacheMode cacheMode, CacheTopology cacheTopology) {
+                                                                  CacheMode cacheMode, CacheTopology cacheTopology) {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          switch (r.clientIntel) {
@@ -191,7 +192,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private Optional<AbstractTopologyResponse> generateTopologyResponse(Response r,
-           Cache<Address, ServerAddress> addressCache, CacheMode cacheMode , CacheTopology cacheTopology) {
+                                                                       Cache<Address, ServerAddress> addressCache, CacheMode cacheMode, CacheTopology cacheTopology) {
       // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
       // endpoint address to the topology cache yet. We delay the topology update until the next client
       // request by returning null here (so the client topology id stays the same).
@@ -211,7 +212,7 @@ class Encoder2x implements VersionedEncoder {
 
       if (isTrace) {
          log.tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
-            cacheMembers, cacheMembers, r.topologyId, topologyId);
+               cacheMembers, cacheMembers, r.topologyId, topologyId);
       }
 
       if (!serverEndpoints.keySet().containsAll(cacheMembers)) {
@@ -230,7 +231,7 @@ class Encoder2x implements VersionedEncoder {
       if (r.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation()) {
          int numSegments = cacheTopology.getReadConsistentHash().getNumSegments();
          return Optional.of(new HashDistAware20Response(topologyId, serverEndpoints, numSegments,
-                 Constants.DEFAULT_CONSISTENT_HASH_VERSION));
+               Constants.DEFAULT_CONSISTENT_HASH_VERSION));
       } else {
          return Optional.of(new TopologyAwareResponse(topologyId, serverEndpoints, 0));
       }
@@ -261,7 +262,7 @@ class Encoder2x implements VersionedEncoder {
       } else if (r instanceof StatsResponse) {
          StatsResponse sr = (StatsResponse) r;
          ExtendedByteBuf.writeUnsignedInt(sr.stats.size(), buf);
-         for (Map.Entry<String, String> stat : sr.stats.entrySet()){
+         for (Map.Entry<String, String> stat : sr.stats.entrySet()) {
             ExtendedByteBuf.writeString(stat.getKey(), buf);
             ExtendedByteBuf.writeString(stat.getValue(), buf);
          }

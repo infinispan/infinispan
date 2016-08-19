@@ -22,9 +22,9 @@ import org.infinispan.security.actions.RemoveListenerAction;
 
 /**
  * SecurityActions for the org.infinispan.server.hotrod package.
- *
- * Do not move. Do not change class and method visibility to avoid being called from other
- * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
+ * <p>
+ * Do not move. Do not change class and method visibility to avoid being called from other {@link
+ * java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
  * @author Tristan Tarrant
  * @since 7.0

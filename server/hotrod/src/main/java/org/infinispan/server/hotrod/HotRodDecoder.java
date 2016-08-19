@@ -36,7 +36,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    private boolean resetRequested = true;
 
    public HotRodDecoder(EmbeddedCacheManager cacheManager, NettyTransport transport, HotRodServer server,
-           Predicate<? super String> ignoreCache) {
+                        Predicate<? super String> ignoreCache) {
       this.cacheManager = cacheManager;
       this.transport = transport;
       this.ignoreCache = ignoreCache;
@@ -57,10 +57,11 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    /**
-    * Should be called when state is transferred.  This also marks the buffer read
-    * position so when we can't read bytes it will be reset to here.
+    * Should be called when state is transferred.  This also marks the buffer read position so when we can't read bytes
+    * it will be reset to here.
+    *
     * @param newState new hotrod decoder state
-    * @param buf the byte buffer to mark
+    * @param buf      the byte buffer to mark
     */
    protected void state(HotRodDecoderState newState, ByteBuf buf) {
       buf.markReaderIndex();
@@ -86,7 +87,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
             // processing
             case DECODE_HEADER:
                if (!decodeHeader(((InetSocketAddress) ctx.channel().remoteAddress()).getAddress().isLoopbackAddress(),
-                       in, out)) {
+                     in, out)) {
                   break;
                }
                state(HotRodDecoderState.DECODE_KEY, in);
@@ -157,6 +158,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
 
    /**
     * Reads the header and returns whether we should try to continue
+    *
     * @param buffer the buffer to read the header from
     * @return whether or not we should continue
     * @throws Exception

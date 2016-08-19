@@ -1,6 +1,12 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
@@ -19,12 +25,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.util.KeyValuePair;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -56,7 +57,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
                writeTopologyUpdate(tar, buf);
             else
                writeLimitedHashTopologyUpdate(tar, buf);
-         } else if (topologyResp instanceof  AbstractHashDistAwareResponse) {
+         } else if (topologyResp instanceof AbstractHashDistAwareResponse) {
             writeHashTopologyUpdate((AbstractHashDistAwareResponse) topologyResp, server, r, buf);
          } else {
             throw new IllegalArgumentException("Unsupported response instance: " + topologyResp);
@@ -167,7 +168,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
    }
 
    private AbstractTopologyResponse generateTopologyResponse(Response r, Cache<Address, ServerAddress> addressCache,
-           HotRodServer server, int currentTopologyId) {
+                                                             HotRodServer server, int currentTopologyId) {
       // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
       // endpoint address to the topology cache yet. We delay the topology update until the next client
       // request by returning null here (so the client topology id stays the same).
@@ -204,9 +205,9 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
    }
 
    protected AbstractHashDistAwareResponse createHashDistAwareResp(int topologyId,
-           Map<Address, ServerAddress> serverEndpointsMap, Configuration cfg) {
+                                                                   Map<Address, ServerAddress> serverEndpointsMap, Configuration cfg) {
       return new HashDistAwareResponse(topologyId, serverEndpointsMap, 0, cfg.clustering().hash().numOwners(),
-         Constants.DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE);
+            Constants.DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE);
    }
 
    void writeHashTopologyUpdate(AbstractHashDistAwareResponse h, HotRodServer server, Response r, ByteBuf buffer) {
@@ -230,7 +231,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
          List<Integer> segmentHashIds = extractSegmentEndHashes(keyPartitioner);
          List<KeyValuePair<ServerAddress, Integer>> serverHashes = new ArrayList<>(numSegments);
          for (Map.Entry<Address, ServerAddress> entry : topologyMap.entrySet()) {
-            for (int segmentIdx = 0 ; segmentIdx < numSegments; ++segmentIdx) {
+            for (int segmentIdx = 0; segmentIdx < numSegments; ++segmentIdx) {
                int ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(entry.getKey());
                if (ownerIdx >= 0) {
                   Integer segmentHashId = segmentHashIds.get(segmentIdx);
@@ -244,7 +245,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
          // totalNumServers below should be the # of unique addresses that own at least one segment.
          int totalNumServers = serverHashes.size();
          writeCommonHashTopologyHeader(buffer, h.topologyId, h.numOwners, h.hashFunction,
-            h.hashSpace, totalNumServers);
+               h.hashSpace, totalNumServers);
          for (KeyValuePair<ServerAddress, Integer> serverHash : serverHashes) {
             ExtendedByteBuf.writeString(serverHash.getKey().getHost(), buffer);
             ExtendedByteBuf.writeUnsignedShort(serverHash.getKey().getPort(), buffer);
@@ -307,7 +308,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
    }
 
    protected void writeCommonHashTopologyHeader(ByteBuf buffer, int viewId,
-           int numOwners, byte hashFct, int hashSpace, int numServers) {
+                                                int numOwners, byte hashFct, int hashSpace, int numServers) {
       buffer.writeByte(1); // Topology changed
       ExtendedByteBuf.writeUnsignedInt(viewId, buffer);
       ExtendedByteBuf.writeUnsignedShort(numOwners, buffer); // Num key owners

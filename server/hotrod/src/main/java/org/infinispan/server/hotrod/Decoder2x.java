@@ -1,7 +1,18 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.util.CharsetUtil;
+import java.io.IOException;
+import java.security.PrivilegedActionException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
@@ -22,18 +33,8 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jgroups.SuspectedException;
 
-import java.io.IOException;
-import java.security.PrivilegedActionException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import io.netty.buffer.ByteBuf;
+import io.netty.util.CharsetUtil;
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -49,7 +50,7 @@ class Decoder2x implements VersionedDecoder {
    private static final long EXPIRATION_DEFAULT = -2;
 
    private static final CacheDecodeContext.ExpirationParam DEFAULT_EXPIRATION =
-           new CacheDecodeContext.ExpirationParam(-1, TimeUnitValue.SECONDS);
+         new CacheDecodeContext.ExpirationParam(-1, TimeUnitValue.SECONDS);
 
    @Override
    public boolean readHeader(ByteBuf buffer, byte version, long messageId, HotRodHeader header) throws Exception {
@@ -155,7 +156,7 @@ class Decoder2x implements VersionedDecoder {
                break;
             default:
                throw new HotRodUnknownOperationException(
-                       "Unknown operation: " + streamOp, version, messageId);
+                     "Unknown operation: " + streamOp, version, messageId);
          }
          buffer.markReaderIndex();
       }
@@ -194,7 +195,7 @@ class Decoder2x implements VersionedDecoder {
    }
 
    private static CacheDecodeContext.RequestParameters readParameters(ByteBuf buffer, HotRodHeader header, boolean readExpiration,
-           boolean readSize, boolean readVersion) {
+                                                                      boolean readSize, boolean readVersion) {
       CacheDecodeContext.ExpirationParam param1;
       CacheDecodeContext.ExpirationParam param2;
       long version;
@@ -246,7 +247,7 @@ class Decoder2x implements VersionedDecoder {
    }
 
    private static CacheDecodeContext.ExpirationParam readExpirationParam(boolean pre22Version, boolean useDefault, ByteBuf buffer,
-           byte timeUnit) {
+                                                                         byte timeUnit) {
       if (pre22Version) {
          int duration = ExtendedByteBufJava.readMaybeVInt(buffer);
          if (duration == Integer.MIN_VALUE) {
@@ -303,7 +304,7 @@ class Decoder2x implements VersionedDecoder {
                   case RemoveRequest:
                   case ReplaceIfUnmodifiedRequest:
                      return new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-                             h.clientIntel, op, OperationStatus.SuccessWithPrevious, h.topologyId, Optional.ofNullable(prev));
+                           h.clientIntel, op, OperationStatus.SuccessWithPrevious, h.topologyId, Optional.ofNullable(prev));
                }
                break;
             case OperationNotExecuted:
@@ -312,7 +313,7 @@ class Decoder2x implements VersionedDecoder {
                   case ReplaceIfUnmodifiedRequest:
                   case RemoveIfUnmodifiedRequest:
                      return new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-                             h.clientIntel, op, OperationStatus.NotExecutedWithPrevious, h.topologyId, Optional.ofNullable(prev));
+                           h.clientIntel, op, OperationStatus.NotExecutedWithPrevious, h.topologyId, Optional.ofNullable(prev));
                }
                break;
          }
@@ -325,7 +326,7 @@ class Decoder2x implements VersionedDecoder {
       HotRodOperation op = h.op;
       if (entry != null && op == HotRodOperation.GetRequest)
          return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, OperationResponse.GetResponse,
-                 OperationStatus.Success, h.topologyId, entry.getValue());
+               OperationStatus.Success, h.topologyId, entry.getValue());
       else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
          long version;
          NumericVersion numericVersion = (NumericVersion) entry.getMetadata().version();
@@ -335,15 +336,15 @@ class Decoder2x implements VersionedDecoder {
             version = 0;
          }
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                 OperationResponse.GetWithVersionResponse, OperationStatus.Success, h.topologyId, entry.getValue(),
-                 version);
+               OperationResponse.GetWithVersionResponse, OperationStatus.Success, h.topologyId, entry.getValue(),
+               version);
       } else if (op == HotRodOperation.GetRequest)
          return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-            OperationResponse.GetResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null);
+               OperationResponse.GetResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null);
       else
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-            h.clientIntel, OperationResponse.GetWithVersionResponse, OperationStatus.KeyDoesNotExist,
-            h.topologyId, null, 0);
+               h.clientIntel, OperationResponse.GetWithVersionResponse, OperationStatus.KeyDoesNotExist,
+               h.topologyId, null, 0);
    }
 
    @Override
@@ -351,26 +352,26 @@ class Decoder2x implements VersionedDecoder {
       switch (header.op) {
          case AuthRequest:
             ExtendedByteBuf.readMaybeString(buffer).flatMap(mech ->
-                    ExtendedByteBuf.readMaybeRangedBytes(buffer).map(clientResponse -> {
-                       hrCtx.operationDecodeContext = new KeyValuePair<>(mech, clientResponse);
-                       buffer.markReaderIndex();
-                       out.add(hrCtx);
-                       return null;
-                    }));
+                  ExtendedByteBuf.readMaybeRangedBytes(buffer).map(clientResponse -> {
+                     hrCtx.operationDecodeContext = new KeyValuePair<>(mech, clientResponse);
+                     buffer.markReaderIndex();
+                     out.add(hrCtx);
+                     return null;
+                  }));
             break;
          case ExecRequest:
             ExecRequestContext execCtx = (ExecRequestContext) hrCtx.operationDecodeContext;
             // first time read
             if (execCtx == null) {
                Optional<ExecRequestContext> optional = ExtendedByteBuf.readMaybeString(buffer).flatMap(name ->
-                       ExtendedByteBuf.readMaybeVInt(buffer).map(paramCount -> {
-                          ExecRequestContext ctx = new ExecRequestContext(name, paramCount, new HashMap<>(paramCount));
-                          hrCtx.operationDecodeContext = ctx;
-                          // Mark that we read these
-                          buffer.markReaderIndex();
+                     ExtendedByteBuf.readMaybeVInt(buffer).map(paramCount -> {
+                        ExecRequestContext ctx = new ExecRequestContext(name, paramCount, new HashMap<>(paramCount));
+                        hrCtx.operationDecodeContext = ctx;
+                        // Mark that we read these
+                        buffer.markReaderIndex();
 
-                          return ctx;
-                       }));
+                        return ctx;
+                     }));
                if (optional.isPresent()) {
                   execCtx = optional.get();
                } else {
@@ -384,12 +385,12 @@ class Decoder2x implements VersionedDecoder {
                Map<String, byte[]> map = execCtx.getParams();
                boolean readAll = true;
                while (map.size() < execCtx.getParamSize()) {
-                  if (! ExtendedByteBuf.readMaybeString(buffer).flatMap(key ->
-                          ExtendedByteBuf.readMaybeRangedBytes(buffer).map(value -> {
-                             map.put(key, value);
-                             buffer.markReaderIndex();
-                             return value;
-                          })).isPresent()) {
+                  if (!ExtendedByteBuf.readMaybeString(buffer).flatMap(key ->
+                        ExtendedByteBuf.readMaybeRangedBytes(buffer).map(value -> {
+                           map.put(key, value);
+                           buffer.markReaderIndex();
+                           return value;
+                        })).isPresent()) {
                      readAll = false;
                      break;
                   }
@@ -427,14 +428,14 @@ class Decoder2x implements VersionedDecoder {
             ClientListenerRequestContext requestCtx;
             if (hrCtx.operationDecodeContext == null) {
                Optional<ClientListenerRequestContext> optional = ExtendedByteBuf.readMaybeRangedBytes(buffer).flatMap(listenerId ->
-                       ExtendedByteBuf.readMaybeByte(buffer).map(includeState -> {
-                          ClientListenerRequestContext ctx = new ClientListenerRequestContext(listenerId, includeState == 1);
-                          hrCtx.operationDecodeContext = ctx;
-                          // Mark that we read these
-                          buffer.markReaderIndex();
+                     ExtendedByteBuf.readMaybeByte(buffer).map(includeState -> {
+                        ClientListenerRequestContext ctx = new ClientListenerRequestContext(listenerId, includeState == 1);
+                        hrCtx.operationDecodeContext = ctx;
+                        // Mark that we read these
+                        buffer.markReaderIndex();
 
-                          return ctx;
-                       }));
+                        return ctx;
+                     }));
                if (optional.isPresent()) {
                   requestCtx = optional.get();
                } else {
@@ -444,7 +445,7 @@ class Decoder2x implements VersionedDecoder {
                requestCtx = (ClientListenerRequestContext) hrCtx.operationDecodeContext;
             }
             if (requestCtx.getFilterFactoryInfo() == null) {
-               if (! readMaybeNamedFactory(buffer).map(f -> {
+               if (!readMaybeNamedFactory(buffer).map(f -> {
                   requestCtx.setFilterFactoryInfo(f);
                   buffer.markReaderIndex();
                   return requestCtx;
@@ -452,7 +453,7 @@ class Decoder2x implements VersionedDecoder {
                   return;
                }
             }
-            if (! readMaybeNamedFactory(buffer).map(converter -> {
+            if (!readMaybeNamedFactory(buffer).map(converter -> {
                boolean useRawData;
                if (Constants.isVersion2x(header.version)) {
                   Optional<Byte> rawOptional = ExtendedByteBuf.readMaybeByte(buffer);
@@ -484,46 +485,46 @@ class Decoder2x implements VersionedDecoder {
             break;
          case IterationStartRequest:
             ExtendedByteBuf.readMaybeOptRangedBytes(buffer).flatMap(segments ->
-               ExtendedByteBuf.readMaybeOptString(buffer).map(name -> {
-                  Optional<KeyValuePair<String, List<byte[]>>> factory;
-                  boolean isPre24 = Constants.isVersionPre24(header.version);
-                  if (name.isPresent()) {
-                     if (isPre24) {
-                        factory = Optional.of(new KeyValuePair<>(name.get(), Collections.emptyList()));
+                  ExtendedByteBuf.readMaybeOptString(buffer).map(name -> {
+                     Optional<KeyValuePair<String, List<byte[]>>> factory;
+                     boolean isPre24 = Constants.isVersionPre24(header.version);
+                     if (name.isPresent()) {
+                        if (isPre24) {
+                           factory = Optional.of(new KeyValuePair<>(name.get(), Collections.emptyList()));
+                        } else {
+                           Optional<List<byte[]>> optionalParams = readOptionalParams(buffer);
+                           if (optionalParams.isPresent()) {
+                              factory = Optional.of(new KeyValuePair<>(name.get(), optionalParams.get()));
+                           } else {
+                              return null;
+                           }
+                        }
                      } else {
-                        Optional<List<byte[]>> optionalParams = readOptionalParams(buffer);
-                        if (optionalParams.isPresent()) {
-                           factory = Optional.of(new KeyValuePair<>(name.get(), optionalParams.get()));
+                        factory = Optional.empty();
+                     }
+                     int batchSize;
+                     Optional<Integer> optionalBatchSize = ExtendedByteBuf.readMaybeVInt(buffer);
+                     if (optionalBatchSize.isPresent()) {
+                        batchSize = optionalBatchSize.get();
+                     } else {
+                        return null;
+                     }
+                     boolean metadata;
+                     if (isPre24) {
+                        metadata = false;
+                     } else {
+                        Optional<Byte> optionalMetadata = ExtendedByteBuf.readMaybeByte(buffer);
+                        if (optionalMetadata.isPresent()) {
+                           metadata = optionalMetadata.get() != 0;
                         } else {
                            return null;
                         }
                      }
-                  } else {
-                     factory = Optional.empty();
-                  }
-                  int batchSize;
-                  Optional<Integer> optionalBatchSize = ExtendedByteBuf.readMaybeVInt(buffer);
-                  if (optionalBatchSize.isPresent()) {
-                     batchSize = optionalBatchSize.get();
-                  } else {
+                     hrCtx.operationDecodeContext = new IterationStartRequest(segments, factory, batchSize, metadata);
+                     buffer.markReaderIndex();
+                     out.add(hrCtx);
                      return null;
-                  }
-                  boolean metadata;
-                  if (isPre24) {
-                     metadata = false;
-                  } else {
-                     Optional<Byte> optionalMetadata = ExtendedByteBuf.readMaybeByte(buffer);
-                     if (optionalMetadata.isPresent()) {
-                        metadata = optionalMetadata.get() != 0;
-                     } else {
-                        return null;
-                     }
-                  }
-                  hrCtx.operationDecodeContext = new IterationStartRequest(segments, factory, batchSize, metadata);
-                  buffer.markReaderIndex();
-                  out.add(hrCtx);
-                  return null;
-               }));
+                  }));
          case IterationNextRequest:
          case IterationEndRequest:
             ExtendedByteBuf.readMaybeString(buffer).ifPresent(iterationId -> {
@@ -550,7 +551,7 @@ class Decoder2x implements VersionedDecoder {
             List<byte[]> params = new ArrayList<>();
             boolean readAll = true;
             while (params.size() < p) {
-               if (! ExtendedByteBuf.readMaybeRangedBytes(buffer).map(param -> {
+               if (!ExtendedByteBuf.readMaybeRangedBytes(buffer).map(param -> {
                   params.add(param);
                   buffer.markReaderIndex();
                   return param;
@@ -575,12 +576,12 @@ class Decoder2x implements VersionedDecoder {
          int lifespan = ce.getLifespan() < 0 ? -1 : (int) (ce.getLifespan() / 1000);
          int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) (ce.getMaxIdle() / 1000);
          return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                 OperationResponse.GetWithMetadataResponse, OperationStatus.Success, h.topologyId, v,
-                 entryVersion.getVersion(), ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
+               OperationResponse.GetWithMetadataResponse, OperationStatus.Success, h.topologyId, v,
+               entryVersion.getVersion(), ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
       } else {
          return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                 OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null,
-                 0, -1, -1, -1, -1);
+               OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null,
+               0, -1, -1, -1, -1);
       }
    }
 
@@ -588,22 +589,22 @@ class Decoder2x implements VersionedDecoder {
    public void customReadValue(HotRodHeader header, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out) {
       switch (header.op) {
          case PutAllRequest:
-            int maxLength =  hrCtx.params.valueLength;
+            int maxLength = hrCtx.params.valueLength;
             Map<byte[], byte[]> map;
             if (hrCtx.operationDecodeContext == null) {
-              map = new HashMap<>(maxLength);
-              hrCtx.operationDecodeContext = map;
+               map = new HashMap<>(maxLength);
+               hrCtx.operationDecodeContext = map;
             } else {
                map = (Map<byte[], byte[]>) hrCtx.operationDecodeContext;
             }
             boolean readAll = true;
             while (map.size() < maxLength) {
-               if (! ExtendedByteBuf.readMaybeRangedBytes(buffer).flatMap(key ->
-                       ExtendedByteBuf.readMaybeRangedBytes(buffer).map(value -> {
-                          map.put(key, value);
-                          buffer.markReaderIndex();
-                          return value;
-                       })).isPresent()) {
+               if (!ExtendedByteBuf.readMaybeRangedBytes(buffer).flatMap(key ->
+                     ExtendedByteBuf.readMaybeRangedBytes(buffer).map(value -> {
+                        map.put(key, value);
+                        buffer.markReaderIndex();
+                        return value;
+                     })).isPresent()) {
                   readAll = false;
                   break;
                }
@@ -613,7 +614,7 @@ class Decoder2x implements VersionedDecoder {
             }
             break;
          case GetAllRequest:
-            maxLength =  hrCtx.params.valueLength;
+            maxLength = hrCtx.params.valueLength;
             Set<byte[]> set;
             if (hrCtx.operationDecodeContext == null) {
                set = new HashSet<>(maxLength);
@@ -623,7 +624,7 @@ class Decoder2x implements VersionedDecoder {
             }
             readAll = true;
             while (set.size() < maxLength) {
-               if (! ExtendedByteBuf.readMaybeRangedBytes(buffer).map(bytes -> {
+               if (!ExtendedByteBuf.readMaybeRangedBytes(buffer).map(bytes -> {
                   set.add(bytes);
                   buffer.markReaderIndex();
                   return bytes;
@@ -680,10 +681,10 @@ class Decoder2x implements VersionedDecoder {
          return createIllegalLifecycleStateErrorResponse(h, t);
       } else if (t instanceof IOException) {
          return new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel, OperationStatus.ParseError,
-                 h.topologyId, t.toString());
+               h.topologyId, t.toString());
       } else if (t instanceof TimeoutException) {
          return new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                 OperationStatus.OperationTimedOut, h.topologyId, t.toString());
+               OperationStatus.OperationTimedOut, h.topologyId, t.toString());
       } else if (t instanceof CacheException) {
          // JGroups and remote exceptions (inside RemoteException) can come wrapped up
          Throwable cause = t.getCause();
@@ -700,24 +701,24 @@ class Decoder2x implements VersionedDecoder {
          return createIllegalLifecycleStateErrorResponse(h, t);
       } else if (t instanceof PrivilegedActionException) {
          return createErrorResponse(h, t.getCause());
-      } else  {
+      } else {
          return createServerErrorResponse(h, t);
       }
    }
 
    private ErrorResponse createNodeSuspectedErrorResponse(HotRodHeader h, Throwable t) {
       return new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-         OperationStatus.NodeSuspected, h.topologyId, t.toString());
+            OperationStatus.NodeSuspected, h.topologyId, t.toString());
    }
 
    private ErrorResponse createIllegalLifecycleStateErrorResponse(HotRodHeader h, Throwable t) {
       return new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-         OperationStatus.IllegalLifecycleState, h.topologyId, t.toString());
+            OperationStatus.IllegalLifecycleState, h.topologyId, t.toString());
    }
 
    private ErrorResponse createServerErrorResponse(HotRodHeader h, Throwable t) {
       return new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-         OperationStatus.ServerError, h.topologyId, createErrorMsg(t));
+            OperationStatus.ServerError, h.topologyId, createErrorMsg(t));
    }
 
    String createErrorMsg(Throwable t) {
@@ -751,7 +752,7 @@ class Decoder2x implements VersionedDecoder {
          if (h.op.isNotConditionalAndCanReturnPrevious()) {
             optCache = optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
          }
-      } else if (!isTransactional && h.op.canReturnPreviousValue()){
+      } else if (!isTransactional && h.op.canReturnPreviousValue()) {
          log.warnForceReturnPreviousNonTransactional(h.op.toString());
       }
       return optCache;
@@ -834,7 +835,7 @@ class IterationStartRequest {
    private final boolean metadata;
 
    IterationStartRequest(Optional<byte[]> optionBitSet, Optional<KeyValuePair<String, List<byte[]>>> factory,
-           int batch, boolean metadata) {
+                         int batch, boolean metadata) {
       this.optionBitSet = optionBitSet;
       this.factory = factory;
       this.batch = batch;

@@ -1,7 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import org.jboss.marshalling.util.IntMap;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +40,7 @@ public enum OperationResponse {
    CacheEntryModifiedEventResponse(0x61),
    CacheEntryRemovedEventResponse(0x62),
    CacheEntryExpiredEventResponse(0x63),
-   
+
    // 2.1
    ExecResponse(0x2C),
    PutAllResponse(0x2E),
@@ -78,73 +76,125 @@ public enum OperationResponse {
    public static OperationResponse toResponse(HotRodOperation op) {
       // Go to java so switch case will be optimized properly
       switch (op) {
-         case PutRequest: return OperationResponse.PutResponse;
-         case GetRequest: return OperationResponse.GetResponse;
-         case PutIfAbsentRequest: return OperationResponse.PutIfAbsentResponse;
-         case ReplaceRequest: return OperationResponse.ReplaceResponse;
-         case ReplaceIfUnmodifiedRequest: return OperationResponse.ReplaceIfUnmodifiedResponse;
-         case RemoveRequest: return OperationResponse.RemoveResponse;
-         case RemoveIfUnmodifiedRequest: return OperationResponse.RemoveIfUnmodifiedResponse;
-         case ContainsKeyRequest: return OperationResponse.ContainsKeyResponse;
-         case GetWithVersionRequest: return OperationResponse.GetWithVersionResponse;
-         case ClearRequest: return OperationResponse.ClearResponse;
-         case StatsRequest: return OperationResponse.StatsResponse;
-         case PingRequest: return OperationResponse.PingResponse;
-         case BulkGetRequest: return OperationResponse.BulkGetResponse;
-         case GetWithMetadataRequest: return OperationResponse.GetWithMetadataResponse;
-         case BulkGetKeysRequest: return OperationResponse.BulkGetKeysResponse;
-         case QueryRequest: return OperationResponse.QueryResponse;
-         case AuthMechListRequest: return OperationResponse.AuthMechListResponse;
-         case AuthRequest: return OperationResponse.AuthResponse;
-         case AddClientListenerRequest: return OperationResponse.AddClientListenerResponse;
-         case RemoveClientListenerRequest: return OperationResponse.RemoveClientListenerResponse;
-         case ExecRequest: return OperationResponse.ExecResponse;
-         case PutAllRequest: return OperationResponse.PutAllResponse;
-         case GetAllRequest: return OperationResponse.GetAllResponse;
-         default: throw new IllegalArgumentException("Unsupported operation: " + op);
+         case PutRequest:
+            return OperationResponse.PutResponse;
+         case GetRequest:
+            return OperationResponse.GetResponse;
+         case PutIfAbsentRequest:
+            return OperationResponse.PutIfAbsentResponse;
+         case ReplaceRequest:
+            return OperationResponse.ReplaceResponse;
+         case ReplaceIfUnmodifiedRequest:
+            return OperationResponse.ReplaceIfUnmodifiedResponse;
+         case RemoveRequest:
+            return OperationResponse.RemoveResponse;
+         case RemoveIfUnmodifiedRequest:
+            return OperationResponse.RemoveIfUnmodifiedResponse;
+         case ContainsKeyRequest:
+            return OperationResponse.ContainsKeyResponse;
+         case GetWithVersionRequest:
+            return OperationResponse.GetWithVersionResponse;
+         case ClearRequest:
+            return OperationResponse.ClearResponse;
+         case StatsRequest:
+            return OperationResponse.StatsResponse;
+         case PingRequest:
+            return OperationResponse.PingResponse;
+         case BulkGetRequest:
+            return OperationResponse.BulkGetResponse;
+         case GetWithMetadataRequest:
+            return OperationResponse.GetWithMetadataResponse;
+         case BulkGetKeysRequest:
+            return OperationResponse.BulkGetKeysResponse;
+         case QueryRequest:
+            return OperationResponse.QueryResponse;
+         case AuthMechListRequest:
+            return OperationResponse.AuthMechListResponse;
+         case AuthRequest:
+            return OperationResponse.AuthResponse;
+         case AddClientListenerRequest:
+            return OperationResponse.AddClientListenerResponse;
+         case RemoveClientListenerRequest:
+            return OperationResponse.RemoveClientListenerResponse;
+         case ExecRequest:
+            return OperationResponse.ExecResponse;
+         case PutAllRequest:
+            return OperationResponse.PutAllResponse;
+         case GetAllRequest:
+            return OperationResponse.GetAllResponse;
+         default:
+            throw new IllegalArgumentException("Unsupported operation: " + op);
       }
    }
 
    public static HotRodOperation fromResponse(OperationResponse response) {
 
-      switch(response) {
-         case PutResponse: return HotRodOperation.PutRequest;
-         case GetResponse: return HotRodOperation.GetRequest;
-         case PutIfAbsentResponse: return HotRodOperation.PutIfAbsentRequest;
-         case ReplaceResponse: return HotRodOperation.ReplaceRequest;
-         case ReplaceIfUnmodifiedResponse: return HotRodOperation.ReplaceIfUnmodifiedRequest;
-         case RemoveResponse: return HotRodOperation.RemoveRequest;
-         case RemoveIfUnmodifiedResponse: return HotRodOperation.RemoveIfUnmodifiedRequest;
-         case ContainsKeyResponse: return HotRodOperation.ContainsKeyRequest;
-         case GetWithVersionResponse: return HotRodOperation.GetWithVersionRequest;
-         case ClearResponse: return HotRodOperation.ClearRequest;
-         case StatsResponse: return HotRodOperation.StatsRequest;
-         case PingResponse: return HotRodOperation.PingRequest;
-         case BulkGetResponse: return HotRodOperation.BulkGetRequest;
+      switch (response) {
+         case PutResponse:
+            return HotRodOperation.PutRequest;
+         case GetResponse:
+            return HotRodOperation.GetRequest;
+         case PutIfAbsentResponse:
+            return HotRodOperation.PutIfAbsentRequest;
+         case ReplaceResponse:
+            return HotRodOperation.ReplaceRequest;
+         case ReplaceIfUnmodifiedResponse:
+            return HotRodOperation.ReplaceIfUnmodifiedRequest;
+         case RemoveResponse:
+            return HotRodOperation.RemoveRequest;
+         case RemoveIfUnmodifiedResponse:
+            return HotRodOperation.RemoveIfUnmodifiedRequest;
+         case ContainsKeyResponse:
+            return HotRodOperation.ContainsKeyRequest;
+         case GetWithVersionResponse:
+            return HotRodOperation.GetWithVersionRequest;
+         case ClearResponse:
+            return HotRodOperation.ClearRequest;
+         case StatsResponse:
+            return HotRodOperation.StatsRequest;
+         case PingResponse:
+            return HotRodOperation.PingRequest;
+         case BulkGetResponse:
+            return HotRodOperation.BulkGetRequest;
 
-         case GetWithMetadataResponse: return HotRodOperation.GetWithMetadataRequest;
-         case BulkGetKeysResponse: return HotRodOperation.BulkGetKeysRequest;
+         case GetWithMetadataResponse:
+            return HotRodOperation.GetWithMetadataRequest;
+         case BulkGetKeysResponse:
+            return HotRodOperation.BulkGetKeysRequest;
 
-            // 1.3
-         case QueryResponse: return HotRodOperation.QueryRequest;
+         // 1.3
+         case QueryResponse:
+            return HotRodOperation.QueryRequest;
 
-            // 2.0
-         case AuthMechListResponse: return HotRodOperation.AuthMechListRequest;
-         case AuthResponse: return HotRodOperation.AuthRequest;
-         case AddClientListenerResponse: return HotRodOperation.AddClientListenerRequest;
-         case RemoveClientListenerResponse: return HotRodOperation.RemoveClientListenerRequest;
-         case SizeResponse: return HotRodOperation.SizeRequest;
+         // 2.0
+         case AuthMechListResponse:
+            return HotRodOperation.AuthMechListRequest;
+         case AuthResponse:
+            return HotRodOperation.AuthRequest;
+         case AddClientListenerResponse:
+            return HotRodOperation.AddClientListenerRequest;
+         case RemoveClientListenerResponse:
+            return HotRodOperation.RemoveClientListenerRequest;
+         case SizeResponse:
+            return HotRodOperation.SizeRequest;
 
-            // 2.1;
-         case ExecResponse: return HotRodOperation.ExecRequest;
-         case PutAllResponse: return HotRodOperation.PutAllRequest;
-         case GetAllResponse: return HotRodOperation.GetAllRequest;
+         // 2.1;
+         case ExecResponse:
+            return HotRodOperation.ExecRequest;
+         case PutAllResponse:
+            return HotRodOperation.PutAllRequest;
+         case GetAllResponse:
+            return HotRodOperation.GetAllRequest;
 
-            // 2.3
-         case IterationStartResponse: return HotRodOperation.IterationStartRequest;
-         case IterationNextResponse: return HotRodOperation.IterationNextRequest;
-         case IterationEndResponse: return HotRodOperation.IterationEndRequest;
-         default: throw new IllegalArgumentException("Unsupported response: " + response);
+         // 2.3
+         case IterationStartResponse:
+            return HotRodOperation.IterationStartRequest;
+         case IterationNextResponse:
+            return HotRodOperation.IterationNextRequest;
+         case IterationEndResponse:
+            return HotRodOperation.IterationEndRequest;
+         default:
+            throw new IllegalArgumentException("Unsupported response: " + response);
       }
    }
 }

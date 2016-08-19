@@ -1,5 +1,8 @@
 package org.infinispan.server.hotrod;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
@@ -9,17 +12,14 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.logging.Log;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
- * Listener that detects crashed or stopped members and removes them from
- * the address cache.
+ * Listener that detects crashed or stopped members and removes them from the address cache.
  *
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
+@Listener(sync = false)
+      // Use a separate thread to avoid blocking the view handler thread
 class CrashedMemberDetectorListener {
    private final Cache<Address, ServerAddress> addressCache;
    private final HotRodServer server;

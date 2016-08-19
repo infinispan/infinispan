@@ -1,8 +1,8 @@
 package org.infinispan.server.hotrod;
 
-import org.infinispan.util.KeyValuePair;
-
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.util.KeyValuePair;
 
 /**
  * @author wburns
@@ -31,29 +31,47 @@ public enum TimeUnitValue {
 
    public TimeUnit toTimeUnit() {
       switch (code) {
-         case 0x00: return TimeUnit.SECONDS;
-         case 0x01: return TimeUnit.MILLISECONDS;
-         case 0x02: return TimeUnit.NANOSECONDS;
-         case 0x03: return TimeUnit.MICROSECONDS;
-         case 0x04: return TimeUnit.MINUTES;
-         case 0x05: return TimeUnit.HOURS;
-         case 0x06: return TimeUnit.DAYS;
-         default : throw new IllegalArgumentException("TimeUnit not supported for: " + code);
+         case 0x00:
+            return TimeUnit.SECONDS;
+         case 0x01:
+            return TimeUnit.MILLISECONDS;
+         case 0x02:
+            return TimeUnit.NANOSECONDS;
+         case 0x03:
+            return TimeUnit.MICROSECONDS;
+         case 0x04:
+            return TimeUnit.MINUTES;
+         case 0x05:
+            return TimeUnit.HOURS;
+         case 0x06:
+            return TimeUnit.DAYS;
+         default:
+            throw new IllegalArgumentException("TimeUnit not supported for: " + code);
       }
    }
 
    public static TimeUnitValue decode(byte rightBits) {
       switch (rightBits) {
-         case 0x00: return SECONDS;
-         case 0x01: return MILLISECONDS;
-         case 0x02: return NANOSECONDS;
-         case 0x03: return MICROSECONDS;
-         case 0x04: return MINUTES;
-         case 0x05: return HOURS;
-         case 0x06: return DAYS;
-         case 0x07: return DEFAULT;
-         case 0x08: return INFINITE;
-         default: throw new IllegalArgumentException("Unsupported byte value: " + rightBits);
+         case 0x00:
+            return SECONDS;
+         case 0x01:
+            return MILLISECONDS;
+         case 0x02:
+            return NANOSECONDS;
+         case 0x03:
+            return MICROSECONDS;
+         case 0x04:
+            return MINUTES;
+         case 0x05:
+            return HOURS;
+         case 0x06:
+            return DAYS;
+         case 0x07:
+            return DEFAULT;
+         case 0x08:
+            return INFINITE;
+         default:
+            throw new IllegalArgumentException("Unsupported byte value: " + rightBits);
       }
    }
 

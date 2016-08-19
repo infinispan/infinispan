@@ -1,11 +1,11 @@
 package org.infinispan.server.hotrod.iteration;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.hotrod.OperationStatus;
-
 import java.util.BitSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.hotrod.OperationStatus;
 
 /**
  * @author wburns

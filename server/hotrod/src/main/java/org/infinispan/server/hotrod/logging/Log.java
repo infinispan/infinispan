@@ -1,5 +1,10 @@
 package org.infinispan.server.hotrod.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.util.Set;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -10,14 +15,9 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
-import java.util.Set;
-
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.WARN;
-
 /**
- * Log abstraction for the Hot Rod server module. For this module, message ids
- * ranging from 6001 to 7000 inclusively have been reserved.
+ * Log abstraction for the Hot Rod server module. For this module, message ids ranging from 6001 to 7000 inclusively
+ * have been reserved.
  *
  * @author Galder Zamarreño
  * @since 5.0

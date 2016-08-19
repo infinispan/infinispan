@@ -3,8 +3,6 @@ package org.infinispan.server.hotrod.test;
 import org.infinispan.server.hotrod.OperationResponse;
 import org.infinispan.server.hotrod.OperationStatus;
 
-import java.util.Optional;
-
 /**
  * @author wburns
  * @since 9.0

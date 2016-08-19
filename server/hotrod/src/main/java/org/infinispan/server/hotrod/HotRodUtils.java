@@ -3,9 +3,8 @@ package org.infinispan.server.hotrod;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 
-import static org.infinispan.server.hotrod.OperationResponse.ErrorResponse;
-
-public class HotRodUtils {}
+public class HotRodUtils {
+}
 
 class UnknownVersionException extends StreamCorruptedException {
    final byte version;

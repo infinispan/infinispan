@@ -91,13 +91,13 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
          Collections.addAll(allMechs, ExternalSaslServerFactory.NAMES);
          for (Iterator<SaslServerFactory> factories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true); factories.hasNext(); ) {
             SaslServerFactory factory = factories.next();
-            for(String mech : factory.getMechanismNames(mechProperties)) {
+            for (String mech : factory.getMechanismNames(mechProperties)) {
                allMechs.add(mech);
             }
          }
          if (allowedMechs.isEmpty()) {
             allowedMechs = allMechs;
-         } else if (!allMechs.containsAll(allowedMechs)){
+         } else if (!allMechs.containsAll(allowedMechs)) {
             throw log.invalidAllowedMechs(allowedMechs, allMechs);
          }
          if (serverName == null) {

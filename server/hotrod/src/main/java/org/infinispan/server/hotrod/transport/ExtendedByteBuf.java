@@ -1,15 +1,14 @@
 package org.infinispan.server.hotrod.transport;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.util.CharsetUtil;
+import java.util.Optional;
+
 import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.core.transport.VLong;
-import org.infinispan.util.KeyValuePair;
 
-import java.util.List;
-import java.util.Optional;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.util.CharsetUtil;
 
 public class ExtendedByteBuf {
    public static ByteBuf wrappedBuffer(byte[]... arrays) {
@@ -52,8 +51,7 @@ public class ExtendedByteBuf {
    }
 
    /**
-    * Reads optional range of bytes. Negative lengths are translated to None,
-    * 0 length represents empty Array
+    * Reads optional range of bytes. Negative lengths are translated to None, 0 length represents empty Array
     */
    public static Optional<byte[]> readOptRangedBytes(ByteBuf bf) {
       int length = SignedNumeric.decode(readUnsignedInt(bf));
@@ -61,8 +59,7 @@ public class ExtendedByteBuf {
    }
 
    /**
-    * Reads an optional String. 0 length is an empty string, negative length
-    * is translated to None.
+    * Reads an optional String. 0 length is an empty string, negative length is translated to None.
     */
    public static Optional<String> readOptString(ByteBuf bf) {
       Optional<byte[]> bytes = readOptRangedBytes(bf);
@@ -70,8 +67,8 @@ public class ExtendedByteBuf {
    }
 
    /**
-    * Reads length of String and then returns an UTF-8 formatted String of such length.
-    * If the length is 0, an empty String is returned.
+    * Reads length of String and then returns an UTF-8 formatted String of such length. If the length is 0, an empty
+    * String is returned.
     */
    public static String readString(ByteBuf bf) {
       byte[] bytes = readRangedBytes(bf);
@@ -80,6 +77,7 @@ public class ExtendedByteBuf {
 
    /**
     * Reads a byte if possible.  If not present the reader index is reset to the last mark.
+    *
     * @param bf
     * @return
     */
@@ -103,6 +101,7 @@ public class ExtendedByteBuf {
 
    /**
     * Reads a variable long if possible.  If not present the reader index is reset to the last mark.
+    *
     * @param bf
     * @return
     */
@@ -122,7 +121,7 @@ public class ExtendedByteBuf {
       else {
          if (count > 9)
             throw new IllegalStateException(
-                    "Stream corrupted.  A variable length long cannot be longer than 9 bytes.");
+                  "Stream corrupted.  A variable length long cannot be longer than 9 bytes.");
 
          if (buf.readableBytes() >= 1) {
             byte bb = buf.readByte();
@@ -136,6 +135,7 @@ public class ExtendedByteBuf {
 
    /**
     * Reads a variable size int if possible.  If not present the reader index is reset to the last mark.
+    *
     * @param bf
     * @return
     */
@@ -154,7 +154,7 @@ public class ExtendedByteBuf {
       else {
          if (count > 5)
             throw new IllegalStateException(
-                    "Stream corrupted.  A variable length integer cannot be longer than 5 bytes.");
+                  "Stream corrupted.  A variable length integer cannot be longer than 5 bytes.");
 
          if (buf.readableBytes() >= 1) {
             byte bb = buf.readByte();
@@ -168,6 +168,7 @@ public class ExtendedByteBuf {
 
    /**
     * Reads a range of bytes if possible.  If not present the reader index is reset to the last mark.
+    *
     * @param bf
     * @return
     */
@@ -176,37 +177,37 @@ public class ExtendedByteBuf {
       if (length.isPresent()) {
          int l = length.get();
          if (bf.readableBytes() >= l) {
-           if (l > 0) {
-             byte[] array = new byte[l];
-             bf.readBytes(array);
-             return Optional.of(array);
-           } else {
-             return Optional.of(new byte[0]);
-           }
+            if (l > 0) {
+               byte[] array = new byte[l];
+               bf.readBytes(array);
+               return Optional.of(array);
+            } else {
+               return Optional.of(new byte[0]);
+            }
          } else {
-           bf.resetReaderIndex();
-           return Optional.empty();
+            bf.resetReaderIndex();
+            return Optional.empty();
          }
       } else return Optional.empty();
    }
 
-  public static Optional<byte[]> readMaybeRangedBytes(ByteBuf bf, int length) {
-     if (bf.readableBytes() < length) {
-       bf.resetReaderIndex();
-       return Optional.empty();
-     } else {
-       byte[] bytes = new byte[length];
-       bf.readBytes(bytes);
-       return Optional.of(bytes);
-     }
-  }
+   public static Optional<byte[]> readMaybeRangedBytes(ByteBuf bf, int length) {
+      if (bf.readableBytes() < length) {
+         bf.resetReaderIndex();
+         return Optional.empty();
+      } else {
+         byte[] bytes = new byte[length];
+         bf.readBytes(bytes);
+         return Optional.of(bytes);
+      }
+   }
 
    public static Optional<Integer> readMaybeSignedInt(ByteBuf bf) {
-    return readMaybeVInt(bf).map(SignedNumeric::decode);
-  }
+      return readMaybeVInt(bf).map(SignedNumeric::decode);
+   }
 
    public static Optional<Optional<byte[]>> readMaybeOptRangedBytes(ByteBuf bf) {
-     Optional<Integer> l = readMaybeSignedInt(bf);
+      Optional<Integer> l = readMaybeSignedInt(bf);
       if (l.isPresent()) {
          int length = l.get();
          if (length < 0) {
@@ -222,34 +223,38 @@ public class ExtendedByteBuf {
       } else {
          return Optional.empty();
       }
-  }
+   }
 
-  /**
-   * Reads a string if possible.  If not present the reader index is reset to the last mark.
-   * @param bf
-   * @return
-   */
-  public static Optional<String> readMaybeString(ByteBuf bf) {
-    Optional<byte[]> bytes = readMaybeRangedBytes(bf);
-    return bytes.map(b -> {
-       if (b.length == 0) return ""; else return new String(b, CharsetUtil.UTF_8);
-    });
-  }
+   /**
+    * Reads a string if possible.  If not present the reader index is reset to the last mark.
+    *
+    * @param bf
+    * @return
+    */
+   public static Optional<String> readMaybeString(ByteBuf bf) {
+      Optional<byte[]> bytes = readMaybeRangedBytes(bf);
+      return bytes.map(b -> {
+         if (b.length == 0) return "";
+         else return new String(b, CharsetUtil.UTF_8);
+      });
+   }
 
-  public static Optional<Optional<String>> readMaybeOptString(ByteBuf bf) {
-    return readMaybeOptRangedBytes(bf).map(optionalBytes -> optionalBytes.map(
+   public static Optional<Optional<String>> readMaybeOptString(ByteBuf bf) {
+      return readMaybeOptRangedBytes(bf).map(optionalBytes -> optionalBytes.map(
             bytes -> {
                if (bytes.length == 0) return "";
                else return new String(bytes, CharsetUtil.UTF_8);
             }));
-  }
+   }
 
    public static void writeUnsignedShort(int i, ByteBuf bf) {
       bf.writeShort(i);
    }
+
    public static void writeUnsignedInt(int i, ByteBuf bf) {
       VInt.write(bf, i);
    }
+
    public static void writeUnsignedLong(long l, ByteBuf bf) {
       VLong.write(bf, l);
    }

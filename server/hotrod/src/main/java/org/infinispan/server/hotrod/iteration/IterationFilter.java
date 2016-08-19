@@ -1,5 +1,11 @@
 package org.infinispan.server.hotrod.iteration;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -9,12 +15,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * @author gustavonalle
@@ -31,7 +31,7 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
    protected Marshaller filterMarshaller;
 
    public IterationFilter(boolean compat, Optional<KeyValueFilterConverter<K, V, C>> providedFilter,
-           Optional<Marshaller> marshaller, boolean binary) {
+                          Optional<Marshaller> marshaller, boolean binary) {
       this.compat = compat;
       this.providedFilter = providedFilter;
       this.marshaller = marshaller;
@@ -66,7 +66,7 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
    @Inject
    public void injectDependencies(Cache cache) {
       filterMarshaller = compat ? cache.getCacheConfiguration().compatibility().marshaller() :
-         marshaller.orElse(MarshallerBuilder.genericFromInstance(providedFilter));
+            marshaller.orElse(MarshallerBuilder.genericFromInstance(providedFilter));
       providedFilter.ifPresent(kvfc -> cache.getAdvancedCache().getComponentRegistry().wireDependencies(kvfc));
 
    }
@@ -109,10 +109,10 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
          }
 
          Optional<Class<Marshaller>> marshallerClass = input.readBoolean() ? Optional.of((Class) input.readObject()) :
-                 Optional.empty();
+               Optional.empty();
 
          return new IterationFilter(compat, filter,
-                 Optional.ofNullable(MarshallerBuilder.fromClass(marshallerClass, filter)), binary);
+               Optional.ofNullable(MarshallerBuilder.fromClass(marshallerClass, filter)), binary);
       }
    }
 }

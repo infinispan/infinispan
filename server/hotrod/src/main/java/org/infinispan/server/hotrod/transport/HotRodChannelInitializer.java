@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.transport;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelOutboundHandler;
+import java.util.concurrent.ExecutorService;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyTransport;
@@ -14,21 +14,22 @@ import org.infinispan.server.hotrod.logging.HotRodAccessLoggingHandler;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.logging.LoggingContextHandler;
 
-import java.util.concurrent.ExecutorService;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOutboundHandler;
 
 /**
-  * HotRod specific channel initializer
-  *
-  * @author wburns
-  * @since 9.0
-  */
+ * HotRod specific channel initializer
+ *
+ * @author wburns
+ * @since 9.0
+ */
 public class HotRodChannelInitializer extends NettyChannelInitializer {
    protected final HotRodServer hotRodServer;
    protected final NettyTransport transport;
    protected final ExecutorService executor;
 
    public HotRodChannelInitializer(HotRodServer hotRodServer, NettyTransport transport, ChannelOutboundHandler encoder,
-           ExecutorService executor) {
+                                   ExecutorService executor) {
       super(hotRodServer, transport, encoder);
       this.hotRodServer = hotRodServer;
       this.transport = transport;
@@ -40,7 +41,7 @@ public class HotRodChannelInitializer extends NettyChannelInitializer {
       super.initializeChannel(ch);
 
       AuthenticationHandler authHandler = hotRodServer.getConfiguration().authentication().enabled() ?
-              new AuthenticationHandler(hotRodServer) : null;
+            new AuthenticationHandler(hotRodServer) : null;
       if (authHandler != null) {
          ch.pipeline().addLast("authentication-1", authHandler);
       }

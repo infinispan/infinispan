@@ -1,12 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import java.io.IOException;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
-
-import java.io.IOException;
 
 /**
  * Hot Rod type converter for compatibility mode.

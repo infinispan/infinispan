@@ -1,9 +1,27 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+
+import javax.security.sasl.SaslServerFactory;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -48,34 +66,17 @@ import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 
-import javax.security.sasl.SaslServerFactory;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
- * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
- * on startup and shutdown.
- *
- * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers
- * This should safe some memory for the local case and the code should be cleaner
+ * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information on
+ * startup and shutdown.
+ * <p>
+ * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers This should safe
+ * some memory for the local case and the code should be cleaner
  *
  * @author Galder Zamarreño
  * @since 4.1
@@ -147,7 +148,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory());
       loadFilterConverterFactories(ParamKeyValueFilterConverterFactory.class,
-              (name, f) -> addKeyValueFilterConverterFactory(name, (KeyValueFilterConverterFactory) f));
+            (name, f) -> addKeyValueFilterConverterFactory(name, (KeyValueFilterConverterFactory) f));
       loadFilterConverterFactories(CacheEventFilterConverterFactory.class, this::addCacheEventFilterConverterFactory);
       loadFilterConverterFactories(CacheEventConverterFactory.class, this::addCacheEventConverterFactory);
       loadFilterConverterFactories(KeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);
@@ -183,12 +184,12 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (this.executor == null || this.executor.isShutdown()) {
          DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "ServerHandler");
          this.executor = new ThreadPoolExecutor(
-            getConfiguration().workerThreads(),
-            getConfiguration().workerThreads(),
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            factory,
-            abortPolicy);
+               getConfiguration().workerThreads(),
+               getConfiguration().workerThreads(),
+               0L, TimeUnit.MILLISECONDS,
+               new LinkedBlockingQueue<>(),
+               factory,
+               abortPolicy);
       }
       return executor;
    }
@@ -197,10 +198,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
          return new NettyInitializers(Arrays.asList(new HotRodChannelInitializer(this, transport, getEncoder(),
-                 getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
+               getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
       else // Idle timeout logic is disabled with -1 or 0 values
          return new NettyInitializers(new HotRodChannelInitializer(this, transport, getEncoder(),
-                 getExecutor(getQualifiedName())));
+               getExecutor(getQualifiedName())));
    }
 
    private <T> void loadFilterConverterFactories(Class<T> c, BiConsumer<String, T> biConsumer) {
@@ -248,7 +249,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private void validateCacheConfiguration(Configuration cacheCfg) {
       IsolationLevel isolationLevel = cacheCfg.locking().isolationLevel();
       if ((isolationLevel == IsolationLevel.REPEATABLE_READ || isolationLevel == IsolationLevel.SERIALIZABLE) &&
-              !cacheCfg.locking().writeSkewCheck())
+            !cacheCfg.locking().writeSkewCheck())
          throw log.invalidIsolationLevel(isolationLevel);
    }
 
@@ -268,34 +269,34 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // Guaranteed delivery required since if data is lost, there won't be
       // any further cache calls, so negative acknowledgment can cause issues.
       addressCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
-              .put(clusterAddress, address);
+            .put(clusterAddress, address);
    }
 
    private void defineTopologyCacheConfig(EmbeddedCacheManager cacheManager) {
       InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(configuration.topologyCacheName(),
-          createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration().transport().distributedSyncTimeout()).build(),
-          EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
+            createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration().transport().distributedSyncTimeout()).build(),
+            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
    }
 
    protected ConfigurationBuilder createTopologyCacheConfig(long distSyncTimeout) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout())
-             .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout())
-             .eviction().strategy(EvictionStrategy.NONE)
-             .expiration().lifespan(-1).maxIdle(-1)
-             // Topology cache uses Object based equals/hashCodes
-             .dataContainer()
-                .keyEquivalence(AnyEquivalence.getInstance())
-                .valueEquivalence(AnyEquivalence.getInstance());
+            .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout())
+            .eviction().strategy(EvictionStrategy.NONE)
+            .expiration().lifespan(-1).maxIdle(-1)
+            // Topology cache uses Object based equals/hashCodes
+            .dataContainer()
+            .keyEquivalence(AnyEquivalence.getInstance())
+            .valueEquivalence(AnyEquivalence.getInstance());
 
       if (configuration.topologyStateTransfer()) {
          builder
-            .clustering()
+               .clustering()
                .stateTransfer()
-                  .awaitInitialTransfer(configuration.topologyAwaitInitialTransfer())
-                  .fetchInMemoryState(true)
-                  .timeout(distSyncTimeout + configuration.topologyReplTimeout());
+               .awaitInitialTransfer(configuration.topologyAwaitInitialTransfer())
+               .fetchInMemoryState(true)
+               .timeout(distSyncTimeout + configuration.topologyReplTimeout());
       } else {
          builder.persistence().addClusterLoader().remoteCallTimeout(configuration.topologyReplTimeout());
       }
@@ -366,7 +367,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
    }
 
-   SaslServerFactory  getSaslServerFactory(String mech) {
+   SaslServerFactory getSaslServerFactory(String mech) {
       return saslMechFactories.get(mech);
    }
 
@@ -452,7 +453,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          while (!success && !distributedExecutorService.isShutdown() && addressCache.getStatus().allowInvocations()) {
             try {
                List<CompletableFuture<Boolean>> futures = distributedExecutorService.submitEverywhere(
-                       new CheckAddressTask(clusterAddress));
+                     new CheckAddressTask(clusterAddress));
                // No need for a timeout here, the distributed executor has a default task timeout
                AtomicBoolean result = new AtomicBoolean(true);
                futures.forEach(f -> {

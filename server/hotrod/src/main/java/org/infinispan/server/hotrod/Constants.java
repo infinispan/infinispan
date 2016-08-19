@@ -8,7 +8,8 @@ package org.infinispan.server.hotrod;
  */
 public class Constants {
 
-   private Constants() { }
+   private Constants() {
+   }
 
    static final public short MAGIC_REQ = 0xA0;
    static final public short MAGIC_RES = 0xA1;
@@ -34,28 +35,56 @@ public class Constants {
 
    static final public int DEFAULT_TOPOLOGY_ID = -1;
 
-   static final public boolean isVersion10(byte v) { return v == VERSION_10; }
-   static final public boolean isVersion11(byte v) { return v == VERSION_11; }
-   static final public boolean isVersion12(byte v) { return v == VERSION_12; }
-   static final public boolean isVersion13(byte v) { return v == VERSION_13; }
-   static final public boolean isVersion1x(byte v) { return v >= VERSION_10 && v <= VERSION_13; }
-   static final public boolean isVersion2x(byte v) { return v >= VERSION_20 && v <= VERSION_25; }
-   static final public boolean isVersionKnown(byte v) { return isVersion1x(v) || isVersion2x(v); }
+   static final public boolean isVersion10(byte v) {
+      return v == VERSION_10;
+   }
+
+   static final public boolean isVersion11(byte v) {
+      return v == VERSION_11;
+   }
+
+   static final public boolean isVersion12(byte v) {
+      return v == VERSION_12;
+   }
+
+   static final public boolean isVersion13(byte v) {
+      return v == VERSION_13;
+   }
+
+   static final public boolean isVersion1x(byte v) {
+      return v >= VERSION_10 && v <= VERSION_13;
+   }
+
+   static final public boolean isVersion2x(byte v) {
+      return v >= VERSION_20 && v <= VERSION_25;
+   }
+
+   static final public boolean isVersionKnown(byte v) {
+      return isVersion1x(v) || isVersion2x(v);
+   }
 
    /**
     * Is version previous to, and not including, 2.2?
     */
-   static public boolean isVersionPre22(byte v) { return isVersion1x(v) || v == VERSION_20 || v == VERSION_21; }
+   static public boolean isVersionPre22(byte v) {
+      return isVersion1x(v) || v == VERSION_20 || v == VERSION_21;
+   }
 
    /**
     * Is version previous to, and not including, 2.4?
     */
-   static public boolean isVersionPre24(byte v) { return isVersion1x(v) || (v >= VERSION_20 && v <= VERSION_23); }
+   static public boolean isVersionPre24(byte v) {
+      return isVersion1x(v) || (v >= VERSION_20 && v <= VERSION_23);
+   }
 
    /**
     * Is version previous post, and not including, 2.0?
     */
-   static public boolean isVersionPost20(byte v) { return v >= VERSION_21 && v <= VERSION_25; }
+   static public boolean isVersionPost20(byte v) {
+      return v >= VERSION_21 && v <= VERSION_25;
+   }
 
-   static public boolean isVersionPost24(byte v) { return v > VERSION_24; }
+   static public boolean isVersionPost24(byte v) {
+      return v > VERSION_24;
+   }
 }

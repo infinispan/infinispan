@@ -29,8 +29,7 @@ public enum OperationStatus {
    ServerError(0x85), // todo: test
    OperationTimedOut(0x86), // todo: test
    NodeSuspected(0x87),
-   IllegalLifecycleState(0x88),
-   ;
+   IllegalLifecycleState(0x88),;
 
    private final static Map<Byte, OperationStatus> intMap = new HashMap<>();
 
@@ -57,10 +56,14 @@ public enum OperationStatus {
    static OperationStatus withCompatibility(OperationStatus st, boolean isCompatibilityEnabled) {
       if (isCompatibilityEnabled) {
          switch (st) {
-            case Success: return SuccessCompat;
-            case SuccessWithPrevious: return SuccessWithPreviousCompat;
-            case NotExecutedWithPrevious: return NotExecutedWithPreviousCompat;
-            default: return st;
+            case Success:
+               return SuccessCompat;
+            case SuccessWithPrevious:
+               return SuccessWithPreviousCompat;
+            case NotExecutedWithPrevious:
+               return NotExecutedWithPreviousCompat;
+            default:
+               return st;
          }
       } else return st;
    }

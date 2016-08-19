@@ -46,8 +46,7 @@ public enum HotRodOperation {
 
    // Operations that end after a Custom Value is read
    PutAllRequest(false, false, DecoderRequirements.VALUE_CUSTOM, true),
-   GetAllRequest(false, false, DecoderRequirements.VALUE_CUSTOM, true)
-   ;
+   GetAllRequest(false, false, DecoderRequirements.VALUE_CUSTOM, true);
 
    private final boolean requiresKey;
    private final boolean requiresValue;
@@ -55,7 +54,7 @@ public enum HotRodOperation {
    private final boolean requiresAuthentication;
 
    HotRodOperation(boolean requiresKey, boolean requiresValue, DecoderRequirements decodeRequirements,
-           boolean requiresAuthentication) {
+                   boolean requiresAuthentication) {
       this.requiresKey = requiresKey;
       this.requiresValue = requiresValue;
       this.decodeRequirements = decodeRequirements;
@@ -74,7 +73,9 @@ public enum HotRodOperation {
       return requiresValue;
    }
 
-   boolean requiresAuthentication() { return requiresAuthentication; }
+   boolean requiresAuthentication() {
+      return requiresAuthentication;
+   }
 
    boolean canSkipIndexing() {
       switch (this) {

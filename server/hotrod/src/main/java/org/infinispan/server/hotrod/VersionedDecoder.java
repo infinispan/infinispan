@@ -1,14 +1,14 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
+import java.util.List;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.CacheDecodeContext.RequestParameters;
 
-import java.util.List;
+import io.netty.buffer.ByteBuf;
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -19,8 +19,8 @@ import java.util.List;
 interface VersionedDecoder {
 
    /**
-    * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it. Returns
-    * whether the entire header was read or not.
+    * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it. Returns whether
+    * the entire header was read or not.
     */
    boolean readHeader(ByteBuf buffer, byte version, long messageId, HotRodHeader header) throws Exception;
 
@@ -49,7 +49,7 @@ interface VersionedDecoder {
     */
    Response createGetResponse(HotRodHeader header, CacheEntry<byte[], byte[]> entry);
 
-  /**
+   /**
     * Read operation specific data for an operation that only requires a header
     */
    void customReadHeader(HotRodHeader header, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out);

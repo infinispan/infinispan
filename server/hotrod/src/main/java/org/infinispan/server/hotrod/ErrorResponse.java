@@ -19,14 +19,14 @@ public class ErrorResponse extends Response {
    @Override
    public String toString() {
       return "ErrorResponse{" +
-              "version=" + version +
-              ", messageId=" + messageId +
-              ", cacheName='" + cacheName + '\'' +
-              ", clientIntel=" + clientIntel +
-              ", operation=" + operation +
-              ", status=" + status +
-              ", topologyId=" + topologyId +
-              ", msg=" + msg +
-              '}';
+            "version=" + version +
+            ", messageId=" + messageId +
+            ", cacheName='" + cacheName + '\'' +
+            ", clientIntel=" + clientIntel +
+            ", operation=" + operation +
+            ", status=" + status +
+            ", topologyId=" + topologyId +
+            ", msg=" + msg +
+            '}';
    }
 }

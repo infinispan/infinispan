@@ -20,7 +20,7 @@ public class Op {
    final long id = HotRodClient.idCounter.incrementAndGet();
 
    public Op(int magic, byte version, byte code, String cacheName, byte[] key, int lifespan, int maxIdle, byte[] value,
-           int flags, long dataVersion, byte clientIntel, int topologyId) {
+             int flags, long dataVersion, byte clientIntel, int topologyId) {
       this.magic = magic;
       this.version = version;
       this.code = code;

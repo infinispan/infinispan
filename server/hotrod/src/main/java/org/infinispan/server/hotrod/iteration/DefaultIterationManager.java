@@ -1,5 +1,21 @@
 package org.infinispan.server.hotrod.iteration;
 
+import static org.infinispan.filter.CacheFilters.filterAndConvert;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.infinispan.BaseCacheStream;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
@@ -17,22 +33,6 @@ import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.infinispan.filter.CacheFilters.filterAndConvert;
-
 /**
  * @author gustavonalle
  * @since 8.0
@@ -42,13 +42,12 @@ class IterationSegmentsListener implements BaseCacheStream.SegmentCompletionList
    private Set<Integer> justFinished = new HashSet<>();
 
    Set<Integer> getFinished(boolean endOfIteration) {
-      synchronized(this) {
+      synchronized (this) {
          if (endOfIteration) {
             Set<Integer> segments = new HashSet<>(finished);
             segments.addAll(justFinished);
             return segments;
-         }
-         else {
+         } else {
             Set<Integer> diff = new HashSet<>(finished);
             diff.removeAll(justFinished);
             finished.clear();
@@ -61,7 +60,7 @@ class IterationSegmentsListener implements BaseCacheStream.SegmentCompletionList
    @Override
    public void segmentCompleted(Set<Integer> segments) {
       if (!segments.isEmpty()) {
-         synchronized(this) {
+         synchronized (this) {
             justFinished = segments;
             finished.addAll(segments);
          }
@@ -78,7 +77,7 @@ class IterationState {
    final boolean metadata;
 
    IterationState(IterationSegmentsListener listener, Iterator<CacheEntry<Object, Object>> iterator, CacheStream<CacheEntry<Object, Object>> stream,
-           int batch, CompatInfo compatInfo, boolean metadata) {
+                  int batch, CompatInfo compatInfo, boolean metadata) {
       this.listener = listener;
       this.iterator = iterator;
       this.stream = stream;
@@ -97,9 +96,10 @@ class CompatInfo {
       this.enabled = enabled;
       this.hotRodTypeConverter = hotRodTypeConverter;
    }
+
    static CompatInfo create(CompatibilityModeConfiguration config) {
       return new CompatInfo(config.enabled(), config.enabled() ?
-              Optional.of(new HotRodTypeConverter(config.marshaller())) : Optional.empty());
+            Optional.of(new HotRodTypeConverter(config.marshaller())) : Optional.empty());
    }
 }
 
@@ -112,7 +112,7 @@ public class DefaultIterationManager implements IterationManager {
 
    private final Map<String, IterationState> iterationStateMap = CollectionFactory.makeConcurrentMap();
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =
-           CollectionFactory.makeConcurrentMap();
+         CollectionFactory.makeConcurrentMap();
 
    public DefaultIterationManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
@@ -158,10 +158,10 @@ public class DefaultIterationManager implements IterationManager {
          if (paramFactory.binaryParam()) {
             unmarshallParams = params;
          } else {
-             unmarshallParams = unmarshallParams(params, factory);
+            unmarshallParams = unmarshallParams(params, factory);
          }
          return new KeyValuePair<>(paramFactory.getFilterConverter(unmarshallParams),
-                 paramFactory.binaryParam());
+               paramFactory.binaryParam());
       } else {
          return new KeyValuePair<>(factory.getFilterConverter(), false);
       }
@@ -182,7 +182,6 @@ public class DefaultIterationManager implements IterationManager {
    }
 
 
-
    @Override
    public IterableIterationResult next(String cacheName, String iterationId) {
       IterationState iterationState = iterationStateMap.get(iterationId);
@@ -193,10 +192,10 @@ public class DefaultIterationManager implements IterationManager {
             entries.add(iterationState.iterator.next());
          }
          return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()), OperationStatus.Success,
-                 entries, iterationState.compatInfo, iterationState.metadata);
+               entries, iterationState.compatInfo, iterationState.metadata);
       } else {
          return new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration,
-                 Collections.emptyList(), null, false);
+               Collections.emptyList(), null, false);
       }
    }
 

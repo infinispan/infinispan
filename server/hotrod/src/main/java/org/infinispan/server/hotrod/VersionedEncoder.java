@@ -1,14 +1,14 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.Events.Event;
 
+import io.netty.buffer.ByteBuf;
+
 /**
- * This class represents the work to be done by an encoder of a particular
- * Hot Rod protocol version.
+ * This class represents the work to be done by an encoder of a particular Hot Rod protocol version.
  *
  * @author Galder Zamarreño
  * @since 5.1

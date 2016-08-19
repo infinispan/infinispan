@@ -1,6 +1,13 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.cache.Configuration;
@@ -14,13 +21,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.util.KeyValuePair;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -32,9 +33,9 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
 
    @Override
    protected AbstractHashDistAwareResponse createHashDistAwareResp(int topologyId,
-      Map<Address, ServerAddress> serverEndpointsMap, Configuration cfg) {
+                                                                   Map<Address, ServerAddress> serverEndpointsMap, Configuration cfg) {
       return new HashDistAware11Response(topologyId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
-         Constants.DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE, 1);
+            Constants.DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE, 1);
    }
 
    @Override
@@ -43,7 +44,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
          writeHashTopologyUpdate11((HashDistAware11Response) h, server, r, buffer);
       } else {
          throw new IllegalStateException(
-                 "Expected version 1.1 specific response: " + h);
+               "Expected version 1.1 specific response: " + h);
       }
    }
 
@@ -85,13 +86,13 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
       }
 
       writeCommonHashTopologyHeader(buf, h.topologyId, h.numOwners,
-         h.hashFunction, h.hashSpace, hashIds.size());
+            h.hashFunction, h.hashSpace, hashIds.size());
       ExtendedByteBuf.writeUnsignedInt(1, buf); // Num virtual nodes
 
       for (KeyValuePair<ServerAddress, Integer> serverHash : hashIds) {
          // TODO: why need cast to Object....
          log.tracef("Writing hash id %d for %s:%s", (Object) serverHash.getValue(), serverHash.getKey().getHost(),
-                 serverHash.getKey().getPort());
+               serverHash.getKey().getPort());
          ExtendedByteBuf.writeString(serverHash.getKey().getHost(), buf);
          ExtendedByteBuf.writeUnsignedShort(serverHash.getKey().getPort(), buf);
          buf.writeInt(serverHash.getValue());
@@ -123,7 +124,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
 
       int segmentSize = (int) Math.ceil((double) Integer.MAX_VALUE / numSegments);
       int leeway = (int) (leewayFraction * segmentSize);
-      assert(leeway > 2 * numOwners);
+      assert (leeway > 2 * numOwners);
       Map<Integer, Integer>[] ownerHashes = new Map[numSegments];
       for (int i = 0; i < numSegments; ++i) {
          ownerHashes[i] = new HashMap<>();
@@ -134,22 +135,22 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
          int i = 0;
          int segmentsLeft = numSegments;
          while (segmentsLeft != 0) {
-              int normalizedHash = h.hash(i) & Integer.MAX_VALUE;
-              if (normalizedHash % segmentSize < leeway) {
-                 int nextSegmentIdx = normalizedHash / segmentSize;
-                 int segmentIdx = (nextSegmentIdx - 1 + numSegments) % numSegments;
-                 Map<Integer, Integer> segmentHashes = ownerHashes[segmentIdx];
-                 if (segmentHashes.size() < numOwners) {
-                    segmentHashes.put(normalizedHash, i);
-                    if (segmentHashes.size() == numOwners) {
-                       segmentsLeft -= 1;
-                    }
-                 }
-              }
-              // Allows overflow, if we didn't find all segments in the 0..MAX_VALUE range
-              i += 1;
-           }
-        });
+            int normalizedHash = h.hash(i) & Integer.MAX_VALUE;
+            if (normalizedHash % segmentSize < leeway) {
+               int nextSegmentIdx = normalizedHash / segmentSize;
+               int segmentIdx = (nextSegmentIdx - 1 + numSegments) % numSegments;
+               Map<Integer, Integer> segmentHashes = ownerHashes[segmentIdx];
+               if (segmentHashes.size() < numOwners) {
+                  segmentHashes.put(normalizedHash, i);
+                  if (segmentHashes.size() == numOwners) {
+                     segmentsLeft -= 1;
+                  }
+               }
+            }
+            // Allows overflow, if we didn't find all segments in the 0..MAX_VALUE range
+            i += 1;
+         }
+      });
       log.tracef("Found denormalized hashes: %s", ownerHashes);
 
       List<Integer>[] results = new List[ownerHashes.length];
@@ -158,9 +159,9 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
       int i = 0;
       for (Map<Integer, Integer> ownerHash : ownerHashes) {
          results[i++] = ownerHash.entrySet().stream()
-                 .sorted(Comparator.comparing(Map.Entry::getKey))
-                 .map(Map.Entry::getValue)
-                 .collect(Collectors.toList());
+               .sorted(Comparator.comparing(Map.Entry::getKey))
+               .map(Map.Entry::getValue)
+               .collect(Collectors.toList());
       }
 
       return results;

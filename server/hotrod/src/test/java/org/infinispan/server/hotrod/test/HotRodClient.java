@@ -1,20 +1,36 @@
 package org.infinispan.server.hotrod.test;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.handler.codec.ReplayingDecoder;
-import io.netty.handler.ssl.SslHandler;
+import static org.infinispan.server.hotrod.OperationStatus.NotExecutedWithPrevious;
+import static org.infinispan.server.hotrod.OperationStatus.Success;
+import static org.infinispan.server.hotrod.OperationStatus.SuccessWithPrevious;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedInt;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedShort;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeRangedBytes;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.net.ssl.SSLEngine;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
@@ -33,43 +49,27 @@ import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 
-import javax.net.ssl.SSLEngine;
-import javax.security.sasl.SaslClient;
-import javax.security.sasl.SaslException;
-import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.server.hotrod.OperationStatus.NotExecutedWithPrevious;
-import static org.infinispan.server.hotrod.OperationStatus.Success;
-import static org.infinispan.server.hotrod.OperationStatus.SuccessWithPrevious;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedInt;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedShort;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeRangedBytes;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.handler.ssl.SslHandler;
 
 /**
- * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation.
- * As a result, it might not be very readable, particularly for readers not used to scala.
- *
- * Reasons why this should not really be a trait:
- * Storing var instances in a trait cause issues with TestNG, see:
- *   http://thread.gmane.org/gmane.comp.lang.scala.user/24317
+ * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation. As a result, it
+ * might not be very readable, particularly for readers not used to scala.
+ * <p>
+ * Reasons why this should not really be a trait: Storing var instances in a trait cause issues with TestNG, see:
+ * http://thread.gmane.org/gmane.comp.lang.scala.user/24317
  *
  * @author Galder Zamarreño
  * @author Tristan Tarrant
@@ -91,7 +91,7 @@ public class HotRodClient {
    }
 
    public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion,
-           SSLEngine sslEngine) {
+                       SSLEngine sslEngine) {
       this.host = host;
       this.port = port;
       this.defaultCacheName = defaultCacheName;
@@ -143,10 +143,10 @@ public class HotRodClient {
       boolean isSuccess = status == expected;
       if (resp instanceof TestErrorResponse) {
          assertTrue(String.format("Status should have been '%s' but instead was: '%s', and the error message was: %s",
-                 expected, status, ((TestErrorResponse) resp).msg), isSuccess);
+               expected, status, ((TestErrorResponse) resp).msg), isSuccess);
       } else {
          assertTrue(String.format(
-                 "Status should have been '%s' but instead was: '%s'", expected, status), isSuccess);
+               "Status should have been '%s' but instead was: '%s'", expected, status), isSuccess);
       }
       return isSuccess;
    }
@@ -170,11 +170,11 @@ public class HotRodClient {
    }
 
    public void assertPut(Method m) {
-      assertStatus(put(k(m) , 0, 0, v(m)), Success);
+      assertStatus(put(k(m), 0, 0, v(m)), Success);
    }
 
    public void assertPutFail(Method m) {
-      Op op = new Op(0xA0, protocolVersion, (byte) 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1 , (byte) 0, 0);
+      Op op = new Op(0xA0, protocolVersion, (byte) 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1, (byte) 0, 0);
       idToOp.put(op.id, op);
       ChannelFuture future = ch.writeAndFlush(op);
       future.awaitUninterruptibly();
@@ -182,11 +182,11 @@ public class HotRodClient {
    }
 
    public void assertPut(Method m, String kPrefix, String vPrefix) {
-      assertStatus(put(k(m, kPrefix) , 0, 0, v(m, vPrefix)), Success);
+      assertStatus(put(k(m, kPrefix), 0, 0, v(m, vPrefix)), Success);
    }
 
    public void assertPut(Method m, int lifespan, int maxIdle) {
-      assertStatus(put(k(m) , lifespan, maxIdle, v(m)), Success);
+      assertStatus(put(k(m), lifespan, maxIdle, v(m)), Success);
    }
 
    public TestResponse put(String k, String v) {
@@ -238,26 +238,26 @@ public class HotRodClient {
    }
 
    public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
-               byte[] v, long dataVersion, byte clientIntelligence, int topologyId) {
+                               byte[] v, long dataVersion, byte clientIntelligence, int topologyId) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, dataVersion,
-                      clientIntelligence, topologyId);
+            clientIntelligence, topologyId);
       return execute(op, op.id);
    }
 
    public TestErrorResponse executeExpectBadMagic(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
-                           byte[] v, long version) {
+                                                  byte[] v, long version) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, version, (byte) 1, 0);
       return (TestErrorResponse) execute(op, 0);
    }
 
    public TestErrorResponse executePartial(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
-                      byte[] v, long version) {
+                                           byte[] v, long version) {
       Op op = new PartialOp(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, version, (byte) 1, 0);
       return (TestErrorResponse) execute(op, op.id);
    }
 
    public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
-               byte[] v, long dataVersion, int flags) {
+                               byte[] v, long dataVersion, int flags) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, flags, dataVersion, (byte) 1, 0);
       return execute(op, op.id);
    }
@@ -400,10 +400,10 @@ public class HotRodClient {
    }
 
    public TestResponse addClientListener(TestClientListener listener, boolean includeState,
-           Optional<KeyValuePair<String, List<byte[]>>> filterFactory,
-           Optional<KeyValuePair<String, List<byte[]>>> converterFactory, boolean useRawData) {
+                                         Optional<KeyValuePair<String, List<byte[]>>> filterFactory,
+                                         Optional<KeyValuePair<String, List<byte[]>>> converterFactory, boolean useRawData) {
       AddClientListenerOp op = new AddClientListenerOp(0xA0, protocolVersion, defaultCacheName,
-              (byte) 1, 0, listener.getId(), includeState, filterFactory, converterFactory, useRawData);
+            (byte) 1, 0, listener.getId(), includeState, filterFactory, converterFactory, useRawData);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       handler.addClientListener(listener);
       writeOp(op);
@@ -489,10 +489,10 @@ class Encoder extends MessageToByteEncoder<Object> {
          if (protocolVersion < 20)
             writeRangedBytes(new byte[0], buffer); // transaction id
          if (op.code != 0x13 && op.code != 0x15
-                 && op.code != 0x17 && op.code != 0x19
-                 && op.code != 0x1D && op.code != 0x1F
-                 && op.code != 0x21 && op.code != 0x23
-                 && op.code != 0x29) { // if it's a key based op...
+               && op.code != 0x17 && op.code != 0x19
+               && op.code != 0x1D && op.code != 0x1F
+               && op.code != 0x21 && op.code != 0x23
+               && op.code != 0x29) { // if it's a key based op...
             writeRangedBytes(op.key, buffer); // key length + key
             if (op.value != null) {
                if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -545,7 +545,7 @@ class Encoder extends MessageToByteEncoder<Object> {
       }
    }
 
-   private void writeHeader(Op op,  ByteBuf buffer) {
+   private void writeHeader(Op op, ByteBuf buffer) {
       buffer.writeByte(op.magic); // magic
       writeUnsignedLong(op.id, buffer); // message id
       buffer.writeByte(op.version); // version
@@ -599,7 +599,7 @@ class Decoder extends ReplayingDecoder<Void> {
                topologyChangeResponse = read2xHashDistAwareHeader(buf, topologyId, op);
          } else {
             throw new UnsupportedOperationException(
-               "Client intelligence " + op.clientIntel + " not supported");
+                  "Client intelligence " + op.clientIntel + " not supported");
          }
       } else {
          topologyChangeResponse = null;
@@ -633,16 +633,16 @@ class Decoder extends ReplayingDecoder<Void> {
                int length = readUnsignedInt(buf);
                if (length == 0) {
                   resp = new TestResponseWithPrevious(op.version, id, op.cacheName,
-                     op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.empty());
+                        op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.empty());
                } else {
                   byte[] previous = new byte[length];
                   buf.readBytes(previous);
                   resp = new TestResponseWithPrevious(op.version, id, op.cacheName,
-                     op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.of(previous));
+                        op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.of(previous));
                }
             } else {
                resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel,
-                       opCode, status, op.topologyId, topologyChangeResponse);
+                     opCode, status, op.topologyId, topologyChangeResponse);
             }
             break;
          case ContainsKeyResponse:
@@ -658,34 +658,34 @@ class Decoder extends ReplayingDecoder<Void> {
                long version = buf.readLong();
                Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
                resp = new TestGetWithVersionResponse(op.version, id, op.cacheName,
-                  op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, data, version);
-            } else{
+                     op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, data, version);
+            } else {
                resp = new TestGetWithVersionResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.empty(), 0);
             }
             break;
          case GetWithMetadataResponse:
-             if (status == Success) {
-                long created = -1;
-                int lifespan = -1;
-                long lastUsed = -1;
-                int maxIdle = -1;
-                byte flags = buf.readByte();
-                if ((flags & 0x01) != 0x01) {
-                   created = buf.readLong();
-                   lifespan = readUnsignedInt(buf);
-                }
-                if ((flags & 0x02) != 0x02) {
-                   lastUsed = buf.readLong();
-                   maxIdle = readUnsignedInt(buf);
-                }
-                long version = buf.readLong();
-                Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
-                resp = new TestGetWithMetadataResponse(op.version, id, op.cacheName,
+            if (status == Success) {
+               long created = -1;
+               int lifespan = -1;
+               long lastUsed = -1;
+               int maxIdle = -1;
+               byte flags = buf.readByte();
+               if ((flags & 0x01) != 0x01) {
+                  created = buf.readLong();
+                  lifespan = readUnsignedInt(buf);
+               }
+               if ((flags & 0x02) != 0x02) {
+                  lastUsed = buf.readLong();
+                  maxIdle = readUnsignedInt(buf);
+               }
+               long version = buf.readLong();
+               Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
+               resp = new TestGetWithMetadataResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, data, version,
                      created, lifespan, lastUsed, maxIdle);
-            } else{
-                resp = new TestGetWithMetadataResponse(op.version, id, op.cacheName,
+            } else {
+               resp = new TestGetWithMetadataResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.empty(), 0,
                      -1, -1, -1, -1);
             }
@@ -695,7 +695,7 @@ class Decoder extends ReplayingDecoder<Void> {
                Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
                resp = new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
                      opCode, status, op.topologyId, topologyChangeResponse, data);
-            } else{
+            } else {
                resp = new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
                      opCode, status, op.topologyId, topologyChangeResponse, Optional.empty());
             }
@@ -723,7 +723,7 @@ class Decoder extends ReplayingDecoder<Void> {
          case QueryResponse:
             byte[] result = ExtendedByteBuf.readRangedBytes(buf);
             resp = new TestQueryResponse(op.version, id, op.cacheName, op.clientIntel,
-               op.topologyId, topologyChangeResponse, result);
+                  op.topologyId, topologyChangeResponse, result);
             break;
          case AuthMechListResponse:
             size = readUnsignedInt(buf);
@@ -732,13 +732,13 @@ class Decoder extends ReplayingDecoder<Void> {
                mechs.add(readString(buf));
             }
             resp = new TestAuthMechListResponse(op.version, id, op.cacheName, op.clientIntel,
-               op.topologyId, topologyChangeResponse, mechs);
+                  op.topologyId, topologyChangeResponse, mechs);
             break;
          case AuthResponse: {
             boolean complete = buf.readBoolean();
             byte[] challenge = ExtendedByteBuf.readRangedBytes(buf);
             resp = new TestAuthResponse(op.version, id, op.cacheName, op.clientIntel,
-                    op.topologyId, topologyChangeResponse, complete, challenge);
+                  op.topologyId, topologyChangeResponse, complete, challenge);
             break;
          }
          case CacheEntryCreatedEventResponse:
@@ -750,7 +750,7 @@ class Decoder extends ReplayingDecoder<Void> {
             if (isCustom == 1 || isCustom == 2) {
                byte[] eventData = ExtendedByteBuf.readRangedBytes(buf);
                resp = new TestCustomEvent(client.protocolVersion, id, client.defaultCacheName, opCode, listenerId,
-                       isRetried, eventData);
+                     isRetried, eventData);
             } else {
                byte[] key = ExtendedByteBuf.readRangedBytes(buf);
                if (opCode == OperationResponse.CacheEntryRemovedEventResponse) {
@@ -758,23 +758,23 @@ class Decoder extends ReplayingDecoder<Void> {
                } else {
                   long dataVersion = buf.readLong();
                   resp = new TestKeyWithVersionEvent(client.protocolVersion, id, client.defaultCacheName,
-                          opCode, listenerId, isRetried, key, dataVersion);
+                        opCode, listenerId, isRetried, key, dataVersion);
                }
             }
             break;
          case SizeResponse:
             long lsize = ExtendedByteBuf.readUnsignedLong(buf);
             resp = new TestSizeResponse(op.version, id, op.cacheName, op.clientIntel,
-                    op.topologyId, topologyChangeResponse, lsize);
+                  op.topologyId, topologyChangeResponse, lsize);
             break;
          case ErrorResponse:
             if (op == null)
                resp = new TestErrorResponse((byte) 10, id, "", (short) 0, status, 0,
-                       topologyChangeResponse, readString(buf));
+                     topologyChangeResponse, readString(buf));
             else
                resp = new TestErrorResponse(op.version, id, op.cacheName, op.clientIntel,
-                       status, op.topologyId, topologyChangeResponse, readString(buf));
-                       break;
+                     status, op.topologyId, topologyChangeResponse, readString(buf));
+            break;
          default:
             resp = null;
             break;
@@ -824,16 +824,16 @@ class Decoder extends ReplayingDecoder<Void> {
       int numServersInTopo = readUnsignedInt(buf);
       if (op.version == 10) {
          return read10HashDistAwareHeader(buf, topologyId,
-                 numOwners, hashFunction, hashSpace, numServersInTopo);
+               numOwners, hashFunction, hashSpace, numServersInTopo);
       } else {
          return read11HashDistAwareHeader(buf, topologyId,
-            numOwners, hashFunction, hashSpace, numServersInTopo);
+               numOwners, hashFunction, hashSpace, numServersInTopo);
       }
    }
 
 
    private AbstractTestTopologyAwareResponse read10HashDistAwareHeader(ByteBuf buf, int topologyId,
-            int numOwners, byte hashFunction, int hashSpace, int numServersInTopo) {
+                                                                       int numOwners, byte hashFunction, int hashSpace, int numServersInTopo) {
       // The exact number of topology addresses in the list is unknown
       // until we loop through the entire list and we figure out how
       // hash ids are per HotRod server (i.e. num virtual nodes > 1)
@@ -873,8 +873,8 @@ class Decoder extends ReplayingDecoder<Void> {
 
 
    private AbstractTestTopologyAwareResponse read11HashDistAwareHeader(ByteBuf buf, int topologyId,
-            int numOwners, Byte hashFunction, int hashSpace,
-            int numServersInTopo) {
+                                                                       int numOwners, Byte hashFunction, int hashSpace,
+                                                                       int numServersInTopo) {
       int numVirtualNodes = readUnsignedInt(buf);
       Map<ServerAddress, Integer> hashToAddress = new HashMap<>();
       for (int i = 1; i <= numServersInTopo; ++i) {
@@ -953,7 +953,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
 class PartialOp extends Op {
 
    public PartialOp(int magic, byte version, byte code, String cacheName, byte[] key, int lifespan, int maxIdle,
-           byte[] value, int flags, long dataVersion, byte clientIntel, int topologyId) {
+                    byte[] value, int flags, long dataVersion, byte clientIntel, int topologyId) {
       super(magic, version, code, cacheName, key, lifespan, maxIdle, value, flags, dataVersion, clientIntel, topologyId);
    }
 }
@@ -1009,8 +1009,8 @@ class AddClientListenerOp extends AbstractOp {
    final boolean useRawData;
 
    public AddClientListenerOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
-           byte[] listenerId, boolean includeState, Optional<KeyValuePair<String, List<byte[]>>> filterFactory,
-           Optional<KeyValuePair<String, List<byte[]>>> converterFactory, boolean useRawData) {
+                              byte[] listenerId, boolean includeState, Optional<KeyValuePair<String, List<byte[]>>> filterFactory,
+                              Optional<KeyValuePair<String, List<byte[]>>> converterFactory, boolean useRawData) {
       super(magic, version, (byte) 0x25, cacheName, clientIntel, topologyId);
       this.listenerId = listenerId;
       this.includeState = includeState;
@@ -1024,7 +1024,7 @@ class RemoveClientListenerOp extends AbstractOp {
    final byte[] listenerId;
 
    public RemoveClientListenerOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
-           byte[] listenerId) {
+                                 byte[] listenerId) {
       super(magic, version, (byte) 0x27, cacheName, clientIntel, topologyId);
       this.listenerId = listenerId;
    }
@@ -1041,7 +1041,7 @@ class AuthOp extends AbstractOp {
    final byte[] response;
 
    public AuthOp(int magic, byte version, byte code, String cacheName, byte clientIntel, int topologyId, String mech,
-           byte[] response) {
+                 byte[] response) {
       super(magic, version, code, cacheName, clientIntel, topologyId);
       this.mech = mech;
       this.response = response;
@@ -1078,7 +1078,7 @@ class TestHashDistAware10Response extends AbstractTestTopologyAwareResponse {
    final int hashSpace;
 
    protected TestHashDistAware10Response(int topologyId, Collection<ServerAddress> members, Map<ServerAddress,
-           List<Integer>> hashIds, int numOwners, byte hashFunction, int hashSpace) {
+         List<Integer>> hashIds, int numOwners, byte hashFunction, int hashSpace) {
       super(topologyId, members);
       this.hashIds = hashIds;
       this.numOwners = numOwners;
@@ -1096,7 +1096,7 @@ class TestHashDistAware11Response extends AbstractTestTopologyAwareResponse {
    final int numVirtualNodes;
 
    protected TestHashDistAware11Response(int topologyId, Map<ServerAddress, Integer> membersToHash, int numOwners,
-           byte hashFunction, int hashSpace, int numVirtualNodes) {
+                                         byte hashFunction, int hashSpace, int numVirtualNodes) {
       super(topologyId, membersToHash.keySet());
       this.membersToHash = membersToHash;
       this.numOwners = numOwners;
@@ -1111,7 +1111,7 @@ class TestHashDistAware20Response extends AbstractTestTopologyAwareResponse {
    final byte hashFunction;
 
    protected TestHashDistAware20Response(int topologyId, Collection<ServerAddress> members,
-           List<Iterable<ServerAddress>> segments, byte hashFunction) {
+                                         List<Iterable<ServerAddress>> segments, byte hashFunction) {
       super(topologyId, members);
       this.segments = segments;
       this.hashFunction = hashFunction;

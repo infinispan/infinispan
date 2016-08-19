@@ -1,5 +1,9 @@
 package org.infinispan.server.hotrod;
 
+import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
@@ -8,10 +12,6 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.EmbeddedMetadata.Builder;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.upgrade.SourceMigrator;
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * An implementation of Migrator, that understands the Hot Rod key and value formats.
