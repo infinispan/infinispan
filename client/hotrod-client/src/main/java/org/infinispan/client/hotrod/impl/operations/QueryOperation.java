@@ -10,12 +10,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -59,7 +59,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
       try {
          requestBytes = ProtobufUtil.toByteArray(serCtx, queryRequest);
       } catch (IOException e) {
-         throw new CacheException(e);  //todo [anistor] need better exception handling
+         throw new HotRodClientException(e);
       }
       transport.writeArray(requestBytes);
       transport.flush();
@@ -70,7 +70,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
          QueryResponse queryResponse = ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
          return queryResponse;
       } catch (IOException e) {
-         throw new CacheException(e);  //todo [anistor] need better exception handling
+         throw new HotRodClientException(e);
       }
    }
 
