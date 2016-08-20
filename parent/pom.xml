@@ -127,7 +127,7 @@
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
       <version.hibernate_dep.hibernate-commons-annotations>5.0.1.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
-      <version.hibernate_dep.javaassist>3.20.0-GA</version.hibernate_dep.javaassist>
+      <version.hibernate_dep.javasist>3.20.0-GA</version.hibernate_dep.javasist>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
@@ -183,7 +183,7 @@
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
       <version.org.wildfly.maven-plugin>1.1.0.Alpha5</version.org.wildfly.maven-plugin>
 
-      <version.javassist>3.18.1-GA</version.javassist>
+      <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
       <version.maven.source>3.0.0</version.maven.source>
