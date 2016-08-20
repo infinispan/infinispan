@@ -28,7 +28,7 @@
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
       <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>
-      <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javaassist}</bundle>
+      <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javassist}</bundle>
       <bundle>wrap:mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
       <bundle>wrap:mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
    </feature>
