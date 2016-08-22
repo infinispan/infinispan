@@ -52,7 +52,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
                pw.print("</body></html>")
             })).build
             case MediaType.APPLICATION_XML => Response.ok.`type`(MediaType.APPLICATION_XML).entity(printIt( pw => {
-               pw.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n<keys>")
+               pw.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + System.lineSeparator() + System.lineSeparator() + "<keys>")
                keys.foreach(key => pw.printf("<key>%s</key>", Escaper.escapeXml(key)))
                pw.print("</keys>")
             })).build

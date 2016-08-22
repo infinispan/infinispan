@@ -171,8 +171,8 @@ class IntegrationTest extends RestServerTestBase {
       assertTrue(xml.contains("<key>b</key>"))
 
       val plain = getCollection("text/plain;charset=UTF-8")
-      assertTrue(plain.contains("a\n"))
-      assertTrue(plain.contains("b\n"))
+      assertTrue(plain.contains("a" + System.lineSeparator()))
+      assertTrue(plain.contains("b" + System.lineSeparator()))
 
       val json = getCollection("application/json")
       assertTrue(json.contains("\"a\""))
@@ -196,8 +196,8 @@ class IntegrationTest extends RestServerTestBase {
       assertTrue(xml.contains("<key>b&gt;</key>"))
 
       val plain = getCollection("text/plain;charset=UTF-8")
-      assertTrue(plain.contains("\"a\"\n"))
-      assertTrue(plain.contains("b>\n"))
+      assertTrue(plain.contains("\"a\"" + System.lineSeparator()))
+      assertTrue(plain.contains("b>" + System.lineSeparator()))
 
       val json = getCollection("application/json")
       assertTrue(json.contains("\\\"a\\\""))
