@@ -25,6 +25,9 @@ public interface Encoding<O, I> {
    void encodeString(String s, O out);
    void encodeStringUtf8(String s, O out);
 
+   int encodeEmpty(int num, O out);
+   int encodePosition(O out, int offset);
+
    boolean decodeBoolean(I in);
    byte decodeByte(I in);
    void decodeBytes(byte[] b, int off, int len, I in);
@@ -37,6 +40,8 @@ public interface Encoding<O, I> {
    String decodeString(I in);
    String decodeStringUtf8(I in);
    int decodeUnsignedShort(I in);
+
+   void decodeRewind(I in, int pos);
 
 //   // TODO: Returns Infinispan's ByteBuffer for ease of use, but this should change
 //   // e.g. NIO ByteBuffer? Another abstraction not exposing byte[]?

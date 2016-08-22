@@ -32,7 +32,10 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
@@ -130,7 +133,7 @@ final class InternalExternalizerTable {
    /**
     * Contains mapping of classes to their corresponding externalizer classes via ExternalizerAdapter instances.
     */
-   private final Map<Class<?>, AdvancedExternalizer<?>> writers = new WeakHashMap<>();
+   final Map<Class<?>, AdvancedExternalizer<?>> writers = new WeakHashMap<>();
 
    /**
     * Contains mapping of ids to their corresponding AdvancedExternalizer classes via ExternalizerAdapter instances.
@@ -141,7 +144,7 @@ final class InternalExternalizerTable {
     * and Integer.MAX_INT. To avoid clashes between foreign and internal ids, foreign ids are transformed into negative
     * values to be stored in this map. This way, we avoid the need of a second map to hold user defined externalizers.
     */
-   private final Map<Integer, AdvancedExternalizer<?>> readers = new HashMap<>();
+   final Map<Integer, AdvancedExternalizer<?>> readers = new HashMap<>();
 
    private final GlobalComponentRegistry gcr;
    private final RemoteCommandsFactory cmdFactory;
@@ -349,7 +352,9 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new MarshalledValue.Externalizer(marshaller));
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer());
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataMortalCacheEntry.Externalizer());
       addInternalExternalizer(new MetadataMortalCacheValue.Externalizer());
+      addInternalExternalizer(new MetadataTransientMortalCacheEntry.Externalizer());
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer());
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer());
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
@@ -360,6 +365,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new MortalCacheValue.Externalizer());
       addInternalExternalizer(new MultiClusterEventCallable.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
+      addInternalExternalizer(new NumericVersion.Externalizer());
       addInternalExternalizer(new OptionalExternalizer());
       addInternalExternalizer(new PersistentUUID.Externalizer());
       addInternalExternalizer(new PutOperation.Externalizer());
@@ -455,7 +461,7 @@ final class InternalExternalizerTable {
       return id;
    }
 
-   private int generateForeignReaderIndex(int foreignId) {
+   int generateForeignReaderIndex(int foreignId) {
       return 0x80000000 | foreignId;
    }
 

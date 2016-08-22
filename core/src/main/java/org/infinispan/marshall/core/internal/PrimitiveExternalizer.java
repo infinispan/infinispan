@@ -412,14 +412,18 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
          case ARRAY_EMPTY:
             return new byte[]{};
          case ARRAY_SMALL:
-            return readFully(new byte[in.readByte()], in);
+            return readFully(mkByteArray(in.readUnsignedByte(), SMALL), in);
          case ARRAY_MEDIUM:
-            return readFully(new byte[in.readShort()], in);
+            return readFully(mkByteArray(in.readUnsignedShort(), MEDIUM), in);
          case ARRAY_LARGE:
             return readFully(new byte[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
+   }
+
+   private byte[] mkByteArray(int len, int limit) {
+      return new byte[len == 0 ? limit : len];
    }
 
    private byte[] readFully(byte[] arr, ObjectInput in) throws IOException {

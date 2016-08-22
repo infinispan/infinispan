@@ -126,7 +126,12 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      throw new RuntimeException("NYI");
+      try {
+         return internal.objectToByteBuffer(obj, estimatedSize);
+      } catch (java.io.NotSerializableException nse) {
+         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
+         throw new NotSerializableException(nse.getMessage(), nse.getCause());
+      }
    }
 
    @Override

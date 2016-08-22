@@ -31,6 +31,17 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
       waitForClusterToForm(CACHE_NAME);
    }
 
+   public void testReplicateJBossExternalizePojo(Method m) {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, k(m));
+      doReplicatePojo(m, pojo);
+   }
+
+   @Test(dependsOnMethods = "testReplicateJBossExternalizePojo")
+   public void testReplicateJBossExternalizePojoToNewJoiningNode(Method m) {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(48, k(m));
+      doReplicatePojoToNewJoiningNode(m, pojo);
+   }
+
    public void testReplicateMarshallableByPojo(Method m) {
       PojoWithSerializeWith pojo = new PojoWithSerializeWith(17, k(m));
       doReplicatePojo(m, pojo);

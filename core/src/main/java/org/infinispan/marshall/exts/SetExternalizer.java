@@ -35,12 +35,9 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    public SetExternalizer() {
       numbers.put(HashSet.class, HASH_SET);
       numbers.put(TreeSet.class, TREE_SET);
-<<<<<<< e0d9d9aedaa845b13960d6e1ff94dd2f23d0fae4
-=======
-      numbers.put(ReadOnlySegmentAwareSet.class, HASH_SET);
       numbers.put(getPrivateSingletonSetClass(), SINGLETON_SET);
       numbers.put(getPrivateSynchronizedSetClass(), SYNCHRONIZED_SET);
->>>>>>> ISPN-6906 Internal marshalling working w/ core
+      numbers.put(getPrivateUnmodifiableSetClass(), HASH_SET);
    }
 
    @Override
@@ -89,25 +86,25 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
 
    @Override
    public Set<Class<? extends Set>> getTypeClasses() {
-<<<<<<< e0d9d9aedaa845b13960d6e1ff94dd2f23d0fae4
-      return Util.asSet(HashSet.class, TreeSet.class);
-=======
       return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class,
-         ReadOnlySegmentAwareSet.class, getPrivateSingletonSetClass(),
-         getPrivateSynchronizedSetClass());
+         getPrivateSingletonSetClass(),
+         getPrivateSynchronizedSetClass(), getPrivateUnmodifiableSetClass());
    }
 
-   public Class<Set> getPrivateSingletonSetClass() {
+   public static Class<Set> getPrivateSingletonSetClass() {
       return getSetClass("java.util.Collections$SingletonSet");
    }
 
-   public Class<Set> getPrivateSynchronizedSetClass() {
+   public static Class<Set> getPrivateSynchronizedSetClass() {
       return getSetClass("java.util.Collections$SynchronizedSet");
+   }
+
+   private static Class<Set> getPrivateUnmodifiableSetClass() {
+      return getSetClass("java.util.Collections$UnmodifiableSet");
    }
 
    private static Class<Set> getSetClass(String className) {
       return Util.<Set>loadClass(className, Set.class.getClassLoader());
->>>>>>> ISPN-6906 Internal marshalling working w/ core
    }
 
 }

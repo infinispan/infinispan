@@ -105,15 +105,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    }
 
    private void marshallParameters(CacheRpcCommand cmd, StreamingMarshaller marshaller, ObjectOutput oo) throws IOException {
-      // TODO: Is all this really needed? Why not write in given ObjectOutput directly?
-      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
-      int estimatedSize = sizePredictor.nextSize(cmd);
-      ObjectOutput paramsOutput = marshaller.startObjectOutput(convertObjectOutput(oo), true, estimatedSize);
-      try {
-         cmdExt.writeCommandParameters(paramsOutput, cmd);
-      } finally {
-         marshaller.finishObjectOutput(paramsOutput);
-      }
+      cmdExt.writeCommandParameters(oo, cmd);
    }
 
    @Override
