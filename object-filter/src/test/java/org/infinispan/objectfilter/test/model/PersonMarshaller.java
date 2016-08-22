@@ -23,7 +23,7 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       person.setAge(reader.readInt("age"));
       person.setFavouriteNumbers(reader.readCollection("favouriteNumbers", new ArrayList<>(), Integer.class));
       person.setLicense(reader.readString("license"));
-      person.setGender(reader.readObject("gender", Person.Gender.class));
+      person.setGender(reader.readEnum("gender", Person.Gender.class));
       person.setLastUpdate(new Date(reader.readLong("lastUpdate")));
       person.setDeleted(reader.readBoolean("deleted"));
       return person;
@@ -39,7 +39,7 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       writer.writeInt("age", person.getAge());
       writer.writeCollection("favouriteNumbers", person.getFavouriteNumbers(), Integer.class);
       writer.writeString("license", person.getLicense());
-      writer.writeObject("gender", person.getGender(), Person.Gender.class);
+      writer.writeEnum("gender", person.getGender(), Person.Gender.class);
       if (person.getLastUpdate() != null) {
          writer.writeLong("lastUpdate", person.getLastUpdate().getTime());
       }

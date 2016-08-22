@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import java.time.Instant;
 import java.util.Date;
 
 import org.infinispan.protostream.EnumMarshaller;
@@ -29,5 +30,10 @@ class RemoteQueryStringCreator extends QueryStringCreator {
    @Override
    protected String renderDate(Date argument) {
       return Long.toString(argument.getTime());
+   }
+
+   @Override
+   protected String renderInstant(Instant argument) {
+      return Long.toString(argument.toEpochMilli());
    }
 }

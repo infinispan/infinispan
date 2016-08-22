@@ -3,9 +3,12 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -22,9 +25,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
@@ -107,6 +112,12 @@ public class RemoteQueryStringTest extends QueryStringTest {
       return builder;
    }
 
+   @AfterClass(alwaysRun = true)
+   public void release() {
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotRodServer);
+   }
+
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
    @Override
    public void testFullTextWildcardFuzzyNotAllowed() throws Exception {
@@ -119,23 +130,45 @@ public class RemoteQueryStringTest extends QueryStringTest {
       super.testFullTextRegexpFuzzyNotAllowed();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*property is analyzed.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028522: .*property is analyzed.*")
    @Override
    public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
       // exception is wrapped in HotRodClientException
       super.testExactMatchOnAnalyzedFieldNotAllowed();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*unless the property is indexed and analyzed.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: .*unless the property is indexed and analyzed.*")
    @Override
    public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
       // exception is wrapped in HotRodClientException
       super.testFullTextTermOnNonAnalyzedFieldNotAllowed();
    }
 
-   @AfterClass(alwaysRun = true)
-   public void release() {
-      killRemoteCacheManager(remoteCacheManager);
-      killServers(hotRodServer);
+   /**
+    * This test is overridden because instants need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testInstant1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   /**
+    * This test is overridden because instants need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testInstant2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
    }
 }
