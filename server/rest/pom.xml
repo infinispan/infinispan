@@ -16,27 +16,7 @@
    </description>
 
    <build>
-      <sourceDirectory>src/main/scala</sourceDirectory>
-      <testSourceDirectory>src/test/scala</testSourceDirectory>
-
       <plugins>
-         <plugin>
-            <groupId>org.scala-tools</groupId>
-            <artifactId>maven-scala-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>compile</id>
-                  <phase>compile</phase>
-               </execution>
-               <execution>
-                  <id>test-compile</id>
-                  <phase>test-compile</phase>
-               </execution>
-               <execution>
-                  <phase>process-resources</phase>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
@@ -77,11 +57,6 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>infinispan-server-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.scala-lang.modules</groupId>
-         <artifactId>scala-xml_${version.scala.major}</artifactId>
       </dependency>
 
       <dependency>

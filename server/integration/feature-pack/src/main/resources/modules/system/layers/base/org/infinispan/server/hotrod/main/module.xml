@@ -24,7 +24,6 @@
       <module name="org.jboss.marshalling" services="import"/>
       <module name="org.jboss.sasl" services="import" />
       <module name="io.netty" />
-      <module name="org.scala-lang.library" />
       <module name="org.jgroups" />
    </dependencies>
 </module>
