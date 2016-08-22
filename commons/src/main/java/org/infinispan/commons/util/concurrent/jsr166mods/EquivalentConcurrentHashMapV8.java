@@ -6,7 +6,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
 import java.io.ObjectStreamField;
 import java.io.Serializable;

@@ -1,8 +1,3 @@
-// Added for reference, to make it easier to port over changes and to make it
-// easy to verify when a test fails, whether the problem is also present in
-// the original CHMv8 implementation, or whether it's a problem with the
-// customizations added in the equivalent version.
-
 // Revision 1.120
 
 /*
@@ -10,31 +5,65 @@
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+/*
+ * Modified for https://issues.jboss.org/browse/ISPN-3023
+ * Includes ideas described in http://portal.acm.org/citation.cfm?id=1547428
+ *
+ */
 
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
+
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 
 import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.Function;
+import java.util.function.IntBinaryOperator;
+import java.util.function.LongBinaryOperator;
+import java.util.function.ToDoubleBiFunction;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntBiFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongBiFunction;
+import java.util.function.ToLongFunction;
+
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.PeekableMap;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.commons.util.concurrent.jsr166mods.StrippedConcurrentLinkedDeque.DequeNode;
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -91,8 +120,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * hash table. To ameliorate impact, when keys are {@link Comparable},
  * this class may use comparison order among keys to help break ties.
  *
- * <p>A {@link Set} projection of a ConcurrentHashMapV8 may be created
- * (using {@link #newKeySet()} or {@link #newKeySet(int)}), or viewed
+ * <p>A {@link Set} projection of a EquivalentConcurrentHashMapV8 may be created
+ * (using {@link #newKeySet(int, Equivalence)} or {@link #newKeySet(int, int, Equivalence)}), or viewed
  * (using {@link #keySet(Object)} when only keys are of interest, and the
  * mapped values are (perhaps transiently) not used or all take the
  * same mapping value.
@@ -111,7 +140,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * computing a snapshot summary of the values in a shared registry.
  * There are three kinds of operation, each with four forms, accepting
  * functions with Keys, Values, Entries, and (Key, Value) arguments
- * and/or return values. Because the elements of a ConcurrentHashMapV8
+ * and/or return values. Because the elements of a EquivalentConcurrentHashMapV8
  * are not ordered in any particular way, and may be processed in
  * different orders in different parallel executions, the correctness
  * of supplied functions should not depend on any ordering, or on any
@@ -161,7 +190,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * values that trade off overhead versus throughput.
  *
  * <p>The concurrency properties of bulk operations follow
- * from those of ConcurrentHashMapV8: Any non-null result returned
+ * from those of EquivalentConcurrentHashMapV8: Any non-null result returned
  * from {@code get(key)} and related access methods bears a
  * happens-before relation with the associated insertion or
  * update.  The result of any bulk operation reflects the
@@ -220,14 +249,1385 @@ import java.util.concurrent.locks.ReentrantLock;
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
+ * <b>NOTE</b>: This map has been tweaked so that equality and hash code
+ * calculations are done based on a passed {@link org.infinispan.commons.equivalence.Equivalence} function
+ * implementation for keys and values, as opposed to relying on their own
+ * equals/hashCode/toString implementations. This is handy when using
+ * key/values whose mentioned methods cannot be overriden, i.e. arrays,
+ * and in situations where users want to avoid using wrapper objects.
+ * To help with future revisions of this class, changes other than
+ * constructor changes have been marked with 'EQUIVALENCE_MOD' comment.
+ *
  * @since 1.5
  * @author Doug Lea
+ * @author Galder Zamarreño
+ * @author William Burns
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
-      implements ConcurrentMap<K,V>, Serializable {
+public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
+      implements ConcurrentMap<K,V>, PeekableMap<K, V>, Serializable, ParallelIterableMap<K, V> {
    private static final long serialVersionUID = 7249069246763182397L;
+
+   static final Object NULL_VALUE = new Object();
+   static final Log log = LogFactory.getLog(BoundedEquivalentConcurrentHashMapV8.class);
+
+   // EVICTION STUFF
+
+   public static <K, V> EvictionListener<K, V> getNullEvictionListener() {
+      return new NullEvictionListener<>();
+   }
+
+   public interface EvictionListener<K, V> {
+
+      void onEntryEviction(Map<K, V> evicted);
+
+      void onEntryChosenForEviction(Entry<K, V> entry);
+
+      void onEntryActivated(Object key);
+
+      void onEntryRemoved(Entry<K, V> entry);
+   }
+
+   static long roundUpToNearest8(long size) {
+      return (size + 7) & ~0x7;
+   }
+
+   public static final class NodeSizeCalculatorWrapper<K, V> extends AbstractEntrySizeCalculatorHelper<K, V> {
+      private final EntrySizeCalculator<? super K, ? super V> calculator;
+      private final long nodeAverageSize;
+
+      public NodeSizeCalculatorWrapper(EntrySizeCalculator<? super K, ? super V> calculator) {
+         this.calculator = calculator;
+         // The node itself is an object and has a reference to its class
+         long calculateNodeAverageSize = OBJECT_SIZE + POINTER_SIZE;
+         // 6 variables in Node, 5 object references
+         calculateNodeAverageSize += 5 * POINTER_SIZE;
+         // 1: the int for the hash
+         calculateNodeAverageSize += 4;
+         // 2: Key actual size is ignored - defined by user
+         // 3: NodeEquivalence is ignored as it is shared between all of the nodes
+         // 4: Value actual size is ignored - defined by user
+         // 5: We have a reference to another node so it is ignored
+         // 6: EvictionEntry currently we only support LRU, so assume that node
+         long lruNodeSize = calculateLRUNodeSize();
+         nodeAverageSize = roundUpToNearest8(calculateNodeAverageSize) + lruNodeSize;
+      }
+
+      private long calculateLRUNodeSize() {
+         // The lru node itself is an object and has a reference to its class
+         long size = OBJECT_SIZE + POINTER_SIZE;
+         // LRUNode has 2 object references in it and 1 boolean
+         size += 2 * POINTER_SIZE;
+         // 1: LRUNode has a pointer back to an internal node, so nothing is added
+         // 2: LRUNode has a DequeNode
+         long dequeNodeSize = calculateDequeNodeSize();
+         // 3: LRUNode has a boolean
+         size += 1;
+         return roundUpToNearest8(size) + dequeNodeSize;
+      }
+
+      private long calculateDequeNodeSize() {
+         // Deque node itself is object and has a reference to its class
+         long size = OBJECT_SIZE + POINTER_SIZE;
+         // Deque node has 3 references in it
+         size += 3 * POINTER_SIZE;
+         // 2 of the references are other deque nodes (ignored) and the other is pointing
+         // back to the node itself (ignored)
+         return roundUpToNearest8(size);
+      }
+
+      @Override
+      public long calculateSize(K key, V value) {
+         long result = calculator.calculateSize(key, value) + nodeAverageSize;
+         if (result < 0) {
+            throw new ArithmeticException("Size overflow!");
+         }
+         return result;
+      }
+   }
+
+   private static final class SingleEntrySizeCalculator implements EntrySizeCalculator<Object, Object> {
+      private final static SingleEntrySizeCalculator SINGLETON = new SingleEntrySizeCalculator();
+      @Override
+      public long calculateSize(Object key, Object value) {
+         return 1;
+      }
+   }
+
+   // We need the suppress warnings because Java doesn't do wildcard types well in another
+   // type so we can't pass our map with types properly
+   @SuppressWarnings({ "rawtypes", "unchecked" })
+   private void notifyEvictionListener(Collection<Node<K, V>> evicted) {
+      // piggyback listener invocation on callers thread outside lock
+      if (evicted != null && !evicted.isEmpty()) {
+         Map evictedCopy;
+         if (evicted.size() == 1) {
+            Node<K, V> evictedEntry = evicted.iterator().next();
+            evictedCopy = singletonMap(evictedEntry.key, evictedEntry.val);
+         } else {
+            evictedCopy = new HashMap<K, V>(evicted.size());
+            for (Node<K, V> he : evicted) {
+               evictedCopy.put(he.key, he.val);
+            }
+            evictedCopy = unmodifiableMap(evictedCopy);
+         }
+         evictionListener.onEntryEviction(evictedCopy);
+      }
+   }
+
+   static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
+      @Override
+      public void onEntryEviction(Map<K, V> evicted) {
+         // Do nothing.
+      }
+      @Override
+      public void onEntryChosenForEviction(Entry<K, V> entry) {
+         // Do nothing.
+      }
+      @Override
+      public void onEntryActivated(Object key) {
+         // Do nothing.
+      }
+      @Override
+      public void onEntryRemoved(Entry<K, V> entry) {
+         // Do nothing.
+      }
+   }
+
+   public interface EvictionPolicy<K, V> {
+
+      Node<K,V> createNewEntry(K key, int hash, Node<K,V> next, V value,
+            EvictionEntry<K, V> evictionEntry);
+
+      TreeNode<K,V> createNewEntry(K key, int hash, TreeNode<K,V> next,
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry);
+
+      /**
+       * Invoked to notify EvictionPolicy implementation that there has been an attempt to access
+       * an entry in Segment, however that entry was not present in Segment.
+       * <p>
+       * Note that this method is always invoked holding a lock on the table and only
+       * is raised when a write operation occurs where there wasn't a previous value
+       *
+       * @param e
+       *            accessed entry in Segment
+       */
+      void onEntryMiss(Node<K,V> e, V value);
+
+      /**
+       * Invoked to notify EvictionPolicy implementation that an entry in Segment has been
+       * accessed.
+       * <p>
+       * Note that this method is invoked without the lock protecting the entry and is raised
+       * when there was found to be a value but it could be changed since we don't
+       * hold the lock
+       *
+       * @param e
+       *            accessed entry in Segment
+       */
+      void onEntryHitRead(Node<K, V> e, V value);
+
+      /**
+       * Invoked to notify EvictionPolicy implementation that an entry in Segment has been
+       * accessed.
+       * <p>
+       * Note that this method is invoked with the lock protecting the entry and is raised
+       * when there is a previous value
+       *
+       * @param e
+       *            accessed entry in Segment
+       */
+      void onEntryHitWrite(Node<K, V> e, V value);
+
+      /**
+       * Invoked to notify EvictionPolicy implementation that an entry e has been removed from
+       * Segment.
+       * <p>
+       * The lock will for sure be held when this invoked
+       *
+       * @param e
+       *            removed entry in Segment
+       */
+      void onEntryRemove(Node<K, V> e);
+
+      /**
+       * This should be invoked after an operation that would cause an element to be added
+       * to the map to make sure that no elements need evicting.
+       * <p>
+       * Note this is also invoked after a read hit.
+       * <p>
+       * This method is never invoked while holding a lock on any segment
+       *
+       * @return the nodes that were evicted
+       */
+      Collection<Node<K, V>> findIfEntriesNeedEvicting();
+
+      void onResize(long oldSize, long newSize);
+
+      /**
+       * Invoked when resizing the container.
+       *
+       * @param newSize New Size applied to the container.
+       */
+      void resize(long newSize);
+   }
+
+   static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
+      private final NodeEquivalence<K, V> nodeEq;
+
+      public NullEvictionPolicy(NodeEquivalence<K, V> nodeEq) {
+         this.nodeEq = nodeEq;
+      }
+
+      @Override
+      public void onEntryMiss(Node<K, V> e, V value) {
+         // Do nothing.
+      }
+
+      @Override
+      public void onEntryRemove(Node<K, V> e) {
+         // Do nothing.
+      }
+
+      @Override
+      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
+            EvictionEntry<K, V> evictionEntry) {
+         // No eviction passed in
+         return new Node<K, V>(hash, nodeEq, key, value, next);
+      }
+
+      @Override
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
+         return new TreeNode<>(hash, nodeEq, key, value, next, parent, evictionEntry);
+      }
+
+      @Override
+      public Set<Node<K, V>> findIfEntriesNeedEvicting() {
+         return Collections.emptySet();
+      }
+
+      @Override
+      public void onEntryHitRead(Node<K, V> e, V value) {
+         // Do nothing.
+      }
+
+      @Override
+      public void onEntryHitWrite(Node<K, V> e, V value) {
+         // Do nothing.
+      }
+
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         // Do nothing.
+      }
+
+      @Override
+      public void resize(long newSize) {
+         // Do nothing.
+      }
+   }
+
+   static class LRUNode<K, V> implements EvictionEntry<K, V> {
+
+      private final Node<K, V> attachedNode;
+      DequeNode<Node<K, V>> queueNode;
+      boolean removed;
+
+      public LRUNode(Node<K, V> item) {
+         this.attachedNode = item;
+      }
+
+      @Override
+      public K getKey() {
+         return attachedNode.key;
+      }
+   }
+
+   static class LRUEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
+      final BoundedEquivalentConcurrentHashMapV8<K, V> map;
+      final StrippedConcurrentLinkedDeque<Node<K, V>> deque =
+            new StrippedConcurrentLinkedDeque<Node<K,V>>();
+      volatile long maxSize;
+      final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
+            new SizeAndEvicting(0, 0));
+      final EntrySizeCalculator<? super K, ? super V> sizeCalculator;
+      final boolean countingMemory;
+
+      static final long NODE_ARRAY_BASE_OFFSET = Unsafe.getUnsafe().arrayBaseOffset(Node[].class);
+      static final long NODE_ARRAY_OFFSET = Unsafe.getUnsafe().arrayIndexScale(Node[].class);
+
+      public LRUEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize,
+            EntrySizeCalculator<? super K, ? super V> sizeCalculator, boolean countingMemory) {
+         this.map = map;
+         this.maxSize = maxSize;
+         this.sizeCalculator = sizeCalculator;
+         this.countingMemory = countingMemory;
+         if (countingMemory) {
+            sun.misc.Unsafe unsafe = Unsafe.getUnsafe();
+            // We add the memory usage this eviction policy
+            long evictionPolicySize = unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+            // we have 4 object references
+            evictionPolicySize += unsafe.ARRAY_OBJECT_INDEX_SCALE * 4;
+            // and a long and a boolean
+            evictionPolicySize += 8 + 1;
+
+            // We do a very slim approximation of how much the map itself takes up in
+            // space irrespective of the elements
+            long mapSize = unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+            // There are 2 array references to nodes
+            mapSize += NODE_ARRAY_BASE_OFFSET * 2;
+            // There is are 2 longs and 3 ints
+            mapSize += 8 * 2 + 4 * 3;
+            // Counter cell array
+            mapSize += unsafe.arrayBaseOffset(CounterCell[].class);
+            // there are 8 references to other objects in the map
+            mapSize += unsafe.ADDRESS_SIZE * 8;
+            incrementSizeEviction(currentSize, roundUpToNearest8(evictionPolicySize) +
+                  roundUpToNearest8(mapSize), 0);
+         }
+      }
+
+      @Override
+      public void onEntryHitRead(Node<K, V> e, V value) {
+         LRUNode<K, V> eviction = (LRUNode<K, V>) e.eviction;
+         // We synchronize in case if multiple threads are hitting this entry at the same
+         // time so we don't link it last twice
+         synchronized (eviction) {
+            // If the queue node is null it means we just added this value
+            // (but onEntryMiss hasn't ran)
+            if (eviction.queueNode != null && !eviction.removed) {
+               Node<K, V> oldItem = eviction.queueNode.item;
+               // Now set the item to null if possible - if we couldn't that means
+               // that the entry was removed from the queue concurrently - let that win
+               if (oldItem != null && eviction.queueNode.casItem(oldItem, null)) {
+                  // this doesn't get unlinked if it was a tail of head here
+                  deque.unlink(eviction.queueNode);
+
+                  DequeNode<Node<K, V>> queueNode = new DequeNode<>(e);
+                  eviction.queueNode = queueNode;
+                  deque.linkLast(queueNode);
+               }
+            }
+         }
+      }
+
+      @Override
+      public void onEntryHitWrite(BoundedEquivalentConcurrentHashMapV8.Node<K,V> e, V value) {
+         onEntryHitRead(e, value);
+      }
+
+      @Override
+      public void onEntryMiss(Node<K, V> e, V value) {
+         LRUNode<K, V> eviction = (LRUNode<K, V>) e.eviction;
+         synchronized (eviction) {
+            if (!eviction.removed) {
+               // increment size here
+               DequeNode<Node<K, V>> queueNode = new DequeNode<>(e);
+               eviction.queueNode = queueNode;
+               deque.linkLast(queueNode);
+               incrementSizeEviction(currentSize, sizeCalculator.calculateSize(e.key, value), 0);
+            }
+         }
+      }
+
+      @Override
+      public void onEntryRemove(Node<K, V> e) {
+         LRUNode<K, V> eviction = (LRUNode<K, V>) e.eviction;
+         synchronized (eviction) {
+            if (eviction.queueNode != null) {
+               Node<K, V> item = eviction.queueNode.item;
+               if (item != null && eviction.queueNode.casItem(item, null)) {
+                  deque.unlink(eviction.queueNode);
+               }
+               eviction.queueNode = null;
+            }
+            // This is just in case if there are concurrent removes for the same key
+            if (!eviction.removed) {
+               eviction.removed = true;
+               incrementSizeEviction(currentSize, -sizeCalculator.calculateSize(e.key, e.val), 0);
+            }
+         }
+      }
+
+      @Override
+      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
+            EvictionEntry<K, V> evictionEntry) {
+         Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
+         if (evictionEntry == null) {
+            node.lazySetEviction(new LRUNode<>(node));
+         } else {
+            node.lazySetEviction(evictionEntry);
+         }
+         return node;
+      }
+
+      @Override
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
+         TreeNode<K, V> treeNode;
+         if (evictionEntry == null) {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
+            treeNode.lazySetEviction(new LRUNode<>(treeNode));
+         } else {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent,
+                  evictionEntry);
+         }
+         return treeNode;
+      }
+
+      @Override
+      public Collection<Node<K, V>> findIfEntriesNeedEvicting() {
+
+         long extra;
+         while (true) {
+            SizeAndEvicting existingSize = currentSize.get();
+            long size = existingSize.size;
+            long evicting = existingSize.evicting;
+            // If there are extras then we need to increase eviction
+            if ((extra = size - evicting - maxSize) > 0) {
+               SizeAndEvicting newSize = new SizeAndEvicting(size, evicting + extra);
+               if (currentSize.compareAndSet(existingSize, newSize)) {
+                  break;
+               }
+            } else {
+               break;
+            }
+         }
+         List<Node<K, V>> evictedEntries = null;
+         if (extra > 0) {
+            evictedEntries = new ArrayList<>((int)extra & 0x7fffffff);
+            long decCreate = 0;
+            while (decCreate < extra) {
+               Node<K, V> node = deque.pollFirst();
+               boolean removed = false;
+               if (node != null) {
+                  LRUNode<K, V> lruNode = (LRUNode<K, V>) node.eviction;
+                  synchronized (lruNode) {
+                     if (!lruNode.removed) {
+                        lruNode.removed = true;
+                        removed = true;
+                     }
+                  }
+               }
+
+               if (removed) {
+                  V value = map.replaceNode(node.key, null, null, true);
+                  if (value != null) {
+                     evictedEntries.add(node);
+                     decCreate += sizeCalculator.calculateSize(node.key, value);
+                  }
+               } else {
+                  // This basically means there was a concurrent remove, in which case
+                  // we can't know how large it was so our eviction can't be correct.
+                  // In this case break out and let the next person fix the eviction
+                  break;
+               }
+            }
+            // It is possible that decCreate is higher than extra and if the size calculation
+            // can return a number greater than 1 most likely to occur very often
+            incrementSizeEviction(currentSize, -decCreate, -extra);
+         } else {
+            evictedEntries = Collections.emptyList();
+         }
+
+         return evictedEntries;
+      }
+
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         if (countingMemory && newSize > oldSize) {
+            // Need to increment the overall size
+            incrementSizeEviction(currentSize, (newSize - oldSize) * NODE_ARRAY_OFFSET, 0);
+         }
+      }
+
+      @Override
+      public void resize(long newSize) {
+         this.maxSize = newSize;
+      }
+   }
+
+   enum Recency {
+      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, EVICTING, EVICTED, REMOVED
+   }
+
+   static interface EvictionEntry<K, V> {
+      public K getKey();
+   }
+
+   static final class LIRSNode<K, V> implements EvictionEntry<K, V> {
+      // The next few variables are to always be protected by "this" object monitor
+      Recency state;
+      DequeNode<LIRSNode<K, V>> stackNode;
+      DequeNode<LIRSNode<K, V>> queueNode;
+      boolean created;
+      final K key;
+
+      public LIRSNode(K key) {
+         this.key = key;
+      }
+
+      public void setState(Recency recency) {
+         state = recency;
+      }
+
+      public void setStackNode(DequeNode<LIRSNode<K, V>> stackNode) {
+         this.stackNode = stackNode;
+      }
+
+      public void setQueueNode(DequeNode<LIRSNode<K, V>> queueNode) {
+         this.queueNode = queueNode;
+      }
+
+      @Override
+      public String toString() {
+         return "LIRSNode [state=" + state + ", stackNode=" +
+               System.identityHashCode(stackNode) + ", queueNode=" +
+               System.identityHashCode(queueNode)
+               + ", key=" + key + "]";
+      }
+
+      @Override
+      public K getKey() {
+         return key;
+      }
+   }
+
+   static final class SizeAndEvicting {
+      private final long size;
+      private final long evicting;
+
+      public SizeAndEvicting(long size, long evicting) {
+         this.size = size;
+         this.evicting = evicting;
+      }
+
+      @Override
+      public String toString() {
+         return "SizeAndEvicting [size=" + size + ", evicting=" + evicting + "]";
+      }
+   }
+
+   static SizeAndEvicting incrementSizeEviction(AtomicReference<SizeAndEvicting> currentSize,
+         long size, long eviction) {
+      boolean replaced = false;
+      SizeAndEvicting lirsSize = null;
+      while (!replaced) {
+         SizeAndEvicting existingSize = currentSize.get();
+         long newSize = existingSize.size + size;
+         long newEviction = existingSize.evicting + eviction;
+         lirsSize = new SizeAndEvicting(newSize, newEviction);
+         replaced = currentSize.compareAndSet(existingSize, lirsSize);
+      }
+      return lirsSize;
+   }
+
+   static final class LIRSEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
+      /**
+       * The percentage of the cache which is dedicated to hot blocks. See section 5.1
+       */
+      private static final float L_LIRS = 0.95f;
+
+      final BoundedEquivalentConcurrentHashMapV8<K, V> map;
+      // LIRS stack S
+      /**
+       * The LIRS stack, S, which is maintains recency information. All hot entries are on the
+       * stack. All cold and non-resident entries which are more recent than the least recent hot
+       * entry are also stored in the stack (the stack is always pruned such that the last entry is
+       * hot, and all entries accessed more recently than the last hot entry are present in the
+       * stack). The stack is ordered by recency, with its most recently accessed entry at the top,
+       * and its least recently accessed entry at the bottom.
+       */
+      final StrippedConcurrentLinkedDeque<LIRSNode<K, V>> stack = new StrippedConcurrentLinkedDeque<>();
+      // LIRS queue Q
+      /**
+       * The LIRS queue, Q, which enqueues all cold entries for eviction. Cold entries (by
+       * definition in the queue) may be absent from the stack (due to pruning of the stack). Cold
+       * entries are added to the end of the queue and entries are evicted from the front of the
+       * queue.
+       */
+      final StrippedConcurrentLinkedDeque<LIRSNode<K, V>> queue = new StrippedConcurrentLinkedDeque<>();
+
+      /** The maximum number of hot entries (L_lirs in the paper). */
+      private volatile long maximumHotSize;
+
+      /** The maximum number of resident entries (L in the paper). */
+      private volatile long maximumSize;
+
+      /** The actual number of hot entries. */
+      private final AtomicLong hotSize = new AtomicLong();
+
+      /**
+       * This stores how many LIR to HIR demotions we need to do to keep in a consistent
+       * state.  Note this should only be incremented when you are promoting a HIR to
+       * LIR usually.
+       */
+      private final AtomicLong hotDemotion = new AtomicLong();
+
+      private final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
+            new SizeAndEvicting(0, 0));
+
+      final ThreadLocal<Collection<LIRSNode<K, V>>> nodesToEvictTL = new ThreadLocal<>();
+
+      public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
+         this.map = map;
+         this.maximumSize = maxSize;
+         this.maximumHotSize = calculateLIRSize(maxSize);
+      }
+
+      private static long calculateLIRSize(long maximumSize) {
+         long result = (long) (L_LIRS * maximumSize);
+         return (result == maximumSize) ? maximumSize - 1 : result;
+      }
+
+      @Override
+      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
+            EvictionEntry<K, V> evictionEntry) {
+         Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
+         if (evictionEntry == null) {
+            node.lazySetEviction(new LIRSNode<K, V>(key));
+         } else {
+            node.lazySetEviction(evictionEntry);
+         }
+         return node;
+      }
+
+      @Override
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
+         TreeNode<K, V> treeNode;
+         if (evictionEntry == null) {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
+            treeNode.lazySetEviction(new LIRSNode<K, V>(key));
+         } else {
+            // We need to link the eviction entry with the new node now too
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, evictionEntry);
+         }
+         return treeNode;
+      }
+
+      /**
+       * Adds this LIRS node as LIR if there is room.
+       * The lock must be obtained on the node to ensure consistency
+       * @param lirsNode The node to try to add
+       * @return if the node was added or not
+       */
+      boolean addToLIRIfNotFullHot(LIRSNode<K, V> lirsNode, boolean incrementSize) {
+         long currentHotSize;
+         // If we haven't hit LIR max then promote it immediately
+         // See section 3.3 second paragraph:
+         while ((currentHotSize = hotSize.get()) < maximumHotSize) {
+            if (hotSize.compareAndSet(currentHotSize, currentHotSize + 1)) {
+               if (incrementSize) {
+                  incrementSizeEviction(currentSize, 1, 0);
+               }
+               DequeNode<LIRSNode<K, V>> stackNode = new DequeNode<>(lirsNode);
+               lirsNode.setStackNode(stackNode);
+               lirsNode.setState(Recency.LIR_RESIDENT);
+               stack.linkLast(stackNode);
+               return true;
+            }
+         }
+         return false;
+      }
+
+      @Override
+      public void onEntryMiss(Node<K, V> e, V value) {
+         long pruneLIR = 0;
+         boolean evictHIR = false;
+         boolean skipIncrement;
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            // This tells us if this is the first time we hit a miss for this node.
+            // This is important to tell if a node was hit and subsequently evicted
+            // before our miss occurred
+            skipIncrement = lirsNode.created;
+            // Now set it to created
+            lirsNode.created = true;
+            Recency recency = lirsNode.state;
+            // See section 3.3 case 3:
+            if (recency == null) {
+               if (skipIncrement) {
+                  throw new IllegalStateException("Created should always be false for a"
+                        + "newly created evictio node!");
+               }
+
+               long hotDifference;
+               // This should be the most common case by far
+               // (alreadyCreated is implied to be false)
+               // If it was added to LIR due to size don't do anymore
+               if (addToLIRIfNotFullHot(lirsNode, true)) {
+                  return;
+               } else if ((hotDifference = hotSize.get() - maximumHotSize) > 0) {
+                  // This can only happen if we had a resize where the new size is less than the hot max size
+                  pruneLIR = hotDifference;
+               }
+
+               // This is the (b) example
+               lirsNode.setState(Recency.HIR_RESIDENT);
+               // We have to add it to the stack before the queue in case if it
+               // got removed by another miss
+               DequeNode<LIRSNode<K, V>> stackNode = new DequeNode<>(lirsNode);
+               lirsNode.setStackNode(stackNode);
+               stack.linkLast(stackNode);
+               DequeNode<LIRSNode<K, V>> queueNode = new DequeNode<>(lirsNode);
+               lirsNode.setQueueNode(queueNode);
+               queue.linkLast(queueNode);
+            } else {
+               // If this was true it means this node was not created by this miss
+               // (essentially means the value was changed to HIR_NONRESIDENT or is being
+               // EVICTED soon
+               if (skipIncrement) {
+                  switch (recency) {
+                  case HIR_NONRESIDENT:
+                     // This is the 3.3 case 3 (a) example
+                     e.val = value;
+                     // We don't add a value to the map here as the map implementation
+                     // will handle this for us afterwards
+
+                     // If it was added to LIR due to size don't do anymore
+                     if (addToLIRIfNotFullHot(lirsNode, true)) {
+                        return;
+                     }
+
+                     // This is the (a) example
+                     promoteHIRToLIR(lirsNode);
+                     pruneLIR = 1;
+                     // Since we are adding back in a value we set it to increment
+                     skipIncrement = false;
+                     break;
+                  case EVICTING:
+                     e.val = value;
+                     // We don't add a value to the map here as the map implementation
+                     // will handle this for us afterwards
+
+                     // In the case of eviction we add the node back as if it was a HIR_RESIDENT
+                     // except we also have to evict an old HIR to make room
+                     evictHIR = true;
+                     lirsNode.setState(Recency.HIR_RESIDENT);
+                     // We have to add it back now
+                     DequeNode<LIRSNode<K, V>> stackNode = new DequeNode<>(lirsNode);
+                     lirsNode.setStackNode(stackNode);
+                     stack.linkLast(stackNode);
+                     DequeNode<LIRSNode<K, V>> queueNode = new DequeNode<>(lirsNode);
+                     lirsNode.setQueueNode(queueNode);
+                     queue.linkLast(queueNode);
+                     break;
+                  case REMOVED:
+                  case EVICTED:
+                     // It cannot turn into a resident since it would require a put to
+                     // update the value to non null, which would require holding the lock
+                     // Both Removed and Evicted hold the lock during the entire duration
+                     // so neither state should be possible as they will remove node
+                     throw new IllegalStateException("Cannot have a miss on a key and then "
+                           + "get a node in " + recency);
+                  case HIR_RESIDENT:
+                  case LIR_RESIDENT:
+                     // Ignore any entry in this state as it is already updated
+                     break;
+                  }
+               }
+            }
+         }
+
+         if (pruneLIR > 0) {
+            hotDemotion.addAndGet(pruneLIR);
+         }
+
+         // Note only 1 of these can be true
+         if (!skipIncrement || evictHIR) {
+            // The size is checked in the findIfEntriesNeedEvicting
+            incrementSizeEviction(currentSize, 1, 0);
+         }
+      }
+
+      @SuppressWarnings("unchecked")
+      void demoteLowestLIR() {
+         boolean pruned = false;
+         while (!pruned) {
+            // Now we prune to make room for our promoted node
+            Object[] LIRDetails = pruneIncludingLIR();
+            if (LIRDetails == null) {
+               // There was nothing to prune!
+               return;
+            } else {
+               DequeNode<LIRSNode<K, V>> removedDequeNode = (DequeNode<LIRSNode<K, V>>) LIRDetails[0];
+               LIRSNode<K, V> removedLIR = (LIRSNode<K, V>) LIRDetails[1];
+               synchronized (removedLIR) {
+                  if (removedDequeNode != removedLIR.stackNode) {
+                     continue;
+                  }
+                  // If the node was removed concurrently removed we ignore it and get the
+                  // next one still
+                  if (removedLIR.state != Recency.REMOVED){
+                     // If the stack node is still the one we removed, then we can continue
+                     // with demotion.  If not then we had a concurrent hit which resurrected
+                     // the LIR so we pick the next one to evict
+
+                     // We demote the LIR_RESIDENT to HIR_RESIDENT in the queue (not in stack)
+                     removedLIR.setState(Recency.HIR_RESIDENT);
+                     removedLIR.setStackNode(null);
+                     DequeNode<LIRSNode<K, V>> queueNode = new DequeNode<>(removedLIR);
+                     removedLIR.setQueueNode(queueNode);
+                     queue.linkLast(queueNode);
+                     pruned = true;
+                  }
+               }
+            }
+         }
+      }
+
+      /**
+       * Prunes blocks in the bottom of the stack until a HOT block is removed.
+       * If pruned blocks were resident, then they remain in the queue; non-resident blocks (if any)
+       * are dropped
+       * @return Returns an array storing the removed LIR details.  The first element is
+       *         the DequeNode that was removed from the stack deque - this
+       *         is helpful to determine if this entry was update concurrently (because
+       *         it will have a new stack deque pointer if it was).  The second element is
+       *         the actual Node that this is tied to value wise
+       */
+      @SuppressWarnings("unchecked")
+      Object[] pruneIncludingLIR() {
+         // See section 3.3:
+         // "We define an operation called "stack pruning" on the LIRS
+         // stack S, which removes the HIR blocks in the bottom of
+         // the stack until an LIR block sits in the stack bottom. This
+         // operation serves for two purposes: (1) We ensure the block in
+         // the bottom of the stack always belongs to the LIR block set.
+         // (2) After the LIR block in the bottom is removed, those HIR
+         // blocks contiguously located above it will not have chances to
+         // change their status from HIR to LIR, because their recencies
+         // are larger than the new maximum recency of LIR blocks."
+         /**
+          * Note that our implementation is done lazily and we don't prune HIR blocks
+          * until we know we are removing a LIR block.  The reason for this is that
+          * we can't do a head CAS and only can poll from them
+          * WARNING: This could cause a HIR block that should have been pruned to be
+          * promoted to LIR if it is accesssed before another LIR block is promoted.
+          * Unfortunately there is not an easier way to do this without adding additional
+          * contention.  Need to figure out if the contention would be high or not
+          */
+         LIRSNode<K, V> removedLIR = null;
+         Object[] nodeDetails = new Object[2];
+         while (true) {
+            if (!stack.pollFirstNode(nodeDetails)) {
+               long hot;
+               // If hot size is less than 0 that means we had a concurrent removal of
+               // the last contents in the cache, so we need to make sure to not to loop
+               // waiting for a value
+               while ((hot = hotSize.get()) < 0) {
+                  if (hotSize.compareAndSet(hot, hot + 1)) {
+                     return null;
+                  }
+               }
+               continue;
+            }
+            DequeNode<LIRSNode<K, V>> removedStackNode = (DequeNode<LIRSNode<K, V>>) nodeDetails[0];
+            removedLIR = (LIRSNode<K, V>) nodeDetails[1];
+            synchronized (removedLIR) {
+               if (removedStackNode != removedLIR.stackNode) {
+                  continue;
+               }
+               switch (removedLIR.state) {
+               case LIR_RESIDENT:
+                  // Note we don't null out the stack because the caller once again
+                  // does a check to make sure the stack pointer hasn't changed
+                  return nodeDetails;
+               case HIR_NONRESIDENT:
+                  // Non resident was already evicted and now it is no longer in the
+                  // queue or the stack so it is effectively gone - however we want to
+                  // remove the now null node
+                  removedLIR.setState(Recency.EVICTING);
+                  Collection<LIRSNode<K, V>> nodesToEvict = nodesToEvictTL.get();
+                  if (nodesToEvict == null) {
+                     nodesToEvict = new ArrayList<>();
+                     nodesToEvictTL.set(nodesToEvict);
+                  }
+                  nodesToEvict.add(removedLIR);
+               case HIR_RESIDENT:
+                  // Leave it in the queue if it was a resident
+                  removedLIR.setStackNode(null);
+                  break;
+               case REMOVED:
+               case EVICTING:
+               case EVICTED:
+                  // We ignore this value if it it was evicted/removed elsewhere as it is
+                  // no longer LIRS
+                  break;
+               }
+            }
+         }
+      }
+
+      /**
+       * The node must be locked before calling this method
+       * @param lirsNode
+       */
+      void promoteHIRToLIR(LIRSNode<K, V> lirsNode) {
+         // This block first unlinks the node from both the stack and queue before
+         // repositioning it
+         {
+            DequeNode<LIRSNode<K, V>> stackNode = lirsNode.stackNode;
+            // Stack node could be null if this node was pruned in demotion concurrently
+            if (stackNode != null) {
+               LIRSNode<K, V> item = stackNode.item;
+               if (item != null && stackNode.casItem(item, null)) {
+                  stack.unlink(stackNode);
+               }
+               lirsNode.setStackNode(null);
+            }
+
+            // Also unlink from queue node if it was set
+            DequeNode<LIRSNode<K, V>> queueNode = lirsNode.queueNode;
+            if (queueNode != null) {
+               LIRSNode<K, V> item = queueNode.item;
+               if (item != null && queueNode.casItem(item, null)) {
+                  queue.unlink(queueNode);
+               }
+               lirsNode.setQueueNode(null);
+            }
+         }
+
+         // Promoting the node to LIR and add to the stack
+         lirsNode.setState(Recency.LIR_RESIDENT);
+         DequeNode<LIRSNode<K, V>> stackNode = new DequeNode<>(lirsNode);
+         lirsNode.setStackNode(stackNode);
+         stack.linkLast(stackNode);
+      }
+
+      @Override
+      public void onEntryHitRead(Node<K,V> e, V value) {
+         boolean reAttempt = false;
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            Recency recency = lirsNode.state;
+            // If the recency is non resident or evicting that means
+            // we may have to do a write to the value most likely, so we retry this
+            // with the table lock so we can properly do the update - NOTE that the
+            // recency can change outside of this lock
+            if (recency == Recency.HIR_NONRESIDENT ||
+                  recency == Recency.EVICTING) {
+               reAttempt = true;
+            } else {
+               onEntryHitWrite(e, value);
+            }
+         }
+         if (reAttempt) {
+            int hash = spread(map.keyEq.hashCode(lirsNode.getKey())); // EQUIVALENCE_MOD
+            for (Node<K,V>[] tab = map.table;;) {
+               Node<K,V> f; int n, i;
+               if (tab == null || (n = tab.length) == 0 ||
+                     (f = tabAt(tab, i = (n - 1) & hash)) == null)
+                  break;
+               else if (f.hash == MOVED)
+                  tab = map.helpTransfer(tab, f);
+               else {
+                  synchronized (f) {
+                     if (tabAt(tab, i) == f) {
+                        synchronized (lirsNode) {
+                           onEntryHitWrite(e, value);
+                        }
+                     }
+                  }
+                  break;
+               }
+            }
+         }
+      }
+
+      @Override
+      public void onEntryHitWrite(Node<K, V> e, V value) {
+         boolean demoteLIR = false;
+         boolean evictHIR = false;
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            // Section 3.3
+            //
+            Recency recency = lirsNode.state;
+            // If the state is still null that means it was added and we got in
+            // before the onEntryMiss was fired, so that means this is automatically
+            // a LIR resident
+            if (recency == null) {
+               // If it was added to LIR don't need anymore work
+               if (addToLIRIfNotFullHot(lirsNode, false)) {
+                  return;
+               }
+               recency = Recency.LIR_RESIDENT;
+               lirsNode.setState(recency);
+               // If we are doing a promotion of HIR to LIR we need to do pruning as well
+               // Remember if recency was null that means we just had a concurrent
+               // onEntryMiss but it hasn't been processed yet, which means it would
+               // been a HIR resident
+               demoteLIR = true;
+            }
+
+            switch (recency) {
+            case LIR_RESIDENT:
+               // case 1
+               //
+               // Note that if we had a concurrent pruning targeting this node, getting
+               // a hit takes precedence
+               DequeNode<LIRSNode<K, V>> stackNode = lirsNode.stackNode;
+               // This will be null if we got in before onEntryMiss
+               if (stackNode != null) {
+                  LIRSNode<K, V> item = stackNode.item;
+                  if (item != null && stackNode.casItem(item, null)) {
+                     stack.unlink(stackNode);
+                  }
+               }
+               // Now that we have it removed promote it to the top
+               DequeNode<LIRSNode<K, V>> newStackNode = new DequeNode<>(lirsNode);
+               lirsNode.setStackNode(newStackNode);
+               stack.linkLast(newStackNode);
+               break;
+            case HIR_NONRESIDENT:
+               if (e.val == NULL_VALUE) {
+                  // We essentially added the value back in so we have to set the value
+                  // and increment the count
+                  e.val = value;
+                  map.addCount(1, -1);
+               }
+               // Non resident can happen if we have a hit and then a concurrent HIR pruning
+               // caused our node to be non resident.
+               if (addToLIRIfNotFullHot(lirsNode, true)) {
+                  return;
+               }
+               promoteHIRToLIR(lirsNode);
+               // The only way this is possible is if we had a concurrent eviction
+               // of the key right after we saw it existed but before we could
+               // act on it.  Since we revived it to LIR we also have to set it's
+               // value to what it should be
+               evictHIR = true;
+               demoteLIR = true;
+               break;
+            case EVICTED:
+               // We can't reliably do a put here without having a point where the object
+               // was possibly seen as null so we leave it as null to be more consistent
+               break;
+            case EVICTING:
+               // In the case of eviction we add the node back as if it was a HIR_RESIDENT
+               // except we also have to evict an old HIR to make room
+               // Note the stackNode is assumed to be null in this case
+               evictHIR = true;
+               lirsNode.setState(Recency.HIR_RESIDENT);
+               // It is possible the node trying to be evicted was a NON resident before
+               // In that case we set the value and increment the count in the map
+               if (e.val == NULL_VALUE) {
+                  e.val = value;
+                  map.addCount(1, -1);
+               }
+               // Note this falls through, since we saved the evicting entry it is like
+               // we now have a HIR resident
+            case HIR_RESIDENT:
+               // case 2
+               if (lirsNode.stackNode != null) {
+                  // This is the (a) example
+                  //
+                  // In the case it was in the stack we promote it
+                  promoteHIRToLIR(lirsNode);
+                  // Need to demote a LIR to make room
+                  demoteLIR = true;
+               } else {
+                  // This is the (b) example
+                  //
+                  // In the case it wasn't in the stack but was in the queue, we
+                  // add it again to the stack and bump it up to the top of the queue
+                  if (lirsNode.queueNode != null) {
+                     LIRSNode<K, V> item = lirsNode.queueNode.item;
+                     if (item != null && lirsNode.queueNode.casItem(item, null)) {
+                        queue.unlink(lirsNode.queueNode);
+                     }
+                  }
+
+                  newStackNode = new DequeNode<>(lirsNode);
+                  lirsNode.setStackNode(newStackNode);
+                  stack.linkLast(newStackNode);
+                  DequeNode<LIRSNode<K, V>> newQueueNode = new DequeNode<>(lirsNode);
+                  lirsNode.setQueueNode(newQueueNode);
+                  queue.linkLast(newQueueNode);
+               }
+               break;
+            case REMOVED:
+               // If the entry was removed we ignore the hit.
+               break;
+            }
+         }
+         if (demoteLIR) {
+            hotDemotion.incrementAndGet();
+         }
+         if (evictHIR) {
+            // The size is checked in the findIfEntriesNeedEvicting
+            incrementSizeEviction(currentSize, 1, 0);
+         }
+      }
+
+      @Override
+      public void onEntryRemove(Node<K, V> e) {
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            switch (lirsNode.state) {
+            case LIR_RESIDENT:
+               hotSize.decrementAndGet();
+            case HIR_RESIDENT:
+               incrementSizeEviction(currentSize, -1, 0);
+            case HIR_NONRESIDENT:
+            case EVICTING:
+               // In the case of eviction/non resident we already subtracted the value
+               // And we don't want to remove twice
+               lirsNode.setState(Recency.REMOVED);
+               break;
+            case REMOVED:
+            case EVICTED:
+               // This shouldn't be possible
+            }
+
+            DequeNode<LIRSNode<K, V>> queueNode = lirsNode.queueNode;
+            if (queueNode != null) {
+               LIRSNode<K, V> item = queueNode.item;
+               if (item != null && queueNode.casItem(item, null)) {
+                  queue.unlink(queueNode);
+               }
+               lirsNode.setQueueNode(null);
+            }
+            lirsNode.setQueueNode(null);
+            DequeNode<LIRSNode<K, V>> stackNode = lirsNode.stackNode;
+            if (stackNode != null) {
+               LIRSNode<K, V> item = stackNode.item;
+               if (item != null && stackNode.casItem(item, null)) {
+                  stack.unlink(stackNode);
+               }
+               lirsNode.setStackNode(null);
+            }
+         }
+      }
+
+      @Override
+      public Collection<Node<K, V>> findIfEntriesNeedEvicting() {
+         long hotDemotions;
+         while ((hotDemotions = hotDemotion.get()) > 0) {
+            if (hotDemotion.compareAndSet(hotDemotions, 0)) {
+               break;
+            }
+         }
+         for (long i = 0; i < hotDemotions; ++i) {
+            demoteLowestLIR();
+         }
+         int evictCount;
+         while (true) {
+            SizeAndEvicting sizeEvict = currentSize.get();
+            long size = sizeEvict.size;
+            long evict = sizeEvict.evicting;
+            long longEvictCount = (size - evict - maximumSize);
+            if (longEvictCount > 0) {
+               evictCount = (int) longEvictCount & 0x7fffffff;
+               if (currentSize.compareAndSet(sizeEvict,
+                     new SizeAndEvicting(size, evict + evictCount))) {
+                  break;
+               }
+            } else {
+               evictCount = 0;
+               break;
+            }
+         }
+         // If this is non null it is also non empty
+         Collection<LIRSNode<K, V>> tlEvicted = nodesToEvictTL.get();
+         if (tlEvicted == null) {
+            tlEvicted = Collections.emptyList();
+         } else {
+            nodesToEvictTL.remove();
+         }
+         if (evictCount != 0 || !tlEvicted.isEmpty()) {
+            @SuppressWarnings("unchecked")
+            LIRSNode<K, V>[] queueContents = new LIRSNode[evictCount + tlEvicted.size()];
+            Iterator<LIRSNode<K, V>> tlIterator = tlEvicted.iterator();
+            int offset = 0;
+            while (tlIterator.hasNext()) {
+               queueContents[evictCount + offset] = tlIterator.next();
+               offset++;
+            }
+            int evictedValues = evictCount;
+            int decEvict = evictCount;
+            Object[] hirDetails = new Object[2];
+            for (int i = 0; i < evictCount; ++i) {
+               boolean foundNode = false;
+               while (!foundNode) {
+                  if (!queue.pollFirstNode(hirDetails)) {
+                     SizeAndEvicting sizeEvict = currentSize.get();
+                     // If the size was changed behind our back by a remove we
+                     // need to detect that
+                     if (sizeEvict.size - sizeEvict.evicting < maximumSize) {
+                        SizeAndEvicting newSizeEvict = new SizeAndEvicting(sizeEvict.size,
+                              sizeEvict.evicting - 1);
+                        if (currentSize.compareAndSet(sizeEvict, newSizeEvict)) {
+                           evictedValues--;
+                           decEvict--;
+                           break;
+                        }
+                     }
+                     // This could be valid in the case when an entry is promoted to LIR and
+                     // hasn't yet moved the demoted LIR to HIR
+                     // We loop back around to get this - this could spin loop if it takes
+                     // the other thread long to add the HIR element back
+                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+                     continue;
+                  }
+                  DequeNode<LIRSNode<K, V>> removedDequeNode = (DequeNode<LIRSNode<K, V>>) hirDetails[0];
+                  LIRSNode<K, V> removedHIR = (LIRSNode<K, V>) hirDetails[1];
+                  synchronized (removedHIR) {
+                     if (removedHIR.queueNode != removedDequeNode) {
+                        continue;
+                     }
+                     // Since we removed the queue node we need to null it out
+                     removedHIR.setQueueNode(null);
+                     switch (removedHIR.state) {
+                     case HIR_RESIDENT:
+                        // If it is in the stack we set it to HIR non resident
+                        if (removedHIR.stackNode != null) {
+                           removedHIR.setState(Recency.HIR_NONRESIDENT);
+                           // We can't set the value to NULL_VALUE until we hold the
+                           // lock below
+                           queueContents[i] = removedHIR;
+                        } else {
+                           removedHIR.setState(Recency.EVICTING);
+                           // It wasn't part of the stack so we have to remove it completely
+                           // Note we don't null out the queue or stack nodes on the LIRSNode
+                           // since we aren't reusing it
+                           queueContents[i] = removedHIR;
+                        }
+                        foundNode = true;
+                        break;
+                     case REMOVED:
+                        // If it was removed then it wasn't evicted so we don't decrement
+                        // size in that case
+                        evictedValues--;
+                        foundNode = true;
+                        break;
+                     case LIR_RESIDENT:
+                     case EVICTING:
+                     case EVICTED:
+                     case HIR_NONRESIDENT:
+                        break;
+                     }
+                  }
+               }
+            }
+            incrementSizeEviction(currentSize, -evictedValues, -decEvict);
+            Collection<Node<K, V>> removedNodes = new ArrayList<>(queueContents.length);
+            for (int j = 0; j < queueContents.length; ++j) {
+               LIRSNode<K, V> evict = queueContents[j];
+               // This can be null if the entry was removed when we tried to evict
+               // or if we found a subsequent value in the same table
+               if (evict == null) {
+                  continue;
+               }
+               // If it is still evicting we lock the segment for the key and then
+               // finally evict it
+               // The locking of the outer segment is required if the entry is hit with
+               // an update at the same time
+               if (evict.state == Recency.EVICTING ||
+                     evict.state == Recency.HIR_NONRESIDENT) {
+                  // Most of the following is copied from putVal method of CHMV8
+                  // This is so we can get the owning node so we can synchronize
+                  // to make sure that no additional writes occur for the evicting
+                  // value because we don't want them to be lost when we do the actual
+                  // eviction
+                  int hash = spread(map.keyEq.hashCode(evict.getKey())); // EQUIVALENCE_MOD
+                  for (Node<K,V>[] tab = map.table;;) {
+                     Node<K,V> f; int n, i;
+                     if (tab == null || (n = tab.length) == 0 ||
+                           (f = tabAt(tab, i = (n - 1) & hash)) == null)
+                        break;
+                     else if (f.hash == MOVED)
+                        tab = map.helpTransfer(tab, f);
+                     else {
+                        synchronized (f) {
+                           if (tabAt(tab, i) == f) {
+                              synchronized (evict) {
+                                 if (evict.state == Recency.EVICTING) {
+                                    evict.setState(Recency.EVICTED);
+                                    V prevValue = map.replaceNode(evict.getKey(), null, null, true);
+                                    removedNodes.add(new Node<>(-1, null, evict.getKey(),
+                                          prevValue, null));
+                                 } else if (evict.state == Recency.HIR_NONRESIDENT) {
+                                    Node<K, V> node = f.find(hash, evict.getKey());
+                                    V prevValue = node.val;
+                                    if (prevValue != NULL_VALUE) {
+                                       node.val = (V) NULL_VALUE;
+                                       map.addCount(-1, -1);
+                                       Node<K, V> nonResidentNode = new Node<K, V>(-1, null, evict.getKey(),
+                                             prevValue, null);
+                                       removedNodes.add(nonResidentNode);
+                                       map.notifyListenerOfRemoval(nonResidentNode, true);
+                                    }
+                                 }
+                              }
+                              break;
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+            return removedNodes;
+         }
+         return Collections.emptySet();
+      }
+
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         // Do nothing
+      }
+
+      @Override
+      public void resize(long newSize) {
+         this.maximumSize = newSize;
+         this.maximumHotSize = calculateLIRSize(this.maximumSize);
+      }
+
+   }
+
+   public enum Eviction {
+      NONE {
+         @Override
+         public <K, V> EvictionPolicy<K, V> make(
+               BoundedEquivalentConcurrentHashMapV8<K, V> map,
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
+            return new NullEvictionPolicy<K, V>(map.nodeEq);
+         }
+      },
+      LRU {
+         @Override
+         public <K, V> EvictionPolicy<K, V> make(
+               BoundedEquivalentConcurrentHashMapV8<K, V> map,
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
+            if (sizeCalculator == null) {
+               return new LRUEvictionPolicy<K, V>(map, capacity,
+                     SingleEntrySizeCalculator.SINGLETON, false);
+            } else {
+               return new LRUEvictionPolicy<K, V>(map, capacity,
+                     new NodeSizeCalculatorWrapper<K, V>(sizeCalculator), true);
+            }
+
+         }
+      },
+      LIRS {
+         @Override
+         public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map,
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
+            if (sizeCalculator != null) {
+               throw new IllegalArgumentException("LIRS does not support a size calculator!");
+            }
+            return new LIRSEvictionPolicy<K, V>(map, capacity);
+         }
+      };
+
+      abstract <K, V> EvictionPolicy<K, V> make(
+            BoundedEquivalentConcurrentHashMapV8<K, V> map, EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity);
+   }
+   // END EVICTION STUFF
 
    /**
     * An object for traversing and partitioning elements of a source.
@@ -249,39 +1649,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       long estimateSize();
 
       /** Applies the action to each untraversed element */
-      void forEachRemaining(Action<? super T> action);
+      void forEachRemaining(Consumer<? super T> action);
       /** If an element remains, applies the action and returns true. */
-      boolean tryAdvance(Action<? super T> action);
+      boolean tryAdvance(Consumer<? super T> action);
    }
-
-   // Sams
-   /** Interface describing a void action of one argument */
-   public interface Action<A> { void apply(A a); }
-   /** Interface describing a void action of two arguments */
-   public interface BiAction<A,B> { void apply(A a, B b); }
-   /** Interface describing a function of one argument */
-   public interface Fun<A,T> { T apply(A a); }
-   /** Interface describing a function of two arguments */
-   public interface BiFun<A,B,T> { T apply(A a, B b); }
-   /** Interface describing a function mapping its argument to a double */
-   public interface ObjectToDouble<A> { double apply(A a); }
-   /** Interface describing a function mapping its argument to a long */
-   public interface ObjectToLong<A> { long apply(A a); }
-   /** Interface describing a function mapping its argument to an int */
-   public interface ObjectToInt<A> {int apply(A a); }
-   /** Interface describing a function mapping two arguments to a double */
-   public interface ObjectByObjectToDouble<A,B> { double apply(A a, B b); }
-   /** Interface describing a function mapping two arguments to a long */
-   public interface ObjectByObjectToLong<A,B> { long apply(A a, B b); }
-   /** Interface describing a function mapping two arguments to an int */
-   public interface ObjectByObjectToInt<A,B> {int apply(A a, B b); }
-   /** Interface describing a function mapping two doubles to a double */
-   public interface DoubleByDoubleToDouble { double apply(double a, double b); }
-   /** Interface describing a function mapping two longs to a long */
-   public interface LongByLongToLong { long apply(long a, long b); }
-   /** Interface describing a function mapping two ints to an int */
-   public interface IntByIntToInt { int apply(int a, int b); }
-
 
     /*
      * Overview:
@@ -623,6 +1994,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
     /* ---------------- Nodes -------------- */
 
+   static class NodeEquivalence<K,V> {
+      final Equivalence<? super K> keyEq;
+      final Equivalence<? super V> valueEq;
+
+      NodeEquivalence(Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
+         this.keyEq = keyEq;
+         this.valueEq = valueEq;
+      }
+   }
+
    /**
     * Key-value entry.  This class is never exported out as a
     * user-mutable Map.Entry (i.e., one supporting setValue; see
@@ -634,31 +2015,40 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static class Node<K,V> implements Map.Entry<K,V> {
       final int hash;
       final K key;
+      final NodeEquivalence<K, V> nodeEq; // EQUIVALENCE_MOD
       volatile V val;
       volatile Node<K,V> next;
+      volatile EvictionEntry<K, V> eviction;
 
-      Node(int hash, K key, V val, Node<K,V> next) {
+      Node(int hash, NodeEquivalence<K, V> nodeEq, K key,
+            V val, Node<K,V> next) { // EQUIVALENCE_MOD
          this.hash = hash;
          this.key = key;
          this.val = val;
          this.next = next;
+         this.nodeEq = nodeEq; // EQUIVALENCE_MOD
       }
 
+      public final int hashCode(K key, V value) {
+         return nodeEq.keyEq.hashCode(key) ^ nodeEq.valueEq.hashCode(value);
+      }
+
+      @Override
       public final K getKey()       { return key; }
+      @Override
       public final V getValue()     { return val; }
-      public final int hashCode()   { return key.hashCode() ^ val.hashCode(); }
-      public final String toString(){ return key + "=" + val; }
+      @Override
+      public final int hashCode()   { throw new UnsupportedOperationException("hashCode is not supported!"); } // EQUIVALENCE_MOD
+      @Override
+      public String toString(){ return "Node: " + key + "=" + val; }
+      @Override
       public final V setValue(V value) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public final boolean equals(Object o) {
-         Object k, v, u; Map.Entry<?,?> e;
-         return ((o instanceof Map.Entry) &&
-                       (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
-                       (v = e.getValue()) != null &&
-                       (k == key || k.equals(key)) &&
-                       (v == (u = val) || v.equals(u)));
+         throw new UnsupportedOperationException("equals is not supported!");
       }
 
       /**
@@ -670,11 +2060,31 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             do {
                K ek;
                if (e.hash == h &&
-                     ((ek = e.key) == k || (ek != null && k.equals(ek))))
+                     ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
                   return e;
             } while ((e = e.next) != null);
          }
          return null;
+      }
+
+      void lazySetEviction(EvictionEntry<K, V> val) {
+         UNSAFE.putOrderedObject(this, evictionOffset, val);
+     }
+
+      // Unsafe mechanics
+
+      private static final sun.misc.Unsafe UNSAFE;
+      private static final long evictionOffset;
+
+      static {
+          try {
+              UNSAFE = Unsafe.getUnsafe();
+              Class<?> k = Node.class;
+              evictionOffset = UNSAFE.objectFieldOffset
+                  (k.getDeclaredField("eviction"));
+          } catch (Exception e) {
+              throw new Error(e);
+          }
       }
    }
 
@@ -718,8 +2128,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Returns x's Class if it is of the form "class C implements
     * Comparable<C>", else null.
     */
-   static Class<?> comparableClassFor(Object x) {
-      if (x instanceof Comparable) {
+   static Class<?> comparableClassFor(Object x, Equivalence<?> eq) { // EQUIVALENCE_MOD
+      if (eq.isComparable(x)) { // EQUIVALENCE_MOD
          Class<?> c; Type[] ts, as; Type t; ParameterizedType p;
          if ((c = x.getClass()) == String.class) // bypass checks
             return c;
@@ -741,10 +2151,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Returns k.compareTo(x) if x matches kc (k's screened comparable
     * class), else 0.
     */
-   @SuppressWarnings({"rawtypes","unchecked"}) // for cast to Comparable
-   static int compareComparables(Class<?> kc, Object k, Object x) {
-      return (x == null || x.getClass() != kc ? 0 :
-                    ((Comparable)k).compareTo(x));
+   static int compareComparables(Class<?> kc, Object k, Object x, Equivalence<Object> eq) { // EQUIVALENCE_MOD
+      return (x == null || x.getClass() != kc ? 0 : eq.compare(k, x)); // EQUIVALENCE_MOD
    }
 
     /* ---------------- Table element access -------------- */
@@ -829,13 +2237,62 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    private transient ValuesView<K,V> values;
    private transient EntrySetView<K,V> entrySet;
 
+   Equivalence<? super K> keyEq;
+   Equivalence<? super V> valueEq;
+   transient NodeEquivalence<K, V> nodeEq;
+
+   volatile long maxSize;
+
+   final EvictionPolicy<K, V> evictionPolicy;
+   final EvictionListener<? super K, ? super V> evictionListener;
 
     /* ---------------- Public operations -------------- */
 
    /**
     * Creates a new, empty map with the default initial table size (16).
     */
-   public ConcurrentHashMapV8() {
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      if (maxSize <= 0) {
+         throw new IllegalArgumentException();
+      }
+      this.maxSize = maxSize;
+      this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
+      this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
+      this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
+      this.evictionPolicy = Eviction.LRU.make(this, null, maxSize);
+      this.evictionListener = new NullEvictionListener<K, V>();
+   }
+
+   /**
+    * Creates a new, empty map with the default initial table size (16).
+    */
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize,
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, evictionStrategy, evictionListener, keyEquivalence, valueEquivalence,
+            null);
+   }
+
+   /**
+    * Creates a new, empty map with the default initial table size (16).
+    */
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize,
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence,
+         EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
+      if (maxSize <= 0) {
+         throw new IllegalArgumentException();
+      }
+      if (evictionStrategy == null || evictionListener == null) {
+         throw new NullPointerException();
+      }
+      this.maxSize = maxSize;
+      this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
+      this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
+      this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
+      this.evictionPolicy = evictionStrategy.make(this, sizeCalculator, maxSize);
+      this.evictionListener = evictionListener;
    }
 
    /**
@@ -848,11 +2305,44 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws IllegalArgumentException if the initial capacity of
     * elements is negative
     */
-   public ConcurrentHashMapV8(int initialCapacity) {
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize, int initialCapacity,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       if (initialCapacity < 0)
          throw new IllegalArgumentException();
-      int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ?
-                       MAXIMUM_CAPACITY :
+      if (initialCapacity > maxSize) {
+         // Since initialCapacity has to be a power of 2 we shouldn't really set it to
+         // maxSize since it can be any arbitrary size
+         throw new IllegalArgumentException("initialCapacity cannot be greater than maxSize");
+      }
+      int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ? MAXIMUM_CAPACITY :
+                       tableSizeFor(initialCapacity + (initialCapacity >>> 1) + 1));
+      this.sizeCtl = cap;
+   }
+
+   /**
+    * Creates a new, empty map with an initial table size
+    * accommodating the specified number of elements without the need
+    * to dynamically resize.
+    *
+    * @param initialCapacity The implementation performs internal
+    * sizing to accommodate this many elements.
+    * @throws IllegalArgumentException if the initial capacity of
+    * elements is negative
+    */
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize, int initialCapacity,
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, evictionStrategy, evictionListener, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
+
+      if (initialCapacity < 0)
+         throw new IllegalArgumentException();
+      if (initialCapacity > maxSize) {
+         // Since initialCapacity has to be a power of 2 we shouldn't really set it to
+         // maxSize since it can be any arbitrary size
+         throw new IllegalArgumentException("initialCapacity cannot be greater than maxSize");
+      }
+      int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ? MAXIMUM_CAPACITY :
                        tableSizeFor(initialCapacity + (initialCapacity >>> 1) + 1));
       this.sizeCtl = cap;
    }
@@ -862,7 +2352,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @param m the map
     */
-   public ConcurrentHashMapV8(Map<? extends K, ? extends V> m) {
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize, Map<? extends K, ? extends V> m,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       this.sizeCtl = DEFAULT_CAPACITY;
       putAll(m);
    }
@@ -882,8 +2374,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @since 1.6
     */
-   public ConcurrentHashMapV8(int initialCapacity, float loadFactor) {
-      this(initialCapacity, loadFactor, 1);
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize, int initialCapacity, float loadFactor,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, initialCapacity, loadFactor, 1, Eviction.LRU, getNullEvictionListener(),
+            keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
    }
 
    /**
@@ -904,14 +2398,17 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * negative or the load factor or concurrencyLevel are
     * nonpositive
     */
-   public ConcurrentHashMapV8(int initialCapacity,
-         float loadFactor, int concurrencyLevel) {
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize, int initialCapacity,
+         float loadFactor, int concurrencyLevel,
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, initialCapacity, evictionStrategy, evictionListener, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
          throw new IllegalArgumentException();
       if (initialCapacity < concurrencyLevel)   // Use at least as many bins
          initialCapacity = concurrencyLevel;   // as estimated threads
-      long size = (long)(1.0 + (long)initialCapacity / loadFactor);
-      int cap = (size >= (long)MAXIMUM_CAPACITY) ?
+      long size = (long)(1.0 + initialCapacity / loadFactor);
+      int cap = (size >= MAXIMUM_CAPACITY) ?
             MAXIMUM_CAPACITY : tableSizeFor((int)size);
       this.sizeCtl = cap;
    }
@@ -921,16 +2418,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * {@inheritDoc}
     */
+   @Override
    public int size() {
       long n = sumCount();
       return ((n < 0L) ? 0 :
-                    (n > (long)Integer.MAX_VALUE) ? Integer.MAX_VALUE :
+                    (n > Integer.MAX_VALUE) ? Integer.MAX_VALUE :
                           (int)n);
    }
 
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean isEmpty() {
       return sumCount() <= 0L; // ignore transient negative values
    }
@@ -946,21 +2445,73 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V get(Object key) {
       Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
-      int h = spread(key.hashCode());
+      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       if ((tab = table) != null && (n = tab.length) > 0 &&
             (e = tabAt(tab, (n - 1) & h)) != null) {
          if ((eh = e.hash) == h) {
-            if ((ek = e.key) == key || (ek != null && key.equals(ek)))
-               return e.val;
+            if ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key))) {// EQUIVALENCE_MOD
+               V val = e.val;
+               if (val != NULL_VALUE) {
+                  evictionPolicy.onEntryHitRead(e, val);
+                  notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+                  return val;
+               }
+               return null;
+            }
          }
-         else if (eh < 0)
-            return (p = e.find(h, key)) != null ? p.val : null;
+         else if (eh < 0) {
+            V val = (p = e.find(h, key)) != null ? p.val : null;
+            if (val != null && val != NULL_VALUE) {
+               evictionPolicy.onEntryHitRead(p, val);
+               notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+               return val;
+            }
+            return null;
+         }
          while ((e = e.next) != null) {
             if (e.hash == h &&
-                  ((ek = e.key) == key || (ek != null && key.equals(ek))))
+                  ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+               V val = e.val;
+               if (val != NULL_VALUE) {
+                  evictionPolicy.onEntryHitRead(e, val);
+                  notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+                  return val;
+               }
+               return null;
+            }
+         }
+      }
+      return null;
+   }
+
+   @Override
+   public V peek(Object key) {
+      V val = innerPeek(key);
+      return val == NULL_VALUE ? null : val;
+   }
+
+   V innerPeek(Object key) {
+      Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
+      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
+      if ((tab = table) != null && (n = tab.length) > 0 &&
+            (e = tabAt(tab, (n - 1) & h)) != null) {
+         if ((eh = e.hash) == h) {
+            if ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key))) {// EQUIVALENCE_MOD
                return e.val;
+            }
+         }
+         else if (eh < 0) {
+            V val = (p = e.find(h, key)) != null ? p.val : null;
+            return val;
+         }
+         while ((e = e.next) != null) {
+            if (e.hash == h &&
+                  ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+               return e.val;
+            }
          }
       }
       return null;
@@ -975,6 +2526,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code equals} method; {@code false} otherwise
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean containsKey(Object key) {
       return get(key) != null;
    }
@@ -989,6 +2541,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         specified value
     * @throws NullPointerException if the specified value is null
     */
+   @Override
    public boolean containsValue(Object value) {
       if (value == null)
          throw new NullPointerException();
@@ -997,13 +2550,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
             V v;
-            if ((v = p.val) == value || (v != null && value.equals(v)))
+            if ((v = p.val) == value || (v != null && v != NULL_VALUE && valueEq.equals(v, value))) // EQUIVALENCE_MOD
                return true;
          }
       }
       return false;
    }
-
    /**
     * Maps the specified key to the specified value in this table.
     * Neither the key nor the value can be null.
@@ -1017,6 +2569,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V put(K key, V value) {
       return putVal(key, value, false);
    }
@@ -1024,16 +2577,21 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /** Implementation for put and putIfAbsent */
    final V putVal(K key, V value, boolean onlyIfAbsent) {
       if (key == null || value == null) throw new NullPointerException();
-      int hash = spread(key.hashCode());
+      int hash = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       int binCount = 0;
       for (Node<K,V>[] tab = table;;) {
          Node<K,V> f; int n, i, fh;
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-            if (casTabAt(tab, i, null,
-                  new Node<K,V>(hash, key, value, null)))
-               break;                   // no lock when adding to empty bin
+            Node<K, V> newNode = evictionPolicy.createNewEntry(key, hash, null, value, null);
+            synchronized (newNode) {
+               if (casTabAt(tab, i, null, newNode)) {// EQUIVALENCE_MOD
+                  evictionPolicy.onEntryMiss(newNode, value);
+                  evictionListener.onEntryActivated(key);
+                  break;
+               }
+            }
          }
          else if ((fh = f.hash) == MOVED)
             tab = helpTransfer(tab, f);
@@ -1047,16 +2605,26 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == hash &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
                            oldVal = e.val;
-                           if (!onlyIfAbsent)
+                           if (!onlyIfAbsent || oldVal == NULL_VALUE) {
                               e.val = value;
+                              // We support null evicted values
+                              if (oldVal == NULL_VALUE) {
+                                 evictionPolicy.onEntryMiss(e, value);
+                              } else {
+                                 evictionPolicy.onEntryHitWrite(e, value);
+                              }
+                           }
                            break;
                         }
                         Node<K,V> pred = e;
                         if ((e = e.next) == null) {
-                           pred.next = new Node<K,V>(hash, key,
+                           pred.next = evictionPolicy.createNewEntry(key,  hash,  null,
                                  value, null);
+                           evictionPolicy.onEntryMiss(pred.next, value);
+                           // When entry not present, attempt to activate if necessary
+                           evictionListener.onEntryActivated(key);
                            break;
                         }
                      }
@@ -1067,8 +2635,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
                            value)) != null) {
                         oldVal = p.val;
-                        if (!onlyIfAbsent)
+                        if (!onlyIfAbsent || oldVal == NULL_VALUE) {
                            p.val = value;
+                           // We support null evicted values
+                           if (oldVal == NULL_VALUE) {
+                              evictionPolicy.onEntryMiss(p, value);
+                           } else {
+                              evictionPolicy.onEntryHitWrite(p, value);
+                           }
+                        }
                      }
                   }
                }
@@ -1076,13 +2651,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             if (binCount != 0) {
                if (binCount >= TREEIFY_THRESHOLD)
                   treeifyBin(tab, i);
-               if (oldVal != null)
-                  return oldVal;
-               break;
+               if (oldVal == null || oldVal == NULL_VALUE) {
+                  break;
+               }
+               notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+               return oldVal;
             }
          }
       }
       addCount(1L, binCount);
+      notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
       return null;
    }
 
@@ -1093,6 +2671,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @param m mappings to be stored in this map
     */
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       tryPresize(m.size());
       for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
@@ -1108,8 +2687,22 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V remove(Object key) {
       return replaceNode(key, null, null);
+   }
+
+   final V replaceNode(Object key, V value, Object cv) {
+      return replaceNode(key, value, cv, false);
+   }
+
+   @SuppressWarnings({ "rawtypes", "unchecked" })
+   private void notifyListenerOfRemoval(Node removedNode, boolean isEvict) {
+      if (isEvict) {
+         evictionListener.onEntryChosenForEviction(removedNode);
+      } else {
+         evictionListener.onEntryRemoved(removedNode);
+      }
    }
 
    /**
@@ -1117,8 +2710,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Replaces node value with v, conditional upon match of cv if
     * non-null.  If resulting value is null, delete.
     */
-   final V replaceNode(Object key, V value, Object cv) {
-      int hash = spread(key.hashCode());
+   final V replaceNode(Object key, V value, Object cv, boolean isEvict) {
+      int hash = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       for (Node<K,V>[] tab = table;;) {
          Node<K,V> f; int n, i, fh;
          if (tab == null || (n = tab.length) == 0 ||
@@ -1137,17 +2730,37 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == hash &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
-                           V ev = e.val;
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                           V ev = e.val == NULL_VALUE ? null : e.val;
                            if (cv == null || cv == ev ||
-                                 (ev != null && cv.equals(ev))) {
+                                 (ev != null && valueEq.equals(ev, cv))) { // EQUIVALENCE_MOD
                               oldVal = ev;
-                              if (value != null)
+                              if (value != null) {
                                  e.val = value;
-                              else if (pred != null)
+                                 if (oldVal == null) {
+                                    evictionPolicy.onEntryMiss(e, value);
+                                 } else {
+                                    evictionPolicy.onEntryHitWrite(e, value);
+                                 }
+                              }
+                              else if (pred != null) {
+                                 if (!isEvict) {
+                                    evictionPolicy.onEntryRemove(e);
+                                 }
+                                 if (oldVal != null) {
+                                    notifyListenerOfRemoval(e, isEvict);
+                                 }
                                  pred.next = e.next;
-                              else
+                              }
+                              else {
+                                 if (!isEvict) {
+                                    evictionPolicy.onEntryRemove(e);
+                                 }
+                                 if (oldVal != null) {
+                                    notifyListenerOfRemoval(e, isEvict);
+                                 }
                                  setTabAt(tab, i, e.next);
+                              }
                            }
                            break;
                         }
@@ -1162,14 +2775,29 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      TreeNode<K,V> r, p;
                      if ((r = t.root) != null &&
                            (p = r.findTreeNode(hash, key, null)) != null) {
-                        V pv = p.val;
+                        V pv = p.val == NULL_VALUE ? null : p.val;
                         if (cv == null || cv == pv ||
-                              (pv != null && cv.equals(pv))) {
+                              (pv != null && valueEq.equals(pv, cv))) { // EQUIVALENCE_MOD
                            oldVal = pv;
-                           if (value != null)
+                           if (value != null) {
                               p.val = value;
-                           else if (t.removeTreeNode(p))
-                              setTabAt(tab, i, untreeify(t.first));
+                              if (oldVal == null) {
+                                 evictionPolicy.onEntryMiss(p, value);
+                              } else {
+                                 evictionPolicy.onEntryHitWrite(p, value);
+                              }
+                           }
+                           else {
+                              if (t.removeTreeNode(p)) {
+                                 setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
+                              }
+                              if (!isEvict) {
+                                 evictionPolicy.onEntryRemove(p);
+                              }
+                              if (pv != null) {
+                                notifyListenerOfRemoval(p, isEvict);
+                              }
+                           }
                         }
                      }
                   }
@@ -1185,12 +2813,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
+      if (!isEvict) {
+         notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+      }
       return null;
    }
 
    /**
-    * Removes all of the mappings from this map.
+    * Removes all of the mappingsonEntryHit(e) from this map.
     */
+   @Override
    public void clear() {
       long delta = 0L; // negative number of deletions
       int i = 0;
@@ -1211,7 +2843,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                                        (f instanceof TreeBin) ?
                                              ((TreeBin<K,V>)f).first : null);
                   while (p != null) {
-                     --delta;
+                     if (p.val != NULL_VALUE) {
+                        --delta;
+                     }
+                     evictionPolicy.onEntryRemove(p);
                      p = p.next;
                   }
                   setTabAt(tab, i++, null);
@@ -1241,6 +2876,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the set view
     */
+   @Override
    public KeySetView<K,V> keySet() {
       KeySetView<K,V> ks;
       return (ks = keySet) != null ? ks : (keySet = new KeySetView<K,V>(this, null));
@@ -1264,6 +2900,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the collection view
     */
+   @Override
    public Collection<V> values() {
       ValuesView<K,V> vs;
       return (vs = values) != null ? vs : (values = new ValuesView<K,V>(this));
@@ -1286,6 +2923,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the set view
     */
+   @Override
    public Set<Map.Entry<K,V>> entrySet() {
       EntrySetView<K,V> es;
       return (es = entrySet) != null ? es : (entrySet = new EntrySetView<K,V>(this));
@@ -1298,13 +2936,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the hash code value for this map
     */
+   @Override
    public int hashCode() {
       int h = 0;
       Node<K,V>[] t;
       if ((t = table) != null) {
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
-         for (Node<K,V> p; (p = it.advance()) != null; )
-            h += p.key.hashCode() ^ p.val.hashCode();
+         for (Node<K,V> p; (p = it.advance()) != null; ) {
+            V val = p.val;
+            if (val != NULL_VALUE) {
+               h += p.hashCode(p.key, val); // EQUIVALENCE_MOD
+            }
+         }
       }
       return h;
    }
@@ -1320,6 +2963,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return a string representation of this map
     */
+   @Override
    public String toString() {
       Node<K,V>[] t;
       int f = (t = table) == null ? 0 : t.length;
@@ -1331,12 +2975,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          for (;;) {
             K k = p.key;
             V v = p.val;
-            sb.append(k == this ? "(this Map)" : k);
-            sb.append('=');
-            sb.append(v == this ? "(this Map)" : v);
+            if (v != NULL_VALUE) {
+               sb.append(k == this ? "(this Map)" : keyEq.toString(k)); // EQUIVALENCE_MOD
+               sb.append('=');
+               sb.append(v == this ? "(this Map)" : valueEq.toString(v)); // EQUIVALENCE_MOD
+            }
             if ((p = it.advance()) == null)
                break;
-            sb.append(',').append(' ');
+            if (v != NULL_VALUE) {
+               sb.append(',').append(' ');
+            }
          }
       }
       return sb.append('}').toString();
@@ -1352,6 +3000,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param o object to be compared for equality with this map
     * @return {@code true} if the specified object is equal to this map
     */
+   @Override
+   @SuppressWarnings("unchecked")
    public boolean equals(Object o) {
       if (o != this) {
          if (!(o instanceof Map))
@@ -1362,16 +3012,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          Traverser<K,V> it = new Traverser<K,V>(t, f, 0, f);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
             V val = p.val;
-            Object v = m.get(p.key);
-            if (v == null || (v != val && !v.equals(val)))
-               return false;
+            if (val != NULL_VALUE) {
+               Object v = m.get(p.key);
+               if (v == null || (v != val && !valueEq.equals(val, v))) // EQUIVALENCE_MOD
+                 return false;
+            }
          }
          for (Map.Entry<?,?> e : m.entrySet()) {
             Object mk, mv, v;
             if ((mk = e.getKey()) == null ||
                   (mv = e.getValue()) == null ||
                   (v = get(mk)) == null ||
-                  (mv != v && !mv.equals(v)))
+                  (mv != v && !valueEq.equals((V) v, mv))) // EQUIVALENCE_MOD
                return false;
          }
       }
@@ -1389,7 +3041,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * Saves the state of the {@code ConcurrentHashMapV8} instance to a
+    * Saves the state of the {@code EquivalentConcurrentHashMapV8} instance to a
     * stream (i.e., serializes it).
     * @param s the stream
     * @throws java.io.IOException if an I/O error occurs
@@ -1398,6 +3050,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * for each key-value mapping, followed by a null pair.
     * The key-value mappings are emitted in no particular order.
     */
+   @SuppressWarnings("unchecked")
    private void writeObject(java.io.ObjectOutputStream s)
          throws java.io.IOException {
       // For serialization compatibility
@@ -1410,7 +3063,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
       int segmentShift = 32 - sshift;
       int segmentMask = ssize - 1;
-      @SuppressWarnings("unchecked") Segment<K,V>[] segments = (Segment<K,V>[])
+      Segment<K,V>[] segments = (Segment<K,V>[])
             new Segment<?,?>[DEFAULT_CONCURRENCY_LEVEL];
       for (int i = 0; i < segments.length; ++i)
          segments[i] = new Segment<K,V>(LOAD_FACTOR);
@@ -1419,12 +3072,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       s.putFields().put("segmentMask", segmentMask);
       s.writeFields();
 
+      s.writeObject(keyEq); // EQUIVALENCE_MOD
+      s.writeObject(valueEq); // EQUIVALENCE_MOD
+
       Node<K,V>[] t;
       if ((t = table) != null) {
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
-            s.writeObject(p.key);
-            s.writeObject(p.val);
+            V val = p.val;
+            if (val != null) {
+               s.writeObject(p.key);
+               s.writeObject(val);
+            }
          }
       }
       s.writeObject(null);
@@ -1439,24 +3098,32 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         could not be found
     * @throws java.io.IOException if an I/O error occurs
     */
+   @SuppressWarnings("unchecked")
    private void readObject(java.io.ObjectInputStream s)
          throws java.io.IOException, ClassNotFoundException {
-        /*
-         * To improve performance in typical cases, we create nodes
-         * while reading, then place in table once size is known.
-         * However, we must also validate uniqueness and deal with
-         * overpopulated bins while doing so, which requires
-         * specialized versions of putVal mechanics.
-         */
+      /*
+       * To improve performance in typical cases, we create nodes
+       * while reading, then place in table once size is known.
+       * However, we must also validate uniqueness and deal with
+       * overpopulated bins while doing so, which requires
+       * specialized versions of putVal mechanics.
+       */
       sizeCtl = -1; // force exclusion for table construction
       s.defaultReadObject();
+
+      keyEq = (Equivalence<K>) s.readObject(); // EQUIVALENCE MOD
+      valueEq = (Equivalence<V>) s.readObject(); // EQUIVALENCE MOD
+      nodeEq = new NodeEquivalence<K, V>(keyEq, valueEq);
+
       long size = 0L;
       Node<K,V> p = null;
       for (;;) {
-         @SuppressWarnings("unchecked") K k = (K) s.readObject();
-         @SuppressWarnings("unchecked") V v = (V) s.readObject();
+         K k = (K) s.readObject();
+         V v = (V) s.readObject();
          if (k != null && v != null) {
-            p = new Node<K,V>(spread(k.hashCode()), k, v, p);
+            p = evictionPolicy.createNewEntry(k, spread(keyEq.hashCode(k)), p, v, null); // EQUIVALENCE_MOD
+            evictionPolicy.onEntryMiss(p, v);
+            size -= evictionPolicy.findIfEntriesNeedEvicting().size();
             ++size;
          }
          else
@@ -1466,13 +3133,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          sizeCtl = 0;
       else {
          int n;
-         if (size >= (long)(MAXIMUM_CAPACITY >>> 1))
+         if (size >= MAXIMUM_CAPACITY >>> 1)
             n = MAXIMUM_CAPACITY;
          else {
             int sz = (int)size;
             n = tableSizeFor(sz + (sz >>> 1) + 1);
          }
-         @SuppressWarnings("unchecked")
          Node<K,V>[] tab = (Node<K,V>[])new Node<?,?>[n];
          int mask = n - 1;
          long added = 0L;
@@ -1497,7 +3163,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   for (q = first; q != null; q = q.next) {
                      if (q.hash == h &&
                            ((qk = q.key) == k ||
-                                  (qk != null && k.equals(qk)))) {
+                                  (qk != null && keyEq.equals(qk, k)))) { // EQUIVALENCE_MOD
                         insertAtFront = false;
                         break;
                      }
@@ -1509,15 +3175,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      p.next = first;
                      TreeNode<K,V> hd = null, tl = null;
                      for (q = p; q != null; q = q.next) {
-                        TreeNode<K,V> t = new TreeNode<K,V>
-                              (q.hash, q.key, q.val, null, null);
+                        TreeNode<K,V> t = evictionPolicy.createNewEntry(q.key, q.hash,
+                              null, null, q.val, q.eviction);
                         if ((t.prev = tl) == null)
                            hd = t;
                         else
                            tl.next = t;
                         tl = t;
                      }
-                     setTabAt(tab, j, new TreeBin<K,V>(hd));
+                     setTabAt(tab, j, new TreeBin<K,V>(hd, this)); // EQUIVALENCE_MOD
                   }
                }
             }
@@ -1543,6 +3209,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V putIfAbsent(K key, V value) {
       return putVal(key, value, true);
    }
@@ -1552,6 +3219,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean remove(Object key, Object value) {
       if (key == null)
          throw new NullPointerException();
@@ -1563,6 +3231,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if any of the arguments are null
     */
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       if (key == null || oldValue == null || newValue == null)
          throw new NullPointerException();
@@ -1576,6 +3245,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V replace(K key, V value) {
       if (key == null || value == null)
          throw new NullPointerException();
@@ -1595,36 +3265,43 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @return the mapping for the key, if present; else the default value
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V getOrDefault(Object key, V defaultValue) {
       V v;
       return (v = get(key)) == null ? defaultValue : v;
    }
 
-   public void forEach(BiAction<? super K, ? super V> action) {
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
       if (action == null) throw new NullPointerException();
       Node<K,V>[] t;
       if ((t = table) != null) {
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
-            action.apply(p.key, p.val);
+            V val = p.val;
+            if (val != NULL_VALUE)
+               action.accept(p.key, val);
          }
       }
    }
 
-   public void replaceAll(BiFun<? super K, ? super V, ? extends V> function) {
+   @Override
+   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
       if (function == null) throw new NullPointerException();
       Node<K,V>[] t;
       if ((t = table) != null) {
          Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
          for (Node<K,V> p; (p = it.advance()) != null; ) {
             V oldValue = p.val;
-            for (K key = p.key;;) {
-               V newValue = function.apply(key, oldValue);
-               if (newValue == null)
-                  throw new NullPointerException();
-               if (replaceNode(key, newValue, oldValue) != null ||
-                     (oldValue = get(key)) == null)
-                  break;
+            if (oldValue != NULL_VALUE) {
+               for (K key = p.key;;) {
+                  V newValue = function.apply(key, oldValue);
+                  if (newValue == null)
+                     throw new NullPointerException();
+                  if (replaceNode(key, newValue, oldValue) != null ||
+                        (oldValue = get(key)) == null)
+                     break;
+               }
             }
          }
       }
@@ -1652,10 +3329,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the mappingFunction does so,
     *         in which case the mapping is left unestablished
     */
-   public V computeIfAbsent(K key, Fun<? super K, ? extends V> mappingFunction) {
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       if (key == null || mappingFunction == null)
          throw new NullPointerException();
-      int h = spread(key.hashCode());
+      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       V val = null;
       int binCount = 0;
       for (Node<K,V>[] tab = table;;) {
@@ -1663,14 +3341,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            Node<K,V> r = new ReservationNode<K,V>();
+            Node<K,V> r = new ReservationNode<K,V>(nodeEq); // EQUIVALENCE_MOD
             synchronized (r) {
                if (casTabAt(tab, i, null, r)) {
                   binCount = 1;
                   Node<K,V> node = null;
                   try {
-                     if ((val = mappingFunction.apply(key)) != null)
-                        node = new Node<K,V>(h, key, val, null);
+                     if ((val = mappingFunction.apply(key)) != null) {
+                        node = evictionPolicy.createNewEntry(key, h, null, val, null);
+                        evictionPolicy.onEntryMiss(node, val);
+                        // When entry not present, attempt to activate if necessary
+                        evictionListener.onEntryActivated(key);
+                     }
                   } finally {
                      setTabAt(tab, i, node);
                   }
@@ -1688,18 +3370,29 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   if (fh >= 0) {
                      binCount = 1;
                      for (Node<K,V> e = f;; ++binCount) {
-                        K ek; V ev;
+                        K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
                            val = e.val;
+                           if (val == NULL_VALUE) {
+                              if ((val = mappingFunction.apply(key)) != null) {
+                                 added = true;
+                                 e.val = val;
+                                 evictionPolicy.onEntryMiss(e, val);
+                                 evictionListener.onEntryActivated(key);
+                              }
+                           }
                            break;
                         }
                         Node<K,V> pred = e;
                         if ((e = e.next) == null) {
                            if ((val = mappingFunction.apply(key)) != null) {
                               added = true;
-                              pred.next = new Node<K,V>(h, key, val, null);
+                              pred.next = evictionPolicy.createNewEntry(key, h, null, val,
+                                    null);
+                              evictionPolicy.onEntryMiss(pred.next, val);
+                              evictionListener.onEntryActivated(key);
                            }
                            break;
                         }
@@ -1710,8 +3403,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      TreeBin<K,V> t = (TreeBin<K,V>)f;
                      TreeNode<K,V> r, p;
                      if ((r = t.root) != null &&
-                           (p = r.findTreeNode(h, key, null)) != null)
+                           (p = r.findTreeNode(h, key, null)) != null) {
                         val = p.val;
+                     }
                      else if ((val = mappingFunction.apply(key)) != null) {
                         added = true;
                         t.putTreeVal(h, key, val);
@@ -1728,8 +3422,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
-      if (val != null)
+      if (val != null) {
          addCount(1L, binCount);
+         notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+      }
       return val;
    }
 
@@ -1753,10 +3449,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
-   public V computeIfPresent(K key, BiFun<? super K, ? super V, ? extends V> remappingFunction) {
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(key.hashCode());
+      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1777,17 +3474,23 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
-                           val = remappingFunction.apply(key, e.val);
-                           if (val != null)
-                              e.val = val;
-                           else {
-                              delta = -1;
-                              Node<K,V> en = e.next;
-                              if (pred != null)
-                                 pred.next = en;
-                              else
-                                 setTabAt(tab, i, en);
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                           V prevVal = e.val;
+                           if (prevVal != NULL_VALUE) {
+                              val = remappingFunction.apply(key, prevVal);
+                              if (val != null) {
+                                 e.val = val;
+                                 evictionPolicy.onEntryHitWrite(e, val);
+                              }
+                              else {
+                                 delta = -1;
+                                 Node<K,V> en = e.next;
+                                 if (pred != null)
+                                    pred.next = en;
+                                 else
+                                    setTabAt(tab, i, en);
+                                 evictionPolicy.onEntryRemove(e);
+                              }
                            }
                            break;
                         }
@@ -1803,12 +3506,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      if ((r = t.root) != null &&
                            (p = r.findTreeNode(h, key, null)) != null) {
                         val = remappingFunction.apply(key, p.val);
-                        if (val != null)
+                        if (val != null) {
                            p.val = val;
+                           evictionPolicy.onEntryHitWrite(p, val);
+                        }
                         else {
                            delta = -1;
                            if (t.removeTreeNode(p))
-                              setTabAt(tab, i, untreeify(t.first));
+                              setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
+                           evictionPolicy.onEntryRemove(p);
                         }
                      }
                   }
@@ -1818,8 +3524,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                break;
          }
       }
-      if (delta != 0)
-         addCount((long)delta, binCount);
+      if (delta != 0) {
+         addCount(delta, binCount);
+      }
       return val;
    }
 
@@ -1843,11 +3550,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
+   @Override
    public V compute(K key,
-         BiFun<? super K, ? super V, ? extends V> remappingFunction) {
+         BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(key.hashCode());
+      int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1856,7 +3564,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            Node<K,V> r = new ReservationNode<K,V>();
+            Node<K,V> r = new ReservationNode<K,V>(nodeEq); // EQUIVALENCE_MOD
             synchronized (r) {
                if (casTabAt(tab, i, null, r)) {
                   binCount = 1;
@@ -1864,7 +3572,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   try {
                      if ((val = remappingFunction.apply(key, null)) != null) {
                         delta = 1;
-                        node = new Node<K,V>(h, key, val, null);
+                        node = evictionPolicy.createNewEntry(key, h, null, val, null);
+                        evictionPolicy.onEntryMiss(node, val);
+                        // When entry not present, attempt to activate if necessary
+                        evictionListener.onEntryActivated(key);
                      }
                   } finally {
                      setTabAt(tab, i, node);
@@ -1885,17 +3596,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
-                           val = remappingFunction.apply(key, e.val);
-                           if (val != null)
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                           V oldVal = e.val == NULL_VALUE ? null : e.val;
+                           val = remappingFunction.apply(key, oldVal);
+                           if (val != null) {
                               e.val = val;
+                              if (oldVal == null) {
+                                 evictionPolicy.onEntryMiss(e, val);
+                              } else {
+                                 evictionPolicy.onEntryHitWrite(e, val);
+                              }
+                           }
                            else {
-                              delta = -1;
+                              delta = oldVal == null ? 0 : -1;
                               Node<K,V> en = e.next;
                               if (pred != null)
                                  pred.next = en;
                               else
                                  setTabAt(tab, i, en);
+                              if (oldVal != null) {
+                                 evictionPolicy.onEntryRemove(e);
+                              }
                            }
                            break;
                         }
@@ -1904,8 +3625,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            val = remappingFunction.apply(key, null);
                            if (val != null) {
                               delta = 1;
-                              pred.next =
-                                    new Node<K,V>(h, key, val, null);
+                              pred.next = evictionPolicy.createNewEntry(key, h, null,
+                                    val, null);
+                              evictionPolicy.onEntryMiss(pred.next, val);
+                              // When entry not present, attempt to activate if necessary
+                              evictionListener.onEntryActivated(key);
                            }
                            break;
                         }
@@ -1919,20 +3643,28 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         p = r.findTreeNode(h, key, null);
                      else
                         p = null;
-                     V pv = (p == null) ? null : p.val;
+                     V pv = (p == null) ? null : p.val == NULL_VALUE ? null : p.val;
                      val = remappingFunction.apply(key, pv);
                      if (val != null) {
-                        if (p != null)
+                        if (p != null) {
+                           delta = p.val == null ? 1 : 0;
                            p.val = val;
+                           if (pv == null) {
+                              evictionPolicy.onEntryMiss(p, val);
+                           } else {
+                              evictionPolicy.onEntryHitWrite(p, val);
+                           }
+                        }
                         else {
                            delta = 1;
                            t.putTreeVal(h, key, val);
                         }
                      }
                      else if (p != null) {
-                        delta = -1;
+                        delta = p.val == null || p.val == NULL_VALUE ? 0 : -1;
                         if (t.removeTreeNode(p))
-                           setTabAt(tab, i, untreeify(t.first));
+                           setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
+                        evictionPolicy.onEntryRemove(p);
                      }
                   }
                }
@@ -1944,8 +3676,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
-      if (delta != 0)
-         addCount((long)delta, binCount);
+      if (delta != 0) {
+         addCount(delta, binCount);
+      }
+      notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
       return val;
    }
 
@@ -1969,10 +3703,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
-   public V merge(K key, V value, BiFun<? super V, ? super V, ? extends V> remappingFunction) {
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       if (key == null || value == null || remappingFunction == null)
          throw new NullPointerException();
-      int h = spread(key.hashCode());
+      int h = spread(keyEq.hashCode(key));
       V val = null;
       int delta = 0;
       int binCount = 0;
@@ -1981,10 +3716,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (tab == null || (n = tab.length) == 0)
             tab = initTable();
          else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
-            if (casTabAt(tab, i, null, new Node<K,V>(h, key, value, null))) {
-               delta = 1;
-               val = value;
-               break;
+            Node<K, V> newNode = evictionPolicy.createNewEntry(key, h, null, val, null);
+            synchronized (newNode) {
+               if (casTabAt(tab, i, null, newNode)) { // EQUIVALENCE_MOD
+                  delta = 1;
+                  val = value;
+                  evictionPolicy.onEntryMiss(newNode, val);
+                  evictionListener.onEntryActivated(key);
+                  break;
+               }
             }
          }
          else if ((fh = f.hash) == MOVED)
@@ -1998,12 +3738,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         K ek;
                         if (e.hash == h &&
                               ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
-                           val = remappingFunction.apply(e.val, value);
-                           if (val != null)
+                                     (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
+                           V prevVal = e.val;
+                           prevVal = prevVal == NULL_VALUE ? null : prevVal;
+                           val = remappingFunction.apply(prevVal, value);
+                           if (val != null) {
+                              delta = prevVal == null ? 1 : 0;
                               e.val = val;
+                           }
                            else {
-                              delta = -1;
+                              delta = prevVal == null ? 0 : -1;
                               Node<K,V> en = e.next;
                               if (pred != null)
                                  pred.next = en;
@@ -2016,8 +3760,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         if ((e = e.next) == null) {
                            delta = 1;
                            val = value;
-                           pred.next =
-                                 new Node<K,V>(h, key, val, null);
+                           pred.next = evictionPolicy.createNewEntry(key, h, null, val,
+                                 null);
+                           evictionPolicy.onEntryMiss(pred.next, val);
+                           evictionListener.onEntryActivated(key);
                            break;
                         }
                      }
@@ -2028,20 +3774,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      TreeNode<K,V> r = t.root;
                      TreeNode<K,V> p = (r == null) ? null :
                            r.findTreeNode(h, key, null);
+                     V prevVal = p.val;
+                     prevVal = prevVal == NULL_VALUE ? null : prevVal;
                      val = (p == null) ? value :
-                           remappingFunction.apply(p.val, value);
+                           remappingFunction.apply(prevVal, value);
                      if (val != null) {
-                        if (p != null)
+                        if (p != null) {
+                           // If val was null then this is an add
+                           delta = prevVal == null ? 1 : 0;
                            p.val = val;
+                        }
                         else {
                            delta = 1;
                            t.putTreeVal(h, key, val);
                         }
                      }
                      else if (p != null) {
-                        delta = -1;
+                        // If val was null then it wasn't removed - but we still remove
+                        // the node
+                        delta = prevVal == null ? 0 : -1;
                         if (t.removeTreeNode(p))
-                           setTabAt(tab, i, untreeify(t.first));
+                           setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
                      }
                   }
                }
@@ -2053,8 +3806,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
-      if (delta != 0)
-         addCount((long)delta, binCount);
+      if (delta != 0) {
+         addCount(delta, binCount);
+         notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
+      }
       return val;
    }
 
@@ -2103,11 +3858,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       return new ValueIterator<K,V>(t, f, 0, f, this);
    }
 
-   // ConcurrentHashMapV8-only methods
+   // EquivalentConcurrentHashMapV8-only methods
 
    /**
     * Returns the number of mappings. This method should be used
-    * instead of {@link #size} because a ConcurrentHashMapV8 may
+    * instead of {@link #size} because a EquivalentConcurrentHashMapV8 may
     * contain more mappings than can be represented as an int. The
     * value returned is an estimate; the actual count may differ if
     * there are concurrent insertions or removals.
@@ -2121,19 +3876,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * Creates a new {@link Set} backed by a ConcurrentHashMapV8
+    * Creates a new {@link Set} backed by a EquivalentConcurrentHashMapV8
     * from the given type to {@code Boolean.TRUE}.
     *
     * @return the new set
     * @since 1.8
     */
-   public static <K> KeySetView<K,Boolean> newKeySet() {
+   public static <K> KeySetView<K,Boolean> newKeySet(int maxSize, Equivalence<K> keyEquivalence) { // EQUIVALENCE_MOD
       return new KeySetView<K,Boolean>
-            (new ConcurrentHashMapV8<K,Boolean>(), Boolean.TRUE);
+            (new BoundedEquivalentConcurrentHashMapV8<K,Boolean>(maxSize, keyEquivalence,
+                  AnyEquivalence.<Boolean>getInstance()), Boolean.TRUE); // EQUIVALENCE_MOD
    }
 
    /**
-    * Creates a new {@link Set} backed by a ConcurrentHashMapV8
+    * Creates a new {@link Set} backed by a EquivalentConcurrentHashMapV8
     * from the given type to {@code Boolean.TRUE}.
     *
     * @param initialCapacity The implementation performs internal
@@ -2143,9 +3899,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * elements is negative
     * @since 1.8
     */
-   public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity) {
+   public static <K> KeySetView<K,Boolean> newKeySet(int maxSize, int initialCapacity, Equivalence<K> keyEquivalence) { // EQUIVALENCE_MOD
       return new KeySetView<K,Boolean>
-            (new ConcurrentHashMapV8<K,Boolean>(initialCapacity), Boolean.TRUE);
+            (new BoundedEquivalentConcurrentHashMapV8<K,Boolean>(maxSize, initialCapacity, keyEquivalence,
+                  AnyEquivalence.<Boolean>getInstance()), Boolean.TRUE); // EQUIVALENCE_MOD
    }
 
    /**
@@ -2172,11 +3929,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    static final class ForwardingNode<K,V> extends Node<K,V> {
       final Node<K,V>[] nextTable;
-      ForwardingNode(Node<K,V>[] tab) {
-         super(MOVED, null, null, null);
+      ForwardingNode(Node<K,V>[] tab, NodeEquivalence<K, V> nodeEq) { // EQUIVALENCE_MOD
+         super(MOVED, nodeEq, null, null, null); // EQUIVALENCE_MOD
          this.nextTable = tab;
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          // loop to avoid arbitrarily deep recursion on forwarding nodes
          outer: for (Node<K,V>[] tab = nextTable;;) {
@@ -2187,7 +3945,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             for (;;) {
                int eh; K ek;
                if ((eh = e.hash) == h &&
-                     ((ek = e.key) == k || (ek != null && k.equals(ek))))
+                     ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
                   return e;
                if (eh < 0) {
                   if (e instanceof ForwardingNode) {
@@ -2208,10 +3966,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * A place-holder node used in computeIfAbsent and compute
     */
    static final class ReservationNode<K,V> extends Node<K,V> {
-      ReservationNode() {
-         super(RESERVED, null, null, null);
+      ReservationNode(NodeEquivalence<K, V> nodeEq) { // EQUIVALENCE_MOD
+         super(RESERVED, nodeEq, null, null, null); // EQUIVALENCE_MOD
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          return null;
       }
@@ -2243,6 +4002,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                   table = tab = nt;
                   sc = n - (n >>> 2);
+                  evictionPolicy.onResize(0, n);
                }
             } finally {
                sizeCtl = sc;
@@ -2251,6 +4011,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       return tab;
+   }
+
+   public void resize(long newSize) {
+      if (newSize <= 0) {
+         throw new IllegalArgumentException();
+      }
+      this.maxSize = newSize;
+      this.evictionPolicy.resize(newSize);
+   }
+
+   public long capacity() {
+      return maxSize;
    }
 
    /**
@@ -2277,13 +4049,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             fullAddCount(x, hc, uncontended);
             return;
          }
-         if (check <= 1)
+         // If this is true it means an element was removed or the element wasn't replaced
+         // In either case we don't care about the size
+         if (check <= -1)
             return;
          s = sumCount();
       }
       if (check >= 0) {
          Node<K,V>[] tab, nt; int n, sc;
-         while (s >= (long)(sc = sizeCtl) && (tab = table) != null &&
+         while (s >= (sc = sizeCtl) && (sizeCtl * .75) < maxSize && (tab = table) != null &&
                (n = tab.length) < MAXIMUM_CAPACITY) {
             int rs = resizeStamp(n);
             if (sc < 0) {
@@ -2300,6 +4074,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             s = sumCount();
          }
       }
+      return;
    }
 
    /**
@@ -2345,6 +4120,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                      table = nt;
                      sc = n - (n >>> 2);
+                     evictionPolicy.onResize(tab.length, n);
                   }
                } finally {
                   sizeCtl = sc;
@@ -2392,7 +4168,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          transferIndex = n;
       }
       int nextn = nextTab.length;
-      ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
+      ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab, nodeEq); // EQUIVALENCE_MOD
       boolean advance = true;
       boolean finishing = false; // to ensure sweep before committing nextTab
       for (int i = 0, bound = 0;;) {
@@ -2418,8 +4194,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             int sc;
             if (finishing) {
                nextTable = null;
+               long oldSize = table.length;
                table = nextTab;
                sizeCtl = (n << 1) - (n >>> 1);
+               evictionPolicy.onResize(oldSize, table.length);
                return;
             }
             if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
@@ -2457,10 +4235,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      }
                      for (Node<K,V> p = f; p != lastRun; p = p.next) {
                         int ph = p.hash; K pk = p.key; V pv = p.val;
-                        if ((ph & n) == 0)
-                           ln = new Node<K,V>(ph, pk, pv, ln);
-                        else
-                           hn = new Node<K,V>(ph, pk, pv, hn);
+                        if ((ph & n) == 0) {
+                           ln = evictionPolicy.createNewEntry(pk, ph, ln, pv, p.eviction);
+                        }
+                        else {
+                           hn = evictionPolicy.createNewEntry(pk, ph, hn, pv, p.eviction);
+                        }
                      }
                      setTabAt(nextTab, i, ln);
                      setTabAt(nextTab, i + n, hn);
@@ -2474,8 +4254,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      int lc = 0, hc = 0;
                      for (Node<K,V> e = t.first; e != null; e = e.next) {
                         int h = e.hash;
-                        TreeNode<K,V> p = new TreeNode<K,V>
-                              (h, e.key, e.val, null, null);
+                        TreeNode<K,V> p = evictionPolicy.createNewEntry(e.key, h, null,
+                              null, e.val, e.eviction);
                         if ((h & n) == 0) {
                            if ((p.prev = loTail) == null)
                               lo = p;
@@ -2493,10 +4273,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            ++hc;
                         }
                      }
-                     ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) :
-                           (hc != 0) ? new TreeBin<K,V>(lo) : t;
-                     hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) :
-                           (lc != 0) ? new TreeBin<K,V>(hi) : t;
+                     ln = (lc <= UNTREEIFY_THRESHOLD) ? untreeify(lo) : // EQUIVALENCE_MOD
+                           (hc != 0) ? new TreeBin<K,V>(lo, this) : t; // EQUIVALENCE_MOD
+                     hn = (hc <= UNTREEIFY_THRESHOLD) ? untreeify(hi) : // EQUIVALENCE_MOD
+                           (lc != 0) ? new TreeBin<K,V>(hi, this) : t; // EQUIVALENCE_MOD
                      setTabAt(nextTab, i, ln);
                      setTabAt(nextTab, i + n, hn);
                      setTabAt(tab, i, fwd);
@@ -2515,7 +4295,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * too small, in which case resizes instead.
     */
    private final void treeifyBin(Node<K,V>[] tab, int index) {
-      Node<K,V> b; int n, sc;
+      Node<K,V> b; int n;
       if (tab != null) {
          if ((n = tab.length) < MIN_TREEIFY_CAPACITY)
             tryPresize(n << 1);
@@ -2524,16 +4304,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                if (tabAt(tab, index) == b) {
                   TreeNode<K,V> hd = null, tl = null;
                   for (Node<K,V> e = b; e != null; e = e.next) {
-                     TreeNode<K,V> p =
-                           new TreeNode<K,V>(e.hash, e.key, e.val,
-                                 null, null);
+                     TreeNode<K,V> p = evictionPolicy.createNewEntry(e.key, e.hash, null,
+                           null, e.val, e.eviction);
                      if ((p.prev = tl) == null)
                         hd = p;
                      else
                         tl.next = p;
                      tl = p;
                   }
-                  setTabAt(tab, index, new TreeBin<K,V>(hd));
+                  setTabAt(tab, index, new TreeBin<K,V>(hd, this));
                }
             }
          }
@@ -2543,10 +4322,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * Returns a list on non-TreeNodes replacing those in given list.
     */
-   static <K,V> Node<K,V> untreeify(Node<K,V> b) {
+   Node<K,V> untreeify(Node<K,V> b) { // EQUIVALENCE_MOD
       Node<K,V> hd = null, tl = null;
       for (Node<K,V> q = b; q != null; q = q.next) {
-         Node<K,V> p = new Node<K,V>(q.hash, q.key, q.val, null);
+         Node<K,V> p = evictionPolicy.createNewEntry(q.key, q.hash, null, q.val,
+               q.eviction);
          if (tl == null)
             hd = p;
          else
@@ -2568,12 +4348,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       TreeNode<K,V> prev;    // needed to unlink next upon deletion
       boolean red;
 
-      TreeNode(int hash, K key, V val, Node<K,V> next,
-            TreeNode<K,V> parent) {
-         super(hash, key, val, next);
+      TreeNode(int hash, NodeEquivalence<K,V> nodeEq, K key, V val, Node<K,V> next, // EQUIVALENCE_MOD
+            TreeNode<K,V> parent, EvictionEntry<K, V> evictionEntry) {
+         super(hash, nodeEq, key, val, next); // EQUIVALENCE_MOD
          this.parent = parent;
+         if (evictionEntry != null) {
+            lazySetEviction(evictionEntry);
+         }
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          return findTreeNode(h, k, null);
       }
@@ -2582,6 +4366,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Returns the TreeNode (or null if not found) for the given key
        * starting at given root.
        */
+      @SuppressWarnings("unchecked")
       final TreeNode<K,V> findTreeNode(int h, Object k, Class<?> kc) {
          if (k != null) {
             TreeNode<K,V> p = this;
@@ -2592,15 +4377,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   p = pl;
                else if (ph < h)
                   p = pr;
-               else if ((pk = p.key) == k || (pk != null && k.equals(pk)))
+               else if ((pk = p.key) == k || (pk != null && nodeEq.keyEq.equals(pk, k))) // EQUIVALENCE_MOD
                   return p;
                else if (pl == null)
                   p = pr;
                else if (pr == null)
                   p = pl;
                else if ((kc != null ||
-                               (kc = comparableClassFor(k)) != null) &&
-                     (dir = compareComparables(kc, k, pk)) != 0)
+                               (kc = comparableClassFor(k, nodeEq.keyEq)) != null) && // EQUIVALENCE_MOD
+                     (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) != 0) // EQUIVALENCE_MOD
                   p = (dir < 0) ? pl : pr;
                else if ((q = pr.findTreeNode(h, k, kc)) != null)
                   return q;
@@ -2609,6 +4394,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             } while (p != null);
          }
          return null;
+      }
+
+      @Override
+      public String toString() {
+         return "Tree" + super.toString() + " with hash " + System.identityHashCode(this);
       }
    }
 
@@ -2622,6 +4412,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * not) to complete before tree restructuring operations.
     */
    static final class TreeBin<K,V> extends Node<K,V> {
+      final BoundedEquivalentConcurrentHashMapV8<K, V> map;
       TreeNode<K,V> root;
       volatile TreeNode<K,V> first;
       volatile Thread waiter;
@@ -2651,8 +4442,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * Creates bin with initial set of nodes headed by b.
        */
-      TreeBin(TreeNode<K,V> b) {
-         super(TREEBIN, null, null, null);
+      @SuppressWarnings("unchecked")
+      TreeBin(TreeNode<K,V> b, BoundedEquivalentConcurrentHashMapV8<K, V> map) { // EQUIVALENCE_MOD
+         super(TREEBIN, map.nodeEq, null, null, null);
+         this.map = map;
          this.first = b;
          TreeNode<K,V> r = null;
          for (TreeNode<K,V> x = b, next; x != null; x = next) {
@@ -2675,9 +4468,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   else if (ph < h)
                      dir = 1;
                   else if ((kc == null &&
-                                  (kc = comparableClassFor(k)) == null) ||
-                        (dir = compareComparables(kc, k, pk)) == 0)
+                        (kc = comparableClassFor(k, nodeEq.keyEq)) == null) || // EQUIVALENCE_MOD
+                        (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) == 0) // EQUIVALENCE_MOD
                      dir = tieBreakOrder(k, pk);
+
                   TreeNode<K,V> xp = p;
                   if ((p = (dir <= 0) ? p.left : p.right) == null) {
                      x.parent = xp;
@@ -2692,7 +4486,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
          this.root = r;
-         assert checkInvariants(root);
+//         assert checkInvariants(root);
       }
 
       /**
@@ -2739,13 +4533,14 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * using tree comparisons from root, but continues linear
        * search when lock not available.
        */
+      @Override
       final Node<K,V> find(int h, Object k) {
          if (k != null) {
             for (Node<K,V> e = first; e != null; ) {
                int s; K ek;
                if (((s = lockState) & (WAITER|WRITER)) != 0) {
                   if (e.hash == h &&
-                        ((ek = e.key) == k || (ek != null && k.equals(ek))))
+                        ((ek = e.key) == k || (ek != null && nodeEq.keyEq.equals(ek, k)))) // EQUIVALENCE_MOD
                      return e;
                   e = e.next;
                }
@@ -2775,40 +4570,44 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Finds or adds a node.
        * @return null if added
        */
+      @SuppressWarnings("unchecked")
       final TreeNode<K,V> putTreeVal(int h, K k, V v) {
          Class<?> kc = null;
          boolean searched = false;
          for (TreeNode<K,V> p = root;;) {
             int dir, ph; K pk;
             if (p == null) {
-               first = root = new TreeNode<K,V>(h, k, v, null, null);
+               first = root = map.evictionPolicy.createNewEntry(k, h, null, null, v, null);
+               map.evictionPolicy.onEntryMiss(first, v);
+               map.evictionListener.onEntryActivated(k);
                break;
             }
             else if ((ph = p.hash) > h)
                dir = -1;
             else if (ph < h)
                dir = 1;
-            else if ((pk = p.key) == k || (pk != null && k.equals(pk)))
+            else if ((pk = p.key) == k || (pk != null && nodeEq.keyEq.equals(pk, k))) // EQUIVALENCE_MOD
                return p;
             else if ((kc == null &&
-                            (kc = comparableClassFor(k)) == null) ||
-                  (dir = compareComparables(kc, k, pk)) == 0) {
+                     (kc = comparableClassFor(k, nodeEq.keyEq)) == null) || // EQUIVALENCE_MOD
+                     (dir = compareComparables(kc, k, pk, (Equivalence<Object>) nodeEq.keyEq)) == 0) { // EQUIVALENCE_MOD
                if (!searched) {
                   TreeNode<K,V> q, ch;
                   searched = true;
                   if (((ch = p.left) != null &&
-                             (q = ch.findTreeNode(h, k, kc)) != null) ||
-                        ((ch = p.right) != null &&
-                               (q = ch.findTreeNode(h, k, kc)) != null))
-                     return q;
+                     (q = ch.findTreeNode(h, k, kc)) != null) ||
+                     ((ch = p.right) != null &&
+                     (q = ch.findTreeNode(h, k, kc)) != null))
+                  return q;
                }
                dir = tieBreakOrder(k, pk);
             }
-
             TreeNode<K,V> xp = p;
             if ((p = (dir <= 0) ? p.left : p.right) == null) {
                TreeNode<K,V> x, f = first;
-               first = x = new TreeNode<K,V>(h, k, v, f, xp);
+               first = x = map.evictionPolicy.createNewEntry(k, h, f, xp, v, null);
+               map.evictionPolicy.onEntryMiss(first, v);
+               map.evictionListener.onEntryActivated(k);
                if (f != null)
                   f.prev = x;
                if (dir <= 0)
@@ -2934,7 +4733,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          } finally {
             unlockRoot();
          }
-         assert checkInvariants(root);
+//         assert checkInvariants(root);
          return false;
       }
 
@@ -3153,7 +4952,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private static final long LOCKSTATE;
       static {
          try {
-            U = getUnsafe();
+            U = Unsafe.getUnsafe();
             Class<?> k = TreeBin.class;
             LOCKSTATE = U.objectFieldOffset
                   (k.getDeclaredField("lockState"));
@@ -3218,7 +5017,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * Advances if possible, returning next valid node, or null if none.
        */
-      final Node<K,V> advance() {
+      Node<K,V> advance() {
          Node<K,V> e;
          if ((e = next) != null)
             e = e.next;
@@ -3291,82 +5090,110 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Traverser to support iterator.remove.
     */
    static class BaseIterator<K,V> extends Traverser<K,V> {
-      final ConcurrentHashMapV8<K,V> map;
-      Node<K,V> lastReturned;
+      final BoundedEquivalentConcurrentHashMapV8<K,V> map;
+      K lastKey;
+      K key;
+      V value;
       BaseIterator(Node<K,V>[] tab, int size, int index, int limit,
-            ConcurrentHashMapV8<K,V> map) {
+            BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          super(tab, size, index, limit);
          this.map = map;
-         advance();
+         advanceUntilValidValue();
       }
 
-      public final boolean hasNext() { return next != null; }
-      public final boolean hasMoreElements() { return next != null; }
+      @Override
+      final Node<K, V> advance() {
+         throw new UnsupportedOperationException();
+      }
+
+      final void advanceUntilValidValue() {
+         Node<K, V> node = super.advance();
+         if (node != null) {
+            do {
+               value = node.val;
+               if (value != null && value != NULL_VALUE) {
+                  key = node.key;
+                  break;
+               } else {
+                  key = null;
+               }
+            } while ((node = super.advance()) != null);
+         } else {
+            key = null;
+            value = null;
+         }
+      }
+
+      public final boolean hasNext() { return key != null; }
+      public final boolean hasMoreElements() { return key != null; }
 
       public final void remove() {
-         Node<K,V> p;
-         if ((p = lastReturned) == null)
+         K p;
+         if ((p = lastKey) == null)
             throw new IllegalStateException();
-         lastReturned = null;
-         map.replaceNode(p.key, null, null);
+         lastKey = null;
+         map.replaceNode(p, null, null);
       }
    }
 
    static final class KeyIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<K>, Enumeration<K> {
       KeyIterator(Node<K,V>[] tab, int index, int size, int limit,
-            ConcurrentHashMapV8<K,V> map) {
+            BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final K next() {
-         Node<K,V> p;
-         if ((p = next) == null)
+         K k;
+         if ((k = key) == null)
             throw new NoSuchElementException();
-         K k = p.key;
-         lastReturned = p;
-         advance();
+         lastKey = k;
+         advanceUntilValidValue();
          return k;
       }
 
+      @Override
       public final K nextElement() { return next(); }
    }
 
    static final class ValueIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<V>, Enumeration<V> {
       ValueIterator(Node<K,V>[] tab, int index, int size, int limit,
-            ConcurrentHashMapV8<K,V> map) {
+            BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final V next() {
-         Node<K,V> p;
-         if ((p = next) == null)
+         K k;
+         if ((k = key) == null)
             throw new NoSuchElementException();
-         V v = p.val;
-         lastReturned = p;
-         advance();
+         lastKey = k;
+         V v = value;
+         advanceUntilValidValue();
          return v;
       }
 
+      @Override
       public final V nextElement() { return next(); }
    }
 
    static final class EntryIterator<K,V> extends BaseIterator<K,V>
          implements Iterator<Map.Entry<K,V>> {
       EntryIterator(Node<K,V>[] tab, int index, int size, int limit,
-            ConcurrentHashMapV8<K,V> map) {
+            BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final Map.Entry<K,V> next() {
-         Node<K,V> p;
-         if ((p = next) == null)
+         K k;
+         if ((k = key) == null)
             throw new NoSuchElementException();
-         K k = p.key;
-         V v = p.val;
-         lastReturned = p;
-         advance();
+         V v = value;
+         lastKey = k;
+         advanceUntilValidValue();
          return new MapEntry<K,V>(k, v, map);
       }
    }
@@ -3377,24 +5204,29 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final class MapEntry<K,V> implements Map.Entry<K,V> {
       final K key; // non-null
       V val;       // non-null
-      final ConcurrentHashMapV8<K,V> map;
-      MapEntry(K key, V val, ConcurrentHashMapV8<K,V> map) {
+      final BoundedEquivalentConcurrentHashMapV8<K,V> map;
+      MapEntry(K key, V val, BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          this.key = key;
          this.val = val;
          this.map = map;
       }
+      @Override
       public K getKey()        { return key; }
+      @Override
       public V getValue()      { return val; }
-      public int hashCode()    { return key.hashCode() ^ val.hashCode(); }
+      @Override
+      public int hashCode()    { return map.keyEq.hashCode(key) ^ map.valueEq.hashCode(val); } // EQUIVALENCE_MOD
+      @Override
       public String toString() { return key + "=" + val; }
 
+      @Override
       public boolean equals(Object o) {
          Object k, v; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
                        (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
                        (v = e.getValue()) != null &&
-                       (k == key || k.equals(key)) &&
-                       (v == val || v.equals(val)));
+                       (k == key || map.keyEq.equals(key, k)) && // EQUIVALENCE_MOD
+                       (v == val || map.valueEq.equals(val, v))); // EQUIVALENCE_MOD
       }
 
       /**
@@ -3405,6 +5237,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * could even have been removed, in which case the put will
        * re-establish). We do not and cannot guarantee more.
        */
+      @Override
       public V setValue(V value) {
          if (value == null) throw new NullPointerException();
          V v = val;
@@ -3423,6 +5256,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<K> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3430,21 +5264,24 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1);
       }
 
-      public void forEachRemaining(Action<? super K> action) {
+      @Override
+      public void forEachRemaining(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          for (Node<K,V> p; (p = advance()) != null;)
-            action.apply(p.key);
+            action.accept(p.key);
       }
 
-      public boolean tryAdvance(Action<? super K> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
          if ((p = advance()) == null)
             return false;
-         action.apply(p.key);
+         action.accept(p.key);
          return true;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
@@ -3458,6 +5295,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<V> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3465,36 +5303,40 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1);
       }
 
-      public void forEachRemaining(Action<? super V> action) {
+      @Override
+      public void forEachRemaining(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          for (Node<K,V> p; (p = advance()) != null;)
-            action.apply(p.val);
+            action.accept(p.val);
       }
 
-      public boolean tryAdvance(Action<? super V> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
          if ((p = advance()) == null)
             return false;
-         action.apply(p.val);
+         action.accept(p.val);
          return true;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
 
    static final class EntrySpliterator<K,V> extends Traverser<K,V>
          implements ConcurrentHashMapSpliterator<Map.Entry<K,V>> {
-      final ConcurrentHashMapV8<K,V> map; // To export MapEntry
+      final BoundedEquivalentConcurrentHashMapV8<K,V> map; // To export MapEntry
       long est;               // size estimate
       EntrySpliterator(Node<K,V>[] tab, int size, int index, int limit,
-            long est, ConcurrentHashMapV8<K,V> map) {
+            long est, BoundedEquivalentConcurrentHashMapV8<K,V> map) {
          super(tab, size, index, limit);
          this.map = map;
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<Map.Entry<K,V>> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3502,21 +5344,31 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1, map);
       }
 
-      public void forEachRemaining(Action<? super Map.Entry<K,V>> action) {
+      @Override
+      public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
-         for (Node<K,V> p; (p = advance()) != null; )
-            action.apply(new MapEntry<K,V>(p.key, p.val, map));
+         for (Node<K,V> p; (p = advance()) != null; ) {
+            V val = p.val;
+            if (val != NULL_VALUE)
+            action.accept(new MapEntry<K, V>(p.key, val, map));
+         }
       }
 
-      public boolean tryAdvance(Action<? super Map.Entry<K,V>> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
-         if ((p = advance()) == null)
-            return false;
-         action.apply(new MapEntry<K,V>(p.key, p.val, map));
-         return true;
+         while ((p = advance()) != null) {
+            V val = p.val;
+            if (val != NULL_VALUE) {
+               action.accept(new MapEntry<K, V>(p.key, val, map));
+               return true;
+            }
+         }
+         return false;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
@@ -3547,8 +5399,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param action the action
     * @since 1.8
     */
+   @Override
    public void forEach(long parallelismThreshold,
-         BiAction<? super K,? super V> action) {
+         BiConsumer<? super K,? super V> action) {
       if (action == null) throw new NullPointerException();
       new ForEachMappingTask<K,V>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3568,8 +5421,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> void forEach(long parallelismThreshold,
-         BiFun<? super K, ? super V, ? extends U> transformer,
-         Action<? super U> action) {
+         BiFunction<? super K, ? super V, ? extends U> transformer,
+         Consumer<? super U> action) {
       if (transformer == null || action == null)
          throw new NullPointerException();
       new ForEachTransformedMappingTask<K,V,U>
@@ -3593,7 +5446,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U search(long parallelismThreshold,
-         BiFun<? super K, ? super V, ? extends U> searchFunction) {
+         BiFunction<? super K, ? super V, ? extends U> searchFunction) {
       if (searchFunction == null) throw new NullPointerException();
       return new SearchMappingsTask<K,V,U>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3616,8 +5469,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U reduce(long parallelismThreshold,
-         BiFun<? super K, ? super V, ? extends U> transformer,
-         BiFun<? super U, ? super U, ? extends U> reducer) {
+         BiFunction<? super K, ? super V, ? extends U> transformer,
+         BiFunction<? super U, ? super U, ? extends U> reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceMappingsTask<K,V,U>
@@ -3641,9 +5494,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public double reduceToDouble(long parallelismThreshold,
-         ObjectByObjectToDouble<? super K, ? super V> transformer,
+         ToDoubleBiFunction<? super K, ? super V> transformer,
          double basis,
-         DoubleByDoubleToDouble reducer) {
+         DoubleBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceMappingsToDoubleTask<K,V>
@@ -3667,9 +5520,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public long reduceToLong(long parallelismThreshold,
-         ObjectByObjectToLong<? super K, ? super V> transformer,
+         ToLongBiFunction<? super K, ? super V> transformer,
          long basis,
-         LongByLongToLong reducer) {
+         LongBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceMappingsToLongTask<K,V>
@@ -3693,9 +5546,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public int reduceToInt(long parallelismThreshold,
-         ObjectByObjectToInt<? super K, ? super V> transformer,
+         ToIntBiFunction<? super K, ? super V> transformer,
          int basis,
-         IntByIntToInt reducer) {
+         IntBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceMappingsToIntTask<K,V>
@@ -3712,7 +5565,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public void forEachKey(long parallelismThreshold,
-         Action<? super K> action) {
+         Consumer<? super K> action) {
       if (action == null) throw new NullPointerException();
       new ForEachKeyTask<K,V>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3732,8 +5585,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> void forEachKey(long parallelismThreshold,
-         Fun<? super K, ? extends U> transformer,
-         Action<? super U> action) {
+         Function<? super K, ? extends U> transformer,
+         Consumer<? super U> action) {
       if (transformer == null || action == null)
          throw new NullPointerException();
       new ForEachTransformedKeyTask<K,V,U>
@@ -3757,7 +5610,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U searchKeys(long parallelismThreshold,
-         Fun<? super K, ? extends U> searchFunction) {
+         Function<? super K, ? extends U> searchFunction) {
       if (searchFunction == null) throw new NullPointerException();
       return new SearchKeysTask<K,V,U>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3776,7 +5629,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public K reduceKeys(long parallelismThreshold,
-         BiFun<? super K, ? super K, ? extends K> reducer) {
+         BiFunction<? super K, ? super K, ? extends K> reducer) {
       if (reducer == null) throw new NullPointerException();
       return new ReduceKeysTask<K,V>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3799,8 +5652,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U reduceKeys(long parallelismThreshold,
-         Fun<? super K, ? extends U> transformer,
-         BiFun<? super U, ? super U, ? extends U> reducer) {
+         Function<? super K, ? extends U> transformer,
+         BiFunction<? super U, ? super U, ? extends U> reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceKeysTask<K,V,U>
@@ -3824,9 +5677,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public double reduceKeysToDouble(long parallelismThreshold,
-         ObjectToDouble<? super K> transformer,
+         ToDoubleFunction<? super K> transformer,
          double basis,
-         DoubleByDoubleToDouble reducer) {
+         DoubleBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceKeysToDoubleTask<K,V>
@@ -3850,9 +5703,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public long reduceKeysToLong(long parallelismThreshold,
-         ObjectToLong<? super K> transformer,
+         ToLongFunction<? super K> transformer,
          long basis,
-         LongByLongToLong reducer) {
+         LongBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceKeysToLongTask<K,V>
@@ -3876,9 +5729,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public int reduceKeysToInt(long parallelismThreshold,
-         ObjectToInt<? super K> transformer,
+         ToIntFunction<? super K> transformer,
          int basis,
-         IntByIntToInt reducer) {
+         IntBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceKeysToIntTask<K,V>
@@ -3895,7 +5748,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public void forEachValue(long parallelismThreshold,
-         Action<? super V> action) {
+         Consumer<? super V> action) {
       if (action == null)
          throw new NullPointerException();
       new ForEachValueTask<K,V>
@@ -3916,8 +5769,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> void forEachValue(long parallelismThreshold,
-         Fun<? super V, ? extends U> transformer,
-         Action<? super U> action) {
+         Function<? super V, ? extends U> transformer,
+         Consumer<? super U> action) {
       if (transformer == null || action == null)
          throw new NullPointerException();
       new ForEachTransformedValueTask<K,V,U>
@@ -3941,7 +5794,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U searchValues(long parallelismThreshold,
-         Fun<? super V, ? extends U> searchFunction) {
+         Function<? super V, ? extends U> searchFunction) {
       if (searchFunction == null) throw new NullPointerException();
       return new SearchValuesTask<K,V,U>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3959,7 +5812,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public V reduceValues(long parallelismThreshold,
-         BiFun<? super V, ? super V, ? extends V> reducer) {
+         BiFunction<? super V, ? super V, ? extends V> reducer) {
       if (reducer == null) throw new NullPointerException();
       return new ReduceValuesTask<K,V>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -3982,8 +5835,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U reduceValues(long parallelismThreshold,
-         Fun<? super V, ? extends U> transformer,
-         BiFun<? super U, ? super U, ? extends U> reducer) {
+         Function<? super V, ? extends U> transformer,
+         BiFunction<? super U, ? super U, ? extends U> reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceValuesTask<K,V,U>
@@ -4007,9 +5860,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public double reduceValuesToDouble(long parallelismThreshold,
-         ObjectToDouble<? super V> transformer,
+         ToDoubleFunction<? super V> transformer,
          double basis,
-         DoubleByDoubleToDouble reducer) {
+         DoubleBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceValuesToDoubleTask<K,V>
@@ -4033,9 +5886,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public long reduceValuesToLong(long parallelismThreshold,
-         ObjectToLong<? super V> transformer,
+         ToLongFunction<? super V> transformer,
          long basis,
-         LongByLongToLong reducer) {
+         LongBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceValuesToLongTask<K,V>
@@ -4059,9 +5912,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public int reduceValuesToInt(long parallelismThreshold,
-         ObjectToInt<? super V> transformer,
+         ToIntFunction<? super V> transformer,
          int basis,
-         IntByIntToInt reducer) {
+         IntBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceValuesToIntTask<K,V>
@@ -4071,14 +5924,17 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    /**
     * Performs the given action for each entry.
-    *
+    * <p>
+    * NOTE: Due to the nature of some eviction algorithms this method must copy any
+    * valid node before calling the provided Action.  Thus for performance it may be
+    * advisable to use forEach instead.
     * @param parallelismThreshold the (estimated) number of elements
     * needed for this operation to be executed in parallel
     * @param action the action
     * @since 1.8
     */
    public void forEachEntry(long parallelismThreshold,
-         Action<? super Map.Entry<K,V>> action) {
+         Consumer<? super Map.Entry<K,V>> action) {
       if (action == null) throw new NullPointerException();
       new ForEachEntryTask<K,V>(null, batchFor(parallelismThreshold), 0, 0, table,
             action).invoke();
@@ -4087,7 +5943,10 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * Performs the given action for each non-null transformation
     * of each entry.
-    *
+    *    * <p>
+    * NOTE: Due to the nature of some eviction algorithms this method must copy any
+    * valid node before calling the provided Action.  Thus for performance it may be
+    * advisable to use forEach instead.
     * @param parallelismThreshold the (estimated) number of elements
     * needed for this operation to be executed in parallel
     * @param transformer a function returning the transformation
@@ -4097,8 +5956,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> void forEachEntry(long parallelismThreshold,
-         Fun<Map.Entry<K,V>, ? extends U> transformer,
-         Action<? super U> action) {
+         Function<Map.Entry<K,V>, ? extends U> transformer,
+         Consumer<? super U> action) {
       if (transformer == null || action == null)
          throw new NullPointerException();
       new ForEachTransformedEntryTask<K,V,U>
@@ -4122,7 +5981,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U searchEntries(long parallelismThreshold,
-         Fun<Map.Entry<K,V>, ? extends U> searchFunction) {
+         Function<Map.Entry<K,V>, ? extends U> searchFunction) {
       if (searchFunction == null) throw new NullPointerException();
       return new SearchEntriesTask<K,V,U>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -4140,7 +5999,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public Map.Entry<K,V> reduceEntries(long parallelismThreshold,
-         BiFun<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer) {
+         BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer) {
       if (reducer == null) throw new NullPointerException();
       return new ReduceEntriesTask<K,V>
             (null, batchFor(parallelismThreshold), 0, 0, table,
@@ -4163,8 +6022,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public <U> U reduceEntries(long parallelismThreshold,
-         Fun<Map.Entry<K,V>, ? extends U> transformer,
-         BiFun<? super U, ? super U, ? extends U> reducer) {
+         Function<Map.Entry<K,V>, ? extends U> transformer,
+         BiFunction<? super U, ? super U, ? extends U> reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceEntriesTask<K,V,U>
@@ -4188,9 +6047,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public double reduceEntriesToDouble(long parallelismThreshold,
-         ObjectToDouble<Map.Entry<K,V>> transformer,
+         ToDoubleFunction<Entry<K,V>> transformer,
          double basis,
-         DoubleByDoubleToDouble reducer) {
+         DoubleBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceEntriesToDoubleTask<K,V>
@@ -4214,9 +6073,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public long reduceEntriesToLong(long parallelismThreshold,
-         ObjectToLong<Map.Entry<K,V>> transformer,
+         ToLongFunction<Entry<K,V>> transformer,
          long basis,
-         LongByLongToLong reducer) {
+         LongBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceEntriesToLongTask<K,V>
@@ -4240,9 +6099,9 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.8
     */
    public int reduceEntriesToInt(long parallelismThreshold,
-         ObjectToInt<Map.Entry<K,V>> transformer,
+         ToIntFunction<Entry<K,V>> transformer,
          int basis,
-         IntByIntToInt reducer) {
+         IntBinaryOperator reducer) {
       if (transformer == null || reducer == null)
          throw new NullPointerException();
       return new MapReduceEntriesToIntTask<K,V>
@@ -4259,22 +6118,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    abstract static class CollectionView<K,V,E>
          implements Collection<E>, java.io.Serializable {
       private static final long serialVersionUID = 7249069246763182397L;
-      final ConcurrentHashMapV8<K,V> map;
-      CollectionView(ConcurrentHashMapV8<K,V> map)  { this.map = map; }
+      final BoundedEquivalentConcurrentHashMapV8<K,V> map;
+      CollectionView(BoundedEquivalentConcurrentHashMapV8<K,V> map)  { this.map = map; }
 
       /**
        * Returns the map backing this view.
        *
        * @return the map backing this view
        */
-      public ConcurrentHashMapV8<K,V> getMap() { return map; }
+      public BoundedEquivalentConcurrentHashMapV8<K,V> getMap() { return map; }
 
       /**
        * Removes all of the elements from this view, by removing all
        * the mappings from the map backing this view.
        */
+      @Override
       public final void clear()      { map.clear(); }
+      @Override
       public final int size()        { return map.size(); }
+      @Override
       public final boolean isEmpty() { return map.isEmpty(); }
 
       // implementations below rely on concrete classes supplying these
@@ -4287,12 +6149,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * guaranteed to) reflect any modifications subsequent to
        * construction.
        */
+      @Override
       public abstract Iterator<E> iterator();
+      @Override
       public abstract boolean contains(Object o);
+      @Override
       public abstract boolean remove(Object o);
 
       private static final String oomeMsg = "Required array size too large";
 
+      @Override
       public final Object[] toArray() {
          long sz = map.mappingCount();
          if (sz > MAX_ARRAY_SIZE)
@@ -4315,6 +6181,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return (i == n) ? r : Arrays.copyOf(r, i);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final <T> T[] toArray(T[] a) {
          long sz = map.mappingCount();
@@ -4356,6 +6223,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        *
        * @return a string representation of this collection
        */
+      @Override
       public final String toString() {
          StringBuilder sb = new StringBuilder();
          sb.append('[');
@@ -4372,6 +6240,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return sb.append(']').toString();
       }
 
+      @Override
       public final boolean containsAll(Collection<?> c) {
          if (c != this) {
             for (Object e : c) {
@@ -4382,6 +6251,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return true;
       }
 
+      @Override
       public final boolean removeAll(Collection<?> c) {
          boolean modified = false;
          for (Iterator<E> it = iterator(); it.hasNext();) {
@@ -4393,6 +6263,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return modified;
       }
 
+      @Override
       public final boolean retainAll(Collection<?> c) {
          boolean modified = false;
          for (Iterator<E> it = iterator(); it.hasNext();) {
@@ -4407,13 +6278,13 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    /**
-    * A view of a ConcurrentHashMapV8 as a {@link Set} of keys, in
+    * A view of a EquivalentConcurrentHashMapV8 as a {@link Set} of keys, in
     * which additions may optionally be enabled by mapping to a
     * common value.  This class cannot be directly instantiated.
     * See {@link #keySet() keySet()},
     * {@link #keySet(Object) keySet(V)},
-    * {@link #newKeySet() newKeySet()},
-    * {@link #newKeySet(int) newKeySet(int)}.
+    * {@link #newKeySet(int, Equivalence) newKeySet()},
+    * {@link #newKeySet(int, int, Equivalence) newKeySet(int)}.
     *
     * @since 1.8
     */
@@ -4421,7 +6292,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          implements Set<K>, java.io.Serializable {
       private static final long serialVersionUID = 7249069246763182397L;
       private final V value;
-      KeySetView(ConcurrentHashMapV8<K,V> map, V value) {  // non-public
+      KeySetView(BoundedEquivalentConcurrentHashMapV8<K,V> map, V value) {  // non-public
          super(map);
          this.value = value;
       }
@@ -4439,6 +6310,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * {@inheritDoc}
        * @throws NullPointerException if the specified key is null
        */
+      @Override
       public boolean contains(Object o) { return map.containsKey(o); }
 
       /**
@@ -4450,14 +6322,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @return {@code true} if the backing map contained the specified key
        * @throws NullPointerException if the specified key is null
        */
+      @Override
       public boolean remove(Object o) { return map.remove(o) != null; }
 
       /**
        * @return an iterator over the keys of the backing map
        */
+      @Override
       public Iterator<K> iterator() {
          Node<K,V>[] t;
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          int f = (t = m.table) == null ? 0 : t.length;
          return new KeyIterator<K,V>(t, f, 0, f, m);
       }
@@ -4472,6 +6346,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @throws UnsupportedOperationException if no default mapped value
        * for additions was provided
        */
+      @Override
       public boolean add(K e) {
          V v;
          if ((v = value) == null)
@@ -4490,6 +6365,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @throws UnsupportedOperationException if no default mapped value
        * for additions was provided
        */
+      @Override
       public boolean addAll(Collection<? extends K> c) {
          boolean added = false;
          V v;
@@ -4502,13 +6378,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return added;
       }
 
+      @Override
       public int hashCode() {
          int h = 0;
          for (K e : this)
-            h += e.hashCode();
+            h += map.keyEq.hashCode(e);
          return h;
       }
 
+      @Override
       public boolean equals(Object o) {
          Set<?> c;
          return ((o instanceof Set) &&
@@ -4518,40 +6396,45 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public ConcurrentHashMapSpliterator<K> spliteratorV8() {
          Node<K,V>[] t;
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
+         // TODO: need to support NULL value
          return new KeySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
       }
 
-      public void forEach(Action<? super K> action) {
+      @Override
+      public void forEach(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
          if ((t = map.table) != null) {
             Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
             for (Node<K,V> p; (p = it.advance()) != null; )
-               action.apply(p.key);
+               if (p.val != NULL_VALUE)
+                  action.accept(p.key);
          }
       }
    }
 
    /**
-    * A view of a ConcurrentHashMapV8 as a {@link Collection} of
+    * A view of a EquivalentConcurrentHashMapV8 as a {@link Collection} of
     * values, in which additions are disabled. This class cannot be
     * directly instantiated. See {@link #values()}.
     */
    static final class ValuesView<K,V> extends CollectionView<K,V,V>
          implements Collection<V>, java.io.Serializable {
       private static final long serialVersionUID = 2249069246763182397L;
-      ValuesView(ConcurrentHashMapV8<K,V> map) { super(map); }
+      ValuesView(BoundedEquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      @Override
       public final boolean contains(Object o) {
          return map.containsValue(o);
       }
 
+      @Override
       public final boolean remove(Object o) {
          if (o != null) {
             for (Iterator<V> it = iterator(); it.hasNext();) {
-               if (o.equals(it.next())) {
+               if (map.valueEq.equals(it.next(), o)) { // EQUIVALENCE_MOD
                   it.remove();
                   return true;
                }
@@ -4560,58 +6443,65 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return false;
       }
 
+      @Override
       public final Iterator<V> iterator() {
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
          int f = (t = m.table) == null ? 0 : t.length;
          return new ValueIterator<K,V>(t, f, 0, f, m);
       }
 
+      @Override
       public final boolean add(V e) {
          throw new UnsupportedOperationException();
       }
+      @Override
       public final boolean addAll(Collection<? extends V> c) {
          throw new UnsupportedOperationException();
       }
 
       public ConcurrentHashMapSpliterator<V> spliteratorV8() {
          Node<K,V>[] t;
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
          return new ValueSpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
       }
 
-      public void forEach(Action<? super V> action) {
+      @Override
+      public void forEach(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
          if ((t = map.table) != null) {
             Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
             for (Node<K,V> p; (p = it.advance()) != null; )
-               action.apply(p.val);
+               action.accept(p.val);
          }
       }
    }
 
    /**
-    * A view of a ConcurrentHashMapV8 as a {@link Set} of (key, value)
+    * A view of a EquivalentConcurrentHashMapV8 as a {@link Set} of (key, value)
     * entries.  This class cannot be directly instantiated. See
     * {@link #entrySet()}.
     */
    static final class EntrySetView<K,V> extends CollectionView<K,V,Map.Entry<K,V>>
          implements Set<Map.Entry<K,V>>, java.io.Serializable {
       private static final long serialVersionUID = 2249069246763182397L;
-      EntrySetView(ConcurrentHashMapV8<K,V> map) { super(map); }
+      EntrySetView(BoundedEquivalentConcurrentHashMapV8<K,V> map) { super(map); }
 
+      @Override
+      @SuppressWarnings("unchecked")
       public boolean contains(Object o) {
          Object k, v, r; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
                        (k = (e = (Map.Entry<?,?>)o).getKey()) != null &&
                        (r = map.get(k)) != null &&
                        (v = e.getValue()) != null &&
-                       (v == r || v.equals(r)));
+                       (v == r || map.valueEq.equals((V) r, v))); // EQUIVALENCE_MOD
       }
 
+      @Override
       public boolean remove(Object o) {
          Object k, v; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -4623,17 +6513,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * @return an iterator over the entries of the backing map
        */
+      @Override
       public Iterator<Map.Entry<K,V>> iterator() {
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
          int f = (t = m.table) == null ? 0 : t.length;
          return new EntryIterator<K,V>(t, f, 0, f, m);
       }
 
+      @Override
       public boolean add(Entry<K,V> e) {
          return map.putVal(e.getKey(), e.getValue(), false) == null;
       }
 
+      @Override
       public boolean addAll(Collection<? extends Entry<K,V>> c) {
          boolean added = false;
          for (Entry<K,V> e : c) {
@@ -4643,18 +6536,23 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return added;
       }
 
+      @Override
       public final int hashCode() {
          int h = 0;
          Node<K,V>[] t;
          if ((t = map.table) != null) {
             Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
             for (Node<K,V> p; (p = it.advance()) != null; ) {
-               h += p.hashCode();
+               V val  = p.val;
+               if (val != NULL_VALUE) {
+                  h += p.hashCode(p.key, val);
+               }
             }
          }
          return h;
       }
 
+      @Override
       public final boolean equals(Object o) {
          Set<?> c;
          return ((o instanceof Set) &&
@@ -4664,19 +6562,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public ConcurrentHashMapSpliterator<Map.Entry<K,V>> spliteratorV8() {
          Node<K,V>[] t;
-         ConcurrentHashMapV8<K,V> m = map;
+         BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          long n = m.sumCount();
          int f = (t = m.table) == null ? 0 : t.length;
+         // TODO: need to tweak spliterator for null values
          return new EntrySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n, m);
       }
 
-      public void forEach(Action<? super Map.Entry<K,V>> action) {
+      @Override
+      public void forEach(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
          if ((t = map.table) != null) {
             Traverser<K,V> it = new Traverser<K,V>(t, t.length, 0, t.length);
-            for (Node<K,V> p; (p = it.advance()) != null; )
-               action.apply(new MapEntry<K,V>(p.key, p.val, map));
+            for (Node<K,V> p; (p = it.advance()) != null; ) {
+               V val = p.val;
+               if (val != NULL_VALUE) {
+                  action.accept(new MapEntry<K,V>(p.key, val, map));
+               }
+            }
          }
       }
 
@@ -4689,6 +6593,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * class Traverser, because we need to subclass CountedCompleter.
     */
    abstract static class BulkTask<K,V,R> extends CountedCompleter<R> {
+      private static final long serialVersionUID = -3076449340738586169L;
+
       Node<K,V>[] tab;        // same as Traverser
       Node<K,V> next;
       int index;
@@ -4719,7 +6625,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if ((e = next) != null)
             e = e.next;
          for (;;) {
-            Node<K,V>[] t; int i, n; K ek;  // must use locals in checks
+            Node<K,V>[] t; int i, n;  // must use locals in checks
             if (e != null)
                return next = e;
             if (baseIndex >= baseLimit || (t = tab) == null ||
@@ -4752,15 +6658,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachKeyTask<K,V>
          extends BulkTask<K,V,Void> {
-      final Action<? super K> action;
+      final Consumer<? super K> action;
       ForEachKeyTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Action<? super K> action) {
+                  Consumer<? super K> action) {
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
-         final Action<? super K> action;
+         final Consumer<? super K> action;
          if ((action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -4770,7 +6677,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            action).fork();
             }
             for (Node<K,V> p; (p = advance()) != null;)
-               action.apply(p.key);
+               if (p.val != NULL_VALUE)
+                  action.accept(p.key);
             propagateCompletion();
          }
       }
@@ -4779,15 +6687,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachValueTask<K,V>
          extends BulkTask<K,V,Void> {
-      final Action<? super V> action;
+      final Consumer<? super V> action;
       ForEachValueTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Action<? super V> action) {
+                  Consumer<? super V> action) {
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
-         final Action<? super V> action;
+         final Consumer<? super V> action;
          if ((action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -4796,8 +6705,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      (this, batch >>>= 1, baseLimit = h, f, tab,
                            action).fork();
             }
-            for (Node<K,V> p; (p = advance()) != null;)
-               action.apply(p.val);
+            for (Node<K,V> p; (p = advance()) != null;) {
+               V val = p.val;
+               if (val != NULL_VALUE)
+                  action.accept(val);
+            }
             propagateCompletion();
          }
       }
@@ -4806,15 +6718,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachEntryTask<K,V>
          extends BulkTask<K,V,Void> {
-      final Action<? super Entry<K,V>> action;
+      final Consumer<? super Entry<K,V>> action;
       ForEachEntryTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Action<? super Entry<K,V>> action) {
+                  Consumer<? super Entry<K,V>> action) {
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
-         final Action<? super Entry<K,V>> action;
+         final Consumer<? super Entry<K,V>> action;
          if ((action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -4823,8 +6736,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      (this, batch >>>= 1, baseLimit = h, f, tab,
                            action).fork();
             }
-            for (Node<K,V> p; (p = advance()) != null; )
-               action.apply(p);
+            for (Node<K,V> p; (p = advance()) != null; ) {
+               V val = p.val;
+               if (val != NULL_VALUE) {
+                  // This is rather inefficient since we don't know if a node will
+                  // be modified concurrently...
+                  Node<K, V> copy = new Node<K, V>(p.hash, p.nodeEq, p.key, val, null);
+                  action.accept(copy);
+               }
+            }
             propagateCompletion();
          }
       }
@@ -4833,15 +6753,16 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachMappingTask<K,V>
          extends BulkTask<K,V,Void> {
-      final BiAction<? super K, ? super V> action;
+      final BiConsumer<? super K, ? super V> action;
       ForEachMappingTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  BiAction<? super K,? super V> action) {
+                  BiConsumer<? super K,? super V> action) {
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
-         final BiAction<? super K, ? super V> action;
+         final BiConsumer<? super K, ? super V> action;
          if ((action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -4850,8 +6771,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      (this, batch >>>= 1, baseLimit = h, f, tab,
                            action).fork();
             }
-            for (Node<K,V> p; (p = advance()) != null; )
-               action.apply(p.key, p.val);
+            for (Node<K,V> p; (p = advance()) != null; ) {
+               V val = p.val;
+               if (val != NULL_VALUE)
+                  action.accept(p.key, val);
+            }
             propagateCompletion();
          }
       }
@@ -4860,17 +6784,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachTransformedKeyTask<K,V,U>
          extends BulkTask<K,V,Void> {
-      final Fun<? super K, ? extends U> transformer;
-      final Action<? super U> action;
+      final Function<? super K, ? extends U> transformer;
+      final Consumer<? super U> action;
       ForEachTransformedKeyTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<? super K, ? extends U> transformer, Action<? super U> action) {
+                  Function<? super K, ? extends U> transformer, Consumer<? super U> action) {
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
-         final Fun<? super K, ? extends U> transformer;
-         final Action<? super U> action;
+         final Function<? super K, ? extends U> transformer;
+         final Consumer<? super U> action;
          if ((transformer = this.transformer) != null &&
                (action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -4881,9 +6806,11 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            transformer, action).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; ) {
-               U u;
-               if ((u = transformer.apply(p.key)) != null)
-                  action.apply(u);
+               if (p.val != NULL_VALUE) {
+                  U u;
+                  if ((u = transformer.apply(p.key)) != null)
+                     action.accept(u);
+               }
             }
             propagateCompletion();
          }
@@ -4893,17 +6820,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachTransformedValueTask<K,V,U>
          extends BulkTask<K,V,Void> {
-      final Fun<? super V, ? extends U> transformer;
-      final Action<? super U> action;
+      final Function<? super V, ? extends U> transformer;
+      final Consumer<? super U> action;
       ForEachTransformedValueTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<? super V, ? extends U> transformer, Action<? super U> action) {
+                  Function<? super V, ? extends U> transformer, Consumer<? super U> action) {
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
-         final Fun<? super V, ? extends U> transformer;
-         final Action<? super U> action;
+         final Function<? super V, ? extends U> transformer;
+         final Consumer<? super U> action;
          if ((transformer = this.transformer) != null &&
                (action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -4914,9 +6842,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            transformer, action).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; ) {
-               U u;
-               if ((u = transformer.apply(p.val)) != null)
-                  action.apply(u);
+               V val = p.val;
+               if (val != NULL_VALUE) {
+                  U u;
+                  if ((u = transformer.apply(val)) != null)
+                     action.accept(u);
+               }
             }
             propagateCompletion();
          }
@@ -4926,17 +6857,18 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachTransformedEntryTask<K,V,U>
          extends BulkTask<K,V,Void> {
-      final Fun<Map.Entry<K,V>, ? extends U> transformer;
-      final Action<? super U> action;
+      final Function<Map.Entry<K,V>, ? extends U> transformer;
+      final Consumer<? super U> action;
       ForEachTransformedEntryTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<Map.Entry<K,V>, ? extends U> transformer, Action<? super U> action) {
+                  Function<Map.Entry<K,V>, ? extends U> transformer, Consumer<? super U> action) {
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
-         final Fun<Map.Entry<K,V>, ? extends U> transformer;
-         final Action<? super U> action;
+         final Function<Map.Entry<K,V>, ? extends U> transformer;
+         final Consumer<? super U> action;
          if ((transformer = this.transformer) != null &&
                (action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -4947,9 +6879,15 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            transformer, action).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; ) {
-               U u;
-               if ((u = transformer.apply(p)) != null)
-                  action.apply(u);
+               V val = p.val;
+               if (val != NULL_VALUE) {
+                  // This is rather inefficient since we don't know if a node will
+                  // be modified concurrently...
+                  Node<K, V> copy = new Node<K, V>(p.hash, p.nodeEq, p.key, val, null);
+                  U u;
+                  if ((u = transformer.apply(copy)) != null)
+                     action.accept(u);
+               }
             }
             propagateCompletion();
          }
@@ -4959,18 +6897,19 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ForEachTransformedMappingTask<K,V,U>
          extends BulkTask<K,V,Void> {
-      final BiFun<? super K, ? super V, ? extends U> transformer;
-      final Action<? super U> action;
+      final BiFunction<? super K, ? super V, ? extends U> transformer;
+      final Consumer<? super U> action;
       ForEachTransformedMappingTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  BiFun<? super K, ? super V, ? extends U> transformer,
-                  Action<? super U> action) {
+                  BiFunction<? super K, ? super V, ? extends U> transformer,
+                  Consumer<? super U> action) {
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
-         final BiFun<? super K, ? super V, ? extends U> transformer;
-         final Action<? super U> action;
+         final BiFunction<? super K, ? super V, ? extends U> transformer;
+         final Consumer<? super U> action;
          if ((transformer = this.transformer) != null &&
                (action = this.action) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -4981,9 +6920,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            transformer, action).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; ) {
-               U u;
-               if ((u = transformer.apply(p.key, p.val)) != null)
-                  action.apply(u);
+               V val = p.val;
+               if (val != null && val != NULL_VALUE) {
+                  U u;
+                  if ((u = transformer.apply(p.key, val)) != null)
+                     action.accept(u);
+               }
             }
             propagateCompletion();
          }
@@ -4993,18 +6935,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class SearchKeysTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<? super K, ? extends U> searchFunction;
+      final Function<? super K, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchKeysTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<? super K, ? extends U> searchFunction,
+                  Function<? super K, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
-         final Fun<? super K, ? extends U> searchFunction;
+         final Function<? super K, ? extends U> searchFunction;
          final AtomicReference<U> result;
          if ((searchFunction = this.searchFunction) != null &&
                (result = this.result) != null) {
@@ -5037,18 +6981,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class SearchValuesTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<? super V, ? extends U> searchFunction;
+      final Function<? super V, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchValuesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<? super V, ? extends U> searchFunction,
+                  Function<? super V, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
-         final Fun<? super V, ? extends U> searchFunction;
+         final Function<? super V, ? extends U> searchFunction;
          final AtomicReference<U> result;
          if ((searchFunction = this.searchFunction) != null &&
                (result = this.result) != null) {
@@ -5081,18 +7027,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class SearchEntriesTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<Entry<K,V>, ? extends U> searchFunction;
+      final Function<Entry<K,V>, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchEntriesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  Fun<Entry<K,V>, ? extends U> searchFunction,
+                  Function<Entry<K,V>, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
-         final Fun<Entry<K,V>, ? extends U> searchFunction;
+         final Function<Entry<K,V>, ? extends U> searchFunction;
          final AtomicReference<U> result;
          if ((searchFunction = this.searchFunction) != null &&
                (result = this.result) != null) {
@@ -5125,18 +7073,20 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class SearchMappingsTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final BiFun<? super K, ? super V, ? extends U> searchFunction;
+      final BiFunction<? super K, ? super V, ? extends U> searchFunction;
       final AtomicReference<U> result;
       SearchMappingsTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
-                  BiFun<? super K, ? super V, ? extends U> searchFunction,
+                  BiFunction<? super K, ? super V, ? extends U> searchFunction,
                   AtomicReference<U> result) {
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
-         final BiFun<? super K, ? super V, ? extends U> searchFunction;
+         final BiFunction<? super K, ? super V, ? extends U> searchFunction;
          final AtomicReference<U> result;
          if ((searchFunction = this.searchFunction) != null &&
                (result = this.result) != null) {
@@ -5169,19 +7119,21 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ReduceKeysTask<K,V>
          extends BulkTask<K,V,K> {
-      final BiFun<? super K, ? super K, ? extends K> reducer;
+      final BiFunction<? super K, ? super K, ? extends K> reducer;
       K result;
       ReduceKeysTask<K,V> rights, nextRight;
       ReduceKeysTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   ReduceKeysTask<K,V> nextRight,
-                  BiFun<? super K, ? super K, ? extends K> reducer) {
+                  BiFunction<? super K, ? super K, ? extends K> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final K getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final BiFun<? super K, ? super K, ? extends K> reducer;
+         final BiFunction<? super K, ? super K, ? extends K> reducer;
          if ((reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -5216,19 +7168,21 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ReduceValuesTask<K,V>
          extends BulkTask<K,V,V> {
-      final BiFun<? super V, ? super V, ? extends V> reducer;
+      final BiFunction<? super V, ? super V, ? extends V> reducer;
       V result;
       ReduceValuesTask<K,V> rights, nextRight;
       ReduceValuesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   ReduceValuesTask<K,V> nextRight,
-                  BiFun<? super V, ? super V, ? extends V> reducer) {
+                  BiFunction<? super V, ? super V, ? extends V> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final V getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final BiFun<? super V, ? super V, ? extends V> reducer;
+         final BiFunction<? super V, ? super V, ? extends V> reducer;
          if ((reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -5263,19 +7217,21 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class ReduceEntriesTask<K,V>
          extends BulkTask<K,V,Map.Entry<K,V>> {
-      final BiFun<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
+      final BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
       Map.Entry<K,V> result;
       ReduceEntriesTask<K,V> rights, nextRight;
       ReduceEntriesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   ReduceEntriesTask<K,V> nextRight,
-                  BiFun<Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer) {
+                  BiFunction<Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final Map.Entry<K,V> getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final BiFun<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
+         final BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
          if ((reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
                   (h = ((f = baseLimit) + i) >>> 1) > i;) {
@@ -5308,23 +7264,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceKeysTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<? super K, ? extends U> transformer;
-      final BiFun<? super U, ? super U, ? extends U> reducer;
+      final Function<? super K, ? extends U> transformer;
+      final BiFunction<? super U, ? super U, ? extends U> reducer;
       U result;
       MapReduceKeysTask<K,V,U> rights, nextRight;
       MapReduceKeysTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceKeysTask<K,V,U> nextRight,
-                  Fun<? super K, ? extends U> transformer,
-                  BiFun<? super U, ? super U, ? extends U> reducer) {
+                  Function<? super K, ? extends U> transformer,
+                  BiFunction<? super U, ? super U, ? extends U> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final Fun<? super K, ? extends U> transformer;
-         final BiFun<? super U, ? super U, ? extends U> reducer;
+         final Function<? super K, ? extends U> transformer;
+         final BiFunction<? super U, ? super U, ? extends U> reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -5361,23 +7319,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceValuesTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<? super V, ? extends U> transformer;
-      final BiFun<? super U, ? super U, ? extends U> reducer;
+      final Function<? super V, ? extends U> transformer;
+      final BiFunction<? super U, ? super U, ? extends U> reducer;
       U result;
       MapReduceValuesTask<K,V,U> rights, nextRight;
       MapReduceValuesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceValuesTask<K,V,U> nextRight,
-                  Fun<? super V, ? extends U> transformer,
-                  BiFun<? super U, ? super U, ? extends U> reducer) {
+                  Function<? super V, ? extends U> transformer,
+                  BiFunction<? super U, ? super U, ? extends U> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final Fun<? super V, ? extends U> transformer;
-         final BiFun<? super U, ? super U, ? extends U> reducer;
+         final Function<? super V, ? extends U> transformer;
+         final BiFunction<? super U, ? super U, ? extends U> reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -5414,23 +7374,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceEntriesTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final Fun<Map.Entry<K,V>, ? extends U> transformer;
-      final BiFun<? super U, ? super U, ? extends U> reducer;
+      final Function<Map.Entry<K,V>, ? extends U> transformer;
+      final BiFunction<? super U, ? super U, ? extends U> reducer;
       U result;
       MapReduceEntriesTask<K,V,U> rights, nextRight;
       MapReduceEntriesTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceEntriesTask<K,V,U> nextRight,
-                  Fun<Map.Entry<K,V>, ? extends U> transformer,
-                  BiFun<? super U, ? super U, ? extends U> reducer) {
+                  Function<Map.Entry<K,V>, ? extends U> transformer,
+                  BiFunction<? super U, ? super U, ? extends U> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final Fun<Map.Entry<K,V>, ? extends U> transformer;
-         final BiFun<? super U, ? super U, ? extends U> reducer;
+         final Function<Map.Entry<K,V>, ? extends U> transformer;
+         final BiFunction<? super U, ? super U, ? extends U> reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -5467,23 +7429,25 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceMappingsTask<K,V,U>
          extends BulkTask<K,V,U> {
-      final BiFun<? super K, ? super V, ? extends U> transformer;
-      final BiFun<? super U, ? super U, ? extends U> reducer;
+      final BiFunction<? super K, ? super V, ? extends U> transformer;
+      final BiFunction<? super U, ? super U, ? extends U> reducer;
       U result;
       MapReduceMappingsTask<K,V,U> rights, nextRight;
       MapReduceMappingsTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceMappingsTask<K,V,U> nextRight,
-                  BiFun<? super K, ? super V, ? extends U> transformer,
-                  BiFun<? super U, ? super U, ? extends U> reducer) {
+                  BiFunction<? super K, ? super V, ? extends U> transformer,
+                  BiFunction<? super U, ? super U, ? extends U> reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final BiFun<? super K, ? super V, ? extends U> transformer;
-         final BiFun<? super U, ? super U, ? extends U> reducer;
+         final BiFunction<? super K, ? super V, ? extends U> transformer;
+         final BiFunction<? super U, ? super U, ? extends U> reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             for (int i = baseIndex, f, h; batch > 0 &&
@@ -5495,9 +7459,12 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
             U r = null;
             for (Node<K,V> p; (p = advance()) != null; ) {
-               U u;
-               if ((u = transformer.apply(p.key, p.val)) != null)
-                  r = (r == null) ? u : reducer.apply(r, u);
+               V val = p.val;
+               if (val != NULL_VALUE) {
+                  U u;
+                  if ((u = transformer.apply(p.key, val)) != null)
+                     r = (r == null) ? u : reducer.apply(r, u);
+               }
             }
             result = r;
             CountedCompleter<?> c;
@@ -5520,25 +7487,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceKeysToDoubleTask<K,V>
          extends BulkTask<K,V,Double> {
-      final ObjectToDouble<? super K> transformer;
-      final DoubleByDoubleToDouble reducer;
+      final ToDoubleFunction<? super K> transformer;
+      final DoubleBinaryOperator reducer;
       final double basis;
       double result;
       MapReduceKeysToDoubleTask<K,V> rights, nextRight;
       MapReduceKeysToDoubleTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceKeysToDoubleTask<K,V> nextRight,
-                  ObjectToDouble<? super K> transformer,
+                  ToDoubleFunction<? super K> transformer,
                   double basis,
-                  DoubleByDoubleToDouble reducer) {
+                  DoubleBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToDouble<? super K> transformer;
-         final DoubleByDoubleToDouble reducer;
+         final ToDoubleFunction<? super K> transformer;
+         final DoubleBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             double r = this.basis;
@@ -5550,7 +7519,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key));
+               r = reducer.applyAsDouble(r, transformer.applyAsDouble(p.key));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5558,7 +7527,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceKeysToDoubleTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsDouble(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5569,25 +7538,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceValuesToDoubleTask<K,V>
          extends BulkTask<K,V,Double> {
-      final ObjectToDouble<? super V> transformer;
-      final DoubleByDoubleToDouble reducer;
+      final ToDoubleFunction<? super V> transformer;
+      final DoubleBinaryOperator reducer;
       final double basis;
       double result;
       MapReduceValuesToDoubleTask<K,V> rights, nextRight;
       MapReduceValuesToDoubleTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceValuesToDoubleTask<K,V> nextRight,
-                  ObjectToDouble<? super V> transformer,
+                  ToDoubleFunction<? super V> transformer,
                   double basis,
-                  DoubleByDoubleToDouble reducer) {
+                  DoubleBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToDouble<? super V> transformer;
-         final DoubleByDoubleToDouble reducer;
+         final ToDoubleFunction<? super V> transformer;
+         final DoubleBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             double r = this.basis;
@@ -5599,7 +7570,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.val));
+               r = reducer.applyAsDouble(r, transformer.applyAsDouble(p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5607,7 +7578,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceValuesToDoubleTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsDouble(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5618,25 +7589,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceEntriesToDoubleTask<K,V>
          extends BulkTask<K,V,Double> {
-      final ObjectToDouble<Map.Entry<K,V>> transformer;
-      final DoubleByDoubleToDouble reducer;
+      final ToDoubleFunction<Map.Entry<K,V>> transformer;
+      final DoubleBinaryOperator reducer;
       final double basis;
       double result;
       MapReduceEntriesToDoubleTask<K,V> rights, nextRight;
       MapReduceEntriesToDoubleTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceEntriesToDoubleTask<K,V> nextRight,
-                  ObjectToDouble<Map.Entry<K,V>> transformer,
+                  ToDoubleFunction<Map.Entry<K,V>> transformer,
                   double basis,
-                  DoubleByDoubleToDouble reducer) {
+                  DoubleBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToDouble<Map.Entry<K,V>> transformer;
-         final DoubleByDoubleToDouble reducer;
+         final ToDoubleFunction<Map.Entry<K,V>> transformer;
+         final DoubleBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             double r = this.basis;
@@ -5648,7 +7621,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p));
+               r = reducer.applyAsDouble(r, transformer.applyAsDouble(p));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5656,7 +7629,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceEntriesToDoubleTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsDouble(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5667,25 +7640,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceMappingsToDoubleTask<K,V>
          extends BulkTask<K,V,Double> {
-      final ObjectByObjectToDouble<? super K, ? super V> transformer;
-      final DoubleByDoubleToDouble reducer;
+      final ToDoubleBiFunction<? super K, ? super V> transformer;
+      final DoubleBinaryOperator reducer;
       final double basis;
       double result;
       MapReduceMappingsToDoubleTask<K,V> rights, nextRight;
       MapReduceMappingsToDoubleTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceMappingsToDoubleTask<K,V> nextRight,
-                  ObjectByObjectToDouble<? super K, ? super V> transformer,
+                  ToDoubleBiFunction<? super K, ? super V> transformer,
                   double basis,
-                  DoubleByDoubleToDouble reducer) {
+                  DoubleBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectByObjectToDouble<? super K, ? super V> transformer;
-         final DoubleByDoubleToDouble reducer;
+         final ToDoubleBiFunction<? super K, ? super V> transformer;
+         final DoubleBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             double r = this.basis;
@@ -5697,7 +7672,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key, p.val));
+               r = reducer.applyAsDouble(r, transformer.applyAsDouble(p.key, p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5705,7 +7680,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceMappingsToDoubleTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsDouble(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5716,25 +7691,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceKeysToLongTask<K,V>
          extends BulkTask<K,V,Long> {
-      final ObjectToLong<? super K> transformer;
-      final LongByLongToLong reducer;
+      final ToLongFunction<? super K> transformer;
+      final LongBinaryOperator reducer;
       final long basis;
       long result;
       MapReduceKeysToLongTask<K,V> rights, nextRight;
       MapReduceKeysToLongTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceKeysToLongTask<K,V> nextRight,
-                  ObjectToLong<? super K> transformer,
+                  ToLongFunction<? super K> transformer,
                   long basis,
-                  LongByLongToLong reducer) {
+                  LongBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToLong<? super K> transformer;
-         final LongByLongToLong reducer;
+         final ToLongFunction<? super K> transformer;
+         final LongBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             long r = this.basis;
@@ -5746,7 +7723,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key));
+               r = reducer.applyAsLong(r, transformer.applyAsLong(p.key));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5754,7 +7731,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceKeysToLongTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsLong(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5765,25 +7742,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceValuesToLongTask<K,V>
          extends BulkTask<K,V,Long> {
-      final ObjectToLong<? super V> transformer;
-      final LongByLongToLong reducer;
+      final ToLongFunction<? super V> transformer;
+      final LongBinaryOperator reducer;
       final long basis;
       long result;
       MapReduceValuesToLongTask<K,V> rights, nextRight;
       MapReduceValuesToLongTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceValuesToLongTask<K,V> nextRight,
-                  ObjectToLong<? super V> transformer,
+                  ToLongFunction<? super V> transformer,
                   long basis,
-                  LongByLongToLong reducer) {
+                  LongBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToLong<? super V> transformer;
-         final LongByLongToLong reducer;
+         final ToLongFunction<? super V> transformer;
+         final LongBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             long r = this.basis;
@@ -5795,7 +7774,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.val));
+               r = reducer.applyAsLong(r, transformer.applyAsLong(p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5803,7 +7782,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceValuesToLongTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsLong(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5814,25 +7793,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceEntriesToLongTask<K,V>
          extends BulkTask<K,V,Long> {
-      final ObjectToLong<Map.Entry<K,V>> transformer;
-      final LongByLongToLong reducer;
+      final ToLongFunction<Map.Entry<K,V>> transformer;
+      final LongBinaryOperator reducer;
       final long basis;
       long result;
       MapReduceEntriesToLongTask<K,V> rights, nextRight;
       MapReduceEntriesToLongTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceEntriesToLongTask<K,V> nextRight,
-                  ObjectToLong<Map.Entry<K,V>> transformer,
+                  ToLongFunction<Map.Entry<K,V>> transformer,
                   long basis,
-                  LongByLongToLong reducer) {
+                  LongBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToLong<Map.Entry<K,V>> transformer;
-         final LongByLongToLong reducer;
+         final ToLongFunction<Map.Entry<K,V>> transformer;
+         final LongBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             long r = this.basis;
@@ -5844,7 +7825,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p));
+               r = reducer.applyAsLong(r, transformer.applyAsLong(p));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5852,7 +7833,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceEntriesToLongTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsLong(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5863,25 +7844,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceMappingsToLongTask<K,V>
          extends BulkTask<K,V,Long> {
-      final ObjectByObjectToLong<? super K, ? super V> transformer;
-      final LongByLongToLong reducer;
+      final ToLongBiFunction<? super K, ? super V> transformer;
+      final LongBinaryOperator reducer;
       final long basis;
       long result;
       MapReduceMappingsToLongTask<K,V> rights, nextRight;
       MapReduceMappingsToLongTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceMappingsToLongTask<K,V> nextRight,
-                  ObjectByObjectToLong<? super K, ? super V> transformer,
+                  ToLongBiFunction<? super K, ? super V> transformer,
                   long basis,
-                  LongByLongToLong reducer) {
+                  LongBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectByObjectToLong<? super K, ? super V> transformer;
-         final LongByLongToLong reducer;
+         final ToLongBiFunction<? super K, ? super V> transformer;
+         final LongBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             long r = this.basis;
@@ -5893,7 +7876,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key, p.val));
+               r = reducer.applyAsLong(r, transformer.applyAsLong(p.key, p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5901,7 +7884,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceMappingsToLongTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsLong(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5912,25 +7895,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceKeysToIntTask<K,V>
          extends BulkTask<K,V,Integer> {
-      final ObjectToInt<? super K> transformer;
-      final IntByIntToInt reducer;
+      final ToIntFunction<? super K> transformer;
+      final IntBinaryOperator reducer;
       final int basis;
       int result;
       MapReduceKeysToIntTask<K,V> rights, nextRight;
       MapReduceKeysToIntTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceKeysToIntTask<K,V> nextRight,
-                  ObjectToInt<? super K> transformer,
+                  ToIntFunction<? super K> transformer,
                   int basis,
-                  IntByIntToInt reducer) {
+                  IntBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToInt<? super K> transformer;
-         final IntByIntToInt reducer;
+         final ToIntFunction<? super K> transformer;
+         final IntBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             int r = this.basis;
@@ -5942,7 +7927,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key));
+               r = reducer.applyAsInt(r, transformer.applyAsInt(p.key));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5950,7 +7935,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceKeysToIntTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsInt(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -5961,25 +7946,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceValuesToIntTask<K,V>
          extends BulkTask<K,V,Integer> {
-      final ObjectToInt<? super V> transformer;
-      final IntByIntToInt reducer;
+      final ToIntFunction<? super V> transformer;
+      final IntBinaryOperator reducer;
       final int basis;
       int result;
       MapReduceValuesToIntTask<K,V> rights, nextRight;
       MapReduceValuesToIntTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceValuesToIntTask<K,V> nextRight,
-                  ObjectToInt<? super V> transformer,
+                  ToIntFunction<? super V> transformer,
                   int basis,
-                  IntByIntToInt reducer) {
+                  IntBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToInt<? super V> transformer;
-         final IntByIntToInt reducer;
+         final ToIntFunction<? super V> transformer;
+         final IntBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             int r = this.basis;
@@ -5991,7 +7978,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.val));
+               r = reducer.applyAsInt(r, transformer.applyAsInt(p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -5999,7 +7986,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceValuesToIntTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsInt(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -6010,25 +7997,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceEntriesToIntTask<K,V>
          extends BulkTask<K,V,Integer> {
-      final ObjectToInt<Map.Entry<K,V>> transformer;
-      final IntByIntToInt reducer;
+      final ToIntFunction<Map.Entry<K,V>> transformer;
+      final IntBinaryOperator reducer;
       final int basis;
       int result;
       MapReduceEntriesToIntTask<K,V> rights, nextRight;
       MapReduceEntriesToIntTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceEntriesToIntTask<K,V> nextRight,
-                  ObjectToInt<Map.Entry<K,V>> transformer,
+                  ToIntFunction<Map.Entry<K,V>> transformer,
                   int basis,
-                  IntByIntToInt reducer) {
+                  IntBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectToInt<Map.Entry<K,V>> transformer;
-         final IntByIntToInt reducer;
+         final ToIntFunction<Map.Entry<K,V>> transformer;
+         final IntBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             int r = this.basis;
@@ -6040,7 +8029,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p));
+               r = reducer.applyAsInt(r, transformer.applyAsInt(p));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -6048,7 +8037,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceEntriesToIntTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsInt(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -6059,25 +8048,27 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("serial")
    static final class MapReduceMappingsToIntTask<K,V>
          extends BulkTask<K,V,Integer> {
-      final ObjectByObjectToInt<? super K, ? super V> transformer;
-      final IntByIntToInt reducer;
+      final ToIntBiFunction<? super K, ? super V> transformer;
+      final IntBinaryOperator reducer;
       final int basis;
       int result;
       MapReduceMappingsToIntTask<K,V> rights, nextRight;
       MapReduceMappingsToIntTask
             (BulkTask<K,V,?> p, int b, int i, int f, Node<K,V>[] t,
                   MapReduceMappingsToIntTask<K,V> nextRight,
-                  ObjectByObjectToInt<? super K, ? super V> transformer,
+                  ToIntBiFunction<? super K, ? super V> transformer,
                   int basis,
-                  IntByIntToInt reducer) {
+                  IntBinaryOperator reducer) {
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
-         final ObjectByObjectToInt<? super K, ? super V> transformer;
-         final IntByIntToInt reducer;
+         final ToIntBiFunction<? super K, ? super V> transformer;
+         final IntBinaryOperator reducer;
          if ((transformer = this.transformer) != null &&
                (reducer = this.reducer) != null) {
             int r = this.basis;
@@ -6089,7 +8080,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            rights, transformer, r, reducer)).fork();
             }
             for (Node<K,V> p; (p = advance()) != null; )
-               r = reducer.apply(r, transformer.apply(p.key, p.val));
+               r = reducer.applyAsInt(r, transformer.applyAsInt(p.key, p.val));
             result = r;
             CountedCompleter<?> c;
             for (c = firstComplete(); c != null; c = c.nextComplete()) {
@@ -6097,7 +8088,7 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      t = (MapReduceMappingsToIntTask<K,V>)c,
                      s = t.rights;
                while (s != null) {
-                  t.result = reducer.apply(t.result, s.result);
+                  t.result = reducer.applyAsInt(t.result, s.result);
                   s = t.rights = s.nextRight;
                }
             }
@@ -6258,8 +8249,8 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static {
       try {
-         U = getUnsafe();
-         Class<?> k = ConcurrentHashMapV8.class;
+         U = Unsafe.getUnsafe();
+         Class<?> k = BoundedEquivalentConcurrentHashMapV8.class;
          SIZECTL = U.objectFieldOffset
                (k.getDeclaredField("sizeCtl"));
          TRANSFERINDEX = U.objectFieldOffset
@@ -6279,36 +8270,6 @@ public class ConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
       } catch (Exception e) {
          throw new Error(e);
-      }
-   }
-
-   /**
-    * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
-    * Replace with a simple call to Unsafe.getUnsafe when integrating
-    * into a jdk.
-    *
-    * @return a sun.misc.Unsafe
-    */
-   private static sun.misc.Unsafe getUnsafe() {
-      try {
-         return sun.misc.Unsafe.getUnsafe();
-      } catch (SecurityException tryReflectionInstead) {}
-      try {
-         return java.security.AccessController.doPrivileged
-               (new java.security.PrivilegedExceptionAction<sun.misc.Unsafe>() {
-                  public sun.misc.Unsafe run() throws Exception {
-                     Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
-                     for (java.lang.reflect.Field f : k.getDeclaredFields()) {
-                        f.setAccessible(true);
-                        Object x = f.get(null);
-                        if (k.isInstance(x))
-                           return k.cast(x);
-                     }
-                     throw new NoSuchFieldError("the Unsafe");
-                  }});
-      } catch (java.security.PrivilegedActionException e) {
-         throw new RuntimeException("Could not initialize intrinsics",
-               e.getCause());
       }
    }
 }

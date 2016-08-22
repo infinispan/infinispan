@@ -16,10 +16,10 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.commons.util.concurrent.jsr166mods.ConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;

@@ -14,9 +14,9 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.ConcurrentParallelHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8;
 
 /**
  * A factory for ConcurrentMaps.

@@ -1,6 +1,6 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.testng.annotations.Test;
 
 /**
