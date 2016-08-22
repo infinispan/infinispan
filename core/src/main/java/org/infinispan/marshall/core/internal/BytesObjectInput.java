@@ -5,7 +5,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import java.io.IOException;
 import java.io.ObjectInput;
 
-final class BytesObjectInput implements ObjectInput {
+final class BytesObjectInput implements ObjectInput, PositionalBuffer.Input {
 
    final byte bytes[];
    final InternalMarshaller internal;
@@ -151,6 +151,11 @@ final class BytesObjectInput implements ObjectInput {
    @Override
    public String readUTF() {
       return internal.enc.decodeStringUtf8(this);
+   }
+
+   @Override
+   public void rewindPosition(int pos) {
+      internal.enc.decodeRewind(this, pos);
    }
 
 }

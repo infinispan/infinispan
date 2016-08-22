@@ -449,7 +449,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          if (inf != null) {
             assert inf.toString().contains("in object java.lang.Object@");
-            assert inf.toString().contains("in object org.infinispan.commands.write.PutKeyValueCommand@");
+            //assert inf.toString().contains("in object org.infinispan.commands.write.PutKeyValueCommand@");
          }
       }
    }
@@ -501,20 +501,26 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testMarshallingSerializableSubclass() throws Exception {
       Child1 child1Obj = new Child1(1234, "1234");
       byte[] bytes = marshaller.objectToByteBuffer(child1Obj);
-      marshaller.objectFromByteBuffer(bytes);
+      Child1 readChild1 = (Child1) marshaller.objectFromByteBuffer(bytes);
+      assertEquals(1234, readChild1.someInt);
+      assertEquals("1234", readChild1.getId());
    }
 
    public void testMarshallingNestedSerializableSubclass() throws Exception {
       Child1 child1Obj = new Child1(1234, "1234");
       Child2 child2Obj = new Child2(2345, "2345", child1Obj);
       byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
-      marshaller.objectFromByteBuffer(bytes);
+      Child2 readChild2 = (Child2) marshaller.objectFromByteBuffer(bytes);
+      assertEquals(2345, readChild2.someInt);
+      assertEquals("2345", readChild2.getId());
+      assertEquals(1234, readChild2.getChild1Obj().someInt);
+      assertEquals("1234", readChild2.getChild1Obj().getId());
    }
 
-//   public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
-//      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
-//      marshallAndAssertEquality(pojo);
-//   }
+   public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
+      marshallAndAssertEquality(pojo);
+   }
 
    public void testErrorUnmarshallInputStreamAvailable() throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer("23");
@@ -552,10 +558,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(new PojoWithSerializeWith(20, "k2"));
    }
 
-//   public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
-//      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
-//      assertTrue(marshaller.isMarshallable(pojo));
-//   }
+   public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
+      assertTrue(marshaller.isMarshallable(pojo));
+   }
 
    public void testListArray() throws Exception {
       List<Integer>[] numbers = new List[]{Arrays.asList(1), Arrays.asList(2)};

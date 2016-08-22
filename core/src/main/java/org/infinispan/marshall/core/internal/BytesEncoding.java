@@ -187,6 +187,22 @@ final class BytesEncoding implements Encoding<BytesObjectOutput, BytesObjectInpu
       writeIntDirect(localPos - 4 - startPos, startPos, out);
    }
 
+   @Override
+   public int encodeEmpty(int num, BytesObjectOutput out) {
+      int posBefore = out.pos;
+      out.pos = checkCapacity(num, out);
+      return posBefore;
+   }
+
+   @Override
+   public int encodePosition(BytesObjectOutput out, int offset) {
+      out.bytes[offset] = (byte) (out.pos >> 24);
+      out.bytes[offset+1] = (byte) (out.pos >> 16);
+      out.bytes[offset+2] = (byte) (out.pos >> 8);
+      out.bytes[offset+3] = (byte) out.pos;
+      return out.pos;
+   }
+
    private int skipIntSize(BytesObjectOutput out) {
       checkCapacity(4, out);
       int count = out.pos;
@@ -377,6 +393,11 @@ final class BytesEncoding implements Encoding<BytesObjectOutput, BytesObjectInpu
       int v = (in.bytes[in.pos] & 0xff) << 8 | (in.bytes[in.pos + 1] & 0xff);
       in.pos += 2;
       return v;
+   }
+
+   @Override
+   public void decodeRewind(BytesObjectInput in, int pos) {
+      in.pos = pos;
    }
 
 }

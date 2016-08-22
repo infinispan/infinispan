@@ -5,7 +5,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import java.io.IOException;
 import java.io.ObjectOutput;
 
-final class BytesObjectOutput implements ObjectOutput {
+final class BytesObjectOutput implements ObjectOutput, PositionalBuffer.Output {
 
    final InternalMarshaller internal;
 
@@ -105,6 +105,16 @@ final class BytesObjectOutput implements ObjectOutput {
    @Override
    public void close() {
       // No-op
+   }
+
+   @Override
+   public int savePosition() {
+      return internal.enc.encodeEmpty(4, this);
+   }
+
+   @Override
+   public int writePosition(int offset) {
+      return internal.enc.encodePosition(this, offset);
    }
 
 //   ByteBuffer toByteBuffer() {

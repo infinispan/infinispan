@@ -33,18 +33,18 @@ import org.jboss.marshalling.Unmarshaller;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   final ExternalizerTable externalizerTable;
-   ExternalizerTableProxy proxy;
+//   final ExternalizerTable externalizerTable;
+//   ExternalizerTableProxy proxy;
    final GlobalConfiguration globalCfg;
 
    public JBossMarshaller() {
-      this.externalizerTable = null;
+//      this.externalizerTable = null;
       this.globalCfg = null;
    }
 
    public JBossMarshaller(ExternalizerTable externalizerTable,
          GlobalConfiguration globalCfg) {
-      this.externalizerTable = externalizerTable;
+//      this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;
    }
 
@@ -54,8 +54,8 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
 
-      proxy = new ExternalizerTableProxy(externalizerTable);
-      baseCfg.setObjectTable(proxy);
+//      proxy = new ExternalizerTableProxy(externalizerTable);
+//      baseCfg.setObjectTable(proxy);
 
       ClassResolver classResolver = globalCfg.serialization().classResolver();
       if (classResolver == null) {
@@ -75,53 +75,53 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       baseCfg.setClassResolver(null);
       // Remove the ExternalizerTable reference from all the threads.
       // Don't need to re-populate the proxy on start, as the component is volatile.
-      proxy.clear();
+      //proxy.clear();
    }
 
    @Override
    public boolean isMarshallableCandidate(Object o) {
       return super.isMarshallableCandidate(o)
-            || externalizerTable.isMarshallableCandidate(o)
+            //|| externalizerTable.isMarshallableCandidate(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || o.getClass().getAnnotation(Externalize.class) != null;
    }
 
-   /**
-    * Proxy for {@code ExternalizerTable}, used to remove the references to the real {@code ExternalizerTable}
-    * from all the threads that have a {@code PerThreadInstanceHolder}.
-    *
-    * This is useful because {@code ExternalizerTable} can keep lots of other objects alive through its
-    * {@code GlobalComponentRegistry} and {@code RemoteCommandsFactory} fields.
-    */
-   private static final class ExternalizerTableProxy implements ObjectTable {
-      private ExternalizerTable externalizerTable;
-
-      public ExternalizerTableProxy(ExternalizerTable externalizerTable) {
-         this.externalizerTable = externalizerTable;
-         log.tracef("Initialized proxy %s with table %s", this, externalizerTable);
-      }
-
-      public void clear() {
-         externalizerTable = null;
-         log.tracef("Cleared proxy %s", this);
-      }
-
-      @Override
-      public Writer getObjectWriter(Object o) throws IOException {
-         return getExternalizerTable().getObjectWriter(o);
-      }
-
-      @Override
-      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-         return getExternalizerTable().readObject(input);
-      }
-
-      private ExternalizerTable getExternalizerTable() {
-         ExternalizerTable table = this.externalizerTable;
-         if (table == null) {
-            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
-         }
-         return table;
-      }
-   }
+//   /**
+//    * Proxy for {@code ExternalizerTable}, used to remove the references to the real {@code ExternalizerTable}
+//    * from all the threads that have a {@code PerThreadInstanceHolder}.
+//    *
+//    * This is useful because {@code ExternalizerTable} can keep lots of other objects alive through its
+//    * {@code GlobalComponentRegistry} and {@code RemoteCommandsFactory} fields.
+//    */
+//   private static final class ExternalizerTableProxy implements ObjectTable {
+//      private ExternalizerTable externalizerTable;
+//
+//      public ExternalizerTableProxy(ExternalizerTable externalizerTable) {
+//         this.externalizerTable = externalizerTable;
+//         log.tracef("Initialized proxy %s with table %s", this, externalizerTable);
+//      }
+//
+//      public void clear() {
+//         externalizerTable = null;
+//         log.tracef("Cleared proxy %s", this);
+//      }
+//
+//      @Override
+//      public Writer getObjectWriter(Object o) throws IOException {
+//         return getExternalizerTable().getObjectWriter(o);
+//      }
+//
+//      @Override
+//      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+//         return getExternalizerTable().readObject(input);
+//      }
+//
+//      private ExternalizerTable getExternalizerTable() {
+//         ExternalizerTable table = this.externalizerTable;
+//         if (table == null) {
+//            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
+//         }
+//         return table;
+//      }
+//   }
 }

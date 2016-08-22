@@ -1,15 +1,16 @@
 package org.infinispan.marshall.core.internal;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
+import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -33,40 +34,47 @@ public final class InternalMarshaller implements StreamingMarshaller {
    final Encoding<BytesObjectOutput, BytesObjectInput> enc = new BytesEncoding();
    final InternalExternalizerTable externalizers;
 
-   // TODO: Default should be JBoss Marshaller (needs ExternalizerTable & GlobalConfiguration)
-   // ^ External marshaller is what global configuration serialization config can tweak
-   final StreamingMarshaller external = new InternalJavaSerialMarshaller();
+   final StreamingMarshaller external;
 
    public InternalMarshaller(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
       this.externalizers = new InternalExternalizerTable(enc, gcr, cmdFactory);
+      //this.external = new ExternalJavaMarshaller();
+      this.external = new ExternalJBossMarshaller(externalizers, gcr.getGlobalConfiguration());
    }
 
    @Override
    public void start() {
       externalizers.start();
+      external.start();
    }
 
    @Override
    public void stop() {
       externalizers.stop();
+      external.stop();
    }
 
    @Override
    public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
       BytesObjectOutput out = writeObjectOutput(obj);
-      return out.toBytes(); // trim out unusued bytes
+      return out.toBytes(); // trim out unused bytes
    }
 
    private BytesObjectOutput writeObjectOutput(Object obj) throws IOException {
       BufferSizePredictor sizePredictor = marshallableTypeHints.getBufferSizePredictor(obj);
-      BytesObjectOutput out = new BytesObjectOutput(sizePredictor.nextSize(obj), this);
+      BytesObjectOutput out = writeObjectOutput(obj, sizePredictor.nextSize(obj));
+      sizePredictor.recordSize(out.pos);
+      return out;
+   }
+
+   private BytesObjectOutput writeObjectOutput(Object obj, int estimatedSize) throws IOException {
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
       Externalizer<Object> ext = externalizers.findWriteExternalizer(obj, out);
       if (ext != null)
          ext.writeObject(out, obj);
       else
          external.objectToObjectStream(obj, out);
 
-      sizePredictor.recordSize(out.pos);
       return out;
    }
 
@@ -171,7 +179,17 @@ public final class InternalMarshaller implements StreamingMarshaller {
    private boolean isMarshallableCandidate(Object o) {
       return o instanceof Serializable
             || externalizers.isMarshallable(o)
-            || o.getClass().getAnnotation(SerializeWith.class) != null;
+            || o.getClass().getAnnotation(SerializeWith.class) != null
+            || isExternalMarshallable(o);
+   }
+
+   private boolean isExternalMarshallable(Object o) {
+      try {
+         return external.isMarshallable(o);
+      } catch (Exception e) {
+         throw new NotSerializableException(
+               "Object of type " + o.getClass() + " expected to be marshallable", e);
+      }
    }
 
    @Override
@@ -187,6 +205,12 @@ public final class InternalMarshaller implements StreamingMarshaller {
    }
 
    @Override
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
+      BytesObjectOutput out = writeObjectOutput(obj, estimatedSize);
+      return out.toBytes(); // trim out unused bytes
+   }
+
+   @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       throw new RuntimeException("NYI");
    }
@@ -198,11 +222,6 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
-      throw new RuntimeException("NYI");
-   }
-
-   @Override
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       throw new RuntimeException("NYI");
    }
 

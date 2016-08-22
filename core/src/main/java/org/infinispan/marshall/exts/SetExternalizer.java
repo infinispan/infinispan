@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -39,6 +40,7 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
       numbers.put(ReadOnlySegmentAwareSet.class, HASH_SET);
       numbers.put(getPrivateSingletonSetClass(), SINGLETON_SET);
       numbers.put(getPrivateSynchronizedSetClass(), SYNCHRONIZED_SET);
+      numbers.put(getPrivateUnmodifiableSetClass(), HASH_SET);
    }
 
    @Override
@@ -89,15 +91,19 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    public Set<Class<? extends Set>> getTypeClasses() {
       return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class,
          ReadOnlySegmentAwareSet.class, getPrivateSingletonSetClass(),
-         getPrivateSynchronizedSetClass());
+         getPrivateSynchronizedSetClass(), getPrivateUnmodifiableSetClass());
    }
 
-   public Class<Set> getPrivateSingletonSetClass() {
+   public static Class<Set> getPrivateSingletonSetClass() {
       return getSetClass("java.util.Collections$SingletonSet");
    }
 
-   public Class<Set> getPrivateSynchronizedSetClass() {
+   public static Class<Set> getPrivateSynchronizedSetClass() {
       return getSetClass("java.util.Collections$SynchronizedSet");
+   }
+
+   private static Class<Set> getPrivateUnmodifiableSetClass() {
+      return getSetClass("java.util.Collections$UnmodifiableSet");
    }
 
    private static Class<Set> getSetClass(String className) {
