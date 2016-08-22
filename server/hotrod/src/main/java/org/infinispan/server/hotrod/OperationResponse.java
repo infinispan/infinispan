@@ -194,7 +194,7 @@ public enum OperationResponse {
          case IterationEndResponse:
             return HotRodOperation.IterationEndRequest;
          default:
-            throw new IllegalArgumentException("Unsupported response: " + response);
+            return null;
       }
    }
 }
