@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  *
  * @author Michal Linhard (mlinhard@redhat.com)
  */
-@Test(groups = { "functional" }, testName = "rest.TwoServerTest")
+@Test(groups = {"functional"}, testName = "rest.TwoServerTest")
 public class TwoServerTest extends RestServerTestBase {
 
    private static final String PATH1 = "http://localhost:8890/rest/___defaultcache/";
@@ -61,7 +61,7 @@ public class TwoServerTest extends RestServerTestBase {
 
       startServers();
       TestingUtil.blockUntilViewsReceived(10000, getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),
-         getCacheManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
+            getCacheManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
       createClient();
    }
 
@@ -121,7 +121,7 @@ public class TwoServerTest extends RestServerTestBase {
       assertEquals(primaryLocation.toString(), po.getValue());
       Header sa = get.getResponseHeader("Cluster-Server-Address");
       assertNotNull(sa);
-      JGroupsTransport transport = (JGroupsTransport)getCacheManager("2").getTransport();
+      JGroupsTransport transport = (JGroupsTransport) getCacheManager("2").getTransport();
       assertEquals(transport.getPhysicalAddresses().toString(), sa.getValue());
       Header nn = get.getResponseHeader("Cluster-Node-Name");
       assertNotNull(nn);
@@ -136,14 +136,14 @@ public class TwoServerTest extends RestServerTestBase {
       String key4Path = EXPIRY_PATH1 + "k4";
       // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
       post(key1Path, "v1", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
-         "timeToLiveSeconds", "3", "maxIdleTimeSeconds", "3");
+            "timeToLiveSeconds", "3", "maxIdleTimeSeconds", "3");
       // no value means never expire
       post(key2Path, "v2", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text");
       // 0 value means use default
       post(key3Path, "v3", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
-         "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
+            "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
       post(key4Path, "v4", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
-         "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
+            "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
       TestingUtil.sleepThread(1000);
       get(key1Path, "v1");

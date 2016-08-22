@@ -98,7 +98,7 @@ public class RestService implements Service<Lifecycle> {
          InetSocketAddress socketAddress = socketBinding.getSocketAddress();
          configurationBuilder.host(socketAddress.getAddress().getHostAddress());
          configurationBuilder.port(socketAddress.getPort());
-         restServer = NettyRestServer.apply(configurationBuilder.build(), cacheManagerInjector.getValue());
+         restServer = NettyRestServer.createServer(configurationBuilder.build(), cacheManagerInjector.getValue());
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextCreationFailed(e);
       }

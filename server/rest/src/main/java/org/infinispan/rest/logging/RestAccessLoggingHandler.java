@@ -23,7 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 @Provider
 public class RestAccessLoggingHandler implements ContainerResponseFilter, ContainerRequestFilter {
-   private final static JavaLog log = LogFactory.getLog(RestAccessLoggingHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(RestAccessLoggingHandler.class, Log.class);
 
    private final static String NANO_TIME = "NanoTime";
 
@@ -35,7 +35,13 @@ public class RestAccessLoggingHandler implements ContainerResponseFilter, Contai
       // IP
       String remoteAddress = context.channel().remoteAddress().toString();
       // Date
-      long startNano = Long.parseLong(requestContext.getHeaderString(NANO_TIME));
+      String timeString = requestContext.getHeaderString(NANO_TIME);
+      long startNano;
+      if (timeString != null) {
+         startNano = Long.parseLong(requestContext.getHeaderString(NANO_TIME));
+      } else {
+         startNano = 0;
+      }
       // Request method | path | protocol
       String requestMethod = requestContext.getMethod();
       String uri = requestContext.getUriInfo().getPath();
@@ -57,7 +63,7 @@ public class RestAccessLoggingHandler implements ContainerResponseFilter, Contai
       long responseTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNano);
 
       log.tracef("%s [%s] \"%s %s\" %s %d %d %d ms", remoteAddress, responseTime, requestMethod, uri, status, requestSize,
-              responseSize, responseTime);
+            responseSize, responseTime);
    }
 
    @Override

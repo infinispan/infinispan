@@ -176,7 +176,7 @@ public class CompatibilityCacheFactory<K, V> {
    void createRestCache(int port) throws Exception {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
       builder.port(port);
-      rest = NettyRestServer.apply(builder.build(), cacheManager);
+      rest = NettyRestServer.createServer(builder.build(), cacheManager);
       rest.start();
       restClient = new HttpClient();
    }

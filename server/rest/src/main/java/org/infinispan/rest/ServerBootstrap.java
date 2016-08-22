@@ -11,7 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.rest.logging.JavaLog;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -31,7 +31,7 @@ public class ServerBootstrap implements ServletContextListener {
     */
    private static final String EXTENDED_HEADERS = "extended.headers";
 
-   private final static JavaLog log = LogFactory.getLog(ServerBootstrap.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(ServerBootstrap.class, Log.class);
 
    // Attributes attached to the ServletContext
    public final static String CACHE_MANAGER = "org.infinispan.rest.ServerBootstrap.CACHE_MANAGER";
