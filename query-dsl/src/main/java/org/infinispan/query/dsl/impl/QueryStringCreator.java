@@ -364,6 +364,11 @@ public class QueryStringCreator implements Visitor<String> {
       }
 
       if (argument instanceof Instant) {
+         sb.append('\'').append(renderInstant((Instant) argument)).append('\'');
+         return;
+      }
+
+      if (argument instanceof Instant) {
          sb.append('\'').append(argument).append('\'');
          return;
       }
@@ -373,6 +378,10 @@ public class QueryStringCreator implements Visitor<String> {
 
    protected String renderDate(Date argument) {
       return getDateFormatter().format(argument);
+   }
+
+   protected String renderInstant(Instant argument) {
+      return argument.toString();
    }
 
    private DateFormat getDateFormatter() {

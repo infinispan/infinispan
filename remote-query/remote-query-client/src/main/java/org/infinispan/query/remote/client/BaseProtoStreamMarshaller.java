@@ -43,10 +43,11 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
             o instanceof Float ||
             o instanceof Boolean ||
             o instanceof byte[] ||
-//            o instanceof Byte ||
-//            o instanceof Short ||
-//            o instanceof Character ||
-//            o instanceof java.util.Date ||   //todo [anistor] No support for Byte, Short, Character, java.util.Date at the moment
+            o instanceof Byte ||
+            o instanceof Short ||
+            o instanceof Character ||
+            o instanceof java.util.Date ||
+            o instanceof java.time.Instant ||
             getSerializationContext().canMarshall(o.getClass());
    }
 

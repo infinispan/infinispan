@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax;
 
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
@@ -127,6 +129,22 @@ public final class ConstantValueExpr implements ValueExpr {
             } else if (Number.class.isAssignableFrom(type)) {
                return ((Number) value).byteValue();
             }
+         } else if (targetType == Date.class) {
+            if (type == String.class) {
+               try {
+                  return DateHelper.getJpaDateFormat().parse((String) value);
+               } catch (ParseException e) {
+                  throw new RuntimeException(e);
+               }
+            } else if (Number.class.isAssignableFrom(type)) {
+               return new Date(((Number) value).longValue());
+            }
+         } else if (targetType == Instant.class) {
+            if (type == String.class) {
+               return Instant.parse((String) value);
+            } else if (Number.class.isAssignableFrom(type)) {
+               return Instant.ofEpochMilli(((Number) value).longValue());
+            }
          }
 
          //todo [anistor] continue with other commonsense conversions
@@ -165,8 +183,10 @@ public final class ConstantValueExpr implements ValueExpr {
          strVal = "'" + constantValue + "'";
       } else if (constantValue instanceof Date) {
          strVal = DateHelper.getJpaDateFormat().format((Date) constantValue);
+      } else if (constantValue instanceof Instant) {
+         strVal = constantValue.toString();
       } else {
-         strVal = "" + constantValue;
+         strVal = String.valueOf(constantValue);
       }
       return "CONST(" + strVal + ')';
    }
@@ -184,6 +204,9 @@ public final class ConstantValueExpr implements ValueExpr {
       }
       if (constantValue instanceof Date) {
          return "'" + DateHelper.getJpaDateFormat().format((Date) constantValue) + "'";
+      }
+      if (constantValue instanceof Instant) {
+         return "'" + constantValue.toString() + "'";
       }
       return "" + constantValue;
    }

@@ -14,6 +14,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -2981,5 +2982,27 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<Transaction> list = q.list();
       assertEquals(50, list.size());
+   }
+
+   public void testInstant1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("creationDate").eq(Instant.parse("2011-12-03T10:15:30Z"))
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testInstant2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("passwordExpirationDate").eq(Instant.parse("2011-12-03T10:15:30Z"))
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
    }
 }

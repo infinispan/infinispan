@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,8 @@ public class UserPB implements User {
    private Integer age;
    private Gender gender;
    private String notes;
+   private Instant creationDate = Instant.parse("2011-12-03T10:15:30Z");
+   private Instant passwordExpirationDate = Instant.parse("2011-12-03T10:15:30Z");
 
    public int getId() {
       return id;
@@ -88,6 +91,26 @@ public class UserPB implements User {
    }
 
    @Override
+   public Instant getCreationDate() {
+      return creationDate;
+   }
+
+   @Override
+   public void setCreationDate(Instant creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @Override
+   public Instant getPasswordExpirationDate() {
+      return passwordExpirationDate;
+   }
+
+   @Override
+   public void setPasswordExpirationDate(Instant passwordExpirationDate) {
+      this.passwordExpirationDate = passwordExpirationDate;
+   }
+
+   @Override
    public String toString() {
       return "UserPB{" +
             "id=" + id +
@@ -98,6 +121,8 @@ public class UserPB implements User {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
+            ", creationDate=" + creationDate +
+            ", passwordExpirationDate=" + passwordExpirationDate +
             '}';
    }
 }

@@ -2,6 +2,10 @@ package org.infinispan.query.dsl.embedded;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,7 +13,9 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
@@ -40,6 +46,46 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
+      User user1 = getModelFactory().makeUser();
+      user1.setId(1);
+      user1.setName("John");
+      user1.setSurname("Doe");
+      user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
+      user1.setNotes("Lorem ipsum dolor sit amet");
+
+      Address address1 = getModelFactory().makeAddress();
+      address1.setStreet("Main Street");
+      address1.setPostCode("X1234");
+      address1.setNumber(156);
+      user1.setAddresses(Collections.singletonList(address1));
+
+      User user2 = getModelFactory().makeUser();
+      user2.setId(2);
+      user2.setName("Spider");
+      user2.setSurname("Man");
+      user2.setGender(User.Gender.MALE);
+      user2.setAccountIds(Collections.singleton(3));
+
+      Address address2 = getModelFactory().makeAddress();
+      address2.setStreet("Old Street");
+      address2.setPostCode("Y12");
+      address2.setNumber(-12);
+      Address address3 = getModelFactory().makeAddress();
+      address3.setStreet("Bond Street");
+      address3.setPostCode("ZZ");
+      address3.setNumber(312);
+      user2.setAddresses(Arrays.asList(address2, address3));
+
+      User user3 = getModelFactory().makeUser();
+      user3.setId(3);
+      user3.setName("Spider");
+      user3.setSurname("Woman");
+      user3.setGender(User.Gender.FEMALE);
+      user3.setAccountIds(Collections.emptySet());
+      user3.setAddresses(new ArrayList<>());
+
       Transaction transaction0 = getModelFactory().makeTransaction();
       transaction0.setId(0);
       transaction0.setDescription("Birthday present");
@@ -100,6 +146,9 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
       // persist and index the test objects
       // we put all of them in the same cache for the sake of simplicity
+      getCacheForWrite().put("user_" + user1.getId(), user1);
+      getCacheForWrite().put("user_" + user2.getId(), user2);
+      getCacheForWrite().put("user_" + user3.getId(), user3);
       getCacheForWrite().put("transaction_" + transaction0.getId(), transaction0);
       getCacheForWrite().put("transaction_" + transaction1.getId(), transaction1);
       getCacheForWrite().put("transaction_" + transaction2.getId(), transaction2);
@@ -329,7 +378,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*property is analyzed.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028522: .*property is analyzed.*")
    public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -338,7 +387,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*unless the property is indexed and analyzed.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: .*unless the property is indexed and analyzed.*")
    public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -355,5 +404,23 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
+   }
+
+   public void testInstant1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testInstant2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
    }
 }

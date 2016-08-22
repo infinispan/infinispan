@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -90,6 +91,8 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
             value = value.toString();
          } else if (value instanceof Date) {
             value = ((Date) value).getTime();
+         } else if (value instanceof Instant) {
+            value = ((Instant) value).toEpochMilli();
          }
          params.add(new QueryRequest.NamedParameter(e.getKey(), value));
       }

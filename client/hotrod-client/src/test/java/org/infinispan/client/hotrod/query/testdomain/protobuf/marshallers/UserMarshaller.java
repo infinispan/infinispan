@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,8 +41,10 @@ public class UserMarshaller implements MessageMarshaller<UserPB> {
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), AddressPB.class);
 
       Integer age = reader.readInt("age");
-      User.Gender gender = reader.readObject("gender", User.Gender.class);
+      User.Gender gender = reader.readEnum("gender", User.Gender.class);
       String notes = reader.readString("notes");
+      Instant creationDate = reader.readInstant("creationDate");
+      Instant passwordExpirationDate = reader.readInstant("passwordExpirationDate");
 
       UserPB user = new UserPB();
       user.setId(id);
@@ -52,6 +55,8 @@ public class UserMarshaller implements MessageMarshaller<UserPB> {
       user.setGender(gender);
       user.setAddresses(addresses);
       user.setNotes(notes);
+      user.setCreationDate(creationDate);
+      user.setPasswordExpirationDate(passwordExpirationDate);
       return user;
    }
 
@@ -63,7 +68,9 @@ public class UserMarshaller implements MessageMarshaller<UserPB> {
       writer.writeString("surname", user.getSurname());
       writer.writeCollection("addresses", user.getAddresses(), AddressPB.class);
       writer.writeInt("age", user.getAge());
-      writer.writeObject("gender", user.getGender(), User.Gender.class);
+      writer.writeEnum("gender", user.getGender(), User.Gender.class);
       writer.writeString("notes", user.getNotes());
+      writer.writeInstant("creationDate", user.getCreationDate());
+      writer.writeInstant("passwordExpirationDate", user.getPasswordExpirationDate());
    }
 }

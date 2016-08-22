@@ -1,12 +1,14 @@
 package org.infinispan.all.embeddedquery.testdomain.hsearch;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
+import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
@@ -41,6 +43,12 @@ public class UserHS extends UserBase {
 
    @IndexedEmbedded(targetElement = AddressHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private List<Address> addresses;
+
+   @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
+   private Instant creationDate = Instant.parse("2011-12-03T10:15:30Z");
+
+   //@Field(analyze = Analyze.NO, store = Store.YES, index = Index.NO)
+   private Instant passwordExpirationDate = Instant.parse("2011-12-03T10:15:30Z");
 
    /**
     * This is not indexed!
@@ -106,6 +114,26 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   public Instant getCreationDate() {
+      return creationDate;
+   }
+
+   @Override
+   public void setCreationDate(Instant creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @Override
+   public Instant getPasswordExpirationDate() {
+      return passwordExpirationDate;
+   }
+
+   @Override
+   public void setPasswordExpirationDate(Instant passwordExpirationDate) {
+      this.passwordExpirationDate = passwordExpirationDate;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -120,6 +148,8 @@ public class UserHS extends UserBase {
       if (name != null ? !name.equals(other.name) : other.name != null) return false;
       if (surname != null ? !surname.equals(other.surname) : other.surname != null) return false;
       if (notes != null ? !notes.equals(other.notes) : other.notes != null) return false;
+      if (creationDate != null ? !creationDate.equals(other.creationDate) : other.creationDate != null) return false;
+      if (passwordExpirationDate != null ? !passwordExpirationDate.equals(other.passwordExpirationDate) : other.passwordExpirationDate != null) return false;
 
       return true;
    }
@@ -134,6 +164,8 @@ public class UserHS extends UserBase {
       result = 31 * result + (gender != null ? gender.hashCode() : 0);
       result = 31 * result + (addresses != null ? addresses.hashCode() : 0);
       result = 31 * result + (notes != null ? notes.hashCode() : 0);
+      result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
+      result = 31 * result + (passwordExpirationDate != null ? passwordExpirationDate.hashCode() : 0);
       return result;
    }
 
@@ -148,6 +180,8 @@ public class UserHS extends UserBase {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
+            ", creationDate=" + creationDate +
+            ", passwordExpirationDate=" + passwordExpirationDate +
             '}';
    }
 }
