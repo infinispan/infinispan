@@ -152,6 +152,8 @@ final class ExternalMarshallerWhiteList {
             || className.equals("java.time.Instant") // prod
 
             || className.startsWith("org.infinispan.test")
+
+            || className.equals("org.infinispan.server.infinispan.task.DistributedServerTask") // prod
             ;
    }
 

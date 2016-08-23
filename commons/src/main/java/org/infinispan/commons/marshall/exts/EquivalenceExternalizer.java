@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall.exts;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -17,17 +18,20 @@ public final class EquivalenceExternalizer extends AbstractExternalizer<Equivale
 
    private static final int BYTE_ARRAY_EQ    = 0x00;
    private static final int ANY_EQ           = 0x01;
+   private static final int ANY_SERVER_EQ    = 0x02;
 
    private final IdentityIntMap<Class<?>> subIds = new IdentityIntMap<>(2);
 
    public EquivalenceExternalizer() {
       subIds.put(ByteArrayEquivalence.class, BYTE_ARRAY_EQ);
       subIds.put(AnyEquivalence.class, ANY_EQ);
+      subIds.put(AnyServerEquivalence.class, ANY_SERVER_EQ);
    }
 
    @Override
    public Set<Class<? extends Equivalence>> getTypeClasses() {
-      return Util.asSet(ByteArrayEquivalence.class, AnyEquivalence.class);
+      return Util.asSet(ByteArrayEquivalence.class, AnyEquivalence.class,
+            AnyServerEquivalence.class);
    }
 
    @Override
@@ -49,6 +53,8 @@ public final class EquivalenceExternalizer extends AbstractExternalizer<Equivale
             return ByteArrayEquivalence.INSTANCE;
          case ANY_EQ:
             return AnyEquivalence.getInstance();
+         case ANY_SERVER_EQ:
+            return AnyServerEquivalence.INSTANCE;
          default:
             throw new IllegalStateException("Unknown equivalence type: " + Integer.toHexString(subId));
       }
