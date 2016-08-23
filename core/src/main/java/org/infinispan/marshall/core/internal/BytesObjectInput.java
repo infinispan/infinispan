@@ -11,10 +11,12 @@ final class BytesObjectInput implements ObjectInput, PositionalBuffer.Input {
    final InternalMarshaller internal;
 
    int pos;
+   int offset; // needed for external JBoss Marshalling, to be able to rewind correctly when the bytes are prepended :(
 
    private BytesObjectInput(byte[] bytes, int offset, InternalMarshaller internal) {
       this.bytes = bytes;
       this.pos = offset;
+      this.offset = offset;
       this.internal = internal;
    }
 

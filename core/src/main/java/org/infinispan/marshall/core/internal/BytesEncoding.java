@@ -397,7 +397,10 @@ final class BytesEncoding implements Encoding<BytesObjectOutput, BytesObjectInpu
 
    @Override
    public void decodeRewind(BytesObjectInput in, int pos) {
-      in.pos = pos;
+      if (in.offset == 0)
+         in.pos = pos;
+      else
+         in.pos = pos + in.offset;
    }
 
 }

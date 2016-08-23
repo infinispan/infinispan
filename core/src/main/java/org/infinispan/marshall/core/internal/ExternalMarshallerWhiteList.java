@@ -152,8 +152,13 @@ final class ExternalMarshallerWhiteList {
             || className.equals("java.time.Instant") // prod
 
             || className.startsWith("org.infinispan.test")
+            || className.startsWith("org.infinispan.server.test")
+            || className.startsWith("org.infinispan.it")
+            || className.startsWith("org.infinispan.all")
 
             || className.equals("org.infinispan.server.infinispan.task.DistributedServerTask") // prod
+
+            || className.equals("org.infinispan.jcache.annotation.DefaultCacheKey") // prod
             ;
    }
 
