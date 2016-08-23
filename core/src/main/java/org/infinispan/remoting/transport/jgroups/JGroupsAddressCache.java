@@ -1,7 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8;
 import org.jgroups.Address;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.UUID;

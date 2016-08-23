@@ -1,4 +1,4 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.LIRSEvictionPolicy;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.LIRSNode;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Recency;
-import org.infinispan.commons.util.concurrent.jdk8backported.StrippedConcurrentLinkedDeque.DequeNode;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.LIRSEvictionPolicy;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.LIRSNode;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.Recency;
+import org.infinispan.commons.util.concurrent.jsr166mods.StrippedConcurrentLinkedDeque.DequeNode;
 import org.testng.annotations.Test;
 
 /**
