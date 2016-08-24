@@ -3,9 +3,9 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
@@ -57,7 +57,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      Stream<CacheEntry<?, ObjectFilter.FilterResult>> stream = CacheFilters.filterAndConvert(cache.cacheEntrySet().stream(), createFilter());
+      CacheStream<CacheEntry<?, ObjectFilter.FilterResult>> stream = (CacheStream<CacheEntry<?, ObjectFilter.FilterResult>>) CacheFilters.filterAndConvert(cache.cacheEntrySet().stream(), createFilter());
       return Closeables.iterator(stream.map(e -> e.getValue()));
    }
 

@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
- * Tests query without indexing over Hot Rod in a two-node cluster.
+ * Tests query without indexing over Hot Rod in a three node cluster.
  *
  * @author anistor@redhat.com
  * @since 7.2
@@ -17,8 +17,8 @@ public class MultiHotRodServerNonIndexedQueryTest extends MultiHotRodServerQuery
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-      createHotRodServers(2, builder);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      createHotRodServers(3, builder);
 
       waitForClusterToForm();
 
