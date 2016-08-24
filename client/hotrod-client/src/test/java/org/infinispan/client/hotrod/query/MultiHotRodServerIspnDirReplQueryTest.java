@@ -19,9 +19,9 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      createHotRodServers(2, defaultConfiguration);
+      createHotRodServers(3, defaultConfiguration);
 
-      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing()
             .index(Index.LOCAL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");

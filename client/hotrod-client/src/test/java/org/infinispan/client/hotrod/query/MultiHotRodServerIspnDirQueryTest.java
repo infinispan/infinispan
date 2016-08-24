@@ -21,7 +21,7 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
-      createHotRodServers(2, defaultConfiguration);
+      createHotRodServers(3, defaultConfiguration);
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().index(Index.ALL)
