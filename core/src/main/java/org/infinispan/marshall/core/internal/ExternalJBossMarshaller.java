@@ -22,7 +22,6 @@ import org.jboss.marshalling.Unmarshaller;
 final class ExternalJBossMarshaller implements StreamingMarshaller {
 
    final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
-   final ExternalMarshallerWhiteList whiteList = new ExternalMarshallerWhiteList();
    final JBossMarshaller marshaller;
 
    public ExternalJBossMarshaller(InternalExternalizerTable externalizers, GlobalConfiguration globalCfg) {
@@ -32,7 +31,7 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
 
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      whiteList.checkWhiteListed(obj);
+      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
 
       if (out instanceof PositionalBuffer.Output) {
          PositionalBuffer.Output posOut = (PositionalBuffer.Output) out;
