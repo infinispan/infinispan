@@ -224,9 +224,7 @@ final class InternalExternalizerTable {
                return (Externalizer<T>) primitives;
             case InternalIds.NON_PRIMITIVE:
                int subType = in.readUnsignedByte();
-               Externalizer<T> ext = (Externalizer<T>) readers.get(subType);
-               // TODO: Add null checks and see if not started...etc
-               return ext;
+               return (Externalizer<T>) readers.get(subType);
             case InternalIds.ANNOTATED:
                Class<? extends Externalizer<T>> clazz =
                      (Class<? extends Externalizer<T>>) in.readObject();
@@ -234,47 +232,12 @@ final class InternalExternalizerTable {
             case InternalIds.PRE_CONFIGURED:
                int foreignId = UnsignedNumeric.readUnsignedInt(in);
                int foreignSubType = generateForeignReaderIndex(foreignId);
-               // TODO: Add null checks and see if not started...etc
                return (Externalizer<T>) readers.get(foreignSubType);
             case InternalIds.EXTERNAL:
                return null;
             default:
                throw new CacheException("Unknown externalizer type: " + type);
          }
-
-//      int foreignId = -1;
-//      if (readerIndex == Ids.MAX_ID) {
-//         // User defined externalizer
-//         foreignId = UnsignedNumeric.readUnsignedInt(input);
-//         readerIndex = generateForeignReaderIndex(foreignId);
-//      }
-
-//         AdvancedExternalizer<T> ext = (AdvancedExternalizer<T>) readers.get(readerIndex);
-//         if (ext == null) {
-//            if (!started) {
-//               log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not properly populated: %s", readers);
-//
-////            if (Thread.currentThread().isInterrupted()) {
-////               throw log.pushReadInterruptionDueToCacheManagerShutdown(readerIndex, new InterruptedException());
-////            } else {
-////               throw log.cannotResolveExternalizerReader(gcr.getStatus(), readerIndex);
-////            }
-//            }
-////            else {
-//////               if (trace) {
-//////                  // TODO: Implement available() in BytesObjectInput ?
-//////                  log.tracef("Unknown type. Input stream has %s to read", input.available());
-//////                  log.tracef("Check contents of read externalizers: %s", readers);
-//////               }
-////
-//////            if (foreignId > 0)
-//////               throw log.missingForeignExternalizer(foreignId);
-////
-////               throw log.unknownExternalizerReaderIndex(readerIndex);
-////            }
-//         }
-//
-//         return ext;
       }
       catch (Exception e) {
          // TODO: Update Log.java eventually (not doing yet to avoid need to rebase)
