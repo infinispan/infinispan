@@ -144,7 +144,6 @@
       <version.jboss.jboss-transaction-spi>7.1.0.Final</version.jboss.jboss-transaction-spi>
       <version.jboss.xnio>3.2.2.Final</version.jboss.xnio>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
@@ -605,11 +604,6 @@
             <groupId>org.jboss.xnio</groupId>
             <artifactId>xnio-nio</artifactId>
             <version>${version.jboss.xnio}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-embedded</artifactId>
-            <version>${version.jetty}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.slf4j</groupId>
@@ -1191,11 +1185,6 @@
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
-            </plugin>
-            <plugin>
-               <groupId>org.mortbay.jetty</groupId>
-               <artifactId>jetty-maven-plugin</artifactId>
-               <version>8.0.0.M3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -38,10 +38,6 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
-         </plugin>
-         <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
                <attachClasses>true</attachClasses>
@@ -91,12 +87,6 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
          <scope>test</scope>
       </dependency>
 
