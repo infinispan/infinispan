@@ -143,6 +143,7 @@ import org.jboss.marshalling.Unmarshaller;
  * @since 5.0
  */
 @Scope(Scopes.GLOBAL)
+@Deprecated
 public class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
    private static final boolean trace = log.isTraceEnabled();
