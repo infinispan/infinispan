@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * For example, if a rebalance is in progress, joins are queued and send in
  * one go when the rebalance has finished.
  *
- * This {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation avois any of the issues
+ * This {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation avoids any of the issues
  * mentioned and guarantees that multiple caches with the same members will
  * have the same consistent hash.
  *

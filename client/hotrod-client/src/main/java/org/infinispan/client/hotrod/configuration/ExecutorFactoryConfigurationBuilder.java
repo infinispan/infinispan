@@ -30,7 +30,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    /**
     * Specify factory class for executor
     *
-    * @param factory
+    * @param factoryClass
     *           clazz
     * @return this ExecutorFactoryConfig
     */

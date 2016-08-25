@@ -4,8 +4,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
- *
- * ConnectionPoolConfigurationBuilder. Specified connection pooling properties for the HotRod client
+ * ConnectionPoolConfigurationBuilder. Specifies connection pooling properties for the HotRod client.
  *
  * @author Tristan Tarrant
  * @since 5.2
