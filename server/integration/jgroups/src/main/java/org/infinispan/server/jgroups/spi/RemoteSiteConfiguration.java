@@ -21,7 +21,7 @@
  */
 package org.infinispan.server.jgroups.spi;
 
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Configuration of a channel to a remote site, used by the RELAY2 protocol.
@@ -30,7 +30,7 @@ import org.jgroups.Channel;
 public interface RemoteSiteConfiguration {
     String getName();
 
-    Channel getChannel();
+    JChannel getChannel();
 
     String getClusterName();
 }

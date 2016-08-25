@@ -27,6 +27,7 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jgroups.JChannel;
+import org.jgroups.protocols.TP;
 
 /**
  * Enumerates management metrics for a channel.
@@ -56,13 +57,13 @@ public enum ChannelMetric implements Metric<JChannel> {
     NUM_TASKS_IN_TIMER(MetricKeys.NUM_TASKS_IN_TIMER, ModelType.INT) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(channel.getNumberOfTasksInTimer());
+            return new ModelNode(((TP) channel.getProtocolStack().getTransport()).getNumTimerTasks());
         }
     },
     NUM_TIMER_THREADS(MetricKeys.NUM_TIMER_THREADS, ModelType.INT) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(channel.getTimerThreads());
+            return new ModelNode(((TP) channel.getProtocolStack().getTransport()).getTimerThreads());
         }
     },
     RECEIVED_BYTES(MetricKeys.RECEIVED_BYTES, ModelType.LONG) {
@@ -98,7 +99,7 @@ public enum ChannelMetric implements Metric<JChannel> {
     STATS_ENABLED(MetricKeys.STATS_ENABLED, ModelType.BOOLEAN) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(channel.statsEnabled());
+            return new ModelNode(channel.stats());
         }
     },
     VERSION(MetricKeys.VERSION, ModelType.STRING) {

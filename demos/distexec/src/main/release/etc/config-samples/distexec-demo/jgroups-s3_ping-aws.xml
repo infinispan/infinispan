@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config>
+<config xmlns="urn:org:jgroups"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
    <TCP bind_port="7800"/>
    <S3_PING secret_access_key="replace with your secret access key" access_key="replace with your access key"
             location="replace with your s3 bucket name"/>
@@ -7,12 +9,11 @@
    <FD_SOCK start_port="9777"/>
    <FD_ALL interval="3000" timeout="15000" timeout_check_interval="3000"/>
    <VERIFY_SUSPECT timeout="1500"/>
-   <pbcast.NAKACK use_mcast_xmit="false" retransmit_timeout="300,600,1200,2400,4800"
+   <pbcast.NAKACK2 use_mcast_xmit="false"
                   discard_delivered_msgs="true"/>
    <UNICAST3 conn_expiry_timeout="0"/>
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="400000"/>
    <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}" view_bundling="true"/>
-   <FC max_credits="2m" min_threshold="0.40"/>
+   <MFC max_credits="2M" min_threshold="0.40"/>
    <FRAG2 frag_size="60000"/>
-   <pbcast.STREAMING_STATE_TRANSFER/>
 </config>

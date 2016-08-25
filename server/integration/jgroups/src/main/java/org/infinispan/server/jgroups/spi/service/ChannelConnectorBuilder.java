@@ -34,7 +34,6 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-import org.jgroups.Channel;
 import org.jgroups.JChannel;
 import org.jgroups.jmx.JmxConfigurator;
 
@@ -43,12 +42,12 @@ import org.jgroups.jmx.JmxConfigurator;
  *
  * @author Paul Ferraro
  */
-public class ChannelConnectorBuilder implements Builder<Channel>, Service<Channel> {
+public class ChannelConnectorBuilder implements Builder<JChannel>, Service<JChannel> {
 
     private static final Logger LOGGER = org.jboss.logging.Logger.getLogger(ChannelConnectorBuilder.class);
 
     private final String name;
-    private final InjectedValue<Channel> channel = new InjectedValue<>();
+    private final InjectedValue<JChannel> channel = new InjectedValue<>();
     private final InjectedValue<MBeanServer> server = new InjectedValue<>();
 
     public ChannelConnectorBuilder(String name) {
@@ -61,27 +60,25 @@ public class ChannelConnectorBuilder implements Builder<Channel>, Service<Channe
     }
 
     @Override
-    public ServiceBuilder<Channel> build(ServiceTarget target) {
+    public ServiceBuilder<JChannel> build(ServiceTarget target) {
         return target.addService(this.getServiceName(), this)
-                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.name), Channel.class, this.channel)
+                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.name), JChannel.class, this.channel)
                 .addDependency(ServiceName.JBOSS.append("mbean", "server"), MBeanServer.class, this.server)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND);
     }
 
     @Override
-    public Channel getValue() {
+    public JChannel getValue() {
         return this.channel.getValue();
     }
 
     @Override
     public void start(StartContext context) throws StartException {
-        Channel channel = this.getValue();
-        if (channel instanceof JChannel) {
-            try {
-                JmxConfigurator.registerChannel((JChannel) channel, this.server.getValue(), this.name);
-            } catch (Exception e) {
-                LOGGER.debug(e.getMessage(), e);
-            }
+        JChannel channel = this.getValue();
+        try {
+            JmxConfigurator.registerChannel(channel, this.server.getValue(), this.name);
+        } catch (Exception e) {
+            LOGGER.debug(e.getMessage(), e);
         }
         try {
             channel.connect(this.name);
@@ -92,14 +89,12 @@ public class ChannelConnectorBuilder implements Builder<Channel>, Service<Channe
 
     @Override
     public void stop(StopContext context) {
-        Channel channel = this.getValue();
+        JChannel channel = this.getValue();
         channel.disconnect();
-        if (channel instanceof JChannel) {
-            try {
-                JmxConfigurator.unregisterChannel((JChannel) channel, this.server.getValue(), this.name);
-            } catch (Exception e) {
-                LOGGER.debug(e.getMessage(), e);
-            }
+        try {
+            JmxConfigurator.unregisterChannel(channel, this.server.getValue(), this.name);
+        } catch (Exception e) {
+            LOGGER.debug(e.getMessage(), e);
         }
     }
 }

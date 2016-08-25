@@ -28,7 +28,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
@@ -198,7 +198,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
-         Channel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
+         JChannel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
          ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
       }
    }
@@ -209,11 +209,11 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
    protected void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
       for (EmbeddedCacheManager cm : cacheManagers) {
          JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
-         Channel channel = t.getChannel();
+         JChannel channel = t.getChannel();
          try {
             DISCARD discard = new DISCARD();
             discard.setDiscardAll(true);
-            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
          } catch (Exception e) {
             log.warn("Problems inserting discard", e);
             throw new RuntimeException(e);

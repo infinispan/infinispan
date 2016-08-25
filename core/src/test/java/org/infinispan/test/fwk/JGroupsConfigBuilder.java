@@ -250,10 +250,10 @@ public class JGroupsConfigBuilder {
 
    static class JGroupsProtocolCfg {
       final Map<ProtocolType, ProtocolConfiguration> protoMap;
-      final ProtocolStackConfigurator configurator;
+      final XmlConfigurator configurator;
 
       JGroupsProtocolCfg(Map<ProtocolType, ProtocolConfiguration> protoMap,
-                         ProtocolStackConfigurator configurator) {
+                         XmlConfigurator configurator) {
          this.protoMap = protoMap;
          this.configurator = configurator;
       }
@@ -287,7 +287,7 @@ public class JGroupsConfigBuilder {
 
       @Override
       public String toString() {
-         return configurator.getProtocolStackString();
+         return configurator.getProtocolStackString(true);
       }
    }
 

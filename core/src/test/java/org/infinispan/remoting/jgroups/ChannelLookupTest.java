@@ -3,6 +3,9 @@ package org.infinispan.remoting.jgroups;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.Properties;
@@ -18,7 +21,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Address;
-import org.jgroups.Channel;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.View;
@@ -29,10 +31,10 @@ import org.testng.annotations.Test;
 
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
-   static Channel mockChannel = mock(Channel.class);
-   ProtocolStack ps = mock(ProtocolStack.class);
-   Address a = new UUID(1, 1);
-   View v = new View(a, 1, Collections.singletonList(a));
+   static JChannel mockChannel = mock(JChannel.class);
+   private ProtocolStack ps = mock(ProtocolStack.class);
+   private Address a = new UUID(1, 1);
+   private View v = new View(a, 1, Collections.singletonList(a));
 
    public void channelLookupTest() {
 
@@ -53,9 +55,9 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
 
          GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cm);
          Transport t = gcr.getComponent(Transport.class);
-         assert t != null;
-         assert t instanceof JGroupsTransport;
-         assert !(((JGroupsTransport) t).getChannel() instanceof JChannel);
+         assertNotNull(t);
+         assertTrue(t instanceof JGroupsTransport);
+         assertNotSame(JChannel.class, ((JGroupsTransport) t).getChannel().getClass());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -67,7 +69,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Channel getJGroupsChannel(Properties p) {
+      public JChannel getJGroupsChannel(Properties p) {
          return mockChannel;
       }
 

@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -17,12 +18,12 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
-import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.blocks.RequestCorrelator;
@@ -112,7 +113,8 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
    }
 
    private EmbeddedCacheManager createCacheManager(ConfigurationBuilder cacheCfg, String name,
-         JChannel channel, final byte[] cacheNotFoundResponseBytes) throws Exception {
+                                                   JChannel channel, final byte[] cacheNotFoundResponseBytes) throws
+         Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().nodeName(channel.getName());
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
@@ -132,18 +134,19 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
 
          private Object handle(Message message) {
             short id = ClassConfigurator.getProtocolId(RequestCorrelator.class);
-            RequestCorrelator.Header header = (RequestCorrelator.Header) message.getHeader(id);
+            RequestCorrelator.Header header = message.getHeader(id);
             if (header != null) {
                log.debugf("Sending CacheNotFoundResponse reply for %s", header);
-               Message response = message.makeReply().setFlag(message.getFlags())
-                     .clearFlag(Message.Flag.RSVP, Message.Flag.SCOPED);
+               short flags = (short) ((message.getFlags() | CommandAwareRpcDispatcher.REPLY_FLAGS_TO_SET) &
+                     ~CommandAwareRpcDispatcher.REPLY_FLAGS_TO_CLEAR);
+               Message response = message.makeReply().setFlag(flags);
 
                response.putHeader(FORK.ID, message.getHeader(FORK.ID));
                response.putHeader(id,
                      new RequestCorrelator.Header(RequestCorrelator.Header.RSP, header.req_id, id));
                response.setBuffer(cacheNotFoundResponseBytes);
 
-               fork.down(new Event(Event.MSG, response));
+               fork.down(response);
             }
             return null;
          }
@@ -158,13 +161,14 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
    }
 
    private JChannel createChannel(String name, int portRange) throws Exception {
-      JChannel ch1 = new JChannel(JGroupsConfigBuilder
+      String configString = JGroupsConfigBuilder
             .getJGroupsConfig(ConcurrentStartForkChannelTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange)));
-      ch1.setName(name);
-      ch1.connect(ConcurrentStartForkChannelTest.class.getSimpleName());
-      log.tracef("Channel %s connected: %s", ch1, ch1.getViewAsString());
-      return ch1;
+                  new TransportFlags().withPortRange(portRange));
+      JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
+      channel.setName(name);
+      channel.connect(ConcurrentStartForkChannelTest.class.getSimpleName());
+      log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
+      return channel;
    }
 
 }

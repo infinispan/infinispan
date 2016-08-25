@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.6.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
    <TCP bind_addr="${jgroups.tcp.address:127.0.0.1}"
         bind_port="${jgroups.tcp.port:7800}"
         enable_diagnostics="false"

@@ -8,7 +8,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.jgroups.Channel;
 import org.jgroups.JChannel;
 
 /**
@@ -32,7 +31,7 @@ public class CustomChannelLookup implements JGroupsChannelLookup {
    }
 
    @Override
-   public Channel getJGroupsChannel(Properties p) {
+   public JChannel getJGroupsChannel(Properties p) {
       String nodeName = p.getProperty("customNodeName");
       connect = Boolean.valueOf(p.getProperty("customConnect"));
       return channelMap.remove(nodeName);

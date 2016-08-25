@@ -41,7 +41,6 @@
    <PING />
    <MPING 
       ip_ttl="${jgroups.udp.ip_ttl:2}"/>
-   <MERGE2/>
    <MERGE3
       min_interval="10000"
       max_interval="30000"/>
@@ -55,27 +54,14 @@
    <VERIFY_SUSPECT 
       timeout="5000"/>
    <BARRIER/>
-   <pbcast.NAKACK use_mcast_xmit="true"
-      retransmit_timeout="300,600,1200,2400,4800"
-      discard_delivered_msgs="true"/>
-   <pbcast.NAKACK2 
+   <pbcast.NAKACK2
       xmit_interval="1000"
       xmit_table_num_rows="50"
       xmit_table_msgs_per_row="1024"
       xmit_table_max_compaction_time="30000"
       max_msg_batch_size="100"
       resend_last_seqno="true"/>
-   <UNICAST
-      conn_expiry_timeout="0"/>
-   <UNICAST2
-      stable_interval="5000"
-      max_bytes="1m"
-      max_msg_batch_size="100"
-      xmit_table_num_rows="20"
-      xmit_table_msgs_per_row="10000"
-      xmit_table_max_compaction_time="10000"
-      conn_expiry_timeout="0"/>
-   <UNICAST3 
+   <UNICAST3
       xmit_interval="500"
       xmit_table_num_rows="50"
       xmit_table_msgs_per_row="1024"

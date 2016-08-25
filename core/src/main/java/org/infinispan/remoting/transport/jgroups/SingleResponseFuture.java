@@ -5,9 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import org.infinispan.remoting.responses.Response;
-import org.jgroups.blocks.UnicastRequest;
-import org.jgroups.util.FutureListener;
-import org.jgroups.util.NotifyingFuture;
+import org.jgroups.SuspectedException;
 import org.jgroups.util.Rsp;
 
 /**
@@ -15,19 +13,25 @@ import org.jgroups.util.Rsp;
  * @since 8.0
  */
 public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
-      implements FutureListener<Response>, Callable<Void> {
-   private final UnicastRequest request;
+      implements Callable<Void> {
+   private final CompletableFuture<Response> request;
    private volatile Future<?> timeoutFuture = null;
 
-   SingleResponseFuture(NotifyingFuture<Response> request) {
-      this.request = ((UnicastRequest) request);
-      request.setListener(this);
+   SingleResponseFuture(CompletableFuture<Response> request) {
+      this.request = request;
+      request.whenComplete(this::requestDone);
    }
 
-   @Override
-   public void futureDone(Future<Response> future) {
-      Rsp<Response> response = request.getResult();
-      complete(response);
+   private void requestDone(Response response, Throwable throwable) {
+      if (throwable == null) {
+         complete(new Rsp<>(response));
+      } else if (throwable instanceof SuspectedException) {
+         Rsp<Response> rsp = new Rsp<>();
+         rsp.setSuspected();
+         complete(rsp);
+      } else {
+         complete(new Rsp<>(throwable));
+      }
       if (timeoutFuture != null) {
          timeoutFuture.cancel(false);
       }
@@ -43,7 +47,7 @@ public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
    @Override
    public Void call() throws Exception {
       // The request timed out
-      complete(request.getResult());
+      complete(new Rsp<>());
       request.cancel(false);
       return null;
    }

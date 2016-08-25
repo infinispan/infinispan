@@ -36,7 +36,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceRegistry;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 
@@ -61,7 +61,7 @@ public class ExportNativeConfiguration extends AbstractRuntimeOnlyHandler {
             try {
                 ChannelFactory factory = controller.awaitValue();
                 // Create a temporary channel, but don't connect it
-                try (Channel channel = factory.createChannel(UUID.randomUUID().toString())) {
+                try (JChannel channel = factory.createChannel(UUID.randomUUID().toString())) {
                     // ProtocolStack.printProtocolSpecAsXML() is very hacky and only works on an uninitialized stack
                     List<Protocol> protocols = channel.getProtocolStack().getProtocols();
                     Collections.reverse(protocols);

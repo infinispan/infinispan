@@ -172,19 +172,16 @@
         <subsystem xmlns="urn:jboss:domain:jgroups:1.1" default-stack="${jboss.default.jgroups.stack:udp}">
             <stack name="udp">
                 <transport type="UDP" socket-binding="jgroups-udp">
-                    <property name="timer_type">new</property>
                     <property name="timer_min_threads">4</property>
                     <property name="timer_max_threads">4</property>
                     <property name="timer_keep_alive_time">5000000000</property>
                     <property name="timer.queue_max_size">500</property>
-                    <property name="thread_pool.enabled">true</property>
                     <property name="thread_pool.min_threads">200</property>
                     <property name="thread_pool.max_threads">200</property>
                     <property name="thread_pool.keep_alive_time">5000000000</property>
                     <property name="thread_pool.queue_enabled">true</property>
                     <property name="thread_pool.queue_max_size">100000</property>
                     <property name="thread_pool.rejection_policy">discard</property>
-                    <property name="oob_thread_pool.enabled">true</property>
                     <property name="oob_thread_pool.min_threads">200</property>
                     <property name="oob_thread_pool.max_threads">200</property>
                     <property name="oob_thread_pool.keep_alive_time">1000000000</property>
@@ -227,19 +224,16 @@
             </stack>
             <stack name="tcp">
                 <transport type="TCP" socket-binding="jgroups-tcp">
-                    <property name="timer_type">new</property>
                     <property name="timer.min_threads">4</property>
                     <property name="timer.max_threads">4</property>
                     <property name="timer.keep_alive_time">5000000000</property>
                     <property name="timer.queue_max_size">500</property>
-                    <property name="thread_pool.enabled">true</property>
                     <property name="thread_pool.min_threads">200</property>
                     <property name="thread_pool.max_threads">200</property>
                     <property name="thread_pool.keep_alive_time">5000000000</property>
                     <property name="thread_pool.queue_enabled">true</property>
                     <property name="thread_pool.queue_max_size">100000</property>
                     <property name="thread_pool.rejection_policy">discard</property>
-                    <property name="oob_thread_pool.enabled">true</property>
                     <property name="oob_thread_pool.min_threads">200</property>
                     <property name="oob_thread_pool.max_threads">200</property>
                     <property name="oob_thread_pool.keep_alive_time">1000000000</property>

@@ -88,26 +88,26 @@ public class OperationsTestCase extends OperationTestCaseBase {
     public void testTransportPropertyReadWriteOperation() throws Exception {
         KernelServices services = this.buildKernelServices();
 
-        // read the enable_bundling transport property
-        ModelNode result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "enable_bundling"));
+        // read the log_discard_msgs transport property
+        ModelNode result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "log_discard_msgs"));
         Assert.assertEquals(result.toString(), SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("true", result.get(RESULT).resolve().asString());
 
-        // write the enable_bundling transport property
-        result = services.executeOperation(getTransportPutPropertyOperation("maximal", "TCP", "enable_bundling", "false"));
+        // write the log_discard_msgs transport property
+        result = services.executeOperation(getTransportPutPropertyOperation("maximal", "TCP", "log_discard_msgs", "false"));
         Assert.assertEquals(result.toString(), SUCCESS, result.get(OUTCOME).asString());
 
-        // re-read the enable_bundling transport property
-        result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "enable_bundling"));
+        // re-read the log_discard_msgs transport property
+        result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "log_discard_msgs"));
         Assert.assertEquals(result.toString(), SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("false", result.get(RESULT).asString());
 
-        // remove the enable_bundling transport property
-        result = services.executeOperation(getTransportRemovePropertyOperation("maximal", "TCP", "enable_bundling"));
+        // remove the log_discard_msgs transport property
+        result = services.executeOperation(getTransportRemovePropertyOperation("maximal", "TCP", "log_discard_msgs"));
         Assert.assertEquals(result.toString(), SUCCESS, result.get(OUTCOME).asString());
 
-        // re-read the enable_bundling transport property
-        result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "enable_bundling"));
+        // re-read the log_discard_msgs transport property
+        result = services.executeOperation(getTransportGetPropertyOperation("maximal", "TCP", "log_discard_msgs"));
         Assert.assertEquals(result.toString(), SUCCESS, result.get(OUTCOME).asString());
         Assert.assertFalse(result.get(RESULT).isDefined());
 

@@ -22,7 +22,7 @@
                        machine="${test.expr:machine1}"
                        rack="${test.expr:rack1}"
                        site="${test.expr:site1}">
-                <property name="enable_bundling">${test.expr:true}</property>
+                <property name="log_discard_msgs">${test.expr:true}</property>
                 <default-thread-pool min-threads="11"
                                      queue-length="12"
                                      max-threads="13"

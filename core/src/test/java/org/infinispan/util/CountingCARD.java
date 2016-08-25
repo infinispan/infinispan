@@ -16,7 +16,6 @@ import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.remoting.transport.jgroups.MarshallerAdapter;
 import org.infinispan.remoting.transport.jgroups.SingleResponseFuture;
 import org.infinispan.test.TestingUtil;
 import org.jgroups.Address;
@@ -47,21 +46,19 @@ public class CountingCARD extends CommandAwareRpcDispatcher {
    public CountingCARD(JGroupsTransport transport, InboundInvocationHandler handler,
                        GenerationalScheduledThreadPoolExecutor timeoutExecutor, TimeService timeService,
                        Executor remoteExecutor, StreamingMarshaller marshaller) {
-      super(transport.getChannel(), transport, handler, timeoutExecutor, timeService, remoteExecutor);
+      super(transport.getChannel(), transport, handler, timeoutExecutor, timeService, remoteExecutor, marshaller);
       installUpHandler(prot_adapter, true); // Make sure that this is the up handler
       this.timeoutExecutor = timeoutExecutor;
-      MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
-      setRequestMarshaller(adapter);
-      setResponseMarshaller(adapter);
       start();
    }
 
    @Override
-   protected SingleResponseFuture processSingleCall(ReplicableCommand command, long timeout, Address destination, ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller) throws Exception {
+   protected SingleResponseFuture processSingleCall(ReplicableCommand command, long timeout, Address destination,
+                                                    ResponseMode mode, DeliverOrder deliverOrder) throws Exception {
       synchronized (this) {
          awaitingReponses++;
       }
-      SingleResponseFuture srf = super.processSingleCall(command, timeout, destination, mode, deliverOrder, marshaller);
+      SingleResponseFuture srf = super.processSingleCall(command, timeout, destination, mode, deliverOrder);
       if (srf == null) {
          synchronized (this) {
             if (--awaitingReponses == 0) notifyAll();

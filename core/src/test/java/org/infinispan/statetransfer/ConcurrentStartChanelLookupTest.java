@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.ByteArrayInputStream;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
@@ -114,9 +115,10 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
    }
 
    private JChannel createChannel(String name, int portRange) throws Exception {
-      JChannel channel = new JChannel(JGroupsConfigBuilder
+      String configString = JGroupsConfigBuilder
             .getJGroupsConfig(ConcurrentStartChanelLookupTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange)));
+                  new TransportFlags().withPortRange(portRange));
+      JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
       channel.connect(ConcurrentStartChanelLookupTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
