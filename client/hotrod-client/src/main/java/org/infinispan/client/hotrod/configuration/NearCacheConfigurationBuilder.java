@@ -33,7 +33,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
 
    @Override
    public NearCacheConfiguration create() {
-      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries.intValue());
+      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries);
    }
 
    @Override

@@ -55,8 +55,7 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    public Builder<?> read(ClusterConfiguration template) {
-      template.getCluster().stream()
-         .forEach(server -> this.addClusterNode(server.host(), server.port()));
+      template.getCluster().forEach(server -> this.addClusterNode(server.host(), server.port()));
       return this;
    }
 }
