@@ -3,17 +3,22 @@ package org.infinispan.marshall.core.internal;
 import java.io.Serializable;
 
 // Temporary class, should become active by default when testing
-final class ExternalMarshallerWhiteList {
+final class ExternallyMarshallable {
 
-   public void checkWhiteListed(Object obj) {
-      String pkg = obj.getClass().getPackage().getName();
-      if (obj instanceof Serializable
-            && isMarshallablePackage(pkg)
-            && !isWhiteList(obj.getClass().getName()))
-         throw new RuntimeException("Check support for: " + obj.getClass());
+   private ExternallyMarshallable() {
+      // Static class
    }
 
-   private boolean isMarshallablePackage(String pkg) {
+   public static boolean isAllowed(Object obj) {
+      String pkg = obj.getClass().getPackage().getName();
+      boolean isBlackList =
+            obj instanceof Serializable
+            && isMarshallablePackage(pkg)
+            && !isWhiteList(obj.getClass().getName());
+      return !isBlackList;
+   }
+
+   private static boolean isMarshallablePackage(String pkg) {
       return pkg.startsWith("java.")
             || pkg.startsWith("org.infinispan.")
             || pkg.startsWith("org.jgroups.")
@@ -24,7 +29,7 @@ final class ExternalMarshallerWhiteList {
             ;
    }
 
-   boolean isWhiteList(String className) {
+   private static boolean isWhiteList(String className) {
       return className.endsWith("Exception")
             || className.contains("$$Lambda$")
             || className.equals("java.lang.Class")

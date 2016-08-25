@@ -7,7 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
@@ -19,11 +18,9 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
  */
 public final class ExternalJavaMarshaller implements StreamingMarshaller {
 
-   final ExternalMarshallerWhiteList whiteList = new ExternalMarshallerWhiteList();
-
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      whiteList.checkWhiteListed(obj);
+      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
 
       DelegateOutputStream stream = new DelegateOutputStream(out);
       try (ObjectOutputStream objectStream = new ObjectOutputStream(stream)) {
