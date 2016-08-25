@@ -34,11 +34,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
          <scope>test</scope>
@@ -89,10 +84,6 @@
                   <phase>prepare-package</phase>
                </execution>
             </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
          </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
