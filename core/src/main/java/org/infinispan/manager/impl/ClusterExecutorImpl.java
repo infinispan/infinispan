@@ -71,8 +71,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
    }
 
    /**
-    * Returns the targets we should use for JGroups.  This excludes the local node if it is a target.
-    * @return
+    * @return the targets we should use for JGroups. This excludes the local node if it is a target.
     */
    private List<org.jgroups.Address> getJGroupsTargets() {
       List<org.jgroups.Address> list;
@@ -250,25 +249,25 @@ public class ClusterExecutorImpl implements ClusterExecutor {
                     ResponseMode.GET_ALL, unit.toMillis(time), DeliverOrder.NONE);
             futures[i] = srf.handle((r, t) -> {
                if (t != null) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null, t);
+                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, t);
                } else if (r.wasReceived()) {
                   if (r.hasException()) {
-                     triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null, r.getException());
+                     triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, r.getException());
                   } else {
                      Response response = r.getValue();
                      if (response instanceof SuccessfulResponse) {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 (V) ((SuccessfulResponse) response).getResponseValue(), null);
                      } else if (response instanceof ExceptionResponse) {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 null, ((ExceptionResponse) response).getException());
                      } else {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 null, new IllegalStateException("Response was neither successful or an exception!"));
                      }
                   }
                } else if (r.wasSuspected()) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null,
+                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null,
                           new SuspectException());
                } else {
                   // We throw it so it is propagated to the parent CompletableFuture

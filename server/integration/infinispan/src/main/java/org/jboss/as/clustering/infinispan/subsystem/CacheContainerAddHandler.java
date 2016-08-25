@@ -54,7 +54,7 @@ import org.jboss.as.server.ServerEnvironment;
 import org.jboss.dmr.ModelNode;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.msc.service.ServiceTarget;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Add operation handler for /subsystem=infinispan/cache-container=*
@@ -108,7 +108,7 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             transportBuilder.build(target).install();
 
             if (!name.equals(channel)) {
-                new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(name), ChannelServiceName.CHANNEL.getServiceName(name), Channel.class).build(target).install();
+                new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(name), ChannelServiceName.CHANNEL.getServiceName(name), JChannel.class).build(target).install();
 
                 new ChannelBuilder(name).build(target).install();
                 new ChannelConnectorBuilder(name).build(target).install();

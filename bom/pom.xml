@@ -73,7 +73,7 @@
       <version.cdi>1.2</version.cdi>
       <version.jboss.marshalling>1.4.11.Final</version.jboss.marshalling>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
-      <version.jgroups>3.6.10.Final</version.jgroups>
+      <version.jgroups>4.0.0.Alpha1</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.1.5.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>

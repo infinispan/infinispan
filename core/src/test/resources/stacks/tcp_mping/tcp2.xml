@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.6.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
    <TCP bind_port="7800"
         port_range="30"
         recv_buf_size="20000000"
@@ -9,7 +9,6 @@
         sock_conn_timeout="300"
         bundler_type="transfer-queue"
 
-        thread_pool.enabled="true"
         thread_pool.min_threads="1"
         thread_pool.max_threads="25"
         thread_pool.keep_alive_time="5000"
@@ -17,7 +16,6 @@
         thread_pool.queue_max_size="100"
         thread_pool.rejection_policy="run"
 
-        oob_thread_pool.enabled="true"
         oob_thread_pool.min_threads="1"
         oob_thread_pool.max_threads="8"
         oob_thread_pool.keep_alive_time="5000"
@@ -33,8 +31,7 @@
    <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
           mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
           mcast_port="${jgroups.mping.mcast_port:43366}"
-          ip_ttl="${jgroups.udp.ip_ttl:2}"
-          num_initial_members="3"/>
+          ip_ttl="${jgroups.udp.ip_ttl:2}"/>
 
    <MERGE3/>
    <FD_SOCK/>
@@ -64,7 +61,6 @@
                   max_bytes="400000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" view_bundling="false"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
-   <FC max_credits="2m"
-       min_threshold="0.40"/>
+   <MFC max_credits="2M" min_threshold="0.40"/>
    <FRAG2 frag_size="60000"/>
 </config>

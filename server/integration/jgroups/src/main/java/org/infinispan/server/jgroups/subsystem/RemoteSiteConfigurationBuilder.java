@@ -33,14 +33,14 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * @author Paul Ferraro
  */
 public class RemoteSiteConfigurationBuilder implements Builder<RemoteSiteConfiguration>, Value<RemoteSiteConfiguration>, RemoteSiteConfiguration {
 
-    private final InjectedValue<Channel> channel = new InjectedValue<>();
+    private final InjectedValue<JChannel> channel = new InjectedValue<>();
     private final String stackName;
     private final String siteName;
     private String channelName;
@@ -58,7 +58,7 @@ public class RemoteSiteConfigurationBuilder implements Builder<RemoteSiteConfigu
     @Override
     public ServiceBuilder<RemoteSiteConfiguration> build(ServiceTarget target) {
         return target.addService(this.getServiceName(), new ValueService<>(this))
-                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.channelName), Channel.class, this.channel)
+                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.channelName), JChannel.class, this.channel)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND)
         ;
     }
@@ -79,7 +79,7 @@ public class RemoteSiteConfigurationBuilder implements Builder<RemoteSiteConfigu
     }
 
     @Override
-    public Channel getChannel() {
+    public JChannel getChannel() {
         return this.channel.getValue();
     }
 

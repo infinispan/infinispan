@@ -71,14 +71,11 @@ public class TransportStackConfigurationIT {
     }
 
     private void assertMBeanAttributes(MBeanServerConnectionProvider provider, String protocolMBean) throws Exception {
-        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "discard_incompatible_packets")));
-        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "enable_bundling")));
+        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "log_discard_msgs")));
 
-        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.enabled")));
         assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.queue_enabled")));
         assertEquals("abort", getAttribute(provider, protocolMBean, "thread_pool.rejection_policy"));
 
-        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.enabled")));
         assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.queue_enabled")));
         assertEquals("abort", getAttribute(provider, protocolMBean, "oob_thread_pool.rejection_policy"));
     }

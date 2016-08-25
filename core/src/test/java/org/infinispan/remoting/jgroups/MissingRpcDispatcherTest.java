@@ -1,5 +1,6 @@
 package org.infinispan.remoting.jgroups;
 
+import java.io.ByteArrayInputStream;
 import java.util.Properties;
 
 import org.infinispan.Cache;
@@ -14,7 +15,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-import org.jgroups.Channel;
 import org.jgroups.JChannel;
 import org.testng.annotations.Test;
 
@@ -28,8 +28,8 @@ import org.testng.annotations.Test;
  *
  * This test checks that the caller doesn't get a (@code TimeoutException} waiting for a response.
  *
- * @since 5.1
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
+ * @since 5.1
  */
 @Test(groups = "unstable", testName = "remoting.jgroups.MissingRpcDispatcherTest",
       description = "See ISPN-4034. Disabled because I removed the cache members filter in 5.2 -- original group: functional")
@@ -53,7 +53,7 @@ public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
 
       // create a new jgroups channel that will join the cluster
       // but without attaching the Infinispan RpcDispatcher
-      Channel channel2 = createJGroupsChannel(manager(0).getCacheManagerConfiguration());
+      JChannel channel2 = createJGroupsChannel(manager(0).getCacheManagerConfiguration());
       try {
          // try the put operation again
          cache1.put("k2", "v2");
@@ -78,14 +78,14 @@ public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
       }
    }
 
-   private Channel createJGroupsChannel(GlobalConfiguration oldGC) {
+   private JChannel createJGroupsChannel(GlobalConfiguration oldGC) {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().read(oldGC);
       TestCacheManagerFactory.amendTransport(builder);
       GlobalConfiguration gc = builder.build();
       Properties p = gc.transport().properties();
       String jgroupsCfg = p.getProperty(JGroupsTransport.CONFIGURATION_STRING);
       try {
-         JChannel channel = new JChannel(jgroupsCfg);
+         JChannel channel = new JChannel(new ByteArrayInputStream(jgroupsCfg.getBytes()));
          channel.setName(gc.transport().nodeName());
          channel.connect(gc.transport().clusterName());
          return channel;

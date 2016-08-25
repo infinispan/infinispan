@@ -16,7 +16,7 @@
                        machine="machine1"
                        rack="rack1"
                        site="site1">
-                <property name="enable_bundling">true</property>
+                <property name="log_discard_msgs">true</property>
                 <default-thread-pool min-threads="11"
                                      queue-length="12"
                                      max-threads="13"

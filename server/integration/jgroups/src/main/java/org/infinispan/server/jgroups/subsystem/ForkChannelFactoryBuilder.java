@@ -40,7 +40,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Builder for a service that provides a {@link ChannelFactory} for creating fork channels.
@@ -49,7 +49,7 @@ import org.jgroups.Channel;
 public class ForkChannelFactoryBuilder implements Builder<ChannelFactory>, Value<ChannelFactory> {
 
     private final String channelName;
-    private final InjectedValue<Channel> parentChannel = new InjectedValue<>();
+    private final InjectedValue<JChannel> parentChannel = new InjectedValue<>();
     private final InjectedValue<ChannelFactory> parentFactory = new InjectedValue<>();
     private final List<ValueDependency<ProtocolConfiguration>> protocols = new LinkedList<>();
 
@@ -65,7 +65,7 @@ public class ForkChannelFactoryBuilder implements Builder<ChannelFactory>, Value
     @Override
     public ServiceBuilder<ChannelFactory> build(ServiceTarget target) {
         return target.addService(this.getServiceName(), new ValueService<>(this))
-                .addDependency(ChannelServiceName.CONNECTOR.getServiceName(this.channelName), Channel.class, this.parentChannel)
+                .addDependency(ChannelServiceName.CONNECTOR.getServiceName(this.channelName), JChannel.class, this.parentChannel)
                 .addDependency(ChannelServiceName.FACTORY.getServiceName(this.channelName), ChannelFactory.class, this.parentFactory)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND)
         ;

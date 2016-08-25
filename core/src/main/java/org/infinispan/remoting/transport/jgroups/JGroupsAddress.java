@@ -35,7 +35,7 @@ public class JGroupsAddress implements Address {
 
       JGroupsAddress that = (JGroupsAddress) o;
 
-      return address.equals(that.address);
+      return hashCode == that.hashCode && address.equals(that.address);
    }
 
    @Override

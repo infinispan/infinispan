@@ -26,6 +26,9 @@ import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
 
+import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -54,8 +57,6 @@ import org.infinispan.stats.logging.Log;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.blocks.RpcDispatcher;
-import org.jgroups.util.Buffer;
 
 /**
  * Takes statistics about the RPC invocations.
@@ -71,7 +72,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    private static final boolean trace = log.isTraceEnabled();
    private final RpcManager actual;
    private final CacheStatisticManager cacheStatisticManager;
-   private final RpcDispatcher.Marshaller marshaller;
+   private final org.infinispan.commons.marshall.StreamingMarshaller marshaller;
    private final TimeService timeService;
 
    public ExtendedStatisticRpcManager(RpcManager actual, CacheStatisticManager cacheStatisticManager,
@@ -80,7 +81,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       this.cacheStatisticManager = cacheStatisticManager;
       Transport t = actual.getTransport();
       if (t instanceof JGroupsTransport) {
-         marshaller = ((JGroupsTransport) t).getCommandAwareRpcDispatcher().getMarshaller();
+         marshaller = ((JGroupsTransport) t).getCommandAwareRpcDispatcher().getIspnMarshaller();
       } else {
          marshaller = null;
       }
@@ -112,7 +113,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       for (Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
          // TODO: This is giving a time for all rpcs combined...
          updateStats(entry.getValue(), options.responseMode().isSynchronous(),
-               timeService.timeDuration(start, NANOSECONDS), Collections.singleton(entry.getKey()));
+                     timeService.timeDuration(start, NANOSECONDS), Collections.singleton(entry.getKey()));
       }
       return responseMap;
    }
@@ -217,10 +218,50 @@ public class ExtendedStatisticRpcManager implements RpcManager {
 
    private int getCommandSize(ReplicableCommand command) {
       try {
-         Buffer buffer = marshaller.objectToBuffer(command);
-         return buffer != null ? buffer.getLength() : 0;
+         CountingDataOutput dataOutput = new CountingDataOutput();
+         ObjectOutput byteOutput = marshaller.startObjectOutput(dataOutput, false, 0);
+         marshaller.objectToObjectStream(command, byteOutput);
+         marshaller.finishObjectOutput(byteOutput);
+         return dataOutput.getCount();
       } catch (Exception e) {
          return 0;
+      }
+   }
+
+   private static class CountingDataOutput extends OutputStream {
+      private int count;
+
+      private CountingDataOutput() {
+         this.count = 0;
+      }
+
+      public int getCount() {
+         return count;
+      }
+
+      @Override
+      public void write(int b) throws IOException {
+         count++;
+      }
+
+      @Override
+      public void write(byte[] b) throws IOException {
+         count += b.length;
+      }
+
+      @Override
+      public void write(byte[] b, int off, int len) throws IOException {
+         count += len;
+      }
+
+      @Override
+      public void flush() throws IOException {
+
+      }
+
+      @Override
+      public void close() throws IOException {
+
       }
    }
 }

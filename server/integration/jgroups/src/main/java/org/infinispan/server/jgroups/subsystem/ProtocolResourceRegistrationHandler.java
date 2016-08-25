@@ -57,7 +57,7 @@ import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceRegistry;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.protocols.SASL;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.stack.Protocol;
@@ -82,7 +82,7 @@ public class ProtocolResourceRegistrationHandler implements OperationStepHandler
 
         ServiceController<?> controller = registry.getService(ChannelServiceName.CHANNEL.getServiceName(channelName));
         if (controller != null) {
-            Channel channel = (Channel) controller.getValue();
+            JChannel channel = (JChannel) controller.getValue();
             if (channel != null) {
                 controller = registry.getService(ChannelServiceName.FACTORY.getServiceName(channelName));
                 ChannelFactory factory = (ChannelFactory) controller.getValue();
