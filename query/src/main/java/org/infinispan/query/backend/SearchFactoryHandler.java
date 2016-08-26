@@ -1,10 +1,10 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.query.backend.TransactionHelper.Operation;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.transaction.Transaction;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.notifications.Listener;
@@ -47,8 +47,7 @@ final class SearchFactoryHandler {
          final Boolean existingBoolean = queryKnownClasses.get(potentialNewType);
          if (existingBoolean != null) {
             return existingBoolean;
-         }
-         else {
+         } else {
             handleOnDemandRegistration(false, potentialNewType);
             Boolean isIndexable = queryKnownClasses.get(potentialNewType);
             return isIndexable != null ? isIndexable : false;
@@ -92,12 +91,13 @@ final class SearchFactoryHandler {
             return;
          }
          final Class<?>[] newtypes = reducedSet.toArray(new Class<?>[reducedSet.size()]);
-         transactionHelper.runSuspendingTx(new Operation() {
-            @Override
-            public void execute() {
-               searchFactory.addClasses(newtypes);
-            }
-         });
+
+         Transaction tx = transactionHelper.suspendTxIfExists();
+         try {
+            searchFactory.addClasses(newtypes);
+         } finally {
+            transactionHelper.resume(tx);
+         }
          for (Class<?> type : newtypes) {
             if (hasIndex(type)) {
                log.detectedUnknownIndexedEntity(queryKnownClasses.getCacheName(), type.getName());

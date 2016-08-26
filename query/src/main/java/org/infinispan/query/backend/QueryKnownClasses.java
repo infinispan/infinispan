@@ -69,7 +69,7 @@ public final class QueryKnownClasses {
     */
    private volatile AdvancedCache<KeyValuePair<String, Class<?>>, Boolean> knownClassesCache;
 
-   private volatile TransactionManager transactionManager;
+   private volatile TransactionHelper transactionHelper;
 
    /**
     * A second level cache. Not using a ConcurrentHashMap as this will degenerate into a read-only Map at runtime;
@@ -140,7 +140,7 @@ public final class QueryKnownClasses {
 
       startInternalCache();
       Set<Class<?>> result = new HashSet<>();
-      Transaction tx = suspendTx();
+      Transaction tx = transactionHelper.suspendTxIfExists();
       try {
          for (KeyValuePair<String, Class<?>> key : knownClassesCache.keySet()) {
             if (key.getKey().equals(cacheName)) {
@@ -149,7 +149,7 @@ public final class QueryKnownClasses {
          }
          return result;
       } finally {
-         resumeTx(tx);
+         transactionHelper.resume(tx);
       }
    }
 
@@ -176,11 +176,11 @@ public final class QueryKnownClasses {
          throw new IllegalArgumentException("Null values are not allowed");
       }
       startInternalCache();
-      Transaction tx = suspendTx();
+      Transaction tx = transactionHelper.suspendTxIfExists();
       try {
          runCommand(() -> knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value));
       } finally {
-         resumeTx(tx);
+         transactionHelper.resume(tx);
       }
 
       localCacheInsert(clazz, value);
@@ -211,7 +211,7 @@ public final class QueryKnownClasses {
                internalCacheRegistry.registerInternalCache(QUERY_KNOWN_CLASSES_CACHE_NAME, getInternalCacheConfig());
                Cache<KeyValuePair<String, Class<?>>, Boolean> knownClassesCache = SecurityActions.getCache(cacheManager, QUERY_KNOWN_CLASSES_CACHE_NAME);
                this.knownClassesCache = knownClassesCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
-               transactionManager = this.knownClassesCache.getTransactionManager();
+               transactionHelper = new TransactionHelper(this.knownClassesCache.getTransactionManager());
             }
          }
       }
@@ -252,27 +252,4 @@ public final class QueryKnownClasses {
       }
    }
 
-   /**
-    * Suspend any ongoing transaction, so that the internal cache writes are committed immediately.
-    */
-   private Transaction suspendTx() {
-      if (transactionManager == null) {
-         return null;
-      }
-      try {
-         return transactionManager.suspend();
-      } catch (SystemException e) {
-         throw new CacheException("Unable to suspend ongoing transaction", e);
-      }
-   }
-
-   private void resumeTx(Transaction tx) {
-      if (tx != null) {
-         try {
-            transactionManager.resume(tx);
-         } catch (InvalidTransactionException | SystemException e) {
-            throw new CacheException("Unable to resume ongoing transaction", e);
-         }
-      }
-   }
 }
