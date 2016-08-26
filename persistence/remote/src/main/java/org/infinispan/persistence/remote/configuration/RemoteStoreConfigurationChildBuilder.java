@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -65,10 +66,16 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller);
 
    /**
-    * This property defines the protocol version that this client should use. Defaults to 1.1. Other
-    * valid values include 1.0.
+    * This property defines the protocol version that this client should use. Defaults to {@link ProtocolVersion#DEFAULT_PROTOCOL_VERSION}
+    * @deprecated Use {@link #protocolVersion(ProtocolVersion)} instead
     */
+   @Deprecated
    RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion);
+
+   /**
+    * This property defines the protocol version that this client should use. Defaults to {@link ProtocolVersion#DEFAULT_PROTOCOL_VERSION}
+    */
+   RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion);
 
    /**
     * Normally the {@link org.infinispan.persistence.remote.RemoteStore} stores values wrapped in {@link InternalCacheEntry}. Setting
