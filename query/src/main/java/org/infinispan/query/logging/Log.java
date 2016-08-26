@@ -9,6 +9,8 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.IOException;
 import java.util.List;
 
+import javax.transaction.Transaction;
+
 import org.hibernate.hql.ParsingException;
 import org.hibernate.search.backend.LuceneWork;
 import org.infinispan.commons.CacheException;
@@ -143,4 +145,11 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Could not locate error handler class %s", id = 14032)
    IllegalArgumentException unsupportedErrorHandlerConfigurationValueType(Class<?> type);
+
+   @Message(value = "Unable to resume suspended transaction %s", id = 14033)
+   CacheException unableToResumeSuspendedTx(Transaction transaction, @Cause Throwable cause);
+
+   @Message(value = "Unable to suspend transaction", id = 14034)
+   CacheException unableToSuspendTx(@Cause Throwable cause);
+
 }

@@ -14,6 +14,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
@@ -35,6 +38,7 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.query.backend.ComponentRegistryService;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.backend.TransactionHelper;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -65,6 +69,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    private final Lock writeLock = flushLock.writeLock();
    private final Lock readLock = flushLock.readLock();
    private ExecutorService asyncExecutor;
+   private TransactionHelper transactionHelper;
 
 
    @Override
@@ -104,10 +109,16 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
 
    @Override
    public void initialize(String indexName, Properties properties, Similarity similarity, WorkerBuildContext buildContext) {
-      super.initialize(indexName, properties, similarity, buildContext);
       ServiceManager serviceManager = buildContext.getServiceManager();
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();
+      transactionHelper = new TransactionHelper(componentRegistry.getComponent(TransactionManager.class));
+      Transaction tx = transactionHelper.suspendTxIfExists();
+      try {
+         super.initialize(indexName, properties, similarity, buildContext);
+      } finally {
+         transactionHelper.resume(tx);
+      }
       asyncExecutor = componentRegistry.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
       distributionManager = componentRegistry.getComponent(DistributionManager.class);
       rpcManager = componentRegistry.getComponent(RpcManager.class);
@@ -175,8 +186,13 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    }
 
    private Address getLockHolder(String indexName) {
-      InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
-      return directoryProvider.getLockOwner(indexName, IndexWriter.WRITE_LOCK_NAME);
+      Transaction tx = transactionHelper.suspendTxIfExists();
+      try {
+         InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
+         return directoryProvider.getLockOwner(indexName, IndexWriter.WRITE_LOCK_NAME);
+      } finally {
+         transactionHelper.resume(tx);
+      }
    }
 
    private Address getLocation(LuceneWork work) {
@@ -242,7 +258,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       List<Address> dest = Collections.singletonList(destination);
       log.debugf("Sending works %s to %s", works, dest);
       CompletableFuture<Map<Address, Response>> result
-              = rpcManager.invokeRemotelyAsync(dest, indexUpdateCommand, rpcManager.getDefaultRpcOptions(false));
+            = rpcManager.invokeRemotelyAsync(dest, indexUpdateCommand, rpcManager.getDefaultRpcOptions(false));
       result.whenComplete((responses, error) -> {
          if (error != null) {
             log.error("Error forwarding index job", error);
