@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.util.Properties;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -113,10 +114,19 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder marshaller(Marshaller marshaller);
 
    /**
-    * This property defines the protocol version that this client should use. Defaults to 1.1. Other
-    * valid values include 1.0.
+    * This property defines the protocol version that this client should use. Defaults to the latest protocol version
+    * supported by this client.
+    *
+    * @deprecated Use {@link ConfigurationChildBuilder#version(ProtocolVersion)} instead.
     */
+   @Deprecated
    ConfigurationBuilder protocolVersion(String protocolVersion);
+
+   /**
+    * This property defines the protocol version that this client should use. Defaults to the latest protocol version
+    * supported by this client.
+    */
+   ConfigurationBuilder version(ProtocolVersion protocolVersion);
 
    /**
     * This property defines the maximum socket read timeout in milliseconds before giving up waiting

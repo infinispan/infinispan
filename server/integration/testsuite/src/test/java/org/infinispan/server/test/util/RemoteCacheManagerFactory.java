@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -27,7 +28,7 @@ public class RemoteCacheManagerFactory {
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans) {
-        return createCache(beans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createCache(beans, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans, String protocolVersion) {
@@ -43,7 +44,7 @@ public class RemoteCacheManagerFactory {
     }
 
     public RemoteCacheManager createManager(RemoteInfinispanServer server) {
-        return createManager(server, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createManager(server, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     private RemoteCacheManager createManager(RemoteInfinispanServer server, String protocolVersion) {

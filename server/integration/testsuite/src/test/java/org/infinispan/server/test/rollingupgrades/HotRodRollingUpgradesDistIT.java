@@ -8,6 +8,7 @@ import javax.management.ObjectName;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -80,7 +81,7 @@ public class HotRodRollingUpgradesDistIT {
             builder3.addServer()
                     .host("127.0.0.1")
                     .port(11422)
-                    .protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
+                    .version(ProtocolVersion.PROTOCOL_VERSION_12);
 
             RemoteCacheManager rcm3 = new RemoteCacheManager(builder3.build());
             final RemoteCache<String, String> c3 = rcm3.getCache("default");
@@ -89,7 +90,7 @@ public class HotRodRollingUpgradesDistIT {
             builder4.addServer()
                     .host("127.0.0.1")
                     .port(11522)
-                    .protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
+                    .version(ProtocolVersion.PROTOCOL_VERSION_12);
 
             RemoteCacheManager rcm4 = new RemoteCacheManager(builder4.build());
             final RemoteCache<String, String> c4 = rcm4.getCache("default");
@@ -186,7 +187,7 @@ public class HotRodRollingUpgradesDistIT {
             // old Hot Rod protocol version was set for communication with new server
             return createCache(cacheBeans, System.getProperty("hotrod.protocol.version"));
         } else {
-            return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+            return createCache(cacheBeans, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
         }
     }
 

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.util.Properties;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
@@ -105,9 +106,18 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.marshaller(marshaller);
    }
 
+   /**
+    * @deprecated Use {@link #version(ProtocolVersion)} instead.
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder protocolVersion(String protocolVersion) {
-      return builder.protocolVersion(protocolVersion);
+      return builder.version(ProtocolVersion.parseVersion(protocolVersion));
+   }
+
+   @Override
+   public ConfigurationBuilder version(ProtocolVersion protocolVersion) {
+      return builder.version(protocolVersion);
    }
 
    @Override

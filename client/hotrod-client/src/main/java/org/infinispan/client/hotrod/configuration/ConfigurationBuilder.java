@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
@@ -56,7 +57,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
    private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
    private Marshaller marshaller;
-   private String protocolVersion = ConfigurationProperties.DEFAULT_PROTOCOL_VERSION;
+   private ProtocolVersion protocolVersion = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
    private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
    private final SecurityConfigurationBuilder security;
@@ -210,8 +211,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return nearCache;
    }
 
+   /**
+    * @deprecated Use {@link ConfigurationBuilder#version(ProtocolVersion)} instead.
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder protocolVersion(String protocolVersion) {
+      this.protocolVersion = ProtocolVersion.parseVersion(protocolVersion);
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder version(ProtocolVersion protocolVersion) {
       this.protocolVersion = protocolVersion;
       return this;
    }
@@ -290,7 +301,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER));
       }
-      this.protocolVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion));
+      this.protocolVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString()));
       this.servers.clear();
       this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, ""));
       this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout));
@@ -375,7 +386,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.keySizeEstimate = template.keySizeEstimate();
       this.marshaller = template.marshaller();
       this.marshallerClass = template.marshallerClass();
-      this.protocolVersion = template.protocolVersion();
+      this.protocolVersion = template.version();
       this.servers.clear();
       for (ServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());

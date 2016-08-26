@@ -11,6 +11,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -45,7 +46,7 @@ public class ITestUtils {
      * @return New {@link RemoteCacheManager}
      */
     public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server) {
-        return createCacheManager(server, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createCacheManager(server, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server, String protocolVersion) {
@@ -54,7 +55,7 @@ public class ITestUtils {
     }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port) {
-        return createConfigBuilder(hostName, port, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createConfigBuilder(hostName, port, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port, String protocolVersion) {

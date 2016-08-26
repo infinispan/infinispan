@@ -195,7 +195,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          }
       }
 
-      codec = CodecFactory.getCodec(configuration.protocolVersion());
+      codec = CodecFactory.getCodec(configuration.version());
 
       if (asyncExecutorService == null) {
          ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
