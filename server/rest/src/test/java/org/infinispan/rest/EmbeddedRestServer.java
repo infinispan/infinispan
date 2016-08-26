@@ -12,7 +12,7 @@ public class EmbeddedRestServer {
    public EmbeddedRestServer(EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
       this.cacheManager = cacheManager;
       this.configuration = configuration;
-      this.server = NettyRestServer.apply(configuration, cacheManager);
+      this.server = NettyRestServer.createServer(configuration, cacheManager);
    }
 
    public void start() throws Exception {

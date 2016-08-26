@@ -12,11 +12,9 @@ import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 
 /**
- *
  * Basis for REST server tests.
  *
  * @author Michal Linhard (mlinhard@redhat.com)
- *
  */
 public class RestServerTestBase extends AbstractInfinispanTest {
    private Map<String, NettyRestServer> servers = new HashMap<String, NettyRestServer>();
@@ -34,11 +32,11 @@ public class RestServerTestBase extends AbstractInfinispanTest {
    public void addServer(String name, int port, EmbeddedCacheManager cacheManager) {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
       builder.port(port);
-      servers.put(name, NettyRestServer.apply(builder.build(), cacheManager));
+      servers.put(name, NettyRestServer.createServer(builder.build(), cacheManager));
    }
 
    public void addServer(String name, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
-      servers.put(name, NettyRestServer.apply(configuration, cacheManager));
+      servers.put(name, NettyRestServer.createServer(configuration, cacheManager));
    }
 
    protected void ignoreCache(String cacheName) {
@@ -58,7 +56,7 @@ public class RestServerTestBase extends AbstractInfinispanTest {
       if (ctx == null) {
          return null;
       }
-      return ctx.cacheManager();
+      return ctx.cacheManager;
    }
 
    public void startServers() throws Exception {
