@@ -1662,6 +1662,11 @@
           <xs:documentation>Index all data</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
+      <xs:enumeration value="PRIMARY_OWNER">
+        <xs:annotation>
+          <xs:documentation>Only index changes on the primary owner, regardless of it's local or remote.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 
