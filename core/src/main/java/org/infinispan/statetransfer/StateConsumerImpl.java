@@ -222,8 +222,6 @@ public class StateConsumerImpl implements StateConsumer {
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 
       timeout = configuration.clustering().stateTransfer().timeout();
-
-      stateRequestCompletionService = new SemaphoreCompletionService<>(stateTransferExecutor, 1);
    }
 
    public boolean hasActiveTransfers() {
@@ -667,6 +665,8 @@ public class StateConsumerImpl implements StateConsumer {
       //rpc options does not changes in runtime. we can use always the same instance.
       rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
+
+      stateRequestCompletionService = new SemaphoreCompletionService<>(stateTransferExecutor, 1);
    }
 
    @Stop(priority = 0)
