@@ -1448,4 +1448,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot enable '%s' in invalidation caches!", id = 420)
    CacheConfigurationException attributeNotAllowedInInvalidationMode(String attributeName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while handling view %s", id = 421)
+   void viewHandlingError(int viewId, @Cause Throwable t);
 }

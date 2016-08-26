@@ -523,14 +523,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             '}';
    }
 
-   public void doMergePartitions(Map<Address, CacheStatusResponse> statusResponses,
-         List<Address> clusterMembers, boolean isMergeView) throws Exception {
+   public void doMergePartitions(Map<Address, CacheStatusResponse> statusResponses) {
       synchronized (this) {
-         if (statusResponses.isEmpty()) {
-            throw new IllegalArgumentException("Should have at least one current topology");
-         }
-
          try {
+            if (statusResponses.isEmpty()) {
+               throw new IllegalArgumentException("Should have at least one current topology");
+            }
+
             HashMap<Address, CacheJoinInfo> joinInfos = new HashMap<>();
             Set<CacheTopology> currentTopologies = new HashSet<>();
             Set<CacheTopology> stableTopologies = new HashSet<>();

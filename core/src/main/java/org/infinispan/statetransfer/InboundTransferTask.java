@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
@@ -34,12 +34,12 @@ public class InboundTransferTask {
    private static final boolean trace = log.isTraceEnabled();
 
    /**
-    * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
+    * All access to fields {@code segments} and {@code finishedSegments} must be done while synchronizing on {@code segments}.
     */
    private final Set<Integer> segments = new HashSet<>();
 
    /**
-    * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
+    * All access to fields {@code segments} and {@code finishedSegments} must be done while synchronizing on {@code segments}.
     */
    private final Set<Integer> finishedSegments = new HashSet<>();
 
@@ -48,27 +48,9 @@ public class InboundTransferTask {
    private volatile boolean isCancelled = false;
 
    /**
-    * Indicates if the request was sent to source.
-    */
-   private final AtomicBoolean isStarted = new AtomicBoolean();
-
-   /**
-    * Indicates if the START_STATE_TRANSFER was successfully sent to source node and the source replied with a successful response.
-    */
-   private boolean isStartedSuccessfully = false;
-
-   /**
-    * Indicates if the task was completed normally: all requested segments were completely received except for the cancelled ones.
-    * This flag is only meaningful when completionLatch becomes 0.
-    */
-   private volatile boolean isCompletedSuccessfully = false;
-
-   /**
     * This latch is counted down when all segments are completely received or in case of task cancellation.
     */
-   private final CountDownLatch completionLatch = new CountDownLatch(1);
-
-   private final StateConsumerImpl stateConsumer;
+   private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
    private final int topologyId;
 
@@ -82,7 +64,8 @@ public class InboundTransferTask {
 
    private final RpcOptions rpcOptions;
 
-   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, StateConsumerImpl stateConsumer, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout, String cacheName) {
+   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId,
+                              RpcManager rpcManager, CommandsFactory commandsFactory, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("segments must not be null or empty");
       }
@@ -93,7 +76,6 @@ public class InboundTransferTask {
       this.segments.addAll(segments);
       this.source = source;
       this.topologyId = topologyId;
-      this.stateConsumer = stateConsumer;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
@@ -125,14 +107,15 @@ public class InboundTransferTask {
    /**
     * Send START_STATE_TRANSFER request to source node.
     *
-    * @return {@code true} if the transfer was started, otherwise {@code false}
+    * @return a {@code CompletableFuture} that completes when the transfer is done.
     */
-   public boolean requestSegments() {
-      if (!isCancelled && isStarted.compareAndSet(false, true)) {
+   public CompletableFuture<Void> requestSegments() {
+      if (!isCancelled) {
          Set<Integer> segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
             log.tracef("Segments list is empty, skipping source %s", source);
-            return false;
+            completionFuture.complete(null);
+            return completionFuture;
          }
          if (trace) {
             log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
@@ -143,20 +126,22 @@ public class InboundTransferTask {
             Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
-               isStartedSuccessfully = true;
                if (trace) {
                   log.tracef("Successfully requested segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
                }
+               return completionFuture;
             } else {
                Exception e = response instanceof ExceptionResponse ?
-                       ((ExceptionResponse) response).getException() : new CacheException(String.valueOf(response));
+                     ((ExceptionResponse) response).getException() : new CacheException(String.valueOf(response));
                log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
+               completionFuture.completeExceptionally(e);
             }
          } catch (Exception e) {
             log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
+            completionFuture.completeExceptionally(e);
          }
       }
-      return isStartedSuccessfully;
+      return completionFuture;
    }
 
    /**
@@ -244,31 +229,15 @@ public class InboundTransferTask {
    }
 
    private void notifyCompletion(boolean success) {
-      isCompletedSuccessfully = success;
-      completionLatch.countDown();
-      stateConsumer.onTaskCompletion(this);
-   }
-
-   /**
-    * Wait until all segments are received, cancelled, or the task is terminated abruptly by <code>terminate()</code>.
-    *
-    * @return true if the task completed normally or false if it was terminated abruptly
-    * @throws InterruptedException if the thread is interrupted while waiting
-    */
-   public boolean awaitCompletion() throws InterruptedException {
-      if (!isStartedSuccessfully) {
-         throw new IllegalStateException("Cannot await completion unless the request was previously sent to source node successfully.");
+      if (success) {
+         completionFuture.complete(null);
+      } else {
+         completionFuture.completeExceptionally(new CancellationException("Inbound transfer was cancelled"));
       }
-      completionLatch.await();
-      return isCompletedSuccessfully;
    }
 
    public boolean isCompletedSuccessfully() {
-      return isCompletedSuccessfully;
-   }
-
-   public boolean isStartedSuccessfully() {
-      return isStartedSuccessfully;
+      return completionFuture.isDone() && !completionFuture.isCompletedExceptionally();
    }
 
    /**
@@ -288,8 +257,7 @@ public class InboundTransferTask {
                ", unfinishedSegments=" + getUnfinishedSegments() +
                ", source=" + source +
                ", isCancelled=" + isCancelled +
-               ", isStartedSuccessfully=" + isStartedSuccessfully +
-               ", isCompletedSuccessfully=" + isCompletedSuccessfully +
+               ", completionFuture=" + completionFuture +
                ", topologyId=" + topologyId +
                ", timeout=" + timeout +
                ", cacheName=" + cacheName +
