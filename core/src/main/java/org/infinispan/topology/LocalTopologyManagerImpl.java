@@ -4,10 +4,8 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +16,7 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.executors.SemaphoreCompletionService;
+import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -131,15 +129,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
       // For Total Order caches, we must not move the topology updates to another thread
       ExecutorService topologyUpdatesExecutor = joinInfo.isTotalOrder() ? withinThreadExecutor : asyncTransportExecutor;
-      LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm, topologyUpdatesExecutor);
+      LocalCacheStatus cacheStatus = new LocalCacheStatus(cacheName, joinInfo, stm, phm, topologyUpdatesExecutor);
       runningCaches.put(cacheName, cacheStatus);
 
       long timeout = joinInfo.getTimeout();
       long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
-      // Pretend the join is using up a thread from the topology updates completion service.
+      // Pretend the join is using up a thread from the topology updates executor.
       // This ensures that the initial topology and the GET_CACHE_LISTENERS request will happen on this thread,
       // and other topology updates are only handled after we call backgroundTaskFinished(null)
-      cacheStatus.getTopologyUpdatesCompletionService().continueTaskInBackground();
+      CompletableFuture<Void> joinFuture = new CompletableFuture<>();
+      cacheStatus.getTopologyUpdatesExecutor().executeAsync(() -> joinFuture);
       try {
          while (true) {
             int viewId = transport.getViewId();
@@ -152,12 +151,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                   continue;
                }
 
-               if (doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(),
-                     initialStatus.getAvailabilityMode(), viewId, transport.getCoordinator(), cacheStatus)) {
-                  doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
-                        transport.getCoordinator(), cacheStatus);
-                  return initialStatus.getCacheTopology();
+               if (!doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(),
+                                           initialStatus.getAvailabilityMode(), viewId, transport.getCoordinator(),
+                                           cacheStatus)) {
+                  throw new IllegalStateException(
+                        "We already had a newer topology by the time we received the join response");
                }
+
+               doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
+                                            transport.getCoordinator(), cacheStatus);
+               return initialStatus.getCacheTopology();
             } catch (Exception e) {
                log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
                if (e.getCause() != null && e.getCause() instanceof CacheJoinException) {
@@ -171,7 +174,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             }
          }
       } finally {
-         cacheStatus.getTopologyUpdatesCompletionService().backgroundTaskFinished(null);
+         joinFuture.complete(null);
       }
    }
 
@@ -261,29 +264,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return;
       }
 
-      cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable() {
-         @Override
-         public void run() {
-            doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
-         }
-      }, null);
-      // Clear any finished tasks from the completion service's queue to avoid leaks
-      List<? extends Future<Void>> futures = cacheStatus.getTopologyUpdatesCompletionService().drainCompletionQueue();
-      boolean interrupted = false;
-      for (Future<Void> future : futures) {
-         // These will not block since they are already completed
-         try {
-            future.get();
-         } catch (InterruptedException e) {
-            // This shouldn't happen as each task is complete
-            interrupted = true;
-         } catch (ExecutionException e) {
-            log.topologyUpdateError(cacheTopology.getTopologyId(), e.getCause());
-         }
-      }
-      if (interrupted) {
-         Thread.currentThread().interrupt();
-      }
+      cacheStatus.getTopologyUpdatesExecutor().execute(
+            () -> doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus));
    }
 
    /**
@@ -291,8 +273,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
     *
     * @return {@code true} if the topology was applied, {@code false} if it was ignored.
     */
-   protected boolean doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
-         AvailabilityMode availabilityMode, int viewId, Address sender, LocalCacheStatus cacheStatus) {
+   private boolean doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
+                                          AvailabilityMode availabilityMode, int viewId, Address sender,
+                                          LocalCacheStatus cacheStatus) {
       try {
          waitForView(viewId);
       } catch (InterruptedException e) {
@@ -426,16 +409,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          final Address sender, final int viewId) {
       final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus != null) {
-         cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable() {
-            @Override
-            public void run() {
-               doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, sender, cacheStatus);
-            }
-         }, null);
+         cacheStatus.getTopologyUpdatesExecutor().execute(
+               () -> doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, sender, cacheStatus));
       }
    }
 
-   protected void doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId,
+   private void doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId,
                                              Address sender, LocalCacheStatus cacheStatus) {
       synchronized (runningCaches) {
          if (!validateCommandViewId(newStableTopology, viewId, sender, cacheName))
@@ -465,19 +444,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return;
       }
 
-      cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
-            } catch (Throwable t) {
-               log.rebalanceStartError(cacheName, t);
-            }
+      cacheStatus.getTopologyUpdatesExecutor().execute(() -> {
+         try {
+            doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
+         } catch (Throwable t) {
+            log.rebalanceStartError(cacheName, t);
          }
-      }, null);
+      });
    }
 
-   protected void doHandleRebalance(int viewId, LocalCacheStatus cacheStatus, CacheTopology cacheTopology, String cacheName, Address sender) {
+   private void doHandleRebalance(int viewId, LocalCacheStatus cacheStatus, CacheTopology cacheTopology,
+                                  String cacheName, Address sender) {
       try {
          waitForView(viewId);
       } catch (InterruptedException e) {
@@ -674,16 +651,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private void executeOnCoordinatorAsync(final ReplicableCommand command) throws Exception {
       // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
-         asyncTransportExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-               if (trace) log.tracef("Attempting to execute command on self: %s", command);
-               gcr.wireDependencies(command);
-               try {
-                  command.invoke();
-               } catch (Throwable t) {
-                  log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
-               }
+         asyncTransportExecutor.execute(() -> {
+            if (trace) log.tracef("Attempting to execute command on self: %s", command);
+            gcr.wireDependencies(command);
+            try {
+               command.invoke();
+            } catch (Throwable t) {
+               log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
             }
          });
       } else {
@@ -706,13 +680,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return parseResponses(responseMap);
       }
 
-      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
-         @Override
-         public Map<Address, Response> call() throws Exception {
-            return transport.invokeRemotely(null, command,
+      Future<Map<Address, Response>> remoteFuture = transport.invokeRemotelyAsync(null, command,
                   ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, null, DeliverOrder.NONE, false);
-         }
-      });
 
       // invoke the command on the local node
       gcr.wireDependencies(command);
@@ -779,15 +748,15 @@ class LocalCacheStatus {
    private final PartitionHandlingManager partitionHandlingManager;
    private volatile CacheTopology currentTopology;
    private volatile CacheTopology stableTopology;
-   private final SemaphoreCompletionService<Void> topologyUpdatesCompletionService;
+   private final LimitedExecutor topologyUpdatesExecutor;
 
-   LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler, PartitionHandlingManager phm,
-                    ExecutorService executor) {
+   LocalCacheStatus(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler handler,
+                    PartitionHandlingManager phm, ExecutorService executor) {
       this.joinInfo = joinInfo;
       this.handler = handler;
       this.partitionHandlingManager = phm;
 
-      this.topologyUpdatesCompletionService = new SemaphoreCompletionService<>(executor, 1);
+      this.topologyUpdatesExecutor = new LimitedExecutor("Topology-" + cacheName, executor, 1);
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -819,7 +788,7 @@ class LocalCacheStatus {
       partitionHandlingManager.onTopologyUpdate(currentTopology);
    }
 
-   SemaphoreCompletionService<Void> getTopologyUpdatesCompletionService() {
-      return topologyUpdatesCompletionService;
+   LimitedExecutor getTopologyUpdatesExecutor() {
+      return topologyUpdatesExecutor;
    }
 }

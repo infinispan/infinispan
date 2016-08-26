@@ -32,11 +32,6 @@ public interface ClusterTopologyManager {
     */
    void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
 
-   /**
-    * Install a new cluster view.
-    */
-   void handleClusterView(boolean isMerge, int viewId);
-
    void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
 
    void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed);

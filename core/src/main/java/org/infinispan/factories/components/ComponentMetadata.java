@@ -211,6 +211,11 @@ public class ComponentMetadata implements Serializable {
       public int getPriority() {
          return priority;
       }
+
+      @Override
+      public String toString() {
+         return method.getName() + "(priority=" + priority + ")";
+      }
    }
 
    /**
