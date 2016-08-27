@@ -168,4 +168,3 @@ public class Version {
       return version.split("[\\.\\-]");
    }
 }
-

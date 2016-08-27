@@ -168,4 +168,3 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
       return builder;
    }
 }
-

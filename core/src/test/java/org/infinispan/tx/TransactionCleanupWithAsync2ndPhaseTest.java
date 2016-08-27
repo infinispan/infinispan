@@ -63,4 +63,3 @@ public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManage
       });
    }
 }
-

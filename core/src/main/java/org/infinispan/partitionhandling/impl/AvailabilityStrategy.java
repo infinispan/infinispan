@@ -53,4 +53,3 @@ public interface AvailabilityStrategy {
     */
    void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode);
 }
-

@@ -31,5 +31,3 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
       notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
    }
 }
-
-

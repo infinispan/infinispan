@@ -435,4 +435,3 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       return rpc;
    }
 }
-

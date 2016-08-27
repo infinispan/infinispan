@@ -141,4 +141,3 @@ class MemcachedMetadataBuilder extends EmbeddedMetadata.Builder {
          return new MemcachedMetadata(flags, version);
    }
 }
-

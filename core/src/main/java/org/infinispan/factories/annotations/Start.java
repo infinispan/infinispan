@@ -24,5 +24,5 @@ public @interface Start {
     * @return execution priority
     * @since 4.0
     */
-   public abstract int priority() default 10;
+   int priority() default 10;
 }

@@ -21,4 +21,3 @@ public class OptReplBackupFailureTest extends NonTxBackupFailureTest {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 }
-

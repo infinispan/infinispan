@@ -20,4 +20,3 @@ public class CheckRemoteLockAcquiredOnlyOnceDistTest extends CheckRemoteLockAcqu
       key = getKeyForCache(0);
    }
 }
-

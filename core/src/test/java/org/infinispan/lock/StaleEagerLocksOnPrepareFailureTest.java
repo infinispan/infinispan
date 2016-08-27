@@ -90,4 +90,3 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       assertEventuallyNotLocked(c2, k2);
    }
 }
-

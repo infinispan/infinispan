@@ -198,4 +198,3 @@ public enum OperationResponse {
       }
    }
 }
-

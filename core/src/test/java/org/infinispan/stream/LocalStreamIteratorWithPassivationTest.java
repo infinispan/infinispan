@@ -324,4 +324,3 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       }
    }
 }
-

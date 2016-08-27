@@ -50,4 +50,3 @@ public abstract class BaseDeltaAwarePreloadTest extends MultipleCacheManagersTes
    }
 
 }
-

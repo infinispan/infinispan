@@ -53,4 +53,3 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
       assert configuration.transaction().syncCommitPhase();
    }
 }
-

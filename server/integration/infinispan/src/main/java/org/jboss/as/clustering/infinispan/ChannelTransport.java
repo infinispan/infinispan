@@ -66,4 +66,3 @@ public class ChannelTransport extends JGroupsTransport {
         this.closeChannel = false;
     }
 }
-

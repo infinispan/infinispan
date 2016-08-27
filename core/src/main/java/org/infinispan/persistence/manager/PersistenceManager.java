@@ -152,5 +152,3 @@ public interface PersistenceManager extends Lifecycle {
     */
    void rollbackAllTxStores(Transaction transaction, AccessMode accessMode);
 }
-
-

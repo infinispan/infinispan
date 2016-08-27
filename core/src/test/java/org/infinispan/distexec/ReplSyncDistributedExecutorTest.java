@@ -29,5 +29,3 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
       super.testBasicTargetRemoteDistributedCallableWithHighFutureAndLowTaskTimeout();
    }
 }
-
-

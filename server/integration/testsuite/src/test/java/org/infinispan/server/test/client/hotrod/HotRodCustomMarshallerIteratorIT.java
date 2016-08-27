@@ -202,5 +202,3 @@ public class HotRodCustomMarshallerIteratorIT {
       }
    }
 }
-
-

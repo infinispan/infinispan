@@ -75,5 +75,3 @@ public class ReservoirSampler {
       return new double[size];
    }
 }
-
-

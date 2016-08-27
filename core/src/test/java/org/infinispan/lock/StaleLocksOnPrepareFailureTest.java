@@ -61,4 +61,3 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       }
    }
 }
-

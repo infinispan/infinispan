@@ -177,4 +177,3 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
       }
    }
 }
-

@@ -70,4 +70,3 @@ public class ThreadsAttributesWriteHandler extends ReloadRequiredWriteAttributeH
         }, OperationContext.Stage.MODEL);
     }
 }
-
