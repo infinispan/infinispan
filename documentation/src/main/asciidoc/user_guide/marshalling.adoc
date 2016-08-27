@@ -316,7 +316,7 @@ Once the Externalizer's readObject() and writeObject() methods have been impleme
 
 [source,java]
 ----
-import org.infinispan.util.Util;
+import org.infinispan.commons.util.Util;
 ...
 @Override
 public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
