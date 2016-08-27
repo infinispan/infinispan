@@ -159,5 +159,3 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
    }
 
 }
-
-

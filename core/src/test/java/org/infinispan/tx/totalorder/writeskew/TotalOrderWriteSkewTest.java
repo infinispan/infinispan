@@ -45,4 +45,3 @@ public class TotalOrderWriteSkewTest extends ReplWriteSkewTest {
             .recovery().disable();
    }
 }
-

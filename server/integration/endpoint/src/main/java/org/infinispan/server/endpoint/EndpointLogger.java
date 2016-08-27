@@ -185,4 +185,3 @@ public interface EndpointLogger extends BasicLogger {
    @Message(id = 10032, value = "No Security realm declared for endpoint '%s'. Using default encryption realm.")
    void noSSLContextForSni(String endpoint);
 }
-

@@ -123,4 +123,3 @@ public class ActivationManagerImpl implements ActivationManager {
       activations.set(0);
    }
 }
-

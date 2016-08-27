@@ -140,4 +140,3 @@ public final class RIMBeanServerRegistrationUtility {
    }
 
 }
-

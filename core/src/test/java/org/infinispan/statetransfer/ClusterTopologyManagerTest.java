@@ -481,4 +481,3 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(cache(1, OTHER_CACHE_NAME));
    }
 }
-

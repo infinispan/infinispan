@@ -117,5 +117,3 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
       nodes.forEach(Node::kill);
    }
 }
-
-

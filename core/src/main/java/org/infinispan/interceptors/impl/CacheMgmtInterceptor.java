@@ -427,4 +427,3 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       evictions.add(numEvictions);
    }
 }
-

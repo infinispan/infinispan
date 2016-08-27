@@ -57,4 +57,3 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 }
-

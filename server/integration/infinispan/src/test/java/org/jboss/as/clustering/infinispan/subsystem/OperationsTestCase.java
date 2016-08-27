@@ -149,7 +149,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         timestampColumn.get(ModelKeys.NAME).set("version") ;
         timestampColumn.get(ModelKeys.TYPE).set("BIGINT") ;
 
-        return stringKeyedTable ;
+        return stringKeyedTable;
     }
 
 }

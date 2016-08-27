@@ -152,5 +152,3 @@ public class HotRodTargetMigrator implements TargetMigrator {
       loaderManager.disableStore(RemoteStore.class.getName());
    }
 }
-
-

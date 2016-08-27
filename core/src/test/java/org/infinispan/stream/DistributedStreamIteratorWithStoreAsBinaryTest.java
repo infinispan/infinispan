@@ -116,4 +116,3 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       }
    }
 }
-

@@ -69,5 +69,3 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
       }
    }
 }
-
-

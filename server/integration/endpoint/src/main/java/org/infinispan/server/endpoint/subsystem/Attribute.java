@@ -113,4 +113,3 @@ public enum Attribute {
         return attribute == null ? UNKNOWN : attribute;
     }
 }
-

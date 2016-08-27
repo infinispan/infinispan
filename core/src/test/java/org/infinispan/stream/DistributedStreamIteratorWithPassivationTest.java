@@ -337,4 +337,3 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       }
    }
 }
-

@@ -95,5 +95,3 @@ public class RemoteStoreTest extends BaseStoreTest {
       assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }
-
-

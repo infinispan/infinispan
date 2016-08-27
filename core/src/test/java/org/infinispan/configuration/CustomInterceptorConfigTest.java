@@ -94,5 +94,3 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
 
    }
 }
-
-

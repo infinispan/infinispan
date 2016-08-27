@@ -108,4 +108,3 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot find resource '%s'", id = 918)
    IOException cannotFindResource(String fileName);
 }
-

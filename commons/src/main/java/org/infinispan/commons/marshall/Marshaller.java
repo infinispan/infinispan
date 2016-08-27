@@ -101,4 +101,3 @@ public interface Marshaller {
    BufferSizePredictor getBufferSizePredictor(Object o);
 
 }
-

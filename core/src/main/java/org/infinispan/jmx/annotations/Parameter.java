@@ -12,4 +12,3 @@ public @interface Parameter {
    String description() default "";
    String type() default "";
 }
-

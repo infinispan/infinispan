@@ -160,4 +160,4 @@ public class SaslQopHandler extends ByteToMessageDecoder implements ChannelOutbo
          super.handlerRemoved0(ctx);
          server.dispose();
      }
- }
+}

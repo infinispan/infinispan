@@ -58,4 +58,3 @@ public final class ImmutableMarshalledValueByteStream extends MarshalledValueByt
    }
 
 }
-

@@ -119,5 +119,3 @@ public class ListenerCacheManagerStopTest extends AbstractInfinispanTest {
       }
    }
 }
-
-

@@ -41,4 +41,3 @@ public class MultiServerCompatTest extends MultiHotRodServersTest implements Abs
       assertEquals(CACHE_SIZE, entries.size());
    }
 }
-

@@ -17,4 +17,3 @@
  * </p>
  */
 package org.infinispan.spring;
-

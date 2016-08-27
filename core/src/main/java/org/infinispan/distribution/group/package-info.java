@@ -9,4 +9,3 @@
  * </p>
  */
 package org.infinispan.distribution.group;
-
