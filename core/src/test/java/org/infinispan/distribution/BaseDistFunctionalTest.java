@@ -189,7 +189,9 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             if (allowL1) {
                assert ice == null || ice instanceof L1InternalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
             } else {
-               assert ice == null : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice + "!";
+               // Segments no longer owned are invalidated asynchronously
+               eventuallyEquals("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")",
+                     null, () -> dc.get(key));
             }
          }
       }
