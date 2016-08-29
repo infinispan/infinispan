@@ -11,12 +11,13 @@ import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
-import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.jboss.logging.Logger;
@@ -40,18 +41,12 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
-   protected final JPQLParser<TypeMetadata> parser = new JPQLParser<>();
-
    protected BaseMatcher(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 
    public ObjectPropertyHelper<TypeMetadata> getPropertyHelper() {
       return propertyHelper;
-   }
-
-   public JPQLParser<TypeMetadata> getParser() {
-      return parser;
    }
 
    /**
@@ -136,7 +131,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(queryString, getPropertyHelper());
+      final FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -178,8 +173,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback
          callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(queryString, getPropertyHelper());
+      FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
+      disallowFullText(parsingResult);
 
       write.lock();
       try {
@@ -191,6 +187,14 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
          return filterRegistry.addFilter(queryString, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
+      }
+   }
+
+   private void disallowFullText(FilterParsingResult<TypeMetadata> parsingResult) {
+      if (parsingResult.getWhereClause() != null) {
+         if (parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE)) {
+            throw log.getFiltersCannotUseFullTextSearchException();
+         }
       }
    }
 

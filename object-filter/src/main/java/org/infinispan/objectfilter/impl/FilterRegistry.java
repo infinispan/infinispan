@@ -90,7 +90,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
          // translate sort field paths
          translatedSortFields = new ArrayList<>(sortFields.length);
          for (SortField sortField : sortFields) {
-            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().getPath()));
+            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().asArrayPath()));
          }
       }
 

@@ -34,7 +34,7 @@ public final class OrExpr extends BooleanOperatorExpr {
          }
          sb.append(c);
       }
-      sb.append(")");
+      sb.append(')');
       return sb.toString();
    }
 
@@ -45,7 +45,7 @@ public final class OrExpr extends BooleanOperatorExpr {
          if (i != 0) {
             sb.append(" OR ");
          }
-         sb.append("(").append(children.get(i).toQueryString()).append(")");
+         sb.append('(').append(children.get(i).toQueryString()).append(')');
       }
       return sb.toString();
    }

@@ -73,6 +73,9 @@ public final class ConstantValueExpr implements ValueExpr {
       Comparable value;
       if (constantValue instanceof ParamPlaceholder) {
          String paramName = ((ParamPlaceholder) constantValue).getName();
+         if (namedParameters == null) {
+            throw new IllegalStateException("Missing value for parameter " + paramName);
+         }
          value = (Comparable) namedParameters.get(paramName);
          if (value == null) {
             throw new IllegalStateException("Missing value for parameter " + paramName);
@@ -153,7 +156,19 @@ public final class ConstantValueExpr implements ValueExpr {
 
    @Override
    public String toString() {
-      return "CONST(" + constantValue + ')';
+      String strVal;
+      if (constantValue instanceof ParamPlaceholder) {
+         strVal = constantValue.toString();
+      } else if (constantValue instanceof String) {
+         strVal = "\"" + constantValue + "\"";
+      } else if (constantValue instanceof Character) {
+         strVal = "'" + constantValue + "'";
+      } else if (constantValue instanceof Date) {
+         strVal = DateHelper.getJpaDateFormat().format((Date) constantValue);
+      } else {
+         strVal = "" + constantValue;
+      }
+      return "CONST(" + strVal + ')';
    }
 
    @Override

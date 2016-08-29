@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -18,7 +18,7 @@ import org.infinispan.query.dsl.impl.BaseQuery;
  */
 final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
 
-   private final QueryEngine queryEngine;
+   private final QueryEngine<TypeMetadata> queryEngine;
 
    private final ResultProcessor resultProcessor;
 
@@ -35,7 +35,7 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
     */
    private List<Object> results;
 
-   EmbeddedLuceneQuery(QueryEngine queryEngine, QueryFactory queryFactory,
+   EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, FilterParsingResult<TypeMetadata> parsingResult,
                        String[] projection, ResultProcessor resultProcessor,
                        long startOffset, int maxResults) {

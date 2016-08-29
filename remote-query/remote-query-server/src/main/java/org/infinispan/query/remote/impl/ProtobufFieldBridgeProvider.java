@@ -7,7 +7,6 @@ import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
@@ -18,7 +17,7 @@ import org.infinispan.query.remote.impl.logging.Log;
  * @author anistor@redhat.com
  * @since 9.0
  */
-final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeProvider {
+final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeProvider<Descriptor> {
 
    private static final Log log = LogFactory.getLog(ProtobufFieldBridgeProvider.class, Log.class);
 
@@ -34,15 +33,12 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
 
    private static final FieldBridge BOOL_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), QueryFacadeImpl.NULL_TOKEN_CODEC);
 
-   private final SerializationContext serializationContext;
-
-   ProtobufFieldBridgeProvider(SerializationContext serializationContext) {
-      this.serializationContext = serializationContext;
+   ProtobufFieldBridgeProvider() {
    }
 
    @Override
-   public FieldBridge getFieldBridge(String typeName, String[] propertyPath) {
-      FieldDescriptor fd = getFieldDescriptor(typeName, propertyPath);
+   public FieldBridge getFieldBridge(Descriptor typeMetadata, String[] propertyPath) {
+      FieldDescriptor fd = getFieldDescriptor(typeMetadata, propertyPath);
       switch (fd.getType()) {
          case DOUBLE:
             return DOUBLE_FIELD_BRIDGE;
@@ -72,8 +68,8 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
       return null;
    }
 
-   private FieldDescriptor getFieldDescriptor(String typeName, String[] propertyPath) {
-      Descriptor messageDescriptor = serializationContext.getMessageDescriptor(typeName);
+   private FieldDescriptor getFieldDescriptor(Descriptor typeMetadata, String[] propertyPath) {
+      Descriptor messageDescriptor = typeMetadata;
       FieldDescriptor fd = null;
       for (int i = 0; i < propertyPath.length; i++) {
          String name = propertyPath[i];

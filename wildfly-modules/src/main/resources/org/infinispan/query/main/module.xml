@@ -9,7 +9,6 @@
         <module name="javax.api" />
         <module name="javax.transaction.api" />
         <module name="org.apache.lucene" slot="${lucene.slot}"/>
-        <module name="org.hibernate.hql.parser" slot="${slot}"/>
         <module name="org.hibernate.search.engine" slot="${slot}" export="true"/>
         <module name="org.infinispan.core" slot="${slot}"/>
         <module name="org.infinispan.commons" slot="${slot}"/>

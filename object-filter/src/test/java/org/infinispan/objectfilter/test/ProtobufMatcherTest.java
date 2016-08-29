@@ -41,6 +41,6 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    @Override
    protected ProtobufMatcher createMatcher() {
-      return new ProtobufMatcher(serCtx);
+      return new ProtobufMatcher(serCtx, null);
    }
 }

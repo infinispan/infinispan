@@ -1,6 +1,7 @@
 package org.infinispan.query.api.continuous;
 
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.query.dsl.Query;
 
@@ -12,6 +13,10 @@ import org.infinispan.query.dsl.Query;
  * @since 8.2
  */
 public interface ContinuousQuery<K, V> {
+
+   <C> void addContinuousQueryListener(String queryString, ContinuousQueryListener<K, C> listener);
+
+   <C> void addContinuousQueryListener(String queryString, Map<String, Object> namedParameters, ContinuousQueryListener<K, C> listener);
 
    <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener);
 

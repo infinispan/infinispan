@@ -7,9 +7,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Query;
@@ -38,6 +38,17 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       return cm;
+   }
+
+   /**
+    * Fulltext continuous queries are not allowed.
+    */
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028521:.*")
+   public void testDisallowFullTextQuery() {
+      Query query = Search.getQueryFactory(cache()).create("from org.infinispan.query.test.Person where name : 'john'");
+
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
+      cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
    /**

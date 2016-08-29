@@ -42,7 +42,7 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -125,7 +125,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          registerMatcher(cr, searchFactory);
 
-         QueryEngine queryEngine = new QueryEngine(cache, isIndexed);
+         QueryEngine<Class<?>> queryEngine = new QueryEngine<>(cache, isIndexed);
          cr.registerComponent(queryEngine, QueryEngine.class);
       }
    }

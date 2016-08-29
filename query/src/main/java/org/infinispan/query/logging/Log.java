@@ -11,9 +11,9 @@ import java.util.List;
 
 import javax.transaction.Transaction;
 
-import org.hibernate.hql.ParsingException;
 import org.hibernate.search.backend.LuceneWork;
 import org.infinispan.commons.CacheException;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.remoting.transport.Address;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -140,9 +140,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The type %s is not an indexed entity.", id = 14030)
    IllegalArgumentException getNoIndexedEntityException(String typeName);
 
-   @Message(value = "No queries can be applied to property %2$s in type %1$s since the property is analyzed.", id = 14031)
-   ParsingException getQueryOnAnalyzedPropertyNotSupportedException(String typeName, String propertyName);
-
    @Message(value = "Could not locate error handler class %s", id = 14032)
    IllegalArgumentException unsupportedErrorHandlerConfigurationValueType(Class<?> type);
 
@@ -155,4 +152,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Error occurred while applying changes to the index", id = 14035)
    void errorOccurredApplyingChanges(@Cause Throwable cause);
+
+   @Message(value = "Prefix, wildcard or regexp queries cannot be fuzzy: %s", id = 14036)
+   ParsingException getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(String s); //todo [anistor] this should be thrown earlier at parsing time
 }

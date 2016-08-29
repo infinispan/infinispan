@@ -32,7 +32,7 @@ public final class BooleanFilterNormalizer {
 
       @Override
       public BooleanExpr visit(OrExpr orExpr) {
-         List<BooleanExpr> children = new ArrayList<BooleanExpr>(orExpr.getChildren().size());
+         List<BooleanExpr> children = new ArrayList<>(orExpr.getChildren().size());
 
          for (BooleanExpr child : orExpr.getChildren()) {
             child = child.acceptVisitor(this);
@@ -62,7 +62,7 @@ public final class BooleanFilterNormalizer {
 
       @Override
       public BooleanExpr visit(AndExpr andExpr) {
-         List<BooleanExpr> children = new ArrayList<BooleanExpr>(andExpr.getChildren().size());
+         List<BooleanExpr> children = new ArrayList<>(andExpr.getChildren().size());
 
          for (BooleanExpr child : andExpr.getChildren()) {
             child = child.acceptVisitor(this);
@@ -140,6 +140,14 @@ public final class BooleanFilterNormalizer {
          // comparison operators are never negated using NotExpr
          return new ComparisonExpr(leftChild, rightChild, comparisonType);
       }
+
+      @Override
+      public BooleanExpr visit(BetweenExpr betweenExpr) {
+         return new AndExpr(
+               new ComparisonExpr(betweenExpr.getLeftChild(), betweenExpr.getFromChild(), ComparisonExpr.Type.GREATER_OR_EQUAL),
+               new ComparisonExpr(betweenExpr.getLeftChild(), betweenExpr.getToChild(), ComparisonExpr.Type.LESS_OR_EQUAL)
+         );
+      }
    };
 
    /**
@@ -161,7 +169,7 @@ public final class BooleanFilterNormalizer {
 
       @Override
       public BooleanExpr visit(OrExpr orExpr) {
-         List<BooleanExpr> children = new ArrayList<BooleanExpr>(orExpr.getChildren().size());
+         List<BooleanExpr> children = new ArrayList<>(orExpr.getChildren().size());
 
          for (BooleanExpr child : orExpr.getChildren()) {
             child = child.acceptVisitor(this);
@@ -189,7 +197,7 @@ public final class BooleanFilterNormalizer {
 
       @Override
       public BooleanExpr visit(AndExpr andExpr) {
-         List<BooleanExpr> children = new ArrayList<BooleanExpr>(andExpr.getChildren().size());
+         List<BooleanExpr> children = new ArrayList<>(andExpr.getChildren().size());
 
          for (BooleanExpr child : andExpr.getChildren()) {
             child = child.acceptVisitor(this);
@@ -236,6 +244,14 @@ public final class BooleanFilterNormalizer {
          }
 
          return new NotExpr(booleanExpr);
+      }
+
+      @Override
+      public BooleanExpr visit(BetweenExpr betweenExpr) {
+         return new OrExpr(
+               new ComparisonExpr(betweenExpr.getLeftChild(), betweenExpr.getFromChild(), ComparisonExpr.Type.LESS),
+               new ComparisonExpr(betweenExpr.getLeftChild(), betweenExpr.getToChild(), ComparisonExpr.Type.GREATER)
+         );
       }
 
       @Override

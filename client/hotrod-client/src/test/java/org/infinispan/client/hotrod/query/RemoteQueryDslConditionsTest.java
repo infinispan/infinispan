@@ -149,7 +149,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testInvalidEmbeddedAttributeQuery();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
    @Override
    public void testRejectProjectionOfRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
@@ -201,13 +201,13 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    @Override
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupBy3();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014021: Queries containing grouping and aggregation functions must use projections.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014021: Queries containing grouping and aggregation functions must use projections.")
    @Override
    public void testGroupBy5() {
       // the original exception gets wrapped in HotRodClientException
@@ -220,7 +220,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testGroupBy6();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : SUM.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028515: Cannot have aggregate functions in the WHERE clause : SUM.")
    public void testGroupBy7() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupBy7();
@@ -388,21 +388,21 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[1]);
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
    @Override
    public void testGroupByMustNotAcceptRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupByMustNotAcceptRepeatedProperty();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
    @Override
    public void testOrderByMustNotAcceptRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
       super.testOrderByMustNotAcceptRepeatedProperty();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : MIN.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028515: Cannot have aggregate functions in the WHERE clause : MIN.")
    @Override
    public void testRejectAggregationsInWhereClause() {
       // the original exception gets wrapped in HotRodClientException

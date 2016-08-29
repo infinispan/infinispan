@@ -409,14 +409,21 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>${version.hibernate.search}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-serialization-avro</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-          <dependency>
-              <groupId>org.hibernate</groupId>
-              <artifactId>hibernate-entitymanager</artifactId>
-              <version>${version.hibernate.core}</version>
-          </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>${version.hibernate.core}</version>
+         </dependency>
 
          <dependency>
             <groupId>org.infinispan.protostream</groupId>

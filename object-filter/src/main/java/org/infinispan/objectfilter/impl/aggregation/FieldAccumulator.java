@@ -1,6 +1,6 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
-import org.infinispan.objectfilter.PropertyPath;
+import org.infinispan.objectfilter.impl.ql.AggregationFunction;
 
 /**
  * An accumulator is a stateless object that operates on row data.
@@ -61,7 +61,7 @@ public abstract class FieldAccumulator {
    protected void finish(Object[] accRow) {
    }
 
-   public static FieldAccumulator makeAccumulator(PropertyPath.AggregationType aggregationType, int inColumn, int outColumn, Class<?> propertyType) {
+   public static FieldAccumulator makeAccumulator(AggregationFunction aggregationType, int inColumn, int outColumn, Class<?> propertyType) {
       switch (aggregationType) {
          case SUM:
             return new SumAccumulator(inColumn, outColumn, propertyType);
@@ -78,12 +78,12 @@ public abstract class FieldAccumulator {
       }
    }
 
-   public static Class<?> getOutputType(PropertyPath.AggregationType aggregationType, Class<?> propertyType) {
-      if (aggregationType == PropertyPath.AggregationType.AVG) {
+   public static Class<?> getOutputType(AggregationFunction aggregationType, Class<?> propertyType) {
+      if (aggregationType == AggregationFunction.AVG) {
          return Double.class;
-      } else if (aggregationType == PropertyPath.AggregationType.COUNT) {
+      } else if (aggregationType == AggregationFunction.COUNT) {
          return Long.class;
-      } else if (aggregationType == PropertyPath.AggregationType.SUM) {
+      } else if (aggregationType == AggregationFunction.SUM) {
          return SumAccumulator.getOutputType(propertyType);
       }
       return propertyType;

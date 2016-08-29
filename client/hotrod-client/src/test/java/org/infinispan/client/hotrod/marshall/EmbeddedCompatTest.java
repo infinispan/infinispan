@@ -288,6 +288,26 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, list.get(0)[1]);
    }
 
+   public void testRemoteFullTextQuery() {
+      Transaction transaction = new TransactionHS();
+      transaction.setId(3);
+      transaction.setDescription("Hotel");
+      transaction.setLongDescription("Expenses for Infinispan F2F meeting");
+      transaction.setAccountId(2);
+      transaction.setAmount(99);
+      transaction.setDate(new Date(42));
+      transaction.setDebit(true);
+      transaction.setValid(true);
+      cache.put(transaction.getId(), transaction);
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.create("from sample_bank_account.Transaction where longDescription:'f2f'");
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+   }
+
    public void testEmbeddedLuceneQuery() throws Exception {
       Account account = createAccountPB(1);
       remoteCache.put(1, account);

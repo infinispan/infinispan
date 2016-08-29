@@ -1,6 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
+import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 
 /**
  * @author anistor@redhat.com
