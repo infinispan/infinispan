@@ -171,7 +171,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-         cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
+         cr.registerComponent(new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new), ProtobufMatcher.class);
 
          if (isCompatMode) {
             SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
@@ -185,7 +185,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          }
 
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
+         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode);
          cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }

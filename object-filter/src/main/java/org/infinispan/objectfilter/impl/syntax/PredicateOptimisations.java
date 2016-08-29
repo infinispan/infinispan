@@ -54,9 +54,15 @@ final class PredicateOptimisations {
 
    /**
     * Removes duplicate occurrences of same predicate in a conjunction or disjunction. Also detects and removes
-    * tautology and contradiction. The following translation rules are applied: <ul> <li>X || X => X</li> <li>X && X =>
-    * X</li> <li>!X || !X => !X</li> <li>!X && !X => !X</li> <li>X || !X => TRUE (tautology)</li> <li>X && !X => FALSE
-    * (contradiction)</li> </ul>
+    * tautology and contradiction. The following translation rules are applied:
+    * <ul>
+    * <li>X || X => X</li>
+    * <li>X && X => X</li>
+    * <li>!X || !X => !X</li>
+    * <li>!X && !X => !X</li>
+    * <li>X || !X => TRUE (tautology)</li>
+    * <li>X && !X => FALSE (contradiction)</li>
+    * </ul>
     *
     * @param children      the list of children expressions
     * @param isConjunction is the parent boolean expression a conjunction or a disjunction?
@@ -64,7 +70,7 @@ final class PredicateOptimisations {
    private static void removeRedundantPredicates(List<BooleanExpr> children, boolean isConjunction) {
       for (int i = 0; i < children.size(); i++) {
          BooleanExpr ci = children.get(i);
-         if (ci instanceof BooleanOperatorExpr) {
+         if (ci instanceof BooleanOperatorExpr || ci instanceof FullTextBoostExpr || ci instanceof FullTextOccurExpr) {
             // we may encounter non-predicate expressions, just ignore them
             continue;
          }
@@ -84,7 +90,7 @@ final class PredicateOptimisations {
          while (j < children.size()) {
             BooleanExpr cj = children.get(j);
             // we may encounter non-predicate expressions, just ignore them
-            if (!(cj instanceof BooleanOperatorExpr)) {
+            if (!(cj instanceof BooleanOperatorExpr || cj instanceof FullTextBoostExpr || cj instanceof FullTextOccurExpr)) {
                boolean isCjNegated = cj instanceof NotExpr;
                if (isCjNegated) {
                   cj = ((NotExpr) cj).getChild();

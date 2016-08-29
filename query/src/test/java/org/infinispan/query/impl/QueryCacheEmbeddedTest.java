@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
@@ -25,7 +25,7 @@ import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
-import org.infinispan.query.dsl.impl.JPAQueryGenerator;
+import org.infinispan.query.dsl.impl.QueryStringCreator;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -71,7 +71,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
             .having("name").eq("John").toBuilder();
 
       // obtain the query string
-      String queryString = ((BaseQueryBuilder) queryQueryBuilder).accept(new JPAQueryGenerator());
+      String queryString = ((BaseQueryBuilder) queryQueryBuilder).accept(new QueryStringCreator());
 
       // everything set up, test follows ...
 

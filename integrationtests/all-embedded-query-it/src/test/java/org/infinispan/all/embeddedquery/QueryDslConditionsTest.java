@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.hibernate.hql.ParsingException;
 import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
@@ -42,6 +41,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;

@@ -4,11 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
-import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.junit.Test;
 
 /**
@@ -17,19 +16,20 @@ import org.junit.Test;
  */
 public class BooleShannonExpansionTest {
 
-   private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
-
-   private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-
-   private final JPQLParser<Class<?>> parser = new JPQLParser<>();
+   private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new BooleShannonExpansion.IndexedFieldProvider() {
+   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new IndexedFieldProvider.FieldIndexingMetadata() {
       @Override
       public boolean isIndexed(String[] propertyPath) {
          String last = propertyPath[propertyPath.length - 1];
          return !"number".equals(last) && !"license".equals(last);
+      }
+
+      @Override
+      public boolean isAnalyzed(String[] propertyPath) {
+         return false;
       }
 
       @Override
@@ -44,7 +44,7 @@ public class BooleShannonExpansionTest {
     * @param expectedQuery   the expected equivalent JPA of the AST
     */
    private void assertExpectedTree(String queryString, String expectedExprStr, String expectedQuery) {
-      FilterParsingResult<Class<?>> parsingResult = parser.parse(queryString, propertyHelper);
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse(queryString, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {
@@ -54,7 +54,7 @@ public class BooleShannonExpansionTest {
          assertNull(expr);
       }
       if (expectedQuery != null) {
-         String queryOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
+         String queryOut = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
          assertEquals(expectedQuery, queryOut);
       }
    }
@@ -70,7 +70,7 @@ public class BooleShannonExpansionTest {
    public void testExpansionNotNeeded() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.surname = 'Adrian' or p.name = 'Nistor'",
-            "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
+            "OR(EQUAL(PROP(surname), CONST(\"Adrian\")), EQUAL(PROP(name), CONST(\"Nistor\")))",
             "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
    }
 
@@ -94,7 +94,7 @@ public class BooleShannonExpansionTest {
    public void testExpansionPossible() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor'",
-            "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
+            "OR(EQUAL(PROP(surname), CONST(\"Adrian\")), EQUAL(PROP(name), CONST(\"Nistor\")))",
             "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
    }
 

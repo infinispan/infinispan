@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
@@ -18,6 +19,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 /**
@@ -44,6 +46,19 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       serializationContext = ProtoStreamMarshaller.getSerializationContext(cache.getRemoteCacheManager());
    }
 
+   @Override
+   public <C> void addContinuousQueryListener(String queryString, ContinuousQueryListener<K, C> listener) {
+      addContinuousQueryListener(queryString, null, listener);
+   }
+
+   @Override
+   public <C> void addContinuousQueryListener(String queryString, Map<String, Object> namedParameters, ContinuousQueryListener<K, C> listener) {
+      ClientEntryListener<K, ?> eventListener = new ClientEntryListener<>(serializationContext, listener);
+      Object[] factoryParams = Filters.makeFactoryParams(queryString, namedParameters);
+      cache.addClientListener(eventListener, factoryParams, null);
+      listeners.add(eventListener);
+   }
+
    /**
     * Registers a continuous query listener that uses a query DSL based filter. The listener will receive notifications
     * when a cache entry joins or leaves the matching set defined by the query.
@@ -52,10 +67,8 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
     * @param query    the query to be used for determining the matching set
     */
    public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
-      ClientEntryListener<K, ?> eventListener = new ClientEntryListener<>(serializationContext, listener);
-      Object[] factoryParams = Filters.makeFactoryParams(query);
-      cache.addClientListener(eventListener, factoryParams, null);
-      listeners.add(eventListener);
+      BaseQuery baseQuery = (BaseQuery) query;
+      addContinuousQueryListener(baseQuery.getQueryString(), baseQuery.getNamedParameters(), listener);
    }
 
    public void removeContinuousQueryListener(ContinuousQueryListener<K, ?> listener) {

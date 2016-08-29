@@ -12,11 +12,7 @@ public final class StringHelper {
    }
 
    public static String join(String[] array) {
-      return join(Arrays.asList(array));
-   }
-
-   public static String join(Iterable<String> iterable) {
-      return String.join(".", iterable);
+      return String.join(".", Arrays.asList(array));
    }
 
    public static String[] split(String propertyPath) {

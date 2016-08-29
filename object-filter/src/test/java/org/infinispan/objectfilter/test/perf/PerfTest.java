@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 
-import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
@@ -51,15 +50,9 @@ public class PerfTest {
 
       Object obj = createPerson1();
 
-      final int[] matchCount = new int[1];
-
+      int[] matchCount = new int[1];
       for (int k = 0; k < NUM_FILTERS; k++) {
-         matcher.registerFilter(query, new FilterCallback() {
-            @Override
-            public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-               matchCount[0]++;
-            }
-         });
+         matcher.registerFilter(query, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
       }
 
       long stime = System.nanoTime();

@@ -11,23 +11,29 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
-import org.infinispan.query.dsl.impl.JPAQueryGenerator;
+import org.infinispan.query.dsl.impl.QueryStringCreator;
 import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class FilterQueryFactory extends BaseQueryFactory {
+final class FilterQueryFactory extends BaseQueryFactory {
 
    private final SerializationContext serializationContext;
 
-   public FilterQueryFactory(SerializationContext serializationContext) {
+   FilterQueryFactory(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;
    }
 
-   public FilterQueryFactory() {
+   FilterQueryFactory() {
       this(null);
+   }
+
+   @Override
+   public Query create(String queryString) {
+      //todo [anistor] some params come from a builder, some from parsing the query string
+      return new FilterQuery(this, queryString, null, null, -1, -1);
    }
 
    @Override
@@ -56,7 +62,7 @@ public final class FilterQueryFactory extends BaseQueryFactory {
 
       @Override
       public Query build() {
-         JPAQueryGenerator generator = new JPAQueryGenerator();
+         QueryStringCreator generator = new QueryStringCreator();
          String queryString = accept(generator);
          if (log.isTraceEnabled()) {
             log.tracef("Query string : %s", queryString);

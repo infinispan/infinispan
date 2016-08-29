@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.hql.ParsingException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,6 +17,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -150,7 +150,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    private static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> results = new ArrayList<ObjectFilter.FilterResult>();
+      public final List<ObjectFilter.FilterResult> results = new ArrayList<>();
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {

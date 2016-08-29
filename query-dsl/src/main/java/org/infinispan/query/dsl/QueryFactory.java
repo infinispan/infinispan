@@ -10,6 +10,8 @@ package org.infinispan.query.dsl;
  */
 public interface QueryFactory {
 
+   Query create(String queryString);
+
    /**
     * Creates a QueryBuilder for the given entity type.
     *

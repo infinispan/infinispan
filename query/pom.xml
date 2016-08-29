@@ -37,13 +37,15 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate.hql</groupId>
-         <artifactId>hibernate-hql-parser</artifactId>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-search-engine</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-engine</artifactId>
+         <classifier>tests</classifier>
+         <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -95,6 +97,16 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.easytesting</groupId>
+         <artifactId>fest-assert</artifactId>
       </dependency>
 
       <dependency>

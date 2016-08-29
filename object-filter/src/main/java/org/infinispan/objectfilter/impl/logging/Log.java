@@ -1,7 +1,11 @@
 package org.infinispan.objectfilter.impl.logging;
 
-import org.hibernate.hql.ParsingException;
+import java.util.List;
+
+import org.antlr.runtime.RecognitionException;
+import org.infinispan.objectfilter.ParsingException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -53,4 +57,43 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28513, value = "Aggregation AVG cannot be applied to property of type %s")
    IllegalStateException getAVGCannotBeAppliedToPropertyOfType(String typeName);
+
+   @Message(id = 28514, value = "%s aggregation can only be applied to property references.")
+   ParsingException getAggregationCanOnlyBeAppliedToPropertyReferencesException(String aggregationType);
+
+   @Message(id = 28515, value = "Cannot have aggregate functions in the WHERE clause : %s.")
+   ParsingException getNoAggregationsInWhereClauseException(String aggregationType);
+
+   @Message(id = 28516, value = "Cannot have aggregate functions in the GROUP BY clause : %s.")
+   ParsingException getNoAggregationsInGroupByClauseException(String aggregationType);
+
+   @Message(id = 28517, value = "The predicate %s can not be added since there may be only one root predicate.")
+   IllegalStateException getNotMoreThanOnePredicateInRootOfWhereClauseAllowedException(Object predicate);
+
+   @Message(id = 28518, value = "The predicate %s can not be added since there may be only one sub-predicate in a NOT predicate.")
+   IllegalStateException getNotMoreThanOnePredicateInNegationAllowedException(Object predicate);
+
+   @Message(id = 28519, value = "Cannot apply predicates directly to an entity alias: %s")
+   ParsingException getPredicatesOnEntityAliasNotAllowedException(String alias);
+
+   @Message(id = 28520, value = "Full-text queries are not allowed in the HAVING clause")
+   ParsingException getFullTextQueriesNotAllowedInHavingClauseException();
+
+   @Message(id = 28521, value = "Full-text queries cannot be applied to property '%2$s' in type %1$s unless the property is indexed and analyzed.")
+   ParsingException getFullTextQueryOnNotAalyzedPropertyNotSupportedException(String typeName, String propertyName);
+
+   @Message(id = 28522, value = "No relational queries can be applied to property '%2$s' in type %1$s since the property is analyzed.")
+   ParsingException getQueryOnAnalyzedPropertyNotSupportedException(String typeName, String propertyName);
+
+   @Message(id = 28523, value = "Filters cannot use full-text searches")
+   ParsingException getFiltersCannotUseFullTextSearchException();
+
+   @Message(id = 28524, value = "Left side argument must be a property path")
+   ParsingException getLeftSideMustBeAPropertyPath();
+
+   @Message(id = 28525, value = "Invalid query: %s")
+   ParsingException getQuerySyntaxException(String query, @Cause RecognitionException cause);
+
+   @Message(id = 28526, value = "Invalid query: %s; Parser error messages: %s.")
+   ParsingException getQuerySyntaxException(String query, List<?> parserErrorMessages);
 }

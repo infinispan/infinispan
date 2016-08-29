@@ -11,7 +11,6 @@ import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
@@ -21,6 +20,7 @@ import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
 
@@ -103,7 +103,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          // translate sort field paths
          translatedSortFields = new ArrayList<>(sortFields.length);
          for (SortField sortField : sortFields) {
-            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().getPath()));
+            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().asArrayPath()));
          }
       } else {
          translatedSortFields = null;

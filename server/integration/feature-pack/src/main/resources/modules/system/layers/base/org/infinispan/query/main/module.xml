@@ -9,7 +9,6 @@
         <module name="javax.api" />
         <module name="javax.transaction.api" />
         <module name="org.apache.lucene"/>
-        <module name="org.hibernate.hql.parser"/>
         <module name="org.hibernate.search.engine" />
         <module name="org.infinispan"/>
         <module name="org.infinispan.query.dsl"/>

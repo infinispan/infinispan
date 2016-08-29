@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 
@@ -13,6 +14,12 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory {
 
    public EmbeddedQueryFactory(QueryEngine queryEngine) {
       this.queryEngine = queryEngine;
+   }
+
+   @Override
+   public Query create(String queryString) {
+      //todo [anistor] some params come from a builder, some from parsing the query string
+      return new DelegatingQuery(queryEngine, this, queryString, null, null, -1, -1);
    }
 
    @Override

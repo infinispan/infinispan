@@ -21,42 +21,63 @@ public final class BooleShannonExpansion {
    private final int maxExpansionCofactors;
 
    // todo [anistor] besides indexed vs non-indexed we need to detect occurrences of cross-relationship spurious matches and apply a second in-memory filtering phase
-   public interface IndexedFieldProvider {
 
-      IndexedFieldProvider NO_INDEXING = new IndexedFieldProvider() {
-         @Override
-         public boolean isIndexed(String[] propertyPath) {
-            return false;
-         }
+   private final IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata;
 
-         @Override
-         public boolean isStored(String[] propertyPath) {
-            return false;
-         }
-      };
-
-      boolean isIndexed(String[] propertyPath);
-
-      boolean isStored(String[] propertyPath);
-   }
-
-   private final IndexedFieldProvider indexedFieldProvider;
-
-   public BooleShannonExpansion(int maxExpansionCofactors, IndexedFieldProvider indexedFieldProvider) {
+   public BooleShannonExpansion(int maxExpansionCofactors, IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata) {
       this.maxExpansionCofactors = maxExpansionCofactors;
-      this.indexedFieldProvider = indexedFieldProvider;
+      this.fieldIndexingMetadata = fieldIndexingMetadata;
    }
 
-   private static class Collector extends ExprVisitor {
-
-      private final IndexedFieldProvider indexedFieldProvider;
+   private class Collector extends ExprVisitor {
 
       private boolean foundIndexed = false;
 
-      private final Set<PrimaryPredicateExpr> predicatesToRemove = new LinkedHashSet<PrimaryPredicateExpr>();
+      private final Set<PrimaryPredicateExpr> predicatesToRemove = new LinkedHashSet<>();
 
-      private Collector(IndexedFieldProvider indexedFieldProvider) {
-         this.indexedFieldProvider = indexedFieldProvider;
+      @Override
+      public BooleanExpr visit(FullTextBoostExpr fullTextBoostExpr) {
+         fullTextBoostExpr.getChild().acceptVisitor(this);
+         return fullTextBoostExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(FullTextOccurExpr fullTextOccurExpr) {
+         fullTextOccurExpr.getChild().acceptVisitor(this);
+         return fullTextOccurExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(FullTextTermExpr fullTextTermExpr) {
+         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextTermExpr.getChild();
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+            foundIndexed = true;
+         } else {
+            predicatesToRemove.add(fullTextTermExpr);
+         }
+         return fullTextTermExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(FullTextRegexpExpr fullTextRegexpExpr) {
+         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+            foundIndexed = true;
+         } else {
+            predicatesToRemove.add(fullTextRegexpExpr);
+         }
+         return fullTextRegexpExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(FullTextRangeExpr fullTextRangeExpr) {
+         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRangeExpr.getChild();
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+            foundIndexed = true;
+         } else {
+            predicatesToRemove.add(fullTextRangeExpr);
+         }
+         return fullTextRangeExpr;
       }
 
       @Override
@@ -89,7 +110,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
-         if (indexedFieldProvider.isIndexed(propertyValueExpr.getPropertyPath())) {
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(isNullExpr);
@@ -100,7 +121,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(ComparisonExpr comparisonExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) comparisonExpr.getLeftChild();
-         if (indexedFieldProvider.isIndexed(propertyValueExpr.getPropertyPath())) {
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(comparisonExpr);
@@ -111,7 +132,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-         if (indexedFieldProvider.isIndexed(propertyValueExpr.getPropertyPath())) {
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(likeExpr);
@@ -157,7 +178,7 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(OrExpr orExpr) {
-         List<BooleanExpr> newChildren = new ArrayList<BooleanExpr>(orExpr.getChildren().size());
+         List<BooleanExpr> newChildren = new ArrayList<>(orExpr.getChildren().size());
          for (BooleanExpr c : orExpr.getChildren()) {
             BooleanExpr e = c.acceptVisitor(this);
             if (e instanceof ConstantBooleanExpr) {
@@ -181,7 +202,7 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(AndExpr andExpr) {
-         List<BooleanExpr> newChildren = new ArrayList<BooleanExpr>(andExpr.getChildren().size());
+         List<BooleanExpr> newChildren = new ArrayList<>(andExpr.getChildren().size());
          for (BooleanExpr c : andExpr.getChildren()) {
             BooleanExpr e = c.acceptVisitor(this);
             if (e instanceof ConstantBooleanExpr) {
@@ -264,7 +285,7 @@ public final class BooleShannonExpansion {
          return booleanExpr;
       }
 
-      Collector collector = new Collector(indexedFieldProvider);
+      Collector collector = new Collector();
       booleanExpr.acceptVisitor(collector);
 
       if (!collector.foundIndexed) {

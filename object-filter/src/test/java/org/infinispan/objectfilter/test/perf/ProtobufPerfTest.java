@@ -27,7 +27,7 @@ public class ProtobufPerfTest extends PerfTest {
    }
 
    protected Matcher createMatcher() throws Exception {
-      return new ProtobufMatcher(serCtx);
+      return new ProtobufMatcher(serCtx, null);
    }
 
    protected Object createPerson1() throws Exception {

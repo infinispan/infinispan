@@ -23,11 +23,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.hql.ParsingException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
@@ -139,6 +139,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Transaction transaction1 = getModelFactory().makeTransaction();
       transaction1.setId(1);
       transaction1.setDescription("Feb. rent payment");
+      transaction1.setLongDescription("Feb. rent payment");
       transaction1.setAccountId(1);
       transaction1.setAmount(1500);
       transaction1.setDate(makeDate("2013-01-05"));
@@ -148,6 +149,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Transaction transaction2 = getModelFactory().makeTransaction();
       transaction2.setId(2);
       transaction2.setDescription("Starbucks");
+      transaction2.setLongDescription("Starbucks");
       transaction2.setAccountId(1);
       transaction2.setAmount(23);
       transaction2.setDate(makeDate("2013-01-09"));
@@ -166,6 +168,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Transaction transaction4 = getModelFactory().makeTransaction();
       transaction4.setId(4);
       transaction4.setDescription("Last january");
+      transaction4.setLongDescription("Last january");
       transaction4.setAccountId(2);
       transaction4.setAmount(95);
       transaction4.setDate(makeDate("2013-01-31"));
@@ -175,6 +178,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Transaction transaction5 = getModelFactory().makeTransaction();
       transaction5.setId(5);
       transaction5.setDescription("-Popcorn");
+      transaction5.setLongDescription("-Popcorn");
       transaction5.setAccountId(2);
       transaction5.setAmount(5);
       transaction5.setDate(makeDate("2013-01-01"));
@@ -200,6 +204,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
          Transaction transaction = getModelFactory().makeTransaction();
          transaction.setId(50 + i);
          transaction.setDescription("Expensive shoes " + i);
+         transaction.setLongDescription("Expensive shoes " + i);
          transaction.setAccountId(2);
          transaction.setAmount(100 + i);
          transaction.setDate(makeDate("2013-08-20"));
@@ -1894,7 +1899,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.get(0)[0]);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL000009: Cannot have aggregate functions in WHERE clause : SUM.")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028515: Cannot have aggregate functions in the WHERE clause : SUM.")
    public void testGroupBy7() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2838,7 +2843,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(1)[1]);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL000009: Cannot have aggregate functions in WHERE clause : MIN.")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028515: Cannot have aggregate functions in the WHERE clause : MIN.")
    public void testRejectAggregationsInWhereClause() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2948,5 +2953,23 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<Object[]> list = q.list();
       assertEquals(0, list.size());
+   }
+
+   public void testFullTextTerm() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+   }
+
+   public void testFullTextPhrase() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
+
+      List<Transaction> list = q.list();
+      assertEquals(50, list.size());
    }
 }

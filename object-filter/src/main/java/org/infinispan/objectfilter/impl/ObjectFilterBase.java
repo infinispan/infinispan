@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.jboss.logging.Logger;
 
 /**

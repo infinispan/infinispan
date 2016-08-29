@@ -11,7 +11,7 @@ import java.util.List;
  */
 public abstract class BooleanOperatorExpr implements BooleanExpr {
 
-   protected final List<BooleanExpr> children = new ArrayList<BooleanExpr>();
+   protected final List<BooleanExpr> children = new ArrayList<>();
 
    protected BooleanOperatorExpr(BooleanExpr... children) {
       for (BooleanExpr child : children) {

@@ -10,19 +10,14 @@
 
    <artifactId>infinispan-objectfilter</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan Object Filtering API</name>
-   <description>Infinispan Object Filtering based on a JP-QL subset</description>
+   <name>Infinispan Object Querying and Filtering API</name>
+   <description>Infinispan Object Querying and Filtering based on Ickle, a JP-QL subset</description>
 
    <dependencies>
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
          <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.hibernate.hql</groupId>
-         <artifactId>hibernate-hql-parser</artifactId>
       </dependency>
 
       <dependency>
@@ -37,6 +32,17 @@
       </dependency>
 
       <dependency>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-runtime</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.easytesting</groupId>
+         <artifactId>fest-assert</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
@@ -45,6 +51,8 @@
 
    <properties>
       <suite.exclude.groups>org.infinispan.objectfilter.test.perf.Profiling</suite.exclude.groups>
+      <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
+      <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
 
    <build>
@@ -68,6 +76,61 @@
                   <version>${version.maven.surefire}</version>
                </dependency>
             </dependencies>
+         </plugin>
+
+         <plugin>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr3-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>antlr3</id>
+                  <goals>
+                     <goal>antlr</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <sourceDirectory>${basedir}/src/main/antlr3</sourceDirectory>
+               <outputDirectory>${project.build.directory}/generated-sources/antlr3</outputDirectory>
+            </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.antlr</groupId>
+                  <artifactId>antlr</artifactId>
+                  <version>${version.antlr}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>none-default</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>shade</goal>
+                  </goals>
+                  <configuration>
+                     <finalName>${intermediary_jar_name}</finalName>
+                     <minimizeJar>true</minimizeJar>
+                     <artifactSet>
+                        <excludes>
+                           <exclude>net.jcip:jcip-annotations:jar:</exclude>
+                           <exclude>log4j:log4j:jar:</exclude>
+                           <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
+                        </excludes>
+                     </artifactSet>
+                     <relocations>
+                        <relocation>
+                           <pattern>org.antlr.runtime</pattern>
+                           <shadedPattern>org.infinipan.objectfilter.impl.antlr.runtime</shadedPattern>
+                        </relocation>
+                     </relocations>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
 
          <plugin>

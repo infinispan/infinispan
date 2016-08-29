@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -79,5 +80,17 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       List<User> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getId());
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
+   @Override
+   public void testFullTextTerm() throws Exception {
+      super.testFullTextTerm();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
+   @Override
+   public void testFullTextPhrase() throws Exception {
+      super.testFullTextPhrase();
    }
 }

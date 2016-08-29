@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 import org.infinispan.query.remote.client.MarshallerRegistration;
@@ -17,6 +18,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
 
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
+
+   @Override
+   public Query create(String queryString) {
+      //todo [anistor] some params come from a builder, some from parsing the query string
+      return new RemoteQuery(this, cache, serializationContext, queryString, null, null, -1, -1);
+   }
 
    public RemoteQueryFactory(RemoteCacheImpl cache) {
       serializationContext = ProtoStreamMarshaller.getSerializationContext(cache.getRemoteCacheManager());
