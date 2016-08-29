@@ -9,18 +9,18 @@ NOTE: For simple usage, using the Cache API should be no different from using th
 
 ==== Performance Concerns of Certain Map Methods
 Certain methods exposed in Map have certain performance consequences when used with Infinispan, such as 
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#size%28%29[size()] , 
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#values%28%29[values()] , 
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#keySet%28%29[keySet()] and 
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#entrySet%28%29[entrySet()] .  
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#size--[size()] , 
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#values--[values()] , 
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#keySet--[keySet()] and 
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#entrySet--[entrySet()] .  
 Specific methods on the `keySet`, `values` and `entrySet` are fine for use please see their Javadoc for further details.
 
 Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
 
-It should be noted that using certain flags with the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags%28org.infinispan.context.Flag...%29[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
+It should be noted that using certain flags with the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
 
 ==== Mortal and Immortal Data
-Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#put%28K,%20V,%20long,%20java.util.concurrent.TimeUnit%29[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
+Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
 In addition to _lifespan_ , Infinispan also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used. 
 
@@ -28,11 +28,11 @@ In addition to _lifespan_ , Infinispan also supports _maxIdle_ as an additional 
 See <<_eviction_examples, these examples>> of using mortal data with Infinispan. 
 
 ==== putForExternalRead operation
-Infinispan's link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)[putForExternalRead] . This operation is particularly useful when Infinispan is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
+Infinispan's link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when Infinispan is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
 
 To achieve this, putForExternalRead acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenario, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. putForExternalRead is consider to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly.
 
-To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)[putForExternalRead] within the context of this example:
+To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] within the context of this example:
 
 [source,java]
 ----
@@ -61,7 +61,7 @@ if (cachedPerson == null) {
 
 ----
 
-Please note that link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put(K, V)[put] operation, otherwise the possibility of caching corrupt data is likely.
+Please note that link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put(K, V)[put] operation, otherwise the possibility of caching corrupt data is likely.
 
 === The AdvancedCache interface
 In addition to the simple Cache interface, Infinispan offers an link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
@@ -74,7 +74,7 @@ AdvancedCache advancedCache = cache.getAdvancedCache();
 
 
 ==== Flags
-Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags%28org.infinispan.context.Flag...%29[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
+Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
 
 [source,java]
 ----
@@ -227,7 +227,7 @@ To tune the thread pool used to dispatch such asynchronous notifications, use th
 ===  Asynchronous API
 In addition to synchronous API methods like link:http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#put%28K,%20V%29[Cache.put()] , link:http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#remove%28java.lang.Object%29[Cache.remove()] , etc., Infinispan also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
-These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putAsync%28K,%20V%29[Cache.putAsync()] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#removeAsync%28java.lang.Object%29[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html[Future] containing the actual result of the operation.
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/AsyncCache.html#putAsync-K-V-[Cache.putAsync()] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/AsyncCache.html#removeAsync-java.lang.Object-[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html[Future] containing the actual result of the operation.
 
 For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns a `String`.
 `Cache.putAsync(String key, String value)` would return a `Future<String>`.
@@ -289,7 +289,7 @@ cache.putAsync("key", "value").attachListener(futureListener);
 The Javadocs on the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] interface has some examples on using the asynchronous API, as does link:http://infinispan.blogspot.com/2009/05/whats-so-cool-about-asynchronous-api.html[this article] by Manik Surtani introducing the API.
 
 ===  Invocation Flags
-An important aspect of getting the most of Infinispan is the use of per-invocation flags in order to provide specific behaviour to each particular cache call. By doing this, some important optimizations can be implemented potentially saving precious time and network resources. One of the most popular usages of flags can be found right in Cache API, underneath the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)[putForExternalRead()] method which is used to load an Infinispan cache with data read from an external resource. In order to make this call efficient, Infinispan basically calls a normal put operation passing the following flags: link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#FAIL_SILENTLY[FAIL_SILENTLY] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#FORCE_ASYNCHRONOUS[FORCE_ASYNCHRONOUS] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#ZERO_LOCK_ACQUISITION_TIMEOUT[ZERO_LOCK_ACQUISITION_TIMEOUT]
+An important aspect of getting the most of Infinispan is the use of per-invocation flags in order to provide specific behaviour to each particular cache call. By doing this, some important optimizations can be implemented potentially saving precious time and network resources. One of the most popular usages of flags can be found right in Cache API, underneath the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead()] method which is used to load an Infinispan cache with data read from an external resource. In order to make this call efficient, Infinispan basically calls a normal put operation passing the following flags: link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#FAIL_SILENTLY[FAIL_SILENTLY] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#FORCE_ASYNCHRONOUS[FORCE_ASYNCHRONOUS] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html#ZERO_LOCK_ACQUISITION_TIMEOUT[ZERO_LOCK_ACQUISITION_TIMEOUT]
 
 What Infinispan is doing here is effectively saying that when putting data read from external read, it will use an almost-zero lock acquisition time and that if the locks cannot be acquired, it will fail silently without throwing any exception related to lock acquisition. It also specifies that regardless of the cache mode, if the cache is clustered, it will replicate asynchronously and so won't wait for responses from other nodes. The combination of all these flags make this kind of operation very efficient, and the efficiency comes from the fact this type of _putForExternalRead_ calls are used with the knowledge that client can always head back to a persistent store of some sorts to retrieve the data that should be stored in memory. So, any attempt to store the data is just a best effort and if not possible, the client should try again if there's a cache miss.
 
@@ -310,7 +310,7 @@ strictlyLocal.put("local_3", "only");
 This approach makes your code more readable.
 
 ==== Examples
-If you want to use these or any other flags available, which by the way are described in detail the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html[Flag enumeration] , you simply need to get hold of the advanced cache and add the flags you need via the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags(org.infinispan.context.Flag...)[withFlags()] method call. For example:
+If you want to use these or any other flags available, which by the way are described in detail the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/context/Flag.html[Flag enumeration] , you simply need to get hold of the advanced cache and add the flags you need via the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] method call. For example:
 
 [source,java]
 ----
@@ -321,7 +321,7 @@ cache.getAdvancedCache()
 
 ----
 
-It's worth noting that these flags are only active for the duration of the cache operation. If the same flags need to be used in several invocations, even if they're in the same transaction, link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags(org.infinispan.context.Flag...)[withFlags()] needs to be called repeatedly. Clearly, if the cache operation is to be replicated in another node, the flags are carried over to the remote nodes as well.
+It's worth noting that these flags are only active for the duration of the cache operation. If the same flags need to be used in several invocations, even if they're in the same transaction, link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] needs to be called repeatedly. Clearly, if the cache operation is to be replicated in another node, the flags are carried over to the remote nodes as well.
 
 
 ===== Suppressing return values from a put() or remove()
@@ -389,7 +389,7 @@ TreeCache treeCache = TreeCacheFactory.createTreeCache(cache);
 ==== Manipulating data in a Tree Cache
 The Tree API effectively provides two ways to interact with the data:
 
-Via link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html[TreeCache] convenience methods: These methods are located within the TreeCache interface and enable users to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#put(java.lang.String, K, V)[store] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#get(org.infinispan.tree.Fqn, K)[retrieve] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#move(org.infinispan.tree.Fqn, org.infinispan.tree.Fqn)[move] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#remove(org.infinispan.tree.Fqn, K)[remove] ...etc data with a single call that takes the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Fqn.html[Fqn] , in String or Fqn format, and the data involved in the call. For example:
+Via link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html[TreeCache] convenience methods: These methods are located within the TreeCache interface and enable users to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#put-java.lang.String-K-V-[store] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#get-org.infinispan.tree.Fqn-K-[retrieve] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#move-org.infinispan.tree.Fqn-org.infinispan.tree.Fqn-[move] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/TreeCache.html#remove-org.infinispan.tree.Fqn-K-[remove] ...etc data with a single call that takes the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Fqn.html[Fqn] , in String or Fqn format, and the data involved in the call. For example:
 
 [source,java]
 ----
@@ -443,7 +443,7 @@ john.put("surname", "Smith");
 
 ----
 
-A node also provides the ability to access its link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Node.html#getParent()[parent] or link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Node.html#getChildren()[children] . For example:
+A node also provides the ability to access its link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Node.html#getParent--[parent] or link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/tree/Node.html#getChildren--[children] . For example:
 
 [source,java]
 ----
