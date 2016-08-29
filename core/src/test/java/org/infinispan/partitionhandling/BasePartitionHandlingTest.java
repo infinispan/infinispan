@@ -325,12 +325,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       public void assertAvailabilityMode(final AvailabilityMode state) {
          for (final Cache c : cachesInThisPartition()) {
-            eventually(new Condition() {
-               @Override
-               public boolean isSatisfied() throws Exception {
-                  return partitionHandlingManager(c).getAvailabilityMode() == state;
-               }
-            });
+            eventuallyEquals(state, () -> partitionHandlingManager(c).getAvailabilityMode());
          }
       }
    }

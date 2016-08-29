@@ -1,14 +1,14 @@
 package org.infinispan.partitionhandling;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
-import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -44,29 +44,21 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
       cache(2).put(k2, "v2");
 
 
-      List<Address> allMembers = advancedCache(0).getRpcManager().getMembers();
+      HashSet<Address> allMembers = new HashSet<>(advancedCache(0).getRpcManager().getMembers());
       //use set comparison as the merge view will reshuffle the order of nodes
-      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < numMembersInCluster; i++) {
-               if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
-                  return false;
-               }
-            }
-            return true;
-         }
-      });
+      assertStableTopologyMembers(allMembers, partitionHandlingManager(0));
+      assertStableTopologyMembers(allMembers, partitionHandlingManager(1));
+      assertStableTopologyMembers(allMembers, partitionHandlingManager(2));
+      for (int i = 0; i < numMembersInCluster; i++) {
+         assertEquals(AvailabilityMode.AVAILABLE, partitionHandlingManager(i).getAvailabilityMode());
+      }
 
       splitCluster(p0.getNodes(), p1.getNodes());
 
       TestingUtil.waitForRehashToComplete(cache(p0.node(0)), cache(p0.node(1)));
       partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
       partition(1).assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
-      assertEquals(partitionHandlingManager(p1.node(0)).getLastStableTopology().getMembers(), allMembers);
+      assertStableTopologyMembers(allMembers, partitionHandlingManager(p1.node(0)));
 
       //1. check key visibility in partition 1
       partition(0).assertKeyAvailableForRead(k0, "v0");
@@ -102,9 +94,9 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
       partition(0).merge(partition(1));
 
       //use set comparison as the merge view will reshuffle the order of nodes
-      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      expectStableTopologyMembers(allMembers, partitionHandlingManager(0));
+      expectStableTopologyMembers(allMembers, partitionHandlingManager(1));
+      expectStableTopologyMembers(allMembers, partitionHandlingManager(2));
       partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
 
       // 4. check data seen correctly
@@ -135,4 +127,13 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
 
       assertNull(cache(0).get("nonExistentKey"));
    }
+
+   private void assertStableTopologyMembers(HashSet<Address> allMembers, PartitionHandlingManager phm) {
+      assertEquals(allMembers, new HashSet<Address>(phm.getLastStableTopology().getMembers()));
+   }
+
+   private void expectStableTopologyMembers(HashSet<Address> expected, PartitionHandlingManager phm) {
+      eventuallyEquals(expected, () -> new HashSet<Address>(phm.getLastStableTopology().getMembers()));
+   }
+
 }
