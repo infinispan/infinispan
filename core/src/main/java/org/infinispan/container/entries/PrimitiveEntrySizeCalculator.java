@@ -2,7 +2,7 @@ package org.infinispan.container.entries;
 
 import java.lang.reflect.Array;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
+import org.infinispan.commons.util.concurrent.jsr166mods.AbstractEntrySizeCalculatorHelper;
 
 import sun.misc.Unsafe;
 

@@ -35,7 +35,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.Constants;

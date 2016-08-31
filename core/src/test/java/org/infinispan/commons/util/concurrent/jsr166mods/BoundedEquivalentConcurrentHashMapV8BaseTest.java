@@ -1,4 +1,4 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -24,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.NullEvictionListener;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
+import org.infinispan.commons.util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8.NullEvictionListener;
 import org.infinispan.util.EquivalentHashMapTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 7.1
  */
-@Test(groups = "functional", testName = "util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8BaseTest")
+@Test(groups = "functional", testName = "util.concurrent.jsr166mods.BoundedEquivalentConcurrentHashMapV8BaseTest")
 public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends EquivalentHashMapTest {
 
    protected final Log log = LogFactory.getLog(getClass());
