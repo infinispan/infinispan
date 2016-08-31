@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -536,8 +537,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       c = cm.getCacheConfiguration("custom-container");
       assertTrue(c.dataContainer().dataContainer() instanceof QueryableDataContainer);
-      assertTrue(c.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
-      assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
+      assertTrue(c.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
+      assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
 
       c = cm.getCacheConfiguration("store-as-binary");
       assertTrue(c.storeAsBinary().enabled());

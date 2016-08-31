@@ -15,6 +15,7 @@ import java.io.Serializable;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @Deprecated Equivalence is to be removed (byte[] are directly supported)
  */
 public interface Equivalence<T> extends Serializable {
 

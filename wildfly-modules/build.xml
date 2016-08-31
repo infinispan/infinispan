@@ -56,6 +56,10 @@
 
         </filterset>
 
+        <module-def name="com.github.ben-manes.caffeine" slot="${infinispan.slot}">
+            <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine" />
+        </module-def>
+
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
             <maven-resource group="org.antlr" artifact="antlr-runtime" />
         </module-def>
@@ -144,6 +148,7 @@
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
             <maven-resource group="org.infinispan" artifact="infinispan-commons"/>
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
+            <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine"/>
         </module-def>
 
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">

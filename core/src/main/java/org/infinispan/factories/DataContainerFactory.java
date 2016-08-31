@@ -11,6 +11,7 @@ import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 /**
  * Constructs the data container
@@ -54,9 +55,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                   EntrySizeCalculator esc;
                   if (configuration.storeAsBinary().storeKeysAsBinary() &&
                           configuration.storeAsBinary().storeValuesAsBinary()) {
-                     esc = new MarshalledValueEntrySizeCalculator();
+                     esc = new WrappedByteArraySizeCalculator(new MarshalledValueEntrySizeCalculator());
                   } else {
-                     esc = new PrimitiveEntrySizeCalculator();
+                     esc = new WrappedByteArraySizeCalculator<>(new PrimitiveEntrySizeCalculator());
                   }
                   dataContainer = DefaultDataContainer.boundedDataContainer(
                           level, thresholdSize, st, configuration.eviction().threadPolicy(), keyEquivalence,

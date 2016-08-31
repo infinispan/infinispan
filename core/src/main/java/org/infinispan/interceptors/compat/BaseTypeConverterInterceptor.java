@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.Caches;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -29,6 +30,7 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -52,9 +54,9 @@ import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
  */
 public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncInterceptor {
 
-   private InternalEntryFactory entryFactory;
-   private VersionGenerator versionGenerator;
-   private Cache<K, V> cache;
+   protected InternalEntryFactory entryFactory;
+   protected VersionGenerator versionGenerator;
+   protected Cache<K, V> cache;
 
 
    @Inject
@@ -67,10 +69,10 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    /**
     * Subclasses need to return a TypeConverter instance that is appropriate for a cache operation with the specified flags.
     *
-    * @param flags the set of flags for the current cache operation
+    * @param command the command for the current cache operation
     * @return the converter, never {@code null}
     */
-   protected abstract TypeConverter<Object, Object, Object, Object> determineTypeConverter(Set<Flag> flags);
+   protected abstract TypeConverter<Object, Object, Object, Object> determineTypeConverter(FlagAffectedCommand command);
 
    @Override
    public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -78,7 +80,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          return super.visitPutKeyValueCommand(ctx, command);
       }
       Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(command.getValue()));
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> converter.unboxValue(rv));
@@ -88,7 +90,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Map<Object, Object> map = command.getMap();
-         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
          Map<Object, Object> convertedMap = new HashMap<>(map.size());
          for (Entry<Object, Object> entry : map.entrySet()) {
             convertedMap.put(converter.boxKey(entry.getKey()), converter.boxValue(entry.getValue()));
@@ -104,7 +106,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rv == null) {
@@ -120,7 +122,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rv == null) {
@@ -139,7 +141,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Collection<?> keys = command.getKeys();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       Set<Object> boxedKeys = new LinkedHashSet<>(keys.size());
       for (Object key : keys) {
          boxedKeys.add(converter.boxKey(key));
@@ -187,7 +189,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          return super.visitReplaceCommand(ctx, command);
       }
       Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       Object oldValue = command.getOldValue();
       command.setKey(converter.boxKey(key));
       command.setOldValue(converter.boxValue(oldValue));
@@ -203,7 +205,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       });
    }
 
-   private void addVersionIfNeeded(MetadataAwareCommand cmd) {
+   protected void addVersionIfNeeded(MetadataAwareCommand cmd) {
       Metadata metadata = cmd.getMetadata();
       if (metadata.version() == null) {
          Metadata newMetadata = metadata.builder().version(versionGenerator.generateNew()).build();
@@ -217,7 +219,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          return super.visitRemoveCommand(ctx, command);
       }
       Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       Object conditionalValue = command.getValue();
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(conditionalValue));
@@ -237,10 +239,11 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          return invokeNext(ctx, command);
       }
 
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         KeySetCommand keySetCommand = (KeySetCommand) rCommand;
          CacheSet<K> set = (CacheSet<K>) rv;
-         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(keySetCommand);
+         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, keySetCommand), set) {
             @Override
             public CloseableIterator<K> iterator() {
                return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
@@ -275,10 +278,11 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
+
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand.getFlags());
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand);
          return new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
             @Override
             public CloseableIterator<CacheEntry<K, V>> iterator() {
@@ -317,17 +321,20 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       V newValue = (V) converter.unboxValue(entry.getValue());
       // If either value changed then make a copy
       if (newKey != entry.getKey() || newValue != entry.getValue()) {
+         if (entry instanceof InternalCacheEntry) {
+            return entryFactory.create(newKey, newValue, (InternalCacheEntry) entry);
+         }
          return entryFactory.create(newKey, newValue, entry.getMetadata());
       }
       return entry;
    }
 
-   private static class TypeConverterIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
+   public static class TypeConverterIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
       private final CloseableIterator<CacheEntry<K, V>> iterator;
       private final TypeConverter<Object, Object, Object, Object> converter;
       private final InternalEntryFactory entryFactory;
 
-      private TypeConverterIterator(CloseableIterator<CacheEntry<K, V>> iterator,
+      public TypeConverterIterator(CloseableIterator<CacheEntry<K, V>> iterator,
                                     TypeConverter<Object, Object, Object, Object> converter,
                                     InternalEntryFactory entryFactory) {
          this.iterator = iterator;

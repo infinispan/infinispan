@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
@@ -31,9 +30,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    private Stream<Integer> justCompletedSegments = Stream.empty();
 
-   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager,
-           Equivalence<? super K> keyEquivalence) {
-      super(keyEquivalence);
+   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
       this.entryFactory = entryFactory;
       this.distributionManager = distributionManager;
       // we assume the # of segments won't change between different consistent hashes
@@ -45,10 +42,11 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    @Override
-   public boolean handleEvent(CacheEntryEvent<K, V> event, ListenerInvocation<Event<K, V>> invocation) {
-      K key = event.getKey();
+   public boolean handleEvent(EventWrapper<K, V, CacheEntryEvent<K, V>> wrapped, ListenerInvocation<Event<K, V>> invocation) {
+      K key = wrapped.getKey();
       // If we already completed, don't enqueue
       boolean enqueued = !completed.get();
+      CacheEntryEvent<K, V> event = wrapped.getEvent();
       CacheEntry<K, V> cacheEntry = entryFactory.create(event.getKey(), event.getValue(), event.getMetadata());
       if (enqueued && !addEvent(key, cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
          // If it wasn't added it means we haven't processed this value yet, so add it to the queue for this segment

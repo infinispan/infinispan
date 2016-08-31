@@ -42,6 +42,7 @@ public final class Deployments {
             .addAsLibraries(
                   new File("target/test-libs/infinispan-core.jar"),
                   new File("target/test-libs/infinispan-commons.jar"),
+                  new File("target/test-libs/caffeine.jar"),
                   new File("target/test-libs/jboss-marshalling.jar"),
                   new File("target/test-libs/jboss-marshalling-river.jar"),
                   new File("target/test-libs/wildfly-controller-client.jar"))

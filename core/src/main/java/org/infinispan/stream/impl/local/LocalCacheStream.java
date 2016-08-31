@@ -28,6 +28,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
 import org.infinispan.stream.impl.intops.object.FlatMapOperation;
@@ -43,6 +44,7 @@ import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.intops.object.SkipOperation;
 import org.infinispan.stream.impl.intops.object.SortedComparatorOperation;
 import org.infinispan.stream.impl.intops.object.SortedOperation;
+import org.infinispan.util.function.RemovableFunction;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -424,12 +426,22 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
 
    @Override
    public CloseableIterator<R> iterator() {
-      // If the stream is null we can assume no intermediate operations and thus we can support remove
-      if (intermediateOperations.isEmpty()) {
+      int size = intermediateOperations.size();
+      if (size == 0) {
+         // If no intermediate operations we can support remove
          return streamSupplier.removableIterator(Closeables.iterator(createStream()));
-      } else {
-         return Closeables.iterator(createStream());
       }
+      else if (size == 1) {
+         IntermediateOperation intOp = intermediateOperations.peek();
+         if (intOp instanceof MapOperation) {
+            MapOperation map = (MapOperation) intOp;
+            if (map.getFunction() instanceof RemovableFunction) {
+               // If function was removable means we can just use remove as is
+               return streamSupplier.removableIterator(Closeables.iterator(createStream()));
+            }
+         }
+      }
+      return Closeables.iterator(createStream());
    }
 
    @Override

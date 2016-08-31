@@ -3,9 +3,14 @@ package org.infinispan.factories;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.cache.impl.CompatibilityAdvancedCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
+import org.infinispan.cache.impl.TypeConverterDelegatingAdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.compat.TypeConverter;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.eviction.ActivationManager;
@@ -13,6 +18,7 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -70,7 +76,21 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                String cacheName) throws Exception {
       AdvancedCache<K, V> cache = new CacheImpl<K, V>(cacheName);
+      CompatibilityModeConfiguration compatibilityModeConfiguration = configuration.compatibility();
+      Marshaller marshaller;
+      TypeConverter converter = new WrappedByteArrayConverter();
+      if (compatibilityModeConfiguration.enabled()) {
+         marshaller = compatibilityModeConfiguration.marshaller();
+         cache = new CompatibilityAdvancedCache<>(cache, marshaller, converter);
+      } else {
+         marshaller = null;
+         cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
+      }
       bootstrap(cacheName, cache, configuration, globalComponentRegistry);
+      if (marshaller != null) {
+         componentRegistry.wireDependencies(marshaller);
+      }
+      componentRegistry.registerComponent(converter, TypeConverter.class);
       return cache;
    }
 

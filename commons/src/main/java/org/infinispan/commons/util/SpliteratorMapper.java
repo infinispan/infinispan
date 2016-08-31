@@ -44,7 +44,13 @@ public class SpliteratorMapper<E, S> implements Spliterator<S> {
 
    @Override
    public int characteristics() {
-      return spliterator.characteristics();
+      int characteristics = spliterator.characteristics();
+      if (mapper instanceof DistinctFunction) {
+         return characteristics;
+      } else {
+         // Have to unset distinct if the function wasn't distinct
+         return characteristics & ~Spliterator.DISTINCT;
+      }
    }
 
    @Override

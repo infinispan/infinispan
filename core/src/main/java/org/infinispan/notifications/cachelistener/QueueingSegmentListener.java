@@ -53,11 +53,11 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Ca
    /**
     * This should be called by any listener when an event is generated to possibly queue it.  If it is not
     * queued, then the caller should take appropriate action such as manually firing the invocation.
-    * @param event The event that was just raised
+    * @param wrapper The event that was just raised
     * @param invocation The invocation the event would be fired on
     * @return Whether or not it was queued.  If it wasn't queued the invocation should be fired manually
     */
-   public boolean handleEvent(E event, ListenerInvocation<Event<K, V>> invocation);
+   public boolean handleEvent(EventWrapper<K, V, E> wrapper, ListenerInvocation<Event<K, V>> invocation);
 
    /**
     * This is needed to tell the handler when the complete iteration is done.  Depending on the implementation

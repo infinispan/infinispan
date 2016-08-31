@@ -6,6 +6,7 @@
    </resources>
 
    <dependencies>
+      <module name="org.infinispan.commons"/>
       <module name="org.infinispan.query.dsl"/>
       <module name="org.antlr.antlr-runtime"/>
       <module name="org.hibernate.hql.parser"/>

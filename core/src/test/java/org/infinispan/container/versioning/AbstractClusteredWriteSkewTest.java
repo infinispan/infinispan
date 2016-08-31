@@ -300,23 +300,20 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
          primaryOwner.put(key, "v2");
       }
 
-      boolean evicted = false;
-      int i = 0;
       DataContainer dataContainer = TestingUtil.extractComponent(primaryOwner, DataContainer.class);
-      while (i < MAX_ENTRIES * 2) {
-         MagicKey tempKey = new MagicKey("other-key-" + i, primaryOwner);
-         primaryOwner.put(tempKey, "value");
-         // LIRS requires the key to be read again to force it to be hot, or else each write
-         // will evict the most previous
-         primaryOwner.get(tempKey);
-         if (dataContainer.peek(key) == null) {
-            //the key was evicted and it is only in persistence.
-            evicted = true;
-            break;
+      MagicKey[] keys = new MagicKey[MAX_ENTRIES];
+      int insertCount = 10;
+      for (int i = 0; i < insertCount; ++i) {
+         for (int j = 0; j < MAX_ENTRIES; ++j) {
+            MagicKey tempKey = keys[j];
+            if (tempKey == null) {
+               tempKey = new MagicKey("other-key-" + j, primaryOwner);
+               keys[i] = tempKey;
+            }
+            primaryOwner.put(tempKey, "value");
          }
-         ++i;
       }
-      assertTrue("The key was not evicted after " + MAX_ENTRIES + " inserts", evicted);
+      assertTrue("The key was not evicted after " + insertCount + " inserts", dataContainer.peek(key) == null);
 
       log.debugf("It is going to try to commit the suspended transaction");
       try {

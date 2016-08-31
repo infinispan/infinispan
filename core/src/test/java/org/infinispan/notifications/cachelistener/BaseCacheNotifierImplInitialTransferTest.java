@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -37,6 +38,7 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -121,6 +123,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       Answer answer = i -> Mockito.mock((Class) i.getArguments()[0]);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
+            new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
                            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
