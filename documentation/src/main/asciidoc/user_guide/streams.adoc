@@ -46,7 +46,7 @@ link:http://spark.apache.org/[Apache Spark].
 
 This option is only supported for replicated and distributed caches.  This allows the user to operate upon
 a subset of data at a time as determined by the
-link:https://docs.jboss.org/infinispan/8.2/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner].
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner].
 The segments can be filtered by invoking
 link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#filterKeySegments-java.util.Set-[filterKeySegments]
 method on the `CacheStream`.  This is applied after the key filter but before any intermediate operations are performed.
@@ -277,7 +277,7 @@ in a completed batch will be ran again when the rehash failure operation occurs.
 node will not cause this issue as the rehash failover doesn't occur until all responses are received.
 
 These operations batch sizes are both controlled by the same value which can be configured by invoking
-link:https://docs.jboss.org/infinispan/8.2/apidocs/org/infinispan/CacheStream.html#distributedBatchSize-int-[distributedBatchSize]
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#distributedBatchSize-int-[distributedBatchSize]
 method on the `CacheStream`.  This value will default to the `chunkSize` configured in state transfer.
 Unfortunately this value is a tradeoff with memory usage vs performance vs at least once and your
 mileage may vary.
