@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -18,6 +19,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Base64;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
@@ -221,16 +223,22 @@ public class SingleNodeJdbcStoreIT {
         assertCleanCacheAndStoreHotrod(stringCache, stringDB.stringTable);
         stringCache.put("k1", "v1");
         stringCache.put("k2", "v2");
-        assertTrue(!stringDB.stringTable.exists() || stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")) == null);
-        assertTrue(!stringDB.stringTable.exists() || stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k2")) == null);
+        boolean tableExists = stringDB.stringTable.exists();
+        if (tableExists) {
+            assertNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
+            assertNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k2")));
+        }
         stringCache.put("k3", "v3");
-        //now k1 evicted and stored in store
+        //now a key would be evicted and stored in store
         assertTrue(2 >= server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntries());
-        assertNotNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
+        if (tableExists) {
+            assertEquals(1, stringDB.stringTable.getAllKeys().size());
+        }
     }
 
     public void testRestartStringStoreAfter(boolean killed) throws Exception {
         assertEquals(0, server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntries());
+
         assertNotNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
         if (killed) {
             assertEquals(1, stringDB.stringTable.getAllRows().size());
@@ -260,7 +268,7 @@ public class SingleNodeJdbcStoreIT {
         assertTrue(2 >= server.getCacheManager(binaryMBeans.managerName).getCache(binaryMBeans.cacheName).getNumberOfEntries());
         byte[] k1Stored = getRealKeyStored(key1, binaryCache);
         assertTrue(!binaryDB.bucketTable.getAllRows().isEmpty());
-        assertNotNull(binaryDB.bucketTable.getBucketByKey(k1Stored));
+        assertNotNull(binaryDB.bucketTable.getBucketByKey(new WrappedByteArray(k1Stored)));
     }
 
     public void testRestartBinaryStoreAfter(boolean killed) throws Exception {
@@ -270,7 +278,7 @@ public class SingleNodeJdbcStoreIT {
         byte[] k1Stored = getRealKeyStored(key1, binaryCache);
         byte[] k3Stored = getRealKeyStored(key3, binaryCache);
         assertEquals(0, server.getCacheManager(binaryMBeans.managerName).getCache(binaryMBeans.cacheName).getNumberOfEntries());
-        assertNotNull(binaryDB.bucketTable.getBucketByKey(k1Stored));
+        assertNotNull(binaryDB.bucketTable.getBucketByKey(new WrappedByteArray(k1Stored)));
         if (killed) {
             assertEquals(1, binaryDB.bucketTable.getAllRows().size());
             assertEquals("v1", binaryCache.get(key1));
@@ -351,8 +359,8 @@ public class SingleNodeJdbcStoreIT {
         byte[] k2Stored = getRealKeyStored(key2, binaryWPCache);
         binaryWPDB.bucketTable.waitForTableCreation();
         assertEquals(2, binaryWPDB.bucketTable.getAllRows().size());
-        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k1Stored));
-        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k2Stored));
+        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(new WrappedByteArray(k1Stored)));
+        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(new WrappedByteArray(k2Stored)));
     }
 
     public void testRestartBinaryStoreWPAfter() throws Exception {
@@ -369,8 +377,8 @@ public class SingleNodeJdbcStoreIT {
         assertEquals("v1", binaryWPCache.get(key1));
         assertEquals("v2", binaryWPCache.get(key2));
         assertEquals(2, binaryWPDB.bucketTable.getAllRows().size());
-        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k1Stored));
-        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k2Stored));
+        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(new WrappedByteArray(k1Stored)));
+        assertNotNull(binaryWPDB.bucketTable.getBucketByKey(new WrappedByteArray(k2Stored)));
     }
 
     public void testRestartMixedStoreWPBefore() throws Exception {
@@ -414,9 +422,9 @@ public class SingleNodeJdbcStoreIT {
     public String getStoredKey(RemoteCache cache, String key) throws IOException, InterruptedException {
         // 1. marshall the key
         // 2. encode it with base64 (that's what DefaultTwoWayKey2StringMapper does)
-        // 3. prefix it with 9 (again, done by DefaultTwoWayKey2StringMapper to mark the key as byte array type)
+        // 3. prefix it with 8 (again, done by DefaultTwoWayKey2StringMapper to mark the key as wrapped byte array type)
         // 4. prefix it with UTF-16 BOM (that is what DefaultTwoWayKey2StringMapper does for non string values)
-        return '\uFEFF' + "9" + Base64.encodeBytes(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
+        return '\uFEFF' + "8" + Base64.encodeBytes(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans mbeans) {

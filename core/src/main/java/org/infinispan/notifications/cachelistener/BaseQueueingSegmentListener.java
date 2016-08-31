@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,8 +35,8 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    protected final AtomicBoolean completed = new AtomicBoolean(false);
    protected final ConcurrentMap<K, Object> notifiedKeys;
 
-   protected BaseQueueingSegmentListener(Equivalence<? super K> keyEquivalence) {
-      this.notifiedKeys = new EquivalentConcurrentHashMapV8<>(keyEquivalence, AnyEquivalence.getInstance());
+   protected BaseQueueingSegmentListener() {
+      this.notifiedKeys = new ConcurrentHashMap<>();
    }
 
    @Override

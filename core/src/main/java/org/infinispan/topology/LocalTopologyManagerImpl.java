@@ -10,12 +10,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.Version;
-import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -613,8 +612,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public void handleCacheShutdown(String cacheName) {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-      CacheImpl<?, ?> cache = (CacheImpl<?, ?>) cr.getComponent(Cache.class);
-      cache.performGracefulShutdown();
+      // Perform any orderly shutdown operations here
+      PassivationManager passivationManager = cr.getComponent(PassivationManager.class);
+      if (passivationManager != null) {
+         passivationManager.passivateAll();
+      }
+
       // The cache has shutdown, write the CH state
       ScopedPersistentState cacheState = new ScopedPersistentStateImpl(cacheName);
       cacheState.setProperty(GlobalStateManagerImpl.VERSION, Version.getVersion());

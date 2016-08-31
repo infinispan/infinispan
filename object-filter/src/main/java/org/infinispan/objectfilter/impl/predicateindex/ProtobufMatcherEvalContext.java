@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.io.IOException;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -32,7 +33,12 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
       super(userContext, eventType, instance);
       this.serializationContext = serializationContext;
       try {
-         ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) getInstance());
+         Object inst = getInstance();
+         if (inst != null && inst.getClass() == WrappedByteArray.class) {
+            ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, ((WrappedByteArray) inst).getBytes());
+         } else {
+            ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) inst);
+         }
       } catch (IOException e) {
          throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
       }

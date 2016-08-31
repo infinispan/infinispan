@@ -51,6 +51,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -947,6 +948,10 @@ public class TestingUtil {
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<?, ?> cache) {
+      if (cache instanceof AbstractDelegatingCache) {
+         // Need to unwrap to the base cache
+         return extractCommandsFactory(extractField(cache, "cache"));
+      }
       return (CommandsFactory) extractField(cache, "commandsFactory");
    }
 

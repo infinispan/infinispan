@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -20,7 +21,7 @@ import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 public class PerKeyLockContainer implements LockContainer {
 
    private static final int INITIAL_CAPACITY = 32;
-   private final EquivalentConcurrentHashMapV8<Object, InfinispanLock> lockMap;
+   private final ConcurrentMap<Object, InfinispanLock> lockMap;
    private TimeService timeService;
 
    public PerKeyLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {

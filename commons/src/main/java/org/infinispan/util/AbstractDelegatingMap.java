@@ -9,6 +9,11 @@ public abstract class AbstractDelegatingMap<K, V> implements Map<K, V> {
    protected abstract Map<K, V> delegate();
 
    @Override
+   public V putIfAbsent(K key, V value) {
+      return delegate().putIfAbsent(key, value);
+   }
+
+   @Override
    public int size() {
       return delegate().size();
    }

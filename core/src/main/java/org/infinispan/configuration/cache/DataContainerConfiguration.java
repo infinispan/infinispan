@@ -48,14 +48,18 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return dataContainer.get();
    }
 
-   @SuppressWarnings("unchecked")
+   /**
+    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    */
    public <K> Equivalence<K> keyEquivalence() {
-      return keyEquivalence.get();
+      return AnyEquivalence.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
+   /**
+    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    */
    public <V> Equivalence<V> valueEquivalence() {
-      return valueEquivalence.get();
+      return AnyEquivalence.getInstance();
    }
 
    public AttributeSet attributes() {

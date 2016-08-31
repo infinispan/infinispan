@@ -21,6 +21,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
@@ -60,17 +61,9 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          cache.put("key-" + (i + 1), "value-" + (i + 1));
       }
       assertEquals(CACHE_SIZE, cache.size());
-      int expectedEvictions;
-      if (getEvictionStrategy() == EvictionStrategy.LIRS) {
-         // Eviction count will be Size + (Size * .05) rounded up (since the first elements will be in resident blocks
-         // so they won't cause evictions to occur
-         expectedEvictions = (int) Math.ceil(CACHE_SIZE + (CACHE_SIZE * .05));
-      } else {
-         // Otherwise is LRU and that will evict on each write
-         expectedEvictions = CACHE_SIZE * 2;
-      }
-      assertEquals("eviction events count should be same with case size: " + evictionListener.getEvictedEvents(),
-            expectedEvictions, evictionListener.getEvictedEvents().size());
+      // We don't know for sure how many will be evicted due to randomness, but we know they MUST evict
+      // at least a size worth since we are writing more than double
+      assertTrue(evictionListener.evictedEntries.size() > CACHE_SIZE);
    }
 
    public void testSimpleExpirationMaxIdle() throws Exception {

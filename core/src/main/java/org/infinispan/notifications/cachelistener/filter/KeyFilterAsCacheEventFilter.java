@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -23,7 +24,7 @@ public class KeyFilterAsCacheEventFilter<K> implements CacheEventFilter<K, Objec
    private final KeyFilter<? super K> filter;
 
    public KeyFilterAsCacheEventFilter(KeyFilter<? super K> filter) {
-      this.filter = filter;
+      this.filter = Objects.requireNonNull(filter);
    }
 
    @Override

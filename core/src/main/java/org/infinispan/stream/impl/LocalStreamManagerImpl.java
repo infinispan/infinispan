@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -103,10 +104,20 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       }
    }
 
+   private static <K, V> Cache unwrapCache(Cache<K, V> cache) {
+      if (cache instanceof AbstractDelegatingCache) {
+         return unwrapCache(((AbstractDelegatingCache) cache).getDelegate());
+      }
+      return cache;
+   }
+
    @Inject
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
            Configuration configuration, CommandsFactory factory) {
-      this.cache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
+      // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
+      // stack in the operation itself.
+      this.cache = unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
       this.cacheName = ByteString.fromString(cache.getName());
       this.registry = registry;
       this.stm = stm;
