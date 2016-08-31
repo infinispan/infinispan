@@ -65,6 +65,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -218,6 +219,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
       return new PutKeyValueCommand(key, value, false, notifier, metadata, flagsBitSet,
                                     configuration.dataContainer().valueEquivalence(), generateUUID());
+   }
+
+   @Override
+   public SinglePutKeyValueCommand buildSinglePutKeyValueCommand(Object key, Object value) {
+      return new SinglePutKeyValueCommand(cacheName, key, generateUUID(), value);
    }
 
    @Override
@@ -497,6 +503,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier, configuration);
+            break;
+         case SinglePutKeyValueCommand.COMMAND_ID:
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());

@@ -54,9 +54,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -157,6 +159,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private LocalTopologyManager localTopologyManager;
    private volatile boolean stopping = false;
 
+   private boolean isSinglePutCache = false;
+
    public CacheImpl(String name) {
       this.name = name;
    }
@@ -212,6 +216,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       // have to have access to the default metadata on some operations
       defaultMetadata = new EmbeddedMetadata.Builder()
               .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
+
+      isSinglePutCache = detectSinglePutCache(config);
+   }
+
+   private boolean detectSinglePutCache(Configuration config) {
+      return !config.transaction().transactionMode().isTransactional() // Is non-tx?
+            && config.dataContainer().keyEquivalence() instanceof AnyEquivalence // Is key equivalence default?
+            && config.dataContainer().valueEquivalence() instanceof AnyEquivalence // Is value equivalence default?
+            && !config.unsafe().unreliableReturnValues() // is not unsafe?
+            && !config.compatibility().enabled() // is not compatibility
+            ;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -1111,8 +1126,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V put(K key, V value, Metadata metadata, long explicitFlags) {
       assertKeyValueNotNull(key, value);
+      if (isSinglePutCache &&
+            metadata == defaultMetadata && // Is metadata default?
+            explicitFlags == EnumUtil.IGNORE_RETURN_VALUES_BIT_SET && // Is explicit flags only IGNORE_RETURN_VALUES?
+            hasNoCreatedOrModifiedListeners()) { // Has no listeners?
+         SinglePutKeyValueCommand command = commandsFactory.buildSinglePutKeyValueCommand(key, value);
+         InvocationContext ctx = invocationContextFactory.createSingleKeyNonTxInvocationContext();
+         ctx.setLockOwner(command.getKeyLockOwner());
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      }
+
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       return putInternal(key, value, metadata, explicitFlags, ctx);
+   }
+
+   private boolean hasNoCreatedOrModifiedListeners() {
+      return !notifier.hasCreatedListeners() && !notifier.hasModifiedListeners();
    }
 
    @SuppressWarnings("unchecked")

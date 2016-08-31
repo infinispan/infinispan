@@ -6,6 +6,7 @@ import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.CustomInterceptorConfigTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
@@ -28,6 +29,10 @@ public class CustomInterceptorException extends SingleCacheManagerTest {
       eCm.getCache().getAdvancedCache().addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor() {
          @Override
          public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+            throw new IllegalStateException("Induce failure!");
+         }
+         @Override
+         public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
             throw new IllegalStateException("Induce failure!");
          }
       }, 1);

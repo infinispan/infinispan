@@ -27,6 +27,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
@@ -124,6 +125,27 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      MarshalledValue key;
+      MarshalledValue value;
+      if (wrapKeys) {
+         if (!isTypeExcluded(command.getKey().getClass())) {
+            key = createMarshalledValue(command.getKey(), ctx);
+            command.setKey(key);
+         }
+      }
+
+      if (wrapValues) {
+         if (!isTypeExcluded(command.getValue().getClass())) {
+            value = createMarshalledValue(command.getValue(), ctx);
+            command.setValue(value);
+         }
+      }
+
+      return ctx.onReturn(processRetValReturnHandler);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       MarshalledValue key;
       MarshalledValue value;
       if (wrapKeys) {

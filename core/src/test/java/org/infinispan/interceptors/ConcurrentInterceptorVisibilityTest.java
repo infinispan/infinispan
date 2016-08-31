@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
@@ -129,6 +130,18 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
          return ret;
       }
 
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         // First execute the operation itself
+         Object ret = super.visitSinglePutKeyValueCommand(ctx, command);
+         assertKeySet = (cache.keySet().size() == 1);
+         // After entry has been committed to the container
+         log.info("Cache entry created, now check in different thread");
+         latch.countDown();
+         // Force a bit of delay in the listener
+         TestingUtil.sleepThread(3000);
+         return ret;
+      }
    }
 
 }

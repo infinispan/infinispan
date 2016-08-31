@@ -8,6 +8,7 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -75,6 +76,14 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
+         streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
+      }
+      return ctx.onReturn(writeSkewReturnHandler);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
       }

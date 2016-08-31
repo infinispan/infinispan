@@ -42,6 +42,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -291,7 +292,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
-   private void wrapEntryForPutIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      wrapEntryForPutIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+   }
+
+   private void wrapEntryForPutIfNeeded(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
          boolean skipRead = command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional();
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, skipRead, false);

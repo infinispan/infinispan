@@ -20,6 +20,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -274,6 +275,15 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          Object result = super.visitPutKeyValueCommand(ctx, command);
+         if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            doBlock(ctx, command);
+         }
+         return result;
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         Object result = super.visitSinglePutKeyValueCommand(ctx, command);
          if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
             doBlock(ctx, command);
          }

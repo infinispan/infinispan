@@ -110,4 +110,9 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
     * @param typeConverter the converter instance; can be {@code null}
     */
    void setTypeConverter(TypeConverter typeConverter);
+
+   boolean hasCreatedListeners();
+
+   boolean hasModifiedListeners();
+
 }

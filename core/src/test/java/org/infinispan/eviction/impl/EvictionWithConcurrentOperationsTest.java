@@ -19,6 +19,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -575,6 +576,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return handle(ctx, command, beforePut, afterPut);
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
          return handle(ctx, command, beforePut, afterPut);
       }
 

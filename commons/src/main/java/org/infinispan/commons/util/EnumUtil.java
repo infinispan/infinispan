@@ -15,6 +15,7 @@ public class EnumUtil {
    }
 
    public static final long EMPTY_BIT_SET = 0L;
+   public static final long IGNORE_RETURN_VALUES_BIT_SET = 524288L;
 
    public static <E extends Enum<E>> long bitSetOf(Collection<E> enums) {
       if (enums == null || enums.isEmpty()) {

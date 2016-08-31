@@ -24,6 +24,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
@@ -120,6 +121,21 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             // If the state transfer interceptor has to retry the command, it should ignore the previous
             // value.
             PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+            putKeyValueCommand.setValueMatcher(
+                  putKeyValueCommand.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
+            return null;
+         });
+      }
+      return handleTxWriteCommand(ctx, command, command.getKey());
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous
+            // value.
+            SinglePutKeyValueCommand putKeyValueCommand = (SinglePutKeyValueCommand) rCommand;
             putKeyValueCommand.setValueMatcher(
                   putKeyValueCommand.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
             return null;

@@ -17,6 +17,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 
@@ -50,6 +51,11 @@ public class AffectedKeysVisitor extends AbstractVisitor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+      return command.getAffectedKeys();
+   }
+
+   @Override
+   public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) {
       return command.getAffectedKeys();
    }
 

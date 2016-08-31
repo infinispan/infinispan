@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
@@ -170,6 +171,17 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
             throw new ClassCircularityError();
          else
             return super.visitPutKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         Object k = command.getKey();
+         if (k == FailureType.EXCEPTION_FROM_INTERCEPTOR)
+            throw new EmptyStackException();
+         else if (k == FailureType.ERROR_FROM_INTERCEPTOR)
+            throw new ClassCircularityError();
+         else
+            return super.visitSinglePutKeyValueCommand(ctx, command);
       }
    }
 }

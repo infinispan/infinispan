@@ -7,11 +7,13 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
@@ -120,10 +122,20 @@ public class LockingTest extends SingleCacheManagerTest {
 
          @Override
          public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+            checkpoint();
+            return invokeNextInterceptor(ctx, command);
+         }
+
+         private void checkpoint() throws InterruptedException, TimeoutException {
             if (first.compareAndSet(false, true)) {
                checkPoint.trigger("before-block");
                checkPoint.awaitStrict("block", 30, TimeUnit.SECONDS);
             }
+         }
+
+         @Override
+         public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+            checkpoint();
             return invokeNextInterceptor(ctx, command);
          }
       }, CallInterceptor.class);

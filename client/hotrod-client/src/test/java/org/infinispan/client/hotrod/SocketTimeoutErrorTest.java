@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -87,6 +88,16 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
          }
 
          return super.visitPutKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         if (unmarshall(command.getKey()).equals("FailFailFail")) {
+            Thread.sleep(6000);
+            return null;
+         }
+
+         return super.visitSinglePutKeyValueCommand(ctx, command);
       }
 
       private String unmarshall(Object key) throws Exception {

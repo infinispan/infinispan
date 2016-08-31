@@ -9,12 +9,14 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
@@ -98,11 +100,20 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return registerProtoFiles(command, command.getValue());
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         return registerProtoFiles(command, command.getValue());
+      }
+
+      public Object registerProtoFiles(AbstractDataCommand command, Object value) throws IOException {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             FileDescriptorSource source = new FileDescriptorSource()
                   .withProgressCallback(EMPTY_CALLBACK)
-                  .addProtoFile(key, (String) command.getValue());
+                  .addProtoFile(key, (String) value);
             try {
                serializationContext.registerProtoFiles(source);
             } catch (IOException | DescriptorParserException e) {

@@ -1,6 +1,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 
@@ -22,5 +23,11 @@ public class FooInterceptor extends BaseCustomInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       putInvoked = true;
       return super.visitPutKeyValueCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      putInvoked = true;
+      return super.visitSinglePutKeyValueCommand(ctx, command);
    }
 }

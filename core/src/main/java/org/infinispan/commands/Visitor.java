@@ -31,6 +31,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 
@@ -44,6 +45,8 @@ public interface Visitor {
    // write commands
 
    Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable;
+
+   Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable;
 
    Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable;
 

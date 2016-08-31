@@ -26,6 +26,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
@@ -348,6 +349,12 @@ public class BackupSenderImpl implements BackupSender {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          failurePolicy.handlePutFailure(site, command.getKey(), command.getValue(), command.isPutIfAbsent());
+         return null;
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         failurePolicy.handlePutFailure(site, command.getKey(), command.getValue(), false);
          return null;
       }
 

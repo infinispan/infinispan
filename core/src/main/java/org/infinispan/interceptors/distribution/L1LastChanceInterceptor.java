@@ -14,6 +14,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
@@ -62,6 +63,11 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command, true);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 

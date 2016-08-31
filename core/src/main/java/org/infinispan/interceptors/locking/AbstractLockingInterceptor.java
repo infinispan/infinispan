@@ -26,6 +26,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -74,6 +75,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 

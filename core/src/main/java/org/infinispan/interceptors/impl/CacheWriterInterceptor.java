@@ -29,6 +29,7 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -36,6 +37,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
@@ -181,11 +183,20 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return handleDataWriteCommand(ctx);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      return handleDataWriteCommand(ctx);
+   }
+
+   public CompletableFuture<Void> handleDataWriteCommand(InvocationContext ctx) {
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
-         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+         AbstractDataWriteCommand putKeyValueCommand = (AbstractDataWriteCommand) rCommand;
          if (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful())
             return null;
          if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))

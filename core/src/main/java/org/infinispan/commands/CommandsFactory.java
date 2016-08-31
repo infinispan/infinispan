@@ -57,6 +57,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
@@ -101,6 +102,8 @@ public interface CommandsFactory {
     * @return a PutKeyValueCommand
     */
    PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet);
+
+   SinglePutKeyValueCommand buildSinglePutKeyValueCommand(Object key, Object value);
 
    /**
     * Builds a RemoveCommand

@@ -21,11 +21,13 @@ import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -153,7 +155,17 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable == null) {
-            processPutKeyValueCommand(((PutKeyValueCommand) rCommand), rCtx, rv, null);
+            processDataWriteCommand(((AbstractDataWriteCommand) rCommand), command.getValue(), rCtx, rv, null);
+         }
+         return null;
+      });
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            processDataWriteCommand(((AbstractDataWriteCommand) rCommand), command.getValue(), rCtx, rv, null);
          }
          return null;
       });
@@ -341,8 +353,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                for (int i = 0; i < writeCommands.length; i++) {
                   final WriteCommand writeCommand = writeCommands[i];
                   if (writeCommand instanceof PutKeyValueCommand) {
-                     processPutKeyValueCommand((PutKeyValueCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
-                           transactionContext);
+                     processDataWriteCommand((PutKeyValueCommand) writeCommand, ((PutKeyValueCommand) writeCommand).getValue(),
+                           txInvocationContext, stateBeforePrepare[i], transactionContext);
+                  } if (writeCommand instanceof SinglePutKeyValueCommand) {
+                     processDataWriteCommand((SinglePutKeyValueCommand) writeCommand, ((SinglePutKeyValueCommand) writeCommand).getValue(),
+                           txInvocationContext, stateBeforePrepare[i], transactionContext);
                   } else if (writeCommand instanceof PutMapCommand) {
                      processPutMapCommand((PutMapCommand) writeCommand, txInvocationContext,
                            (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
@@ -464,10 +479,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * @param previousValue the value being replaced by the put operation
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
-   private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
+   private void processDataWriteCommand(final AbstractDataWriteCommand command, final Object cmdValue, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
-      Object value = extractValue(command.getValue());
+      Object value = extractValue(cmdValue);
       Object key = command.getKey();
       if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value, previousValue)) {
          if (shouldModifyIndexes(command, ctx, key)) {

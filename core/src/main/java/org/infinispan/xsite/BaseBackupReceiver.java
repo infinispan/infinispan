@@ -20,6 +20,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
@@ -101,6 +102,12 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          if (command.isConditional()) {
             return backupCache.putIfAbsent(command.getKey(), command.getValue(), command.getMetadata());
          }
+         return backupCache.put(command.getKey(), command.getValue(), command.getMetadata());
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         log.tracef("Processing a remote single put %s", command);
          return backupCache.put(command.getKey(), command.getValue(), command.getMetadata());
       }
 

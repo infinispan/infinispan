@@ -12,6 +12,7 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -56,6 +57,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
       }
+      return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 

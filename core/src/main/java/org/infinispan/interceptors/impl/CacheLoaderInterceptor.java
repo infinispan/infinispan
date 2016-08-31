@@ -17,6 +17,7 @@ import java.util.function.Function;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.functional.AbstractWriteKeyCommand;
@@ -27,7 +28,6 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -39,6 +39,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
@@ -138,6 +139,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      return visitDataCommand(ctx, command);
+   }
+
+   @Override
    public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       return visitDataCommand(ctx, command);
@@ -191,7 +197,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return ctx.continueInvocation();
    }
 
-   private CompletableFuture<Void> visitDataCommand(InvocationContext ctx, AbstractDataCommand command)
+   private <T extends FlagAffectedCommand & DataCommand> CompletableFuture<Void> visitDataCommand(InvocationContext ctx, T command)
          throws Throwable {
       Object key;
       if ((key = command.getKey()) != null) {

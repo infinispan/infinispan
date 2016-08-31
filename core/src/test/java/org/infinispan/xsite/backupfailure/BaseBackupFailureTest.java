@@ -8,6 +8,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.context.InvocationContext;
@@ -98,6 +99,16 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (isFailing) {
+            putFailed = true;
+            throw new CacheException("Induced failure");
+         } else {
+            return invokeNextInterceptor(ctx, command);
+         }
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
          if (isFailing) {
             putFailed = true;
             throw new CacheException("Induced failure");

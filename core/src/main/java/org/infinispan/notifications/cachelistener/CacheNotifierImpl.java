@@ -292,6 +292,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
+   public boolean hasCreatedListeners() {
+      return !cacheEntryCreatedListeners.isEmpty();
+   }
+
+   @Override
+   public boolean hasModifiedListeners() {
+      return !cacheEntryModifiedListeners.isEmpty();
+   }
+
+   @Override
    protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations(Listener l) {
       if (l.clustered()) {
          // Cluster listeners only allow a subset of types

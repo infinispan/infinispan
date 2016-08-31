@@ -6,6 +6,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -29,6 +30,14 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      String name = (String) command.getKey();
+      String script = (String) command.getValue();
+      command.setMetadata(scriptingManager.compileScript(name, script));
+      return ctx.continueInvocation();
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
       command.setMetadata(scriptingManager.compileScript(name, script));

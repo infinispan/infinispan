@@ -18,6 +18,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -501,6 +502,12 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
       @Override
       public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (isRightType(ctx)) putOkay = true;
+         return ctx.continueInvocation();
+      }
+
+      @Override
+      public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return ctx.continueInvocation();
       }

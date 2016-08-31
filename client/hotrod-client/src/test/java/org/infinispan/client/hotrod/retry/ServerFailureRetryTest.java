@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -89,6 +90,18 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
          }
          return super.visitPutKeyValueCommand(ctx, command);
       }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         if (ctx.isOriginLocal()) {
+            suspectExceptionThrown = true;
+            throw throwJGroupsException ?
+                  new SuspectedException("Simulated suspicion")
+                  : new SuspectException("Simulated suspicion");
+         }
+         return super.visitSinglePutKeyValueCommand(ctx, command);
+      }
+
    }
 
 }

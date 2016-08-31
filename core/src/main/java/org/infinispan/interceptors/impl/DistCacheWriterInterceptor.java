@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -71,11 +73,20 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return handleAbstractDataWriteCommand(ctx);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+      return handleAbstractDataWriteCommand(ctx);
+   }
+
+   public CompletableFuture<Void> handleAbstractDataWriteCommand(InvocationContext ctx) {
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
-         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+         AbstractDataWriteCommand putKeyValueCommand = (AbstractDataWriteCommand) rCommand;
          Object key = putKeyValueCommand.getKey();
          if (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful())
             return null;

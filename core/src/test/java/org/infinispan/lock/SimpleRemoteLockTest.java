@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -56,6 +57,15 @@ public class SimpleRemoteLockTest extends MultipleCacheManagersTest {
    public static class ExceptionInRemotePutInterceptor extends BaseCustomInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (ctx.isOriginLocal()) {
+            return invokeNextInterceptor(ctx, command);
+         }
+         assertTrue(TestingUtil.extractLockManager(cache).isLocked(command.getKey()));
+         throw new RuntimeException("Induced Exception!");
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
          if (ctx.isOriginLocal()) {
             return invokeNextInterceptor(ctx, command);
          }

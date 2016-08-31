@@ -187,4 +187,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int ARRAYS = 172;
 
    // 173-174 used in commons
+
+   //int SINGLE_PUT_KEY_VALUE = 175;
+
 }

@@ -7,6 +7,7 @@ import org.infinispan.atomic.impl.ClearOperation;
 import org.infinispan.atomic.impl.PutOperation;
 import org.infinispan.atomic.impl.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -139,6 +140,10 @@ final class InternalExternalizerTable {
     * Contains mapping of ids to their corresponding AdvancedExternalizer classes via ExternalizerAdapter instances.
     * This maps contains mappings for both internal and foreign or user defined externalizers.
     *
+    * 0x000       - 0x0FF (255)         : internal externalizers
+    * 0x100 (256) - 0xFFF (4095)        : replicable commands
+    * negative numbers  : foreign externalizers (negated)
+    *
     * Internal ids are only allowed to be unsigned bytes (0 to 254). 255 is an special id that signals the
     * arrival of a foreign externalizer id. Foreign externalizers are only allowed to use positive ids that between 0
     * and Integer.MAX_INT. To avoid clashes between foreign and internal ids, foreign ids are transformed into negative
@@ -176,6 +181,10 @@ final class InternalExternalizerTable {
       if (clazz == null || primitives.getTypeClasses().contains(clazz)) {
          out.writeByte(InternalIds.PRIMITIVE);
          ext = (Externalizer<T>) primitives;
+      } else if (obj instanceof AdvancedExternalizer) {
+         ext = (Externalizer<T>) obj;
+         out.writeByte(InternalIds.COMMAND);
+         out.writeShort(((AdvancedExternalizer<T>) ext).getId());
       } else {
          ext = (Externalizer<T>) writers.get(clazz);
          if (ext != null) {
@@ -235,6 +244,9 @@ final class InternalExternalizerTable {
                return (Externalizer<T>) readers.get(foreignSubType);
             case InternalIds.EXTERNAL:
                return null;
+            case InternalIds.COMMAND:
+               int commandExternalizerId = in.readUnsignedShort();
+               return (Externalizer<T>) readers.get(commandExternalizerId);
             default:
                throw new CacheException("Unknown externalizer type: " + type);
          }
@@ -357,6 +369,8 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new UnsureResponse.Externalizer());
       addInternalExternalizer(new UuidExternalizer());
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer());
+
+      addCommandExternalizer(new SinglePutKeyValueCommand());
    }
 
    private void addInternalExternalizer(AdvancedExternalizer<?> ext) {
@@ -394,6 +408,16 @@ final class InternalExternalizerTable {
       if (trace)
          log.tracef("Loaded externalizer %s for %s with id %s and reader index %s",
                ext.getClass().getName(), typeClass, ext.getId(), readerIndex);
+   }
+
+   private void addCommandExternalizer(AdvancedExternalizer<?> ext) {
+      int readerIndex = ext.getId();
+      if (readerIndex > 4095)
+         throw new CacheConfigurationException(
+               "Command " + ext + "  externalizer is using an id(" + readerIndex +
+                     ") that exceeded the limit. It needs to be smaller than 4096");
+
+      readers.put(readerIndex, ext);
    }
 
    private void loadForeignMarshallables(GlobalConfiguration globalCfg) {

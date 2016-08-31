@@ -12,6 +12,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.context.Flag;
@@ -93,6 +94,15 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
+         checkMarshallable(command.getKey());
+         checkMarshallable(command.getValue());
+      }
+      return ctx.continueInvocation();
+   }
+
+   @Override
+   public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
          checkMarshallable(command.getKey());
          checkMarshallable(command.getValue());

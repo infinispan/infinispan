@@ -6,6 +6,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -90,6 +91,12 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return super.visitPutKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public CompletableFuture<Void> visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         if (isRightType(ctx)) putOkay = true;
+         return super.visitSinglePutKeyValueCommand(ctx, command);
       }
 
       @Override

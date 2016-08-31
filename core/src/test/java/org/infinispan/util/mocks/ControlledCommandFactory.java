@@ -66,6 +66,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.context.Flag;
@@ -154,6 +155,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
       return actual.buildPutKeyValueCommand(key, value, metadata, flagsBitSet);
+   }
+
+   @Override
+   public SinglePutKeyValueCommand buildSinglePutKeyValueCommand(Object key, Object value) {
+      return actual.buildSinglePutKeyValueCommand(key, value);
    }
 
    @Override

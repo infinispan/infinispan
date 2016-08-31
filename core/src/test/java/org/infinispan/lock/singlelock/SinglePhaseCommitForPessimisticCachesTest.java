@@ -9,6 +9,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -95,6 +96,12 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          putCount++;
          return super.visitPutKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitSinglePutKeyValueCommand(InvocationContext ctx, SinglePutKeyValueCommand command) throws Throwable {
+         putCount++;
+         return super.visitSinglePutKeyValueCommand(ctx, command);
       }
 
       @Override

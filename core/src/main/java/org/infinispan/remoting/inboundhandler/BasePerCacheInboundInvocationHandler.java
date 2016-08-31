@@ -8,9 +8,13 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.write.SinglePutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -34,6 +38,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    protected StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
    private CancellationService cancellationService;
+   private InvocationContextFactory icf;
+   private InterceptorChain interceptorChain;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
       ReplicableCommand innerCmd = command.getCommand();
@@ -60,12 +66,16 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
                                   ResponseGenerator responseGenerator,
                                   CancellationService cancellationService,
                                   StateTransferLock stateTransferLock,
-                                  StateTransferManager stateTransferManager) {
+                                  StateTransferManager stateTransferManager,
+                                  InvocationContextFactory icf,
+                                  InterceptorChain interceptorChain) {
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.responseGenerator = responseGenerator;
       this.cancellationService = cancellationService;
       this.stateTransferLock = stateTransferLock;
       this.stateTransferManager = stateTransferManager;
+      this.icf = icf;
+      this.interceptorChain = interceptorChain;
    }
 
    final Response invokePerform(CacheRpcCommand cmd) throws Throwable {
@@ -76,7 +86,16 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
          if (cmd instanceof CancellableCommand) {
             cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
          }
-         return responseGenerator.getResponse(cmd, cmd.perform(null));
+
+         switch (cmd.getCommandId()) {
+            case SinglePutKeyValueCommand.COMMAND_ID:
+               SinglePutKeyValueCommand singlePutCmd = (SinglePutKeyValueCommand) cmd;
+               InvocationContext ctx = icf.createRemoteInvocationContextForCommand(singlePutCmd, singlePutCmd.getOrigin());
+               ctx.setLockOwner(singlePutCmd.getKeyLockOwner());
+               return responseGenerator.getResponse(cmd, interceptorChain.invoke(ctx, singlePutCmd));
+            default:
+               return responseGenerator.getResponse(cmd, cmd.perform(null));
+         }
       } finally {
          if (cmd instanceof CancellableCommand) {
             cancellationService.unregister(((CancellableCommand) cmd).getUUID());
