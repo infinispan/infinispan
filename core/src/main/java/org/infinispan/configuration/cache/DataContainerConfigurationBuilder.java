@@ -74,6 +74,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @param keyEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                     key types.
     * @return this configuration builder
+    * @Deprecated Equivalence is to be removed (byte[] are directly supported)
     */
    public <K> DataContainerConfigurationBuilder keyEquivalence(Equivalence<K> keyEquivalence) {
       attributes.attribute(KEY_EQUIVALENCE).set(keyEquivalence);
@@ -89,6 +90,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @param valueEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                       value types.
     * @return this configuration builder
+    * @Deprecated Equivalence is to be removed (byte[] are directly supported)
     */
    public <V> DataContainerConfigurationBuilder valueEquivalence(Equivalence<V> valueEquivalence) {
       attributes.attribute(VALUE_EQUIVALENCE).set(valueEquivalence);

@@ -17,6 +17,7 @@ import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.context.Flag;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -265,7 +266,8 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testPutForExternalReadInDecaratedCacheWithVersion() {
       final Integer key = 12;
       NumericVersion version = new NumericVersion(1);
-      DecoratedCache decoratedCache = new DecoratedCache(advCache);
+      // Flag forces decorated cache, but doesn't affect processing
+      AdvancedCache<Integer, String> decoratedCache = advCache.withFlags(Flag.SKIP_STATISTICS);
       decoratedCache.putForExternalRead(key, "v1", withVersion(version));
       CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(version, cacheEntry.getMetadata().version());
@@ -282,7 +284,8 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testPutForExternalReadInDecaratedCacheWithLifespan() {
       final Integer key = 12;
       long lifespan = 1_000_000;
-      DecoratedCache decoratedCache = new DecoratedCache(advCache);
+      // Flag forces decorated cache, but doesn't affect processing
+      AdvancedCache<Integer, String> decoratedCache = advCache.withFlags(Flag.SKIP_STATISTICS);
       decoratedCache.putForExternalRead(key, "v1", withLifespan(lifespan));
       CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());

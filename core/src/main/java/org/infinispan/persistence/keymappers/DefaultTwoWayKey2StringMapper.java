@@ -1,6 +1,8 @@
 package org.infinispan.persistence.keymappers;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Base64;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,7 +26,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    private static final char DOUBLE_IDENTIFIER = '5';
    private static final char FLOAT_IDENTIFIER = '6';
    private static final char BOOLEAN_IDENTIFIER = '7';
-   // private static final char BYTEARRAYKEY_IDENTIFIER = '8';
+   private static final char BYTEARRAYKEY_IDENTIFIER = '8';
    private static final char NATIVE_BYTEARRAYKEY_IDENTIFIER = '9';
 
    @Override
@@ -46,6 +48,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
          identifier = FLOAT_IDENTIFIER;
       } else if (key.getClass().equals(Boolean.class)) {
          identifier = BOOLEAN_IDENTIFIER;
+      } else if (key.getClass().equals(WrappedByteArray.class)) {
+         return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes(((WrappedByteArray)key).getBytes()));
       } else if (key.getClass().equals(byte[].class)) {
          return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes((byte[])key));
       } else {
@@ -75,6 +79,9 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
                return Float.parseFloat(value);
             case BOOLEAN_IDENTIFIER:
                return Boolean.parseBoolean(value);
+            case BYTEARRAYKEY_IDENTIFIER:
+               byte[] bytes = Base64.decode(value);
+               return new WrappedByteArray(bytes);
             case NATIVE_BYTEARRAYKEY_IDENTIFIER:
                return Base64.decode(value);
             default:
@@ -87,7 +94,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
 
    @Override
    public boolean isSupportedType(Class<?> keyType) {
-      return isPrimitive(keyType);
+      return isPrimitive(keyType) || keyType == WrappedByteArray.class;
    }
 
    private String generateString(char identifier, String s) {

@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
@@ -106,7 +107,13 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
-         MetadataValue<?> value = remoteCache.getWithMetadata(key);
+         Object unwrappedKey;
+         if (key instanceof WrappedByteArray) {
+            unwrappedKey = ((WrappedByteArray) key).getBytes();
+         } else {
+            unwrappedKey = key;
+         }
+         MetadataValue<?> value = remoteCache.getWithMetadata(unwrappedKey);
          if (value != null) {
             Metadata metadata = new EmbeddedMetadata.Builder()
                   .version(new NumericVersion(value.getVersion()))
@@ -114,12 +121,19 @@ public class RemoteStore implements AdvancedLoadWriteStore {
                   .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
             long created = value.getCreated();
             long lastUsed = value.getLastUsed();
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(),
+            Object realValue = value.getValue();
+            if (realValue instanceof byte[]) {
+               realValue = new WrappedByteArray((byte[]) realValue);
+            }
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, realValue,
                                     new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
          }
       } else {
+         if (key instanceof WrappedByteArray) {
+            key = ((WrappedByteArray) key).getBytes();
+         }
          return (MarshalledEntry) remoteCache.get(key);
       }
    }
@@ -133,6 +147,9 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       TaskContextImpl taskContext = new TaskContextImpl();
       for (Object key : remoteCache.keySet()) {
+         if (key instanceof byte[]) {
+            key = new WrappedByteArray((byte[]) key);
+         }
          if (taskContext.isStopped())
             break;
          if (filter == null || filter.accept(key)) {
@@ -167,7 +184,21 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       InternalMetadata metadata = entry.getMetadata();
       long lifespan = metadata != null ? metadata.lifespan() : -1;
       long maxIdle = metadata != null ? metadata.maxIdle() : -1;
-      remoteCache.put(entry.getKey(), configuration.rawValues() ? entry.getValue() : entry, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS, toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+      Object key = entry.getKey();
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
+      Object value;
+      if (configuration.rawValues()) {
+         value = entry.getValue();
+         if (value instanceof WrappedByteArray) {
+            value = ((WrappedByteArray) value).getBytes();
+         }
+      } else {
+         value = entry;
+      }
+      remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
+            toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
    }
 
    @Override
@@ -177,6 +208,9 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    @Override
    public boolean delete(Object key) throws PersistenceException {
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
       // Less than ideal, but RemoteCache, since it extends Cache, can only
       // know whether the operation succeeded based on whether the previous
       // value is null or not.

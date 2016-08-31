@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 
 import net.jcip.annotations.Immutable;
@@ -387,6 +388,9 @@ public class MurmurHash3 implements Hash {
    public int hash(Object o) {
       if (o instanceof byte[])
          return hash((byte[]) o);
+      else if (o instanceof WrappedByteArray) {
+         return hash(((WrappedByteArray) o).getBytes());
+      }
       else if (o instanceof long[])
          return hash((long[]) o);
       else if (o instanceof String)

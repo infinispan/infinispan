@@ -14,9 +14,11 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * A factory for ConcurrentMaps.
@@ -101,8 +103,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> ConcurrentMap<K, V> makeBoundedConcurrentMap(int maxSize) {
-      return new BoundedEquivalentConcurrentHashMapV8<>(maxSize,
-            AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+      return new CaffeineConcurrentMap<>(Caffeine.newBuilder().maximumSize(maxSize).build());
    }
 
    public static <K, V> Map<K, V> makeMap(

@@ -37,8 +37,11 @@ import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
 import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.stream.impl.RemovableIterator;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
+import org.infinispan.util.function.RemovableFunction;
 
 /**
  * Interceptor that handles bulk entrySet and keySet commands when using in a distributed/replicated environment.
@@ -134,8 +137,20 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry) {
             @Override
             public Iterator<CacheEntry<K, V>> iterator() {
-               if (intermediateOperations.isEmpty()) {
+               int size = intermediateOperations.size();
+               if (size == 0) {
+                  // If no intermediate operations we can support remove
                   return new RemovableIterator<>(super.iterator(), cache, e -> e.getKey());
+               }
+               else if (size == 1) {
+                  IntermediateOperation intOp = intermediateOperations.peek();
+                  if (intOp instanceof MapOperation) {
+                     MapOperation map = (MapOperation) intOp;
+                     if (map.getFunction() instanceof RemovableFunction) {
+                        // If function was removable means we can just use remove as is
+                        return new RemovableIterator<>(super.iterator(), cache, e -> e.getKey());
+                     }
+                  }
                }
                return super.iterator();
             }
@@ -289,9 +304,21 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                  StreamMarshalling.entryToKeyFunction()) {
             @Override
             public Iterator<K> iterator() {
+               int size = intermediateOperations.size();
                // The act of mapping to key requires 1 intermediate operation
-               if (intermediateOperations.size() == 1) {
+               if (size == 1) {
                   return new RemovableIterator<>(super.iterator(), cache, Function.identity());
+               } else if (size == 2) {
+                  Iterator<IntermediateOperation> iter = intermediateOperations.iterator();
+                  iter.next();
+                  IntermediateOperation intOp = iter.next();
+                  if (intOp instanceof MapOperation) {
+                     MapOperation map = (MapOperation) intOp;
+                     if (map.getFunction() instanceof RemovableFunction) {
+                        // If function was removable means we can just use remove as is
+                        return new RemovableIterator<>(super.iterator(), cache, Function.identity());
+                     }
+                  }
                }
                return super.iterator();
             }

@@ -1,6 +1,7 @@
 package org.infinispan.cache.impl;
 
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -9,7 +10,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -73,7 +80,24 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
       return cache.getName();
    }
 
+   @ManagedAttribute(
+         description = "Returns the cache name",
+         displayName = "Cache name",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public String getCacheName() {
+      String name = getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
+      return name + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
+   }
+
    @Override
+   @ManagedAttribute(
+         description = "Returns the version of Infinispan",
+         displayName = "Infinispan version",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
    public String getVersion() {
       return cache.getVersion();
    }
@@ -241,6 +265,20 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
       return cache.getStatus();
    }
 
+   /**
+    * Returns String representation of ComponentStatus enumeration in order to avoid class not found exceptions in JMX
+    * tools that don't have access to infinispan classes.
+    */
+   @ManagedAttribute(
+         description = "Returns the cache status",
+         displayName = "Cache status",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public String getCacheStatus() {
+      return getStatus().toString();
+   }
+
    @Override
    public V putIfAbsent(K key, V value) {
       return cache.putIfAbsent(key, value);
@@ -302,6 +340,10 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   @ManagedOperation(
+         description = "Clears the cache",
+         displayName = "Clears the cache", name = "clear"
+   )
    public void clear() {
       cache.clear();
    }
@@ -322,13 +364,30 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   @ManagedOperation(
+         description = "Starts the cache.",
+         displayName = "Starts cache."
+   )
    public void start() {
       cache.start();
    }
 
    @Override
+   @ManagedOperation(
+         description = "Stops the cache.",
+         displayName = "Stops cache."
+   )
    public void stop() {
       cache.stop();
+   }
+
+   @Override
+   @ManagedOperation(
+         description = "Shuts down the cache across the cluster",
+         displayName = "Clustered cache shutdown"
+   )
+   public void shutdown() {
+      cache.shutdown();
    }
 
    @Override
@@ -360,6 +419,16 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public CompletableFuture<V> getAsync(K key) {
       return cache.getAsync(key);
+   }
+
+   @ManagedAttribute(
+         description = "Returns the cache configuration in form of properties",
+         displayName = "Cache configuration properties",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public Properties getConfigurationAsProperties() {
+      return new PropertyFormatter().format(getCacheConfiguration());
    }
 
    @Override
