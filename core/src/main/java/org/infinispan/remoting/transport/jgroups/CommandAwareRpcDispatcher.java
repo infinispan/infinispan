@@ -253,9 +253,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          try {
             rsp_buf = rsp_marshaller.objectToBuffer(retVal);
          } catch (Throwable t) {
-            try {  // this call should succeed (all exceptions are serializable)
+            try {
+               // this call should succeed (all exceptions are serializable)
                rsp_buf = rsp_marshaller.objectToBuffer(t);
                is_exception = true;
+            } catch (IllegalLifecycleStateException tt) {
+               return;
             } catch (Throwable tt) {
                log.errorMarshallingObject(tt, retVal);
                return;
