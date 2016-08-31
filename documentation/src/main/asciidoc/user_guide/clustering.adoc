@@ -822,7 +822,7 @@ dcc.clustering().partitionHandling().enabled(true);
 ==== Monitoring and administration
 
 The availability mode of a cache is exposed in JMX as an attribute in the
-link:http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html#Cache[Cache MBean].
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#Cache[Cache MBean].
 The attribute is writable, allowing an administrator to forcefully migrate
 a cache from degraded state back to available (at the cost of
 consistency).
