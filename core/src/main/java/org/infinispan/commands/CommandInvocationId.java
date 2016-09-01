@@ -71,12 +71,12 @@ public final class CommandInvocationId {
 
    public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
       output.writeObject(commandInvocationId.address);
-      output.writeLong(commandInvocationId.id);
+      UnsignedNumeric.writeUnsignedLong(output, commandInvocationId.id);
    }
 
    public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
       Address address = (Address) input.readObject();
-      long id = input.readLong();
+      long id = UnsignedNumeric.readUnsignedLong(input);
       return new CommandInvocationId(address, id);
    }
 
