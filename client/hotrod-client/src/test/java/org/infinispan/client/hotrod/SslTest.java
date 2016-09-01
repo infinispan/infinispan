@@ -68,7 +68,7 @@ public class SslTest extends SingleCacheManagerTest {
             .port(hotrodServer.getPort())
             .socketTimeout(3000)
          .connectionPool()
-            .maxActive(1)
+            .maxTotal(1)
          .security()
             .authentication()
                .disable()

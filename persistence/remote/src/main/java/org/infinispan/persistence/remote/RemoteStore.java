@@ -8,7 +8,6 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -221,8 +220,6 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       builder.classLoader(configuration.getClass().getClassLoader())
             .balancingStrategy(configuration.balancingStrategy())
             .connectionPool()
-            .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))
-            .maxActive(poolConfiguration.maxActive())
             .maxIdle(poolConfiguration.maxIdle())
             .maxTotal(poolConfiguration.maxTotal())
             .minIdle(poolConfiguration.minIdle())

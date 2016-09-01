@@ -238,10 +238,7 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(valueSizeEstimate()));
       properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(maxRetries()));
 
-      properties.setProperty("exhaustedAction", Integer.toString(connectionPool().exhaustedAction().ordinal()));
-      properties.setProperty("maxActive", Integer.toString(connectionPool().maxActive()));
       properties.setProperty("maxTotal", Integer.toString(connectionPool().maxTotal()));
-      properties.setProperty("maxWait", Long.toString(connectionPool().maxWait()));
       properties.setProperty("maxIdle", Integer.toString(connectionPool().maxIdle()));
       properties.setProperty("minIdle", Integer.toString(connectionPool().minIdle()));
       properties.setProperty("numTestsPerEvictionRun", Integer.toString(connectionPool().numTestsPerEvictionRun()));

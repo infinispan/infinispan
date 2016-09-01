@@ -6,7 +6,7 @@
     </properties>
 
     <resources>
-        <artifact name="${commons-pool:commons-pool}"/>
+        <artifact name="${org.apache.commons:commons-pool2}"/>
     </resources>
 
     <dependencies>

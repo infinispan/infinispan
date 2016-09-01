@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
@@ -61,8 +61,8 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool<?, ?>) TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
+      TcpTransportFactory tcpConnectionFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      connectionPool = TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
 
       return cacheManager;
    }

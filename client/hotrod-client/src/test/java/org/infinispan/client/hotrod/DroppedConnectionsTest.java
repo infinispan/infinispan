@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.InetSocketAddress;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -41,7 +41,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
                .testWhileIdle(false)
                .minIdle(1)
                .maxIdle(2)
-               .maxActive(2)
+               .maxTotal(1)
             .addServer().host("localhost").port(hotRodServer.getPort());
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());

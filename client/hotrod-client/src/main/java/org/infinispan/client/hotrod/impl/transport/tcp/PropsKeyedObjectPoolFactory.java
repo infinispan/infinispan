@@ -1,43 +1,40 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import org.apache.commons.pool.KeyedPoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.apache.commons.pool.impl.GenericKeyedObjectPoolFactory;
+import org.apache.commons.pool2.KeyedPooledObjectFactory;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.infinispan.client.hotrod.configuration.ConnectionPoolConfiguration;
-import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 
 /**
+ * Create a Pool based on configuration.
+ *
  * @author Mircea.Markus@jboss.com
- * @since 4.1
+ * @author Sebastian Łaskawiec
+ * @since 9.0
  */
-public class PropsKeyedObjectPoolFactory<K, V> extends GenericKeyedObjectPoolFactory<K, V> {
+public class PropsKeyedObjectPoolFactory<K, V> {
 
-   public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory<K, V> factory, ConnectionPoolConfiguration configuration) {
-      super(factory,
-            configuration.maxActive(),
-            mapExhaustedAction(configuration.exhaustedAction()),
-            configuration.maxWait(),
-            configuration.maxIdle(),
-            configuration.maxTotal(),
-            configuration.minIdle(),
-            configuration.testOnBorrow(),
-            configuration.testOnReturn(),
-            configuration.timeBetweenEvictionRuns(),
-            configuration.numTestsPerEvictionRun(),
-            configuration.minEvictableIdleTime(),
-            configuration.testWhileIdle(),
-            configuration.lifo());
+   private final KeyedPooledObjectFactory<K, V> factory;
+   private final ConnectionPoolConfiguration configuration;
+
+   public PropsKeyedObjectPoolFactory(KeyedPooledObjectFactory<K, V> factory, ConnectionPoolConfiguration configuration) {
+      this.factory = factory;
+      this.configuration = configuration;
    }
 
-   private static byte mapExhaustedAction(ExhaustedAction action) {
-      switch (action) {
-      case CREATE_NEW:
-         return GenericKeyedObjectPool.WHEN_EXHAUSTED_GROW;
-      case EXCEPTION:
-         return GenericKeyedObjectPool.WHEN_EXHAUSTED_FAIL;
-      case WAIT:
-      default:
-         return GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK;
-      }
+   public GenericKeyedObjectPool<K, V> createPool() {
+      GenericKeyedObjectPoolConfig config = new GenericKeyedObjectPoolConfig();
+      config.setMaxTotal(configuration.maxTotal());
+      config.setMaxIdlePerKey(configuration.maxIdle());
+      config.setMinIdlePerKey(configuration.minIdle());
+      config.setNumTestsPerEvictionRun(configuration.numTestsPerEvictionRun());
+      config.setMinEvictableIdleTimeMillis(configuration.minEvictableIdleTime());
+      config.setTimeBetweenEvictionRunsMillis(configuration.timeBetweenEvictionRuns());
+      config.setLifo(configuration.lifo());
+      config.setTestOnBorrow(configuration.testOnBorrow());
+      config.setTestOnReturn(configuration.testOnReturn());
+      config.setTestWhileIdle(configuration.testWhileIdle());
+
+      return new GenericKeyedObjectPool(factory, config);
    }
 }
