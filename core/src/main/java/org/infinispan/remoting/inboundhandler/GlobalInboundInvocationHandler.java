@@ -124,7 +124,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       }
       initializeCacheRpcCommand(command, cr);
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
-      handler.handle(command, reply, mode);
+      handler.handle(command, reply, mode, origin);
    }
 
    private void initializeCacheRpcCommand(CacheRpcCommand command, ComponentRegistry componentRegistry) {

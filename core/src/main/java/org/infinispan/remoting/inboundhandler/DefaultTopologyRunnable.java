@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
@@ -20,8 +21,8 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
    private final int commandTopologyId;
 
    public DefaultTopologyRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
-                                  TopologyMode topologyMode, int commandTopologyId) {
-      super(handler, command, reply);
+                                  TopologyMode topologyMode, int commandTopologyId, Address origin) {
+      super(handler, command, reply, origin);
       this.topologyMode = topologyMode;
       this.commandTopologyId = commandTopologyId;
    }

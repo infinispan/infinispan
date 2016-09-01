@@ -120,7 +120,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
          public void reply(Object returnValue) {
             //no-op
          }
-      }, DeliverOrder.PER_SENDER);
+      }, DeliverOrder.PER_SENDER, address(1));
 
       sequencer.exit("st:simulate_old_response");
 

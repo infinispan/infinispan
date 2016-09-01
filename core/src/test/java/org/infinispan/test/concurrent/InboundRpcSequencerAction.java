@@ -14,6 +14,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Replaces the {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -79,11 +80,11 @@ public class InboundRpcSequencerAction {
       }
 
       @Override
-      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
          boolean accepted = matcher.accept(command);
          advance(accepted, statesBefore, reply);
          try {
-            handler.handle(command, reply, order);
+            handler.handle(command, reply, order, origin);
          } finally {
             advance(accepted, statesAfter, new Reply() {
                @Override

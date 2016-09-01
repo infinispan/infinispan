@@ -18,6 +18,7 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -78,7 +79,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       this.interceptorChain = interceptorChain;
    }
 
-   final Response invokePerform(CacheRpcCommand cmd) throws Throwable {
+   final Response invokePerform(CacheRpcCommand cmd, Address origin) throws Throwable {
       try {
          if (isTraceEnabled()) {
             getLog().tracef("Calling perform() on %s", cmd);
@@ -90,7 +91,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
          switch (cmd.getCommandId()) {
             case SinglePutKeyValueCommand.COMMAND_ID:
                SinglePutKeyValueCommand singlePutCmd = (SinglePutKeyValueCommand) cmd;
-               InvocationContext ctx = icf.createRemoteInvocationContextForCommand(singlePutCmd, singlePutCmd.getOrigin());
+               InvocationContext ctx = icf.createRemoteInvocationContextForCommand(singlePutCmd, origin);
                ctx.setLockOwner(singlePutCmd.getKeyLockOwner());
                return responseGenerator.getResponse(cmd, interceptorChain.invoke(ctx, singlePutCmd));
             default:
@@ -151,8 +152,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    protected final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
                                                           final int commandTopologyId, final boolean waitTransactionalData,
-                                                          final boolean onExecutorService) {
-      return new DefaultTopologyRunnable(this, command, reply, TopologyMode.create(onExecutorService, waitTransactionalData), commandTopologyId);
+                                                          final boolean onExecutorService, Address origin) {
+      return new DefaultTopologyRunnable(this, command, reply, TopologyMode.create(onExecutorService, waitTransactionalData), commandTopologyId, origin);
    }
 
    protected abstract Log getLog();

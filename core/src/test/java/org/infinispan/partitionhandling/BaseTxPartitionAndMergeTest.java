@@ -17,6 +17,7 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -191,10 +192,10 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       }
 
       @Override
-      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
          final Filter currentFilter = filter;
          if (currentFilter != null && currentFilter.before(command, reply, order)) {
-            delegate.handle(command, reply, order);
+            delegate.handle(command, reply, order, origin);
          }
       }
    }

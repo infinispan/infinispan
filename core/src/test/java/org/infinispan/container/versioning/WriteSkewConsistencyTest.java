@@ -291,11 +291,11 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
          if (discardRemoteGet && command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
             return;
          }
-         realOne.handle(command, reply, order);
+         realOne.handle(command, reply, order, origin);
       }
    }
 

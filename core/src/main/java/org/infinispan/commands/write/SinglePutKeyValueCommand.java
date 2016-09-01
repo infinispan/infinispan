@@ -33,12 +33,13 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  * - A non-conditional put always matches value, so is always successful.
  * - If value equivalence is default, no need to serialize that info.
  * - Only ignore return values flag set, so no need to serialize that info.
+ *
+ * @since 9.0
  */
 public final class SinglePutKeyValueCommand
    implements
-      DataWriteCommand, RemoteLockCommand, FlagAffectedCommand,
-      AdvancedExternalizer<SinglePutKeyValueCommand>,
-      CacheRpcCommand {
+      DataWriteCommand, RemoteLockCommand, FlagAffectedCommand, CacheRpcCommand,
+      AdvancedExternalizer<SinglePutKeyValueCommand> {
 
    public static final byte COMMAND_ID = 61;
    private static final int EXTERNALIZER_ID = COMMAND_ID << 4;
@@ -49,18 +50,11 @@ public final class SinglePutKeyValueCommand
    CommandInvocationId commandInvocationId;
    Object value;
 
-   // TODO: Address should not be an instance variable of the command:
-   // Should be a parameter to PerCacheInboundInvocationHandler.handle really,
-   // but doesn't make much difference since eventually it should be part of
-   // BaseBlockingRunnable constructor
-   transient Address origin;
-
    public SinglePutKeyValueCommand() {
       // For externalizers
    }
 
    public SinglePutKeyValueCommand(ByteString cacheName, Object key, CommandInvocationId commandInvocationId, Object value) {
-      //super(key, EnumUtil.IGNORE_RETURN_VALUES_BIT_SET, commandInvocationId);
       this.cacheName = cacheName;
       this.key = key;
       this.commandInvocationId = commandInvocationId;
@@ -82,12 +76,13 @@ public final class SinglePutKeyValueCommand
 
    @Override
    public void setOrigin(Address origin) {
-      this.origin = origin;
+      // No-op, now passed around via PerCacheInboundInvocationHandler.handle() call,
+      // then as parameter to BaseBlockingRunnable constructor
    }
 
    @Override
    public Address getOrigin() {
-      return this.origin;
+      return null; // Not in use
    }
 
    @Override

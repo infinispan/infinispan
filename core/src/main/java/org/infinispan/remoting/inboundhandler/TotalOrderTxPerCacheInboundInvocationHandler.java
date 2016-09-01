@@ -12,6 +12,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
@@ -39,7 +40,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
    }
 
    @Override
-   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
       try {
          final int commandTopologyId = extractCommandTopologyId(command);
          if (isCommandSentBeforeFirstTopology(commandTopologyId)) {
@@ -59,19 +60,19 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
                }
                TotalOrderRemoteTransactionState state = ((TotalOrderPrepareCommand) command).getOrCreateState();
                totalOrderManager.ensureOrder(state, ((PrepareCommand) command).getKeysToLock());
-               runnable = createRunnableForPrepare(state, (PrepareCommand) command, reply);
+               runnable = createRunnableForPrepare(state, (PrepareCommand) command, reply, origin);
                onExecutorService = true;
                break;
             case TotalOrderCommitCommand.COMMAND_ID:
             case TotalOrderVersionedCommitCommand.COMMAND_ID:
             case RollbackCommand.COMMAND_ID:
                onExecutorService = true;
-               runnable = createRunnableForCommitOrRollback(command, reply);
+               runnable = createRunnableForCommitOrRollback(command, reply, origin);
                break;
             default:
                onExecutorService = executeOnExecutorService(order, command);
                runnable = createDefaultRunnable(command, reply, commandTopologyId,
-                                                command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
+                                                command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService, origin);
                break;
          }
          handleRunnable(runnable, onExecutorService);
@@ -92,8 +93,8 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
 
    private BlockingRunnable createRunnableForPrepare(final TotalOrderRemoteTransactionState state,
                                                      final PrepareCommand command,
-                                                     final Reply reply) {
-      return new BaseBlockingRunnable(this, command, reply) {
+                                                     final Reply reply, Address origin) {
+      return new BaseBlockingRunnable(this, command, reply, origin) {
          @Override
          public boolean isReady() {
             for (TotalOrderLatch block : state.getConflictingTransactionBlocks()) {
@@ -135,8 +136,8 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
       };
    }
 
-   private BlockingRunnable createRunnableForCommitOrRollback(final CacheRpcCommand command, final Reply reply) {
-      return new BaseBlockingRunnable(this, command, reply) {
+   private BlockingRunnable createRunnableForCommitOrRollback(final CacheRpcCommand command, final Reply reply, Address origin) {
+      return new BaseBlockingRunnable(this, command, reply, origin) {
 
          @Override
          public boolean isReady() {

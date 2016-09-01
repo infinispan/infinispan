@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Class to be extended to allow some control over the {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler}
@@ -18,10 +19,10 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
    }
 
    @Override
-   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
       boolean canDelegate = beforeHandle(command, reply, order);
       if (canDelegate) {
-         delegate.handle(command, reply, order);
+         delegate.handle(command, reply, order, origin);
       }
       afterHandle(command, order, canDelegate);
    }

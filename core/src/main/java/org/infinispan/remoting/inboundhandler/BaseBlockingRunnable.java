@@ -4,6 +4,7 @@ import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
 
@@ -20,10 +21,13 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    protected final Reply reply;
    protected Response response;
 
-   protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply) {
+   private final Address origin;
+
+   protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply, Address origin) {
       this.handler = handler;
       this.command = command;
       this.reply = reply;
+      this.origin = origin;
    }
 
    @Override
@@ -31,7 +35,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       try {
          response = beforeInvoke();
          if (response == null) {
-            response = handler.invokePerform(command);
+            response = handler.invokePerform(command, origin);
          }
          afterInvoke();
       } catch (InterruptedException e) {

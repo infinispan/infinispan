@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Interface to invoke when a {@link org.infinispan.commands.remote.CacheRpcCommand} is received from other node in the
@@ -17,7 +18,8 @@ public interface PerCacheInboundInvocationHandler {
     * @param command the {@link org.infinispan.commands.remote.CacheRpcCommand} to handle-
     * @param reply   the return value is passed to this object in order to be sent back to the sender
     * @param order   the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} in which the command was sent
+    * @param origin  the origin of the invocation
     */
-   void handle(CacheRpcCommand command, Reply reply, DeliverOrder order);
+   void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin);
 
 }

@@ -15,6 +15,7 @@ import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.PendingTxAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.BlockingRunnable;
@@ -58,7 +59,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    }
 
    @Override
-   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order, Address origin) {
       if (order == DeliverOrder.TOTAL) {
          unexpectedDeliverMode(command, order);
       }
@@ -71,18 +72,19 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
             case PrepareCommand.COMMAND_ID:
             case VersionedPrepareCommand.COMMAND_ID:
                if (pessimisticLocking) {
-                  runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService);
+                  runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService, origin);
                } else {
                   runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
-                                                       createReadyAction(commandTopologyId, (PrepareCommand) command));
+                                                       createReadyAction(commandTopologyId, (PrepareCommand) command), origin);
                }
                break;
             case LockControlCommand.COMMAND_ID:
                runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
-                                                    createReadyAction(commandTopologyId, (LockControlCommand) command));
+                                                    createReadyAction(commandTopologyId, (LockControlCommand) command), origin);
                break;
             default:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
+               runnable = createDefaultRunnable(command, reply, commandTopologyId,
+                     command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService, origin);
                break;
          }
          handleRunnable(runnable, onExecutorService);
@@ -103,18 +105,18 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
 
    protected final BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
                                                               boolean waitTransactionalData, boolean onExecutorService,
-                                                              ReadyAction readyAction) {
+                                                              ReadyAction readyAction, Address origin) {
       final TopologyMode topologyMode = TopologyMode.create(onExecutorService, waitTransactionalData);
       if (onExecutorService && readyAction != null) {
          readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId) {
+         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, origin) {
             @Override
             public boolean isReady() {
                return super.isReady() && readyAction.isReady();
             }
          };
       } else {
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId);
+         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, origin);
       }
    }
 
