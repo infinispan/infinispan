@@ -1221,7 +1221,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          this.map = map;
          loadFactor = lf;
          eviction = es.make(this, map.evictCap, lf);
-         setTable(HashEntry.<K, V> newArray(cap));
+         setTable(HashEntry.newArray(cap));
          // disable rehashing if eviction is enabled (rehashing in this map
          // implementation involves recreating all entries, which breaks the
          // order maintained by the eviction algorithms)
@@ -2560,7 +2560,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     */
    private void execute(ExecutorService executorService, final BiConsumer<? super K,? super V> action)
          throws InterruptedException {
-      List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>(entrySet());
+      List<Map.Entry<K, V>> list = new ArrayList<>(entrySet());
       int numCores = Runtime.getRuntime().availableProcessors();
       int splittingSize = Math.max(list.size() / (numCores << 2), 128);
       List<List<Map.Entry<K, V>>> partition = splitIntoLists(list, splittingSize);

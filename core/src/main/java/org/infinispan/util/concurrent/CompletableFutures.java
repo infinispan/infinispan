@@ -35,7 +35,7 @@ public class CompletableFutures {
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
       CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-      return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.<T> toList()));
+      return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.toList()));
    }
 
    public static <T> CompletableFuture<T> completedExceptionFuture(Throwable ex) {

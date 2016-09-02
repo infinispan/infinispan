@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 /**
  * @author Pierre Sutra
  * @since 7.2
- * *
  */
 @Test(groups = "functional", testName = "AtomicObjectFactoryTest")
 @CleanupAfterMethod
@@ -40,7 +39,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
 
     @Test(enabled = true)
-    public void basicUsageTest() throws  Exception{
+    public void basicUsageTest() throws Exception {
         Cache<?, ?> cache = cache(0);
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
 
@@ -63,7 +62,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     }
 
     @Test(enabled = true)
-    public void basicPerformanceTest() throws Exception{
+    public void basicPerformanceTest() throws Exception {
         Cache<?, ?> cache = cache(0);
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
 
@@ -85,7 +84,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     public void distributedCacheTest() throws Exception {
 
         List<HashSet<Integer>> sets = new ArrayList<>();
-        List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+        List<Future<Integer>> futures = new ArrayList<>();
 
         for(EmbeddedCacheManager manager: cacheManagers){
             Cache<?, ?> cache = manager.getCache();
@@ -146,13 +145,13 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     // INNER CLASSES
     //
 
-    private class ExerciseAtomicSetTask implements Callable<Integer>{
+    private class ExerciseAtomicSetTask implements Callable<Integer> {
 
         private int ncalls;
         private Set<Integer> set;
         private Set<Integer> added;
 
-        public ExerciseAtomicSetTask(Set<Integer> s, int n){
+        public ExerciseAtomicSetTask(Set<Integer> s, int n) {
             ncalls = n;
             set = s;
             added = new HashSet<>();

@@ -47,11 +47,11 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       // Since the number of nodes changes, the capacity factors are repeated
       float[][] capacityFactors = {null, {1}, {2}, {1, 100}, {2, 0, 1}};
 
-      ConsistentHashFactory <DefaultConsistentHash> chf = createConsistentHashFactory();
+      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
       Hash hashFunction = MurmurHash3.getInstance();
 
       for (int nn : numNodes) {
-         List<Address> nodes = new ArrayList<Address>(nn);
+         List<Address> nodes = new ArrayList<>(nn);
          for (int j = 0; j < nn; j++) {
             nodes.add(new TestAddress(j, "TA"));
          }
@@ -62,7 +62,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
                   for (float[] lf : capacityFactors) {
                      Map<Address, Float> lfMap = null;
                      if (lf != null) {
-                        lfMap = new HashMap<Address, Float>();
+                        lfMap = new HashMap<>();
                         for (int i = 0; i < nn; i++) {
                            lfMap.put(nodes.get(i), lf[i % lf.length]);
                         }
@@ -100,9 +100,8 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          if (nodesToRemove == baseMembers.size() && nodesToAdd == 0)
             break;
 
-         List<Address> newMembers = new ArrayList<Address>(baseMembers);
-         HashMap<Address, Float> newCapacityFactors = lfMap != null ?
-               new HashMap<Address, Float>(lfMap) : null;
+         List<Address> newMembers = new ArrayList<>(baseMembers);
+         HashMap<Address, Float> newCapacityFactors = lfMap != null ? new HashMap<>(lfMap) : null;
          for (int k = 0; k < nodesToRemove; k++) {
             int indexToRemove = Math.abs(baseCH.getHashFunction().hash(k) % newMembers.size());
             if (newCapacityFactors != null) {
@@ -241,7 +240,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    protected Map<Address, Float> computeExpectedOwned(int numSegments, int numNodes, int actualNumOwners,
                                                        Collection<Address> nodes,
                                                        final Map<Address, Float> capacityFactors) {
-      Map<Address, Float> expectedOwned = new HashMap<Address, Float>();
+      Map<Address, Float> expectedOwned = new HashMap<>();
       if (capacityFactors == null) {
          float expected = Math.min(numSegments, (float) numSegments * actualNumOwners / numNodes);
          for (Address node : nodes) {
@@ -250,7 +249,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          return expectedOwned;
       }
 
-      List<Address> sortedNodes = new ArrayList<Address>(nodes);
+      List<Address> sortedNodes = new ArrayList<>(nodes);
       Collections.sort(sortedNodes, new Comparator<Address>() {
          @Override
          public int compare(Address o1, Address o2) {
@@ -278,7 +277,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    protected float allowedDeviationOwned(int numSegments, int actualNumOwners, int numNodes, float totalCapacity,
-                                          float maxCapacityFactor) {
+                                         float maxCapacityFactor) {
       return numNodes * maxCapacityFactor / totalCapacity;
    }
 
@@ -315,8 +314,8 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH) {
       int numSegments = oldCH.getNumSegments();
       int numOwners = oldCH.getNumOwners();
-      Set<Address> oldMembers = new HashSet<Address>(oldCH.getMembers());
-      Set<Address> newMembers = new HashSet<Address>(newCH.getMembers());
+      Set<Address> oldMembers = new HashSet<>(oldCH.getMembers());
+      Set<Address> newMembers = new HashSet<>(newCH.getMembers());
 
       // Compute the number of segments owned by members that left
       int leaverSegments = 0;
@@ -329,7 +328,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       // Compute the number of segments where an old node became an owner
       int oldMembersAddedSegments = 0;
       for (int segment = 0; segment < numSegments; segment++) {
-         ArrayList<Address> oldMembersAdded = new ArrayList<Address>(newCH.locateOwnersForSegment(segment));
+         ArrayList<Address> oldMembersAdded = new ArrayList<>(newCH.locateOwnersForSegment(segment));
          oldMembersAdded.removeAll(oldCH.locateOwnersForSegment(segment));
          oldMembersAdded.retainAll(oldMembers);
          oldMembersAddedSegments += oldMembersAdded.size();
@@ -346,10 +345,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             oldCH, newCH, expectedExtraMoves, oldMembersAddedSegments);
    }
 
-   protected <T> Set<T> symmetricalDiff(Collection <T> set1, Collection<T> set2) {
-      HashSet<T> commonMembers = new HashSet<T>(set1);
+   protected <T> Set<T> symmetricalDiff(Collection<T> set1, Collection<T> set2) {
+      HashSet<T> commonMembers = new HashSet<>(set1);
       commonMembers.retainAll(set2);
-      HashSet<T> symDiffMembers = new HashSet<T>(set1);
+      HashSet<T> symDiffMembers = new HashSet<>(set1);
       symDiffMembers.addAll(set2);
       symDiffMembers.removeAll(commonMembers);
       return symDiffMembers;
@@ -362,18 +361,18 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       TestAddress C = new TestAddress(2, "C");
       TestAddress D = new TestAddress(3, "D");
 
-      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 60, Arrays.<Address>asList(A), null);
+      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 60, Arrays.asList(A), null);
       //System.out.println(ch1);
 
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.<Address>asList(A, B), null);
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), null);
       ch2 = chf.rebalance(ch2);
       //System.out.println(ch2);
 
-      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.<Address>asList(A, B, C), null);
+      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), null);
       ch3 = chf.rebalance(ch3);
       //System.out.println(ch3);
 
-      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.<Address>asList(A, B, C, D), null);
+      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), null);
       ch4 = chf.rebalance(ch4);
       //System.out.println(ch4);
    }

@@ -17,7 +17,7 @@ public final class DistributedTaskLifecycleService {
    private final List<DistributedTaskLifecycle> lifecycles;
 
    private DistributedTaskLifecycleService() {
-      lifecycles = new ArrayList<DistributedTaskLifecycle>();
+      lifecycles = new ArrayList<>();
       for (DistributedTaskLifecycle cl : ServiceFinder.load(DistributedTaskLifecycle.class)) {
          lifecycles.add(cl);
       }
@@ -30,7 +30,7 @@ public final class DistributedTaskLifecycleService {
       return service;
    }
 
-   public <T,K,V> void onPreExecute(Callable<T> task, Cache <K,V> inputCache) {
+   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputCache) {
       try {
          for (DistributedTaskLifecycle l : lifecycles) {
             l.onPreExecute(task, inputCache);

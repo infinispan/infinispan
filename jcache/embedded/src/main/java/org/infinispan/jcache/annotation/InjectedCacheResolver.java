@@ -110,7 +110,7 @@ public class InjectedCacheResolver implements CacheResolver {
    private <K, V> Cache<K, V> getCacheFromDefaultCacheManager(final String cacheName) {
       final Configuration defaultInjectedConfiguration = getBeanReference(Configuration.class);
       defaultCacheManager.defineConfiguration(cacheName, defaultInjectedConfiguration);
-      return defaultJCacheManager.getOrCreateCache(cacheName, defaultCacheManager.<K, V> getCache(cacheName)
+      return defaultJCacheManager.getOrCreateCache(cacheName, defaultCacheManager.<K, V>getCache(cacheName)
             .getAdvancedCache());
    }
 

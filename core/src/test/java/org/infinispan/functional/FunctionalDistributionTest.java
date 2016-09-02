@@ -44,7 +44,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
    public void testDistributionFromPrimaryOwner() throws InterruptedException {
       Object key = "testDistributionFromPrimaryOwner";
       doTestDistribution(key, cacheManagers.stream()
-            .map(cm -> cm.<Object, Integer> getCache(DIST).getAdvancedCache())
+            .map(cm -> cm.<Object, Integer>getCache(DIST).getAdvancedCache())
             .filter(cache -> cache.getDistributionManager().getPrimaryLocation(key)
                   .equals(cache.getRpcManager().getAddress()))
             .findAny()
@@ -54,7 +54,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
    public void testDistributionFromSecondaryOwner() throws InterruptedException {
       Object key = "testDistributionFromSecondaryOwner";
       doTestDistribution(key, cacheManagers.stream()
-            .map(cm -> cm.<Object, Integer> getCache(DIST).getAdvancedCache())
+            .map(cm -> cm.<Object, Integer>getCache(DIST).getAdvancedCache())
             // owner...
             .filter(cache -> cache.getDistributionManager().getLocality(key).isLocal()
                   // ...but not primary owner
@@ -67,7 +67,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
    public void testDistributionFromNonOwner() throws InterruptedException {
       Object key = "testDistributionFromNonOwner";
       doTestDistribution(key, cacheManagers.stream()
-            .map(cm -> cm.<Object, Integer> getCache(DIST).getAdvancedCache())
+            .map(cm -> cm.<Object, Integer>getCache(DIST).getAdvancedCache())
             .filter(cache -> !cache.getDistributionManager().getLocality(key).isLocal())
             .findAny()
             .get());
@@ -96,7 +96,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
       // we want to ensure that each of the owners executes the function only once:
       Assert.assertEquals(
             (Object) cacheManagers.stream()
-                  .map(cm -> cm.<Object, Integer> getCache(DIST).getAdvancedCache())
+                  .map(cm -> cm.<Object, Integer>getCache(DIST).getAdvancedCache())
                   .filter(cache -> cache.getDistributionManager().getLocality(key).isLocal())
                   .map(cache -> cache.getDataContainer().get(key).getValue())
                   .collect(Collectors.toList()),

@@ -56,7 +56,7 @@ public class InfinispanExtensionEmbedded implements Extension {
 
    private final Object registerLock = new Object();
 
-   private Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<Set<Annotation>>();
+   private Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<>();
 
    public InfinispanExtensionEmbedded() {
       new ConfigurationBuilder(); // Attempt to initialize a core class
@@ -70,7 +70,7 @@ public class InfinispanExtensionEmbedded implements Extension {
         if (annotation != null) {
             configurationName = annotation.value();
         }
-        configurations.add(new ConfigurationHolder((Producer<Configuration>) event.getProducer(), configurationName,
+        configurations.add(new ConfigurationHolder(event.getProducer(), configurationName,
                 Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())));
     }
 
@@ -81,7 +81,7 @@ public class InfinispanExtensionEmbedded implements Extension {
     }
 
    @SuppressWarnings("unchecked")
-   <T, X>void registerBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
+   <T, X> void registerBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
 
        if (beanManager.getBeans(Configuration.class).isEmpty()) {
            LOGGER.addDefaultEmbeddedConfiguration();
@@ -104,7 +104,7 @@ public class InfinispanExtensionEmbedded implements Extension {
               @Override
               public AdvancedCache<?, ?> create(Bean<AdvancedCache<?, ?>> bean,
                  CreationalContext<AdvancedCache<?, ?>> creationalContext) {
-                 return new ContextualReference<AdvancedCacheProducer>(beanManager, AdvancedCacheProducer.class).create(Reflections.<CreationalContext<AdvancedCacheProducer>>cast(creationalContext)).get().getAdvancedCache(holder.getName(), holder.getQualifiers());
+                 return new ContextualReference<AdvancedCacheProducer>(beanManager, AdvancedCacheProducer.class).create(Reflections.cast(creationalContext)).get().getAdvancedCache(holder.getName(), holder.getQualifiers());
               }
            }).create();
           event.addBean(advancedCacheBean);
@@ -135,7 +135,7 @@ public class InfinispanExtensionEmbedded implements Extension {
    }
 
    public Set<InstalledCacheManager> getInstalledEmbeddedCacheManagers(BeanManager beanManager) {
-       Set<InstalledCacheManager> installedCacheManagers = new HashSet<InstalledCacheManager>();
+       Set<InstalledCacheManager> installedCacheManagers = new HashSet<>();
        for (Set<Annotation> qualifiers : installedEmbeddedCacheManagers) {
            Bean<?> b = beanManager.resolve(beanManager.getBeans(EmbeddedCacheManager.class, qualifiers.toArray(Reflections.EMPTY_ANNOTATION_ARRAY)));
            EmbeddedCacheManager cm = (EmbeddedCacheManager) beanManager.getReference(b, EmbeddedCacheManager.class, beanManager.createCreationalContext(b));

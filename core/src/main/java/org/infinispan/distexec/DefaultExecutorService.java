@@ -571,8 +571,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       return list.get(0);
    }
 
-   protected <T> Address selectExecutionNode(DistributedTask <T> task) {
-     return selectExecutionNode(executionCandidates(task));
+   protected <T> Address selectExecutionNode(DistributedTask<T> task) {
+      return selectExecutionNode(executionCandidates(task));
    }
 
    protected List<Address> randomClusterMembers(final List<Address> members, int numNeeded) {
@@ -733,7 +733,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
    }
 
-   private class DefaultDistributedTaskBuilder<T> implements DistributedTaskBuilder<T>, DistributedTask<T>{
+   private class DefaultDistributedTaskBuilder<T> implements DistributedTaskBuilder<T>, DistributedTask<T> {
 
       private Callable<T> callable;
       private long timeout;

@@ -9,7 +9,7 @@ import org.kohsuke.MetaInfServices;
 public class DefaultDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
    @Override
-   public <T, K, V> void onPreExecute(Callable<T> task, Cache <K,V> inputCache) {
+   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputCache) {
       // intentionally no-op
    }
 

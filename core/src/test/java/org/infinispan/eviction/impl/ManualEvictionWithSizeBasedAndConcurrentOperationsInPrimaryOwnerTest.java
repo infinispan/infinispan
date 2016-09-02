@@ -509,7 +509,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry< K, V>> action)
+      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action)
             throws InterruptedException {
          throw new UnsupportedOperationException();
       }

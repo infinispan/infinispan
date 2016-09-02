@@ -9,7 +9,7 @@ import java.util.function.BiConsumer;
  * @author Vladimir Blagojevic
  * @since 7.0
  */
-public interface ParallelIterableMap<K, V>{
+public interface ParallelIterableMap<K, V> {
 
    /**
     * Performs the given action for each (key, value) but traversing entries in parallel.
@@ -19,5 +19,5 @@ public interface ParallelIterableMap<K, V>{
     * @param action the action
     * @since 7.0
     */
-   void forEach(long parallelismThreshold, BiConsumer<? super K,? super V> action) throws InterruptedException;
+   void forEach(long parallelismThreshold, BiConsumer<? super K, ? super V> action) throws InterruptedException;
 }

@@ -353,7 +353,7 @@ public interface CommandsFactory {
     * @param keys keys used in Callable
     * @return a DistributedExecuteCommand
     */
-   <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
+   <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
 
    /**
     * @see GetInDoubtTxInfoCommand

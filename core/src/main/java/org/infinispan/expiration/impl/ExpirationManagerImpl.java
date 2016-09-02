@@ -32,7 +32,7 @@ import net.jcip.annotations.ThreadSafe;
 public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    protected static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
-   protected ScheduledFuture <?> expirationTask;
+   protected ScheduledFuture<?> expirationTask;
 
    // components to be injected
    protected ScheduledExecutorService executor;
