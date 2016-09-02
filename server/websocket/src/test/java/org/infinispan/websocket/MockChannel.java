@@ -74,7 +74,12 @@ public class MockChannel implements Channel {
 		});
 	}
 
-    @Override
+	@Override
+	public ChannelId id() {
+		return null;
+	}
+
+	@Override
     public EventLoop eventLoop() {
         return null;
     }
@@ -124,7 +129,17 @@ public class MockChannel implements Channel {
         return false;
     }
 
-    @Override
+	@Override
+	public long bytesBeforeUnwritable() {
+		return 0;
+	}
+
+	@Override
+	public long bytesBeforeWritable() {
+		return 0;
+	}
+
+	@Override
     public Unsafe unsafe() {
         return null;
     }
@@ -257,7 +272,12 @@ public class MockChannel implements Channel {
         return null;
     }
 
-    @Override
+	@Override
+	public <T> boolean hasAttr(AttributeKey<T> attributeKey) {
+		return false;
+	}
+
+	@Override
     public int compareTo(Channel o) {
         return 0;
     }
