@@ -8,7 +8,6 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -45,7 +44,7 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder getConfigurationBuilder() {
       final ConfigurationBuilder conf = getDefaultClusteredCacheConfig(DIST_SYNC, false);
-      conf.clustering().hash().keyPartitioner(new AffinityPartitioner()).numSegments(10).numOwners(1);
+      conf.clustering().hash().numSegments(10).numOwners(1);
       return conf;
    }
 

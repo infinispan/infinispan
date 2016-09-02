@@ -7,7 +7,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
@@ -21,7 +20,6 @@ public class AffinityIndexManagerMassIndexTest extends DistributedMassIndexingTe
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Car.class)

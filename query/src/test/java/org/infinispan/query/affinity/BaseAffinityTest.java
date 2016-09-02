@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -33,7 +32,6 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Entity.class)

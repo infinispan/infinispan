@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
@@ -21,7 +20,6 @@ public class ClusteredCacheWithAffinityIndexManagerTest extends ClusteredCacheTe
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
-      cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Person.class)
