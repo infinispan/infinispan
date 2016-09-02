@@ -74,13 +74,13 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      if (ctx.isOriginLocal()) {
-         command.setKey(converter.boxKey(key));
-         command.setValue(converter.boxValue(command.getValue()));
+      if (!ctx.isOriginLocal()) {
+         return super.visitPutKeyValueCommand(ctx, command);
       }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      command.setKey(converter.boxKey(key));
+      command.setValue(converter.boxValue(command.getValue()));
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
@@ -93,8 +93,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Map<Object, Object> map = command.getMap();
-         TypeConverter<Object, Object, Object, Object> converter =
-               determineTypeConverter(command.getFlags());
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
          Map<Object, Object> convertedMap = new HashMap<>(map.size());
          for (Entry<Object, Object> entry : map.entrySet()) {
             convertedMap.put(converter.boxKey(entry.getKey()),
@@ -102,23 +101,22 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          }
          command.setMap(convertedMap);
       }
-      // There is no return value for putAll so nothing to convert
-      return ctx.continueInvocation();
+      return super.visitPutMapCommand(ctx, command);
    }
 
    @Override
    public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      if (ctx.isOriginLocal()) {
-         command.setKey(converter.boxKey(key));
+      if (!ctx.isOriginLocal()) {
+         return super.visitGetKeyValueCommand(ctx, command);
       }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      command.setKey(converter.boxKey(key));
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
-         if (rv == null || !needsUnboxing(rCtx)) {
+         if (rv == null) {
             // Preserves the original return value
             return null;
          }
@@ -128,17 +126,17 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
    @Override
    public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      if (ctx.isOriginLocal()) {
-         command.setKey(converter.boxKey(key));
+      if (!ctx.isOriginLocal()) {
+         return super.visitGetCacheEntryCommand(ctx, command);
       }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      command.setKey(converter.boxKey(key));
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
-         if (rv == null || !needsUnboxing(rCtx)) {
+         if (rv == null) {
             // Preserves the original return value
             return null;
          }
@@ -151,27 +149,23 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       });
    }
 
-   private boolean needsUnboxing(InvocationContext ctx) {
-      return ctx.isOriginLocal();
-   }
-
    @Override
    public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      Collection<?> keys = command.getKeys();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      if (ctx.isOriginLocal()) {
-         Set<Object> boxedKeys = new LinkedHashSet<>(keys.size());
-         for (Object key : keys) {
-            boxedKeys.add(converter.boxKey(key));
-         }
-         command.setKeys(boxedKeys);
+      if (!ctx.isOriginLocal()) {
+         return super.visitGetAllCommand(ctx, command);
       }
+      Collection<?> keys = command.getKeys();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      Set<Object> boxedKeys = new LinkedHashSet<>(keys.size());
+      for (Object key : keys) {
+         boxedKeys.add(converter.boxKey(key));
+      }
+      command.setKeys(boxedKeys);
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
-         if (rv == null || !needsUnboxing(rCtx)) {
+         if (rv == null) {
             return null;
          }
 
@@ -209,15 +203,15 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
    @Override
    public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      Object oldValue = command.getOldValue();
-      if (ctx.isOriginLocal()) {
-         command.setKey(converter.boxKey(key));
-         command.setOldValue(converter.boxValue(oldValue));
-         command.setNewValue(converter.boxValue(command.getNewValue()));
+      if (!ctx.isOriginLocal()) {
+         return super.visitReplaceCommand(ctx, command);
       }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      Object oldValue = command.getOldValue();
+      command.setKey(converter.boxKey(key));
+      command.setOldValue(converter.boxValue(oldValue));
+      command.setNewValue(converter.boxValue(command.getNewValue()));
       addVersionIfNeeded(command);
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
@@ -245,14 +239,14 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
    @Override
    public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      Object key = command.getKey();
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      Object conditionalValue = command.getValue();
-      if (ctx.isOriginLocal()) {
-         command.setKey(converter.boxKey(key));
-         command.setValue(converter.boxValue(conditionalValue));
+      if (!ctx.isOriginLocal()) {
+         return super.visitRemoveCommand(ctx, command);
       }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      Object conditionalValue = command.getValue();
+      command.setKey(converter.boxKey(key));
+      command.setValue(converter.boxValue(conditionalValue));
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
@@ -263,24 +257,26 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          if (conditionalValue != null && rv instanceof Boolean)
             return null;
 
-         return CompletableFuture.completedFuture(ctx.isOriginLocal() ? converter.unboxValue(rv) : rv);
+         return CompletableFuture.completedFuture(converter.unboxValue(rv));
       });
    }
 
    @Override
    public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
          throws Throwable {
-      if (!ctx.isOriginLocal())
-         return ctx.continueInvocation();
+      if (!ctx.isOriginLocal()) {
+         return super.visitKeySetCommand(ctx, command);
+      }
 
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
+         KeySetCommand keySetCommand = (KeySetCommand) rCommand;
          CacheSet<K> set = (CacheSet<K>) rv;
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(keySetCommand.getFlags());
          return CompletableFuture.completedFuture(
-               new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
+               new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, keySetCommand), set) {
                   @Override
                   public CloseableIterator<K> iterator() {
                      return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
@@ -314,18 +310,20 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
    @Override
    public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      if (!ctx.isOriginLocal())
-         return ctx.continueInvocation();
+      if (!ctx.isOriginLocal()) {
+         return super.visitEntrySetCommand(ctx, command);
+      }
 
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
 
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;
 
+         EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand.getFlags());
          CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
          return CompletableFuture.completedFuture(
-               new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
+               new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, entrySetCommand), set) {
                   @Override
                   public CloseableIterator<CacheEntry<K, V>> iterator() {
                      return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
