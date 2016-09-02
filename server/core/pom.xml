@@ -16,7 +16,6 @@
 
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-      <infinispan.test.parallel.thread>1</infinispan.test.parallel.thread>
    </properties>
 
    <dependencies>
