@@ -6,7 +6,7 @@ import org.infinispan.Cache;
 
 public interface DistributedTaskLifecycle {
 
-   <T, K, V> void onPreExecute(Callable<T> task, Cache <K,V> inputDataCache);
+   <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache);
 
    <T> void onPostExecute(Callable<T> task);
 }

@@ -41,7 +41,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    private final Address origin;
    private final boolean commandRetried;
 
-   public static <K, V>ClusterEvent<K, V> fromEvent(CacheEntryEvent<K, V> event) {
+   public static <K, V> ClusterEvent<K, V> fromEvent(CacheEntryEvent<K, V> event) {
       if (event instanceof ClusterEvent) {
          return (ClusterEvent<K, V>) event;
       }

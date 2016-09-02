@@ -5,7 +5,6 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -94,7 +93,7 @@ public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case FACTORY: {
-            builder.factory(Util.<ExecutorFactory> getInstance(value, classLoader));
+            builder.factory(Util.getInstance(value, classLoader));
             break;
          }
          default: {

@@ -20,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>{
+public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration> {
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
 
