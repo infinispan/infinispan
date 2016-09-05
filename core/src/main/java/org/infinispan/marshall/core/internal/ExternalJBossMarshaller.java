@@ -8,8 +8,8 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -26,7 +26,6 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
 
    public ExternalJBossMarshaller(InternalExternalizerTable externalizers, GlobalConfiguration globalCfg) {
       this.marshaller = new InternalJBossMarshaller(externalizers, globalCfg);
-      //this.marshaller = new JBossMarshaller(null, globalCfg);
    }
 
    @Override
@@ -198,49 +197,30 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
          baseCfg.setObjectTable(new ObjectTable() {
             @Override
             public Writer getObjectWriter(Object object) throws IOException {
-               AdvancedExternalizer<Object> ext = (AdvancedExternalizer<Object>)
-                     externalizers.writers.get(object.getClass());
-               if (ext != null)
-                  return (m, obj) -> {
-                     m.writeInt(ext.getId());
-                     ext.writeObject(m, obj);
-                  };
-
-               return null;
+               InternalExternalizerTable.MarshallableType type = externalizers.marshallable(object);
+               switch (type) {
+                  case INTERNAL:
+                  case PREDEFINED:
+                  case ANNOTATED:
+                     return (m, obj) -> {
+                        Externalizer<Object> ext = externalizers.findWriteExternalizer(obj, m);
+                        ext.writeObject(m, obj);
+                     };
+                  case PRIMITIVE:
+                  case NOT_MARSHALLABLE:
+                     return null;
+                  default:
+                     throw new IOException("Unknown marshallable type: " + type);
+               }
             }
 
             @Override
             public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-               int id = unmarshaller.readInt();
-               AdvancedExternalizer<?> ext = externalizers.readers.get(id);
-               if (ext == null) {
-                  // Try as foreign externalizer
-                  int foreignId = externalizers.generateForeignReaderIndex(id);
-                  ext = externalizers.readers.get(foreignId);
-               }
-
+               Externalizer<Object> ext = externalizers.findReadExternalizer(unmarshaller);
                return ext.readObject(unmarshaller);
             }
          });
       }
    }
-
-//   static final class JBossObjectOutput implements ObjectOutput {
-//
-//   }
-
-//   final static class InternalObjectTable implements ObjectTable {
-//
-//      @Override
-//      public Writer getObjectWriter(Object object) throws IOException {
-//         return null;  // TODO: Customise this generated block
-//      }
-//
-//      @Override
-//      public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-//         return null;  // TODO: Customise this generated block
-//      }
-//
-//   }
 
 }

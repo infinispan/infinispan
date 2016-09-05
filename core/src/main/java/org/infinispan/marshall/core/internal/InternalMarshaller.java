@@ -1,7 +1,6 @@
 package org.infinispan.marshall.core.internal;
 
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
@@ -178,7 +177,7 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    private boolean isMarshallableCandidate(Object o) {
       return o instanceof Serializable
-            || externalizers.isMarshallable(o)
+            || externalizers.marshallable(o).isMarshallable()
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || isExternalMarshallable(o);
    }

@@ -1,14 +1,13 @@
 package org.infinispan.marshall.core.internal;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.AbstractSet;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
 
@@ -47,7 +46,7 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
    // 0x2C-0x2F unused
 
    final IdentityIntMap<Class<?>> subIds = new IdentityIntMap<>(16);
-   final Set<Class<?>> types = new PrimitiveTypes();
+   final Set<Class<?>> subTypes = new HashSet<>();
 
    // Assumes that whatever encoding passed can handle ObjectOutput/ObjectInput
    // (that might change when adding support for NIO ByteBuffers)
@@ -55,32 +54,37 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
 
    public PrimitiveExternalizer(Encoding enc) {
       this.enc = enc;
-      subIds.put(String.class, STRING);
-      subIds.put(byte[].class, BYTE_ARRAY);
+      addSubType(String.class, STRING);
+      addSubType(byte[].class, BYTE_ARRAY);
 
-      subIds.put(Boolean.class, BOOLEAN_OBJ);
-      subIds.put(Byte.class, BYTE_OBJ);
-      subIds.put(Character.class, CHAR_OBJ);
-      subIds.put(Double.class, DOUBLE_OBJ);
-      subIds.put(Float.class, FLOAT_OBJ);
-      subIds.put(Integer.class, INT_OBJ);
-      subIds.put(Long.class, LONG_OBJ);
-      subIds.put(Short.class, SHORT_OBJ);
+      addSubType(Boolean.class, BOOLEAN_OBJ);
+      addSubType(Byte.class, BYTE_OBJ);
+      addSubType(Character.class, CHAR_OBJ);
+      addSubType(Double.class, DOUBLE_OBJ);
+      addSubType(Float.class, FLOAT_OBJ);
+      addSubType(Integer.class, INT_OBJ);
+      addSubType(Long.class, LONG_OBJ);
+      addSubType(Short.class, SHORT_OBJ);
 
-      subIds.put(boolean[].class, BOOLEAN_ARRAY);
-      subIds.put(char[].class, CHAR_ARRAY);
-      subIds.put(double[].class, DOUBLE_ARRAY);
-      subIds.put(float[].class, FLOAT_ARRAY);
-      subIds.put(int[].class, INT_ARRAY);
-      subIds.put(long[].class, LONG_ARRAY);
-      subIds.put(short[].class, SHORT_ARRAY);
+      addSubType(boolean[].class, BOOLEAN_ARRAY);
+      addSubType(char[].class, CHAR_ARRAY);
+      addSubType(double[].class, DOUBLE_ARRAY);
+      addSubType(float[].class, FLOAT_ARRAY);
+      addSubType(int[].class, INT_ARRAY);
+      addSubType(long[].class, LONG_ARRAY);
+      addSubType(short[].class, SHORT_ARRAY);
 
-      subIds.put(Object[].class, OBJECT_ARRAY);
+      addSubType(Object[].class, OBJECT_ARRAY);
+   }
+
+   public void addSubType(Class<?> clazz, int subId) {
+      subIds.put(clazz, subId);
+      subTypes.add(clazz);
    }
 
    @Override
    public Set<Class<?>> getTypeClasses() {
-      return types;
+      return subTypes;
    }
 
    @Override
@@ -673,28 +677,7 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
 
    @Override
    public Integer getId() {
-      return InternalIds.PRIMITIVE;
-   }
-
-   private final class PrimitiveTypes extends AbstractSet<Class<?>> {
-
-      @Override
-      public boolean contains(Object o) {
-         final int doesNotExist = -1;
-         int i = PrimitiveExternalizer.this.subIds.get((Class<?>) o, doesNotExist);
-         return i != doesNotExist;
-      }
-
-      @Override
-      public Iterator<Class<?>> iterator() {
-         return null;
-      }
-
-      @Override
-      public int size() {
-         return 0;
-      }
-
+      return null; // Internal, id defined in internal externalizer table
    }
 
 }
