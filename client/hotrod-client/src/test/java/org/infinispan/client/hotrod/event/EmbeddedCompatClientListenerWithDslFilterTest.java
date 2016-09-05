@@ -145,7 +145,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
 
       Query query = qf.from(UserPB.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 
@@ -200,7 +200,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
 
       Query query = qf.from(UserPB.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 
@@ -226,7 +226,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       ClientEntryListener listener = new ClientEntryListener(ProtoStreamMarshaller.getSerializationContext(client(0)));
@@ -240,7 +240,6 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
    public void testRequireRawDataListener() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder()
             .build();
 
       @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
@@ -262,7 +261,6 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
    public void testRequireQueryDslFilterFactoryNameForListener() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder()
             .build();
 
       @ClientListener(filterFactoryName = "some-filter-factory-name",

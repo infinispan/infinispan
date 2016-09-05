@@ -15,7 +15,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionContext;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.util.TimeService;
@@ -101,8 +100,10 @@ public class ServerEventLogger implements EventLogger {
          cacheManager.executor().submitConsumer(m -> {
             Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
             QueryFactory queryFactory = Search.getQueryFactory(cache);
-            QueryBuilder query = queryFactory.from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count);
-            FilterConditionContext filter = query.having("when").lte(start);
+            FilterConditionContext filter = queryFactory.from(ServerEventImpl.class)
+                  .orderBy("when", SortOrder.DESC)
+                  .maxResults(count)
+                  .having("when").lte(start);
             category.map(c -> filter.and(queryFactory.having("category").eq(c)));
             level.map(l -> filter.and(queryFactory.having("level").eq(l)));
             List<EventLog> nodeEvents = filter.toBuilder().build().list();

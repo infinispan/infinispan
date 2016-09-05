@@ -58,7 +58,7 @@ public class BaseHotRodQueryIT {
 
       QueryFactory qf = Search.getQueryFactory(cache);
       Query query = qf.from(Person.class)
-            .having("name").eq("Adrian").toBuilder()
+            .having("name").eq("Adrian")
             .build();
       List<Person> list = query.list();
       assertNotNull(list);

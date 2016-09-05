@@ -63,7 +63,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 31);
+            .build().setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -118,7 +118,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 31);
+            .build().setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -179,7 +179,6 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(31)
-            .toBuilder()
             .select("name", "age")
             .build();
 
@@ -216,7 +215,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);

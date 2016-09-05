@@ -359,7 +359,7 @@ public abstract class AbstractMatcherTest {
    public void testDSL() throws Exception {
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("phoneNumbers.number").eq("004012345").toBuilder().build();
+            .having("phoneNumbers.number").eq("004012345").build();
       assertTrue(match(q, createPerson1()));
    }
 
@@ -415,7 +415,7 @@ public abstract class AbstractMatcherTest {
             .having("id").lt(1000)
             .and()
             .having("age").lt(1000)
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -435,7 +435,7 @@ public abstract class AbstractMatcherTest {
       Query q = qf.from(Person.class)
             .having("name").like("Jo%")
             .and(qf.not().having("name").like("Jo%").or().having("id").lt(1000))
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -451,7 +451,7 @@ public abstract class AbstractMatcherTest {
 
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
       final boolean b[] = new boolean[1];
 
@@ -480,7 +480,7 @@ public abstract class AbstractMatcherTest {
 
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 

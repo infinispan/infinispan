@@ -59,7 +59,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
     @Test
     public void testManualIndexing() throws Exception {
         QueryBuilder qb = Search.getQueryFactory(remoteCache).from(User.class)
-                .having("name").eq("Tom").toBuilder();
+                .having("name").eq("Tom");
 
         User user = new User();
         user.setId(1);

@@ -28,7 +28,7 @@ public interface FilterConditionContext {
     * @param rightCondition the second condition
     * @return the new context
     */
-   FilterConditionContext and(FilterConditionContext rightCondition);
+   <T extends FilterConditionContext & QueryBuilder> T and(FilterConditionContext rightCondition);
 
    /**
     * Creates a new context and connects it with the current one using boolean OR. The new context is added after the
@@ -49,12 +49,14 @@ public interface FilterConditionContext {
     * @param rightCondition the second condition
     * @return the new context
     */
-   FilterConditionContext or(FilterConditionContext rightCondition);
+   <T extends FilterConditionContext & QueryBuilder> T or(FilterConditionContext rightCondition);
 
    /**
-    * Get the {@link QueryBuilder} that created this context.
+    * Get the {@link QueryBuilder} that created this context. As of Infinispan 9.0 this is no longer needed.
     *
     * @return the parent builder
+    * @deprecated To be removed in Infinispan 10.0 without replacement.
     */
+   @Deprecated
    QueryBuilder toBuilder();
 }

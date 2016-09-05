@@ -93,7 +93,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
             .or()
             .having("id").gte(Expression.param("idParam1"))
             .or()
-            .having("id").lt(Expression.param("idParam2")).toBuilder()
+            .having("id").lt(Expression.param("idParam2"))
             .build();
 
       final int iterations = 1000;

@@ -50,7 +50,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
 
       Query query = qf.from(Person.class)
             .having("age").lte(30)
-            .toBuilder().build();
+            .build();
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));

@@ -48,7 +48,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
             .select(max("age"))
             .having("age").gte(20)
-            .toBuilder().build();
+            .build();
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
@@ -69,7 +69,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query = qf.from(Person.class)
             .select("age")
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 30);
+            .build().setParameter("ageParam", 30);
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       cq.addContinuousQueryListener(query, listener);
@@ -173,7 +173,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query = qf.from(Person.class)
             .select("age")
             .having("age").lte(param("ageParam"))
-            .toBuilder().build();
+            .build();
 
       query.setParameter("ageParam", 30);
 
@@ -213,13 +213,13 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query1 = qf.from(Person.class)
             .having("age").lte(30)
             .and().having("name").eq("John").or().having("name").eq("Johny")
-            .toBuilder().build();
+            .build();
       ContinuousQuery<Object, Object> cq1 = Search.getContinuousQuery(cache());
       cq1.addContinuousQueryListener(query1, listener);
 
       Query query2 = qf.from(Person.class)
             .having("age").lte(30).or().having("name").eq("Joe")
-            .toBuilder().build();
+            .build();
       ContinuousQuery<Object, Object> cq2 = Search.getContinuousQuery(cache());
       cq2.addContinuousQueryListener(query2, listener);
 

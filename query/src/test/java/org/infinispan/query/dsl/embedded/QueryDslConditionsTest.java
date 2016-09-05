@@ -240,7 +240,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("John")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -253,7 +253,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
@@ -264,7 +264,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .having("description").eq("John Doe's first bank account")
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -276,7 +276,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("Jacob")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -287,7 +287,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(NotIndexed.class)
             .having("notIndexedField").eq("testing 123")
-            .toBuilder().build();
+            .build();
 
       List<NotIndexed> list = q.list();
       assertEquals(1, list.size());
@@ -299,7 +299,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -312,7 +312,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
             .and().having("surname").eq("Doe")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -325,7 +325,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
             .and().having("surname").eq(param("surnameParam"))
-            .toBuilder().build();
+            .build();
 
       q.setParameter("surnameParam", "Doe");
 
@@ -340,7 +340,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").like("%ipsum%")
             .and(qf.having("name").eq("John").or().having("name").eq("Jane"))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
 
@@ -354,7 +354,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all users in a given post code
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("addresses.postCode").eq("X1234")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -366,7 +366,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("addresses.postCode").eq("Y12")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -379,7 +379,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all rent payments made from a given account
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("description").like("%rent%")
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -393,7 +393,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       qf.from(getModelFactory().getTransactionImplClass())
             .having("date").between(new Object(), new Object())
-            .toBuilder()
             .build();
    }
 
@@ -403,7 +402,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions that happened in January 2013
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
@@ -419,7 +418,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions that happened in January 2013
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31")).includeUpper(false)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(3, list.size());
@@ -435,7 +434,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions that happened in January 2013
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31")).includeLower(false)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(3, list.size());
@@ -451,7 +450,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions greater than a given amount
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("amount").gt(1500)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -463,7 +462,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("amount").gte(1500)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(2, list.size());
@@ -477,7 +476,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("amount").lt(1500)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(54, list.size());
@@ -491,7 +490,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("amount").lte(1500)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(55, list.size());
@@ -507,7 +506,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions that happened in January 2013
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("description").lte("-Popcorn")
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -520,7 +519,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("Spider")
             .and().having("surname").eq("Man")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -533,7 +532,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("Spider")
             .and(qf.having("surname").eq("Man"))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -546,7 +545,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("gender").eq(User.Gender.MALE)
             .and().having("gender").eq(User.Gender.FEMALE)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -560,7 +559,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .having("name").eq("Spider")
             .or(qf.having("name").eq("John"))
             .and(qf.having("surname").eq("Man"))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -572,7 +571,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").eq("Man")
             .or().having("surname").eq("Woman")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -587,7 +586,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").eq("Man")
             .or(qf.having("surname").eq("Woman"))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -602,7 +601,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("gender").eq(User.Gender.MALE)
             .or().having("gender").eq(User.Gender.FEMALE)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(3, list.size());
@@ -617,7 +616,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .or().having("name").eq("Spider")
             .and().having("gender").eq(User.Gender.FEMALE)
             .or().having("surname").like("%oe%")
-            .toBuilder().build();
+            .build();
       List<User> list = q.list();
 
       assertEquals(2, list.size());
@@ -633,7 +632,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .or().having("name").eq("Spider")
             .or().having("gender").eq(User.Gender.FEMALE)
             .and().having("surname").like("%oe%")
-            .toBuilder().build();
+            .build();
       List<User> list = q.list();
 
       assertEquals(1, list.size());
@@ -645,7 +644,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("name").eq("Spider")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -657,7 +656,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().not().having("surname").eq("Doe")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -671,7 +670,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("name").eq("John")
             .and().having("surname").eq("Man")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -685,7 +684,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").eq("Man")
             .and().not().having("name").eq("John")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -699,7 +698,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("name").eq("Spider")
             .or().having("surname").eq("Man")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -714,7 +713,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // QueryFactory.not() test
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not(qf.not(qf.having("gender").eq(User.Gender.FEMALE)))
-            .toBuilder()
             .build();
 
       List<User> list = q.list();
@@ -728,7 +726,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("gender").eq(User.Gender.FEMALE)
             .and().not(qf.having("name").eq("Spider"))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
@@ -741,7 +739,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .not(
                   qf.having("name").eq("John")
                         .or(qf.having("surname").eq("Man")))
-            .toBuilder()
             .build();
 
       List<User> list = q.list();
@@ -757,7 +754,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .not(
                   qf.having("name").eq("John")
                         .and(qf.having("surname").eq("Doe")))
-            .toBuilder()
             .orderBy("id", SortOrder.ASC)
             .build();
 
@@ -776,7 +772,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .not().not(
                   qf.having("name").eq("John")
                         .or(qf.having("surname").eq("Man")))
-            .toBuilder()
             .build();
 
       List<User> list = q.list();
@@ -791,7 +786,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .not(qf.not(
                   qf.having("name").eq("John")
                         .or(qf.having("surname").eq("Man"))))
-            .toBuilder()
             .build();
 
       List<User> list = q.list();
@@ -813,7 +807,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").gt("A").or().having("name").lte("A")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(3, list.size());
@@ -824,7 +818,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").gt("A").and().having("name").lte("A")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
@@ -856,7 +850,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").isNull()
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -867,7 +861,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("surname").isNull()
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(3, list.size());
@@ -878,7 +872,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("addresses").isNull()
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -894,7 +888,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("surname", SortOrder.ASC)
             .orderBy("age", SortOrder.ASC)
             .having("age").isNull()
-            .toBuilder().build();
+            .build();
 
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
@@ -912,7 +906,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name", "age")
             .not().having("age").isNull()
-            .toBuilder().build();
+            .build();
 
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -925,7 +919,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").contains(2)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -937,7 +931,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").contains(42)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -948,7 +942,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAll(1, 2)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -960,7 +954,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAll(Collections.singleton(1))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -972,7 +966,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAll(1, 2, 3)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -983,7 +977,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAll(Collections.emptySet())
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(3, list.size());
@@ -995,7 +989,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("id", SortOrder.ASC)
             .having("accountIds").containsAny(2, 3)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1008,7 +1002,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAny(4, 5)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -1019,7 +1013,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("accountIds").containsAny(Collections.emptySet())
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(3, list.size());
@@ -1031,7 +1025,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Integer> ids = Arrays.asList(1, 3);
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("id").in(ids)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1045,7 +1039,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("id").in(4)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(0, list.size());
@@ -1089,7 +1083,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1105,7 +1099,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("name", SortOrder.ASC)
             .not(qf.having("gender").eq(User.Gender.FEMALE))
             .and(qf.not().not(qf.having("gender").eq(User.Gender.MALE)))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1119,7 +1113,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all transactions that have a given description. the description contains characters that need to be escaped.
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .having("description").eq("John Doe's first bank account")
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -1147,7 +1141,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1217,7 +1211,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("John")
             .and().having("surname").eq("Doe")
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1232,7 +1226,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("accountId").eq(1)
             .and().having("description").like("%rent%")
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -1247,7 +1241,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all the transactions that happened in January 2013
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
@@ -1264,7 +1258,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
-            .toBuilder().build();
+            .build();
 
       List<Object[]> list = q.list();
       assertEquals(4, list.size());
@@ -1287,7 +1281,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("accountId").eq(2)
             .and().having("amount").gt(40)
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(52, list.size());
@@ -1302,7 +1296,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .having("name").eq("John")
             .and().having("addresses.postCode").eq("X1234")
             .and(qf.having("accountIds").eq(1))
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1316,7 +1310,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .having("accountId").eq(1)
             .and()
-            .not().having("isDebit").eq(true).toBuilder().build();
+            .not().having("isDebit").eq(true).build();
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -1328,7 +1322,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // the user that has the bank account with id 3
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("accountIds").contains(3).toBuilder().build();
+            .having("accountIds").contains(3).build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1341,7 +1335,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // the user that has all the specified bank accounts
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("accountIds").containsAll(2, 1).toBuilder().build();
+            .having("accountIds").containsAll(2, 1).build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1355,7 +1349,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // the user that has at least one of the specified accounts
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("accountIds").containsAny(1, 3).toBuilder().build();
+            .having("accountIds").containsAny(1, 3).build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1371,7 +1365,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .startOffset(20).maxResults(10)
             .orderBy("id", SortOrder.ASC)
             .having("accountId").eq(2).and().having("description").like("Expensive%")
-            .toBuilder().build();
+            .build();
 
       List<Transaction> list = q.list();
       assertEquals(50, q.getResultSize());
@@ -1386,12 +1380,12 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // all accounts for a user. first get the user by id and then get his account.
       Query q1 = qf.from(getModelFactory().getUserImplClass())
-            .having("id").eq(1).toBuilder().build();
+            .having("id").eq(1).build();
 
       List<User> users = q1.list();
       Query q2 = qf.from(getModelFactory().getAccountImplClass())
             .orderBy("description", SortOrder.ASC)
-            .having("id").in(users.get(0).getAccountIds()).toBuilder().build();
+            .having("id").in(users.get(0).getAccountIds()).build();
 
       List<Account> list = q2.list();
       assertEquals(2, list.size());
@@ -1407,7 +1401,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
-                  .or().having("description").like("%rent%")).toBuilder().build();
+                  .or().having("description").like("%rent%")).build();
 
       List<Transaction> list = q.list();
       assertEquals(2, list.size());
@@ -1438,7 +1432,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("age").isNull()
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1451,7 +1445,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("age").isNull()
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1464,7 +1458,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("addresses.postCode").in("ZZ", "X1234").toBuilder().build();
+            .having("addresses.postCode").in("ZZ", "X1234").build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1476,7 +1470,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not().having("addresses.postCode").in("X1234").toBuilder().build();
+            .not().having("addresses.postCode").in("X1234").build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1488,7 +1482,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not().having("addresses").isNull().toBuilder().build();
+            .not().having("addresses").isNull().build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1500,7 +1494,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not().having("addresses.postCode").like("%123%").toBuilder().build();
+            .not().having("addresses.postCode").like("%123%").build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1513,7 +1507,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("id").between(1, 2)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
@@ -1525,7 +1519,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("id").between(1, 2).includeLower(false)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
 
@@ -1539,7 +1533,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("id").between(1, 2).includeUpper(false)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(2, list.size());
@@ -1552,7 +1546,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .having("creationDate").eq(makeDate("2013-01-20"))
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -1565,7 +1559,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .orderBy("id", SortOrder.ASC)
             .having("creationDate").lt(makeDate("2013-01-20"))
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(2, list.size());
@@ -1579,7 +1573,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .orderBy("id", SortOrder.ASC)
             .having("creationDate").lte(makeDate("2013-01-20"))
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(3, list.size());
@@ -1593,7 +1587,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .having("creationDate").gt(makeDate("2013-01-04"))
-            .toBuilder().build();
+            .build();
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -1604,7 +1598,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testWrongQueryBuilding1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.not().having("name").eq("John").toBuilder().build();
+      Query q = qf.not().having("name").eq("John").build();
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
@@ -1612,8 +1606,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq("John").toBuilder()
-            .having("surname").eq("Man").toBuilder()
+            .having("name").eq("John")
+            .having("surname").eq("Man")
             .build();
    }
 
@@ -1622,8 +1616,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not().having("name").eq("John").toBuilder()
-            .not().having("surname").eq("Man").toBuilder()
+            .not().having("name").eq("John")
+            .not().having("surname").eq("Man")
             .build();
    }
 
@@ -1632,8 +1626,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not(qf.having("name").eq("John")).toBuilder()
-            .not(qf.having("surname").eq("Man")).toBuilder()
+            .not(qf.having("name").eq("John"))
+            .not(qf.having("surname").eq("Man"))
             .build();
    }
 
@@ -1642,8 +1636,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not(qf.having("name").eq("John")).toBuilder()
-            .not(qf.having("surname").eq("Man")).toBuilder()
+            .not(qf.having("name").eq("John"))
+            .not(qf.having("surname").eq("Man"))
             .build();
    }
 
@@ -1653,7 +1647,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("gender").eq(null)
-            .toBuilder().build();
+            .build();
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
@@ -1905,7 +1899,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(sum("age"))
-            .having(sum("age")).gt(10).toBuilder()
+            .having(sum("age")).gt(10)
             .build();
 
       List<Object[]> list = q.list();
@@ -1921,7 +1915,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(property("accountId"), sum("amount"))
             .groupBy("accountId")
-            .having(sum("amount")).gt(3324).toBuilder()
+            .having(sum("amount")).gt(3324)
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -1935,7 +1929,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(property("accountId"), avg("amount"))
             .groupBy("accountId")
-            .having(avg("amount")).lt(130.0).toBuilder()
+            .having(avg("amount")).lt(130.0)
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -1949,7 +1943,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(property("accountId"), min("amount"))
             .groupBy("accountId")
-            .having(min("amount")).lt(10).toBuilder()
+            .having(min("amount")).lt(10)
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -1963,7 +1957,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(property("accountId"), max("amount"))
             .groupBy("accountId")
-            .having(avg("amount")).lt(150).toBuilder()
+            .having(avg("amount")).lt(150)
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -2367,9 +2361,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name")
-            .having("name").eq("John").toBuilder()
+            .having("name").eq("John")
             .groupBy("name")
-            .having("name").eq("John").toBuilder()
+            .having("name").eq("John")
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2403,7 +2397,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
-            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15"))
             .groupBy("date")
             .build();
 
@@ -2417,7 +2411,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(count("date"), min("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
 
@@ -2432,7 +2426,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(min("date"), count("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
 
@@ -2448,7 +2442,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("gender").eq(param("param2"))
-            .toBuilder().build();
+            .build();
 
       q.setParameter("param2", User.Gender.MALE);
 
@@ -2473,7 +2467,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .having("gender").eq(param("param1"))
             .and()
             .having("name").eq(param("param2"))
-            .toBuilder().build();
+            .build();
 
       Map<String, Object> parameterMap = new HashMap<>(2);
       parameterMap.put("param1", User.Gender.MALE);
@@ -2505,7 +2499,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
             .having("creationDate").eq(param("param1"))
-            .toBuilder().build().setParameter("param1", makeDate("2013-01-03"));
+            .build().setParameter("param1", makeDate("2013-01-03"));
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -2517,7 +2511,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(property("accountId"), property("date"), sum("amount"))
             .groupBy("accountId", "date")
-            .having(sum("amount")).gt(param("param")).toBuilder()
+            .having(sum("amount")).gt(param("param"))
             .build();
 
       q.setParameter("param", 1801);
@@ -2534,7 +2528,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param("param1"))
-            .toBuilder().build();
+            .build();
 
       q.setParameter("param2", "John");
    }
@@ -2545,7 +2539,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param("param1"))
-            .toBuilder().build();
+            .build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
       parameterMap.put("param2", User.Gender.MALE);
@@ -2559,7 +2553,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("John")
-            .toBuilder().build().setParameter("param1", "John");
+            .build()
+            .setParameter("param1", "John");
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014804: Query does not have parameters")
@@ -2568,7 +2563,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("John")
-            .toBuilder().build();
+            .build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
       parameterMap.put("param1", User.Gender.MALE);
@@ -2582,7 +2577,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param(null))
-            .toBuilder().build();
+            .build();
 
       q.setParameter(null, "John");
    }
@@ -2593,7 +2588,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param(""))
-            .toBuilder().build();
+            .build();
 
       q.setParameter("", "John");
    }
@@ -2605,7 +2600,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param("param1"))
             .and().having("gender").eq(param("param2"))
-            .toBuilder().build();
+            .build();
 
       q.setParameter("param1", "John");
 
@@ -2619,7 +2614,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(param("param1"))
             .and().having("gender").eq(param("param2"))
-            .toBuilder().build();
+            .build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
       parameterMap.put("param1", "John");
@@ -2635,7 +2630,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq("John")
-            .toBuilder().build();
+            .build();
 
       q.setParameters(null);
    }
@@ -2645,7 +2640,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(avg("amount"), sum("amount"), count("date"), min("date"), max("accountId"))
-            .having("isDebit").eq(param("param")).toBuilder()
+            .having("isDebit").eq(param("param"))
             .orderBy(avg("amount"), SortOrder.DESC).orderBy(count("date"), SortOrder.DESC)
             .orderBy(max("amount"), SortOrder.ASC)
             .build();
@@ -2667,7 +2662,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
-            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15"))
             .groupBy("date")
             .build();
       List<Object[]> list = q.list();
@@ -2682,7 +2677,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(count("date"), min("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
       List<Object[]> list = q.list();
@@ -2700,7 +2695,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "isValid")
             .having("id").gte(98)
-            .toBuilder()
             .orderBy("id")
             .build();
       List<Object[]> list = q.list();
@@ -2720,7 +2714,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "description")
             .having("id").gte(98)
-            .toBuilder()
             .orderBy("id")
             .build();
       List<Object[]> list = q.list();
@@ -2740,7 +2733,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "isValid")
             .having("id").gte(98)
-            .toBuilder()
             .orderBy("isValid")
             .orderBy("id")
             .build();
@@ -2761,7 +2753,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "description")
             .having("id").gte(98)
-            .toBuilder()
             .orderBy("description")
             .orderBy("id")
             .build();
@@ -2782,7 +2773,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "date", "date")
             .having("description").eq("Hotel")
-            .toBuilder().build();
+            .build();
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());
@@ -2798,7 +2789,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "isDebit", "isDebit")
             .having("description").eq("Hotel")
-            .toBuilder().build();
+            .build();
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());
@@ -2832,9 +2823,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(avg("age"), property("name"))
-            .having("name").gt("A").toBuilder()
+            .having("name").gt("A")
             .groupBy("name")
-            .having(max("addresses.street")).gt("A").toBuilder()
+            .having(max("addresses.street")).gt("A")
             .orderBy(min("addresses.street"))
             .build();
 
@@ -2852,7 +2843,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name")
-            .having("name").eq(min("addresses.street")).toBuilder()
+            .having("name").eq(min("addresses.street"))
             .build();
       q.list();
    }
@@ -2861,7 +2852,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(min("addresses.street"))
-            .having("name").eq("Spider").toBuilder()
+            .having("name").eq("Spider")
             .build();
 
       List<Object[]> list = q.list();
@@ -2910,25 +2901,25 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // use a true wildcard
       Query q1 = qf.from(getModelFactory().getUserImplClass())
-            .having("name").like("J%n").toBuilder()
+            .having("name").like("J%n")
             .build();
       assertEquals(1, q1.list().size());
 
       // use an improper wildcard
       Query q2 = qf.from(getModelFactory().getUserImplClass())
-            .having("name").like("J*n").toBuilder()
+            .having("name").like("J*n")
             .build();
       assertEquals(0, q2.list().size());
 
       // use a true wildcard
       Query q3 = qf.from(getModelFactory().getUserImplClass())
-            .having("name").like("Jo_n").toBuilder()
+            .having("name").like("Jo_n")
             .build();
       assertEquals(1, q3.list().size());
 
       // use an improper wildcard
       Query q4 = qf.from(getModelFactory().getUserImplClass())
-            .having("name").like("Jo?n").toBuilder()
+            .having("name").like("Jo?n")
             .build();
       assertEquals(0, q4.list().size());
    }
@@ -2939,7 +2930,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(sum("age"))
             .groupBy("name")
-            .having(sum("age")).gt(50000).toBuilder()
+            .having(sum("age")).gt(50000)
             .build();
 
       List<Object[]> list = q.list();
@@ -2952,7 +2943,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(sum("amount"))
             .groupBy("accountId")
-            .having(sum("amount")).gt(50000).toBuilder()
+            .having(sum("amount")).gt(50000)
             .build();
 
       List<Object[]> list = q.list();

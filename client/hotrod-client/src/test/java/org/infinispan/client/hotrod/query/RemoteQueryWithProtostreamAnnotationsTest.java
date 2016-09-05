@@ -195,7 +195,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       // get memo1 back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(Memo.class)
-            .having("text").like("%ipsum%").toBuilder()
+            .having("text").like("%ipsum%")
             .build();
       List<Memo> list = query.list();
       assertNotNull(list);
@@ -205,7 +205,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
       // get memo2 back from remote cache via query and check its attributes
       query = qf.from(Memo.class)
-            .having("author.name").eq("Adrian").toBuilder()
+            .having("author.name").eq("Adrian")
             .build();
       list = query.list();
       assertNotNull(list);

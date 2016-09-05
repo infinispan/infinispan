@@ -112,7 +112,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       Query query = qf.from(User.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 

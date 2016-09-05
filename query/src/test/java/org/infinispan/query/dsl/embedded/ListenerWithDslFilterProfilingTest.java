@@ -35,7 +35,7 @@ public class ListenerWithDslFilterProfilingTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(31)
-            .toBuilder().build();
+            .build();
 
       final int numEntries = 100000;
       final int numListeners = 1000;
