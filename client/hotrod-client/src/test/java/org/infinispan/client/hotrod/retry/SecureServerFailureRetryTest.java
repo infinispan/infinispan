@@ -37,7 +37,8 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
             .callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()))
          .forceReturnValues(true)
          .connectionTimeout(5)
-         .connectionPool().maxActive(1)
+         .connectionPool()
+//            .maxActive(1)
          .addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(clientBuilder.build());
    }

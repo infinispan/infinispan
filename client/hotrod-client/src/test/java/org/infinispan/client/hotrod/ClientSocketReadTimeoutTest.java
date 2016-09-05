@@ -60,7 +60,8 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       builder
          .addServers("127.0.0.1:" + hotrodServer.getPort())
          .socketTimeout(5000).connectionTimeout(5000)
-         .connectionPool().maxActive(2)
+         .connectionPool()
+         .maxTotal(1)
          .maxRetries(0);
       return new RemoteCacheManager(builder.create());
    }

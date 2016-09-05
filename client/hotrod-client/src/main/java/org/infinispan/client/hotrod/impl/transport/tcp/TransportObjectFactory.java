@@ -3,7 +3,9 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
+import org.apache.commons.pool2.KeyedPooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.logging.Log;
@@ -13,8 +15,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class TransportObjectFactory
-      extends BaseKeyedPoolableObjectFactory<SocketAddress, TcpTransport> {
+public class TransportObjectFactory implements KeyedPooledObjectFactory<SocketAddress, TcpTransport> {
 
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -31,7 +32,7 @@ public class TransportObjectFactory
    }
 
    @Override
-   public TcpTransport makeObject(SocketAddress address) throws Exception {
+   public PooledObject<TcpTransport> makeObject(SocketAddress address) throws Exception {
       TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
       if (trace) log.tracef("Created tcp transport: %s", tcpTransport);
       if (!firstPingExecuted) {
@@ -42,21 +43,19 @@ public class TransportObjectFactory
          // they indicate that the transport instance is invalid.
          ping(tcpTransport, defaultCacheTopologyId);
       }
-      return tcpTransport;
+      return new DefaultPooledObject(tcpTransport);
    }
 
-   protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
-      return po.execute();
-   }
-
-   /**
-    * This will be called by the test thread when testWhileIdle==true.
-    */
    @Override
-   public boolean validateObject(SocketAddress address, TcpTransport transport) {
+   public void destroyObject(SocketAddress address, PooledObject<TcpTransport> transport) throws Exception {
+      if (trace) log.tracef("About to destroy tcp transport: %s", transport);
+      transport.getObject().release();
+   }
+
+   @Override
+   public boolean validateObject(SocketAddress address, PooledObject<TcpTransport> transport) {
       try {
-         boolean valid = ping(transport, defaultCacheTopologyId).isSuccess();
+         boolean valid = ping(transport.getObject(), defaultCacheTopologyId).isSuccess();
          if (trace) log.tracef("Is connection %s valid? %s", transport, valid);
          return valid;
       } catch (Throwable e) {
@@ -66,20 +65,18 @@ public class TransportObjectFactory
    }
 
    @Override
-   public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
-      if (trace) log.tracef("About to destroy tcp transport: %s", transport);
-      transport.release();
-   }
-
-   @Override
-   public void activateObject(SocketAddress address, TcpTransport transport) throws Exception {
-      super.activateObject(address, transport);
+   public void activateObject(SocketAddress address, PooledObject<TcpTransport> transport) throws Exception {
       if (trace) log.tracef("Fetching from pool: %s", transport);
    }
 
    @Override
-   public void passivateObject(SocketAddress address, TcpTransport transport) throws Exception {
-      super.passivateObject(address, transport);
+   public void passivateObject(SocketAddress address, PooledObject<TcpTransport> transport) throws Exception {
       if (trace) log.tracef("Returning to pool: %s", transport);
    }
+
+   protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
+      PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
+      return po.execute();
+   }
+
 }

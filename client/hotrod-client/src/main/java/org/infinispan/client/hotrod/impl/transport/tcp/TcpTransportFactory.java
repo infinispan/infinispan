@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
-import org.apache.commons.pool.KeyedObjectPool;
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.KeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -146,9 +146,7 @@ public class TcpTransportFactory implements TransportFactory {
             connectionFactory = new TransportObjectFactory(codec, this, defaultCacheTopologyId);
          }
          PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
-                 new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
-                         connectionFactory,
-                         configuration.connectionPool());
+               new PropsKeyedObjectPoolFactory<>(connectionFactory, configuration.connectionPool());
          createAndPreparePool(poolFactory);
          balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
          addBalancer(RemoteCacheManager.cacheNameBytes());
@@ -192,15 +190,17 @@ public class TcpTransportFactory implements TransportFactory {
 
    /**
     * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the
-    * caller's thread,
-    * as this is the user.
+    * caller's thread, as this is the user.
     */
    private void createAndPreparePool(PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
-      connectionPool = (GenericKeyedObjectPool<SocketAddress, TcpTransport>)
-              poolFactory.createPool();
+      connectionPool = poolFactory.createPool();
       Collection<SocketAddress> servers = topologyInfo.getServers();
       for (SocketAddress addr : servers) {
-         connectionPool.preparePool(addr, false);
+         try {
+            connectionPool.preparePool(addr);
+         } catch (Exception e) {
+            throw new TransportException(e.getMessage(), e, addr);
+         }
       }
    }
 

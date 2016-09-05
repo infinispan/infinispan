@@ -13,11 +13,8 @@ import org.infinispan.commons.configuration.Builder;
  * @since 5.3
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ConnectionPoolConfiguration> {
-   private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
    private boolean lifo = true;
-   private int maxActive = -1;
    private int maxTotal = -1;
-   private long maxWait = -1;
    private int maxIdle = -1;
    private int minIdle = 1;
    private long timeBetweenEvictionRuns = 120000;
@@ -32,15 +29,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    /**
-    * Specifies what happens when asking for a connection from a server's pool, and that pool is
-    * exhausted.
-    */
-   public ConnectionPoolConfigurationBuilder exhaustedAction(ExhaustedAction exhaustedAction) {
-      this.exhaustedAction = exhaustedAction;
-      return this;
-   }
-
-   /**
     * Sets the LIFO status. True means that borrowObject returns the most recently used ("last in")
     * idle object in a pool (if there are idle instances available). False means that pools behave
     * as FIFO queues - objects are taken from idle object pools in the order that they are returned.
@@ -52,18 +40,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    /**
-    * Controls the maximum number of connections per server that are allocated (checked out to
-    * client threads, or idle in the pool) at one time. When non-positive, there is no limit to the
-    * number of connections per server. When maxActive is reached, the connection pool for that
-    * server is said to be exhausted. The default setting for this parameter is -1, i.e. there is no
-    * limit.
-    */
-   public ConnectionPoolConfigurationBuilder maxActive(int maxActive) {
-      this.maxActive = maxActive;
-      return this;
-   }
-
-   /**
     * Sets a global limit on the number persistent connections that can be in circulation within the
     * combined set of servers. When non-positive, there is no limit to the total number of
     * persistent connections in circulation. When maxTotal is exceeded, all connections pools are
@@ -71,16 +47,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     */
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
       this.maxTotal = maxTotal;
-      return this;
-   }
-
-   /**
-    * The amount of time in milliseconds to wait for a connection to become available when the
-    * exhausted action is {@link ExhaustedAction#WAIT}, after which a {@link java.util.NoSuchElementException}
-    * will be thrown. If a negative value is supplied, the pool will block indefinitely.
-    */
-   public ConnectionPoolConfigurationBuilder maxWait(long maxWait) {
-      this.maxWait = maxWait;
       return this;
    }
 
@@ -173,11 +139,8 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     */
    public ConnectionPoolConfigurationBuilder withPoolProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      exhaustedAction(ExhaustedAction.values()[typed.getIntProperty("whenExhaustedAction", exhaustedAction.ordinal())]);
       lifo(typed.getBooleanProperty("lifo", lifo));
-      maxActive(typed.getIntProperty("maxActive", maxActive));
       maxTotal(typed.getIntProperty("maxTotal", maxTotal));
-      maxWait(typed.getLongProperty("maxWait", maxWait));
       maxIdle(typed.getIntProperty("maxIdle", maxIdle));
       minIdle(typed.getIntProperty("minIdle", minIdle));
       numTestsPerEvictionRun(typed.getIntProperty("numTestsPerEvictionRun", numTestsPerEvictionRun));
@@ -195,17 +158,13 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
 
    @Override
    public ConnectionPoolConfiguration create() {
-      return new ConnectionPoolConfiguration(exhaustedAction, lifo, maxActive, maxTotal, maxWait, maxIdle, minIdle, numTestsPerEvictionRun, timeBetweenEvictionRuns,
-            minEvictableIdleTime, testOnBorrow, testOnReturn, testWhileIdle);
+      return new ConnectionPoolConfiguration(lifo, maxTotal, maxIdle, minIdle, numTestsPerEvictionRun, timeBetweenEvictionRuns, minEvictableIdleTime, testOnBorrow, testOnReturn, testWhileIdle);
    }
 
    @Override
    public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template) {
-      exhaustedAction = template.exhaustedAction();
       lifo = template.lifo();
-      maxActive = template.maxActive();
       maxTotal = template.maxTotal();
-      maxWait = template.maxWait();
       maxIdle = template.maxIdle();
       minIdle = template.minIdle();
       numTestsPerEvictionRun = template.numTestsPerEvictionRun();

@@ -63,7 +63,7 @@
       <version.aesh>0.66.8</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>
-      <version.commons.pool>1.6</version.commons.pool>
+      <version.commons.pool2>2.4.2</version.commons.pool2>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.core>5.1.1.Final</version.hibernate.core>
@@ -467,9 +467,9 @@
             <version>${version.xstream}</version>
          </dependency>
          <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>${version.commons.pool}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>${version.commons.pool2}</version>
          </dependency>
 
          <dependency>

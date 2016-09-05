@@ -15,6 +15,8 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.client.hotrod.impl.operations.AuthMechListOperation;
 import org.infinispan.client.hotrod.impl.operations.AuthOperation;
@@ -43,7 +45,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    }
 
    @Override
-   public TcpTransport makeObject(SocketAddress address) throws Exception {
+   public PooledObject<TcpTransport> makeObject(SocketAddress address) throws Exception {
       TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
       if (trace) {
          log.tracef("Created tcp transport: %s", tcpTransport);
@@ -101,7 +103,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
          // they indicate that the transport instance is invalid.
          ping(tcpTransport, defaultCacheTopologyId);
       }
-      return tcpTransport;
+      return new DefaultPooledObject<>(tcpTransport);
    }
 
    private byte[] evaluateChallenge(final SaslClient saslClient, final byte[] challenge) throws SaslException {

@@ -5,7 +5,7 @@
    <feature name="infinispan-client-hotrod" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
       <bundle>mvn:org.infinispan/infinispan-client-hotrod/${project.version}</bundle>
-      <bundle>mvn:commons-pool/commons-pool/${version.commons.pool}</bundle>
+      <bundle>mvn:org.apache.commons/commons-pool/${version.commons.pool2}</bundle>
    </feature>
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">
       <feature version="${project.version}">infinispan-client-hotrod</feature>

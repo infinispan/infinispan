@@ -59,12 +59,9 @@ public class ConfigurationTest {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, Configuration::balancingStrategyClass);
       OPTIONS.put(TRANSPORT_FACTORY, Configuration::transportFactory);
-      OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
       OPTIONS.put("maxTotal", c -> c.connectionPool().maxTotal());
-      OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());
       OPTIONS.put("maxIdle", c -> c.connectionPool().maxIdle());
       OPTIONS.put("minIdle", c -> c.connectionPool().minIdle());
-      OPTIONS.put("exhaustedAction", c -> c.connectionPool().exhaustedAction());
       OPTIONS.put("numTestsPerEvictionRun", c -> c.connectionPool().numTestsPerEvictionRun());
       OPTIONS.put("timeBetweenEvictionRunsMillis", c -> c.connectionPool().timeBetweenEvictionRuns());
       OPTIONS.put("minEvictableIdleTimeMillis", c -> c.connectionPool().minEvictableIdleTime());
@@ -133,12 +130,9 @@ public class ConfigurationTest {
             .factoryClass(SomeAsyncExecutorFactory.class)
          .balancingStrategy(SomeRequestBalancingStrategy.class)
          .connectionPool()
-            .maxActive(100)
             .maxTotal(150)
-            .maxWait(1000)
             .maxIdle(20)
             .minIdle(10)
-            .exhaustedAction(ExhaustedAction.WAIT)
             .numTestsPerEvictionRun(5)
             .testOnBorrow(true)
             .testOnReturn(true)
@@ -189,9 +183,7 @@ public class ConfigurationTest {
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
       p.setProperty(TRANSPORT_FACTORY, "org.infinispan.client.hotrod.SomeTransportfactory");
       p.setProperty(HASH_FUNCTION_PREFIX + "." + 2, "org.infinispan.client.hotrod.SomeCustomConsistentHashV2");
-      p.setProperty("maxActive", "100");
       p.setProperty("maxTotal", "150");
-      p.setProperty("maxWait", "1000");
       p.setProperty("maxIdle", "20");
       p.setProperty("minIdle", "10");
       p.setProperty("exhaustedAction", "1");
@@ -402,12 +394,9 @@ public class ConfigurationTest {
       assertEqualsConfig(SomeTransportfactory.class, TRANSPORT_FACTORY, configuration);
       assertEquals(null, configuration.consistentHashImpl(1));
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
-      assertEqualsConfig(100, "maxActive", configuration);
       assertEqualsConfig(150, "maxTotal", configuration);
-      assertEqualsConfig(1000L, "maxWait", configuration);
       assertEqualsConfig(20, "maxIdle", configuration);
       assertEqualsConfig(10, "minIdle", configuration);
-      assertEqualsConfig(ExhaustedAction.WAIT, "exhaustedAction", configuration);
       assertEqualsConfig(5, "numTestsPerEvictionRun", configuration);
       assertEqualsConfig(15000L, "timeBetweenEvictionRunsMillis", configuration);
       assertEqualsConfig(12000L, "minEvictableIdleTimeMillis", configuration);
