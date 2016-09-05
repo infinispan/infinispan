@@ -51,7 +51,7 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
 
    @Override
    protected String parameters() {
-      return "{" + name + "}";
+      return "[" + name + "]";
    }
 
    public void testLockCleanupOnBackup() {

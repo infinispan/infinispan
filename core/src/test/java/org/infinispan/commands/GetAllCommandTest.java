@@ -59,10 +59,10 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
 
    @Override
    protected String parameters() {
-      return new StringBuilder().append('{')
+      return new StringBuilder().append('[')
          .append(cacheMode)
          .append(", tx=").append(transactional)
-         .append(", compatibility=").append(compatibility).append("}").toString();
+         .append(", compatibility=").append(compatibility).append("]").toString();
    }
 
    public void testGetAllKeyNotPresent() {

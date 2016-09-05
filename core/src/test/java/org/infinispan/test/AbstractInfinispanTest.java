@@ -30,6 +30,7 @@ import java.util.function.Supplier;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.test.fwk.ChainMethodInterceptor;
+import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.util.DefaultTimeService;
@@ -43,6 +44,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
+import org.testng.internal.MethodInstance;
 
 
 /**
@@ -74,8 +76,23 @@ public class AbstractInfinispanTest {
             methodsByInstance.computeIfAbsent(method.getInstance(), k -> new ArrayList<>()).add(method);
          }
          List<IMethodInstance> newOrder = new ArrayList<>(methods.size());
-         for (List<IMethodInstance> list : methodsByInstance.values()) {
-            newOrder.addAll(list);
+         for (Map.Entry<Object, List<IMethodInstance>> instanceAndMethods : methodsByInstance.entrySet()) {
+            Object instance = instanceAndMethods.getKey();
+            if (instance instanceof AbstractInfinispanTest) {
+               String parameters = ((AbstractInfinispanTest) instance).parameters();
+               if (parameters != null) {
+                  for (IMethodInstance method : instanceAndMethods.getValue()) {
+                     // TestNG calls intercept twice (bug?) so this prevents adding the parameters two times
+                     if (method.getMethod() instanceof NamedTestMethod) {
+                        newOrder.add(method);
+                     } else {
+                        newOrder.add(new MethodInstance(new NamedTestMethod(method.getMethod(), method.getMethod().getMethodName() + parameters)));
+                     }
+                  }
+                  continue;
+               }
+            }
+            newOrder.addAll(instanceAndMethods.getValue());
          }
          return newOrder;
       }
@@ -83,11 +100,6 @@ public class AbstractInfinispanTest {
 
    protected String parameters() {
       return null;
-   }
-
-   @Override
-   public String toString() {
-      return parameters() == null ? super.toString() : parameters();
    }
 
    @BeforeClass(alwaysRun = true)

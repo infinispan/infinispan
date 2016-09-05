@@ -43,7 +43,7 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
 
    @Override
    protected String parameters() {
-      return "{" + cacheName + "}";
+      return "[" + cacheName + "]";
    }
 
    protected void createCacheManagers() throws Throwable {
