@@ -68,10 +68,9 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // obtain the query factory and create a query builder
       QueryFactory qf = Search.getQueryFactory(cache);
       QueryBuilder queryQueryBuilder = qf.from(UserHS.class)
-            .having("name").eq("John")
-            .toBuilder();
+            .having("name").eq("John").toBuilder();
 
-      // compute the same jpa query as it would be generated for the above query
+      // obtain the query string
       String queryString = ((BaseQueryBuilder) queryQueryBuilder).accept(new JPAQueryGenerator());
 
       // everything set up, test follows ...

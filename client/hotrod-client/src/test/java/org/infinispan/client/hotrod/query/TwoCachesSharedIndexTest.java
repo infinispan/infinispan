@@ -115,7 +115,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       RemoteCache<Integer, UserPB> userCache = client(0).getCache(USER_CACHE);
       userCache.put(1, getUserPB());
 
-      Query query = Search.getQueryFactory(userCache).from(UserPB.class).having("name").eq("John").toBuilder().build();
+      Query query = Search.getQueryFactory(userCache).from(UserPB.class).having("name").eq("John").build();
       List<UserPB> users = query.list();
 
       assertEquals("John", users.iterator().next().getName());
@@ -126,7 +126,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       RemoteCache<Integer, AccountPB> accountCache = client(0).getCache(ACCOUNT_CACHE);
       accountCache.put(1, getAccountPB());
 
-      Query query = Search.getQueryFactory(accountCache).from(AccountPB.class).having("description").eq("account1").toBuilder().build();
+      Query query = Search.getQueryFactory(accountCache).from(AccountPB.class).having("description").eq("account1").build();
       List<AccountPB> accounts = query.list();
 
       assertEquals(accounts.iterator().next().getDescription(), "account1");

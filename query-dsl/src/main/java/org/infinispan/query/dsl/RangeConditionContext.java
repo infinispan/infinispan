@@ -9,7 +9,7 @@ package org.infinispan.query.dsl;
  */
 public interface RangeConditionContext extends FilterConditionContext {
 
-   RangeConditionContext includeLower(boolean includeLower);
+   <T extends RangeConditionContext & QueryBuilder> T includeLower(boolean includeLower);
 
-   RangeConditionContext includeUpper(boolean includeUpper);
+   <T extends RangeConditionContext & QueryBuilder> T includeUpper(boolean includeUpper);
 }

@@ -26,9 +26,9 @@ public abstract class BaseQuery implements Query {
 
    protected final String[] projection;
 
-   protected final int startOffset;
+   protected int startOffset;
 
-   protected final int maxResults;
+   protected int maxResults;
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?
    protected BaseQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection,
@@ -140,5 +140,17 @@ public abstract class BaseQuery implements Query {
 
    public int getMaxResults() {
       return maxResults;
+   }
+
+   @Override
+   public Query startOffset(long startOffset) {
+      this.startOffset = (int) startOffset;    //todo [anistor] why????
+      return this;
+   }
+
+   @Override
+   public Query maxResults(int maxResults) {
+      this.maxResults = maxResults;
+      return this;
    }
 }

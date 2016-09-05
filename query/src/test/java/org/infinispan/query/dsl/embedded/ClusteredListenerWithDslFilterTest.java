@@ -46,7 +46,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
       Query query = qf.from(org.infinispan.query.test.Person.class)
             .having("age").lte(31)
-            .toBuilder().build();
+            .build();
 
       EntryListener listener = new EntryListener();
 
@@ -97,7 +97,6 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
       Query query = qf.from(org.infinispan.query.test.Person.class)
             .having("age").lte(31)
-            .toBuilder()
             .select("name", "age")
             .build();
 
@@ -141,7 +140,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache(0)).from(Person.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       cache(0).addListener(new EntryListener(), Search.makeFilter(query), null);

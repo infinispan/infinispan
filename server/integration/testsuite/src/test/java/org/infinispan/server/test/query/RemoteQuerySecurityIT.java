@@ -174,7 +174,7 @@ public class RemoteQuerySecurityIT {
       RemoteCache<Object, Object> cache = remoteCacheManagers.get(userLogin).getCache(cacheName);
       QueryFactory qf = Search.getQueryFactory(cache);
       Query query = qf.from(User.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<User> list = query.list();
       assertNotNull(list);

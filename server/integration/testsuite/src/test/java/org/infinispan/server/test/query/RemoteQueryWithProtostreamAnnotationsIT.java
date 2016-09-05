@@ -172,7 +172,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
       // get user1 back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(AnnotatedUser.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<AnnotatedUser> list = query.list();
       assertNotNull(list);
@@ -182,7 +182,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
 
       // get user2 back from remote cache via query and check its attributes
       query = qf.from(AnnotatedUser.class)
-            .having("address.postCode").eq("Xyz").toBuilder()
+            .having("address.postCode").eq("Xyz")
             .build();
       list = query.list();
       assertNotNull(list);

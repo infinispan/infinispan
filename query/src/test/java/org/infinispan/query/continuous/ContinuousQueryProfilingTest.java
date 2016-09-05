@@ -85,6 +85,6 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
       QueryFactory qf = Search.getQueryFactory(c);
       return qf.from(Person.class)
             .having("age").gte(18)
-            .toBuilder().build();
+            .build();
    }
 }

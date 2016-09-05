@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.query.dsl.Expression;
-import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -197,7 +196,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    }
 
    @Override
-   public FilterConditionBeginContext not() {
+   public BaseCondition not() {
       if (filterCondition != null) {
          throw log.cannotUseOperatorAgain("not()");
       }
@@ -208,7 +207,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    }
 
    @Override
-   public FilterConditionContext not(FilterConditionContext fcc) {
+   public BaseCondition not(FilterConditionContext fcc) {
       if (fcc == null) {
          throw log.argumentCannotBeNull();
       }

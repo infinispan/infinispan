@@ -51,7 +51,7 @@ public class GridService {
             .from(Book.class)
             .having("publisher")
             .eq(publisher)
-            .toBuilder().build();
+            .build();
       return query.list();
    }
 

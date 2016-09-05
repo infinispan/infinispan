@@ -44,7 +44,6 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
          public List call() throws Exception {
             Query q = getQueryFactory().from(getModelFactory().getUserImplClass())
                   .not().having("age").eq(20)
-                  .toBuilder()
                   .build();
 
             cache(0).put("new_user_" + newUser.getId(), newUser);
@@ -75,7 +74,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("id").lt(1000)
             .and().having("age").lt(1000)
-            .toBuilder().build();
+            .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());

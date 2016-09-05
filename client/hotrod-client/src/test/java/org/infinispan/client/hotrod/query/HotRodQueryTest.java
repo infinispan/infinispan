@@ -149,7 +149,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
@@ -162,7 +162,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
-            .having("addresses.postCode").eq("1234").toBuilder()
+            .having("addresses.postCode").eq("1234")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
@@ -190,7 +190,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
             .select("name", "surname")
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
 
       List<Object[]> list = query.list();

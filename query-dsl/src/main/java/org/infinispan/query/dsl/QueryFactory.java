@@ -4,8 +4,6 @@ package org.infinispan.query.dsl;
  * Factory for query DSL objects. Query construction starts here, usually by invoking the {@link #from} method which
  * returns a {@link QueryBuilder} capable of constructing {@link Query} objects. The other methods are use for creating
  * sub-conditions.
- * <p>
- * Type parameter Q will be removed in Infinispan 9.0
  *
  * @author anistor@redhat.com
  * @since 6.0

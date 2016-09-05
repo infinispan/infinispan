@@ -263,7 +263,7 @@ public class RowMatcherTest {
    @Test
    public void testDSL() throws Exception {
       Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
       assertTrue(match(q, createPerson1()));
    }
 
@@ -317,7 +317,7 @@ public class RowMatcherTest {
             .having("id").lt(1000)
             .and()
             .having("age").lt(1000)
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -335,7 +335,7 @@ public class RowMatcherTest {
       Query q = queryFactory.from(Person.class)
             .having("name").like("Jo%")
             .and(queryFactory.not().having("name").like("Jo%").or().having("id").lt(1000))
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -350,7 +350,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
       final boolean b[] = new boolean[1];
 
@@ -378,7 +378,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 

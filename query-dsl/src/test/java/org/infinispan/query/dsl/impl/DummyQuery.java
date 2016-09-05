@@ -36,4 +36,14 @@ class DummyQuery implements Query {
    public int getResultSize() {
       return 0;
    }
+
+   @Override
+   public Query startOffset(long startOffset) {
+      return this;
+   }
+
+   @Override
+   public Query maxResults(int maxResults) {
+      return this;
+   }
 }

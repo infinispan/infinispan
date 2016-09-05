@@ -162,7 +162,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
       // get User back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(cache);
-      Query query = qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+      Query query = qf.from(User.class).having("name").eq("Tom").build();
       List list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -170,7 +170,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       assertUser((User) list.get(0));
 
       // get Note back from remote cache via query and check its attributes
-      query = qf.from(Note.class).having("author.name").eq("name").toBuilder().build();
+      query = qf.from(Note.class).having("author.name").eq("name").build();
       list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());

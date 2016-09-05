@@ -1,9 +1,13 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
+import org.infinispan.query.dsl.FilterConditionEndContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -11,7 +15,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-abstract class BaseCondition implements FilterConditionContext, Visitable {
+abstract class BaseCondition implements FilterConditionContext, QueryBuilder, Visitable {
 
    private static final Log log = Logger.getMessageLogger(Log.class, BaseCondition.class.getName());
 
@@ -27,6 +31,10 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    @Override
    public QueryBuilder toBuilder() {
+      return getQueryBuilder();
+   }
+
+   QueryBuilder getQueryBuilder() {
       if (queryBuilder == null) {
          throw log.subQueryDoesNotBelongToAParentQueryBuilder();
       }
@@ -82,7 +90,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    }
 
    @Override
-   public FilterConditionContext or(FilterConditionContext rightCondition) {
+   public BaseCondition or(FilterConditionContext rightCondition) {
       combine(false, rightCondition);
       return this;
    }
@@ -114,5 +122,77 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
       }
 
       rightCondition.setQueryBuilder(queryBuilder);
+   }
+
+   //////////////////////////////// Delegate to parent QueryBuilder ///////////////////////////
+
+   @Override
+   public QueryBuilder startOffset(long startOffset) {
+      return getQueryBuilder().startOffset(startOffset);
+   }
+
+   @Override
+   public QueryBuilder maxResults(int maxResults) {
+      return getQueryBuilder().maxResults(maxResults);
+   }
+
+   @Override
+   public QueryBuilder select(Expression... projection) {
+      return getQueryBuilder().select(projection);
+   }
+
+   @Override
+   public QueryBuilder select(String... attributePath) {
+      return getQueryBuilder().select(attributePath);
+   }
+
+   @Override
+   public QueryBuilder groupBy(String... attributePath) {
+      return getQueryBuilder().groupBy(attributePath);
+   }
+
+   @Override
+   public QueryBuilder orderBy(Expression expression) {
+      return getQueryBuilder().orderBy(expression);
+   }
+
+   @Override
+   public QueryBuilder orderBy(Expression expression, SortOrder sortOrder) {
+      return getQueryBuilder().orderBy(expression);
+   }
+
+   @Override
+   public QueryBuilder orderBy(String attributePath) {
+      return getQueryBuilder().orderBy(attributePath);
+   }
+
+   @Override
+   public QueryBuilder orderBy(String attributePath, SortOrder sortOrder) {
+      return getQueryBuilder().orderBy(attributePath, sortOrder);
+   }
+
+   @Override
+   public FilterConditionEndContext having(String attributePath) {
+      return getQueryBuilder().having(attributePath);
+   }
+
+   @Override
+   public FilterConditionEndContext having(Expression expression) {
+      return getQueryBuilder().having(expression);
+   }
+
+   @Override
+   public <T extends FilterConditionContext & QueryBuilder> T not() {
+      return getQueryBuilder().not();
+   }
+
+   @Override
+   public <T extends FilterConditionContext & QueryBuilder> T not(FilterConditionContext fcc) {
+      return getQueryBuilder().not(fcc);
+   }
+
+   @Override
+   public Query build() {
+      return getQueryBuilder().build();
    }
 }
