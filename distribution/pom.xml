@@ -107,6 +107,13 @@
          <version>${project.version}</version>
          <classifier>javadoc</classifier>
       </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-javadoc-all</artifactId>
+         <version>${project.version}</version>
+         <classifier>javadoc</classifier>
+      </dependency>
       
       <dependency>
          <groupId>javax.cache</groupId>
