@@ -99,6 +99,7 @@
            <module>documentation</module>
            <module>javadoc-embedded</module>
            <module>javadoc-remote</module>
+           <module>javadoc-all</module>
            <module>distribution</module>
         </modules>
      </profile>
