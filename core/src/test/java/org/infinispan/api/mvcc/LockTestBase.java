@@ -1,5 +1,9 @@
 package org.infinispan.api.mvcc;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.Collections;
 
 import javax.transaction.Transaction;
@@ -31,18 +35,18 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    protected boolean repeatableRead = true;
    private CacheContainer cm;
 
-   protected static final class LockTestBaseTL {
+   protected static final class LockTestData {
       public Cache<String, String> cache;
       public TransactionManager tm;
       public LockManager lockManager;
    }
 
-   protected final ThreadLocal<LockTestBaseTL> threadLocal = new ThreadLocal<LockTestBaseTL>();
+   protected LockTestData lockTestData;
 
 
    @BeforeMethod
    public void setUp() {
-      LockTestBaseTL tl = new LockTestBaseTL();
+      LockTestData ltd = new LockTestData();
       ConfigurationBuilder defaultCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
       defaultCfg
@@ -52,49 +56,44 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
             .transaction()
                .transactionManagerLookup(new DummyTransactionManagerLookup());
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
-      tl.cache = cm.getCache();
-      tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
-      tl.tm = TestingUtil.extractComponentRegistry(tl.cache).getComponent(TransactionManager.class);
-      threadLocal.set(tl);
+      ltd.cache = cm.getCache();
+      ltd.lockManager = TestingUtil.extractComponentRegistry(ltd.cache).getComponent(LockManager.class);
+      ltd.tm = TestingUtil.extractComponentRegistry(ltd.cache).getComponent(TransactionManager.class);
+      lockTestData = ltd;
    }
 
    @AfterMethod
    public void tearDown() {
-      LockTestBaseTL tl = threadLocal.get();
       log.debug("**** - STARTING TEARDOWN - ****");
       TestingUtil.killCacheManagers(cm);
-      threadLocal.set(null);
+      lockTestData = null;
    }
 
    protected void assertLocked(Object key) {
-      LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertLocked(key, tl.lockManager);
+      LockAssert.assertLocked(key, lockTestData.lockManager);
    }
 
    protected void assertNotLocked(Object key) {
-      LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertNotLocked(key, tl.lockManager);
+      LockAssert.assertNotLocked(key, lockTestData.lockManager);
    }
 
    protected void assertNoLocks() {
-      LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertNoLocks(tl.lockManager);
+      LockAssert.assertNoLocks(lockTestData.lockManager);
    }
 
    public void testLocksOnPutKeyVal() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
-      Cache<String, String> cache = tl.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
+      Cache<String, String> cache = lockTestData.cache;
+      DummyTransactionManager tm = (DummyTransactionManager) lockTestData.tm;
       tm.begin();
       cache.put("k", "v");
-      assert tm.getTransaction().runPrepare();
+      assertTrue(tm.getTransaction().runPrepare());
       assertLocked("k");
       tm.getTransaction().runCommit(false);
 
       assertNoLocks();
 
       tm.begin();
-      assert cache.get("k").equals("v");
+      assertEquals("v", cache.get("k"));
       assertNotLocked("k");
       tm.commit();
 
@@ -102,7 +101,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.begin();
       cache.remove("k");
-      assert tm.getTransaction().runPrepare();
+      assertTrue(tm.getTransaction().runPrepare());
       assertLocked("k");
       tm.getTransaction().runCommit(false);
 
@@ -110,20 +109,20 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testLocksOnPutData() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       tm.begin();
       cache.putAll(Collections.singletonMap("k", "v"));
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       final DummyTransaction tx = ((DummyTransactionManager) tm).getTransaction();
-      assert tx.runPrepare();
+      assertTrue(tx.runPrepare());
       assertLocked("k");
       tx.runCommit(false);
       assertNoLocks();
 
       tm.begin();
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       assertNoLocks();
       tm.commit();
 
@@ -131,24 +130,24 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testLocksOnEvict() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       // init some data
       cache.putAll(Collections.singletonMap("k", "v"));
 
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
 
       tm.begin();
       cache.evict("k");
       assertNotLocked("k");
       tm.commit();
-      assert !cache.containsKey("k") : "Should not exist";
+      assertFalse(cache.containsKey("k"));
       assertNoLocks();
    }
 
    public void testLocksOnRemoveNonexistent() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
       assert !cache.containsKey("k") : "Should not exist";
@@ -164,7 +163,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testLocksOnEvictNonexistent() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       assert !cache.containsKey("k") : "Should not exist";
@@ -178,21 +177,21 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testLocksOnRemoveData() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
       // init some data
       cache.put("k", "v");
       cache.put("k2", "v2");
 
-      assert "v".equals(cache.get("k"));
-      assert "v2".equals(cache.get("k2"));
+      assertEquals("v", cache.get("k"));
+      assertEquals("v2", cache.get("k2"));
 
       // remove
       tm.begin();
       cache.remove("k");
       cache.remove("k2");
-      assert tm.getTransaction().runPrepare();
+      assertTrue(tm.getTransaction().runPrepare());
 
       assertLocked("k");
       assertLocked("k2");
@@ -203,7 +202,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testWriteDoesntBlockRead() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       cache.put("k", "v");
@@ -215,7 +214,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       // now start a read and confirm that the write doesn't block it.
       tm.begin();
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       assert null == cache.get("k2") : "Should not see uncommitted changes";
       Transaction read = tm.suspend();
 
@@ -229,13 +228,13 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       if (repeatableRead)
          assert null == cache.get("k2") : "Should have repeatable read";
       else
-         assert "v2".equals(cache.get("k2")) : "Read committed should see committed changes";
+         assertEquals("Read committed should see committed changes", "v2", cache.get("k2"));
       tm.commit();
       assertNoLocks();
    }
 
    public void testUpdateDoesntBlockRead() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       cache.put("k", "v");
@@ -247,7 +246,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       // now start a read and confirm that the write doesn't block it.
       tm.begin();
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       Transaction read = tm.suspend();
 
       // commit the write
@@ -258,16 +257,16 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.resume(read);
       if (repeatableRead)
-         assert "v".equals(cache.get("k")) : "Should have repeatable read";
+         assertEquals("Should have repeatable read", "v", cache.get("k"));
       else
-         assert "v2".equals(cache.get("k")) : "Read committed should see committed changes";
+         assertEquals("Read committed should see committed changes", "v2", cache.get("k"));
       tm.commit();
       assertNoLocks();
    }
 
 
    public void testWriteDoesntBlockReadNonexistent() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       // start a write.
@@ -290,20 +289,20 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       if (repeatableRead) {
          assert null == cache.get("k") : "Should have repeatable read";
       } else {
-         assert "v".equals(cache.get("k")) : "Read committed should see committed changes";
+         assertEquals("Read committed should see committed changes", "v", cache.get("k"));
       }
       tm.commit();
       assertNoLocks();
    }
 
    public void testConcurrentWriters() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
       tm.begin();
       cache.put("k", "v");
       final DummyTransaction transaction = tm.getTransaction();
-      assert transaction.runPrepare();
+      assertTrue(transaction.runPrepare());
       tm.suspend();
 
       tm.begin();
@@ -318,12 +317,12 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    }
 
    public void testRollbacks() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       cache.put("k", "v");
       tm.begin();
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       Transaction reader = tm.suspend();
 
       tm.begin();
@@ -332,16 +331,16 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.resume(reader);
       Object value = cache.get("k");
-      assert "v".equals(value) : "Expecting 'v' but was " + value;
+      assertEquals("v", value);
       tm.commit();
 
       // even after commit
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       assertNoLocks();
    }
 
    public void testRollbacksOnNullEntry() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       tm.begin();
@@ -350,7 +349,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.begin();
       cache.put("k", "v");
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       tm.rollback();
 
       tm.resume(reader);
