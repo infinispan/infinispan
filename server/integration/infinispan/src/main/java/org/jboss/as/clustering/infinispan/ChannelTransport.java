@@ -46,7 +46,8 @@ public class ChannelTransport extends JGroupsTransport {
 
     @Override
     protected void initRPCDispatcher() {
-        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, this.getTimeoutExecutor(), timeService);
+        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService,
+              remoteExecutor);
         MarshallerAdapter adapter = new MarshallerAdapter(this.marshaller) {
             @Override
             public Object objectFromBuffer(byte[] buffer, int offset, int length) throws Exception {
