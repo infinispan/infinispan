@@ -341,4 +341,17 @@ public class NamedTestMethod implements ITestNGMethod {
    public int compareTo(Object o) {
       return method.compareTo(o);
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || !(o instanceof ITestNGMethod)) return false;
+
+      return method.equals(o);
+   }
+
+   @Override
+   public int hashCode() {
+      return method.hashCode();
+   }
 }

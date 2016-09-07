@@ -61,7 +61,7 @@ public class TestSuiteProgress {
    static void setupFailed(String name, Throwable exception) {
       String message = "Test setup failed: " + name;
       consoleLog(message);
-      log.info(message, exception);
+      log.error(message, exception);
       failed.incrementAndGet();
       printStatus();
    }
