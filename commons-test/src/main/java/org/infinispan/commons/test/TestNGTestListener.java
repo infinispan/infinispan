@@ -5,8 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jboss.logging.Logger;
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
+import org.testng.IConfigurationListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestContext;
@@ -16,7 +15,7 @@ import org.testng.ITestResult;
 /**
  * Logs TestNG test progress.
  */
-public class TestNGTestListener implements ITestListener, IInvokedMethodListener, ISuiteListener {
+public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener {
    private static final Logger log = Logger.getLogger(TestNGTestListener.class);
    private Set<String> startupThreads;
 
@@ -55,17 +54,6 @@ public class TestNGTestListener implements ITestListener, IInvokedMethodListener
 
    private String testName(ITestResult res) {
       return res.getTestClass().getName() + "." + res.getMethod().getMethodName();
-   }
-
-   @Override
-   public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-   }
-
-   @Override
-   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-      if (testResult.getThrowable() != null && method.isConfigurationMethod()) {
-         TestSuiteProgress.setupFailed(testName(testResult), testResult.getThrowable());
-      }
    }
 
    @Override
@@ -108,5 +96,29 @@ public class TestNGTestListener implements ITestListener, IInvokedMethodListener
    private boolean ignoreThread(Thread thread) {
       String threadName = thread.getName();
       return threadName.startsWith("testng-") || startupThreads.contains(threadName + "@" + thread.getId());
+   }
+
+   @Override
+   public void beforeConfiguration(ITestResult testResult) {
+      log.debugf("Before setup %s", testResult.getMethod().getMethodName());
+   }
+
+   @Override
+   public void onConfigurationSuccess(ITestResult testResult) {
+      log.debugf("After setup %s", testResult.getMethod().getMethodName());
+   }
+
+   @Override
+   public void onConfigurationFailure(ITestResult testResult) {
+      if (testResult.getThrowable() != null) {
+         TestSuiteProgress.setupFailed(testName(testResult), testResult.getThrowable());
+      }
+   }
+
+   @Override
+   public void onConfigurationSkip(ITestResult testResult) {
+      if (testResult.getThrowable() != null) {
+         TestSuiteProgress.testIgnored(testName(testResult));
+      }
    }
 }
