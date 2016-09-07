@@ -39,7 +39,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
    private static final int NUM_NODES = 2;
 
-   private static final int NUM_OWNERS = 1;
+   private static final int NUM_OWNERS = 2;
 
    private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
