@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
+import org.hibernate.search.backend.BackendFactory;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -21,6 +22,7 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * A DirectoryProvider using Infinispan to store the Index. This depends on the CacheManagerServiceProvider to get a
@@ -50,6 +52,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
 
    private LockFactory indexWriterLockFactory;
    private int affinityId;
+   private boolean isAsync;
 
 
    public InfinispanDirectoryProvider(int affinityId) {
@@ -84,6 +87,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
          }
          indexWriterLockFactory = getLockFactory(verifiedIndexDir, properties);
       }
+      this.isAsync = !BackendFactory.isConfiguredAsSync(properties);
    }
 
    private LockFactory getLockFactory(File indexDir, Properties properties) {
@@ -125,7 +129,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       org.infinispan.lucene.directory.BuildContext directoryBuildContext = DirectoryBuilder
             .newDirectoryInstance(metadataCache, dataCache, lockingCache, directoryProviderName)
             .writeFileListAsynchronously(writeFileListAsync)
-            .deleteOperationsExecutor(deletesExecutor.getExecutor());
+            .deleteOperationsExecutor(isAsync ? new WithinThreadExecutor() : deletesExecutor.getExecutor());
       if (chunkSize != null) {
          directoryBuildContext.chunkSize(chunkSize.intValue());
       }
@@ -145,8 +149,8 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       return serviceManager.requestService(AsyncDeleteExecutorService.class);
    }
 
-   public int getActiveDeleteTasks() {
-      return deletesExecutor.getActiveTasks();
+   public int pendingDeleteTasks() {
+      return isAsync ? 0 : deletesExecutor.getActiveTasks();
    }
 
    @Override
@@ -174,6 +178,8 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    public Address getLockOwner(String indexName, String lockName) {
       FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName, affinityId);
       Cache<?, Address> lockCache = cacheManager.getCache(lockingCacheName);
-      return lockCache.get(fileCacheKey);
+      Address address = lockCache.get(fileCacheKey);
+      log.debugf("Lock owner for %s: %s", fileCacheKey, address);
+      return address;
    }
 }

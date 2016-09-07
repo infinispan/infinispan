@@ -7,6 +7,7 @@ import org.apache.lucene.store.Lock;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
+import org.infinispan.lucene.InvalidLockException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.util.logging.Log;
@@ -61,13 +62,14 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
       }
    }
 
-   /**
-    * Used by Lucene at Directory creation: we expect the lock to not exist in this case.
-    */
    public void clearLock() {
-      Object previousValue = noCacheStoreCache.remove(keyOfLock);
-      if (previousValue != null && trace) {
-         log.tracef("Lock: %s removed for index: %s from %s", lockName, indexName, valueOfLock);
+      Object lockOwner = noCacheStoreCache.get(keyOfLock);
+      if (lockOwner == null || valueOfLock.equals(lockOwner)) {
+         Object previousValue = noCacheStoreCache.remove(keyOfLock);
+         log.tracef("Lock: %s removed for index: %s from %s (was %s)", lockName, indexName, valueOfLock, previousValue);
+      } else {
+         log.tracef("Lock: %s not cleared for index: %s from %s, was taken already by %s.", lockName,
+               indexName, valueOfLock, lockOwner);
       }
    }
 
@@ -86,7 +88,7 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
    @Override
    public void ensureValid() throws IOException {
       if (!isLocked()) {
-         throw new IOException("This lock is no longer being held");
+         throw new InvalidLockException("This lock is no longer being held");
       }
    }
 

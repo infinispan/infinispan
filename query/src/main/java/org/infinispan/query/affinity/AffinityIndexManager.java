@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -20,9 +21,11 @@ import javax.transaction.TransactionManager;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.engine.service.spi.ServiceManager;
+import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.WorkerBuildContext;
@@ -31,8 +34,10 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
+import org.infinispan.lucene.InvalidLockException;
 import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.Listener.Observation;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.query.backend.ComponentRegistryService;
@@ -52,10 +57,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author gustavonalle
  * @since 8.2
  */
+@Listener(observation = Observation.POST)
 public class AffinityIndexManager extends DirectoryBasedIndexManager implements OperationFailedHandler {
 
    private static final Log log = LogFactory.getLog(AffinityIndexManager.class, Log.class);
-   private static final int POLL_WAIT = 100;
+   private static final int POLL_WAIT = 1000;
 
    private RpcManager rpcManager;
    private DistributionManager distributionManager;
@@ -70,11 +76,25 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    private final Lock readLock = flushLock.readLock();
    private ExecutorService asyncExecutor;
    private TransactionHelper transactionHelper;
-
+   private int segment;
 
    @Override
-   public void lockObtainFailed(List<LuceneWork> failingOperations) {
-      logDebug("Operation %s failed due to lock already in used", failingOperations);
+   public void operationsFailed(List<LuceneWork> failingOperations, Throwable cause) {
+      log.debugf(cause, "Operations '%s' failed in the backend", failingOperations);
+      if (cause instanceof LockObtainFailedException) {
+         this.lockObtainFailed(failingOperations);
+      }
+      if (cause instanceof SearchException) {
+         Throwable rootCause = cause.getCause();
+         if (rootCause instanceof InvalidLockException) {
+            log.warnf(cause, "Retrying failed operations");
+            this.retryOperations(failingOperations);
+         }
+      }
+   }
+
+   private void lockObtainFailed(List<LuceneWork> failingOperations) {
+      log.debugf("Operation %s failed due to lock already in used", failingOperations);
       try {
          Thread.sleep(POLL_WAIT);
       } catch (InterruptedException e) {
@@ -82,25 +102,29 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       }
       Address lockHolder = getLockHolder(getIndexName());
       clearIfNeeded(lockHolder);
+      retryOperations(failingOperations);
+   }
+
+   private void retryOperations(List<LuceneWork> failingOperations) {
       if (failingOperations.stream().anyMatch(w -> w.getIdInString() != null)) {
-         logDebug("Retrying operations %s", failingOperations);
-         CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+         log.debugf("Retrying operations %s", failingOperations);
+         CompletableFuture.supplyAsync(() -> {
             performOperations(failingOperations, null);
             return null;
-         }, asyncExecutor);
-         future.whenComplete((aVoid, throwable) -> {
+         }, asyncExecutor).whenComplete((aVoid, throwable) -> {
             if (throwable == null) {
-               logDebug("Operation completed");
+               log.debugf("Operation completed");
             } else {
                log.errorf(throwable, "Error reapplying operation");
             }
          });
       }
-
    }
 
    private void clearIfNeeded(Address lockHolder) {
-      if (!rpcManager.getMembers().contains(lockHolder)) {
+      List<Address> members = rpcManager.getMembers();
+      log.debugf("Current members are %s, lock holder is %s", members, lockHolder);
+      if (!members.contains(lockHolder)) {
          final Directory directory = getDirectoryProvider().getDirectory();
          log.debug("Forcing clear of index lock");
          ((DirectoryExtensions) directory).forceUnlock(IndexWriter.WRITE_LOCK_NAME);
@@ -126,14 +150,15 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       keyTransformationHandler = componentRegistry.getComponent(QueryInterceptor.class).getKeyTransformationHandler();
       SearchIntegrator component = componentRegistry.getComponent(SearchIntegrator.class);
       AffinityErrorHandler errorHandler = (AffinityErrorHandler) component.getErrorHandler();
-      cache.addListener(new TopologyChangeListener());
       errorHandler.initialize(this);
+      segment = AffinityShardIdentifierProvider.getSegment(indexName);
+      cache.addListener(this);
    }
 
    private void handleOwnershipLost(Address newOwner) {
       writeLock.lock();
       try {
-         logDebug("Ownership lost, closing index manager");
+         log.debugf("Ownership lost to '%s', closing index manager", newOwner);
          nextOwner = newOwner;
          flushAndReleaseResources();
          hasOwnership = false;
@@ -145,7 +170,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    private void handleOwnershipAcquired() {
       writeLock.lock();
       try {
-         logDebug("Ownership acquired");
+         log.debugf("Ownership acquired");
          nextOwner = null;
          hasOwnership = true;
       } finally {
@@ -155,26 +180,24 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
 
    @Override
    public void flushAndReleaseResources() {
-      Address lockHolder = getLockHolder(getIndexName());
-      if (lockHolder != null) {
-         InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
-         int activeDeleteTasks = directoryProvider.getActiveDeleteTasks();
-         boolean wasInterrupted = false;
-         while (activeDeleteTasks > 0) {
-            try {
-               Thread.sleep(POLL_WAIT);
-               logDebug("Waiting for pending delete tasks, remaining: %s", activeDeleteTasks);
-               activeDeleteTasks = directoryProvider.getActiveDeleteTasks();
-            } catch (InterruptedException e) {
-               wasInterrupted = true;
-            }
+      InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
+      int activeDeleteTasks = directoryProvider.pendingDeleteTasks();
+      boolean wasInterrupted = false;
+      long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(POLL_WAIT);
+      while (activeDeleteTasks > 0 && endTime - System.nanoTime() > 0) {
+         try {
+            Thread.sleep(10);
+            log.debugf("Waiting for pending delete tasks, remaining: %s", activeDeleteTasks);
+            activeDeleteTasks = directoryProvider.pendingDeleteTasks();
+         } catch (InterruptedException e) {
+            wasInterrupted = true;
          }
-         if (wasInterrupted) {
-            Thread.currentThread().interrupt();
-         }
-         logDebug("Flushing directory provider");
-         super.flushAndReleaseResources();
       }
+      if (wasInterrupted) {
+         Thread.currentThread().interrupt();
+      }
+      log.debugf("Flushing directory provider");
+      super.flushAndReleaseResources();
    }
 
    private Object stringToKey(String key) {
@@ -186,6 +209,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    }
 
    private Address getLockHolder(String indexName) {
+      log.debugf("Getting lock holder for %s", indexName);
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
          InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
@@ -202,10 +226,10 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       }
       int segment = getSegment(stringToKey(work.getIdInString()));
       Address lockHolder = getLockHolder(replaceShard(getIndexName(), segment));
-      logDebug("Lock holder for %d is %s", segment, lockHolder);
+      log.debugf("Lock holder for %s is %s", getIndexName(), lockHolder);
       Address destination;
       if (!hasOwnership) {
-         logDebug("Lost ownership, new owner is %s", nextOwner);
+         log.debugf("Lost ownership, new owner is %s", nextOwner);
          destination = nextOwner;
       } else {
          destination = (lockHolder != null && !localAddress.equals(lockHolder)) ? lockHolder : localAddress;
@@ -227,24 +251,30 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       }));
    }
 
-   @Override
    public void performOperations(List<LuceneWork> workList, IndexingMonitor monitor) {
       if (this.cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+         Address localAddress = rpcManager.getAddress();
          readLock.lock();
          try {
-            Address localAddress = rpcManager.getAddress();
             Map<Address, List<LuceneWork>> workByAddress = partitionWorkByAddress(workList);
-            logDebug("Applying work @ %s, workMap is %s", localAddress, workByAddress);
+            log.debugf("Applying work @ %s, workMap is %s", localAddress, workByAddress);
             List<LuceneWork> localWork = workByAddress.get(localAddress);
             if (localWork != null && !localWork.isEmpty()) {
-               logDebug("About to apply work locally %s, hasOwnership=%s", localWork, hasOwnership);
+               log.debugf("About to apply work locally %s, hasOwnership=%s", localWork, hasOwnership);
                super.performOperations(localWork, monitor);
-               logDebug("Work applied");
+               log.debugf("Work applied");
                workByAddress.remove(localAddress);
             }
             workByAddress.entrySet().forEach(entry -> this.sendWork(entry.getValue(), entry.getKey()));
          } finally {
             readLock.unlock();
+         }
+         if (!distributionManager.isRehashInProgress()) {
+            Address primaryOwner = distributionManager.getConsistentHash().locatePrimaryOwnerForSegment(segment);
+            if (!localAddress.equals(primaryOwner)) {
+               log.debugf("%s is not owner anymore, releasing resources", rpcManager.getAddress());
+               this.handleOwnershipLost(primaryOwner);
+            }
          }
       } else {
          super.performOperations(workList, monitor);
@@ -280,33 +310,19 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
       return indexName.substring(0, indexName.lastIndexOf(".") + 1).concat(String.valueOf(newSegment));
    }
 
-   private void logDebug(String format, Object... params) {
-      if (log.isDebugEnabled()) log.debugf(format, params);
-   }
-
-   @Listener
+   @TopologyChanged
    @SuppressWarnings("unused")
-   private class TopologyChangeListener {
-      private final int segment;
-
-      TopologyChangeListener() {
-         String indexName = getIndexName();
-         segment = AffinityShardIdentifierProvider.getSegment(getIndexName());
+   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
+      log.debugf("Topology changed notification for %s: %s", getIndexName(), tce);
+      Address localAddress = rpcManager.getAddress();
+      Address previousOwner = tce.getConsistentHashAtStart().locatePrimaryOwnerForSegment(segment);
+      Address newOwner = tce.getConsistentHashAtEnd().locatePrimaryOwnerForSegment(segment);
+      if (previousOwner.equals(localAddress) && !newOwner.equals(localAddress)) {
+         handleOwnershipLost(newOwner);
+      } else if (!previousOwner.equals(localAddress) && newOwner.equals(localAddress)) {
+         handleOwnershipAcquired();
       }
 
-      @TopologyChanged
-      public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
-         if (!tce.isPre()) {
-            logDebug("Topology changed notification for %s: %s", getIndexName(), tce);
-            Address localAddress = rpcManager.getAddress();
-            Address previousOwner = tce.getConsistentHashAtStart().locatePrimaryOwnerForSegment(segment);
-            Address newOwner = tce.getConsistentHashAtEnd().locatePrimaryOwnerForSegment(segment);
-            if (previousOwner.equals(localAddress) && !newOwner.equals(localAddress)) {
-               handleOwnershipLost(newOwner);
-            } else if (!previousOwner.equals(localAddress) && newOwner.equals(localAddress)) {
-               handleOwnershipAcquired();
-            }
-         }
-      }
    }
+
 }
