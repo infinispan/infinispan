@@ -5,6 +5,7 @@ import static org.jgroups.Message.Flag.NO_FC;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -63,11 +64,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
    private final TimeService timeService;
+   private final Executor remoteExecutor;
 
    public CommandAwareRpcDispatcher(Channel channel, JGroupsTransport transport,
-         InboundInvocationHandler globalHandler, ScheduledExecutorService timeoutExecutor,
-         TimeService timeService) {
+                                    InboundInvocationHandler globalHandler, ScheduledExecutorService timeoutExecutor,
+                                    TimeService timeService, Executor remoteExecutor) {
       this.timeService = timeService;
+      this.remoteExecutor = remoteExecutor;
       this.server_obj = transport;
       this.handler = globalHandler;
       this.timeoutExecutor = timeoutExecutor;
@@ -96,7 +99,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    @Override
    protected RequestCorrelator createRequestCorrelator(Protocol transport, RequestHandler handler, Address local_addr) {
-      return new CustomRequestCorrelator(transport, handler, local_addr);
+      return new CustomRequestCorrelator(transport, handler, local_addr, remoteExecutor);
    }
 
    private boolean isValid(Message req) {

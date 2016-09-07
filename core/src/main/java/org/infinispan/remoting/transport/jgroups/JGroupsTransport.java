@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -113,7 +114,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected GlobalComponentRegistry gcr;
    protected TimeService timeService;
    protected InboundInvocationHandler globalHandler;
-   private ScheduledExecutorService timeoutExecutor;
+   protected ScheduledExecutorService timeoutExecutor;
+   protected Executor remoteExecutor;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -179,14 +181,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                           CacheManagerNotifier notifier, GlobalComponentRegistry gcr,
                           TimeService timeService, InboundInvocationHandler globalHandler,
                           @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                          @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService executorService) {
+                          @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteExecutor) {
       this.marshaller = marshaller;
       this.notifier = notifier;
       this.gcr = gcr;
       this.timeService = timeService;
       this.globalHandler = globalHandler;
       this.timeoutExecutor = timeoutExecutor;
-      this.handler.updateThreadPool(executorService);
+      this.remoteExecutor = remoteExecutor;
+      this.handler.updateThreadPool(remoteExecutor);
    }
 
    @Override
@@ -377,7 +380,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void initRPCDispatcher() {
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService,
+            remoteExecutor);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
