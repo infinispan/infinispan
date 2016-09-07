@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 /**
  * This test benchmarks different hash functions.
  */
-@Test (groups = "manual", testName = "distribution.HashComparisonTest")
+@Test (groups = "manual", testName = "distribution.HashFunctionComparisonTest")
 public class HashFunctionComparisonTest {
 
    private static final int MAX_STRING_SIZE = 16;

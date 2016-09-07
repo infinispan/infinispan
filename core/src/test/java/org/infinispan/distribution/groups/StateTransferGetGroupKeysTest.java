@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "distribution.groups.StateTransferGetGroupKeysTest")
 public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override

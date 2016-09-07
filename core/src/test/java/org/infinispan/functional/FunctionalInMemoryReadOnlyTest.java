@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt; && Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
  */
-@Test(groups = "functional", testName = "functional.FunctionalInMemoryTest")
+@Test(groups = "functional", testName = "functional.FunctionalInMemoryReadOnlyTest")
 public class FunctionalInMemoryReadOnlyTest extends AbstractFunctionalReadOnlyOpTest {
    public FunctionalInMemoryReadOnlyTest() {
       isPersistenceEnabled = false;

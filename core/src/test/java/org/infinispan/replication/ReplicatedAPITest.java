@@ -17,7 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "replication.ReplicatedAPITest")
 public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected boolean isSync;

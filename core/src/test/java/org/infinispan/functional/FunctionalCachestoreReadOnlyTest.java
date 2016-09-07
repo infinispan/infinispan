@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt; && Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
  */
-@Test(groups = "functional", testName = "functional.FunctionalCachestoreTest")
+@Test(groups = "functional", testName = "functional.FunctionalCachestoreReadOnlyTest")
 public class FunctionalCachestoreReadOnlyTest extends AbstractFunctionalReadOnlyOpTest {
    public FunctionalCachestoreReadOnlyTest() {
       isPersistenceEnabled = true;

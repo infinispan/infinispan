@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  *
  * @author amanukya
  */
-@Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
+@Test(groups="functional", testName="scripting.SecureScriptingTaskManagerTest")
 @CleanupAfterMethod
 public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
 

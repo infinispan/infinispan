@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional", testName = "streams.LocalStreamTest")
+@Test(groups = "functional", testName = "streams.SimpleStreamTest")
 public class SimpleStreamTest extends LocalStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {

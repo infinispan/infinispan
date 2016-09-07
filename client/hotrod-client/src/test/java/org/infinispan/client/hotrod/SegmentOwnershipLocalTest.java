@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 8.0
  */
-@Test(groups = "functional", testName = "client.hotrod.SegmentOwnershipDistTest")
+@Test(groups = "functional", testName = "client.hotrod.SegmentOwnershipLocalTest")
 public class SegmentOwnershipLocalTest extends SingleHotRodServerTest {
 
    @Override

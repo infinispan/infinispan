@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 8.1
  */
-@Test(groups = "functional", testName = "jmx.CacheClearTest")
+@Test(groups = "functional", testName = "jmx.CacheConfigurationMBeanTest")
 public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
 
    public static final String JMX_DOMAIN = CacheConfigurationMBeanTest.class.getSimpleName();

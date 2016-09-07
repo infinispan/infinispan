@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @author Tristan Tarrant
  */
-@Test(groups = "functional", testName = "statetransfer.RebalancePolicyJmxTest")
+@Test(groups = "functional", testName = "statetransfer.PerCacheRebalancePolicyJmxTest")
 @CleanupAfterMethod
 public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
