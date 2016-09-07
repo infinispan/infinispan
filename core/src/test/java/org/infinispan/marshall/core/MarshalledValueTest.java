@@ -601,8 +601,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache2.addListener(l);
       try {
          Pojo pojo = new Pojo();
-         // Mock listener will force deserialization on transport thread. Ignore this by setting b to false.
-         pojo.b = false;
          cache1.put("key", pojo);
          assertTrue(l.newValue instanceof Pojo);
          assertSerializationCounts(1, 1);
@@ -676,7 +674,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public static class Pojo implements Externalizable {
       public int i;
-      boolean b = true;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);
       private static final long serialVersionUID = -2888014339659501395L;
@@ -695,22 +692,17 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
          Pojo pojo = (Pojo) o;
 
-         if (b != pojo.b) return false;
          return i == pojo.i;
       }
 
       @Override
       public int hashCode() {
-         int result;
-         result = i;
-         result = 31 * result + (b ? 1 : 0);
-         return result;
+         return i;
       }
 
       @Override
       public void writeExternal(ObjectOutput out) throws IOException {
          out.writeInt(i);
-         out.writeBoolean(b);
          int serCount = updateSerializationCount();
          log.trace("serializationCount=" + serCount);
       }
@@ -718,11 +710,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          i = in.readInt();
-         b = in.readBoolean();
-         if (b) {
-            // TODO: Find a better way to make sure a transport (JGroups) thread is not attempting to deserialize stuff
-            assertTrue("Transport (JGroups) thread is trying to deserialize stuff!!", !Thread.currentThread().getName().startsWith("OOB"));
-         }
          int deserCount = updateDeserializationCount();
          log.trace("deserializationCount=" + deserCount);
       }
@@ -738,8 +725,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       @Override
       public String toString() {
          return "Pojo{" +
-               "b=" + b +
-               ", i=" + i +
+               "i=" + i +
                '}';
       }
    }
