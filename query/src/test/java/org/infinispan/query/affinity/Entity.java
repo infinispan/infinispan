@@ -4,12 +4,13 @@ import java.io.Serializable;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 
 @Indexed(index = "entity")
 @SuppressWarnings("unused")
 public class Entity implements Serializable {
 
-   @Field
+   @Field(store = Store.YES)
    private final int val;
 
    public int getVal() {

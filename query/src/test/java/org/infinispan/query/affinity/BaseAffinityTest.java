@@ -6,15 +6,20 @@ import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
 import static org.testng.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
@@ -24,22 +29,41 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 
-public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
+public class BaseAffinityTest extends MultipleCacheManagersTest {
 
-   protected int ENTRIES = 50;
+   int ENTRIES = 50;
    protected Random random = new Random();
    protected ConfigurationBuilder cacheCfg;
+   protected int REMOTE_TIMEOUT_MINUTES = 3;
+
+   protected Map<String, String> getIndexingProperties() {
+      Map<String, String> props = new HashMap<>();
+      props.put("hibernate.search.lucene_version", "LUCENE_CURRENT");
+      props.put("entity.indexmanager", AffinityIndexManager.class.getName());
+      return props;
+   }
+
+   protected Configuration getLockCacheConfig() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      builder.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+      builder.indexing().index(Index.NONE);
+      return builder.build();
+   }
+
+   protected Configuration getDataCacheConfig() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+      builder.indexing().index(Index.NONE);
+      return builder.build();
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
-      cacheCfg.indexing()
-              .index(Index.PRIMARY_OWNER)
-              .addIndexedEntity(Entity.class)
-              .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
-              .addProperty("entity.indexmanager", AffinityIndexManager.class.getName());
-
+      cacheCfg.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES).hash().keyPartitioner(new AffinityPartitioner());
+      IndexingConfigurationBuilder builder = cacheCfg.indexing().index(Index.PRIMARY_OWNER)
+            .addIndexedEntity(Entity.class);
+      this.getIndexingProperties().entrySet().forEach(entry -> builder.addProperty(entry.getKey(), entry.getValue()));
    }
 
    void checkAffinity() {
