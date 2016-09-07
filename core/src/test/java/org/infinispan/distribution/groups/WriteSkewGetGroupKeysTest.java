@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "distribution.groups.WriteSkewGetGroupKeysTest")
 public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
    @Override
    public Object[] factory() {
@@ -29,9 +29,9 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
          new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
          new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
          new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true),
          new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true),
       };
    }
 

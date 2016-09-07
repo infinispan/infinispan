@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.iteration.DistFailOverRemoteIteratorTest")
+@Test(groups = "functional", testName = "client.hotrod.iteration.MultiServerCompatTest")
 public class MultiServerCompatTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
 
    private static final int NUM_SERVERS = 2;

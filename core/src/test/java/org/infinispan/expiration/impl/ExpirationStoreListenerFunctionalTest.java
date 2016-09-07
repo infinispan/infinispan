@@ -16,7 +16,7 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "expiration.impl.ExpirationStoreFunctionalTest")
+@Test(groups = "functional", testName = "expiration.impl.ExpirationStoreListenerFunctionalTest")
 public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFunctionalTest {
    protected ExpiredCacheListener listener = new ExpiredCacheListener();
    protected ExpirationManager manager;

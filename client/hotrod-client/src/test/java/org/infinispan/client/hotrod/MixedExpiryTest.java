@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 8.0
  */
-@Test(groups = "functional", testName = "client.hotrod.ExpiryTest")
+@Test(groups = "functional", testName = "client.hotrod.MixedExpiryTest")
 public class MixedExpiryTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {

@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "api.ClearTest")
 public class ClearTest extends MultipleCacheManagersTest {
 
    protected final Log log = LogFactory.getLog(getClass());

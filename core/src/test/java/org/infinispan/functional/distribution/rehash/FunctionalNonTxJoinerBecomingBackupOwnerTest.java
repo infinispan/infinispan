@@ -7,7 +7,7 @@ import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.rehash.NonTxJoinerBecomingBackupOwnerTest")
+@Test(groups = "functional", testName = "distribution.rehash.FunctionalNonTxJoinerBecomingBackupOwnerTest")
 @CleanupAfterMethod
 public class FunctionalNonTxJoinerBecomingBackupOwnerTest extends NonTxJoinerBecomingBackupOwnerTest {
 

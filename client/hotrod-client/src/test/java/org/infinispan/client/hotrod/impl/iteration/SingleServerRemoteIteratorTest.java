@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 8.0
  */
-@Test(groups = "functional", testName = "client.hotrod.iteration.RemoteIteratorTest")
+@Test(groups = "functional", testName = "client.hotrod.iteration.SingleServerRemoteIteratorTest")
 public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest implements AbstractRemoteIteratorTest {
 
    public static final String FILTER_CONVERTER_FACTORY_NAME = "even-accounts-descriptions";

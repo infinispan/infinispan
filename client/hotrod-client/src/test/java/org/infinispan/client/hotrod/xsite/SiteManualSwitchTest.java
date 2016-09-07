@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
+@Test(groups = "functional", testName = "client.hotrod.xsite.SiteManualSwitchTest")
 public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
 
    @Override

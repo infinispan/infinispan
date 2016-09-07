@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "distribution.groups.GetGroupKeysTest")
 public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    protected static final String PERSISTENCE_CACHE = "persistence-cache";

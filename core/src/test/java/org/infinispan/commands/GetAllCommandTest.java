@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  * @author William Burns
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "commands.GetAllCommandTest")
 public class GetAllCommandTest extends MultipleCacheManagersTest {
 
    private final int numNodes = 4;

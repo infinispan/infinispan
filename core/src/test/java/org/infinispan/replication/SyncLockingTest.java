@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  */
-@Test(groups = "functional", testName = "replication.ReplLockingTest")
+@Test(groups = "functional", testName = "replication.SyncLockingTest")
 @InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class SyncLockingTest extends MultipleCacheManagersTest {
    private String k = "key", v = "value";

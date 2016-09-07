@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 8.0
  */
-@Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamIteratorTxTest")
+@Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamTxEquivalenceTest")
 public class DistributedStreamTxEquivalenceTest extends BaseSetupStreamIteratorTest {
    public DistributedStreamTxEquivalenceTest() {
       super(true, CacheMode.DIST_SYNC);

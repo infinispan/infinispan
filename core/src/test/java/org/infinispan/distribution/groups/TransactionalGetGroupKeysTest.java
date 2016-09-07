@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "distribution.groups.TransactionalGetGroupKeysTest")
 public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    @Override
    public Object[] factory() {

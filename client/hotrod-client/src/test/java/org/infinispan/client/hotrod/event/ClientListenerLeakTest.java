@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.event.ClientListenerLifecycleTest")
+@Test(groups = "functional", testName = "client.hotrod.event.ClientListenerLeakTest")
 public class ClientListenerLeakTest extends SingleHotRodServerTest {
 
    private String cacheName;
