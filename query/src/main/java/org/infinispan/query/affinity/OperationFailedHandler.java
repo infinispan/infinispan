@@ -2,7 +2,6 @@ package org.infinispan.query.affinity;
 
 import java.util.List;
 
-import org.apache.lucene.store.LockObtainFailedException;
 import org.hibernate.search.backend.LuceneWork;
 
 /**
@@ -13,9 +12,9 @@ import org.hibernate.search.backend.LuceneWork;
 interface OperationFailedHandler {
 
    /**
-    * Called when a {@link LockObtainFailedException} happened in the backend.
+    * Called when operations failed in the backend.
     *
     * @param failingOperations Operations that failed to be applied to the index.
     */
-   void lockObtainFailed(List<LuceneWork> failingOperations);
+   void operationsFailed(List<LuceneWork> failingOperations, Throwable cause);
 }

@@ -40,14 +40,18 @@ public class AffinityErrorHandler extends WrappingErrorHandler {
    protected void errorOccurred(ErrorContext context) {
       if (operationFailedHandler != null) {
          Throwable throwable = context.getThrowable();
-         if (throwable instanceof LockObtainFailedException) {
-            List<LuceneWork> failingOperations = context.getFailingOperations();
-            LuceneWork operationAtFault = context.getOperationAtFault();
-            List<LuceneWork> failed = new ArrayList<>(failingOperations);
-            failed.add(operationAtFault);
-            operationFailedHandler.lockObtainFailed(failed);
-         }
+         log.errorOccurredApplyingChanges(throwable);
+         List<LuceneWork> failed = extractFailedOperations(context);
+         operationFailedHandler.operationsFailed(failed, throwable);
       }
+   }
+
+   private List<LuceneWork> extractFailedOperations(ErrorContext context) {
+      List<LuceneWork> failingOperations = context.getFailingOperations();
+      LuceneWork operationAtFault = context.getOperationAtFault();
+      List<LuceneWork> failed = new ArrayList<>(failingOperations);
+      failed.add(operationAtFault);
+      return failed;
    }
 
    @Override

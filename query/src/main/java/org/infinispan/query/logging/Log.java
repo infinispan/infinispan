@@ -152,4 +152,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Unable to suspend transaction", id = 14034)
    CacheException unableToSuspendTx(@Cause Throwable cause);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Error occurred while applying changes to the index", id = 14035)
+   void errorOccurredApplyingChanges(@Cause Throwable cause);
 }
