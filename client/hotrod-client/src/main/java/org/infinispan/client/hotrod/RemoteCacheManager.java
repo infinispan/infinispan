@@ -103,16 +103,6 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       return configuration;
    }
 
-
-   /**
-    * @since 4.2
-    */
-   @Override
-   @Deprecated
-   public Properties getProperties() {
-      return configuration.properties();
-   }
-
    /**
     * Same as {@link RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the

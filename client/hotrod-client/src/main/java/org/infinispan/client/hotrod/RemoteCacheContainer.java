@@ -25,16 +25,6 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     */
    Configuration getConfiguration();
 
-   /**
-    * Retrieves a clone of the properties currently in use.  Note that making
-    * any changes to the properties instance retrieved will not affect an
-    * already-running RemoteCacheManager.
-    *
-    * @return a clone of the properties used to configure this RemoteCacheManager
-    */
-   @Deprecated
-   Properties getProperties();
-
    <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue);
 
    <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue);
