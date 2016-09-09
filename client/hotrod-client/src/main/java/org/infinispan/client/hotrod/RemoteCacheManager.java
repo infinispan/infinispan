@@ -103,11 +103,14 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       return configuration;
    }
 
-
    /**
+    * Retrieves a clone of the properties currently in use.  Note that making
+    * any changes to the properties instance retrieved will not affect an
+    * already-running RemoteCacheManager.
+    *
+    * @return a clone of the properties used to configure this RemoteCacheManager
     * @since 4.2
     */
-   @Override
    @Deprecated
    public Properties getProperties() {
       return configuration.properties();
