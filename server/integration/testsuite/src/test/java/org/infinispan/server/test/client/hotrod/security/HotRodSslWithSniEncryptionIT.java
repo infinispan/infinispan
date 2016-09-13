@@ -21,7 +21,6 @@ import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -61,7 +60,6 @@ public class HotRodSslWithSniEncryptionIT {
    }
 
    @Test
-   @Ignore
    public void testUnauthorizedAccessToDefaultSSLContext() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
