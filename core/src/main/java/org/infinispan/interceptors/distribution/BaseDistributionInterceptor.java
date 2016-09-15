@@ -202,7 +202,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return CompletableFutures.completedNull();
       }
-      
+
       ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
       getCommand.setWrite(isWrite);
 

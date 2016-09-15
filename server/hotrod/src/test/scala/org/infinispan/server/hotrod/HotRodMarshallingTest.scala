@@ -28,8 +28,7 @@ class HotRodMarshallingTest extends AbstractMarshallingTest {
    def testMarshallingCommandWithBigByteArrayKey() {
       val cacheKey = getBigByteArray
       val command = new ClusteredGetCommand(cacheKey,
-         ByteString.fromString(BasicCacheContainer.DEFAULT_CACHE_NAME), EnumUtil.EMPTY_BIT_SET, false, null,
-         ByteArrayEquivalence.INSTANCE)
+         ByteString.fromString(BasicCacheContainer.DEFAULT_CACHE_NAME), EnumUtil.EMPTY_BIT_SET, ByteArrayEquivalence.INSTANCE)
       val bytes = marshaller.objectToByteBuffer(command)
       val readCommand = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ClusteredGetCommand]
       assertEquals(readCommand, command)
