@@ -1404,5 +1404,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
    void warnAboutUberJarDuplicates();
+
+   @Message(value = "Cannot enable '%s' in invalidation caches!", id = 420)
+   CacheConfigurationException attributeNotAllowedInInvalidationMode(String attributeName);
 }
 
