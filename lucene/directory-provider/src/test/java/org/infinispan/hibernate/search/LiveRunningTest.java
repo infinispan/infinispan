@@ -51,10 +51,10 @@ public class LiveRunningTest {
             assertViews();
          }
       } finally {
-         master.close();
          for (FullTextSessionBuilder slave : slaves) {
             slave.close();
          }
+         master.close();
       }
    }
 
