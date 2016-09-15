@@ -84,6 +84,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private CommandsFactory commandFactory;
    private boolean isUsingLockDelegation;
    private boolean isInvalidation;
+   private boolean isSync;
    private StateConsumer stateConsumer;       // optional
    private StateTransferLock stateTransferLock;
    private XSiteStateConsumer xSiteStateConsumer;
@@ -164,6 +165,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             (cacheConfiguration.clustering().cacheMode().isDistributed() ||
                    cacheConfiguration.clustering().cacheMode().isReplicated());
       isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
+      isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
    }
 
    @Override
@@ -565,17 +567,16 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
-         if (command instanceof WriteCommand) {
+         if (!isInvalidation && command instanceof WriteCommand) {
             WriteCommand writeCommand = (WriteCommand) command;
             // Can't perform the check during preload or if the cache isn't clustered
-            boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
-                  !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
-            if (writeCommand.isSuccessful() && stateConsumer != null &&
-                  stateConsumer.getCacheTopology() != null) {
+            boolean syncRpc = isSync && !command.hasFlag(Flag.FORCE_ASYNCHRONOUS) ||
+                  command.hasFlag(Flag.FORCE_SYNCHRONOUS);
+            if (writeCommand.isSuccessful() && stateConsumer != null && stateConsumer.getCacheTopology() != null) {
                int commandTopologyId = command.getTopologyId();
                int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
                // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-               if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+               if (syncRpc && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
                   // If we were the originator of a data command which we didn't own the key at the time means it
                   // was already committed, so there is no need to throw the OutdatedTopologyException
                   // This will happen if we submit a command to the primary owner and it responds and then a topology
