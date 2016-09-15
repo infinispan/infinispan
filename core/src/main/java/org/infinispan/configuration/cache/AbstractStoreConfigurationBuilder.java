@@ -176,6 +176,11 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
             && builder.clustering().cacheMode().isClustered())
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
+      if (fetchPersistentState && attributes.attribute(FETCH_PERSISTENT_STATE).isModified() &&
+            clustering().cacheMode().isInvalidation()) {
+         throw log.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
+      }
+
       if (shared && !preload && builder.indexing().enabled()
             && builder.indexing().indexLocalOnly())
          log.localIndexingWithSharedCacheLoaderRequiresPreload();
