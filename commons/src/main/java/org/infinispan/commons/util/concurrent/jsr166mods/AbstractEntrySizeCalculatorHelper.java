@@ -1,4 +1,4 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
 /**
  * Abstract class that provides a method to round up to the nearest value of 8 which is important for most jvm when

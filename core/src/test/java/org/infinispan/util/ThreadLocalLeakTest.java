@@ -42,7 +42,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
    // Some static thread locals we cannot remove, because
    private static final Set<String> ACCEPTED_THREAD_LOCALS = new HashSet<String>(Arrays.asList(new String[]{
-         "org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8$CounterHashCode"
+         "org.infinispan.commons.util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8$CounterHashCode"
    }));
 
    private String tmpDirectory;

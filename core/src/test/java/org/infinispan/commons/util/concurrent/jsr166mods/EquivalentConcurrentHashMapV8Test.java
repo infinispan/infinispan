@@ -1,4 +1,4 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jsr166mods;
 
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8Test")
+@Test(groups = "functional", testName = "util.concurrent.jsr166mods.EquivalentConcurrentHashMapV8Test")
 public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
 
    private static final Log log = LogFactory.getLog(EquivalentConcurrentHashMapV8Test.class);
