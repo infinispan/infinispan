@@ -1416,5 +1416,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Received unsolicited state from node %s for segment %d of cache %s", id = 396)
    void ignoringUnsolicitedState(Address node, int segment, String cacheName);
+
+   @Message(value = "Cannot enable '%s' in invalidation caches!", id = 420)
+   CacheConfigurationException attributeNotAllowedInInvalidationMode(String attributeName);
 }
 
