@@ -9,6 +9,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and
@@ -18,6 +20,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class StateTransferConfigurationBuilder extends
       AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration> {
+   private static final Log log = LogFactory.getLog(StateTransferConfigurationBuilder.class);
+
    private final AttributeSet attributes;
 
    StateTransferConfigurationBuilder(ClusteringConfigurationBuilder builder) {
@@ -81,6 +85,13 @@ public class StateTransferConfigurationBuilder extends
    public void validate() {
       if (attributes.attribute(CHUNK_SIZE).get() <= 0) {
          throw new CacheConfigurationException("chunkSize can not be <= 0");
+      }
+
+      if (clustering().cacheMode().isInvalidation()) {
+         Attribute<Boolean> fetchAttribute = attributes.attribute(FETCH_IN_MEMORY_STATE);
+         if (fetchAttribute.isModified() && fetchAttribute.get()) {
+            throw log.attributeNotAllowedInInvalidationMode(FETCH_IN_MEMORY_STATE.name());
+         }
       }
 
       Attribute<Boolean> awaitInitialTransfer = attributes.attribute(AWAIT_INITIAL_TRANSFER);
