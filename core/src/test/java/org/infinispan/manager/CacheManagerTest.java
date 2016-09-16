@@ -11,6 +11,10 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -439,6 +443,35 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             assert 0 == data2.size();
          }
       });
+   }
+
+   @Test(timeOut = 10_000)
+   public void testIfConcurrentStartAndStopDoesNotDeadlock() throws Exception {
+      //given
+      EmbeddedCacheManager cm = new DefaultCacheManager();
+      ExecutorService executor = Executors.newCachedThreadPool();
+      ExecutorCompletionService<Void> workerQueue = new ExecutorCompletionService<>(executor);
+
+      //when
+      for (int i = 0; i < 100; ++i) {
+         workerQueue.submit(() -> {
+            cm.start();
+            return null;
+         });
+         workerQueue.submit(() -> {
+            cm.stop();
+            return null;
+         });
+      }
+      executor.shutdown();
+
+      //then
+      Future<Void> result;
+      while((result = workerQueue.poll()) != null) {
+         //an ExecutionException is thrown if the computation threw an exception.
+         //in that case the test will fail.
+         result.get();
+      }
    }
 
    private DummyInMemoryStore getDummyStore(Cache<String, String> cache1) {
