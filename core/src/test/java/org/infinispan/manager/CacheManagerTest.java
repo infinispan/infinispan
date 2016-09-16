@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import static org.infinispan.test.Exceptions.expectException;
+
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.TestingUtil.v;
@@ -15,6 +16,8 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.UUID;
 
 import org.infinispan.Cache;
@@ -39,13 +42,20 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
+import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -57,6 +67,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional", "smoke"}, testName = "manager.CacheManagerTest")
 public class CacheManagerTest extends AbstractInfinispanTest {
+   private static final java.lang.String CACHE_NAME = "name";
+
    public void testDefaultCache() {
       EmbeddedCacheManager cm = createCacheManager(false);
 
@@ -242,6 +254,43 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cache.put("k", "v2");
       } finally {
          TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+
+   public void testConcurrentCacheManagerStopAndGetCache() throws Exception {
+      EmbeddedCacheManager manager = createCacheManager(false);
+      try {
+         CompletableFuture<Void> cacheStartBlocked = new CompletableFuture<>();
+         CompletableFuture<Void> cacheStartResumed = new CompletableFuture<>();
+         CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
+         CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
+         manager.addListener(new MyListener(cacheStartBlocked, cacheStartResumed));
+         TestingUtil.replaceComponent(manager, GlobalMarshaller.class, new GlobalMarshaller() {
+            @Override
+            public void stop() {
+               log.tracef("Stopping global component registry");
+               managerStopBlocked.complete(null);
+               managerStopResumed.join();
+               super.stop();
+            }
+         }, true);
+
+         Future<?> cacheStartFuture = fork(() -> manager.getCache(CACHE_NAME));
+         cacheStartBlocked.get(10, SECONDS);
+
+         Future<?> managerStopFuture = fork(() -> manager.stop());
+         managerStopBlocked.get(10, SECONDS);
+
+         Future<?> cacheStartFuture2 = fork(() -> manager.getCache(CACHE_NAME));
+         Exceptions.expectExecutionException(IllegalLifecycleStateException.class, cacheStartFuture2);
+
+         managerStopResumed.complete(null);
+         managerStopFuture.get(10, SECONDS);
+
+         cacheStartResumed.complete(null);
+         cacheStartFuture.get(10, SECONDS);
+      } finally {
+         TestingUtil.killCacheManagers(manager);
       }
    }
 
@@ -495,5 +544,28 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          return new UnreliableCacheStoreConfiguration(attributes.protect(), async.create(), singleton().create());
       }
       @Override public UnreliableCacheStoreConfigurationBuilder self() { return this; }
+   }
+
+   @Listener
+   private class MyListener {
+      private final CompletableFuture<Void> cacheStartBlocked;
+      private final CompletableFuture<Void> cacheStartResumed;
+
+      public MyListener(CompletableFuture<Void> cacheStartBlocked, CompletableFuture<Void> cacheStartResumed) {
+         this.cacheStartBlocked = cacheStartBlocked;
+         this.cacheStartResumed = cacheStartResumed;
+      }
+
+      @CacheStarted
+      public void cacheStarted(CacheStartedEvent event) {
+         log.tracef("Cache started: %s", event.getCacheName());
+         cacheStartBlocked.complete(null);
+         cacheStartResumed.join();
+      }
+
+      @CacheStopped
+      public void cacheStopped(CacheStoppedEvent event) {
+         log.tracef("Cache stopped: %s", event.getCacheName());
+      }
    }
 }
