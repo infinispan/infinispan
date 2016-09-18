@@ -279,16 +279,17 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cacheStartBlocked.get(10, SECONDS);
 
          Future<?> managerStopFuture = fork(() -> manager.stop());
-         managerStopBlocked.get(10, SECONDS);
+         Exceptions.expectException(TimeoutException.class, () -> managerStopBlocked.get(1, SECONDS));
 
          Future<?> cacheStartFuture2 = fork(() -> manager.getCache(CACHE_NAME));
          Exceptions.expectExecutionException(IllegalLifecycleStateException.class, cacheStartFuture2);
 
-         managerStopResumed.complete(null);
-         managerStopFuture.get(10, SECONDS);
-
          cacheStartResumed.complete(null);
          cacheStartFuture.get(10, SECONDS);
+
+         managerStopBlocked.get(10, SECONDS);
+         managerStopResumed.complete(null);
+         managerStopFuture.get(10, SECONDS);
       } finally {
          TestingUtil.killCacheManagers(manager);
       }
