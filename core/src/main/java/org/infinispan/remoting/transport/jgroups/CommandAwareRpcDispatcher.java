@@ -53,7 +53,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = SecurityActions.getBooleanProperty("infinispan.unsafe.force_multicast");
-   private static final long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(
+   private static long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(
          SecurityActions.getIntProperty("infinispan.stagger.delay", 5));
 
    private final InboundInvocationHandler handler;
