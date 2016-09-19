@@ -17,12 +17,12 @@ import java.util.HashSet;
 public class ClusteredGetResponseValidityFilter implements ResponseFilter {
 
    private Collection<Address> targets;
-   private int validResponses;
+   private int acceptableResponses;
    private int missingResponses;
 
    public ClusteredGetResponseValidityFilter(Collection<Address> targets, Address self) {
       this.targets = new HashSet<Address>(targets);
-      this.validResponses = 0;
+      this.acceptableResponses = 0;
       this.missingResponses = targets.size();
       if (this.targets.contains(self)) {
          this.missingResponses--;
@@ -33,8 +33,8 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
    public boolean isAcceptable(Response response, Address address) {
       if (targets.contains(address)) {
          missingResponses--;
-         if (response instanceof SuccessfulResponse) {
-            validResponses++;
+         if (response instanceof SuccessfulResponse || response instanceof ExceptionResponse) {
+            acceptableResponses++;
             return true;
          }
       }
@@ -43,7 +43,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
 
    @Override
    public boolean needMoreResponses() {
-      return validResponses < 1 && missingResponses > 0;
+      return acceptableResponses < 1 && missingResponses > 0;
    }
 
 }
