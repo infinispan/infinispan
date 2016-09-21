@@ -22,6 +22,11 @@
  */
 package org.infinispan.interceptors;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -31,8 +36,13 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.*;
-import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -41,21 +51,21 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Takes care of replicating modifications to other caches in a cluster.
@@ -91,9 +101,32 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
    private void sendCommitCommand(CommitCommand command)
          throws TimeoutException, InterruptedException {
-      // may need to resend, so make the commit command synchronous
-      // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
-      rpcManager.invokeRemotely(null, command, cacheConfiguration.transaction().syncCommitPhase(), true);
+      boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
+      ResponseMode responseMode =
+            syncCommitPhase ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
+      long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(null, command, responseMode, replTimeout);
+      checkTxCommandResponses(responseMap, command);
+   }
+
+   protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command) {
+      for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
+         Address recipient = e.getKey();
+         Response response = e.getValue();
+         if (response instanceof CacheNotFoundResponse) {
+            // No need to retry if the missing node wasn't a member when the command started.
+            if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId()
+                  && !rpcManager.getMembers().contains(recipient)) {
+               log.tracef("Ignoring response from node not targeted %s", recipient);
+            } else {
+               log.tracef("Cache not running on node %s, or the node is missing", recipient);
+               throw new OutdatedTopologyException("Cache not running on node " + recipient);
+            }
+         } else if (response instanceof UnsureResponse) {
+            log.tracef("Node %s has a newer topology id", recipient);
+            throw new OutdatedTopologyException("Cache not running on node " + recipient);
+         }
+      }
    }
 
    @Override
@@ -108,8 +141,17 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
 
    protected void broadcastPrepare(TxInvocationContext context, PrepareCommand command) {
       try {
-         boolean async = cacheConfiguration.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-         rpcManager.broadcastRpcCommand(command, !async, false);
+         // this method will return immediately if we're the only member (because exclude_self=true)
+         boolean sync = cacheConfiguration.clustering().cacheMode().isSynchronous();
+         if (sync) {
+            ResponseMode responseMode = ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
+            long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+            Map<Address, Response> responseMap = rpcManager.invokeRemotely(null, command, responseMode, replTimeout);
+            checkTxCommandResponses(responseMap, command);
+         } else {
+            // The invokeRemotely overload that takes a ResponseMode parameter doesn't use the replication queue
+            rpcManager.broadcastRpcCommand(command, false);
+         }
       } finally {
          transactionRemotelyPrepared(context);
       }
@@ -157,7 +199,14 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.broadcastRpcCommand(command, sync, false);
+         if (sync) {
+            ResponseMode responseMode = ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
+            long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+            Map<Address, Response> responseMap = rpcManager.invokeRemotely(null, command, responseMode, replTimeout);
+            checkTxCommandResponses(responseMap, command);
+         } else {
+            rpcManager.broadcastRpcCommand(command, false, false);
+         }
       }
       return retVal;
    }
