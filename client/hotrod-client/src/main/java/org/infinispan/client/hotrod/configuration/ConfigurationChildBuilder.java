@@ -9,6 +9,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.marshall.Marshaller;
 
+import javax.net.ssl.SSLContext;
+
 /**
  * ConfigurationChildBuilder.
  *
@@ -57,10 +59,19 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder balancingStrategy(Class<? extends FailoverRequestBalancingStrategy> balancingStrategy);
 
    /**
-    * @param classLoader
-    * @return
+    * Specifies the {@link ClassLoader} used to find certain resources used by configuration when specified by name
+    * (e.g. certificate stores). Infinispan will search through the classloader which loaded this class, the system
+    * classloader, the TCCL and the OSGi classloader (if applicable).
+    * @deprecated since 9.0.  If you need to load configuration resources from other locations, you will need to do so
+    * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(SSLContext)})
     */
+   @Deprecated
    ConfigurationBuilder classLoader(ClassLoader classLoader);
+
+   /**
+    * Specifies the level of "intelligence" the client should have
+    */
+   ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence);
 
    /**
     * Configures the connection pool

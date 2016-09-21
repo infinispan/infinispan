@@ -92,6 +92,7 @@ public class Configuration {
       return balancingStrategy;
    }
 
+   @Deprecated
    public ClassLoader classLoader() {
       return classLoader.get();
    }
