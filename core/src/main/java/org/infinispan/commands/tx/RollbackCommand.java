@@ -52,7 +52,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      txTable.markTransactionCompleted(globalTx);
+      txTable.markTransactionCompleted(globalTx, false);
       return super.perform(ctx);
    }
 

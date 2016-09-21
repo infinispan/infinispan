@@ -51,13 +51,26 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      txTable.markTransactionCompleted(globalTx);
-      return super.perform(ctx);
+      Object returnValue = super.perform(ctx);
+      // Perform possibly invokes a prepare command and check if the tx is completed, so we have to mark it afterwards.
+      txTable.markTransactionCompleted(globalTx, true);
+      return returnValue;
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
+   }
+
+   @Override
+   protected Object invalidRemoteTxReturnValue(boolean completedSuccessfully) {
+      if (completedSuccessfully) {
+         // The transaction was already committed on this node
+         // TODO: ISPN-5386 Tx succeeds on coord, while being rolled back on other participants due to Tx pruning
+         return null;
+      } else {
+         throw new IllegalStateException("Remote transaction not found");
+      }
    }
 
    @Override

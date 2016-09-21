@@ -35,6 +35,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -98,10 +99,14 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      boolean releaseLocks = releaseLockOnTxCompletion(ctx);
       try {
-      return super.visitCommitCommand(ctx, command);
+         return super.visitCommitCommand(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         releaseLocks = false;
+         throw e;
       } finally {
-         if (releaseLockOnTxCompletion(ctx)) lockManager.unlockAll(ctx);
+         if (releaseLocks) lockManager.unlockAll(ctx);
       }
    }
 

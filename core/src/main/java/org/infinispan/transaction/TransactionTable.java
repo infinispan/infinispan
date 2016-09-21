@@ -532,14 +532,22 @@ public class TransactionTable {
     * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
-   public void markTransactionCompleted(GlobalTransaction globalTx) {
+   public void markTransactionCompleted(GlobalTransaction globalTx, boolean successful) {
+      log.tracef("Marking transaction %s as completed", globalTx);
       completedTransactions.put(globalTx, System.nanoTime());
    }
 
    /**
-    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
+    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction, boolean)
     */
    public boolean isTransactionCompleted(GlobalTransaction gtx) {
+      return completedTransactions.containsKey(gtx);
+   }
+
+   /**
+    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction, boolean)
+    */
+   public boolean isTransactionCompletedSuccessfully(GlobalTransaction gtx) {
       return completedTransactions.containsKey(gtx);
    }
 
