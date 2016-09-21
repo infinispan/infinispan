@@ -38,12 +38,7 @@ public class PersistenceUtil {
 
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {
       final AtomicInteger result = new AtomicInteger(0);
-      acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask<K, V>() {
-         @Override
-         public void processEntry(MarshalledEntry<K, V> marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            result.incrementAndGet();
-         }
-      }, new WithinThreadExecutor(), false, false);
+      acl.process(filter, (marshalledEntry, taskContext) -> result.incrementAndGet(), new WithinThreadExecutor(), false, false);
       return result.get();
    }
 
@@ -51,12 +46,7 @@ public class PersistenceUtil {
       if (acl == null)
          return Collections.emptySet();
       final Set<K> set = new HashSet<K>();
-      acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask<K, V>() {
-         @Override
-         public void processEntry(MarshalledEntry<K, V> marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            set.add(marshalledEntry.getKey());
-         }
-      }, new WithinThreadExecutor(), false, false);
+      acl.process(filter, (marshalledEntry, taskContext) -> set.add(marshalledEntry.getKey()), new WithinThreadExecutor(), false, false);
       return set;
    }
 
@@ -64,12 +54,7 @@ public class PersistenceUtil {
       if (acl == null)
          return Collections.emptySet();
       final Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();
-      acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask<K, V>() {
-         @Override
-         public void processEntry(MarshalledEntry<K, V> ce, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            set.add(ief.create(ce.getKey(), ce.getValue(), ce.getMetadata()));
-         }
-      }, new WithinThreadExecutor(), true, true);
+      acl.process(filter, (ce, taskContext) -> set.add(ief.create(ce.getKey(), ce.getValue(), ce.getMetadata())), new WithinThreadExecutor(), true, true);
       return set;
    }
 
@@ -105,6 +90,25 @@ public class PersistenceUtil {
 
          isLoaded.set(Boolean.TRUE); //loaded!
          return newEntry;
+      });
+   }
+
+   public static <K, V> InternalCacheEntry<K,V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer, final PersistenceManager persistenceManager,
+                                                                              K key, final InvocationContext ctx, final TimeService timeService,
+                                                                              DataContainer.ComputeAction<K, V> action) {
+      return dataContainer.compute(key, (k, oldEntry, factory) -> {
+         //under the lock, check if the entry exists in the DataContainer
+         if (oldEntry != null && (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
+            return action.compute(k, oldEntry, factory);
+         }
+
+         MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, k, ctx, timeService);
+         if (loaded == null) {
+            return action.compute(k, null, factory);
+         }
+
+         InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
+         return action.compute(k, newEntry, factory);
       });
    }
 

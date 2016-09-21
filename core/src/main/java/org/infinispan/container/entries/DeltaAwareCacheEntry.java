@@ -17,8 +17,11 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,6 +37,11 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    private static final Log log = LogFactory.getLog(DeltaAwareCacheEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   // TODO: this is hack!
+   private InvocationContext ctx;
+   private PersistenceManager persistenceManager;
+   private TimeService timeService;
+
    protected K key;
    protected CacheEntry<K, DeltaAware> wrappedEntry;
    protected DeltaAware value;
@@ -43,12 +51,16 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
 
    protected AtomicHashMap<K, ?> uncommittedChanges;
 
-   public DeltaAwareCacheEntry(K key, DeltaAware value, CacheEntry<K, DeltaAware> wrappedEntry) {
+   public DeltaAwareCacheEntry(K key, DeltaAware value, CacheEntry<K, DeltaAware> wrappedEntry,
+                               InvocationContext ctx, PersistenceManager persistenceManager, TimeService timeService) {
       setValid(true);
       this.key = key;
       this.value = value;
       this.initialValue = value;
       this.wrappedEntry = wrappedEntry;
+      this.ctx = ctx;
+      this.persistenceManager = persistenceManager;
+      this.timeService = timeService;
       if (value instanceof AtomicHashMap) {
          this.uncommittedChanges = ((AtomicHashMap) value).copy();
       }
@@ -168,9 +180,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    public final void commit(final DataContainer<K, DeltaAware> container, final Metadata metadata) {
       //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
       //note: we want to merge/copy to/from the data container value.
-      container.compute(key, new DataContainer.ComputeAction<K, DeltaAware>() {
-         @Override
-         public InternalCacheEntry<K, DeltaAware> compute(K key, InternalCacheEntry<K, DeltaAware> oldEntry, InternalEntryFactory factory) {
+      PersistenceUtil.loadAndComputeInDataContainer(container, persistenceManager, key, ctx, timeService, (key, oldEntry, factory) -> {
             InternalCacheEntry<K, DeltaAware> newEntry = oldEntry;
             DeltaAware containerValue = oldEntry == null ? null : (DeltaAware) oldEntry.getValue();
             if (containerValue != null && containerValue != value) {
@@ -203,10 +213,8 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
                   value.commit();
                }
             }
-            reset();
             return newEntry;
-         }
-      });
+         });
    }
 
    private Metadata extractMetadata(CacheEntry<K, DeltaAware> entry, Metadata provided) {
