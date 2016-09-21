@@ -302,12 +302,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
       Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      ResponseMode responseMode;
-      if (syncCommitPhase) {
-         responseMode = ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
-      } else {
-         responseMode = ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
-      }
+      ResponseMode responseMode = syncCommitPhase ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
       long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
       Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, responseMode, replTimeout);
       checkTxCommandResponses(responseMap, command);
