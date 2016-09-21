@@ -80,7 +80,7 @@ public class TransactionInfo {
       return "TransactionInfo{" +
             "globalTransaction=" + globalTransaction +
             ", topologyId=" + topologyId +
-            ", modifications=" + Arrays.asList(modifications) +
+            ", modifications=" + Arrays.toString(modifications) +
             ", lockedKeys=" + lockedKeys +
             '}';
    }
