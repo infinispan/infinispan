@@ -161,7 +161,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    private <T> void assertIndexPopulated(Cache<Integer, T> cache, Class<T> clazz) {
-      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
+      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
       assertEquals(query.list().size(), CACHE_SIZE);
    }
 

@@ -44,7 +44,7 @@ public class TimeoutTest extends SingleCacheManagerTest {
             .keyword().onField("bar").matching("1")
             .createQuery();
 
-      CacheQuery cacheQuery = searchManager.getQuery(query);
+      CacheQuery<?> cacheQuery = searchManager.getQuery(query);
       cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {

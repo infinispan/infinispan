@@ -39,7 +39,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    private final QueryParser queryParser = createQueryParser("blurb");
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
-   CacheQuery cacheQuery;
+   CacheQuery<Person> cacheQuery;
 
    public ClusteredQueryTest() {
       // BasicConfigurator.configure();
@@ -110,13 +110,13 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cacheQuery.sort(sort);
 
       for (int i = 0; i < 2; i ++) {
-         ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+         ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
          try {
             assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
 
             int previousAge = 0;
             while (iterator.hasNext()) {
-               Person person = (Person) iterator.next();
+               Person person = iterator.next();
                assert person.getAge() > previousAge;
                previousAge = person.getAge();
             }
@@ -131,7 +131,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testLazyNonOrdered() throws ParseException {
       populateCache();
 
-      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       try {
          assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
       }
@@ -145,11 +145,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
-      final CacheQuery localQuery1 = searchManager1.getQuery(createLuceneQuery());
+      final CacheQuery<?> localQuery1 = searchManager1.getQuery(createLuceneQuery());
       assertEquals(3, localQuery1.getResultSize());
 
       final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
-      final CacheQuery localQuery2 = searchManager2.getQuery(createLuceneQuery());
+      final CacheQuery<?> localQuery2 = searchManager2.getQuery(createLuceneQuery());
       assertEquals(1, localQuery2.getResultSize());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
@@ -162,13 +162,13 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
          assertEquals(4, cacheQuery.getResultSize());
 
          int previousAge = 0;
          while (iterator.hasNext()) {
-            Person person = (Person) iterator.next();
+            Person person = iterator.next();
             assert person.getAge() > previousAge;
             previousAge = person.getAge();
          }
@@ -183,7 +183,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       cacheQuery.maxResults(1);
-      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
          assert iterator.hasNext();
          iterator.next();
@@ -201,7 +201,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       cacheQuery.maxResults(1);
-      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
          assert iterator.hasNext();
          iterator.remove();
@@ -219,12 +219,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      List<Object> results = cacheQuery.list();
+      List<Person> results = cacheQuery.list();
       assert results.size() == 4 : cacheQuery.getResultSize();
 
       int previousAge = 0;
-      for (Object result : results) {
-         Person person = (Person) result;
+      for (Person person : results) {
          assert person.getAge() > previousAge;
          previousAge = person.getAge();
       }
@@ -247,17 +246,17 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
-      List<Object> results = cacheQuery.list();
+      List<Person> results = cacheQuery.list();
       assertEquals(1, results.size());
       assertEquals(4, cacheQuery.getResultSize());
-      Person result = (Person) results.get(0);
+      Person result = results.get(0);
       assertEquals(45, result.getAge());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
    public void testQueryAll() throws ParseException {
       populateCache();
-      CacheQuery clusteredQuery = Search.getSearchManager(cacheAMachine1)
+      CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
             .getClusteredQuery(new MatchAllDocsQuery(), Person.class);
 
       assertEquals(4, clusteredQuery.list().size());

@@ -52,11 +52,11 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    public void simpleIndexTest() throws ParseException {
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Object> l =  cq.list();
+      List<Person> l =  cq.list();
       assertEquals(1, l.size());
-      Person p = (Person) l.get(0);
+      Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
       assertEquals("A paragraph containing some text", p.getBlurb());
       assertEquals(75, p.getAge());

@@ -90,7 +90,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
          public Void call() throws Exception {
             cache.remove("1");   // cache will now be out of sync with the index
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(EAGER));
+            ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(EAGER));
             assertFalse(iterator.hasNext());
             try {
                iterator.next();
@@ -110,9 +110,9 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
          public Void call() throws Exception {
             cache.remove("1");   // cache will now be out of sync with the index
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            CacheQuery cacheQuery = searchManager.getQuery(query);
+            CacheQuery<?> cacheQuery = searchManager.getQuery(query);
             assertEquals(1, cacheQuery.getResultSize());
-            ResultIterator iterator = cacheQuery.iterator();
+            ResultIterator<?> iterator = cacheQuery.iterator();
             assertFalse(iterator.hasNext());
             try {
                iterator.next();
@@ -132,7 +132,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
          public Void call() throws Exception {
             cache.remove("1");   // cache will now be out of sync with the index
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
+            ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
             assertFalse(iterator.hasNext());
             try {
                iterator.next();
@@ -152,9 +152,9 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
          public Void call() throws Exception {
             cache.remove("1");   // cache will now be out of sync with the index
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar").iterator(new FetchOptions().fetchMode(LAZY));
+            ResultIterator<Object[]> iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar").iterator(new FetchOptions().fetchMode(LAZY));
             assertTrue(iterator.hasNext());
-            Object[] projection = (Object[]) iterator.next();
+            Object[] projection = iterator.next();
             assertNull(projection[0]);
             assertEquals("1", projection[1]);
             return null;

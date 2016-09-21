@@ -94,7 +94,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       for (Cache cache : cluster.iterateAllCaches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+         CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
          assertEquals(expectedIndexSize, query.list().size());
       }
    }

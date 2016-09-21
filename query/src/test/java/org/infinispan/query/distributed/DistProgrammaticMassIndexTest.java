@@ -56,7 +56,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       QueryParser queryParser = createQueryParser("make");
 
       Query luceneQuery = queryParser.parse(carMake);
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
 
       assertEquals(count, cacheQuery.getResultSize());
 

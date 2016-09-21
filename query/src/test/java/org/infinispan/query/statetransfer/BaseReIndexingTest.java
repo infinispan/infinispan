@@ -52,8 +52,8 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void executeSimpleQuery(Cache<String, Person> cache) throws ParseException {
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      List<?> found = cacheQuery.list();
       int elems = found.size();
       assertEquals(1, elems);
       Object val = found.get(0);

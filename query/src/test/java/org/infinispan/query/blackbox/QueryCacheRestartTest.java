@@ -94,8 +94,8 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       SearchManager searchManager = Search.getSearchManager(cache);
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
       Query luceneQuery = queryBuilder.keyword().onField("title").matching("infinispan").createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery(luceneQuery);
-      List<Object> list = cacheQuery.list();
+      CacheQuery<Book> cacheQuery = searchManager.getQuery(luceneQuery);
+      List<Book> list = cacheQuery.list();
       assertEquals(1, list.size());
    }
 

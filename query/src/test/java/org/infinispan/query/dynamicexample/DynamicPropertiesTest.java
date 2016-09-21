@@ -63,7 +63,7 @@ public class DynamicPropertiesTest extends SingleCacheManagerTest {
                .sentence("London")
             .createQuery();
 
-      List list = qf.getQuery(query).list();
+      List<?> list = qf.getQuery(query).list();
       assert list.size() == 1;
       DynamicPropertiesEntity result = (DynamicPropertiesEntity) list.get(0);
       assert result.getProperties().get("name").equals("JUDCon London 2011");

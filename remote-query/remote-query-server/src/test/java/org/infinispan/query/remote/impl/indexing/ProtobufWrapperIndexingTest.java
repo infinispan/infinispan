@@ -65,9 +65,9 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
             .matching("Adrian")
             .createQuery();
 
-      List<Object> list = sm.getQuery(luceneQuery).list();
+      List<ProtobufValueWrapper> list = sm.<ProtobufValueWrapper>getQuery(luceneQuery).list();
       assertEquals(1, list.size());
-      ProtobufValueWrapper pvw = (ProtobufValueWrapper) list.get(0);
+      ProtobufValueWrapper pvw = list.get(0);
       User unwrapped = (User) ProtobufUtil.fromWrappedByteArray(ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager), pvw.getBinary());
       assertEquals("Adrian", unwrapped.getName());
 

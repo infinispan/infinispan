@@ -106,9 +106,9 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     private List searchByName(String name, Cache c) {
         SearchManager sm = Search.getSearchManager(c);
-        CacheQuery q = sm.getQuery(SEntity.searchByName(name), SEntity.class);
+        CacheQuery<?> q = sm.getQuery(SEntity.searchByName(name), SEntity.class);
         int resultSize = q.getResultSize();
-        List l = q.list();
+        List<?> l = q.list();
         assert l.size() == resultSize;
         return q.list();
     }

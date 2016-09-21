@@ -63,8 +63,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").below(30).excludeLimit().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person1);
@@ -93,8 +93,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").below(30).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -125,8 +125,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").above(30).excludeLimit().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -162,8 +162,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").above(30).excludeLimit().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -201,8 +201,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").from(20).excludeLimit().to(30).excludeLimit().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person3);
@@ -229,8 +229,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").from(20).to(30).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -277,8 +277,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class)
             .get().range().onField("age").from(20).excludeLimit().to(30).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person2);
@@ -334,8 +334,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
             .range().onField("dateOfGraduation").from(formatDate("May 5, 2002")).excludeLimit().to(formatDate("June 30, 2012"))
             .createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person1);

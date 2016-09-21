@@ -68,7 +68,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
             final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
             final Query q = qb.keyword().onField("name").matching("Test")
                   .createQuery();
-            final CacheQuery cq = sm.getQuery(q, BondPVO.class);
+            final CacheQuery<?> cq = sm.getQuery(q, BondPVO.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -136,7 +136,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
                   .get();
             final Query q = qb.keyword().onField("name").matching("Test")
                   .createQuery();
-            final CacheQuery cq = sm.getQuery(q, BondPVO2.class);
+            final CacheQuery<?> cq = sm.getQuery(q, BondPVO2.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });

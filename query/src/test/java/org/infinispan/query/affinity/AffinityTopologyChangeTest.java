@@ -73,7 +73,7 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       CompletableFuture.allOf(f1, f2, f3, f4).join();
 
       eventually(() -> {
-         CacheQuery query = Search.getSearchManager(pickCache()).getQuery(new MatchAllDocsQuery()).projection("val");
+         CacheQuery<Object[]> query = Search.getSearchManager(pickCache()).getQuery(new MatchAllDocsQuery()).projection("val");
          Set<Integer> indexedDocsIds = query.list().stream().map(EXTRACT_PROJECTION).collect(Collectors.toSet());
          int resultSize = indexedDocsIds.size();
          rangeClosed(1, ENTRIES).boxed().filter(idx -> !indexedDocsIds.contains(idx))
@@ -160,7 +160,7 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       @Override
       void executeTask() {
          int id = globalCounter.get();
-         CacheQuery q = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Entity.class);
+         CacheQuery<?> q = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Entity.class);
          while (id <= ENTRIES) {
             int size = q.list().size();
             assertTrue(size > 0 && size <= ENTRIES);

@@ -297,12 +297,12 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       org.apache.lucene.search.Query query = searchManager
             .buildQueryBuilderForClass(AccountHS.class).get()
             .keyword().wildcard().onField("description").matching("*test*").createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery(query);
-      List<Object> list = cacheQuery.list();
+      CacheQuery<Account> cacheQuery = searchManager.getQuery(query);
+      List<Account> list = cacheQuery.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertAccount((Account) list.get(0), AccountHS.class);
+      assertAccount(list.get(0), AccountHS.class);
    }
 
    public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedField() throws Exception {

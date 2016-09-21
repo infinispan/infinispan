@@ -59,7 +59,7 @@ public abstract class AbstractQueryTest {
       return cm;
    }
 
-   protected CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) {
+   protected <E> CacheQuery<E> createCacheQuery(Cache m_cache, String fieldName, String searchString) {
       QueryBuilder queryBuilder = new QueryBuilder(STANDARD_ANALYZER);
       Query query = queryBuilder.createBooleanQuery(fieldName, searchString);
       SearchManager queryFactory = Search.getSearchManager(m_cache);
@@ -70,8 +70,8 @@ public abstract class AbstractQueryTest {
       ComponentRegistry cr = ((Cache) cache).getAdvancedCache().getComponentRegistry();
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchIntegrator);
-      HashSet<Class<?>> expectedTypes = new HashSet<Class<?>>(Arrays.asList(types));
-      HashSet<Class<?>> indexedTypes = new HashSet<Class<?>>(searchIntegrator.getIndexedTypes());
+      HashSet<Class<?>> expectedTypes = new HashSet<>(Arrays.asList(types));
+      HashSet<Class<?>> indexedTypes = new HashSet<>(searchIntegrator.getIndexedTypes());
       assertEquals(expectedTypes,  indexedTypes);
    }
 }

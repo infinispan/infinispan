@@ -183,7 +183,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    protected int countIndex() {
       SearchManager searchManager = Search.getSearchManager(cache1);
-      CacheQuery q = searchManager.getQuery(new MatchAllDocsQuery(), Transaction.class);
+      CacheQuery<?> q = searchManager.getQuery(new MatchAllDocsQuery(), Transaction.class);
       return q.getResultSize();
    }
 

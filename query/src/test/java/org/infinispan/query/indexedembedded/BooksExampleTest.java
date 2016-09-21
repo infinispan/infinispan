@@ -56,7 +56,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
                .sentence("in action")
             .createQuery();
 
-      List<Object> list = qf.getQuery(luceneQuery).list();
+      List<?> list = qf.getQuery(luceneQuery).list();
       assert list.size() == 2;
    }
 
