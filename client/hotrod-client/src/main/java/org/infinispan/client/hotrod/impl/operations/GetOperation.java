@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -19,8 +20,9 @@ import net.jcip.annotations.Immutable;
 public class GetOperation<V> extends AbstractKeyOperation<V> {
 
    public GetOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
+                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
+                       ClientIntelligence clientIntelligence) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence);
    }
 
    @Override

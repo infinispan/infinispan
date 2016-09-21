@@ -6,6 +6,8 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -79,7 +81,7 @@ public class RetryOnFailureUnitTest {
       private final boolean failOnTransport;
 
       public MockOperation(TransportFactory transportFactory, boolean failOnTransport) {
-         super(null, transportFactory, null, null, 0);
+         super(null, transportFactory, null, null, 0, ClientIntelligence.getDefault());
          this.failOnTransport = failOnTransport;
          transportInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);

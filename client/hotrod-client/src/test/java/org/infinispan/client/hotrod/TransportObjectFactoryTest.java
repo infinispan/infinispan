@@ -8,6 +8,8 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -24,7 +26,8 @@ public class TransportObjectFactoryTest {
 
    public void testValidate() {
       Codec codec = mock(Codec.class);
-      TransportObjectFactory objectFactory = new TransportObjectFactory(codec, null, new AtomicInteger());
+      Configuration configuration = new ConfigurationBuilder().build();
+      TransportObjectFactory objectFactory = new TransportObjectFactory(codec, null, new AtomicInteger(), configuration);
       doThrow(new TransportException("induced!", null))
             .when(codec).writeHeader(any(Transport.class), any(HeaderParams.class));
 

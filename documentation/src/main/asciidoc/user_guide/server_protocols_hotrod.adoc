@@ -48,6 +48,7 @@ infinispan.client.hotrod.request_balancing_strategy = org.infinispan.client.hotr
 infinispan.client.hotrod.key_size_estimate = 64
 infinispan.client.hotrod.value_size_estimate = 512
 infinispan.client.hotrod.force_return_values = false
+infinispan.client.hotrod.client_intelligence = HASH_DISTRIBUTION_AWARE
 
 ## below is connection pooling config
 maxActive=-1

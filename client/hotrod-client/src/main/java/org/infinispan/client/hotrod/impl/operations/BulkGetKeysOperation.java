@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -19,8 +20,9 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    private final int scope;
 
-   public BulkGetKeysOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, int flags, int scope) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+   public BulkGetKeysOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName,
+                               AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence, int scope) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
       this.scope = scope;
    }
 

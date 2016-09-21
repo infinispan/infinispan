@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -51,6 +52,57 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
                   break;
                }
             }
+            assertEquals(2, tcpTransportFactory.getServers().size());
+         }
+      });
+   }
+
+   public void testBasicIntelligence() {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(server(0).getPort());
+      clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new InternalRemoteCacheManager(clientBuilder.build())) {
+         @Override
+         public void call() {
+            rcm.getCache();
+            TcpTransportFactory tcpTransportFactory =
+                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
+            assertEquals(1, tcpTransportFactory.getServers().size());
+         }
+      });
+   }
+
+   public void testTopologyAwareIntelligence() {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(server(0).getPort());
+      clientBuilder.clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE);
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new InternalRemoteCacheManager(clientBuilder.build())) {
+         @Override
+         public void call() {
+            rcm.getCache();
+            TcpTransportFactory tcpTransportFactory =
+                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
+            assertEquals(2, tcpTransportFactory.getServers().size());
+         }
+      });
+   }
+
+   public void testHashAwareIntelligence() {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(server(0).getPort());
+      clientBuilder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
+      withRemoteCacheManager(new RemoteCacheManagerCallable(
+            new InternalRemoteCacheManager(clientBuilder.build())) {
+         @Override
+         public void call() {
+            rcm.getCache();
+            TcpTransportFactory tcpTransportFactory =
+                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
             assertEquals(2, tcpTransportFactory.getServers().size());
          }
       });

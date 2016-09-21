@@ -62,6 +62,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence) {
+      return builder.clientIntelligence(clientIntelligence);
+   }
+
+   @Override
    public ConnectionPoolConfigurationBuilder connectionPool() {
       return builder.connectionPool();
    }

@@ -22,6 +22,7 @@ public class ConfigurationProperties {
    public static final String SERVER_LIST = "infinispan.client.hotrod.server_list";
    public static final String MARSHALLER = "infinispan.client.hotrod.marshaller";
    public static final String ASYNC_EXECUTOR_FACTORY = "infinispan.client.hotrod.async_executor_factory";
+   public static final String CLIENT_INTELLIGENCE = "infinispan.client.hotrod.client_intelligence";
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = "infinispan.client.hotrod.default_executor_factory.pool_size";
    public static final String TCP_NO_DELAY = "infinispan.client.hotrod.tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = "infinispan.client.hotrod.tcp_keep_alive";

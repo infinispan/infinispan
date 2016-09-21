@@ -47,6 +47,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass = RoundRobinBalancingStrategy.class;
    private FailoverRequestBalancingStrategy balancingStrategy;
+   private ClientIntelligence clientIntelligence = ClientIntelligence.getDefault();
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
@@ -55,7 +56,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    };
    private boolean forceReturnValues;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
-   private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
+   private Class<? extends Marshaller> marshallerClass;
    private Marshaller marshaller;
    private ProtocolVersion protocolVersion = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
    private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
@@ -144,6 +145,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    ClassLoader classLoader() {
       return classLoader != null ? classLoader.get() : null;
+   }
+
+   public ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence) {
+      this.clientIntelligence = clientIntelligence;
+      return this;
    }
 
    @Override
@@ -283,6 +289,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       this.asyncExecutorFactory().withExecutorProperties(typed);
       this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass.getName()));
+      this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault()));
       this.connectionPool.withPoolProperties(typed);
       this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout));
       if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
@@ -348,15 +355,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
          .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
-      if (marshaller == null) {
-         return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
-      } else {
-         return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
+      if (marshaller == null && marshallerClass == null) {
+         marshallerClass = GenericJBossMarshaller.class;
       }
+
+      return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
+            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
    }
 
    @Override

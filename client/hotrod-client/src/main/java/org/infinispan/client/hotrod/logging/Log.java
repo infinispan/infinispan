@@ -249,4 +249,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
    void warnAboutUberJarDuplicates();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
+   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
 }
