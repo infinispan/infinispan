@@ -72,7 +72,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
 
    public ConfigurationBuilder() {
-      this.classLoader = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
+      this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
@@ -139,7 +139,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder classLoader(ClassLoader cl) {
-      this.classLoader = new WeakReference<ClassLoader>(cl);
+      this.classLoader = new WeakReference<>(cl);
       return this;
    }
 
@@ -147,6 +147,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return classLoader != null ? classLoader.get() : null;
    }
 
+   @Override
    public ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence) {
       this.clientIntelligence = clientIntelligence;
       return this;
