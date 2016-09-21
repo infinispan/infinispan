@@ -48,7 +48,7 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
       QueryParser queryParser = createQueryParser("bar");
 
       org.apache.lucene.search.Query luceneQuery = queryParser.parse("fakebar");
-      CacheQuery query = searchManager.getClusteredQuery(luceneQuery, Foo.class);
+      CacheQuery<?> query = searchManager.getClusteredQuery(luceneQuery, Foo.class);
       query.timeout(1, TimeUnit.NANOSECONDS);
    }
 

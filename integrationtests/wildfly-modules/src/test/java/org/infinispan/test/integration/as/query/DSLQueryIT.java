@@ -54,7 +54,7 @@ public class DSLQueryIT {
    @Test
    public void testDSLQuery() throws Exception {
       service.store("00123", new Book("Functional Programming in Scala", "manning", new Date()), true);
-      List<Object> results = service.findByPublisher("manning");
+      List<Book> results = service.findByPublisher("manning");
       Assert.assertEquals(1, results.size());
    }
 }

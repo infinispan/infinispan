@@ -43,14 +43,15 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "query.blackbox.ClusteredCacheTest")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
-   Cache cache1, cache2;
+   Cache cache1;
+   Cache cache2;
    Person person1;
    Person person2;
    Person person3;
    Person person4;
    QueryParser queryParser;
    Query luceneQuery;
-   CacheQuery cacheQuery;
+   CacheQuery<Person> cacheQuery;
    final String key1 = "Navin";
    final String key2 = "BigGoat";
    final String key3 = "MiniGoat";
@@ -118,7 +119,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       prepareTestData();
       cacheQuery = createCacheQuery(cache2, "blurb", "playing");
 
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
 
       assert found.size() == 1;
 
@@ -129,7 +130,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             log.warn("Person p1 is null in sc2 and cannot actually see the data of person1 in sc1");
          } else {
             log.trace("p1 name is  " + p1.getName());
-
          }
       }
 
@@ -151,7 +151,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       luceneQuery = queryParser.parse("playing");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
 
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
 
       assert found.size() == 1 : "Expected list of size 1, was of size " + found.size();
       assert found.get(0).equals(person1);
@@ -176,7 +176,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       luceneQuery = queryParser.parse("eats");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
 
       AssertJUnit.assertEquals(2, found.size());
       assert found.contains(person2);
@@ -205,7 +205,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("eats");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
 
       assert found.size() == 2;
       assert found.contains(person2);
@@ -225,7 +225,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("playing");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
 
       AssertJUnit.assertEquals(1, found.size());
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
@@ -246,11 +246,11 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       allWrites.put(key3, person3);
 
       cache2.putAll(allWrites);
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(3, found.size());
 
       cache2.putAll(allWrites);
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(3, found.size());
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
@@ -277,14 +277,14 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Future futureTask = cache2.putAllAsync(allWrites);
       futureTask.get();
       assert futureTask.isDone();
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert found.contains(person4);
 
       futureTask = cache1.putAllAsync(allWrites);
       futureTask.get();
       assert futureTask.isDone();
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert found.contains(person4);
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
@@ -305,7 +305,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache2.putForExternalRead("newGoat", person4);
       eventually(() -> cache2.get("newGoat") != null);
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
       assert found.contains(person4);
@@ -315,7 +315,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person5.setBlurb("Plays with grass.");
       cache2.putForExternalRead("newGoat", person5);
 
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
       assert !found.contains(person5);
@@ -338,7 +338,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache2.putIfAbsent("newGoat", person4);
 
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
       assert found.contains(person4);
@@ -348,7 +348,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person5.setBlurb("Plays with grass.");
       cache2.putIfAbsent("newGoat", person5);
 
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
       assert !found.contains(person5);
@@ -372,7 +372,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Future futureTask = cache2.putIfAbsentAsync("newGoat", person4);
       futureTask.get();
       assert futureTask.isDone();
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert found.contains(person4);
 
@@ -382,7 +382,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       futureTask = cache2.putIfAbsentAsync("newGoat", person5);
       futureTask.get();
       assert futureTask.isDone();
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert !found.contains(person5);
       assert found.contains(person4);
@@ -405,7 +405,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Future f = cache2.putAsync("newGoat", person4);
       f.get();
       assert f.isDone();
-      List found = searchManager.getQuery(allQuery, Person.class).list();
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert found.contains(person4);
 
@@ -415,7 +415,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       f = cache2.putAsync("newGoat", person5);
       f.get();
       assert f.isDone();
-      found = searchManager.getQuery(allQuery, Person.class).list();
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
       assert !found.contains(person4);
       assert found.contains(person5);
@@ -430,7 +430,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
               .add(queryParser.parse("eats"), Occur.SHOULD)
               .add(queryParser.parse("playing"), Occur.SHOULD)
               .build();
-      CacheQuery cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
       AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
 
       cache2.clear();
@@ -447,14 +447,14 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       Query luceneQuery = queryParser.parse("eats");
 
-      CacheQuery query = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      CacheQuery<Person> query = Search.getSearchManager(cache1).getQuery(luceneQuery);
       FullTextFilter filter = query.enableFullTextFilter("personFilter");
       filter.setParameter("blurbText", "cheese");
 
       AssertJUnit.assertEquals(1, query.getResultSize());
-      List result = query.list();
+      List<Person> result = query.list();
 
-      Person person = (Person) result.get(0);
+      Person person = result.get(0);
       AssertJUnit.assertEquals("MiniGoat", person.getName());
       AssertJUnit.assertEquals("Eats cheese", person.getBlurb());
 
@@ -476,7 +476,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       Query luceneQuery = queryParser.parse("eats");
 
-      CacheQuery query = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      CacheQuery<Person> query = Search.getSearchManager(cache1).getQuery(luceneQuery);
       FullTextFilter filter = query.enableFullTextFilter("personFilter");
       filter.setParameter("blurbText", "grass");
 
@@ -486,9 +486,9 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       ageFilter.setParameter("age", 70);
 
       AssertJUnit.assertEquals(1, query.getResultSize());
-      List result = query.list();
+      List<Person> result = query.list();
 
-      Person person = (Person) result.get(0);
+      Person person = result.get(0);
       AssertJUnit.assertEquals("ExtraGoat", person.getName());
       AssertJUnit.assertEquals(70, person.getAge());
 
@@ -523,10 +523,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       Query luceneQuery = queryParser.parse("Eats");
 
-      CacheQuery cacheQuery = manager.getQuery(luceneQuery);
+      CacheQuery<Person> cacheQuery = manager.getQuery(luceneQuery);
 
       int counter = 0;
-      try (ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+      try (ResultIterator<Person> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
          while (found.hasNext()) {
             found.next();
             counter++;

@@ -150,7 +150,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private int countIndexedDocuments(Class<?> clazz) {
-      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
+      CacheQuery<?> query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
       return query.list().size();
    }
 

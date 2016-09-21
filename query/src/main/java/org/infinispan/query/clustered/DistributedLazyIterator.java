@@ -17,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class DistributedLazyIterator extends DistributedIterator {
+public class DistributedLazyIterator<E> extends DistributedIterator<E> {
 
    private final UUID queryId;
    private final ExecutorService asyncExecutor;
@@ -45,14 +45,14 @@ public class DistributedLazyIterator extends DistributedIterator {
    }
 
    @Override
-   public Object fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
+   protected E fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
       Object value = null;
       try {
          value = invoker.getValue(scoreIndex, topDoc.getNodeAddress(), queryId);
       } catch (Exception e) {
          log.error("Error while trying to remoting fetch next value: " + e.getMessage());
       }
-      return value;
+      return (E) value;
    }
 
 }

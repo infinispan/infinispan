@@ -174,10 +174,10 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       final int loops = 100000;
       final long startTs = System.nanoTime();
       for (int i = 0; i < loops; i++) {
-         CacheQuery cacheQuery = searchManager.getQuery(query);
-         List<Object> list = cacheQuery.list();
+         CacheQuery<User> cacheQuery = searchManager.getQuery(query);
+         List<User> list = cacheQuery.list();
          assertEquals(1, list.size());
-         assertEquals("John1", ((User) list.get(0)).getName());
+         assertEquals("John1", list.get(0).getName());
       }
       final long duration = (System.nanoTime() - startTs) / loops;
 

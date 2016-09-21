@@ -113,7 +113,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       for (Cache cache : caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, entity);
+         CacheQuery<?> cacheQuery = searchManager.getQuery(luceneQuery, entity);
          assertEquals(expectedCount, cacheQuery.getResultSize());
       }
    }

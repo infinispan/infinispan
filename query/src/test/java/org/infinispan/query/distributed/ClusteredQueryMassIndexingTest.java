@@ -21,7 +21,7 @@ public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest 
    }
 
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
-      CacheQuery cacheQuery = Search.getSearchManager(cache)
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache)
             .getClusteredQuery(new TermQuery(new Term("make", carMake)));
 
       assertEquals(expectedCount, cacheQuery.getResultSize());

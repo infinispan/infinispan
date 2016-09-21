@@ -31,17 +31,17 @@ public class EagerIteratorTest {
    List<String> keys;
    List<EntityInfo> entityInfos;
    Map<String, String> dummyResults;
-   ResultIterator iterator;
+   ResultIterator<Object> iterator;
    AdvancedCache<String, String> cache;
    private KeyTransformationHandler keyTransformationHandler;
 
    @BeforeMethod
    public void setUp() throws Exception {
 
-      keys = new ArrayList<String>();
-      dummyResults = new HashMap<String, String>();
+      keys = new ArrayList<>();
+      dummyResults = new HashMap<>();
 
-      entityInfos = new ArrayList<EntityInfo>();
+      entityInfos = new ArrayList<>();
       keyTransformationHandler = new KeyTransformationHandler();
 
       for (int i = 1; i <= 10; i++) {
@@ -63,7 +63,7 @@ public class EagerIteratorTest {
 
       });
 
-      iterator = new EagerIterator(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());
+      iterator = new EagerIterator<>(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());
    }
 
    protected int getFetchSize() {

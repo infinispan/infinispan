@@ -60,13 +60,13 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       cache.put(223456, new Bond(new Date(System.currentTimeMillis()), 550L));
       assertEfficientIndexingUsed(searchManager.unwrap(SearchIntegrator.class), Bond.class);
 
-      CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class, Debenture.class);
+      CacheQuery<?> query = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class, Debenture.class);
       assertEquals(query.list().size(), 3);
 
-      CacheQuery queryBond = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class);
+      CacheQuery<?> queryBond = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class);
       assertEquals(queryBond.getResultSize(), 2);
 
-      CacheQuery queryDeb = searchManager.getQuery(new MatchAllDocsQuery(), Debenture.class);
+      CacheQuery<?> queryDeb = searchManager.getQuery(new MatchAllDocsQuery(), Debenture.class);
       assertEquals(queryDeb.getResultSize(), 1);
    }
 

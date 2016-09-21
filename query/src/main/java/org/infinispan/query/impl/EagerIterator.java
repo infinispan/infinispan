@@ -16,7 +16,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Marko Luksa
  */
 @NotThreadSafe
-public class EagerIterator extends AbstractIterator {
+public class EagerIterator<E> extends AbstractIterator<E> {
 
    private List<EntityInfo> entityInfos;
 

@@ -69,7 +69,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       SearchManager sm = Search.getSearchManager(cache3);
       QueryBuilder qb = sm.buildQueryBuilderForClass(VeryLongIndexNamedClass.class).get();
       Query q = qb.keyword().wildcard().onField("name").matching("value*").createQuery();
-      CacheQuery cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
+      CacheQuery<?> cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
 
       assertEquals(100, cq.getResultSize());
 

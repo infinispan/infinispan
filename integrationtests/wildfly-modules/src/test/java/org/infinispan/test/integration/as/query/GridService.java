@@ -19,7 +19,7 @@ import org.infinispan.query.SearchManager;
 public class GridService {
 
    @Inject
-   private Cache<String,Book> bookshelf;
+   private Cache<String, Book> bookshelf;
 
    public void store(String isbn, Book book, boolean index) {
       if (index) {
@@ -34,7 +34,7 @@ public class GridService {
       return bookshelf.get(isbn);
    }
 
-   public List<Object> findFullText(String phrase) {
+   public List<Book> findFullText(String phrase) {
       SearchManager sm = Search.getSearchManager(bookshelf);
       QueryBuilder queryBuilder = sm.buildQueryBuilderForClass(Book.class).get();
       Query query = queryBuilder
@@ -42,11 +42,11 @@ public class GridService {
                .onField("title")
                .sentence(phrase)
                .createQuery();
-      CacheQuery cacheQuery = sm.getQuery(query);
+      CacheQuery<Book> cacheQuery = sm.getQuery(query);
       return cacheQuery.list();
    }
 
-   public List<Object> findByPublisher(String publisher) {
+   public List<Book> findByPublisher(String publisher) {
       org.infinispan.query.dsl.Query query = Search.getQueryFactory(bookshelf)
             .from(Book.class)
             .having("publisher")

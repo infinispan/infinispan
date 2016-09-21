@@ -58,9 +58,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testSimple() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
-
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+      List<?> found = cacheQuery.list();
 
       assertPeopleInList(found, person1);
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -69,8 +68,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testSimpleForNonField() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "nonSearchableField", "test1");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "nonSearchableField", "test1");
+      List<?> found = cacheQuery.list();
 
       int elems = found.size();
       assertEquals("Expected 0 but was " + elems, 0, elems);
@@ -80,9 +79,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testEagerIterator() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing" );
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
          assertTrue(found.hasNext());
@@ -97,9 +96,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test(expected = UnsupportedOperationException.class)
    public void testEagerIteratorRemove() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing" );
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
          assertTrue(found.hasNext());
@@ -112,9 +111,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test(expected = NoSuchElementException.class)
    public void testEagerIteratorExCase() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing" );
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing" );
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
          assertTrue(found.hasNext());
@@ -129,9 +128,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testModified() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
-      List<Object> found = cacheQuery.list();
+      List<?> found = cacheQuery.list();
       assertPeopleInList(found, person1);
 
       person1.setBlurb("Likes pizza");
@@ -149,8 +148,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testAdded() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+      List<?> found = cacheQuery.list();
 
       assertPeopleInList(found, person2, person3);
 
@@ -171,8 +170,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testRemoved() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+      List<?> found = cacheQuery.list();
 
       assertPeopleInList(found, person2, person3);
 
@@ -189,8 +188,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testUpdated() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+      List<?> found = cacheQuery.list();
 
       assertPeopleInList(found, person2, person3);
 
@@ -210,8 +209,8 @@ public class LocalCacheTest extends AbstractQueryTest {
       Sort sort = new Sort( new SortField("age", SortField.Type.STRING));
 
       {
-         CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-         List<Object> found = cacheQuery.list();
+         CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+         List<?> found = cacheQuery.list();
 
          assertPeopleInList(found, person2, person3);
 
@@ -229,8 +228,8 @@ public class LocalCacheTest extends AbstractQueryTest {
       cache.put(key2, person2);
 
       {
-         CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-         List<Object> found = cacheQuery.list();
+         CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+         List<?> found = cacheQuery.list();
 
          assertPeopleInList(found, person2, person3);
 
@@ -250,8 +249,8 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testSetFilter() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "name", "Goat");
+      List<?> found = cacheQuery.list();
 
       assertPeopleInList(found, person2, person3);
 
@@ -268,9 +267,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testLazyIterator() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
       try {
          assertTrue(found.hasNext());
@@ -285,9 +284,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test(expected = IllegalArgumentException.class)
    public void testUnknownFetchModeIterator() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions(){
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions(){
          public FetchOptions fetchMode(FetchMode fetchMode) {
             return null;
          }
@@ -305,9 +304,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testIteratorWithDefaultOptions() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
-      ResultIterator found = cacheQuery.iterator();
+      ResultIterator<?> found = cacheQuery.iterator();
 
       try {
          assertTrue(found.hasNext());
@@ -322,7 +321,7 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testExplain() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "Eats");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "Eats");
 
       int matchCounter = 0;
       int i = 0;
@@ -354,11 +353,11 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testFullTextFilterOnOff() {
       loadTestingData();
 
-      CacheQuery query = createCacheQuery(cache, "blurb", "Eats");
+      CacheQuery<?> query = createCacheQuery(cache, "blurb", "Eats");
       FullTextFilter filter = query.enableFullTextFilter("personFilter");
       filter.setParameter("blurbText", "cheese");
 
-      List found = query.list();
+      List<?> found = query.list();
       assertPeopleInList(found, person3);
 
       //Disabling the fullTextFilter.
@@ -373,11 +372,11 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testIteratorRemove() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "Eats");
-      ResultIterator iterator = cacheQuery.iterator();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "Eats");
+      ResultIterator<?> iterator = cacheQuery.iterator();
       try {
          if (iterator.hasNext()) {
-            Object next = iterator.next();
+            iterator.next();
             iterator.remove();
          }
       } finally {
@@ -391,23 +390,23 @@ public class LocalCacheTest extends AbstractQueryTest {
       loadTestingData();
       Query luceneQuery = new BooleanQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(null).getQuery(luceneQuery).firstResult(1);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(null).getQuery(luceneQuery).firstResult(1);
    }
 
    @Test(expected = IllegalArgumentException.class)
    public void testLazyIteratorWithInvalidFetchSize() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "Eats").firstResult(1);
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "Eats").firstResult(1);
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(0));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(0));
    }
 
    @Test(expected = NoSuchElementException.class)
    public void testLazyIteratorWithNoElementsFound() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "fish").firstResult(1);
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "fish").firstResult(1);
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
       try {
          found.next();
@@ -419,9 +418,9 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test(expected = IllegalArgumentException.class)
    public void testIteratorWithNullFetchMode() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "Eats").firstResult(1);
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "Eats").firstResult(1);
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(null));
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(null));
 
       try {
          found.next();
@@ -433,7 +432,7 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testGetResultSize() {
       loadTestingData();
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
       assertEquals(1, cacheQuery.getResultSize());
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -443,23 +442,23 @@ public class LocalCacheTest extends AbstractQueryTest {
    public void testMaxResults() {
       loadTestingData();
 
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "eats").maxResults(1);
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "eats").maxResults(1);
 
       assertEquals(2, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
       assertEquals(1, cacheQuery.list().size());
-      ResultIterator eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+      ResultIterator<?> eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
          assertEquals(1, countElements(eagerIterator));
       } finally {
          eagerIterator.close();
       }
-      ResultIterator lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      ResultIterator<?> lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       try {
          assertEquals(1, countElements(lazyIterator));
       } finally {
          lazyIterator.close();
       }
-      ResultIterator defaultIterator = cacheQuery.iterator();
+      ResultIterator<?> defaultIterator = cacheQuery.iterator();
       try {
          assertEquals(1, countElements(defaultIterator));
       } finally {
@@ -468,7 +467,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   private int countElements(ResultIterator iterator) {
+   private int countElements(ResultIterator<?> iterator) {
       int count = 0;
       while (iterator.hasNext()) {
          iterator.next();
@@ -490,7 +489,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       BooleanQuery luceneQuery = new BooleanQuery();
       luceneQuery.add(new TermQuery(goat), Occur.SHOULD);
       luceneQuery.add(new TermQuery(navin), Occur.SHOULD);
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       // We know that we've got all 3 hits.
       assertEquals("Expected 3, got " + cacheQuery.getResultSize(), 3, cacheQuery.getResultSize());
@@ -538,13 +537,13 @@ public class LocalCacheTest extends AbstractQueryTest {
       person3.setNonSearchableField("test3");
    }
 
-   private void assertPeopleInSortedList(List<Object> actualList, Object... expected) {
-      List<Object> expectedList = new ArrayList<Object>(Arrays.asList(expected));
+   private void assertPeopleInSortedList(List<?> actualList, Object... expected) {
+      List<?> expectedList = new ArrayList<>(Arrays.asList(expected));
       assertEquals("Result doesn't match expected result.", expectedList, actualList);
    }
 
-   private void assertPeopleInList(List<Object> actualList, Object... expected) {
-      List<Object> expectedList = new ArrayList<Object>(Arrays.asList(expected));
+   private void assertPeopleInList(List<?> actualList, Object... expected) {
+      List<?> expectedList = new ArrayList<>(Arrays.asList(expected));
       assertEquals("Size of the result doesn't match.", expected.length, actualList.size());
 
       //collections are not disjoint = they are the same

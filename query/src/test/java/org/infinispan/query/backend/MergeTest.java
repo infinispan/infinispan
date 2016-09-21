@@ -107,7 +107,7 @@ public class MergeTest extends MultipleCacheManagersTest {
       assertAllGood(cache1, cache2);
       System.out.println("Load took: " + (System.currentTimeMillis() - start) / 1000 + " s");
       SearchManager searchManager = Search.getSearchManager(cache1);
-      final CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      final CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
       eventually(new Condition() {
          @Override

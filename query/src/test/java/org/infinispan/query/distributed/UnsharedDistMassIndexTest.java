@@ -27,7 +27,7 @@ public class UnsharedDistMassIndexTest extends DistributedMassIndexingTest {
    @Override
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery cacheQuery = searchManager.getClusteredQuery(new TermQuery(new Term("make", carMake)));
+      CacheQuery<?> cacheQuery = searchManager.getClusteredQuery(new TermQuery(new Term("make", carMake)));
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

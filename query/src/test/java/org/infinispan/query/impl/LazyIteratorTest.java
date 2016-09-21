@@ -37,7 +37,7 @@ public class LazyIteratorTest extends EagerIteratorTest {
          }
       });
 
-      iterator = new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      iterator = new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    @AfterMethod(alwaysRun = false)

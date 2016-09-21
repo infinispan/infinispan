@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 public class ManualIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 4;
-   protected List<Cache<String, Car>> caches = new ArrayList<Cache<String, Car>>(NUM_NODES);
+   protected List<Cache<String, Car>> caches = new ArrayList<>(NUM_NODES);
 
    protected static final String[] neededCacheNames = {
          BasicCacheContainer.DEFAULT_CACHE_NAME,
@@ -60,7 +60,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
       for (Cache cache : caches) {
          SearchManager sm = Search.getSearchManager(cache);
          Query query = sm.buildQueryBuilderForClass(Car.class).get().keyword().onField("make").matching(carMake).createQuery();
-         CacheQuery cacheQuery = sm.getQuery(query, Car.class);
+         CacheQuery<Car> cacheQuery = sm.getQuery(query, Car.class);
          assertEquals("Expected count not met on cache " + cache, expectedCount, cacheQuery.getResultSize());
          assertEquals("Expected count not met on cache " + cache, expectedCount, cacheQuery.list().size());
       }

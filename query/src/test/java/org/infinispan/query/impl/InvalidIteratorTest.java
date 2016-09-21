@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "query.impl.InvalidIteratorTest")
 public class InvalidIteratorTest {
-   private List<EntityInfo> entityInfos = new ArrayList<EntityInfo>();
+   private List<EntityInfo> entityInfos = new ArrayList<>();
    private AdvancedCache<String, String> cache;
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -38,13 +38,13 @@ public class InvalidIteratorTest {
       });
 
       cache = mock(AdvancedCache.class);
-      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEagerIteratorInitWithInvalidFetchSize() throws IOException {
       cache = mock(AdvancedCache.class);
-      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new EagerIterator<>(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    private int getFetchSize() {

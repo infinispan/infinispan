@@ -51,7 +51,7 @@ public class AffinityTest extends BaseAffinityTest {
 
       assertEquals(pickCache().size(), numThreads * ENTRIES);
       cacheList.forEach(c -> {
-         CacheQuery q = Search.getSearchManager(c).getQuery(new MatchAllDocsQuery(), Entity.class);
+         CacheQuery<Entity> q = Search.getSearchManager(c).getQuery(new MatchAllDocsQuery(), Entity.class);
          eventuallyEquals(numThreads * ENTRIES, () -> q.list().size());
       });
 
@@ -65,7 +65,7 @@ public class AffinityTest extends BaseAffinityTest {
       populate(ENTRIES / 2 + 1, ENTRIES);
       checkAffinity();
 
-      CacheQuery q = Search.getSearchManager(pickCache()).getQuery(new MatchAllDocsQuery(), Entity.class);
+      CacheQuery<Entity> q = Search.getSearchManager(pickCache()).getQuery(new MatchAllDocsQuery(), Entity.class);
       assertEquals(ENTRIES, pickCache().size());
       assertEquals(ENTRIES, q.list().size());
 

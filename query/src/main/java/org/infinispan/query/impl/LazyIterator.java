@@ -17,7 +17,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Ales Justin
  */
 @NotThreadSafe
-public class LazyIterator extends AbstractIterator {
+public class LazyIterator<E> extends AbstractIterator<E> {
 
    private final DocumentExtractor extractor;
 

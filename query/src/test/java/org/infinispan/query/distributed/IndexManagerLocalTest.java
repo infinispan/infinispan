@@ -69,7 +69,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
 
    protected void assertIndexSize(int expectedIndexSize) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       assertEquals(expectedIndexSize, query.list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }

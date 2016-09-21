@@ -22,7 +22,7 @@ public interface SearchManager {
     * @param classes - optionally only return results of type that matches this list of acceptable types
     * @return the CacheQuery object which can be used to iterate through results
     */
-   CacheQuery getQuery(Query luceneQuery, Class<?>... classes);
+   <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
    /**
     * Experimental.
@@ -39,7 +39,7 @@ public interface SearchManager {
     * @param classes
     * @return
     */
-   CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes);
+   <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes);
 
    /**
     * The MassIndexer can be used to rebuild the Lucene indexes from

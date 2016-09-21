@@ -82,8 +82,8 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
    protected void checkIndex(int expectedNumber, Class<?> entity, int otherExpected, Class<?> otherEntity) {
       for (Cache<?, ?> c : caches) {
          SearchManager searchManager = Search.getSearchManager(c);
-         CacheQuery query1 = searchManager.getQuery(new MatchAllDocsQuery(), entity);
-         CacheQuery query2 = searchManager.getQuery(new MatchAllDocsQuery(), otherEntity);
+         CacheQuery<?> query1 = searchManager.getQuery(new MatchAllDocsQuery(), entity);
+         CacheQuery<?> query2 = searchManager.getQuery(new MatchAllDocsQuery(), otherEntity);
          assertEquals(expectedNumber, query1.getResultSize());
          assertEquals(otherExpected, query2.getResultSize());
       }

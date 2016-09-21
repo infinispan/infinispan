@@ -56,8 +56,8 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
          .onField("city_location")
          .within(50, Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 

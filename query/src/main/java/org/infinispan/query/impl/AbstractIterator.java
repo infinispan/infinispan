@@ -15,7 +15,7 @@ import org.infinispan.query.ResultIterator;
  * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
-public abstract class AbstractIterator implements ResultIterator {
+public abstract class AbstractIterator<E> implements ResultIterator<E> {
 
    private final Object[] buffer;
 
@@ -62,7 +62,7 @@ public abstract class AbstractIterator implements ResultIterator {
    }
 
    @Override
-   public Object next() {
+   public E next() {
       if (!hasNext()) throw new NoSuchElementException("Out of boundaries. There is no next");
 
       if (mustInitializeBuffer()) {
@@ -71,7 +71,7 @@ public abstract class AbstractIterator implements ResultIterator {
 
       int indexToReturn = index - bufferIndex;
       index++;
-      return buffer[indexToReturn];
+      return (E) buffer[indexToReturn];
    }
 
    private boolean mustInitializeBuffer() {

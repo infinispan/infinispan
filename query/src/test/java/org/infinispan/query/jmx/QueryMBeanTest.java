@@ -111,8 +111,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
          QueryParser queryParser = createQueryParser("blurb");
          Query luceneQuery = queryParser.parse("value");
-         CacheQuery cacheQuery = searchManager.getQuery(luceneQuery);
-         List<Object> found = cacheQuery.list(); //Executing first query
+         CacheQuery<?> cacheQuery = searchManager.getQuery(luceneQuery);
+         List<?> found = cacheQuery.list(); //Executing first query
 
          assertEquals(1L, server.getAttribute(name, "SearchQueryExecutionCount"));
 

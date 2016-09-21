@@ -58,7 +58,7 @@ public class SimpleFacetingTest extends AbstractQueryTest {
 
       Query luceneQuery = queryBuilder.all().createQuery();
 
-      CacheQuery query = qf.getQuery(luceneQuery);
+      CacheQuery<?> query = qf.getQuery(luceneQuery);
 
       query.getFacetManager().enableFaceting( request );
 

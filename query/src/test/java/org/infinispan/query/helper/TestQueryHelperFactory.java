@@ -46,12 +46,11 @@ public class TestQueryHelperFactory {
       return Version.LATEST; //Change as needed
    }
 
-   public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
+   public static <E> CacheQuery<E> createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
       QueryParser qp = createQueryParser(fieldName);
       Query parsedQuery = qp.parse(searchString);
       SearchManager queryFactory = Search.getSearchManager(m_cache);
-      CacheQuery cacheQuery = queryFactory.getQuery(parsedQuery);
-      return cacheQuery;
+      return queryFactory.getQuery(parsedQuery);
    }
 
    public static SearchIntegrator extractSearchFactory(Cache cache) {
