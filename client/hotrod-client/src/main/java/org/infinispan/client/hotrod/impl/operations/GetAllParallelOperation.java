@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -21,8 +22,8 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
    private final Set<byte[]> keys;
 
    protected GetAllParallelOperation(Codec codec, TransportFactory transportFactory, Set<byte[]> keys, byte[]
-         cacheName, AtomicInteger topologyId, int flags, ExecutorService executorService) {
-      super(codec, transportFactory, cacheName, topologyId, flags, executorService);
+         cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence, ExecutorService executorService) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence, executorService);
       this.keys = keys;
    }
 
@@ -42,7 +43,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
 
       return splittedKeys.values().stream().map(
             keysSubset -> new GetAllOperation<K, V>(codec, transportFactory, keysSubset, cacheName, topologyId,
-                  flags)).collect(Collectors.toList());
+                  flags, clientIntelligence)).collect(Collectors.toList());
    }
 
    @Override

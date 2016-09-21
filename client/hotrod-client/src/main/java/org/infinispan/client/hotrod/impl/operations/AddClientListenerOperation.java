@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -43,10 +44,10 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    public final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, TransportFactory transportFactory,
-         String cacheName, AtomicInteger topologyId, int flags,
+         String cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence,
          ClientListenerNotifier listenerNotifier, Object listener,
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags);
+      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, clientIntelligence);
       this.listenerId = generateListenerId();
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;

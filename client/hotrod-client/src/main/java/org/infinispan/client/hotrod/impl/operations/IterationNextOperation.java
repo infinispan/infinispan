@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -29,9 +30,10 @@ public class IterationNextOperation<E> extends HotRodOperation {
    private final Transport transport;
    private final KeyTracker segmentKeyTracker;
 
-   protected IterationNextOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
-                                    String iterationId, Transport transport, KeyTracker segmentKeyTracker) {
-      super(codec, flags, cacheName, topologyId);
+   protected IterationNextOperation(Codec codec, int flags, ClientIntelligence clientIntelligence, byte[] cacheName,
+                                    AtomicInteger topologyId, String iterationId, Transport transport,
+                                    KeyTracker segmentKeyTracker) {
+      super(codec, flags, clientIntelligence, cacheName, topologyId);
       this.iterationId = iterationId;
       this.transport = transport;
 

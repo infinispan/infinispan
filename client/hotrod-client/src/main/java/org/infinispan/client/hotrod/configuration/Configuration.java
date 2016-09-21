@@ -29,6 +29,7 @@ public class Configuration {
    private final Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass;
    private final FailoverRequestBalancingStrategy balancingStrategy;
    private final WeakReference<ClassLoader> classLoader;
+   private final ClientIntelligence clientIntelligence;
    private final ConnectionPoolConfiguration connectionPool;
    private final int connectionTimeout;
    private final Class<? extends ConsistentHash>[] consistentHashImpl;
@@ -49,7 +50,8 @@ public class Configuration {
    private final List<ClusterConfiguration> clusters;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
+         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
+         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
          ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
          List<ClusterConfiguration> clusters) {
@@ -58,41 +60,13 @@ public class Configuration {
       this.balancingStrategy = balancingStrategy;
       this.maxRetries = maxRetries;
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      this.clientIntelligence = clientIntelligence;
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
       this.consistentHashImpl = consistentHashImpl;
       this.forceReturnValues = forceReturnValues;
       this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = marshallerClass;
-      this.marshaller = null;
-      this.protocolVersion = protocolVersion;
-      this.servers = Collections.unmodifiableList(servers);
-      this.socketTimeout = socketTimeout;
-      this.security = security;
-      this.tcpNoDelay = tcpNoDelay;
-      this.tcpKeepAlive = tcpKeepAlive;
-      this.transportFactory = transportFactory;
-      this.valueSizeEstimate = valueSizeEstimate;
-      this.nearCache = nearCache;
-      this.clusters = clusters;
-   }
-
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
-         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters) {
-      this.asyncExecutorFactory = asyncExecutorFactory;
-      this.balancingStrategyClass = balancingStrategyClass;
-      this.balancingStrategy = balancingStrategy;
-      this.maxRetries = maxRetries;
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
-      this.connectionPool = connectionPool;
-      this.connectionTimeout = connectionTimeout;
-      this.consistentHashImpl = consistentHashImpl;
-      this.forceReturnValues = forceReturnValues;
-      this.keySizeEstimate = keySizeEstimate;
-      this.marshallerClass = null;
       this.marshaller = marshaller;
       this.protocolVersion = protocolVersion;
       this.servers = Collections.unmodifiableList(servers);
@@ -120,6 +94,10 @@ public class Configuration {
 
    public ClassLoader classLoader() {
       return classLoader.get();
+   }
+
+   public ClientIntelligence clientIntelligence() {
+      return clientIntelligence;
    }
 
    public ConnectionPoolConfiguration connectionPool() {
@@ -208,7 +186,8 @@ public class Configuration {
 
    @Override
    public String toString() {
-      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy + ",classLoader=" + classLoader + ", connectionPool="
+      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy
+            + ",classLoader=" + classLoader + ", clientIntelligence=" + clientIntelligence + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
@@ -228,6 +207,7 @@ public class Configuration {
          }
       }
       properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass().getName());
+      properties.setProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, clientIntelligence().name());
       properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(connectionTimeout()));
       for (int i = 0; i < consistentHashImpl().length; i++) {
          int version = i + 1;
@@ -316,5 +296,4 @@ public class Configuration {
 
       return properties;
    }
-
 }

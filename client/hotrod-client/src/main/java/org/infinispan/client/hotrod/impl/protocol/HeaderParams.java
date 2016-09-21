@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 
 /**
  * Hot Rod request header parameters
@@ -38,8 +39,8 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams clientIntel(byte clientIntel) {
-      this.clientIntel = clientIntel;
+   public HeaderParams clientIntel(ClientIntelligence clientIntel) {
+      this.clientIntel = clientIntel.getValue();
       return this;
    }
 

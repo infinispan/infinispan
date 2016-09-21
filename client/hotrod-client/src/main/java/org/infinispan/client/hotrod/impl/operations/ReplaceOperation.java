@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -20,9 +21,11 @@ import net.jcip.annotations.Immutable;
 public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
 
    public ReplaceOperation(Codec codec, TransportFactory transportFactory,
-            Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
-            int flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+                           Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                           int flags, ClientIntelligence clientIntelligence, byte[] value,
+                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence, value,
+            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override
