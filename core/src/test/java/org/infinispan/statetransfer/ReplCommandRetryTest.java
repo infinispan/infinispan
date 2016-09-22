@@ -101,32 +101,33 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       log.tracef("Triggering retry 1");
       di2.unblock(1);
 
-      // c2 will return UnsureResponse, and c1 will retry the command.
-      // c1 will send the command to c2 and c3, blocking on both in the DelayInterceptor
-      di2.waitUntilBlocked(2);
-      di3.waitUntilBlocked(1);
-
-      // Unblock the command with the new topology id on c2
-      di2.unblock(2);
-
-      // c4 joins, topology id changes
-      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
-      Cache<Object, Object> c4 = cm4.getCache();
-      DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
-
-      // Unblock the command with the new topology id on c3.
-      log.tracef("Triggering retry 2");
-      di3.unblock(1);
-
-      // c3 will send an UnsureResponse, and c1 will retry the command.
-      // c1 will send the command to c2, c3, and c4, blocking everywhere in the DelayInterceptor
-      // Unblock every node except c1
-      di2.unblock(3);
-      di3.unblock(2);
-      di4.unblock(1);
-
-      // Now c1 blocks
+      // Backport note: replication mode doesn't use lock forwarding yet, so there is no retry
+//      // c2 will return UnsureResponse, and c1 will retry the command.
+//      // c1 will send the command to c2 and c3, blocking on both in the DelayInterceptor
+//      di2.waitUntilBlocked(2);
+//      di3.waitUntilBlocked(1);
+//
+//      // Unblock the command with the new topology id on c2
+//      di2.unblock(2);
+//
+//      // c4 joins, topology id changes
+//      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
+//      Cache<Object, Object> c4 = cm4.getCache();
+//      DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
+//      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+//
+//      // Unblock the command with the new topology id on c3.
+//      log.tracef("Triggering retry 2");
+//      di3.unblock(1);
+//
+//      // c3 will send an UnsureResponse, and c1 will retry the command.
+//      // c1 will send the command to c2, c3, and c4, blocking everywhere in the DelayInterceptor
+//      // Unblock every node except c1
+//      di2.unblock(3);
+//      di3.unblock(2);
+//      di4.unblock(1);
+//
+//      // Now c1 blocks
       di1.unblock(1);
 
       log.tracef("Waiting for the put command to finish on %s", c1);
@@ -135,14 +136,14 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
       assertNull(retval);
 
-      // 1 for the last retry
+      // 1 for the initial invocation, no retry
       assertEquals(1, di1.getCounter());
-      // 1 for the initial invocation + 1 for each retry
-      assertEquals(3, di2.getCounter());
-      // 1 for each retry
-      assertEquals(2, di3.getCounter());
+      // 1 for the initial invocation, no retry
+      assertEquals(1, di2.getCounter());
+      // 0, not in the initial invocation
+      assertEquals(0, di3.getCounter());
       // just the last retry
-      assertEquals(1, di4.getCounter());
+//      assertEquals(1, di4.getCounter());
    }
 
    public void testRetryAfterJoinLockControlCommand() throws Exception {
