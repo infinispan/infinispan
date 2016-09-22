@@ -93,12 +93,15 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
 
       // Unblock the replicated command on c2 and c1
-      // Neither cache will forward the command to c3
+      // Backporting note: Because we're missing ISPN-3357, c2 will forward c3 and c1 will forward to c2+c3
       di2.unblock(1);
       di1.unblock(1);
 
-      Thread.sleep(2000);
-      assertEquals("The command shouldn't have been forwarded to " + c3, 0, di3.getCounter());
+//      Thread.sleep(2000);
+//      assertEquals("The command shouldn't have been forwarded to " + c3, 0, di3.getCounter());
+      di2.unblock(2);
+      di3.unblock(1);
+      di3.unblock(2);
 
       log.tracef("Waiting for the put command to finish on %s", c1);
       Object retval = f.get(10, SECONDS);
@@ -109,9 +112,9 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // 1 direct invocation
       assertEquals(1, di1.getCounter());
       // 1 from c1
-      assertEquals(1, di2.getCounter());
+      assertEquals(2, di2.getCounter());
       // 0 invocations
-      assertEquals(0, di3.getCounter());
+      assertEquals(2, di3.getCounter());
    }
 
    public void testForwardToJoinerAsyncPrepare() throws Exception {
