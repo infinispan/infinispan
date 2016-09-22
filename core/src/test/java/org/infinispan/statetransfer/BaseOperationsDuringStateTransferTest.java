@@ -22,7 +22,6 @@
  */
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -39,27 +38,20 @@ import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
@@ -83,8 +75,6 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
    private final boolean supportsConcurrentUpdates;
 
    private ConfigurationBuilder cacheConfigBuilder;
-
-   private ReclosableLatch transportGate;
 
    protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional,
                                                    boolean isOptimistic, boolean supportsConcurrentUpdates) {
@@ -116,23 +106,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       cacheConfigBuilder.locking().supportsConcurrentUpdates(supportsConcurrentUpdates);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
-      transportGate = new ReclosableLatch(true);
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.transport().transport(new JGroupsTransport() {
-         @Override
-         public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                                      boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception {
-            if (rpcCommand instanceof CacheTopologyControlCommand) {
-               try {
-                  transportGate.await();
-               } catch (InterruptedException e) {
-                  throw new RuntimeException(e);
-               }
-            }
-            return super.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
-         }
-      });
-
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().clusteredDefault();
       addClusterEnabledCacheManager(globalConfigurationBuilder, cacheConfigBuilder);
       waitForClusterToForm();
    }
@@ -160,7 +134,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      enableRebalancing(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -199,7 +173,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      enableRebalancing(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -216,6 +190,11 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
       assertNull(cache(0).get("myKey"));
       assertNull(cache(1).get("myKey"));
+   }
+
+   public void enableRebalancing(boolean enabled) throws Exception {
+      LocalTopologyManagerImpl ltm0 = (LocalTopologyManagerImpl) TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
+      ltm0.setRebalancingEnabled(enabled);
    }
 
    public void testPut() throws Exception {
@@ -241,7 +220,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      enableRebalancing(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -280,7 +259,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      enableRebalancing(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -322,7 +301,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      transportGate.close();
+      enableRebalancing(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -361,7 +340,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      transportGate.open();
+      enableRebalancing(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
