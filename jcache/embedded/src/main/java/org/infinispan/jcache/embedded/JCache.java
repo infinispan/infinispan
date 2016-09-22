@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -130,7 +131,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void clear() {
       // TCK expects clear() to not fire any remove events
-      skipListenerCache.clear();
+      try {
+         skipListenerCache.clear();
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -143,16 +148,20 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       if (key == null)
          throw log.parameterMustNotBeNull("key");
 
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return skipCacheLoadCache.containsKey(key);
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return skipCacheLoadCache.containsKey(key);
+               }
+            });
+         }
 
-      return skipCacheLoadAndStatsCache.containsKey(key);
+         return skipCacheLoadAndStatsCache.containsKey(key);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -171,11 +180,14 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    private V doGet(K key) {
-      V value = configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
-      if (value != null)
-         updateTTLForAccessed(cache, key, value);
-
-      return value;
+      try {
+         V value = configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
+         if (value != null)
+            updateTTLForAccessed(cache, key, value);
+         return value;
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -187,53 +199,69 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       }
 
       AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache :
-         this.skipCacheLoadCache;
-      return cache.getAll(keys);
+            this.skipCacheLoadCache;
+      try {
+         return cache.getAll(keys);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
    public V getAndPut(final K key, final V value) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<V>().call(key, new Callable<V>() {
-            @Override
-            public V call() {
-               return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
-            }
-         });
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<V>().call(key, new Callable<V>() {
+               @Override
+               public V call() {
+                  return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
+               }
+            });
+         }
+         return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
-      return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
    }
 
    @Override
    public V getAndRemove(final K key) {
       checkNotClosed();
-      skipCacheLoadCache.get(key); // bring in key and update stats
-      if (lockRequired(key)) {
-         return new WithProcessorLock<V>().call(key, new Callable<V>() {
-            @Override
-            public V call() {
-               return skipCacheLoadCache.remove(key);
-            }
-         });
-      }
+      try {
+         skipCacheLoadCache.get(key); // bring in key and update stats
+         if (lockRequired(key)) {
+            return new WithProcessorLock<V>().call(key, new Callable<V>() {
+               @Override
+               public V call() {
+                  return skipCacheLoadCache.remove(key);
+               }
+            });
+         }
 
-      return skipCacheLoadCache.remove(key);
+         return skipCacheLoadCache.remove(key);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
    public V getAndReplace(final K key, final V value) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<V>().call(key, new Callable<V>() {
-            @Override
-            public V call() {
-               return replace(skipCacheLoadCache, key, value);
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<V>().call(key, new Callable<V>() {
+               @Override
+               public V call() {
+                  return replace(skipCacheLoadCache, key, value);
+               }
+            });
+         }
 
-      return replace(skipCacheLoadCache, key, value);
+         return replace(skipCacheLoadCache, key, value);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -265,49 +293,53 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       if (trace)
          log.tracef("Invoke entry processor %s for key=%s", entryProcessor, key);
 
-      return new WithProcessorLock<T>().call(key, new Callable<T>() {
-         @Override
-         public T call() throws Exception {
-            // Get old value skipping any listeners to impacting
-            // listener invocation expectations set by the TCK.
-            V oldValue = skipCacheLoadCache.get(key);
-            V safeOldValue = oldValue;
-            if (configuration.isStoreByValue()) {
-               // Make a copy because the entry processor could make changes
-               // directly in the value, and we wanna keep a safe old value
-               // around for when calling the atomic replace() call.
-               safeOldValue = safeCopy(oldValue);
+      try {
+         return new WithProcessorLock<T>().call(key, new Callable<T>() {
+            @Override
+            public T call() throws Exception {
+               // Get old value skipping any listeners to impacting
+               // listener invocation expectations set by the TCK.
+               V oldValue = skipCacheLoadCache.get(key);
+               V safeOldValue = oldValue;
+               if (configuration.isStoreByValue()) {
+                  // Make a copy because the entry processor could make changes
+                  // directly in the value, and we wanna keep a safe old value
+                  // around for when calling the atomic replace() call.
+                  safeOldValue = safeCopy(oldValue);
+               }
+
+               MutableJCacheEntry<K, V> mutable = createMutableCacheEntry(safeOldValue, key);
+               T ret = processEntryProcessor(mutable, entryProcessor, arguments);
+
+               switch (mutable.getOperation()) {
+                  case NONE:
+                     break;
+                  case ACCESS:
+                     updateTTLForAccessed(cache, key, oldValue);
+                     break;
+                  case UPDATE:
+                     V newValue = mutable.getNewValue();
+                     if (oldValue != null) {
+                        // Only allow change to be applied if value has not
+                        // changed since the start of the processing.
+                        replace(cache, skipCacheLoadAndStatsCache, key, oldValue, newValue, true);
+                     } else {
+                        put(cache, skipCacheLoadCache, key, newValue, true);
+                     }
+                     break;
+                  case REMOVE:
+                     cache.remove(key);
+                     break;
+                  default:
+                     break;
+               }
+
+               return ret;
             }
-
-            MutableJCacheEntry<K, V> mutable = createMutableCacheEntry(safeOldValue, key);
-            T ret = processEntryProcessor(mutable, entryProcessor, arguments);
-
-            switch (mutable.getOperation()) {
-               case NONE:
-                  break;
-               case ACCESS:
-                  updateTTLForAccessed(cache, key, oldValue);
-                  break;
-               case UPDATE:
-                  V newValue = mutable.getNewValue();
-                  if (oldValue != null) {
-                     // Only allow change to be applied if value has not
-                     // changed since the start of the processing.
-                     replace(cache, skipCacheLoadAndStatsCache, key, oldValue, newValue, true);
-                  } else {
-                     put(cache, skipCacheLoadCache, key, newValue, true);
-                  }
-                  break;
-               case REMOVE:
-                  cache.remove(key);
-                  break;
-               default:
-                  break;
-            }
-
-            return ret;
-         }
-      });
+         });
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    private MutableJCacheEntry<K, V> createMutableCacheEntry(V safeOldValue, K key) {
@@ -376,12 +408,16 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // with existing cache loader interceptor would not be trivial. Hence,
       // we separate logic at this level.
 
-      if (jcacheLoader == null && jcacheWriter != null)
-         setListenerCompletion(listener);
-      else if (jcacheLoader != null) {
-         loadAllFromJCacheLoader(keys, replaceExistingValues, listener, ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE), skipCacheLoadCache);
-      } else
-         loadAllFromInfinispanCacheLoader(keys, replaceExistingValues, listener);
+      try {
+         if (jcacheLoader == null && jcacheWriter != null)
+            setListenerCompletion(listener);
+         else if (jcacheLoader != null) {
+            loadAllFromJCacheLoader(keys, replaceExistingValues, listener, ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE), skipCacheLoadCache);
+         } else
+            loadAllFromInfinispanCacheLoader(keys, replaceExistingValues, listener);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -427,58 +463,72 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private void doPut(K key, V value) {
       // A normal put should not fire notifications when checking TTL
-      put(ignoreReturnValuesCache, skipCacheLoadAndStatsCache, key, value, false);
+      try {
+         put(ignoreReturnValuesCache, skipCacheLoadAndStatsCache, key, value, false);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
    public boolean putIfAbsent(final K key, final V value) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return put(skipCacheLoadCache,
-                     skipCacheLoadAndStatsCache, key, value, true) == null;
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return put(skipCacheLoadCache,
+                        skipCacheLoadAndStatsCache, key, value, true) == null;
+               }
+            });
+         }
 
-      return put(skipCacheLoadCache,
-            skipCacheLoadAndStatsCache, key, value, true) == null;
+         return put(skipCacheLoadCache,
+               skipCacheLoadAndStatsCache, key, value, true) == null;
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
    public boolean remove(final K key) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return cache.remove(key) != null;
-            }
-         });
-      }
-
       try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return cache.remove(key) != null;
+               }
+            });
+         }
+
          return cache.remove(key) != null;
       } catch (CacheListenerException e) {
          throw Exceptions.launderCacheListenerException(e);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
    }
 
    @Override
    public boolean remove(final K key, final V oldValue) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return remove(cache, key, oldValue);
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return remove(cache, key, oldValue);
+               }
+            });
+         }
 
-      return remove(cache, key, oldValue);
+         return remove(cache, key, oldValue);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
@@ -493,18 +543,22 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       // Delete asynchronously and then wait for removals to complete
       List<Future<V>> futures = new ArrayList<Future<V>>();
-      for (final K key : cache.keySet()) {
-         if (lockRequired(key)) {
-            new WithProcessorLock<Void>().call(key, new Callable<Void>() {
-               @Override
-               public Void call() {
-                  cache.remove(key);
-                  return null;
-               }
-            });
-         } else {
-            futures.add(cache.removeAsync(key));
+      try {
+         for (final K key : cache.keySet()) {
+            if (lockRequired(key)) {
+               new WithProcessorLock<Void>().call(key, new Callable<Void>() {
+                  @Override
+                  public Void call() {
+                     cache.remove(key);
+                     return null;
+                  }
+               });
+            } else {
+               futures.add(cache.removeAsync(key));
+            }
          }
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
 
       for (Future<V> future : futures) {
@@ -514,8 +568,16 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             Thread.currentThread().interrupt();
             throw new CacheException(
                   "Interrupted while waiting for remove to complete");
-         } catch (Exception e) {
-            throw Exceptions.launderCacheWriterException(e);
+         } catch (TimeoutException e) {
+            throw new CacheException(
+                  "Timed out while waiting for remove to complete");
+         } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof org.infinispan.commons.CacheException) {
+               throw Exceptions.launderException((org.infinispan.commons.CacheException) cause);
+            } else {
+               throw new CacheException(cause);
+            }
          }
       }
    }
@@ -524,43 +586,55 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void removeAll(Set<? extends K> keys) {
       checkNotClosed();
       verifyKeys(keys);
-      for (K k : keys) {
-         remove(k);
+      try {
+         for (K k : keys) {
+            remove(k);
+         }
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
    }
 
    @Override
    public boolean replace(final K key, final V value) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return replace(skipCacheLoadCache, skipCacheLoadCache,
-                     key, null, value, false);
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return replace(skipCacheLoadCache, skipCacheLoadCache,
+                        key, null, value, false);
+               }
+            });
+         }
 
-      return replace(skipCacheLoadCache, skipCacheLoadCache,
-            key, null, value, false);
+         return replace(skipCacheLoadCache, skipCacheLoadCache,
+               key, null, value, false);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
    public boolean replace(final K key, final V oldValue, final V newValue) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-               return replace(skipCacheLoadCache, skipCacheLoadCache,
-                     key, oldValue, newValue, true);
-            }
-         });
-      }
+      try {
+         if (lockRequired(key)) {
+            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
+               @Override
+               public Boolean call() {
+                  return replace(skipCacheLoadCache, skipCacheLoadCache,
+                        key, oldValue, newValue, true);
+               }
+            });
+         }
 
-      return replace(skipCacheLoadCache, skipCacheLoadCache,
-            key, oldValue, newValue, true);
+         return replace(skipCacheLoadCache, skipCacheLoadCache,
+               key, oldValue, newValue, true);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
+      }
    }
 
    @Override
