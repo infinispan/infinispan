@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
@@ -29,6 +30,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -60,16 +62,20 @@ public class ClientListenerNotifier {
    private final ExecutorService executor;
    private final Codec codec;
    private final Marshaller marshaller;
+   private final TransportFactory transportFactory;
 
-   protected ClientListenerNotifier(ExecutorService executor, Codec codec, Marshaller marshaller) {
+   protected ClientListenerNotifier(
+         ExecutorService executor, Codec codec,
+         Marshaller marshaller, TransportFactory transportFactory) {
       this.executor = executor;
       this.codec = codec;
       this.marshaller = marshaller;
+      this.transportFactory = transportFactory;
    }
 
-   public static ClientListenerNotifier create(Codec codec, Marshaller marshaller) {
+   public static ClientListenerNotifier create(Codec codec, Marshaller marshaller, TransportFactory transportFactory) {
       ExecutorService executor = Executors.newCachedThreadPool(getRestoreThreadNameThreadFactory());
-      return new ClientListenerNotifier(executor, codec, marshaller);
+      return new ClientListenerNotifier(executor, codec, marshaller, transportFactory);
    }
 
    private static ThreadFactory getRestoreThreadNameThreadFactory() {
@@ -108,19 +114,21 @@ public class ClientListenerNotifier {
          log.tracef("No event listeners registered in faild servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
-      for (byte[] listenerId : failoverListenerIds) {
-         EventDispatcher dispatcher = clientListeners.get(listenerId);
-         removeClientListener(listenerId);
-         // Invoke failover event callback, if presents
-         invokeFailoverEvent(dispatcher);
-         // Re-execute adding client listener in one of the remaining nodes
-         dispatcher.op.execute();
-         if (trace) {
-            SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
-            log.tracef("Fallback listener id %s from a failed server %s to %s",
-                  Util.printArray(listenerId), failedServerAddress,
-                  dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
-         }
+      failoverListenerIds.forEach(this::failoverClientListener);
+   }
+
+   public void failoverClientListener(byte[] listenerId) {
+      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      removeClientListener(listenerId);
+      // Invoke failover event callback, if presents
+      invokeFailoverEvent(dispatcher);
+      // Re-execute adding client listener in one of the remaining nodes
+      dispatcher.op.execute();
+      if (trace) {
+         SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
+         log.tracef("Fallback listener id %s from a failed server %s to %s",
+               Util.printArray(listenerId), failedServerAddress,
+               dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
       }
    }
 
@@ -275,7 +283,11 @@ public class ClientListenerNotifier {
                   log.debug("Timed out reading event, retry");
                } else if (clientEvent != null) {
                   log.unexpectedErrorConsumingEvent(clientEvent, e);
-               }  else {
+               } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset by peer")) {
+                  tryFailoverClientListener();
+                  stopped = true;
+                  return;
+               } else {
                   log.unrecoverableErrorReadingEvent(e, transport.getRemoteSocketAddress());
                   stopped = true;
                   return; // Server is likely gone!
@@ -294,6 +306,20 @@ public class ClientListenerNotifier {
                   stopped = true;
                   return;
                }
+            }
+         }
+      }
+
+      private void tryFailoverClientListener() {
+         try {
+            log.debugf("Connection reset by peer, so failover client listener");
+            failoverClientListener(op.listenerId);
+         } catch (TransportException e) {
+            log.debug("Unable to failover client listener, so ignore connection reset");
+            try {
+               transportFactory.addDisconnectedListener(op);
+            } catch (InterruptedException e1) {
+               Thread.currentThread().interrupt();
             }
          }
       }

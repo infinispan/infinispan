@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -91,6 +94,9 @@ public class TcpTransportFactory implements TransportFactory {
    @GuardedBy("lock")
    private Map<byte[], Boolean> compatibilityCaches = CollectionFactory
            .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+
+   private final BlockingQueue<AddClientListenerOperation> disconnectedListeners =
+         new ArrayBlockingQueue<>(32);
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
@@ -402,6 +408,7 @@ public class TcpTransportFactory implements TransportFactory {
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
          TcpTransport tcpTransport = pool.borrowObject(server);
+         reconnectListenersIfNeeded(tcpTransport);
          return tcpTransport;
       } catch (Exception e) {
          String message = "Could not fetch transport";
@@ -409,6 +416,17 @@ public class TcpTransportFactory implements TransportFactory {
          throw new TransportException(message, e, server);
       } finally {
          logConnectionInfo(server);
+      }
+   }
+
+   private void reconnectListenersIfNeeded(TcpTransport tcpTransport) {
+      if (!disconnectedListeners.isEmpty()) {
+         List<AddClientListenerOperation> drained = new ArrayList<>();
+         disconnectedListeners.drainTo(drained);
+         for (AddClientListenerOperation op : drained) {
+            log.tracef("Reconnecting client listener with id %s", Util.printArray(op.listenerId));
+            op.execute();
+         }
       }
    }
 
@@ -463,6 +481,11 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public String getSniHostName() {
       return sniHostName;
+   }
+
+   @Override
+   public void addDisconnectedListener(AddClientListenerOperation listener) throws InterruptedException {
+      disconnectedListeners.put(listener);
    }
 
    @Override
