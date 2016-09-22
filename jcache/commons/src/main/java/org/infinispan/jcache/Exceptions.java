@@ -60,4 +60,12 @@ public class Exceptions {
       return e;
    }
 
+   public static CacheException launderException(org.infinispan.commons.CacheException e) {
+      // Exceptions thrown from Infinispan are be wrapped as CacheExceptions
+      if (e.getCause() instanceof CacheException) {
+         return (CacheException) e.getCause();
+      } else {
+         return new CacheException(e);
+      }
+   }
 }
