@@ -40,6 +40,7 @@ import java.util.Properties;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
@@ -733,7 +734,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.tcpNoDelay(store.require(ModelKeys.TCP_NO_DELAY).asBoolean());
             }
             if (store.hasDefined(ModelKeys.PROTOCOL_VERSION)) {
-                builder.protocolVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString());
+                builder.protocolVersion(ProtocolVersion.parseVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString()));
             }
             return builder;
         } else if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {

@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
@@ -70,6 +71,11 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
 
    @Override
    public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
+      return builder.protocolVersion(protocolVersion);
+   }
+
+   @Override
+   public RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion) {
       return builder.protocolVersion(protocolVersion);
    }
 

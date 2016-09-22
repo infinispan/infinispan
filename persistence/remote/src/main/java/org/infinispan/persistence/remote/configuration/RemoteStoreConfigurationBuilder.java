@@ -18,6 +18,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -105,6 +106,12 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
 
    @Override
    public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
+      attributes.attribute(PROTOCOL_VERSION).set(ProtocolVersion.parseVersion(protocolVersion));
+      return this;
+   }
+
+   @Override
+   public RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion) {
       attributes.attribute(PROTOCOL_VERSION).set(protocolVersion);
       return this;
    }
