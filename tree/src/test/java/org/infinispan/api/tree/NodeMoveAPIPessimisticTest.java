@@ -22,4 +22,11 @@ public class NodeMoveAPIPessimisticTest extends BaseNodeMoveAPITest {
             .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return cb;
    }
+
+   @Test(enabled = false, description = "The test does not work on pessimistic RR caches, " +
+         "because moveCtoB reads in the root node into context. Then, the move operation does not check " +
+         "if the entry was not changed after lock (no pessimistic WSC) and the move can be executed.")
+   @Override
+   public void testConcurrentMoveSameNode() throws Exception {
+   }
 }
