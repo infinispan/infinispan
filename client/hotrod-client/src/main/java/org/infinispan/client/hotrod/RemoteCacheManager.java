@@ -104,19 +104,6 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    }
 
    /**
-    * Retrieves a clone of the properties currently in use.  Note that making
-    * any changes to the properties instance retrieved will not affect an
-    * already-running RemoteCacheManager.
-    *
-    * @return a clone of the properties used to configure this RemoteCacheManager
-    * @since 4.2
-    */
-   @Deprecated
-   public Properties getProperties() {
-      return configuration.properties();
-   }
-
-   /**
     * Same as {@link RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
     * server tries to connect to "127.0.0.1:11222" in start.

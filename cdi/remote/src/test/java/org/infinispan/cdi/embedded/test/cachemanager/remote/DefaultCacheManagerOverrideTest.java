@@ -36,7 +36,7 @@ public class DefaultCacheManagerOverrideTest extends Arquillian {
    private RemoteCacheManager remoteCacheManager;
 
    public void testDefaultRemoteCacheManagerOverride() {
-      final Properties properties = remoteCacheManager.getProperties();
+      final Properties properties = remoteCacheManager.getConfiguration().properties();
 
       assertEquals(properties.getProperty(SERVER_LIST_KEY), SERVER_LIST_VALUE);
    }
