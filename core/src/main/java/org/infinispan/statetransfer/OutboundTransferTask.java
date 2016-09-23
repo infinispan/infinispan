@@ -144,7 +144,7 @@ public class OutboundTransferTask implements Runnable {
          for (InternalCacheEntry ice : dataContainer) {
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
             int segmentId = readCh.getSegment(key);
-            if (segments.contains(segmentId)) {
+            if (segments.contains(segmentId) && !ice.isL1Entry()) {
                sendEntry(ice, segmentId);
             }
          }
