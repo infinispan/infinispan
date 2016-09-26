@@ -33,7 +33,9 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    public GlobalConfigurationBuilder() {
       // In OSGi contexts the TCCL should not be used. Use the infinispan-core bundle as default instead.
-      ClassLoader defaultCL = Util.isOSGiContext() ? GlobalConfigurationBuilder.class.getClassLoader() : Thread.currentThread().getContextClassLoader();
+      ClassLoader defaultCL = null;
+      if (!Util.isOSGiContext()) defaultCL = Thread.currentThread().getContextClassLoader();
+      if (defaultCL == null) defaultCL = GlobalConfigurationBuilder.class.getClassLoader();
       this.cl = new WeakReference<ClassLoader>(defaultCL);
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
