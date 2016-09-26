@@ -45,7 +45,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
-   private StripedCounters<Stripe> counters = new StripedCounters<Stripe>(Stripe::new);
+   private StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
 
    @Inject
    @SuppressWarnings("unused")
@@ -66,7 +66,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return ctx.continueInvocation();
 
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         counters.increment(Stripe.evictionsFieldUpdater, counters.stripeForCurrentThread());
+         counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
          return null;
       });
    }
@@ -88,14 +88,14 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         Stripe stripe = counters.stripeForCurrentThread();
+         StripeB stripe = counters.stripeForCurrentThread();
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          if (rv == null) {
-            counters.add(Stripe.missTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(Stripe.missesFieldUpdater, stripe);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.increment(StripeB.missesFieldUpdater, stripe);
          } else {
-            counters.add(Stripe.hitTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(Stripe.hitsFieldUpdater, stripe);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.increment(StripeB.hitsFieldUpdater, stripe);
          }
          return null;
       });
@@ -120,14 +120,14 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          }
 
          int missCount = requests - hitCount;
-         Stripe stripe = counters.stripeForCurrentThread();
+         StripeB stripe = counters.stripeForCurrentThread();
          if (hitCount > 0) {
-            counters.add(Stripe.hitsFieldUpdater, stripe, hitCount);
-            counters.add(Stripe.hitTimesFieldUpdater, stripe, intervalMilliseconds * hitCount / requests);
+            counters.add(StripeB.hitsFieldUpdater, stripe, hitCount);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds * hitCount / requests);
          }
          if (missCount > 0) {
-            counters.add(Stripe.missesFieldUpdater, stripe, missCount);
-            counters.add(Stripe.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
+            counters.add(StripeB.missesFieldUpdater, stripe, missCount);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
          }
          return null;
       });
@@ -144,9 +144,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
          if (data != null && !data.isEmpty()) {
-            Stripe stripe = counters.stripeForCurrentThread();
-            counters.add(Stripe.storeTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.add(Stripe.storesFieldUpdater, stripe, data.size());
+            StripeB stripe = counters.stripeForCurrentThread();
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.storesFieldUpdater, stripe, data.size());
          }
          return null;
       });
@@ -172,9 +172,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (command.isSuccessful()) {
             long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-            Stripe stripe = counters.stripeForCurrentThread();
-            counters.add(Stripe.storeTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(Stripe.storesFieldUpdater, stripe);
+            StripeB stripe = counters.stripeForCurrentThread();
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.increment(StripeB.storesFieldUpdater, stripe);
          }
          return null;
       });
@@ -206,13 +206,13 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    private void increaseRemoveHits(long start) {
       long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-      Stripe stripe = counters.stripeForCurrentThread();
-      counters.add(Stripe.removeTimesFieldUpdater, stripe, intervalMilliseconds);
-      counters.increment(Stripe.removeHitsFieldUpdater, stripe);
+      StripeB stripe = counters.stripeForCurrentThread();
+      counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalMilliseconds);
+      counters.increment(StripeB.removeHitsFieldUpdater, stripe);
    }
 
    private void increaseRemoveMisses() {
-      counters.increment(Stripe.removeMissesFieldUpdater, counters.stripeForCurrentThread());
+      counters.increment(StripeB.removeMissesFieldUpdater, counters.stripeForCurrentThread());
    }
 
    @ManagedAttribute(
@@ -221,7 +221,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          measurementType = MeasurementType.TRENDSUP,
          displayType = DisplayType.SUMMARY)
    public long getHits() {
-      return counters.get(Stripe.hitsFieldUpdater);
+      return counters.get(StripeB.hitsFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -231,7 +231,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getMisses() {
-      return counters.get(Stripe.missesFieldUpdater);
+      return counters.get(StripeB.missesFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -241,7 +241,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getRemoveHits() {
-      return counters.get(Stripe.removeHitsFieldUpdater);
+      return counters.get(StripeB.removeHitsFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -251,7 +251,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getRemoveMisses() {
-      return counters.get(Stripe.removeMissesFieldUpdater);
+      return counters.get(StripeB.removeMissesFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -261,7 +261,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getStores() {
-      return counters.get(Stripe.storesFieldUpdater);
+      return counters.get(StripeB.storesFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -271,7 +271,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getEvictions() {
-      return counters.get(Stripe.evictionsFieldUpdater);
+      return counters.get(StripeB.evictionsFieldUpdater);
    }
 
    @ManagedAttribute(
@@ -282,8 +282,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public double getHitRatio() {
-      long hitsL = counters.get(Stripe.hitsFieldUpdater);
-      double total = hitsL + counters.get(Stripe.missesFieldUpdater);
+      long hitsL = counters.get(StripeB.hitsFieldUpdater);
+      double total = hitsL + counters.get(StripeB.missesFieldUpdater);
       // The reason for <= is that equality checks
       // should be avoided for floating point numbers.
       if (total <= 0)
@@ -299,10 +299,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public double getReadWriteRatio() {
-      long sum = counters.get(Stripe.storesFieldUpdater);
+      long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
          return 0;
-      return (((double) (counters.get(Stripe.hitsFieldUpdater) + counters.get(Stripe.missesFieldUpdater)) / (double) sum));
+      return (((double) (counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater)) / (double) sum));
    }
 
    @ManagedAttribute(
@@ -313,10 +313,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public long getAverageReadTime() {
-      long total = counters.get(Stripe.hitsFieldUpdater) + counters.get(Stripe.missesFieldUpdater);
+      long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
       if (total == 0)
          return 0;
-      return (counters.get(Stripe.hitTimesFieldUpdater) + counters.get(Stripe.missTimesFieldUpdater)) / total;
+      return (counters.get(StripeB.hitTimesFieldUpdater) + counters.get(StripeB.missTimesFieldUpdater)) / total;
    }
 
    @ManagedAttribute(
@@ -327,10 +327,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public long getAverageWriteTime() {
-      long sum = counters.get(Stripe.storesFieldUpdater);
+      long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
          return 0;
-      return (counters.get(Stripe.storeTimesFieldUpdater)) / sum;
+      return (counters.get(StripeB.storeTimesFieldUpdater)) / sum;
    }
 
    @ManagedAttribute(
@@ -344,7 +344,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long removes = getRemoveHits();
       if (removes == 0)
          return 0;
-      return (counters.get(Stripe.removeTimesFieldUpdater)) / removes;
+      return (counters.get(StripeB.removeTimesFieldUpdater)) / removes;
    }
 
    @ManagedAttribute(
@@ -403,16 +403,16 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Reset Statistics (Statistics)"
    )
    public void resetStatistics() {
-      counters.reset(Stripe.hitsFieldUpdater);
-      counters.reset(Stripe.missesFieldUpdater);
-      counters.reset(Stripe.storesFieldUpdater);
-      counters.reset(Stripe.evictionsFieldUpdater);
-      counters.reset(Stripe.hitTimesFieldUpdater);
-      counters.reset(Stripe.missTimesFieldUpdater);
-      counters.reset(Stripe.storeTimesFieldUpdater);
-      counters.reset(Stripe.removeHitsFieldUpdater);
-      counters.reset(Stripe.removeTimesFieldUpdater);
-      counters.reset(Stripe.removeMissesFieldUpdater);
+      counters.reset(StripeB.hitsFieldUpdater);
+      counters.reset(StripeB.missesFieldUpdater);
+      counters.reset(StripeB.storesFieldUpdater);
+      counters.reset(StripeB.evictionsFieldUpdater);
+      counters.reset(StripeB.hitTimesFieldUpdater);
+      counters.reset(StripeB.missTimesFieldUpdater);
+      counters.reset(StripeB.storeTimesFieldUpdater);
+      counters.reset(StripeB.removeHitsFieldUpdater);
+      counters.reset(StripeB.removeTimesFieldUpdater);
+      counters.reset(StripeB.removeMissesFieldUpdater);
       resetNanoseconds.set(timeService.time());
    }
 
@@ -421,31 +421,36 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    public void addEvictions(long numEvictions) {
-      counters.add(Stripe.evictionsFieldUpdater, counters.stripeForCurrentThread(), numEvictions);
+      counters.add(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread(), numEvictions);
    }
 
    @SuppressWarnings("unused")
-   private static class Stripe {
-      static final AtomicLongFieldUpdater<Stripe> hitTimesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "hitTimes");
-      static final AtomicLongFieldUpdater<Stripe> missTimesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "missTimes");
-      static final AtomicLongFieldUpdater<Stripe> storeTimesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "storeTimes");
-      static final AtomicLongFieldUpdater<Stripe> removeTimesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "removeTimes");
-      static final AtomicLongFieldUpdater<Stripe> hitsFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "hits");
-      static final AtomicLongFieldUpdater<Stripe> missesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "misses");
-      static final AtomicLongFieldUpdater<Stripe> storesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "stores");
-      static final AtomicLongFieldUpdater<Stripe> evictionsFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "evictions");
-      static final AtomicLongFieldUpdater<Stripe> removeHitsFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "removeHits");
-      static final AtomicLongFieldUpdater<Stripe> removeMissesFieldUpdater =
-            AtomicLongFieldUpdater.newUpdater(Stripe.class, "removeMisses");
+   private static class StripeA {
+      private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
+   }
+
+   @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
+   private static class StripeB extends StripeA {
+      static final AtomicLongFieldUpdater<StripeB> hitTimesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "hitTimes");
+      static final AtomicLongFieldUpdater<StripeB> missTimesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "missTimes");
+      static final AtomicLongFieldUpdater<StripeB> storeTimesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "storeTimes");
+      static final AtomicLongFieldUpdater<StripeB> removeHitsFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "removeHits");
+      static final AtomicLongFieldUpdater<StripeB> removeMissesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "removeMisses");
+      static final AtomicLongFieldUpdater<StripeB> storesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "stores");
+      static final AtomicLongFieldUpdater<StripeB> evictionsFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "evictions");
+      static final AtomicLongFieldUpdater<StripeB> missesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "misses");
+      static final AtomicLongFieldUpdater<StripeB> hitsFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "hits");
+      static final AtomicLongFieldUpdater<StripeB> removeTimesFieldUpdater =
+            AtomicLongFieldUpdater.newUpdater(StripeB.class, "removeTimes");
 
       private volatile long hits = 0;
       private volatile long hitTimes = 0;
@@ -457,7 +462,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       private volatile long removeHits = 0;
       private volatile long removeMisses = 0;
       private volatile long removeTimes = 0;
+   }
 
-      private long slack1, slack2, slack3, slack4, slack5, slack6;
+   @SuppressWarnings("unused")
+   private static class StripeC extends StripeB {
+      private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 }
