@@ -353,7 +353,7 @@ Here is an example of Soft-Index File Store configuration via XML:
 [source,xml]
 ----
 <persistence>
-    <soft-index-file-store xmlns="urn:infinispan:config:soft-index:7.0">
+    <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:8.0">
         <index path="/tmp/sifs/testCache/index" />
         <data path="/tmp/sifs/testCache/data" />
     </soft-index-file-store>
@@ -597,7 +597,7 @@ The `RemoteStore` is a cache loader and writer implementation that stores data i
 [source,xml]
 ----
 <persistence>
-   <remote-store xmlns="urn:infinispan:config:remote:7.0" cache="mycache" raw-values="true">
+   <remote-store xmlns="urn:infinispan:config:store:remote:8.0" cache="mycache" raw-values="true">
       <remote-server host="one" port="12111" />
       <remote-server host="two" />
       <connection-pool max-active="10" exhausted-action="CREATE_NEW" />
