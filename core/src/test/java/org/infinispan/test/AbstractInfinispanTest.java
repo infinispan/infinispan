@@ -23,8 +23,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
-import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 import javax.transaction.TransactionManager;
@@ -151,14 +149,9 @@ public class AbstractInfinispanTest {
             () -> Objects.equals(expected, supplier.get()));
    }
 
-   protected void eventuallyEquals(int expected, IntSupplier supplier) {
-      eventually(() -> "expected:<" + expected + ">, got:<" + supplier.getAsInt() + ">",
-            () -> expected == supplier.getAsInt());
-   }
-
-   protected void eventuallyEquals(String message, long expected, LongSupplier supplier) {
-      eventually(() -> message + " expected:<" + expected + ">, got:<" + supplier.getAsLong() + ">",
-                 () -> expected == supplier.getAsLong());
+   protected <T> void eventuallyEquals(String message, T expected, Supplier<T> supplier) {
+      eventually(() -> message + " expected:<" + expected + ">, got:<" + supplier.get() + ">",
+                 () -> Objects.equals(expected, supplier.get()));
    }
 
    protected void eventually(Supplier<String> messageSupplier, BooleanSupplier condition) {

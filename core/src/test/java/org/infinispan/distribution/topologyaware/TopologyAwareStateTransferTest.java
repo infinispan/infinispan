@@ -140,22 +140,9 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       final List<Address> addresses = hash.locateOwners(key);
       log.debug(key + " should be present on = " + addresses);
 
-      int count = 0;
       for (Cache<? super K, ?> c : caches()) {
-         if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-            log.debug("It is here = " + address(c));
-            count++;
-         }
-      }
-      log.debug("count = " + count);
-      assert count == 2;
-
-      for (Cache<? super K, ?> c : caches()) {
-         if (addresses.contains(address(c))) {
-            assert c.getAdvancedCache().getDataContainer().containsKey(key);
-         } else {
-            assert !c.getAdvancedCache().getDataContainer().containsKey(key);
-         }
+         eventuallyEquals("Failure for key " + key + " on cache " + address(c), addresses.contains(address(c)),
+                          () -> c.getAdvancedCache().getDataContainer().containsKey(key));
       }
    }
 
