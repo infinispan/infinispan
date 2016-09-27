@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -12,6 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -43,22 +43,23 @@ public class DeadlockDetectingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return ctx.continueInvocation();
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return ctx.continueInvocation();
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return ctx.continueInvocation();
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+         throws Throwable {
       DldGlobalTransaction globalTransaction = (DldGlobalTransaction) ctx.getGlobalTransaction();
       if (ctx.isOriginLocal()) {
          globalTransaction.setRemoteLockIntention(command.getKeys());
@@ -70,25 +71,19 @@ public class DeadlockDetectingInterceptor extends DDAsyncInterceptor {
             ((DldGlobalTransaction) ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
          }
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       DldGlobalTransaction globalTransaction = (DldGlobalTransaction) ctx.getGlobalTransaction();
       if (ctx.isOriginLocal()) {
          globalTransaction.setRemoteLockIntention(command.getAffectedKeys());
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          if (rCtx.isOriginLocal()) {
             globalTransaction.setRemoteLockIntention(Collections.emptySet());
          }
-         return null;
       });
    }
-
-
 }

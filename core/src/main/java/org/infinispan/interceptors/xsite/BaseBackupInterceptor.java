@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.xsite;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -11,6 +9,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -38,46 +37,37 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if this is an "empty" tx no point replicating it to other clusters
-      if (!shouldInvokeRemoteTxCommand(ctx))
-         return ctx.continueInvocation();
+      if (!shouldInvokeRemoteTxCommand(ctx)) return invokeNext(ctx, command);
 
-      boolean isTxFromRemoteSite = isTxFromRemoteSite( command.getGlobalTransaction() );
+      boolean isTxFromRemoteSite = isTxFromRemoteSite(command.getGlobalTransaction());
       if (isTxFromRemoteSite) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       BackupResponse backupResponse = backupSender.backupPrepare(command);
       return processBackupResponse(ctx, command, backupResponse);
    }
 
-   protected CompletableFuture<Void> processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
+   protected BasicInvocationStage processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
          BackupResponse backupResponse) {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
-         backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-         return null;
-      });
+      return invokeNext(ctx, command).thenAccept(
+            (rCtx, rCommand, rv) -> backupSender.processResponses(backupResponse, command, ctx.getTransaction()));
    }
 
-   protected CompletableFuture<Void> handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
+   protected BasicInvocationStage handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
+         throws Throwable {
       if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            backupSender.processResponses(backupSender.backupWrite(command), command);
-         }
-         return null;
-      });
+      return invokeNext(ctx, command).thenAccept(
+            (rCtx, rCommand, rv) -> backupSender.processResponses(backupSender.backupWrite(command), command));
    }
 
    protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {
@@ -87,8 +77,8 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    protected boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // ISPN-2362: For backups, we should only replicate to the remote site if there are modifications to replay.
-      boolean shouldBackupRemotely = ctx.isOriginLocal() && ctx.hasModifications() &&
-            !ctx.getCacheTransaction().isFromStateTransfer();
+      boolean shouldBackupRemotely =
+            ctx.isOriginLocal() && ctx.hasModifications() && !ctx.getCacheTransaction().isFromStateTransfer();
       getLog().tracef("Should backup remotely? %s", shouldBackupRemotely);
       return shouldBackupRemotely;
    }

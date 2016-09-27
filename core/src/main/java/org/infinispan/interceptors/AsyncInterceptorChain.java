@@ -82,10 +82,8 @@ public interface AsyncInterceptorChain {
    /**
     * Walks the command through the interceptor chain. The received ctx is being passed in.
     *
-    * <p>Note: Reusing the context for multiple invocations is allowed. However, the two invocations
-    * must not overlap, so calling {@code invoke(ctx, command)} from an interceptor is not allowed.
-    * If an interceptor needs to invoke a new command through the entire chain, it must first
-    * copy the invocation context with {@link InvocationContext#clone()}.</p>
+    * <p>Note: Reusing the context for multiple invocations is allowed, however most context implementations are not
+    * thread-safe.</p>
     */
    Object invoke(InvocationContext ctx, VisitableCommand command);
 

@@ -1,7 +1,5 @@
 package org.infinispan.context;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -9,6 +7,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -87,25 +86,25 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
 
       @Override
-      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
-      public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (isRightType(ctx)) removeOkay = true;
          return super.visitRemoveCommand(ctx, command);
       }
 
       @Override
-      public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) getOkay = true;
          return super.visitGetKeyValueCommand(ctx, command);
       }
 
       @Override
-      public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (isRightType(ctx)) replaceOkay = true;
          return super.visitReplaceCommand(ctx, command);
       }

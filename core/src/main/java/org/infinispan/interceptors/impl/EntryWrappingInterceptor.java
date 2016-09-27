@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -58,7 +57,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationFinallyHandler;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -100,10 +103,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private static final EnumSet<Flag> EVICT_FLAGS =
          EnumSet.of(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL);
 
-   private final ReturnHandler dataReadReturnHandler = new ReturnHandler() {
+   private final InvocationFinallyHandler dataReadReturnHandler = new InvocationFinallyHandler() {
       @Override
-      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
          AbstractDataCommand command1 = (AbstractDataCommand) rCommand;
 
          // TODO needed because entries might be added in L1?
@@ -115,32 +117,25 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          // Entry visit notifications used to happen in the CallInterceptor
          // We do it after (maybe) committing the entries, to avoid adding another try/finally block
-         if (throwable == null && rv != null) {
+         if (t == null && rv != null) {
             Object value = command1 instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
             notifier.notifyCacheEntryVisited(command1.getKey(), value, true, rCtx, command1);
             notifier.notifyCacheEntryVisited(command1.getKey(), value, false, rCtx, command1);
          }
-         return null;
       }
    };
 
-   private final ReturnHandler commitEntriesOnSuccessReturnHandler = new ReturnHandler() {
+   private final InvocationSuccessHandler commitEntriesSuccessHandler = new InvocationSuccessHandler() {
       @Override
-      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
-         if (throwable == null) {
-            commitContextEntries(rCtx, null, null);
-         }
-         return null;
-      }
-   };
-
-   private final ReturnHandler commitEntriesReturnHandler = new ReturnHandler() {
-      @Override
-      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
          commitContextEntries(rCtx, null, null);
-         return null;
+      }
+   };
+
+   private final InvocationFinallyHandler commitEntriesFinallyHandler = new InvocationFinallyHandler() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+         commitContextEntries(rCtx, null, null);
       }
    };
 
@@ -176,40 +171,43 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       wrapEntriesForPrepare(ctx, command);
       if (!shouldCommitDuringPrepare(command, ctx)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn(commitEntriesOnSuccessReturnHandler);
+      return invokeNext(ctx, command).thenAccept(commitEntriesSuccessHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn(commitEntriesReturnHandler);
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(commitEntriesFinallyHandler);
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitDataReadCommand(ctx, command);
-   }
-   @Override
-   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
-      ctx.onReturn(dataReadReturnHandler);
+   @Override
+   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   private BasicInvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command)
+         throws Throwable {
       entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command).handle(dataReadReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       for (Object key : command.getKeys()) {
          entryFactory.wrapEntryForReading(ctx, key, null);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (ctx.isInTxScope()) {
             for (Object key : getAllCommand.getKeys()) {
@@ -218,7 +216,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          }
 
          // Entry visit notifications used to happen in the CallInterceptor
-         if (throwable == null && rv != null) {
+         if (t == null && rv != null) {
             log.tracef("Notifying getAll? %s; result %s", !command.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION), rv);
             Map<Object, Object> map = (Map<Object, Object>) rv;
             // TODO: it would be nice to know if a listener was registered for this and
@@ -234,7 +232,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                }
             }
          }
-         return null;
       });
    }
 
@@ -246,7 +243,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+   public final BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
+         throws Throwable {
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
             //for the invalidate command, we need to try to fetch the key from the data container
@@ -258,8 +256,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public final BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
          if (stateConsumer != null) {
@@ -276,24 +274,24 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          if (trace)
             log.tracef("The return value is %s", rv);
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+   public BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
+         throws Throwable {
       for (Object key : command.getKeys()) {
          //for the invalidate command, we need to try to fetch the key from the data container
          //otherwise it may be not removed
          entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
-         if (trace)
-           log.tracef("Entry to be removed: %s", toStr(key));
+         if (trace) log.tracef("Entry to be removed: %s", toStr(key));
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
-   public final CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public final BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+         throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
@@ -350,13 +348,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+         throws Throwable {
       entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public final CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public final BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       wrapEntryForRemoveIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
@@ -371,7 +370,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public final BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+         throws Throwable {
       wrapEntryForReplaceIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
@@ -387,7 +387,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       for (Object key : command.getMap().keySet()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
@@ -398,32 +398,33 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       command.addFlags(EVICT_FLAGS); //to force the wrapping
       return visitRemoveCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command)
+         throws Throwable {
       final String groupName = command.getGroupName();
       if (!command.isGroupOwner()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
-                                                                   new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
+            new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
       dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
          synchronized (ctx) {
             //the process can be made in multiple threads, so we need to synchronize in the context.
             entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry,
-                                           EntryFactory.Wrap.STORE, false);
+                  EntryFactory.Wrap.STORE, false);
          }
       });
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
-
+   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
+         throws Throwable {
       CacheEntry entry = entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
       // Null entry is often considered to mean that entry is not available
       // locally, but if there's no need to get remote, the read-only
@@ -435,7 +436,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
 
       // The entry is not fetched to local node and it cannot be committed to L1; no need for handler
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private boolean shouldRead(Object key) {
@@ -443,41 +444,45 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
+         throws Throwable {
       for (Object key : command.getKeys()) {
          CacheEntry entry = entryFactory.wrapEntryForReading(ctx, key, null);
          if (entry == null && shouldRead(key)) {
             entryFactory.wrapEntryForReading(ctx, key, NullCacheEntry.getInstance());
          }
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          for (Object key : ((ReadOnlyManyCommand) rCommand).getKeys()) {
             setSkipLookup(rCtx, key);
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
+         throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
+         throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
+         throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
+         WriteOnlyManyEntriesCommand command) throws Throwable {
       for (Object key : command.getEntries().keySet()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
@@ -488,7 +493,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
+         throws Throwable {
       for (Object key : command.getKeys()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
@@ -499,13 +505,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
+         throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
+         throws Throwable {
       for (Object key : command.getKeys()) {
          if (shouldWrap(key, ctx, command)) {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
@@ -515,7 +523,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
+         ReadWriteManyEntriesCommand command) throws Throwable {
       for (Object key : command.getEntries().keySet()) {
          if (shouldWrap(key, ctx, command)) {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
@@ -611,11 +620,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private CompletableFuture<Void> setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext ctx,
+         WriteCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
             applyChanges(rCtx, writeCommand, writeCommand.getMetadata());
@@ -628,19 +635,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                setSkipLookup(rCtx, key);
             }
          }
-         return null;
       });
    }
 
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private CompletableFuture<Void> setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command,
-                                                               Metadata metadata) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
+         DataWriteCommand command, Metadata metadata) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
             applyChanges(rCtx, dataWriteCommand, metadata);
@@ -651,7 +654,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (rCtx.isInTxScope()) {
             setSkipLookup(rCtx, dataWriteCommand.getKey());
          }
-         return null;
       });
    }
 
@@ -672,7 +674,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (newMap.size() > 0) {
             PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap,
                   command.getMetadata(), command.getFlagsBitSet());
-            ctx.forkInvocationSync(clonedCommand);
+            return invokeNext(ctx, clonedCommand);
          }
          return null;
       }
@@ -683,9 +685,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             for (Object key : command.getKeys()) {
                if (cdl.localNodeIsOwner(key)) {
                   entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, false);
-                  ctx.forkInvocationSync(command);
                }
             }
+            return invokeNext(ctx, command);
          }
          return null;
       }
@@ -696,7 +698,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
             EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
             entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
-            ctx.forkInvocationSync(command);
+            return invokeNext(ctx, command);
          }
          return null;
       }
@@ -705,7 +707,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, false, false);
-            ctx.forkInvocationSync(command);
+            return invokeNext(ctx, command);
          }
          return null;
       }
@@ -714,7 +716,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
-            ctx.forkInvocationSync(command);
+            return invokeNext(ctx, command);
          }
          return null;
       }
@@ -726,14 +728,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
             EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
             entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
-            ctx.forkInvocationSync(command);
+            return invokeNext(ctx, command);
          }
          return null;
       }
    }
 
    private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
-                                       final CacheEntry entry, final Flag stateTransferFlag, final Metadata metadata) {
+         final CacheEntry entry, final Flag stateTransferFlag, final Metadata metadata) {
       if (entry == null) {
          return false;
       }
@@ -764,7 +766,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    protected final void wrapEntriesForPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          for (WriteCommand c : command.getModifications()) {
-            c.acceptVisitor(ctx, entryWrappingVisitor);
+            InvocationStage visitorStage = (InvocationStage) c.acceptVisitor(ctx, entryWrappingVisitor);
+            if (visitorStage != null) {
+               // Wait for the sub-command to finish. If there was an exception, rethrow it.
+               visitorStage.get();
+            }
+
             if (c.hasFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER)) {
                ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
             }

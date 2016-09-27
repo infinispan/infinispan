@@ -1,18 +1,17 @@
 package org.infinispan.test.concurrent;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 
 /**
- * Replaces a {@link CommandInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a
+ * Replaces an {@link AsyncInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a
  * command that matches a {@link CommandMatcher} is visited.
  *
  * @author Dan Berindei
@@ -62,7 +61,7 @@ public class InterceptorSequencerAction {
       return this;
    }
 
-   public static class SequencerInterceptor extends DDAsyncInterceptor {
+   public static class SequencerInterceptor extends BaseAsyncInterceptor {
       private static final Class[] uniqueInterceptorClasses = {
             U1.class, U2.class, U3.class, U4.class, U5.class, U6.class, U7.class, U8.class, U9.class
       };
@@ -97,12 +96,11 @@ public class InterceptorSequencerAction {
       }
 
       @Override
-      protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
          StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) ->  {
             StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
-            return null;
          });
       }
 

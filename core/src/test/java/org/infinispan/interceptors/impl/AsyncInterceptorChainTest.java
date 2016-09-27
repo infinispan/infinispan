@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +15,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -99,7 +99,7 @@ public class AsyncInterceptorChainTest {
 
    private static class DummyCallInterceptor extends BaseAsyncInterceptor {
       @Override
-      public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+      public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
             throws Throwable {
          return null;
       }

@@ -3,7 +3,6 @@ package org.infinispan.interceptors.totalorder;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
@@ -12,10 +11,12 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -55,7 +56,8 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         throws Throwable {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
                     command.getGlobalTransaction().globalId(),
@@ -68,110 +70,121 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
       TotalOrderRemoteTransactionState state = getTransactionState(ctx);
 
-      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null) {
-            PrepareCommand prepareCommand = (PrepareCommand) rCommand;
-            if (log.isDebugEnabled()) {
-               log.debugf(throwable, "Exception while preparing for transaction %s. Local=%s",
-                     prepareCommand.getGlobalTransaction().globalId(), rCtx.isOriginLocal());
-            }
-            if (prepareCommand.isOnePhaseCommit()) {
-               transactionTable.remoteTransactionRollback(prepareCommand.getGlobalTransaction());
-            }
+      try {
+         simulateLocking(ctx, command, clusteringDependentLogic);
+
+         if (ctx.isOriginLocal()) {
+            return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+               if (t != null) {
+                  rollbackTxOnPrepareException(rCtx, (PrepareCommand) rCommand, t);
+               }
+            });
          }
-         return null;
-      });
 
-      simulateLocking(ctx, command, clusteringDependentLogic);
-
-      if (ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
-      }
-
-      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null && ((PrepareCommand) rCommand).isOnePhaseCommit()) {
-            totalOrderManager.release(state);
+         state.preparing();
+         if (state.isRollbackReceived()) {
+            //this means that rollback has already been received
+            transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
+            throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
+                  ". it was already marked as rollback");
          }
-         state.prepared();
-         return null;
-      });
 
-      state.preparing();
-      if (state.isRollbackReceived()) {
-         //this means that rollback has already been received
-         transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
-         throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
-               ". it was already marked as rollback");
+         if (state.isCommitReceived()) {
+            log.tracef("Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
+                  command.getGlobalTransaction().globalId());
+            ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
+            ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
+         }
+
+         if (trace) {
+            log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
+         }
+
+         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+            afterPrepare((TxInvocationContext) rCtx, (PrepareCommand) rCommand, state, t);
+         });
+      } catch (Throwable t) {
+         afterPrepare(ctx, command, state, t);
+         throw t;
+      }
+   }
+
+   private void rollbackTxOnPrepareException(InvocationContext ctx, PrepareCommand command, Throwable throwable) {
+      if (log.isDebugEnabled()) {
+         log.debugf(throwable, "Exception while preparing for transaction %s. Local=%s",
+               command.getGlobalTransaction().globalId(), ctx.isOriginLocal());
+      }
+      if (command.isOnePhaseCommit()) {
+         transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
+      }
+   }
+
+   private void afterPrepare(TxInvocationContext ctx, PrepareCommand command, TotalOrderRemoteTransactionState state,
+         Throwable t) {
+      if (t == null && command.isOnePhaseCommit()) {
+         totalOrderManager.release(state);
       }
 
-      if (state.isCommitReceived()) {
-         log.tracef(
-               "Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
-               command.getGlobalTransaction().globalId());
-         ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
-         ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
-      }
+      state.prepared();
 
-      if (trace) {
-         log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
+      if (t != null) {
+         rollbackTxOnPrepareException(ctx, command, t);
       }
-
-      //invoke next interceptor in the chain
-      return ctx.continueInvocation();
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true);
    }
 
    @Override
-   public final CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public final BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+         throws Throwable {
       throw new UnsupportedOperationException("Lock interface not supported with total order protocol");
    }
 
-   private CompletableFuture<Void> visitSecondPhaseCommand(TxInvocationContext context, AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
+   private BasicInvocationStage visitSecondPhaseCommand(TxInvocationContext context,
+         AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
       GlobalTransaction gtx = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s", commit, gtx.globalId(),
-                    context.isOriginLocal());
+               context.isOriginLocal());
       }
 
       TotalOrderRemoteTransactionState state = getTransactionState(context);
-
-      context.onReturn((ctx, command1, rv, throwable) -> {
-         if (throwable != null) {
-            if (log.isDebugEnabled()) {
-               log.debugf(throwable, "Exception while rollback transaction %s", gtx.globalId());
-            }
+      try {
+         if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
+            //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
+            return returnWith(null);
          }
-
-         if (state != null && state.isFinished()) {
-            totalOrderManager.release(state);
-            if (commit) {
-               transactionTable.remoteTransactionCommitted(command.getGlobalTransaction(), false);
-            } else {
-               transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
-            }
-            if (context.isOriginLocal()) {
-               executorService.checkForReadyTasks();
-            }
-         }
-
-         return null;
-      });
-
-      if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
-         //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
-         return context.shortCircuit(null);
+      } catch (Throwable t) {
+         finishSecondPhaseCommand(commit, state, context, command);
+         throw t;
       }
 
-      return context.continueInvocation();
+      return invokeNext(context, command).handle(
+            (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
+                  (AbstractTransactionBoundaryCommand) rCommand));
+   }
+
+   private void finishSecondPhaseCommand(boolean commit, TotalOrderRemoteTransactionState state, InvocationContext ctx,
+         AbstractTransactionBoundaryCommand txCommand) {
+      if (state != null && state.isFinished()) {
+         totalOrderManager.release(state);
+         if (commit) {
+            transactionTable.remoteTransactionCommitted(txCommand.getGlobalTransaction(), false);
+         } else {
+            transactionTable.remoteTransactionRollback(txCommand.getGlobalTransaction());
+         }
+         if (ctx.isOriginLocal()) {
+            executorService.checkForReadyTasks();
+         }
+      }
    }
 
    private TotalOrderRemoteTransactionState getTransactionState(TxInvocationContext context) {

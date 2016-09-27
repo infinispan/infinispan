@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.Exceptions;
@@ -100,7 +100,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       CountDownLatch latch = new CountDownLatch(1);
       node2Cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws
+         public BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws
                Throwable {
             latch.await(10, TimeUnit.SECONDS);
             return super.visitInvalidateCommand(ctx, command);

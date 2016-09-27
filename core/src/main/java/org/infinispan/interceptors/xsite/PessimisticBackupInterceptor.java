@@ -1,9 +1,8 @@
 package org.infinispan.interceptors.xsite;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 
 /**
  * Handles x-site data backups for pessimistic transactional caches.
@@ -14,7 +13,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       //for pessimistic transaction we don't do a 2PC (as we already own the remote lock) but just
       //a 1PC
       throw new IllegalStateException("This should never happen!");

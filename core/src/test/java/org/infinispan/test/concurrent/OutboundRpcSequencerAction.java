@@ -1,5 +1,7 @@
 package org.infinispan.test.concurrent;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +69,7 @@ public class OutboundRpcSequencerAction {
       private final CommandMatcher matcher;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
-      private final ThreadLocal<Boolean> accepted = new ThreadLocal<Boolean>();
+      private final Map<ReplicableCommand, Boolean> accepted = Collections.synchronizedMap(new IdentityHashMap<>());
 
       public SequencerRpcManager(RpcManager rpcManager, StateSequencer stateSequencer, CommandMatcher matcher) {
          super(rpcManager);
@@ -79,7 +81,7 @@ public class OutboundRpcSequencerAction {
       protected void beforeInvokeRemotely(ReplicableCommand command) {
          try {
             boolean accept = matcher.accept(command);
-            accepted.set(accept);
+            accepted.put(command, accept);
             StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesBefore);
          } catch (Exception e) {
             throw new RuntimeException(e);
@@ -89,7 +91,8 @@ public class OutboundRpcSequencerAction {
       @Override
       protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, org.infinispan.remoting.responses.Response> responseMap) {
          try {
-            StateSequencerUtil.advanceMultiple(stateSequencer, accepted.get(), statesAfter);
+            Boolean accepted = this.accepted.remove(command) == Boolean.TRUE;
+            StateSequencerUtil.advanceMultiple(stateSequencer, accepted, statesAfter);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

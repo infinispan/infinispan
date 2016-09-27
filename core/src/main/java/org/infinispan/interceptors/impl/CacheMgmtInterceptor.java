@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -23,6 +22,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -61,33 +61,32 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       if (!getStatisticsEnabled(command))
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
-         return null;
       });
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private BasicInvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          StripeB stripe = counters.stripeForCurrentThread();
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          if (rv == null) {
@@ -97,19 +96,18 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds);
             counters.increment(StripeB.hitsFieldUpdater, stripe);
          }
-         return null;
       });
    }
 
    @SuppressWarnings("unchecked")
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          int requests = ((GetAllCommand) rCommand).getKeys().size();
          int hitCount = 0;
@@ -129,18 +127,17 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             counters.add(StripeB.missesFieldUpdater, stripe, missCount);
             counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
          if (data != null && !data.isEmpty()) {
@@ -148,46 +145,44 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
             counters.add(StripeB.storesFieldUpdater, stripe, data.size());
          }
-         return null;
       });
    }
 
    @Override
    //Map.put(key,value) :: oldValue
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return updateStoreStatistics(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return updateStoreStatistics(ctx, command);
    }
 
-   private CompletableFuture<Void> updateStoreStatistics(InvocationContext ctx, WriteCommand command) throws Throwable {
+   private BasicInvocationStage updateStoreStatistics(InvocationContext ctx, WriteCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          if (command.isSuccessful()) {
             long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
             counters.increment(StripeB.storesFieldUpdater, stripe);
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          RemoveCommand removeCommand = (RemoveCommand) rCommand;
          if (removeCommand.isConditional()) {
             if (removeCommand.isSuccessful())
@@ -200,7 +195,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             else
                increaseRemoveHits(start);
          }
-         return null;
       });
    }
 

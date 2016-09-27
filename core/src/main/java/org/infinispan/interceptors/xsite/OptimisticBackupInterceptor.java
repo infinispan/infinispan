@@ -1,11 +1,10 @@
 package org.infinispan.interceptors.xsite;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
 
 /**
@@ -17,12 +16,12 @@ import org.infinispan.remoting.transport.BackupResponse;
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!shouldInvokeRemoteTxCommand(ctx))
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       BackupResponse backupResponse = backupSender.backupCommit(command);
@@ -30,12 +29,12 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!shouldRollbackRemoteTxCommand(ctx))
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       BackupResponse backupResponse = backupSender.backupRollback(command);

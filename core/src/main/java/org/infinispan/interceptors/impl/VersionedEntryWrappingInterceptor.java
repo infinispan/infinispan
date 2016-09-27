@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -15,6 +13,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
@@ -42,7 +41,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
@@ -56,11 +55,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          originVersionData = null;
       }
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null) {
-            throw throwable;
-         }
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          EntryVersionsMap newVersionData;
          if (txInvocationContext.isOriginLocal()) {
@@ -80,30 +75,33 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
             commitContextEntries(txInvocationContext, null, null);
          }
          if (newVersionData != null)
-            return CompletableFuture.completedFuture(newVersionData);
+            return newVersionData;
 
-         return null;
+         return rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (!rCtx.isOriginLocal()) {
-            VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) rCommand;
-            ((TxInvocationContext<?>) rCtx).getCacheTransaction()
-                  .setUpdatedEntryVersions(versionedCommitCommand.getUpdatedVersions());
-         }
-         commitContextEntries(rCtx, null, null);
-         return null;
-      });
-
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
-      if (ctx.isOriginLocal()) {
-         versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
-      }
+      try {
+         if (ctx.isOriginLocal()) {
+            versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+         }
 
-      return ctx.continueInvocation();
+         return invokeNext(ctx, command).handle(
+               (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
+      } finally {
+         doCommit(ctx, versionedCommitCommand);
+      }
+   }
+
+   private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {
+      if (!rCtx.isOriginLocal()) {
+         ((TxInvocationContext<?>) rCtx).getCacheTransaction().setUpdatedEntryVersions(
+               versionedCommitCommand.getUpdatedVersions());
+      }
+      commitContextEntries(rCtx, null, null);
    }
 
    @Override

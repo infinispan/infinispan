@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.transaction.Status;
@@ -18,6 +17,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -47,7 +47,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -102,9 +104,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private boolean useVersioning;
    private boolean statisticsEnabled;
 
-   private ForkReturnHandler shortCircuitForkReturnHandler =
-         (ctx, command, rv, throwable) -> shortCircuitOrThrow(ctx, rv, throwable);
-
    @Inject
    public void init(TransactionTable txTable, Configuration configuration, RpcManager rpcManager,
                     RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache<K, V> cache,
@@ -124,12 +123,11 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return handlePrepareCommand(ctx, command, shortCircuitForkReturnHandler);
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return handlePrepareCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> handlePrepareCommand(TxInvocationContext ctx, PrepareCommand command,
-         ForkReturnHandler continuation) throws Throwable {
+   private InvocationStage handlePrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       // Debugging for ISPN-5379
       ctx.getCacheTransaction().freezeModifications();
 
@@ -137,257 +135,242 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (this.statisticsEnabled) prepares.incrementAndGet();
       if (!ctx.isOriginLocal()) {
          ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
+         return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+            if (!rCtx.isOriginLocal()) {
+               return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
+                     (AbstractTransactionBoundaryCommand) rCommand);
+            }
+
+            return stage;
+         }).thenAccept((rCtx, rCommand, rv) -> {
+            PrepareCommand prepareCommand = (PrepareCommand) rCommand;
+            if (prepareCommand.isOnePhaseCommit()) {
+               txTable.remoteTransactionCommitted(prepareCommand.getGlobalTransaction(), true);
+            } else {
+               txTable.remoteTransactionPrepared(prepareCommand.getGlobalTransaction());
+            }
+         });
       } else {
          if (ctx.getCacheTransaction().hasModification(ClearCommand.class)) {
             throw new IllegalStateException("No ClearCommand is allowed in Transaction.");
          }
+         return invokeNext(ctx, command);
       }
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
-         if (!rCtx.isOriginLocal()) {
-            ForkReturnHandler newContinuation = (rCtx1, rCommand1, rv1, throwable1) -> {
-               if (throwable == null && !rCtx1.isOriginLocal()) {
-                  // rCommand and rCommand1 are sometimes CommitCommands
-                  if (command.isOnePhaseCommit()) {
-                     txTable.remoteTransactionCommitted(command.getGlobalTransaction(), true);
-                  } else {
-                     txTable.remoteTransactionPrepared(command.getGlobalTransaction());
-                  }
-               }
-               return continuation.handle(rCtx1, rCommand1, rv1, throwable1);
-            };
-
-            return verifyRemoteTransaction((RemoteTxInvocationContext) rCtx, command, newContinuation, rv,
-                  throwable);
-         }
-
-         return continuation.handle(rCtx, rCommand, rv, throwable);
-      });
-   }
-
-   private CompletableFuture<Void> shortCircuitOrThrow(InvocationContext ctx, Object rv, Throwable throwable)
-         throws Throwable {
-      if (throwable != null) {
-         throw throwable;
-      }
-      return ctx.shortCircuit(rv);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
       if (!ctx.isOriginLocal()) {
          GlobalTransaction gtx = ctx.getGlobalTransaction();
          if (txTable.isTransactionCompleted(gtx)) {
             if (trace) log.tracef("Transaction %s already completed, skipping commit", gtx);
-            return ctx.shortCircuit(null);
+            return returnWith(null);
          }
 
          if (!isTotalOrder) {
-            return replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx, command.getTopologyId(),
-                  (rCtx, rCommand, rv, throwable) -> finishCommit((TxInvocationContext<?>) rCtx));
+            InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
+                  command.getTopologyId());
+            if (replayStage != null) {
+               return replayStage.compose(
+                     (stage, rCtx, rCommand, rv, t) -> finishCommit((TxInvocationContext<?>) rCtx, command));
+            } else {
+               return finishCommit(ctx, command);
+            }
          }
       }
 
-      return finishCommit(ctx);
+      return finishCommit(ctx, command);
    }
 
-   private CompletableFuture<Void> finishCommit(TxInvocationContext<?> ctx) {
+   private InvocationStage finishCommit(TxInvocationContext<?> ctx, VisitableCommand command) {
       GlobalTransaction gtx = ctx.getGlobalTransaction();
       if (this.statisticsEnabled) commits.incrementAndGet();
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            if (!rCtx.isOriginLocal() || isTotalOrder) {
-               txTable.remoteTransactionCommitted(gtx, false);
-            }
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         if (!rCtx.isOriginLocal() || isTotalOrder) {
+            txTable.remoteTransactionCommitted(gtx, false);
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
          // the recovery info here
          if (recoveryManager != null) {
             GlobalTransaction gtx = ((RollbackCommand) rCommand).getGlobalTransaction();
             recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier) gtx).getXid());
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+         throws Throwable {
       enlistIfNeeded(ctx);
 
       if (ctx.isOriginLocal()) {
          command.setGlobalTransaction(ctx.getGlobalTransaction());
       }
 
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
          if (!rCtx.isOriginLocal()) {
-            return verifyRemoteTransaction((RemoteTxInvocationContext) rCtx,
-                  (AbstractTransactionBoundaryCommand) rCommand,
-                  shortCircuitForkReturnHandler, rv, throwable);
+            return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
+                  (AbstractTransactionBoundaryCommand) rCommand);
          }
-         return shortCircuitOrThrow(rCtx, rv, throwable);
+         return stage;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return ctx.continueInvocation();
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitSizeCommand(InvocationContext ctx, SizeCommand command)
-         throws Throwable {
+   public BasicInvocationStage visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
-         throws Throwable {
+   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null && rCtx.isInTxScope()) {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         if (rCtx.isInTxScope()) {
             CacheSet<K> set = (CacheSet<K>) rv;
-            return CompletableFuture.completedFuture(
-                  new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache,
-                        (LocalFlagAffectedCommand) rCommand), set) {
-                     @Override
-                     public CloseableIterator<K> iterator() {
-                        return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
-                              (TxInvocationContext<LocalTransaction>) rCtx, cache);
-                     }
-
-                     @Override
-                     public CloseableSpliterator<K> spliterator() {
-                        Spliterator<K> parentSpliterator = super.spliterator();
-                        long estimateSize =
-                              parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
-                        // This is an overestimate for size if we have looked up entries that don't map to
-                        // this node
-                        return new IteratorAsSpliterator.Builder<>(iterator())
-                              .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
-                              .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
-                                    Spliterator.NONNULL).get();
-                     }
-
-                     @Override
-                     public int size() {
-                        long size = stream().count();
-                        if (size > Integer.MAX_VALUE) {
-                           return Integer.MAX_VALUE;
-                        }
-                        return (int) size;
+            return new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, (LocalFlagAffectedCommand) rCommand), set) {
+               @Override
+               public CloseableIterator<K> iterator() {
+                  return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
+                        (TxInvocationContext<LocalTransaction>) rCtx, cache);
                }
-                  });
+
+               @Override
+               public CloseableSpliterator<K> spliterator() {
+                  Spliterator<K> parentSpliterator = super.spliterator();
+                  long estimateSize =
+                        parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
+                  // This is an overestimate for size if we have looked up entries that don't map to
+                  // this node
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                        .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
+                        .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
+                              Spliterator.NONNULL).get();
+               }
+
+               @Override
+               public int size() {
+                  long size = stream().count();
+                  if (size > Integer.MAX_VALUE) {
+                     return Integer.MAX_VALUE;
+                  }
+                  return (int) size;
+               }
+            };
          }
-         return null;
+         return rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
-         throws Throwable {
+   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null && rCtx.isInTxScope()) {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         if (rCtx.isInTxScope()) {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
-            return CompletableFuture.completedFuture(
-                  new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache,
-                        (LocalFlagAffectedCommand) rCommand), set) {
-                     @Override
-                     public CloseableIterator<CacheEntry<K, V>> iterator() {
-                        return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
-                              (TxInvocationContext<LocalTransaction>) rCtx, cache);
-                     }
+            return new AbstractDelegatingEntryCacheSet<K, V>(
+                  Caches.getCacheWithFlags(cache, (LocalFlagAffectedCommand) rCommand), set) {
+               @Override
+               public CloseableIterator<CacheEntry<K, V>> iterator() {
+                  return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
+                        (TxInvocationContext<LocalTransaction>) rCtx, cache);
+               }
 
-                     @Override
-                     public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-                        Spliterator<CacheEntry<K, V>> parentSpliterator = super.spliterator();
-                        long estimateSize =
-                              parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
-                        // This is an overestimate for size if we have looked up entries that don't map to
-                        // this node
-                        return new IteratorAsSpliterator.Builder<>(iterator())
-                              .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
-                              .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
-                                    Spliterator.NONNULL).get();
-                     }
+               @Override
+               public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+                  Spliterator<CacheEntry<K, V>> parentSpliterator = super.spliterator();
+                  long estimateSize =
+                        parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
+                  // This is an overestimate for size if we have looked up entries that don't map to
+                  // this node
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                        .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
+                        .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
+                              Spliterator.NONNULL).get();
+               }
 
-                     @Override
-                     public int size() {
-                        long size = stream().count();
-                        if (size > Integer.MAX_VALUE) {
-                           return Integer.MAX_VALUE;
-                        }
-                        return (int) size;
-                     }
-                  });
+               @Override
+               public int size() {
+                  long size = stream().count();
+                  if (size > Integer.MAX_VALUE) {
+                     return Integer.MAX_VALUE;
+                  }
+                  return (int) size;
+               }
+            };
          }
-         return null;
+         return rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx,
-         InvalidateCommand invalidateCommand) throws Throwable {
+   public BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand)
+         throws Throwable {
       return handleWriteCommand(ctx, invalidateCommand);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx,
-         GetCacheEntryCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
@@ -396,8 +379,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
    }
 
-   private CompletableFuture<Void> handleWriteCommand(InvocationContext ctx, WriteCommand command)
-         throws Throwable {
+   private BasicInvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
          LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
          boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();
@@ -406,10 +388,10 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             command.addFlag(Flag.SKIP_LOCKING);
          }
       }
-      return ctx.onReturn((rCtx, rCommand, rv1, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          // We shouldn't mark the transaction for rollback if it's going to be retried
          WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (throwable != null && !(throwable instanceof OutdatedTopologyException)) {
+         if (t != null && !(t instanceof OutdatedTopologyException)) {
             // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
             if (rCtx.isOriginLocal() && rCtx.isInTxScope() && !writeCommand.hasFlag(Flag.FAIL_SILENTLY)) {
                TxInvocationContext txCtx = (TxInvocationContext) rCtx;
@@ -420,7 +402,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             TxInvocationContext<LocalTransaction> txContext = (TxInvocationContext<LocalTransaction>) rCtx;
             txContext.getCacheTransaction().addModification(writeCommand);
          }
-         return null;
       });
    }
 
@@ -511,9 +492,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       return rollbacks.get();
    }
 
-   private CompletableFuture<Void> verifyRemoteTransaction(RemoteTxInvocationContext ctx,
-         AbstractTransactionBoundaryCommand command, ForkReturnHandler continuation, Object rv,
-         Throwable throwable) throws Throwable {
+   private BasicInvocationStage verifyRemoteTransaction(BasicInvocationStage stage, RemoteTxInvocationContext ctx,
+         AbstractTransactionBoundaryCommand command) throws Throwable {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
       // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
@@ -550,7 +530,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                        globalTransaction, alreadyCompleted, originatorMissing);
          }
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
-         return ctx.forkInvocation(rollback, (rCtx, rCommand, rv1, throwable1) -> {
+         return invokeNext(ctx, rollback).handle((rCtx, rCommand, rv1, throwable1) -> {
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();
             remoteTx.markForRollback(true);
             txTable.removeRemoteTransaction(globalTransaction);
@@ -560,15 +540,14 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                   throw log.orphanTransactionRolledBack(globalTransaction);
                }
             }
-            return continuation.handle(rCtx, rCommand, rv1, throwable1);
          });
       }
 
-      return continuation.handle(ctx, command, rv, throwable);
+      return stage;
    }
 
-   private CompletableFuture<Void> replayRemoteTransactionIfNeeded(RemoteTxInvocationContext ctx,
-         int topologyId, ForkReturnHandler continuation) throws Throwable {
+   private InvocationStage replayRemoteTransactionIfNeeded(RemoteTxInvocationContext ctx, int topologyId)
+         throws Throwable {
       // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
       // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
       // was not received by local node because it was executed on the previous key owners. We need to re-prepare
@@ -590,9 +569,9 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             log.tracef("Replaying the transactions received as a result of state transfer %s",
                   prepareCommand);
          }
-         return handlePrepareCommand(ctx, prepareCommand, continuation);
+         return handlePrepareCommand(ctx, prepareCommand);
       }
-      return continuation.handle(ctx, null, null, null);
+      return null;
    }
 
    static class TransactionAwareKeyCloseableIterator<K, V> extends TransactionAwareCloseableIterator<K, K, V> {

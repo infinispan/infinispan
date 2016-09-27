@@ -47,21 +47,16 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
       tm(0).begin();
 
       MyDelta d = new MyDelta();
-      d.setCreator();
 
       cache(0).put("k", d);
 
       tm(0).commit();
-
    }
 
    private static class MyDelta implements Delta , Serializable {
-      transient Thread creator;
-
-      public void setCreator() {creator = Thread.currentThread();}
-
       public DeltaAware merge(DeltaAware d) {
-         if (creator != Thread.currentThread())
+         String threadName = Thread.currentThread().getName();
+         if (threadName.contains("OOB-") || threadName.contains("remote-"))
             throw new RuntimeException("Induced!");
          return new AtomicHashMap();
       }

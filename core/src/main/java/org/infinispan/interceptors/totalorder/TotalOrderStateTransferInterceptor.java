@@ -1,9 +1,11 @@
 package org.infinispan.interceptors.totalorder;
 
-import java.util.concurrent.CompletableFuture;
-
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -21,14 +23,14 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
    private static final boolean trace = log.isTraceEnabled();
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return localPrepare(ctx, command);
       }
       return remotePrepare(ctx, command);
    }
 
-   private CompletableFuture<Void> remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private InvocationStage remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final int topologyId = currentTopologyId();
       ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
@@ -47,10 +49,10 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
          throw new IllegalStateException("This should never happen");
       }
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
-   private CompletableFuture<Void> localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private BasicInvocationStage localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       command.setTopologyId(currentTopologyId());
 
       if (trace) {
@@ -58,34 +60,30 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
                command.getGlobalTransaction().globalId(), command.getTopologyId());
       }
 
-      return ctx.forkInvocation(command,
-            (rCtx, rCommand, rv, throwable1) -> handleLocalPrepareReturn(((TxInvocationContext) rCtx),
-                  (PrepareCommand) rCommand, rv, throwable1));
+      return invokeNext(ctx, command).compose(this::handleLocalPrepareReturn);
    }
 
-   private CompletableFuture<Void> handleLocalPrepareReturn(TxInvocationContext ctx, PrepareCommand command,
-         Object rv, Throwable throwable) throws Throwable {
-      if (throwable == null)
-         return ctx.shortCircuit(rv);
+   private BasicInvocationStage handleLocalPrepareReturn(BasicInvocationStage invocation, InvocationContext ctx,
+                                                         VisitableCommand command, Object rv, Throwable t)
+         throws Throwable {
+      if (t == null) return invocation;
 
-      //if we receive a RetryPrepareException it was because the prepare was delivered during a state
-      // transfer.
-      //Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the
+      // If we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
+      // Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the
       // prepares are unblocked after the rebalance has finished.
-      boolean needsToPrepare = needsToRePrepare(throwable);
+      boolean needsToPrepare = needsToRePrepare(t);
+      PrepareCommand prepareCommand = (PrepareCommand) command;
       if (log.isDebugEnabled()) {
          log.tracef("Exception caught while preparing transaction %s (cause = %s). Needs to retransmit? %s",
-               command.getGlobalTransaction().globalId(), throwable.getCause(), needsToPrepare);
+               prepareCommand.getGlobalTransaction().globalId(), t.getCause(), needsToPrepare);
       }
 
       if (!needsToPrepare) {
-         throw throwable;
+         throw t;
       } else {
          logRetry(command);
-         command.setTopologyId(currentTopologyId());
-         return ctx.forkInvocation(command,
-               (rCtx, rCommand, rv1, throwable1) -> handleLocalPrepareReturn(((TxInvocationContext) rCtx),
-                     (PrepareCommand) rCommand, rv1, throwable1));
+         prepareCommand.setTopologyId(currentTopologyId());
+         return invokeNext(ctx, command).compose(this::handleLocalPrepareReturn);
       }
    }
 

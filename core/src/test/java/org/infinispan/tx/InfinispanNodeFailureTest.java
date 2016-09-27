@@ -4,7 +4,6 @@ import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -79,8 +79,8 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       advancedCache(1, TEST_CACHE).getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
 
          @Override
-         public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-            return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+            return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
                LockControlCommand cmd = (LockControlCommand) rCommand;
                if (putKey.equals(cmd.getSingleKey())) {
                   // notify main thread it can start killing third node
@@ -88,7 +88,6 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
                   // wait for completion and proceed
                   afterKill.await(10, TimeUnit.SECONDS);
                }
-               return null;
             });
          }
       }, 1);

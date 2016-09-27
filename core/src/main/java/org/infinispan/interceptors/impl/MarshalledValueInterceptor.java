@@ -10,7 +10,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -37,7 +36,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationReturnValueHandler;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -69,14 +71,10 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(MarshalledValueInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final ReturnHandler processRetValReturnHandler = new ReturnHandler() {
+   private final InvocationReturnValueHandler processRetValReturnHandler = new InvocationReturnValueHandler() {
       @Override
-      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
-         if (throwable != null)
-            throw throwable;
-
-         return CompletableFuture.completedFuture(processRetVal(rv, rCtx));
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+         return processRetVal(rv, rCtx);
       }
    };
 
@@ -95,7 +93,7 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (wrapKeys) {
          if (command.multipleKeys()) {
             Collection<Object> rawKeys = command.getKeys();
@@ -111,19 +109,19 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
          }
       }
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>(command.getMap().size());
       Map<Object, Object> map = wrapMap(command.getMap(), marshalledValues, ctx);
       command.setMap(map);
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       MarshalledValue key;
       MarshalledValue value;
       if (wrapKeys) {
@@ -140,11 +138,11 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
          }
       }
 
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       MarshalledValue value;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
@@ -152,11 +150,11 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
             command.setKey(value);
          }
       }
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, org.infinispan.commands.write.EvictCommand command) throws Throwable {
+   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, org.infinispan.commands.write.EvictCommand command) throws Throwable {
       MarshalledValue value;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
@@ -164,18 +162,18 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
             command.setKey(value);
          }
       }
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
    @Override
-   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
-   private CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private InvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       MarshalledValue mv;
       if (wrapKeys) {
          if (!isTypeExcluded(command.getKey().getClass())) {
@@ -183,11 +181,11 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
             command.setKey(mv);
          }
       }
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (wrapKeys) {
          Set<Object> marshalledKeys = new LinkedHashSet<>();
          for (Object key : command.getKeys()) {
@@ -200,22 +198,19 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
          }
          command.setKeys(marshalledKeys);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          Map<Object, Object> map = (Map<Object, Object>) rv;
          Map<Object, Object> unmarshalled = ((GetAllCommand) rCommand).createMap();
          for (Map.Entry<Object, Object> entry : map.entrySet()) {
             // TODO: how does this apply to CacheEntries if command.isReturnEntries()?
             unmarshalled.put(processRetVal(entry.getKey(), rCtx), processRetVal(entry.getValue(), rCtx));
          }
-         return CompletableFuture.completedFuture(unmarshalled);
+         return unmarshalled;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       MarshalledValue key, newValue, oldValue;
       if (wrapKeys && !isTypeExcluded(command.getKey().getClass())) {
          key = createMarshalledValue(command.getKey(), ctx);
@@ -229,7 +224,7 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
          oldValue = createMarshalledValue(command.getOldValue(), ctx);
          command.setOldValue(oldValue);
       }
-      return ctx.onReturn(processRetValReturnHandler);
+      return invokeNext(ctx, command).thenApply(processRetValReturnHandler);
    }
 
    protected <R> R processRetVal(R retVal, InvocationContext ctx) {
@@ -254,60 +249,52 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
 
-         return CompletableFuture.completedFuture(
-               new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache,
-                     ((EntrySetCommand) rCommand)), set) {
-                  @Override
-                  public CloseableIterator<CacheEntry<K, V>> iterator() {
-                     // We pass a null ctx, since we always want this value unwrapped.
-                     // If iterator was invoked locally, it would
-                     // behave the same, however for a remote invocation which is usually part of a stream
-                     // invocation we have
-                     // to have the actual unmarshalled value to perform the intermediate operations upon.
-                     return new CloseableIteratorMapper<>(super.iterator(), e -> unwrapEntry(e, null));
-                  }
+         return new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache,
+               ((EntrySetCommand) rCommand)), set) {
+            @Override
+            public CloseableIterator<CacheEntry<K, V>> iterator() {
+               // We pass a null ctx, since we always want this value unwrapped.
+               // If iterator was invoked locally, it would
+               // behave the same, however for a remote invocation which is usually part of a stream
+               // invocation we have
+               // to have the actual unmarshalled value to perform the intermediate operations upon.
+               return new CloseableIteratorMapper<>(super.iterator(), e -> unwrapEntry(e, null));
+            }
 
-                  @Override
-                  public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-                     return new IteratorAsSpliterator.Builder<>(iterator())
-                           .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
-                                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
-                  }
-               });
+            @Override
+            public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                     .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
+                           Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+            }
+         };
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          CacheSet<K> set = (CacheSet<K>) rv;
-         return CompletableFuture.completedFuture(
-               new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache,
-                     ((KeySetCommand) rCommand)), set) {
-                  @Override
-                  public CloseableIterator<K> iterator() {
-                     // We pass a null ctx, since this is always local invocation - if it was remote it would
-                     // use DistributionBulkInterceptor
-                     return new CloseableIteratorMapper<>(super.iterator(), e -> processRetVal(e, null));
-                  }
+         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache,
+               ((KeySetCommand) rCommand)), set) {
+            @Override
+            public CloseableIterator<K> iterator() {
+               // We pass a null ctx, since this is always local invocation - if it was remote it would
+               // use DistributionBulkInterceptor
+               return new CloseableIteratorMapper<>(super.iterator(), e -> processRetVal(e, null));
+            }
 
-                  @Override
-                  public CloseableSpliterator<K> spliterator() {
-                     return new IteratorAsSpliterator.Builder<>(iterator())
-                           .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
-                                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
-                  }
-               });
+            @Override
+            public CloseableSpliterator<K> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                     .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
+                           Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+            }
+         };
       });
    }
 

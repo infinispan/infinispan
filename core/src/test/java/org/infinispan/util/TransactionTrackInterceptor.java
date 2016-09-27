@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -18,6 +17,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -67,39 +68,35 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          if (rCtx.isOriginLocal()) {
             addLocalTransaction(CLEAR_TRANSACTION);
             //in total order, the transactions are self delivered. So, we simulate the self-deliver of the clear command.
             seen(CLEAR_TRANSACTION, false);
          }
          seen(CLEAR_TRANSACTION, rCtx.isOriginLocal());
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
-         return null;
       });
    }
 
@@ -156,13 +153,12 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   protected InvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          if (rCtx.isOriginLocal() && rCtx.isInTxScope()) {
             GlobalTransaction globalTransaction = ((TxInvocationContext) rCtx).getGlobalTransaction();
             addLocalTransaction(globalTransaction);
          }
-         return null;
       });
    }
 
