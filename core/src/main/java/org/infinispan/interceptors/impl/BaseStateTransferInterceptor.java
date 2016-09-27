@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -10,6 +9,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -46,18 +46,18 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       final boolean isOwner = groupManager.isOwner(groupName);
       updateTopologyId(command);
       final int commandTopologyId = command.getTopologyId();
 
       if (ctx.isOriginLocal()) {
-         return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
             boolean shouldRetry;
-            if (throwable != null) {
+            if (t != null) {
                // Must retry if we got an OutdatedTopologyException or SuspectException
-               Throwable ce = throwable;
+               Throwable ce = t;
                while (ce instanceof RemoteException) {
                   ce = ce.getCause();
                }
@@ -70,20 +70,19 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
                return retryVisitGetKeysInGroupCommand(ctx, command, commandTopologyId);
             }
             // No retry, either rethrow the exception or return the current result
-            if (throwable != null) {
-               throw throwable;
+            if (t != null) {
+               throw t;
             } else {
-               return ctx.shortCircuit(rv);
+               return returnWith(rv);
             }
          });
       } else {
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
             if (isOwner && currentTopologyId() != commandTopologyId) {
                throw new OutdatedTopologyException(
                      "Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId());
             }
-            return null;
          });
       }
    }
@@ -118,7 +117,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private CompletableFuture<Void> retryVisitGetKeysInGroupCommand(InvocationContext context, GetKeysInGroupCommand command,
+   private BasicInvocationStage retryVisitGetKeysInGroupCommand(InvocationContext context, GetKeysInGroupCommand command,
                                                   int commandTopologyId) throws Throwable {
       logRetry(command);
       // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.

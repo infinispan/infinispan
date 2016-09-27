@@ -5,7 +5,6 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.read.GetAllCommand;
@@ -17,6 +16,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -46,12 +46,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return ctx.onReturn(unlockAllReturnHandler);
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
@@ -60,21 +60,20 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (ctx.isInTxScope())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
-      return ctx.onReturn(unlockAllReturnHandler);
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable instanceof OutdatedTopologyException)
-            throw throwable;
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+         if (t instanceof OutdatedTopologyException)
+            throw t;
 
          releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-         return null;
       });
    }
 

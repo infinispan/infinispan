@@ -23,6 +23,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,7 +47,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
 
    // Modifications are guarded with "lock", but reads do not need synchronization
    private volatile List<AsyncInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
-   private volatile InterceptorListNode firstInterceptor = null;
+   private volatile AsyncInterceptor firstInterceptor = null;
 
    public AsyncInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
@@ -227,13 +228,21 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
 
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
-      return ((BaseAsyncInvocationContext) ctx).invoke(command, firstInterceptor);
+      try {
+         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
+         return stage.toCompletableFuture();
+      } catch (Throwable t) {
+         CompletableFuture<Object> cf = new CompletableFuture<>();
+         cf.completeExceptionally(t);
+         return cf;
+      }
    }
 
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         return ((BaseAsyncInvocationContext) ctx).invokeSync(command, firstInterceptor);
+         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
+         return stage.get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -318,11 +327,14 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    }
 
    private void rebuildInterceptors() {
-      InterceptorListNode node = null;
       ListIterator<AsyncInterceptor> it = interceptors.listIterator(interceptors.size());
+      // The CallInterceptor
+      AsyncInterceptor nextInterceptor = it.previous();
       while (it.hasPrevious()) {
-         node = new InterceptorListNode(it.previous(), node);
+         AsyncInterceptor interceptor = it.previous();
+         interceptor.setNextInterceptor(nextInterceptor);
+         nextInterceptor = interceptor;
       }
-      this.firstInterceptor = node;
+      this.firstInterceptor = nextInterceptor;
    }
 }

@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -35,6 +34,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -76,119 +77,119 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
          throws Throwable {
       return handleTxCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command)
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command)
          throws Throwable {
       return handleTxCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command)
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command)
          throws Throwable {
       return handleTxCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       return handleTxCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command)
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command)
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command)
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
+   public BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
+   public BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
          throws Throwable {
       // no need to forward this command
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command)
+   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command)
          throws Throwable {
       // it's not necessary to propagate eviction to the new owners in case of state transfer
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitReadCommand(ctx, command, NOP);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       return visitReadCommand(ctx, command, NOP);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       return visitReadCommand(ctx, command, command::setConsistentHash);
    }
 
-   private CompletableFuture<Void> visitReadCommand(InvocationContext ctx, FlagAffectedCommand command,
+   private InvocationStage visitReadCommand(InvocationContext ctx, FlagAffectedCommand command,
          Consumer<ConsistentHash> consistentHashUpdater) throws Throwable {
       if (isLocalOnly(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
       consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
       updateTopologyId(command);
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null)
-            return rCtx.shortCircuit(rv);
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+         if (t == null)
+            return stage;
 
-         Throwable ce = throwable;
+         Throwable ce = t;
          while (ce instanceof RemoteException) {
             ce = ce.getCause();
          }
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw throwable;
+            throw t;
 
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
@@ -205,24 +206,24 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx,
+   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx,
          ReadWriteKeyValueCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
+   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       return visitReadCommand(ctx, command, NOP);
    }
 
    @Override
-   public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       return visitReadCommand(ctx, command, NOP);
    }
 
@@ -230,33 +231,33 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * Special processing required for transaction commands.
     *
     */
-   private CompletableFuture<Void> handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
+   private BasicInvocationStage handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
       // For local commands we may not have a GlobalTransaction yet
       Address origin = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
       if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       updateTopologyId(command);
 
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
          Object localResult = rv;
          TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) rCommand;
 
          int retryTopologyId = -1;
-         if (throwable instanceof OutdatedTopologyException) {
+         if (t instanceof OutdatedTopologyException) {
             // This can only happen on the originator
             retryTopologyId = Math.max(currentTopologyId(), txCommand.getTopologyId() + 1);
-         } else if (throwable != null) {
-            throw throwable;
+         } else if (t != null) {
+            throw t;
          }
 
          // We need to forward the command to the new owners, if the command was asynchronous
          boolean async = isTxCommandAsync(txCommand);
          if (async) {
             stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(rCtx, txCommand), origin);
-            return rCtx.shortCircuit(rv);
+            return stage;
          }
 
          if (rCtx.isOriginLocal()) {
@@ -282,7 +283,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                localResult = UnsureResponse.INSTANCE;
             }
          }
-         return rCtx.shortCircuit(localResult);
+         return returnWith(localResult);
       });
    }
 
@@ -296,7 +297,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return async;
    }
 
-   protected CompletableFuture<Void> handleWriteCommand(InvocationContext ctx, WriteCommand command)
+   protected BasicInvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       if (ctx.isInTxScope()) {
          return handleTxWriteCommand(ctx, command);
@@ -305,24 +306,24 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
    }
 
-   private CompletableFuture<Void> handleTxWriteCommand(InvocationContext ctx, WriteCommand command)
+   private BasicInvocationStage handleTxWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       Address origin = ctx.getOrigin();
       if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       updateTopologyId(command);
 
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
          int retryTopologyId = -1;
          WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (throwable instanceof OutdatedTopologyException) {
+         if (t instanceof OutdatedTopologyException) {
             // This can only happen on the originator
             retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
-         } else if (throwable != null) {
-            throw throwable;
+         } else if (t != null) {
+            throw t;
          }
 
          if (rCtx.isOriginLocal()) {
@@ -341,10 +342,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          } else {
             if (currentTopologyId() > writeCommand.getTopologyId()) {
                // Signal the originator to retry
-               return rCtx.shortCircuit(UnsureResponse.INSTANCE);
+               return returnWith(UnsureResponse.INSTANCE);
             }
          }
-         return rCtx.shortCircuit(rv);
+         return stage;
       });
    }
 
@@ -353,31 +354,31 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * But we only retry on the originator, and only if the command doesn't have
     * the {@code CACHE_MODE_LOCAL} flag.
     */
-   private CompletableFuture<Void> handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command)
+   private BasicInvocationStage handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
       if (isLocalOnly(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       updateTopologyId(command);
 
       // Only catch OutdatedTopologyExceptions on the originator
       if (!ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
-      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null)
-            return rCtx.shortCircuit(rv);
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+         if (t == null)
+            return stage;
 
-         Throwable ce = throwable;
+         Throwable ce = t;
          while (ce instanceof RemoteException) {
             ce = ce.getCause();
          }
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw throwable;
+            throw t;
 
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
          // next topology.
@@ -399,25 +400,25 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command)
+   public BasicInvocationStage handleDefault(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
       if (command instanceof TopologyAffectedCommand) {
          return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
       } else {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
    }
 
-   private CompletableFuture<Void> handleTopologyAffectedCommand(InvocationContext ctx,
+   private BasicInvocationStage handleTopologyAffectedCommand(InvocationContext ctx,
          VisitableCommand command, Address origin) throws Throwable {
       if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       updateTopologyId((TopologyAffectedCommand) command);
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private boolean isLocalOnly(VisitableCommand command) {

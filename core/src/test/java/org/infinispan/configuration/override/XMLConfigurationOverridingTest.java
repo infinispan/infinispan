@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.TransactionManager;
 
@@ -28,6 +27,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -500,9 +500,9 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       private boolean putOkay;
 
       @Override
-      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       private boolean isRightType(InvocationContext ctx) {

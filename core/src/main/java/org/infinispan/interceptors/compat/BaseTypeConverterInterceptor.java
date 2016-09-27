@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
@@ -35,6 +34,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
@@ -73,7 +73,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    protected abstract TypeConverter<Object, Object, Object, Object> determineTypeConverter(Set<Flag> flags);
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitPutKeyValueCommand(ctx, command);
       }
@@ -81,79 +81,63 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(command.getValue()));
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
-         return CompletableFuture.completedFuture(converter.unboxValue(rv));
-      });
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> converter.unboxValue(rv));
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Map<Object, Object> map = command.getMap();
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
          Map<Object, Object> convertedMap = new HashMap<>(map.size());
          for (Entry<Object, Object> entry : map.entrySet()) {
-            convertedMap.put(converter.boxKey(entry.getKey()),
-                  converter.boxValue(entry.getValue()));
+            convertedMap.put(converter.boxKey(entry.getKey()), converter.boxValue(entry.getValue()));
          }
          command.setMap(convertedMap);
       }
-      return super.visitPutMapCommand(ctx, command);
+      // There is no return value for putAll so nothing to convert
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         return super.visitGetKeyValueCommand(ctx, command);
-      }
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
+
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       command.setKey(converter.boxKey(key));
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rv == null) {
-            // Preserves the original return value
-            return null;
+            return rv;
          }
-         return CompletableFuture.completedFuture(converter.unboxValue(rv));
+         return converter.unboxValue(rv);
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         return super.visitGetCacheEntryCommand(ctx, command);
-      }
+   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
+      if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
+
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       command.setKey(converter.boxKey(key));
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rv == null) {
-            // Preserves the original return value
-            return null;
+            return rv;
          }
          CacheEntry entry = (CacheEntry) rv;
          Object returnValue = converter.unboxValue(entry.getValue());
          // Create a copy of the entry to avoid modifying the internal entry
-         return CompletableFuture.completedFuture(entryFactory
-               .create(entry.getKey(), returnValue, entry.getMetadata(), entry.getLifespan(),
-                     entry.getMaxIdle()));
+         return entryFactory.create(entry.getKey(), returnValue, entry.getMetadata(), entry.getLifespan(),
+               entry.getMaxIdle());
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         return super.visitGetAllCommand(ctx, command);
-      }
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
+
       Collection<?> keys = command.getKeys();
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       Set<Object> boxedKeys = new LinkedHashSet<>(keys.size());
@@ -161,10 +145,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          boxedKeys.add(converter.boxKey(key));
       }
       command.setKeys(boxedKeys);
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rv == null) {
             return null;
          }
@@ -187,22 +168,21 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
                   }
                }
             }
-            return CompletableFuture.completedFuture(unboxed);
+            return unboxed;
          } else {
             Map<Object, Object> map = (Map<Object, Object>) rv;
             Map<Object, Object> unboxed = command.createMap();
             for (Entry<Object, Object> entry : map.entrySet()) {
-               Object value = entry == null ? null : entry.getValue();
-               unboxed.put(converter.unboxKey(entry.getKey()),
-                     entry == null ? null : converter.unboxValue(value));
+               Object value = entry.getValue();
+               unboxed.put(converter.unboxKey(entry.getKey()), value == null ? null : converter.unboxValue(value));
             }
-            return CompletableFuture.completedFuture(unboxed);
+            return unboxed;
          }
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitReplaceCommand(ctx, command);
       }
@@ -213,32 +193,26 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       command.setOldValue(converter.boxValue(oldValue));
       command.setNewValue(converter.boxValue(command.getNewValue()));
       addVersionIfNeeded(command);
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          // Return of conditional replace is not the value type, but boolean, so
          // apply an exception that applies to all servers, regardless of what's
          // stored in the value side
-         if (oldValue != null && rv instanceof Boolean)
-            return null;
+         if (oldValue != null && rv instanceof Boolean) return rv;
 
-         return CompletableFuture.completedFuture(converter.unboxValue(rv));
+         return converter.unboxValue(rv);
       });
    }
 
    private void addVersionIfNeeded(MetadataAwareCommand cmd) {
       Metadata metadata = cmd.getMetadata();
       if (metadata.version() == null) {
-         Metadata newMetadata = metadata.builder()
-               .version(versionGenerator.generateNew())
-               .build();
+         Metadata newMetadata = metadata.builder().version(versionGenerator.generateNew()).build();
          cmd.setMetadata(newMetadata);
       }
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitRemoveCommand(ctx, command);
       }
@@ -247,117 +221,98 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       Object conditionalValue = command.getValue();
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(conditionalValue));
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          // Return of conditional remove is not the value type, but boolean, so
          // apply an exception that applies to all servers, regardless of what's
          // stored in the value side
-         if (conditionalValue != null && rv instanceof Boolean)
-            return null;
+         if (conditionalValue != null && rv instanceof Boolean) return rv;
 
-         return CompletableFuture.completedFuture(converter.unboxValue(rv));
+         return ctx.isOriginLocal() ? converter.unboxValue(rv) : rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
-         throws Throwable {
+   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
-         return super.visitKeySetCommand(ctx, command);
+         return invokeNext(ctx, command);
       }
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
-         KeySetCommand keySetCommand = (KeySetCommand) rCommand;
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          CacheSet<K> set = (CacheSet<K>) rv;
-         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(keySetCommand.getFlags());
-         return CompletableFuture.completedFuture(
-               new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, keySetCommand), set) {
-                  @Override
-                  public CloseableIterator<K> iterator() {
-                     return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
-                  }
+         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
+            @Override
+            public CloseableIterator<K> iterator() {
+               return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
+            }
 
-                  @Override
-                  public CloseableSpliterator<K> spliterator() {
-                     return new IteratorAsSpliterator.Builder<>(iterator())
-                           .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
-                                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
-                  }
+            @Override
+            public CloseableSpliterator<K> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator()).setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
+                     Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+            }
 
-                  @Override
-                  protected CacheStream<K> getStream(boolean parallel) {
-                     DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-                     // Note the stream has to deal with the boxed values - so we can't use our spliterator
-                     // as it already
-                     // unboxes them
-                     CloseableSpliterator<K> closeableSpliterator = super.spliterator();
-                     CacheStream<K> stream = new LocalCacheStream<>(
-                           new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
-                                 () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
-                           cache.getAdvancedCache().getComponentRegistry());
-                     // We rely on the fact that on close returns the same instance
-                     stream.onClose(closeableSpliterator::close);
-                     return new TypeConverterStream(stream, converter, entryFactory);
-                  }
-               });
+            @Override
+            protected CacheStream<K> getStream(boolean parallel) {
+               DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+               // Note the stream has to deal with the boxed values - so we can't use our spliterator
+               // as it already
+               // unboxes them
+               CloseableSpliterator<K> closeableSpliterator = super.spliterator();
+               CacheStream<K> stream = new LocalCacheStream<>(
+                     new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                           () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
+                     cache.getAdvancedCache().getComponentRegistry());
+               // We rely on the fact that on close returns the same instance
+               stream.onClose(closeableSpliterator::close);
+               return new TypeConverterStream(stream, converter, entryFactory);
+            }
+         };
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         return super.visitEntrySetCommand(ctx, command);
-      }
+   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
-
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand.getFlags());
-         CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
-         return CompletableFuture.completedFuture(
-               new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, entrySetCommand), set) {
-                  @Override
-                  public CloseableIterator<CacheEntry<K, V>> iterator() {
-                     return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
-                  }
+         return new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
+            @Override
+            public CloseableIterator<CacheEntry<K, V>> iterator() {
+               return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
+            }
 
-                  @Override
-                  public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-                     return new IteratorAsSpliterator.Builder<>(iterator())
-                           .setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
-                                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
-                  }
+            @Override
+            public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator()).setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(
+                     Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+            }
 
-                  @Override
-                  protected CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
-                     DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-                     // Note the stream has to deal with the boxed values - so we can't use our spliterator
-                     // as it already
+            @Override
+            protected CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
+               DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+               // Note the stream has to deal with the boxed values - so we can't use our spliterator
+               // as it already
 
-                     // unboxes them
-                     CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = super.spliterator();
-                     CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(
-                           new EntryStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
-                                 () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
-                           cache.getAdvancedCache().getComponentRegistry());
-                     // We rely on the fact that on close returns the same instance
-                     stream.onClose(closeableSpliterator::close);
-                     return new TypeConverterStream(stream, converter, entryFactory);
-                  }
-               });
+               // unboxes them
+               CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = super.spliterator();
+               CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(
+                     new EntryStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                           () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
+                     cache.getAdvancedCache().getComponentRegistry());
+               // We rely on the fact that on close returns the same instance
+               stream.onClose(closeableSpliterator::close);
+               return new TypeConverterStream(stream, converter, entryFactory);
+            }
+         };
       });
    }
 
    private static <K, V> CacheEntry<K, V> convert(CacheEntry<K, V> entry,
-           TypeConverter<Object, Object, Object, Object> converter, InternalEntryFactory entryFactory) {
+         TypeConverter<Object, Object, Object, Object> converter, InternalEntryFactory entryFactory) {
       K newKey = (K) converter.unboxKey(entry.getKey());
       V newValue = (V) converter.unboxValue(entry.getValue());
       // If either value changed then make a copy

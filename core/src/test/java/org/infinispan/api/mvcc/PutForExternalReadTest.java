@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +26,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
@@ -87,7 +87,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final CyclicBarrier barrier = new CyclicBarrier(2);
       cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand) {
                if (!ctx.isOriginLocal()) {
@@ -97,7 +97,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
                   barrier.await(10, TimeUnit.SECONDS);
                }
             }
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       }, 0);
 
@@ -200,12 +200,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       assertTrue(cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand || command instanceof RemoveCommand) {
                throw new RuntimeException("Barf!");
             }
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       }, CallInterceptor.class));
 

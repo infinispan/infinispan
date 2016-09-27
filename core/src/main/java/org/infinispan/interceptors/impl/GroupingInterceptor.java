@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
@@ -14,6 +13,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -44,23 +44,22 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       command.setGroupOwner(isGroupOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
             if (rv instanceof List) {
                //noinspection unchecked
                filter((List<CacheEntry>) rv);
             }
-            return null;
          });
       }
 
       KeyListener listener = new KeyListener(groupName, groupManager, factory);
       //this is just to try to make the snapshot the most recent possible by picking some modification on the fly.
       cacheNotifier.addListener(listener);
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          cacheNotifier.removeListener(listener);
 
          if (rv instanceof List) {
@@ -74,7 +73,6 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
                ((Map) rv).put(entry.getKey(), entry.getValue());
             }
          }
-         return null;
       });
    }
 

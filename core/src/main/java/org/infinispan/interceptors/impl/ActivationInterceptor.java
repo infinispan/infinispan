@@ -1,10 +1,9 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 
 /**
  * Handle activation when passivation is enabled.
@@ -14,7 +13,7 @@ import org.infinispan.context.InvocationContext;
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // Load the keys for our map into the data container that we are using removing them from the store.
       // This way when we overwrite the values on commit they won't be in loader and if we rollback they won't be
       // in the loader either but will be in data container at least

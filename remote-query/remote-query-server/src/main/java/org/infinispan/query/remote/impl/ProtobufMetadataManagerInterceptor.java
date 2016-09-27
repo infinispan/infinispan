@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -24,6 +23,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -172,22 +172,19 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            if (!rCtx.isOriginLocal()) {
-               // apply updates to the serialization context
-               for (WriteCommand wc : ((PrepareCommand) rCommand).getModifications()) {
-                  wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
-               }
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         if (!rCtx.isOriginLocal()) {
+            // apply updates to the serialization context
+            for (WriteCommand wc : ((PrepareCommand) rCommand).getModifications()) {
+               wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
             }
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       final Object key = command.getKey();
       final Object value = command.getValue();
 
@@ -209,42 +206,39 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                invoker.invoke(ctx.clone(), cmd);
             }
          } else {
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       }
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
-            if (putKeyValueCommand.isSuccessful()) {
-               FileDescriptorSource source =
-                     new FileDescriptorSource().addProtoFile((String) key, (String) value);
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+         if (putKeyValueCommand.isSuccessful()) {
+            FileDescriptorSource source =
+                  new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
-               ProgressCallback progressCallback = null;
-               if (rCtx.isOriginLocal() && !putKeyValueCommand.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
-                  progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-                  source.withProgressCallback(progressCallback);
-               } else {
-                  source.withProgressCallback(EMPTY_CALLBACK);
-               }
+            ProgressCallback progressCallback = null;
+            if (rCtx.isOriginLocal() && !putKeyValueCommand.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+               source.withProgressCallback(progressCallback);
+            } else {
+               source.withProgressCallback(EMPTY_CALLBACK);
+            }
 
-               try {
-                  serializationContext.registerProtoFiles(source);
-               } catch (IOException | DescriptorParserException e) {
-                  throw new CacheException("Failed to parse proto file : " + key, e);
-               }
+            try {
+               serializationContext.registerProtoFiles(source);
+            } catch (IOException | DescriptorParserException e) {
+               throw new CacheException("Failed to parse proto file : " + key, e);
+            }
 
-               if (progressCallback != null) {
-                  updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
-               }
+            if (progressCallback != null) {
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
             }
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(final InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(final InvocationContext ctx, PutMapCommand command) throws Throwable {
       final Map<Object, Object> map = command.getMap();
 
       FileDescriptorSource source = new FileDescriptorSource();
@@ -268,32 +262,29 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
       invoker.invoke(ctx.clone(), cmd);
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            ProgressCallback progressCallback = null;
-            if (rCtx.isOriginLocal()) {
-               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-               source.withProgressCallback(progressCallback);
-            } else {
-               source.withProgressCallback(EMPTY_CALLBACK);
-            }
-
-            try {
-               serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
-               throw new CacheException(e);
-            }
-
-            if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
-            }
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         ProgressCallback progressCallback = null;
+         if (rCtx.isOriginLocal()) {
+            progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+            source.withProgressCallback(progressCallback);
+         } else {
+            source.withProgressCallback(EMPTY_CALLBACK);
          }
-         return null;
+
+         try {
+            serializationContext.registerProtoFiles(source);
+         } catch (IOException | DescriptorParserException e) {
+            throw new CacheException(e);
+         }
+
+         if (progressCallback != null) {
+            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+         }
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          if (!(command.getKey() instanceof String)) {
             throw new CacheException("The key must be a string");
@@ -336,16 +327,16 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
       }
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(final InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(final InvocationContext ctx, ReplaceCommand command) throws Throwable {
       final Object key = command.getKey();
       final Object value = command.getNewValue();
 
       if (!ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       if (!(key instanceof String)) {
          throw new CacheException("The key must be a string");
@@ -354,7 +345,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          throw new CacheException("The value must be a string");
       }
       if (!shouldIntercept(key)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
          throw new CacheException("The key must end with \".proto\" : " + key);
@@ -365,42 +356,39 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
       invoker.invoke(ctx.clone(), cmd);
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            if (((WriteCommand) rCommand).isSuccessful()) {
-               FileDescriptorSource source =
-                     new FileDescriptorSource().addProtoFile((String) key, (String) value);
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         if (((WriteCommand) rCommand).isSuccessful()) {
+            FileDescriptorSource source =
+                  new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
-               ProgressCallback progressCallback = null;
-               if (rCtx.isOriginLocal()) {
-                  progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-                  source.withProgressCallback(progressCallback);
-               } else {
-                  source.withProgressCallback(EMPTY_CALLBACK);
-               }
+            ProgressCallback progressCallback = null;
+            if (rCtx.isOriginLocal()) {
+               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+               source.withProgressCallback(progressCallback);
+            } else {
+               source.withProgressCallback(EMPTY_CALLBACK);
+            }
 
-               try {
-                  serializationContext.registerProtoFiles(source);
-               } catch (IOException | DescriptorParserException e) {
-                  throw new CacheException("Failed to parse proto file : " + key, e);
-               }
+            try {
+               serializationContext.registerProtoFiles(source);
+            } catch (IOException | DescriptorParserException e) {
+               throw new CacheException("Failed to parse proto file : " + key, e);
+            }
 
-               if (progressCallback != null) {
-                  updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
-               }
+            if (progressCallback != null) {
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
             }
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       for (String fileName : serializationContext.getFileDescriptors().keySet()) {
          serializationContext.unregisterProtoFile(fileName);
       }
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private boolean shouldIntercept(Object key) {

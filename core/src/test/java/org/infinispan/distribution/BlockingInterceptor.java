@@ -1,16 +1,15 @@
 package org.infinispan.distribution;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 
 /**
  * Interceptor that allows for waiting for a command to be invoked, blocking that command and subsequently
@@ -58,15 +57,14 @@ public class BlockingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   protected InvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (!blockAfter) {
          blockIfNeeded(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          if (blockAfter) {
             blockIfNeeded(rCtx, rCommand);
          }
-         return null;
       });
    }
 }

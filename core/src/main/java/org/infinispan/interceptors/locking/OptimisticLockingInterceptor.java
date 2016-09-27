@@ -3,7 +3,6 @@ package org.infinispan.interceptors.locking;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
@@ -21,6 +20,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -59,7 +59,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final Collection<Object> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
@@ -78,64 +78,63 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
 
       if (!command.isOnePhaseCommit()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-         return null;
       });
 
    }
 
    @Override
-   protected CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
 
       if (ctx.isInTxScope())
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
 
       //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
       //locks need to be released in this situation as they might have been acquired from L1.
-      return ctx.onReturn(unlockAllReturnHandler);
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (needToMarkReads && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          for (Object key : command.getKeys()) {
             tctx.getCacheTransaction().addReadKey(key);
          }
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      return ctx.onReturn(unlockAllReturnHandler);
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return ctx.onReturn(unlockAllReturnHandler);
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       // Regardless of whether is conditional so that
       // write skews can be detected in both cases.
       markKeyAsRead(ctx, command, command.isConditional());
-      return ctx.onReturn(unlockAllReturnHandler);
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
    }
 

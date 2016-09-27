@@ -5,7 +5,6 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.S
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.Transaction;
 
@@ -30,6 +29,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.PersistenceUtil;
@@ -58,7 +58,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Transaction tx = ctx.getTransaction();
          Updater modBuilder = new Updater(ctx.getCacheTransaction().getAffectedKeys());
@@ -68,23 +68,23 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
          }
          persistenceManager.prepareAllTxStores(tx, modBuilder.modifications, SHARED);
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          persistenceManager.commitAllTxStores(ctx.getTransaction(), SHARED);
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          persistenceManager.rollbackAllTxStores(ctx.getTransaction(), SHARED);
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private class Updater extends AbstractVisitor {

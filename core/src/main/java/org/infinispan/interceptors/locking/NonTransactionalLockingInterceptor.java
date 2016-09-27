@@ -1,13 +1,12 @@
 package org.infinispan.interceptors.locking;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,36 +25,40 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   protected final CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected final BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       assertNonTransactional(ctx);
       // TODO Check if the return handler is really needed
       //possibly needed because of L1 locks being acquired
-      return ctx.onReturn(unlockAllReturnHandler);
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return visitNonTxDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       assertNonTransactional(ctx);
       // TODO Check if the return handler is really needed
       //possibly needed because of L1 locks being acquired
-      return ctx.onReturn(unlockAllReturnHandler);
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       if (command.isForwarded() || hasSkipLocking(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      ctx.onReturn(unlockAllReturnHandler);
-      lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
-      return ctx.continueInvocation();
+      try {
+         lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
+      } catch (Throwable t) {
+         lockManager.unlockAll(ctx);
+         throw t;
+      }
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

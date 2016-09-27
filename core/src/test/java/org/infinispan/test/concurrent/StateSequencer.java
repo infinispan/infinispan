@@ -84,7 +84,7 @@ public class StateSequencer {
             stateMap.put(stateName, state);
          }
          doOrder(states);
-         log.tracef("Added logical thread %s, with states %s", threadName, Arrays.asList(states));
+         log.tracef("Added logical thread %s, with states %s", threadName, states);
       } finally {
          lock.unlock();
       }

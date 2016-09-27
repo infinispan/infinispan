@@ -15,7 +15,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface InvocationContext extends EntryLookup, AsyncInvocationContext, Cloneable {
+public interface InvocationContext extends EntryLookup, Cloneable {
 
    /**
     * Returns true if the call was originated locally, false if it is the result of a remote rpc.

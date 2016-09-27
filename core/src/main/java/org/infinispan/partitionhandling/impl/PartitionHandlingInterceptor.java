@@ -2,10 +2,8 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
@@ -29,12 +27,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,7 +43,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private DistributionManager distributionManager;
 
    @Inject
-   void init(PartitionHandlingManager partitionHandlingManager, Transport transport, DistributionManager distributionManager) {
+   void init(PartitionHandlingManager partitionHandlingManager, Transport transport,
+         DistributionManager distributionManager) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.transport = transport;
       this.distributionManager = distributionManager;
@@ -62,21 +60,22 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+         throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
-   protected CompletableFuture<Void> handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected BasicInvocationStage handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkWrite(command.getKey());
       }
@@ -84,7 +83,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);
@@ -93,7 +92,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkClear();
       }
@@ -101,12 +100,13 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+         throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -114,7 +114,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -122,58 +122,51 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
       return handleDataReadCommand(ctx, command);
    }
 
    @Override
-   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
       return handleDataReadCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> handleDataReadCommand(InvocationContext ctx, DataCommand command) {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   private BasicInvocationStage handleDataReadCommand(InvocationContext ctx, DataCommand command) {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          DataCommand dataCommand = (DataCommand) rCommand;
-         if (throwable != null) {
-            if (throwable instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
+         if (t != null) {
+            if (t instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
                // We must have received an AvailabilityException from one of the owners.
                // There is no way to verify the cause here, but there isn't any other way to get an invalid
                // get response.
                throw log.degradedModeKeyUnavailable(dataCommand.getKey());
             } else {
-               throw throwable;
+               throw t;
             }
          }
 
          postOperationPartitionCheck(rCtx, dataCommand, dataCommand.getKey());
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            postTxCommandCheck(((TxInvocationContext) rCtx));
-         }
-         return null;
-      });
+      return invokeNext(ctx, command).thenAccept(
+            (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable == null) {
-            postTxCommandCheck(((TxInvocationContext) rCtx));
-         }
-         return null;
-      });
+      return invokeNext(ctx, command).thenAccept(
+            (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
@@ -194,17 +187,17 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
-         if (throwable != null) {
-            if (throwable instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {
+         if (t != null) {
+            if (t instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {
                // We must have received an AvailabilityException from one of the owners.
                // There is no way to verify the cause here, but there isn't any other way to get an invalid
                // get response.
                throw log.degradedModeKeysUnavailable(((GetAllCommand) rCommand).getKeys());
             } else {
-               throw throwable;
+               throw t;
             }
          }
 
@@ -237,7 +230,6 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
          }
 
          // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
-         return null;
       });
    }
 }

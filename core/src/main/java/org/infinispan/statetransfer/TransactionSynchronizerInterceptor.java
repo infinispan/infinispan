@@ -7,7 +7,10 @@ import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * With the Non-Blocking State Transfer (NBST) in place it is possible for a transactional command to be forwarded
@@ -31,23 +34,20 @@ import org.infinispan.transaction.impl.RemoteTransaction;
  * @since 5.2
  */
 public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
+   private static final Log log = LogFactory.getLog(TransactionSynchronizerInterceptor.class);
 
    @Override
-   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
-         throws Throwable {
-      if (!(command instanceof TransactionBoundaryCommand))
-         return ctx.continueInvocation();
-
-      if (ctx.isOriginLocal())
-         return ctx.continueInvocation();
+   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      if (ctx.isOriginLocal() || !(command instanceof TransactionBoundaryCommand)) {
+         return invokeNext(ctx, command);
+      }
 
       CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
-      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         releaseFuture.complete(null);
-         return null;
-      });
-
       RemoteTransaction remoteTransaction = ((TxInvocationContext<RemoteTransaction>) ctx).getCacheTransaction();
-      return remoteTransaction.enterSynchronizationAsync(releaseFuture);
+      return invokeNextAsync(ctx, command, remoteTransaction.enterSynchronizationAsync(releaseFuture)).handle(
+            (rCtx, rCommand, rv, t) -> {
+               log.tracef("Completing tx command release future for %s", remoteTransaction);
+               releaseFuture.complete(null);
+            });
    }
 }

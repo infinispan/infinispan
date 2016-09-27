@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.totalorder;
 
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -15,6 +14,7 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -34,16 +34,15 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
    @Override
-   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-            if (throwable == null && shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
+         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+            if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
                commitContextEntries(ctx, null, null);
             }
-            return null;
          });
       }
 
@@ -51,10 +50,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
 
       wrapEntriesForPrepare(ctx, command);
 
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) rCommand;
          EntryVersionsMap versionsMap =
@@ -69,16 +65,13 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
                      txInvocationContext.getGlobalTransaction().globalId());
          }
 
-         return CompletableFuture.completedFuture(versionsMap == null ? rv : new ArrayList<Object>(versionsMap.keySet()));
+         return versionsMap == null ? rv : new ArrayList<Object>(versionsMap.keySet());
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         commitContextEntries(rCtx, null, null);
-         return null;
-      });
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
    }
 
    @Override

@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.xsite;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -11,6 +9,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
 /**
@@ -32,37 +31,33 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   private BasicInvocationStage handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!skipXSiteBackup(dataWriteCommand)) {
             if (dataWriteCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(dataWriteCommand.getKey())) {
                backupSender.processResponses(backupSender.backupWrite(transform(dataWriteCommand)), dataWriteCommand);
             }
          }
-         return null;
       });
    }
 

@@ -4,7 +4,6 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -26,6 +25,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationExceptionHandler;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -51,25 +53,16 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
 
-   private final ReturnHandler defaultReturnHandler = new ReturnHandler() {
+   private final InvocationExceptionHandler suppressExceptionsHandler = new InvocationExceptionHandler() {
       @Override
-      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
-         if (throwable == null)
-            return null;
-
-         if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
-            throw throwable;
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
+         if (t instanceof InvalidCacheUsageException || t instanceof InterruptedException) {
+            throw t;
          } else {
-            rethrowException(rCtx, rCommand, throwable);
+            rethrowException(rCtx, rCommand, t);
          }
-         if (rCommand instanceof LockControlCommand) {
-            // Return null to return the same value without allocating a CompletableFuture
-            return rv != null ? null : CompletableFuture.completedFuture(Boolean.FALSE);
-         } else {
-            // To ignore the exception, we need to return a CompletableFuture
-            return CompletableFuture.completedFuture(rv);
-         }
+         // Ignore the exception
+         return rCommand instanceof LockControlCommand ? Boolean.FALSE : null;
       }
    };
 
@@ -92,7 +85,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
 
    @Override
-   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace)
          log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null)
@@ -101,7 +94,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       ComponentStatus status = componentRegistry.getStatus();
       if (command.ignoreCommandOnStatus(status)) {
          log.debugf("Status: %s : Ignoring %s command", status, command);
-            return ctx.shortCircuit(null);
+         return returnWith(null);
       } else {
          if (status.isTerminated()) {
             throw log.cacheIsTerminated(getCacheNamePrefix());
@@ -110,11 +103,11 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          }
       }
 
-      return ctx.onReturn(defaultReturnHandler);
+      InvocationStage stage = invokeNext(ctx, command);
+      return stage.exceptionally(suppressExceptionsHandler);
    }
 
-   private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th)
-         throws Throwable {
+   private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th) throws Throwable {
       // Only check for fail silently if there's a failure :)
       boolean suppressExceptions = (command instanceof FlagAffectedCommand)
             && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);

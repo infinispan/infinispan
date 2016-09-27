@@ -3,7 +3,6 @@ package org.infinispan.interceptors.distribution;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -22,6 +21,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -61,25 +61,22 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, false);
    }
 
-   public CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          Object key;
          DataWriteCommand writeCommand = (DataWriteCommand) rCommand;
          if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
@@ -92,16 +89,13 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             blockOnL1FutureIfNeeded(l1Manager
                   .flushCache(Collections.singleton(key), rCtx.getOrigin(), assumeOriginKeptEntryInL1));
          }
-         return null;
+         return rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          PutMapCommand putMapCommand = (PutMapCommand) rCommand;
          if (shouldUpdateOnWriteCommand(putMapCommand)) {
             Set<Object> keys = putMapCommand.getMap().keySet();
@@ -118,7 +112,6 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
                blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, rCtx.getOrigin(), true));
             }
          }
-         return null;
       });
    }
 
@@ -127,26 +120,20 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return ctx.onReturn((ctx1, command1, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
-         if (((PrepareCommand) command1).isOnePhaseCommit()) {
-            blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) ctx1)));
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
+            blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) rCtx)));
          }
-         return null;
+         return rv;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx));
-         return null;
+         return rv;
       });
    }
 

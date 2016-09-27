@@ -3,13 +3,10 @@ package org.infinispan.context.impl;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -116,31 +113,5 @@ public final class ImmutableContext implements InvocationContext {
    @Override
    public boolean isEntryRemovedInContext(Object key) {
       return false;
-   }
-
-   @Override
-   public CompletableFuture<Void> onReturn(AsyncInterceptor.ReturnHandler returnHandler) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletableFuture<Void> continueInvocation() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletableFuture<Void> shortCircuit(Object returnValue) {
-      return null;
-   }
-
-   @Override
-   public CompletableFuture<Void> forkInvocation(VisitableCommand newCommand,
-         AsyncInterceptor.ForkReturnHandler returnHandler) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Object forkInvocationSync(VisitableCommand newCommand) throws InterruptedException {
-      throw new UnsupportedOperationException();
    }
 }

@@ -3,7 +3,6 @@ package org.infinispan.tx.totalorder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +17,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
@@ -38,9 +38,9 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       final CountDownLatch block = new CountDownLatch(1);
       final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
             block.await();
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       };
       final AsyncInterceptorChain chain = TestingUtil.extractComponent(cache(1), AsyncInterceptorChain.class);
@@ -66,12 +66,12 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       final CountDownLatch block = new CountDownLatch(1);
       final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
                throws Throwable {
             if (!ctx.isOriginLocal()) {
                block.await();
             }
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       };
       final AsyncInterceptorChain chain = TestingUtil.extractComponent(cache(0), AsyncInterceptorChain.class);

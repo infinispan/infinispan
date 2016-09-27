@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -20,6 +19,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 
 /**
@@ -57,70 +57,70 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       Object key = command.getKey();
       if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       for (Object key : command.getKeys()) {
          if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
             checkMarshallable(key);
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command)) {
          for (Object key : command.getKeys()) {
             checkMarshallable(key);
          }
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
          checkMarshallable(command.getKey());
          checkMarshallable(command.getValue());
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getMap());
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getKey());
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
          checkMarshallable(command.getKey());
          checkMarshallable(command.getNewValue());
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    private boolean isClusterInvocation(InvocationContext ctx, FlagAffectedCommand command) {

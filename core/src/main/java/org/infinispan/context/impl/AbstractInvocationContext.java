@@ -3,7 +3,6 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.impl.BaseAsyncInvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -13,7 +12,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public abstract class AbstractInvocationContext extends BaseAsyncInvocationContext implements InvocationContext {
+public abstract class AbstractInvocationContext implements InvocationContext {
    private final Address origin;
 
    protected AbstractInvocationContext(Address origin) {
@@ -56,5 +55,14 @@ public abstract class AbstractInvocationContext extends BaseAsyncInvocationConte
     */
    @Deprecated
    protected void onEntryValueReplaced(final Object key, final InternalCacheEntry cacheEntry) {
+   }
+
+   @Override
+   public InvocationContext clone() {
+      try {
+         return (InvocationContext) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new IllegalStateException("Impossible!", e);
+      }
    }
 }

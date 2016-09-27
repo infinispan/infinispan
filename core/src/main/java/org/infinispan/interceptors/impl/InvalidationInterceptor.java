@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commands.AbstractVisitor;
@@ -29,6 +28,8 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
@@ -80,54 +81,47 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!isPutForExternalRead(command)) {
          return handleInvalidate(ctx, command, command.getKey());
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          ClearCommand clearCommand = (ClearCommand) rCommand;
          if (!isLocalModeForced(clearCommand)) {
             // just broadcast the clear command - this is simplest!
             if (rCtx.isOriginLocal())
                rpcManager.invokeRemotely(null, clearCommand, getBroadcastRpcOptions(defaultSynchronous));
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object[] keys = command.getMap() == null ? null : command.getMap().keySet().toArray();
       return handleInvalidate(ctx, command, keys);
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!command.isOnePhaseCommit()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
          // fetch the modifications before the transaction is committed (and thus removed from the txTable)
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
@@ -140,16 +134,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          } else {
             log.tracef("Nothing to invalidate - no modifications in the transaction.");
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          Set<Object> affectedKeys = ctx.getAffectedKeys();
          try {
             log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
@@ -160,43 +150,37 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
             else
                throw log.unableToBroadcastInvalidation(t);
          }
-         return null;
       });
    }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       if (!ctx.isOriginLocal()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null)
-            throw throwable;
-
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          //unlock will happen async as it is a best effort
          LockControlCommand lockControlCommand = (LockControlCommand) rCommand;
          boolean sync = !lockControlCommand.isUnlock();
          ((LocalTxInvocationContext) rCtx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
          rpcManager.invokeRemotely(null, lockControlCommand, getBroadcastRpcOptions(sync));
-         return null;
       });
    }
 
-   private CompletableFuture<Void> handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys)
+   private InvocationStage handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys)
          throws Throwable {
       if (ctx.isInTxScope()) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
-      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (throwable == null && writeCommand.isSuccessful()) {
+         if (writeCommand.isSuccessful()) {
             if (keys != null && keys.length != 0) {
                if (!isLocalModeForced(writeCommand))
                   invalidateAcrossCluster(isSynchronous(writeCommand), keys, rCtx);
             }
          }
-         return null;
       });
    }
 

@@ -3,13 +3,12 @@ package org.infinispan.stats;
 import static java.lang.String.format;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
@@ -98,18 +97,15 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
       private boolean prepareBlocked = false;
 
       @Override
-      public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-            if (throwable == null) {
-               synchronized (this) {
-                  prepareBlocked = true;
-                  notifyAll();
-                  while (!unblock) {
-                     wait();
-                  }
+      public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) ->  {
+            synchronized (this) {
+               prepareBlocked = true;
+               notifyAll();
+               while (!unblock) {
+                  wait();
                }
             }
-            return null;
          });
       }
 
