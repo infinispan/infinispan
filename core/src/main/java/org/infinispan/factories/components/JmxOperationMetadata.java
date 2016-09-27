@@ -42,7 +42,7 @@ public class JmxOperationMetadata implements Serializable {
          }
       }
       ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
-      operationName = mo.name();
+      operationName = mo != null ? (mo.name().isEmpty() ? methodName : mo.name()) : methodName;
       description = mo != null ? mo.description() : null;
    }
 
@@ -51,7 +51,7 @@ public class JmxOperationMetadata implements Serializable {
    }
 
    public String getOperationName() {
-      return operationName.isEmpty() ? methodName : operationName;
+      return operationName;
    }
 
    public String getMethodName() {
