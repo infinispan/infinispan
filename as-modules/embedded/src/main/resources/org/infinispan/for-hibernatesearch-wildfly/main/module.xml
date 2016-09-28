@@ -27,7 +27,6 @@ and obviously needs to avoid dependencies to different versions of Hibernate Sea
              but filtering out the ones related to Apache Lucene, Infinispan Query and Hibernate Search. -->
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="javax.xml.bind.api"/>
         <module name="org.apache.xerces" services="import"/>
         <module name="org.jboss.jandex"/>
         <module name="org.jboss.logging"/>
