@@ -8,7 +8,6 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="javax.xml.bind.api"/>
         <module name="org.jboss.logging"/>
         <module name="org.infinispan.commons" export="true"/>
         <module name="org.infinispan.query" optional="true" services="import"/>

@@ -8,7 +8,6 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="javax.xml.bind.api"/>
         <module name="org.antlr.antlr-runtime"/>
         <module name="org.codehaus.jackson.jackson-core-asl"/>
         <module name="org.codehaus.jackson.jackson-mapper-asl"/>
