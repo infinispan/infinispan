@@ -286,7 +286,7 @@ mileage may vary.
 
 Currently if you are using a replicated cache the `iterator` or `spliterator`
 terminal operations will not perform any of the operations remotely
-and will instead perform everythign on the local node. This is for performance as doing a
+and will instead perform everything on the local node. This is for performance as doing a
 remote iteration process is very costly.
 
 ==== Intermediate operation exceptions
