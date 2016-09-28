@@ -22,7 +22,6 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T> {
-
    protected final Object key;
    protected final byte[] keyBytes;
 

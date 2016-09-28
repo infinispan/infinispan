@@ -34,6 +34,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.jgroups.SuspectedException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.CharsetUtil;
 
 /**
@@ -72,7 +73,6 @@ class Decoder2x implements VersionedDecoder {
             buffer.readBytes(bytes);
             header.cacheName = new String(bytes, CharsetUtil.UTF_8);
          }
-
          header.op = HotRodOperation.fromRequestOpCode(streamOp);
          if (header.op == null) {
             throw new HotRodUnknownOperationException("Unknown operation: " + streamOp, version, messageId);
@@ -108,6 +108,8 @@ class Decoder2x implements VersionedDecoder {
             return readParameters(buffer, header, true, true, true);
          case GET_ALL:
             return readParameters(buffer, header, false, true, false);
+         case PUT_STREAM:
+            return readParameters(buffer, header, true, false, true);
          default:
             return readParameters(buffer, header, true, true, false);
       }
@@ -243,27 +245,35 @@ class Decoder2x implements VersionedDecoder {
    @Override
    public Response createGetResponse(HotRodHeader h, CacheEntry<byte[], byte[]> entry) {
       HotRodOperation op = h.op;
-      if (entry != null && op == HotRodOperation.GET)
-         return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.op,
-               OperationStatus.Success, h.topologyId, entry.getValue());
-      else if (entry != null && op == HotRodOperation.GET_WITH_VERSION) {
-         long version;
-         NumericVersion numericVersion = (NumericVersion) entry.getMetadata().version();
-         if (numericVersion != null) {
-            version = numericVersion.getVersion();
-         } else {
-            version = 0;
+      if (entry != null) {
+         switch (op) {
+            case GET:
+               return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, HotRodOperation.GET,
+                     OperationStatus.Success, h.topologyId, entry.getValue());
+            case GET_WITH_VERSION:
+               long version;
+               NumericVersion numericVersion = (NumericVersion) entry.getMetadata().version();
+               if (numericVersion != null) {
+                  version = numericVersion.getVersion();
+               } else {
+                  version = 0;
+               }
+               return new GetWithVersionResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                     HotRodOperation.GET_WITH_VERSION, OperationStatus.Success, h.topologyId, entry.getValue(),
+                     version);
          }
-         return new GetWithVersionResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               h.op, OperationStatus.Success, h.topologyId, entry.getValue(),
-               version);
-      } else if (op == HotRodOperation.GET)
-         return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               h.op, OperationStatus.KeyDoesNotExist, h.topologyId, null);
-      else
-         return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, h.op, OperationStatus.KeyDoesNotExist,
-               h.topologyId, null, 0);
+      } else {
+         switch (op) {
+            case GET:
+               return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                     HotRodOperation.GET, OperationStatus.KeyDoesNotExist, h.topologyId, null);
+            case GET_WITH_VERSION:
+               return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
+                     h.clientIntel, HotRodOperation.GET_WITH_VERSION, OperationStatus.KeyDoesNotExist,
+                     h.topologyId, null, 0);
+         }
+      }
+      throw new IllegalStateException("Unreachable code");
    }
 
    @Override
@@ -339,6 +349,13 @@ class Decoder2x implements VersionedDecoder {
          case QUERY:
             ExtendedByteBuf.readMaybeRangedBytes(buffer).ifPresent(query -> {
                hrCtx.operationDecodeContext = query;
+               buffer.markReaderIndex();
+               out.add(hrCtx);
+            });
+            break;
+         case GET_STREAM:
+            ExtendedByteBuf.readMaybeVInt(buffer).ifPresent(offset -> {
+               hrCtx.operationDecodeContext = offset;
                buffer.markReaderIndex();
                out.add(hrCtx);
             });
@@ -537,6 +554,25 @@ class Decoder2x implements VersionedDecoder {
             }
             if (readAll) {
                out.add(hrCtx);
+            }
+            break;
+         case PUT_STREAM:
+            ByteBuf vBuffer;
+            if (hrCtx.operationDecodeContext == null) {
+               hrCtx.operationDecodeContext = vBuffer = ByteBufAllocator.DEFAULT.buffer();
+            } else {
+               vBuffer = (ByteBuf) hrCtx.operationDecodeContext;
+            }
+            if (vBuffer != null) {
+               ExtendedByteBuf.readMaybeRangedBytes(buffer).map(bytes -> {
+                  if (bytes.length > 0) {
+                     vBuffer.writeBytes(bytes);
+                  } else {
+                     out.add(hrCtx);
+                  }
+                  buffer.markReaderIndex();
+                  return Optional.empty();
+               });
             }
             break;
       }

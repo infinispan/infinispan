@@ -315,6 +315,11 @@ class GetWithMetadataResponse extends GetResponse {
       this.maxIdle = maxIdle;
    }
 
+   GetWithMetadataResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
+                           OperationStatus status, int topologyId) {
+      this(version, messageId, cacheName, clientIntel, operation, status, topologyId, null, -1, -1, -1, -1, -1);
+   }
+
    @Override
    public String toString() {
       return "GetWithMetadataResponse{" +
@@ -326,6 +331,42 @@ class GetWithMetadataResponse extends GetResponse {
             ", status=" + status +
             ", topologyId=" + topologyId +
             ", data=" + Util.printArray(data, true) +
+            ", dataVersion=" + dataVersion +
+            ", created=" + created +
+            ", lifespan=" + lifespan +
+            ", lastUsed=" + lastUsed +
+            ", maxIdle=" + maxIdle +
+            '}';
+   }
+}
+
+class GetStreamResponse extends GetWithMetadataResponse {
+   protected final int offset;
+
+   GetStreamResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
+                     OperationStatus status, int topologyId, byte[] data, int offset, long dataVersion, long created, int lifespan,
+                     long lastUsed, int maxIdle) {
+      super(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, dataVersion, created, lifespan, lastUsed, maxIdle);
+      this.offset = offset;
+   }
+
+   GetStreamResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation, OperationStatus status, int topologyId) {
+      super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
+      offset = 0;
+   }
+
+   @Override
+   public String toString() {
+      return "GetStreamResponse{" +
+            "version=" + version +
+            ", messageId=" + messageId +
+            ", cacheName='" + cacheName + '\'' +
+            ", clientIntel=" + clientIntel +
+            ", operation=" + operation +
+            ", status=" + status +
+            ", topologyId=" + topologyId +
+            ", data=" + Util.printArray(data, true) +
+            ", offset=" + offset +
             ", dataVersion=" + dataVersion +
             ", created=" + created +
             ", lifespan=" + lifespan +

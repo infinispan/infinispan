@@ -3,6 +3,8 @@ package org.infinispan.client.hotrod.impl.protocol;
 import static org.infinispan.commons.util.Util.hexDump;
 import static org.infinispan.commons.util.Util.printArray;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
@@ -47,6 +50,16 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public <T> T readUnmarshallByteArray(Transport transport, short status) {
       return CodecUtils.readUnmarshallByteArray(transport, status);
+   }
+
+   @Override
+   public <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose) {
+      return (T)new TransportInputStream(transport, versionedMetadata, afterClose);
+   }
+
+   @Override
+   public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
+      return new TransportOutputStream(transport, afterClose);
    }
 
    @Override

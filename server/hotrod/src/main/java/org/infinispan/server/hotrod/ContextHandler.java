@@ -24,6 +24,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.KeyValuePair;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -88,6 +89,7 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
          case GET_WITH_VERSION:
             writeResponse(msg, ctx.channel(), msg.get());
             break;
+         case GET_STREAM:
          case GET_WITH_METADATA:
             writeResponse(msg, ctx.channel(), msg.getKeyMetadata());
             break;
@@ -196,6 +198,24 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             Map<byte[], byte[]> map = msg.cache.getAll((Set<byte[]>) msg.operationDecodeContext);
             writeResponse(msg, ctx.channel(), new GetAllResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, h.topologyId, map));
+            break;
+         case PUT_STREAM:
+            ByteBuf buf = (ByteBuf) msg.operationDecodeContext;
+            try {
+               byte[] bytes = new byte[buf.readableBytes()];
+               buf.readBytes(bytes);
+               msg.operationDecodeContext = bytes;
+               long version = msg.params.streamVersion;
+               if (version == 0) { // Normal put
+                  writeResponse(msg, ctx.channel(), msg.put());
+               } else if (version < 0) { // putIfAbsent
+                  writeResponse(msg, ctx.channel(), msg.putIfAbsent());
+               } else { // versioned replace
+                  writeResponse(msg, ctx.channel(), msg.replaceIfUnmodified());
+               }
+            } finally {
+               buf.release();
+            }
             break;
          default:
             throw new IllegalArgumentException("Unsupported operation invoked: " + msg.header.op);

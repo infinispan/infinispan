@@ -291,6 +291,12 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void releaseTransport(Transport transport) {
+      if (transport.isBusy()) {
+         if (trace) {
+            log.tracef("Not releasing transport since it is in use: %s", transport);
+         }
+         return;
+      }
       // The invalidateObject()/returnObject() calls could take a long time, so we hold the lock only until we get the connection pool reference
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       TcpTransport tcpTransport = (TcpTransport) transport;

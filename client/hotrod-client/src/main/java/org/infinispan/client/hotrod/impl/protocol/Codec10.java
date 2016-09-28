@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import static org.infinispan.commons.util.Util.hexDump;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashSet;
@@ -13,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -164,6 +167,16 @@ public class Codec10 implements Codec {
    @Override
    public <T> T readUnmarshallByteArray(Transport transport, short status) {
       return CodecUtils.readUnmarshallByteArray(transport, status);
+   }
+
+   @Override
+   public <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
+      throw new UnsupportedOperationException();
    }
 
    protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {

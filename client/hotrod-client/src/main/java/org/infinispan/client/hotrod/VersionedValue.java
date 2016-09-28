@@ -6,8 +6,7 @@ package org.infinispan.client.hotrod;
  *
  * @author Mircea.Markus@jboss.com
  */
-public interface VersionedValue<V> {
-   long getVersion();
+public interface VersionedValue<V> extends Versioned {
 
    V getValue();
 }
