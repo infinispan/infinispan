@@ -1,13 +1,17 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
+import org.jboss.marshalling.Version;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -55,4 +59,14 @@ public interface Codec {
     * Read and unmarshall byte array.
     */
    <T> T readUnmarshallByteArray(Transport transport, short status);
+
+   /**
+    * Reads a stream of data
+    */
+   <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose);
+
+   /**
+    * Writes a stream of data
+    */
+   OutputStream writeAsStream(Transport transport, Runnable afterClose);
 }

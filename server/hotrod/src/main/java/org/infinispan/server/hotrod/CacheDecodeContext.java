@@ -50,10 +50,6 @@ public final class CacheDecodeContext {
       return key;
    }
 
-   public Object getOperationDecodeContext() {
-      return operationDecodeContext;
-   }
-
    public RequestParameters getParams() {
       return params;
    }
@@ -150,7 +146,7 @@ public final class CacheDecodeContext {
       return createGetResponse(cache.getCacheEntry(key));
    }
 
-   GetWithMetadataResponse getKeyMetadata() {
+   Response getKeyMetadata() {
       CacheEntry<byte[], byte[]> ce = cache.getCacheEntry(key);
       if (ce != null) {
          NumericVersion entryVersion = (NumericVersion) ce.getMetadata().version();
@@ -158,13 +154,24 @@ public final class CacheDecodeContext {
          int lifespan = ce.getLifespan() < 0 ? -1 : (int) ce.getLifespan() / 1000;
          int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
          long version = entryVersion != null ? entryVersion.getVersion() : 0;
-         return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-               header.op, OperationStatus.Success, header.topologyId, v, version,
-               ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
+         if (header.op == HotRodOperation.GET_WITH_METADATA) {
+            return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+                  header.op, OperationStatus.Success, header.topologyId, v, version,
+                  ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
+         } else {
+            int offset = ((Integer) operationDecodeContext).intValue();
+            return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+                  header.op, OperationStatus.Success, header.topologyId, v, offset, version,
+                  ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
+         }
       } else {
-         return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-               header.op, OperationStatus.KeyDoesNotExist, header.topologyId, null,
-               -1, -1, -1, -1, -1);
+         if (header.op == HotRodOperation.GET_WITH_METADATA) {
+            return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+                  header.op, OperationStatus.KeyDoesNotExist, header.topologyId);
+         } else {
+            return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+                  header.op, OperationStatus.KeyDoesNotExist, header.topologyId);
+         }
       }
    }
 

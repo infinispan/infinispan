@@ -252,15 +252,6 @@ public class OperationsFactory implements HotRodConstants {
       this.flagsMap.set(intFlags);
    }
 
-   public void addFlag(Flag flag) {
-      int intFlags = flag.getFlagInt();
-      Integer threadLocalFlags = this.flagsMap.get();
-      if (threadLocalFlags != null) {
-         intFlags |= threadLocalFlags;
-      }
-      this.flagsMap.set(intFlags);
-   }
-
    public boolean hasFlag(Flag flag) {
       Integer threadLocalFlags = this.flagsMap.get();
       return threadLocalFlags != null && (threadLocalFlags & flag.getFlagInt()) != 0;
@@ -280,5 +271,21 @@ public class OperationsFactory implements HotRodConstants {
 
    public <K, V> IterationNextOperation newIterationNextOperation(String iterationId, Transport transport, KeyTracker segmentKeyTracker) {
       return new IterationNextOperation(codec, flags(), clientIntelligence, cacheNameBytes, topologyId, iterationId, transport, segmentKeyTracker);
+   }
+
+   public <K> GetStreamOperation newGetStreamOperation(K key, byte[] keyBytes, int offset) {
+      return new GetStreamOperation(codec, transportFactory, key, keyBytes, offset, cacheNameBytes, topologyId, flags(), clientIntelligence);
+   }
+
+   public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new PutStreamOperation(codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), clientIntelligence, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new PutStreamOperation(codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), clientIntelligence, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public <K> PutStreamOperation newPutIfAbsentStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new PutStreamOperation(codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), clientIntelligence, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 }

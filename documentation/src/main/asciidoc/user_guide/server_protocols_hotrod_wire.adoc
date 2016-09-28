@@ -12,6 +12,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_3[Hot Rod Protocol 2.3]
 * link:#hot_rod_protocol_2_4[Hot Rod Protocol 2.4]
 * link:#hot_rod_protocol_2_5[Hot Rod Protocol 2.5]
+* link:#hot_rod_protocol_2_6[Hot Rod Protocol 2.6]
 
 ===== Hot Rod Protocol 1.0
 
@@ -103,6 +104,8 @@ In this particular case, this is +10+
 +0x31+ = iterationStart (since 2.3) +
 +0x33+ = iterationNext (since 2.3) +
 +0x35+ = iterationEnd (since 2.3) +
++0x37+ = getStream (since 2.6) +
++0x39+ = putStream (since 2.6) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -178,6 +181,8 @@ for which the response is sent.
 +0x32+ = iterationStart (since 2.3) +
 +0x34+ = iterationNext (since 2.3) +
 +0x36+ = iterationEnd (since 2.3) +
++0x38+ = getStream (since 2.6) +
++0x40+ = putStream (since 2.6) +
 +0x50+ = error (since 1.0) +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
@@ -553,7 +558,7 @@ Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
 than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
 Integer.MAX_VALUE.
 | Key                 | byte array | Byte array containing the key whose value is being requested.
-| Entry Version       | 8 bytes    | Use the value returned by GetWithVersion operation.
+| Entry Version       | 8 bytes    | Use the value returned by GetWithMetadata operation.
 |==============================================================================
 
 Response (0x0E):
@@ -1843,6 +1848,102 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 |... continues until entry count is reached ||
 |==============================================================================
 
+===== Hot Rod Protocol 2.6
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.0
+
+This Hot Rod protocol version adds support for streaming get and put operations.
+It includes two new operations:
+
+* GetStream for retrieving data as a stream, with an optional initial offset
+* PutStream for writing data as a stream, optionally by specifying a version
+
+.GetStream
+
+Request (0x37):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Offset              | vInt       | The offset in bytes from which to start retrieving. Set to 0 to retrieve from the
+beginning
+| Key Length          | vInt       | Length of key. Note that the size of a
+vint can be up to 5 bytes which in theory can produce bigger numbers than
+Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
+than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
+Integer.MAX_VALUE.
+| Key                 | byte array | Byte array containing the key whose value is being requested.
+|==============================================================================
+
+.GetStream
+
+Response (0x38):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if key retrieved +
++0x02+ = if key does not exist +
+| Flag                | 1 byte     | A flag indicating whether the response
+contains expiration information. The value of the flag is obtained as a
+bitwise OR operation between +INFINITE_LIFESPAN (0x01)+ and
+`INFINITE_MAXIDLE (0x02)`.
+| Created             | Long       | (optional) a Long representing the
+timestamp when the entry was created on the server. This value is returned
+only if the flag's +INFINITE_LIFESPAN+ bit is not set.
+| Lifespan            | vInt       | (optional) a vInt representing the
+lifespan of the entry in seconds. This value is returned only if the flag's
++INFINITE_LIFESPAN+ bit is not set.
+| LastUsed            | Long       | (optional) a Long representing the
+timestamp when the entry was last accessed on the server. This value is
+returned only if the flag's `INFINITE_MAXIDLE` bit is not set.
+| MaxIdle             | vInt       | (optional) a vInt representing the
+maxIdle of the entry in seconds. This value is returned only if the flag's
+`INFINITE_MAXIDLE` bit is not set.
+| Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
+The protocol does not mandate that entry_version values are sequential.
+They just need to be unique per update at the key level.
+| Value Length        | vInt       | If success, length of value
+| Value               | byte array | If success, the requested value
+|==============================================================================
+
+.PutStream
+
+Request (0x39)
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Entry Version       | 8 bytes    | Possible values +
+0 = Unconditional put +
+-1 = Put If Absent +
+Other values =  pass a version obtained by `GetWithMetadata` operation to perform a conditional replace.
+| Key Length          | vInt       | Length of key. Note that the size of a
+vint can be up to 5 bytes which in theory can produce bigger numbers than
+Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
+than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
+Integer.MAX_VALUE.
+| Key                 | byte array | Byte array containing the key whose value is being requested.
+| Value Chunk 1 Length| vInt       | The size of the first chunk of data. If this value is 0 it means the client has
+ completed transferring the value and the operation should be performed.
+| Value Chunk 1       | byte array | Array of bytes forming the fist chunk of data.
+| ...continues until the value is complete ||
+|==============================================================================
+
+Response (0x3A):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+|==============================================================================
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

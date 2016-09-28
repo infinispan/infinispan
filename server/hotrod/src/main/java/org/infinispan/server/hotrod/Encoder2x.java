@@ -260,6 +260,14 @@ class Encoder2x implements VersionedEncoder {
             }
             break;
          }
+         case GET_STREAM: {
+            GetStreamResponse r = (GetStreamResponse) response;
+            if (r.status == OperationStatus.Success) {
+               writeMetadata(r.lifespan, r.maxIdle, r.created, r.lastUsed, r.dataVersion, buf);
+               ExtendedByteBuf.writeRangedBytes(r.data, r.offset, buf);
+            }
+            break;
+         }
          case PUT:
          case PUT_IF_ABSENT:
          case REPLACE:
@@ -288,6 +296,7 @@ class Encoder2x implements VersionedEncoder {
          case CLEAR:
          case CONTAINS_KEY:
          case PUT_ALL:
+         case PUT_STREAM:
          case ITERATION_END:
          case ADD_CLIENT_LISTENER:
          case REMOVE_CLIENT_LISTENER:

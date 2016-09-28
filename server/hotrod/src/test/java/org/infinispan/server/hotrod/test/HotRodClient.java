@@ -427,7 +427,31 @@ public class HotRodClient {
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       return (TestSizeResponse) handler.getResponse(op.id);
    }
+
+   public TestGetWithMetadataResponse getStream(byte[] key, int offset) {
+      GetStreamOp op = new GetStreamOp(0xA0, protocolVersion, defaultCacheName, key, 0, (byte) 1, 0, offset);
+      writeOp(op);
+      // Get the handler instance to retrieve the answer.
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return (TestGetWithMetadataResponse) handler.getResponse(op.id);
+   }
+
+   public TestResponse putStream(byte[] key, byte[] value, long version, int lifespan, int maxIdle) {
+      PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, key, value, lifespan, maxIdle, version, (byte)1, 0);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   /*public TestPutStreamResponse putStream(byte[] k, int lifespan, int maxIdle, byte[] v, long dataVersion) {
+      PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, k, lifespan, maxIdle, v, dataVersion);
+      writeOp(op);
+      // Get the handler instance to retrieve the answer.
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return (TestPutStreamResponse) handler.getResponse(op.id);
+   }*/
 }
+
 
 class ClientChannelInitializer implements NettyInitializer {
    private final HotRodClient client;
@@ -495,6 +519,10 @@ class Encoder extends MessageToByteEncoder<Object> {
                && op.code != 0x21 && op.code != 0x23
                && op.code != 0x29) { // if it's a key based op...
             writeRangedBytes(op.key, buffer); // key length + key
+            if (op.code == 0x37) {
+               // GetStream has an offset
+               writeUnsignedInt(((GetStreamOp)op).offset, buffer);
+            }
             if (op.value != null) {
                if (op.code != 0x0D) { // If it's not removeIfUnmodified...
                   if (protocolVersion >= 22) {
@@ -510,10 +538,19 @@ class Encoder extends MessageToByteEncoder<Object> {
                      writeUnsignedInt(op.maxIdle, buffer); // maxIdle
                   }
                }
-               if (op.code == 0x09 || op.code == 0x0D) {
+               if (op.code == 0x09 || op.code == 0x0D || op.code == 0x39) {
                   buffer.writeLong(op.dataVersion);
                }
-               if (op.code != 0x0D) { // If it's not removeIfUnmodified...
+               if (op.code == 0x39) {
+                  // Chunk the value
+                  for(int offset = 0; offset < op.value.length; ) {
+                     int chunk = Math.min(op.value.length - offset, 8192);
+                     writeUnsignedInt(chunk, buffer);
+                     buffer.writeBytes(op.value, offset, chunk);
+                     offset += chunk;
+                  }
+                  writeUnsignedInt(0, buffer);
+               } else if (op.code != 0x0D) { // If it's not removeIfUnmodified...
                   writeRangedBytes(op.value, buffer); // value length + value
                }
             }
@@ -623,6 +660,7 @@ class Decoder extends ReplayingDecoder<Void> {
          case REPLACE_IF_UNMODIFIED:
          case REMOVE:
          case REMOVE_IF_UNMODIFIED:
+         case PUT_STREAM:
             boolean checkPrevious;
             if (op.version >= 10 && op.version <= 13) {
                checkPrevious = (op.flags & ProtocolFlag.ForceReturnPreviousValue.getValue()) == 1;
@@ -666,6 +704,7 @@ class Decoder extends ReplayingDecoder<Void> {
             }
             break;
          case GET_WITH_METADATA:
+         case GET_STREAM:
             if (status == Success) {
                long created = -1;
                int lifespan = -1;
@@ -1051,6 +1090,21 @@ class AuthOp extends AbstractOp {
 class SizeOp extends AbstractOp {
    public SizeOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId) {
       super(magic, version, (byte) 0x29, cacheName, clientIntel, topologyId);
+   }
+}
+
+class GetStreamOp extends Op {
+   final int offset;
+
+   public GetStreamOp(int magic, byte version, String cacheName, byte[] key, int flags, byte clientIntel, int topologyId, int offset) {
+      super(magic, version, (byte)0x37, cacheName, key, -1, -1, null, flags, 0, clientIntel, topologyId);
+      this.offset = offset;
+   }
+}
+
+class PutStreamOp extends Op {
+      public PutStreamOp(int magic, byte version, String cacheName, byte[] key, byte[] value, int lifespan, int maxIdle, long dataVersion, byte clientIntel, int topologyId) {
+      super(magic, version, (byte)0x39, cacheName, key, lifespan, maxIdle, value, 0, dataVersion, clientIntel, topologyId);
    }
 }
 

@@ -16,9 +16,20 @@ public abstract class AbstractTransport implements Transport {
    private static final boolean trace = log.isTraceEnabled();
 
    private final TransportFactory transportFactory;
+   private boolean busy;
 
    protected AbstractTransport(TransportFactory transportFactory) {
       this.transportFactory = transportFactory;
+   }
+
+   @Override
+   public void setBusy(boolean busy) {
+      this.busy = busy;
+   }
+
+   @Override
+   public boolean isBusy() {
+      return busy;
    }
 
    @Override
@@ -106,6 +117,11 @@ public abstract class AbstractTransport implements Transport {
       writeBytes(toAppend);
    }
 
+   public void writeArray(byte[] toAppend, int offset, int count) {
+      writeVInt(count);
+      writeBytes(toAppend, offset, count);
+   }
+
    @Override
    public void writeOptionalArray(byte[] toAppend) {
       writeSignedVInt(toAppend.length);
@@ -113,4 +129,6 @@ public abstract class AbstractTransport implements Transport {
    }
 
    protected abstract void writeBytes(byte[] toAppend);
+
+   protected abstract void writeBytes(byte[] toAppend, int offset, int count);
 }

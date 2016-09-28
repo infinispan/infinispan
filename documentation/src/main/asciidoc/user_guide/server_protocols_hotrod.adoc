@@ -65,7 +65,7 @@ minIdle = 1
 The properties file is then passed to one of constructors of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[RemoteCacheManager].
 For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]'s javadoc.
 
-===== Basic API
+===== Basic API [[hr:basic-api]]
 Below is a sample code snippet on how the client API can be used to store or retrieve information from a Hot Rod server using the Java Hot Rod client. It assumes that a Hot Rod server has been started bound to the default location (localhost:11222)
 
 [source,java]
@@ -166,7 +166,7 @@ public class MyKeyValueFilterConverterFactory implements KeyValueFilterConverter
 * Optional: If the filter uses custom key/value classes, these must be included in the JAR so that the filter can correctly unmarshall key and/or value instances.
 * Deploy the JAR file in the Infinispan Server.
 
-===== Versioned API
+===== Versioned API [[hr:versioned-api]]
 A RemoteCacheManager provides instances of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] interface that represents a handle to the named or default cache on the remote cluster.
 API wise, it extends the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface to which it also adds some new methods, including the so called versioned API.
 Please find below some examples of this API <<server-hotrod:failover,but to understand the motivation behind it, make sure you read this section>>.
@@ -201,7 +201,56 @@ assert remoteCache.replace("car", "lamborghini", valueBinary.getVersion());
 For more details on versioned operations refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] 's javadoc.
 
 ===== Async API
-This cool feature is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
+
+This is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
+
+===== Streaming API
+
+When sending / receiving large objects, it might make sense to stream them between the client and the server. The
+Streaming API implements methods similar to the <<hr:basic-api>> and <<hr:versioned-api>> described above but, instead of taking the value as a parameter,
+they return instances of InputStream and OutputStream. The following example shows how one would write a potentially large
+object:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+OutputStream os = streamingCache.put("a_large_object");
+os.write(...);
+os.close();
+----
+
+Reading such an object through streaming:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+InputStream is = streamingCache.get("a_large_object");
+for(int b = is.read(); b >= 0; b = is.read()) {
+   ...
+}
+is.close();
+----
+
+NOTE: The streaming API does *not* apply marshalling/unmarshalling to the values. For this reason you cannot access
+the same entries using both the streaming and non-streaming API at the same time, unless you provide your own
+marshaller to detect this situation.
+
+The InputStream returned by the `RemoteStreamingCache.get(K key)` method implements the `VersionedMetadata` interface, so
+you can retrieve version and expiration information:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+InputStream is = streamingCache.get("a_large_object");
+int version = ((VersionedMetadata) is).getVersion();
+for(int b = is.read(); b >= 0; b = is.read()) {
+   ...
+}
+is.close();
+----
+
+NOTE: Conditional write methods (`putIfAbsent`, `replace`) only perform the actual condition check once the value has
+been completely sent to the server (i.e. when the `close()` method has been invoked on the `OutputStream`.
 
 ===== Client Event Listener API
 

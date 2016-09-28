@@ -50,6 +50,10 @@ public enum HotRodOperation {
    PUT_ALL(0x2D, 0x2E, EnumSet.of(OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.VALUE_CUSTOM),
    GET_ALL(0x2F, 0x30, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.VALUE_CUSTOM),
 
+   // Stream operations
+   GET_STREAM(0x37, 0x38, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.KEY_CUSTOM),
+   PUT_STREAM(0x39, 0x3A, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.VALUE_CUSTOM),
+
    // Responses
    ERROR(0x50),
    CACHE_ENTRY_CREATED_EVENT(0x60),

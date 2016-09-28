@@ -265,6 +265,13 @@ public class ExtendedByteBuf {
          bf.writeBytes(src);
    }
 
+   public static void writeRangedBytes(byte[] src, int offset, ByteBuf bf) {
+      int l = src.length - offset;
+      writeUnsignedInt(l, bf);
+      if (l > 0)
+         bf.writeBytes(src);
+   }
+
    public static void writeString(String msg, ByteBuf bf) {
       writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf);
    }
