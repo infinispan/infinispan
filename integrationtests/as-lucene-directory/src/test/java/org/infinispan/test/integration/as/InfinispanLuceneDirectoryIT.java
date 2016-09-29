@@ -49,8 +49,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.google.common.base.Joiner;
-
 
 /**
  * Test infinispan-lucene-directory server module
@@ -192,7 +190,7 @@ public class InfinispanLuceneDirectoryIT {
    }
 
    private static String deps(String... dep) {
-      return Joiner.on(", ").join(dep);
+      return String.join(",", dep);
    }
 
 }
