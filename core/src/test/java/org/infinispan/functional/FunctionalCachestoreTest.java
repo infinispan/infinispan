@@ -7,9 +7,9 @@ import static org.testng.Assert.assertTrue;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -23,6 +23,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalCachestoreTest")
 public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
+   // As the functional API should not have side effects, it's hard to verify its execution when it does not
+   // have any return value.
+   static AtomicInteger invocationCount = new AtomicInteger();
+
    public FunctionalCachestoreTest() {
       isPersistenceEnabled = true;
    }
@@ -37,7 +41,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
       method.action.eval(key, wo, rw,
             (Consumer<ReadEntryView<Object, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
-            (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"));
+            (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"), () -> invocationCount);
 
       assertInvocations(2);
 
@@ -54,7 +58,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
             },
-            (Consumer<WriteEntryView<String>> & Serializable) view -> {});
+            (Consumer<WriteEntryView<String>> & Serializable) view -> {}, () -> invocationCount);
 
       assertInvocations(4);
    }
@@ -70,7 +74,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
       method.action.eval(key, lwo, lrw,
          (Consumer<ReadEntryView<Integer, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
-         (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"));
+         (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"), () -> invocationCount);
 
       assertInvocations(1);
 
@@ -87,8 +91,13 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             assertTrue(view.find().isPresent());
             assertEquals(view.get(), "value");
          },
-         (Consumer<WriteEntryView<String>> & Serializable) view -> {});
+         (Consumer<WriteEntryView<String>> & Serializable) view -> {}, () -> invocationCount);
 
       assertInvocations(2);
+   }
+
+   @Override
+   protected AtomicInteger invocationCount() {
+      return invocationCount;
    }
 }
