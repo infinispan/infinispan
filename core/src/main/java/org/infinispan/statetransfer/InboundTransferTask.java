@@ -217,7 +217,7 @@ public class InboundTransferTask {
             StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId,
             cancelledSegments);
       try {
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
+         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false));
       } catch (Exception e) {
          // Ignore exceptions here, the worst that can happen is that the provider will send some extra state
          log.debugf("Caught an exception while cancelling state transfer for segments %s from %s",
