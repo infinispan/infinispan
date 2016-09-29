@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -32,9 +33,6 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "functional.AbstractFunctionalOpTest")
 public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
-   // As the functional API should not have side effects, it's hard to verify its execution when it does not
-   // have any return value.
-   static AtomicInteger invocationCount = new AtomicInteger();
    WriteOnlyMap<Object, String> wo;
    ReadWriteMap<Object, String> rw;
    WriteOnlyMap<Integer, String> lwo;
@@ -44,10 +42,6 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       numNodes = 4;
       numDistOwners = 2;
       cleanup = CleanupPhase.AFTER_METHOD;
-   }
-
-   protected static void assertInvocations(int count) {
-      assertEquals(invocationCount.get(), count);
    }
 
    @DataProvider(name = "methods")
@@ -77,7 +71,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
    @BeforeMethod
    public void resetInvocationCount() {
-      invocationCount.set(0);
+      invocationCount().set(0);
    }
 
    @Override
@@ -106,58 +100,64 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       return key;
    }
 
+   protected abstract AtomicInteger invocationCount();
+
+   protected void assertInvocations(int count) {
+      assertEquals(invocationCount().get(), count);
+   }
+
    enum Method {
-      WO_EVAL(false, (key, wo, rw, read, write) ->
+      WO_EVAL(false, (key, wo, rw, read, write, invocationCountSupplier) ->
             wo.eval(key, (Consumer<WriteEntryView<String>> & Serializable) view -> {
-               invocationCount.incrementAndGet();
+               invocationCountSupplier.get().incrementAndGet();
                write.accept(view);
             }).join()),
-      WO_EVAL_VALUE(false, (key, wo, rw, read, write) ->
+      WO_EVAL_VALUE(false, (key, wo, rw, read, write, invocationCountSupplier) ->
             wo.eval(key, null, (BiConsumer<String, WriteEntryView<String>> & Serializable)
                   (v, view) -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      write.accept(view);
                   }).join()),
-      WO_EVAL_MANY(false, (key, wo, rw, read, write) ->
+      WO_EVAL_MANY(false, (key, wo, rw, read, write, invocationCountSupplier) ->
             wo.evalMany(Collections.singleton(key), (Consumer<WriteEntryView<String>> & Serializable) view -> {
-               invocationCount.incrementAndGet();
+               invocationCountSupplier.get().incrementAndGet();
                write.accept(view);
             }).join()),
-      WO_EVAL_MANY_ENTRIES(false, (key, wo, rw, read, write) ->
+      WO_EVAL_MANY_ENTRIES(false, (key, wo, rw, read, write, invocationCountSupplier) ->
             wo.evalMany(Collections.singletonMap(key, null),
                   (BiConsumer<String, WriteEntryView<String>> & Serializable) (v, view) -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      write.accept(view);
                   }).join()),
-      RW_EVAL(true, (key, wo, rw, read, write) ->
+      RW_EVAL(true, (key, wo, rw, read, write, invocationCountSupplier) ->
             rw.eval(key,
                   (Function<ReadWriteEntryView<Object, String>, Object> & Serializable) view -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      read.accept(view);
                      write.accept(view);
                      return null;
                   }).join()),
-      RW_EVAL_VALUE(true, (key, wo, rw, read, write) ->
+      RW_EVAL_VALUE(true, (key, wo, rw, read, write, invocationCountSupplier) ->
             rw.eval(key, null,
                   (BiFunction<String, ReadWriteEntryView<Object, String>, Object> & Serializable) (v, view) -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      read.accept(view);
                      write.accept(view);
                      return null;
                   }).join()),
-      RW_EVAL_MANY(true, (key, wo, rw, read, write) ->
+      RW_EVAL_MANY(true, (key, wo, rw, read, write, invocationCountSupplier) ->
             rw.evalMany(Collections.singleton(key),
                   (Function<ReadWriteEntryView<Object, String>, Object> & Serializable) view -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      read.accept(view);
                      write.accept(view);
                      return null;
                   }).forEach(v -> {
             })),
-      RW_EVAL_MANY_ENTRIES(true, (key, wo, rw, read, write) ->
+      RW_EVAL_MANY_ENTRIES(true, (key, wo, rw, read, write, invocationCountSupplier) ->
             rw.evalMany(Collections.singletonMap(key, null),
                   (BiFunction<String, ReadWriteEntryView<Object, String>, Object> & Serializable) (v, view) -> {
-                     invocationCount.incrementAndGet();
+                     invocationCountSupplier.get().incrementAndGet();
                      read.accept(view);
                      write.accept(view);
                      return null;
@@ -176,7 +176,11 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       interface Performer<K> {
          void eval(K key,
                    WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
-                   Consumer<ReadEntryView<K, String>> read, Consumer<WriteEntryView<String>> write);
+                   Consumer<ReadEntryView<K, String>> read, Consumer<WriteEntryView<String>> write,
+                   InvocationCountSupplier invocationCountSupplier);
       }
+
+      @FunctionalInterface
+      interface InvocationCountSupplier extends Serializable, Supplier<AtomicInteger> {}
    }
 }
