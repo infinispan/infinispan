@@ -104,7 +104,7 @@ public class OsgiClassLoader extends ClassLoader {
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
-         if (bundle.getState() == Bundle.ACTIVE) {
+         if (bundle != null && bundle.getState() == Bundle.ACTIVE) {
             try {
                final URL resource = bundle.getResource(name);
                if (resource != null) {
@@ -132,7 +132,7 @@ public class OsgiClassLoader extends ClassLoader {
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
-         if (bundle.getState() == Bundle.ACTIVE) {
+         if (bundle != null && bundle.getState() == Bundle.ACTIVE) {
             try {
                final Enumeration<URL> resources = bundle.getResources(name);
                if (resources != null) {
