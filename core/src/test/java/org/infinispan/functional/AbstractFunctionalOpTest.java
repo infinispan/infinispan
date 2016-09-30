@@ -2,12 +2,15 @@ package org.infinispan.functional;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -21,6 +24,7 @@ import org.infinispan.commons.api.functional.Param;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.CountingCARD;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -37,6 +41,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    ReadWriteMap<Object, String> rw;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
+   List<CountingCARD> countingCARDs;
 
    public AbstractFunctionalOpTest() {
       numNodes = 4;
@@ -82,6 +87,21 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       this.rw = ReadWriteMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
       this.lwo = WriteOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
       this.lrw = ReadWriteMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      super.createCacheManagers();
+      countingCARDs = cacheManagers.stream().map(cm -> CountingCARD.replaceDispatcher(cm)).collect(Collectors.toList());
+   }
+
+   protected void advanceGenerationsAndAwait(long timeout, TimeUnit timeUnit) throws InterruptedException {
+      long now = System.currentTimeMillis();
+      long deadline = now + timeUnit.toMillis(timeout);
+      for (CountingCARD card : countingCARDs) {
+         card.advanceGenerationAndAwait(deadline - now, TimeUnit.MILLISECONDS);
+         now = System.currentTimeMillis();
+      }
    }
 
    protected Object getKey(boolean isSourceOwner) {

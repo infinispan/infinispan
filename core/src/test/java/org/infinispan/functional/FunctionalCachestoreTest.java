@@ -7,6 +7,7 @@ import static org.testng.Assert.assertTrue;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
    }
 
    @Test(dataProvider = "owningModeAndMethod")
-   public void testLoad(boolean isSourceOwner, Method method) {
+   public void testLoad(boolean isSourceOwner, Method method) throws InterruptedException {
       Object key = getKey(isSourceOwner);
 
       List<Cache<Object, Object>> owners = caches(DIST).stream()
@@ -46,6 +47,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       assertInvocations(2);
 
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      // Staggered gets could arrive after evict command and that would reload the entry into DC
+      advanceGenerationsAndAwait(10, TimeUnit.SECONDS);
       caches(DIST).forEach(cache -> cache.evict(key));
       caches(DIST).forEach(cache -> assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString()));
       owners.forEach(cache -> {
