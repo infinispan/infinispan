@@ -15,19 +15,9 @@
 
          thread_naming_pattern="pl"
 
-         thread_pool.min_threads="1"
-         thread_pool.max_threads="5"
+         thread_pool.min_threads="0"
+         thread_pool.max_threads="8"
          thread_pool.keep_alive_time="60000"
-         thread_pool.queue_enabled="false"
-         thread_pool.queue_max_size="100"
-         thread_pool.rejection_policy="Discard"
-
-         oob_thread_pool.min_threads="1"
-         oob_thread_pool.max_threads="5"
-         oob_thread_pool.keep_alive_time="60000"
-         oob_thread_pool.queue_enabled="false"
-         oob_thread_pool.queue_max_size="100"
-         oob_thread_pool.rejection_policy="Discard"
          />
 
    <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>

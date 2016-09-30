@@ -73,11 +73,10 @@ public class TransportStackConfigurationIT {
     private void assertMBeanAttributes(MBeanServerConnectionProvider provider, String protocolMBean) throws Exception {
         assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "log_discard_msgs")));
 
-        assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.queue_enabled")));
-        assertEquals("abort", getAttribute(provider, protocolMBean, "thread_pool.rejection_policy"));
-
-        assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.queue_enabled")));
-        assertEquals("abort", getAttribute(provider, protocolMBean, "oob_thread_pool.rejection_policy"));
+        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.enabled")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, protocolMBean, "thread_pool.min_threads")));
+        assertEquals(200, Integer.parseInt(getAttribute(provider, protocolMBean, "thread_pool.max_threads")));
+        assertEquals(60000, Integer.parseInt(getAttribute(provider, protocolMBean, "thread_pool.keep_alive_time")));
     }
 
     /*

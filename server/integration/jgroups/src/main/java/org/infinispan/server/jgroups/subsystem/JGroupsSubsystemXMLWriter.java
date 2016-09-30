@@ -119,9 +119,15 @@ public class JGroupsSubsystemXMLWriter implements XMLElementWriter<SubsystemMars
         writeElement(writer, transport, ProtocolResourceDefinition.PROPERTIES);
         if (transport.hasDefined(ThreadPoolResourceDefinition.WILDCARD_PATH.getKey())) {
             writeThreadPoolElements(Element.DEFAULT_THREAD_POOL, ThreadPoolResourceDefinition.DEFAULT, writer, transport);
-            writeThreadPoolElements(Element.INTERNAL_THREAD_POOL, ThreadPoolResourceDefinition.INTERNAL, writer, transport);
-            writeThreadPoolElements(Element.OOB_THREAD_POOL, ThreadPoolResourceDefinition.OOB, writer, transport);
-            writeThreadPoolElements(Element.TIMER_THREAD_POOL, ThreadPoolResourceDefinition.TIMER, writer, transport);
+            if (transport.hasDefined(ThreadPoolResourceDefinition.OOB.name())) {
+                writeThreadPoolElements(Element.OOB_THREAD_POOL, ThreadPoolResourceDefinition.DEFAULT, writer, transport);
+            }
+            if (transport.hasDefined(ThreadPoolResourceDefinition.INTERNAL.name())) {
+                writeThreadPoolElements(Element.INTERNAL_THREAD_POOL, ThreadPoolResourceDefinition.DEFAULT, writer, transport);
+            }
+            if (transport.hasDefined(ThreadPoolResourceDefinition.TIMER.name())) {
+                writeThreadPoolElements(Element.TIMER_THREAD_POOL, ThreadPoolResourceDefinition.DEFAULT, writer, transport);
+            }
         }
         writer.writeEndElement();
     }

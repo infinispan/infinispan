@@ -15,9 +15,9 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.PingData;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.NameCache;
 import org.jgroups.util.Responses;
 import org.jgroups.util.Tuple;
-import org.jgroups.util.UUID;
 
 /**
  * This protocol allows for discovery to happen via data structures maintained
@@ -148,7 +148,7 @@ public class TEST_PING extends Discovery {
 
       Address localAddr = discovery.getLocalAddr();
       PhysicalAddress physicalAddr = (PhysicalAddress) discovery.down(new Event(Event.GET_PHYSICAL_ADDRESS, localAddr));
-      String logicalName = UUID.get(localAddr);
+      String logicalName = NameCache.get(localAddr);
       PingData pingRsp = new PingData(localAddr, discovery.isServer(), logicalName, physicalAddr).coord(discovery
             .is_coord);
 
@@ -163,7 +163,7 @@ public class TEST_PING extends Discovery {
    private void mapAddrWithPhysicalAddr(TEST_PING local, TEST_PING remote) {
       PhysicalAddress physical_addr = (PhysicalAddress)
          remote.down(new Event(Event.GET_PHYSICAL_ADDRESS, remote.getLocalAddr()));
-      local.down(new Event(Event.SET_PHYSICAL_ADDRESS,
+      local.down(new Event(Event.ADD_PHYSICAL_ADDRESS,
          new Tuple<Address, PhysicalAddress>(remote.getLocalAddr(), physical_addr)));
 
       if (log.isTraceEnabled())
