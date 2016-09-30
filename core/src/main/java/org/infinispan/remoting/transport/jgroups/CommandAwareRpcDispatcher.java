@@ -301,7 +301,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return buf;
    }
 
-   private SingleResponseFuture processSingleCall(ReplicableCommand command, long timeout,
+   protected SingleResponseFuture processSingleCall(ReplicableCommand command, long timeout,
                                                   Address destination, ResponseMode mode,
                                                   DeliverOrder deliverOrder, Marshaller marshaller) throws Exception {
       if (trace)
