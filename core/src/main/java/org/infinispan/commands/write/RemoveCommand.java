@@ -78,6 +78,10 @@ public class RemoveCommand extends AbstractDataWriteCommand {
             if (e != null) {
                e.setChanged(true);
                e.setRemoved(true);
+               e.setCreated(false);
+               if (this instanceof EvictCommand) {
+                  e.setEvicted(true);
+               }
             }
             return isConditional() ? true : null;
          } else {
