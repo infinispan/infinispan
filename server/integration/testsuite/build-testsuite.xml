@@ -358,6 +358,12 @@
                    addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-sni.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
+                   restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
+                   addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
+                   addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
+                   addVault="${other.parts}/vault.xml" />
+        <transform in="standalone.xml" out="testsuite/rest-ssl-with-sni.xml"
+                   restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
                    addVault="${other.parts}/vault.xml" />
@@ -387,6 +393,7 @@
         <attribute name="addJGroupsSasl" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
         <attribute name="hotrodEncrypt" default="false"/>
+        <attribute name="restEncrypt" default="false"/>
         <attribute name="addKrbOpts" default="false"/>
         <attribute name="addKrbSecDomain" default="false"/>
         <attribute name="addVault" default="false"/>
@@ -407,6 +414,7 @@
                 <param name="addJGroupsSasl" expression="@{addJGroupsSasl}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
                 <param name="hotrodEncrypt" expression="@{hotrodEncrypt}"/>
+                <param name="restEncrypt" expression="@{restEncrypt}"/>
                 <param name="addKrbOpts" expression="@{addKrbOpts}"/>
                 <param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
                 <param name="addSecRealm" expression="@{addSecRealm}"/>

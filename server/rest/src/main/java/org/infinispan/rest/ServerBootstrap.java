@@ -113,8 +113,4 @@ public class ServerBootstrap implements ServletContextListener {
       }
    }
 
-   private Class<?> loadClass(String name) throws Exception {
-      return Thread.currentThread().getContextClassLoader().loadClass(name);
-   }
-
 }

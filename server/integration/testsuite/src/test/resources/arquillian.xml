@@ -1055,6 +1055,26 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
+        <container qualifier="restSslWithSni" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/rest-ssl-with-sni.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <!--<property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0-->
+                     <!-- -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}-->
+                     <!-- -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000-->
+                     <!-- -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044-->
+                <!--</property>-->
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
     </group>
 
     <group qualifier="queries">

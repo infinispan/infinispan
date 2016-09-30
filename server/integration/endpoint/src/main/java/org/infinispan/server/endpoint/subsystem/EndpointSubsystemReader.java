@@ -283,9 +283,20 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       PathAddress containerAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.REST_CONNECTOR, name));
       connector.get(OP_ADDR).set(containerAddress.toModelNode());
 
-      ParseUtils.requireNoContent(reader);
-
       operations.add(connector);
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ENCRYPTION: {
+               parseEncryption(reader, connector, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
    }
 
    private void parseWebSocketConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,

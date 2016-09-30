@@ -109,6 +109,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       for (SimpleAttributeDefinition attribute : RestConnectorResource.REST_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
+      writeEncryption(writer, connector);
       writer.writeEndElement();
    }
 

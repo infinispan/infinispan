@@ -46,24 +46,32 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
 
       // Create the service
-      final RestService service = new RestService(config);
+      final RestService service = new RestService(getServiceName(config), config);
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
-      EndpointUtils.addCacheContainerDependency(builder, service.getCacheContainerName(), service.getCacheManager());
-      EndpointUtils.addCacheDependency(builder, service.getCacheContainerName(), null);
+      String cacheContainerName = config.hasDefined(ModelKeys.CACHE_CONTAINER) ? config.get(ModelKeys.CACHE_CONTAINER).asString() : null;
+      EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
+      EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
-      builder
-         .addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
-      if (service.getSecurityDomain()!=null) {
-         EndpointUtils.addSecurityDomainDependency(builder, service.getSecurityDomain(), service.getSecurityDomainContextInjector());
+
+
+
+      builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
+      if (config.hasDefined(ModelKeys.SECURITY_DOMAIN)) {
+         EndpointUtils.addSecurityDomainDependency(builder, config.get(ModelKeys.SECURITY_DOMAIN).asString(), service.getSecurityDomainContextInjector());
       }
+      EncryptableSubsystemHelper.processEncryption(config, service, builder);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();
    }
 
    protected String getSocketBindingName(ModelNode config) {
       return config.hasDefined(ModelKeys.SOCKET_BINDING) ? config.get(ModelKeys.SOCKET_BINDING).asString() : null;
+   }
+
+   protected String getServiceName(ModelNode config) {
+      return config.hasDefined(ModelKeys.NAME) ? config.get(ModelKeys.NAME).asString() : "REST";
    }
 
    @Override
@@ -87,4 +95,6 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
    protected boolean requiresRuntimeVerification() {
       return false;
    }
+
+
 }

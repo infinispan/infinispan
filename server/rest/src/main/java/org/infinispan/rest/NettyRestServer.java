@@ -14,7 +14,10 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.server.core.AbstractCacheIgnoreAware;
+import org.infinispan.server.core.configuration.SslConfiguration;
+import org.infinispan.server.core.utils.SslUtils;
 import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer;
+import org.jboss.resteasy.plugins.server.netty.SniConfiguration;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 public final class NettyRestServer extends AbstractCacheIgnoreAware implements Lifecycle {
@@ -50,7 +53,22 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
       netty.setPort(configuration.port());
       netty.setRootResourcePath("");
       netty.setSecurityDomain(null);
+      addEncryption(configuration, netty);
       return new NettyRestServer(manager, configuration, netty, consumer);
+   }
+
+   private static void addEncryption(RestServerConfiguration config, NettyJaxrsServer netty) {
+      if(config.ssl() != null && config.ssl().enabled()) {
+         SslConfiguration sslConfig = config.ssl();
+         SniConfiguration nettySniConfiguration = new SniConfiguration(SslUtils.createJdkSslContext(sslConfig, sslConfig.sniDomainsConfiguration().get("*")));
+
+         sslConfig.sniDomainsConfiguration().forEach((domainName, domainConfiguration) -> {
+            nettySniConfiguration.addSniMapping(domainName, SslUtils.createJdkSslContext(sslConfig, domainConfiguration));
+         });
+
+         netty.setSSLContext(sslConfig.sslContext());
+         netty.setSniConfiguration(nettySniConfiguration);
+      }
    }
 
    private static void startCaches(EmbeddedCacheManager cm) {
@@ -82,7 +100,7 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
    public void start() {
       netty.start();
       ResteasyDeployment deployment = netty.getDeployment();
-      configuration.getIgnoredCaches().forEach(this::ignoreCache);
+      configuration.ignoredCaches().forEach(this::ignoreCache);
       RestCacheManager restCacheManager = new RestCacheManager(cacheManager, this::isCacheIgnored);
       Server server = new Server(configuration, restCacheManager);
       deployment.getRegistry().addSingletonResource(server);

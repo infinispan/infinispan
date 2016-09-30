@@ -18,15 +18,12 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import static java.util.Optional.ofNullable;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
@@ -41,7 +38,6 @@ import org.infinispan.server.core.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
-import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;
 import org.jboss.as.network.SocketBinding;
@@ -57,7 +53,7 @@ import org.jboss.msc.value.InjectedValue;
  *
  * @author Tristan Tarrant
  */
-class ProtocolServerService implements Service<ProtocolServer> {
+class ProtocolServerService implements Service<ProtocolServer>, EncryptableService {
    // The cacheManager that will be injected by the container (specified by the cacheContainer
    // attribute)
    private final InjectedValue<EmbeddedCacheManager> cacheManager = new InjectedValue<EmbeddedCacheManager>();
@@ -90,6 +86,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
    private LoginContext serverLoginContext = null;
    private String serverContextName;
    private String defaultCacheName;
+   private boolean clientAuth;
 
    ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder) {
       this(serverName, serverClass, configurationBuilder, null);
@@ -120,28 +117,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
          configurationBuilder.port(socketAddress.getPort());
 
          SecurityRealm encryptionRealm = encryptionSecurityRealm.getOptionalValue();
+
          final String qual;
          if (encryptionRealm != null) {
-            SSLContext sslContext = encryptionRealm.getSSLContext();
-            if (sslContext == null) {
-               throw ROOT_LOGGER.noSSLContext(serverName, encryptionRealm.getName());
-            }
-            if (configurationBuilder.ssl().create().requireClientAuth() && !encryptionRealm.getSupportedAuthenticationMechanisms().contains(AuthMechanism.CLIENT_CERT)) {
-               throw ROOT_LOGGER.noSSLTrustStore(serverName, encryptionRealm.getName());
-            }
-            configurationBuilder.ssl().sslContext(sslContext);
-
-            for(Map.Entry<String, InjectedValue<SecurityRealm>> sniConfiguration : sniDomains.entrySet()) {
-               String sniDomain = sniConfiguration.getKey();
-               SSLContext sniSslContext = Optional.ofNullable(sniConfiguration.getValue().getOptionalValue())
-                       .flatMap(s -> ofNullable(s.getSSLContext()))
-                       .orElseGet(() -> {
-                          ROOT_LOGGER.noSSLContextForSni(serverName);
-                          return sslContext;
-                       });
-               configurationBuilder.ssl().sniHostName(sniDomain).sslContext(sniSslContext);
-            }
-
+            EncryptableServiceHelper.fillSecurityConfiguration(this, configurationBuilder.ssl());
             qual = isSniEnabled() ? " (SSL+SNI)" : " (SSL)";
          } else {
             qual = "";
@@ -249,31 +228,32 @@ class ProtocolServerService implements Service<ProtocolServer> {
       return protocolServer;
    }
 
-   InjectedValue<GlobalConfiguration> getCacheManagerConfiguration() {
+   public InjectedValue<GlobalConfiguration> getCacheManagerConfiguration() {
       return cacheManagerConfiguration;
    }
 
-   InjectedValue<EmbeddedCacheManager> getCacheManager() {
+   public InjectedValue<EmbeddedCacheManager> getCacheManager() {
       return cacheManager;
    }
 
-   InjectedValue<SocketBinding> getSocketBinding() {
+   public InjectedValue<SocketBinding> getSocketBinding() {
       return socketBinding;
    }
 
-   InjectedValue<SecurityRealm> getAuthenticationSecurityRealm() {
+   public InjectedValue<SecurityRealm> getAuthenticationSecurityRealm() {
       return authenticationSecurityRealm;
    }
 
-   InjectedValue<SecurityDomainContext> getSaslSecurityDomain() {
+   public InjectedValue<SecurityDomainContext> getSaslSecurityDomain() {
       return saslSecurityDomain;
    }
 
-   InjectedValue<SecurityRealm> getEncryptionSecurityRealm() {
+   @Override
+   public InjectedValue<SecurityRealm> getEncryptionSecurityRealm() {
       return encryptionSecurityRealm;
    }
 
-   InjectedValue<ExtensionManagerService> getExtensionManager() {
+   public InjectedValue<ExtensionManagerService> getExtensionManager() {
       return extensionManager;
    }
 
@@ -281,8 +261,29 @@ class ProtocolServerService implements Service<ProtocolServer> {
       return transport;
    }
 
-   InjectedValue<SecurityRealm> getSniSecurityRealm(String sniHostName) {
+   @Override
+   public InjectedValue<SecurityRealm> getSniSecurityRealm(String sniHostName) {
       return sniDomains.computeIfAbsent(sniHostName, v -> new InjectedValue<SecurityRealm>());
+   }
+
+   @Override
+   public Map<String, InjectedValue<SecurityRealm>> getSniConfiguration() {
+      return sniDomains;
+   }
+
+   @Override
+   public String getServerName() {
+      return serverName;
+   }
+
+   @Override
+   public void setClientAuth(boolean enabled) {
+      clientAuth = enabled;
+   }
+
+   @Override
+   public boolean getClientAuth() {
+      return clientAuth;
    }
 
    Subject getServerSubject(String serverSecurityDomain) throws LoginException
