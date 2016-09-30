@@ -60,8 +60,6 @@ public class ThreadsAttributesWriteHandler extends ReloadRequiredWriteAttributeH
                 // TODO doesn't cover the admin-only modes
                 if (context.getProcessType().isServer() && (
                         conf.hasDefined(ModelKeys.DEFAULT_EXECUTOR) ||
-                                conf.hasDefined(ModelKeys.TIMER_EXECUTOR) ||
-                                conf.hasDefined(ModelKeys.OOB_EXECUTOR) ||
                                 conf.hasDefined(ModelKeys.THREAD_FACTORY))) {
                     // That is not supported.
                     throw new OperationFailedException(JGroupsLogger.ROOT_LOGGER.threadsAttributesUsedInRuntime());

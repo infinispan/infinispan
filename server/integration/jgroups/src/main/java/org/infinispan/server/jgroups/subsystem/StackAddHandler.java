@@ -78,9 +78,6 @@ public class StackAddHandler extends AbstractAddStepHandler {
 
         // Setup thread pool configuration via JGroups properties
         addThreadPoolConfigurationProperties(ThreadPoolResourceDefinition.DEFAULT, "thread_pool", context, transport, transportBuilder);
-        addThreadPoolConfigurationProperties(ThreadPoolResourceDefinition.INTERNAL, "internal_thread_pool", context, transport, transportBuilder);
-        addThreadPoolConfigurationProperties(ThreadPoolResourceDefinition.OOB, "oob_thread_pool", context, transport, transportBuilder);
-        addThreadPoolConfigurationProperties(ThreadPoolResourceDefinition.TIMER, "timer", context, transport, transportBuilder);
 
         transportBuilder.build(target).install();
 
@@ -169,18 +166,6 @@ public class StackAddHandler extends AbstractAddStepHandler {
 
         builder.addProperty(propertyPrefix + ".min_threads", pool.getMinThreads().resolveModelAttribute(context, threadModel).asString())
                 .addProperty(propertyPrefix + ".max_threads", pool.getMaxThreads().resolveModelAttribute(context, threadModel).asString());
-
-        // queue_*
-        int queueSize = pool.getQueueLength().resolveModelAttribute(context, threadModel).asInt();
-        if (propertyPrefix.equals("timer")) {
-            // Timer pool doesn't accept queue_enabled property
-            builder.addProperty(propertyPrefix + ".queue_max_size", String.valueOf(queueSize));
-        } else if (queueSize == 0) {
-            builder.addProperty(propertyPrefix + ".queue_enabled", Boolean.FALSE.toString());
-        } else {
-            builder.addProperty(propertyPrefix + ".queue_enabled", Boolean.TRUE.toString())
-                    .addProperty(propertyPrefix + ".queue_max_size", String.valueOf(queueSize));
-        }
 
         // keepalive_time in milliseconds
         long keepaliveTime = pool.getKeepaliveTime().resolveModelAttribute(context, threadModel).asLong();

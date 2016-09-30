@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.ExtendedUUID;
-import org.jgroups.util.UUID;
+import org.jgroups.util.NameCache;
 import org.jgroups.util.Util;
 
 /**
@@ -28,7 +28,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
    public static ExtendedUUID randomUUID(String name, String siteId, String rackId, String machineId) {
       ExtendedUUID uuid = ExtendedUUID.randomUUID(name);
       if (name != null) {
-         UUID.add(uuid, name);
+         NameCache.add(uuid, name);
       }
       addId(uuid, SITE_KEY, siteId);
       addId(uuid, RACK_KEY, rackId);

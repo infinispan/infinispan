@@ -4,7 +4,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.jgroups.Address;
 import org.jgroups.util.ExtendedUUID;
-import org.jgroups.util.UUID;
+import org.jgroups.util.NameCache;
 
 /**
  * Cache JGroupsAddress instances
@@ -37,7 +37,7 @@ public class JGroupsAddressCache {
    static void pruneAddressCache() {
       // Prune the JGroups addresses & LocalUUIDs no longer in the UUID cache from the our address cache
       addressCache.forEachKey(Integer.MAX_VALUE, address -> {
-         if (UUID.get(address) == null) {
+         if (NameCache.get(address) == null) {
             addressCache.remove(address);
          }
       });
