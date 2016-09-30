@@ -1,9 +1,9 @@
 package org.infinispan.rest.configuration;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.rest.logging.Log;
+import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * RestServerConfigurationBuilder.
@@ -11,30 +11,21 @@ import org.infinispan.commons.configuration.Builder;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class RestServerConfigurationBuilder implements Builder<RestServerConfiguration> {
+public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder> implements
+      Builder<RestServerConfiguration> {
+
+   private final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+
+   private static final int DEFAULT_PORT = 8080;
 
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
-   private int port = 8080;
-   private String host = "localhost";
-   private Set<String> ignoredCaches = new HashSet<String>();
+
+   public RestServerConfigurationBuilder() {
+      super(DEFAULT_PORT);
+   }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
       this.extendedHeaders = extendedHeaders;
-      return this;
-   }
-
-   public RestServerConfigurationBuilder port(int port) {
-      this.port = port;
-      return this;
-   }
-
-   public RestServerConfigurationBuilder host(String host) {
-      this.host = host;
-      return this;
-   }
-
-   public RestServerConfigurationBuilder ignoredCaches(Set<String> ignoredCaches) {
-      this.ignoredCaches = ignoredCaches;
       return this;
    }
 
@@ -45,7 +36,7 @@ public class RestServerConfigurationBuilder implements Builder<RestServerConfigu
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches);
+      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches, ssl.create());
    }
 
    @Override
@@ -66,4 +57,38 @@ public class RestServerConfigurationBuilder implements Builder<RestServerConfigu
       return create();
    }
 
+   @Override
+   public RestServerConfigurationBuilder self() {
+      return this;
+   }
+
+   @Override
+   public RestServerConfigurationBuilder defaultCacheName(String defaultCacheName) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
+   public RestServerConfigurationBuilder idleTimeout(int idleTimeout) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
+   public RestServerConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
+   public RestServerConfigurationBuilder recvBufSize(int recvBufSize) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
+   public RestServerConfigurationBuilder sendBufSize(int sendBufSize) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
+   public RestServerConfigurationBuilder workerThreads(int workerThreads) {
+      throw logger.unsupportedConfigurationOption();
+   }
 }

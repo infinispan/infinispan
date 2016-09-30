@@ -102,6 +102,11 @@ public class RestConnectorResource extends CommonConnectorResource {
    }
 
    @Override
+   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      resourceRegistration.registerSubModel(new EncryptionResource());
+   }
+
+   @Override
    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
       super.registerAttributes(resourceRegistration);
 

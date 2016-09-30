@@ -3,34 +3,27 @@ package org.infinispan.rest.configuration;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.configuration.SslConfiguration;
 
 @BuiltBy(RestServerConfigurationBuilder.class)
-public class RestServerConfiguration {
+public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final ExtendedHeaders extendedHeaders;
-   private final String host;
-   private final int port;
-   private Set<String> ignoredCaches;
 
-   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches) {
+   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl) {
+      super(null, null, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches);
       this.extendedHeaders = extendedHeaders;
-      this.host = host;
-      this.port = port;
-      this.ignoredCaches = ignoredCaches;
    }
 
    public ExtendedHeaders extendedHeaders() {
       return extendedHeaders;
    }
 
-   public int port() {
-      return port;
-   }
-
-   public String host() {
-      return host;
-   }
-
+   /**
+    * @deprecated Use {@link #ignoredCaches()} instead.
+    */
+   @Deprecated
    public Set<String> getIgnoredCaches() {
-      return ignoredCaches;
+      return ignoredCaches();
    }
 }

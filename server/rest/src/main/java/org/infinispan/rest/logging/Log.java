@@ -30,4 +30,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "REST server starting, listening on %s:%s", id = 12003)
    void startRestServer(String host, int port);
 
+   @Message(value = "Unsupported configuration option", id = 12004)
+   UnsupportedOperationException unsupportedConfigurationOption();
+
 }

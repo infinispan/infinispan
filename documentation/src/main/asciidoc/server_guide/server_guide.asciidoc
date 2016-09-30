@@ -945,9 +945,9 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 
 For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
 
-=== Hot Rod encryption (SSL)
+=== Hot Rod and REST encryption (TLS/SSL)
 
-The Hot Rod protocol also supports encryption using SSL/TLS with optional TLS/SNI support (link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
+Both Hot Rod and REST protocols support encryption using SSL/TLS with optional TLS/SNI support (link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
 .Security Realm configuration for SSL
 [source,xml]
@@ -966,7 +966,7 @@ The Hot Rod protocol also supports encryption using SSL/TLS with optional TLS/SN
 When using SNI support there might be multiple Security Realms configured.
 ====
 
-Next modify the +<hotrod-connector>+ element in the endpoint subsystem to require encryption. Optionally add SNI configuration:
+Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the endpoint subsystem to require encryption. Optionally add SNI configuration:
 
 .Hot Rod connector SSL configuration
 
@@ -979,9 +979,15 @@ Next modify the +<hotrod-connector>+ element in the endpoint subsystem to requir
         <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
     </encryption>
 </hotrod-connector>
+<rest-connector socket-binding="rest" cache-container="local">
+    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false">
+        <sni host-name="domain1" security-realm="Domain1ApplicationRealm" />
+        <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
+    </encryption>
+</rest-connector>
 ----
 
-In order to connect to the server, the client will need a trust store containing the public key of the server(s) you are going to connect to:
+In order to connect to the server using Hot Rod protocol, the client needs a trust store containing the public key of the server(s) you are going to connect to:
 
 [source,java]
 ----

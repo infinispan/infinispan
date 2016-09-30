@@ -85,6 +85,14 @@
     </xs:complexType>
 
     <xs:complexType name="rest-connector">
+        <xs:all>
+            <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1" />
+        </xs:all>
+        <xs:attribute name="name" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The logical name to give to this connector. This attribute is required when there are more connectors of the same type defined.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="cache-container" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>

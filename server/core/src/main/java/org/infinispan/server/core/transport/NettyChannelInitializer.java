@@ -1,21 +1,13 @@
 package org.infinispan.server.core.transport;
 
-import java.util.Arrays;
-
-import javax.net.ssl.SSLContext;
-
-import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
-import org.infinispan.server.core.configuration.SslEngineConfiguration;
+import org.infinispan.server.core.utils.SslUtils;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.util.DomainMappingBuilder;
@@ -47,13 +39,13 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       SslConfiguration ssl = server.getConfiguration().ssl();
       if (ssl.enabled()) {
          //add default domain mapping
-         JdkSslContext defaultNettySslContext = createNettySslContext(ssl, ssl.sniDomainsConfiguration().get("*"));
+         JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get("*"));
          DomainMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainMappingBuilder<>(defaultNettySslContext);
 
          //and the rest
          ssl.sniDomainsConfiguration().forEach((k, v) -> {
             if (!"*".equals(k)) {
-               domainMappingBuilder.add(k, createNettySslContext(ssl, v));
+               domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v));
             }
          });
 
@@ -62,29 +54,5 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       pipeline.addLast("decoder", server.getDecoder());
       if (encoder != null)
          pipeline.addLast("encoder", encoder);
-   }
-
-   private JdkSslContext createNettySslContext(SslConfiguration sslConfiguration, SslEngineConfiguration sslEngineConfiguration) {
-      SSLContext sslContext;
-      if (sslEngineConfiguration.sslContext() != null) {
-         sslContext = sslEngineConfiguration.sslContext();
-      } else {
-         sslContext = SslContextFactory.getContext(sslEngineConfiguration.keyStoreFileName(),
-                 sslEngineConfiguration.keyStorePassword(), sslEngineConfiguration.keyStoreCertificatePassword(),
-                 sslEngineConfiguration.trustStoreFileName(), sslEngineConfiguration.trustStorePassword());
-      }
-      return createSslContext(sslContext, requireClientAuth(sslConfiguration));
-   }
-
-  private JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth) {
-    //Unfortunately we need to grap a list of available ciphers from the engine.
-    //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
-    //Of course, we don't need to any specific engine configuration here... just a list of ciphers
-    String[] ciphers = SslContextFactory.getEngine(sslContext, false, false).getSupportedCipherSuites();
-    return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null, clientAuth);
-  }
-
-   private ClientAuth requireClientAuth(SslConfiguration sslConfig) {
-      return sslConfig.requireClientAuth() ? ClientAuth.REQUIRE : ClientAuth.NONE;
    }
 }

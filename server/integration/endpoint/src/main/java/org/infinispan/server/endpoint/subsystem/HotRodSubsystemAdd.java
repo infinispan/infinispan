@@ -67,7 +67,6 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       HotRodServerConfigurationBuilder configurationBuilder = new HotRodServerConfigurationBuilder();
       configureProtocolServer(configurationBuilder, config);
       configureProtocolServerAuthentication(configurationBuilder, config);
-      configureProtocolServerEncryption(configurationBuilder, config);
       configureProtocolServerTopology(configurationBuilder, config);
       // Create the service
       final ProtocolServerService service = new ProtocolServerService(getServiceName(operation), HotRodServer.class, configurationBuilder);
@@ -82,7 +81,7 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
 
-      processEncryption(config, service, builder);
+      EncryptableSubsystemHelper.processEncryption(config, service, builder);
       processAuthentication(config, configurationBuilder, service, builder);
 
       // Extension manager dependency
@@ -123,23 +122,6 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
             if (sasl.hasDefined(ModelKeys.PROPERTY)) {
                for(Property property : sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
                   authenticationBuilder.addMechProperty(property.getName(), property.getValue().asProperty().getValue().asString());
-               }
-            }
-         }
-      }
-   }
-
-   private void processEncryption(ModelNode config, ProtocolServerService service, ServiceBuilder<?> builder) {
-      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
-         EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME, ModelKeys.SECURITY_REALM).asString(), service.getEncryptionSecurityRealm());
-         config = config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
-         if(config.get(ModelKeys.SNI).isDefined()) {
-            for(ModelNode sniConfiguration : config.get(ModelKeys.SNI).asList()) {
-               // if the security realm is missing, a default one will be used
-               if(sniConfiguration.get(0).hasDefined(ModelKeys.SECURITY_REALM)) {
-                  String sniHostName = sniConfiguration.get(0).get(ModelKeys.HOST_NAME).asString();
-                  String securityRealm = sniConfiguration.get(0).get(ModelKeys.SECURITY_REALM).asString();
-                  EndpointUtils.addSecurityRealmDependency(builder, securityRealm, service.getSniSecurityRealm(sniHostName));
                }
             }
          }
@@ -189,16 +171,6 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
          config = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
          builder.authentication().enable();
-      }
-   }
-
-   private void configureProtocolServerEncryption(HotRodServerConfigurationBuilder builder, ModelNode config) {
-      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
-         config = config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
-         builder.ssl().enable();
-         if (config.hasDefined(ModelKeys.REQUIRE_SSL_CLIENT_AUTH)) {
-            builder.ssl().requireClientAuth(config.get(ModelKeys.REQUIRE_SSL_CLIENT_AUTH).asBoolean());
-         }
       }
    }
 

@@ -18,7 +18,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected int idleTimeout = -1;
    protected int recvBufSize = 0;
    protected int sendBufSize = 0;
-   protected final SslConfigurationBuilder ssl;
+   protected final SslConfigurationBuilder<T, S> ssl;
    protected boolean tcpNoDelay = true;
    protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
    protected Set<String> ignoredCaches = Collections.EMPTY_SET;
