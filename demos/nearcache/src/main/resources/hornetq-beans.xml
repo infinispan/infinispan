@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2011 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this library; if not, write to the Free Software
+  ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA
+  -->
+
+<deployment xmlns="urn:jboss:bean-deployer:2.0">
+
+   <bean name="Naming" class="org.jnp.server.NamingBeanImpl"/>
+
+   <!-- JNDI server. Disable this if you don't want JNDI -->
+   <bean name="JNDIServer" class="org.jnp.server.Main">
+      <property name="namingInfo">
+         <inject bean="Naming"/>
+      </property>
+      <property name="port">${jnp.port:1099}</property>
+      <property name="bindAddress">${jnp.host:localhost}</property>
+      <property name="rmiPort">${jnp.rmiPort:1098}</property>
+      <property name="rmiBindAddress">${jnp.host:localhost}</property>
+   </bean>
+
+   <!-- MBean server -->
+   <bean name="MBeanServer" class="javax.management.MBeanServer">
+      <constructor factoryClass="java.lang.management.ManagementFactory"
+                   factoryMethod="getPlatformMBeanServer"/>
+   </bean> 
+
+   <!-- The core configuration -->
+   <bean name="Configuration" class="org.hornetq.core.config.impl.FileConfiguration">
+   </bean>
+
+    <!-- The security manager -->
+   <bean name="HornetQSecurityManager" class="org.hornetq.spi.core.security.HornetQSecurityManagerImpl">
+      <start ignored="true"/>
+      <stop ignored="true"/>
+   </bean>
+
+    <!-- The core server -->
+   <bean name="HornetQServer" class="org.hornetq.core.server.impl.HornetQServerImpl">
+      <constructor>
+         <parameter>
+            <inject bean="Configuration"/>
+         </parameter>
+         <parameter>
+            <inject bean="MBeanServer"/>
+         </parameter>
+         <parameter>
+            <inject bean="HornetQSecurityManager"/>
+         </parameter>        
+      </constructor>
+      <start ignored="true"/>
+      <stop ignored="true"/>
+   </bean>
+   
+   <!-- The JMS server -->
+   <bean name="JMSServerManager" class="org.hornetq.jms.server.impl.JMSServerManagerImpl">
+      <constructor>         
+         <parameter>
+            <inject bean="HornetQServer"/>
+         </parameter>         
+      </constructor>
+   </bean>
+  
+   
+</deployment>

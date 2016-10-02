@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source
+  ~ Copyright 2011 Red Hat Inc. and/or its affiliates and other
+  ~ contributors as indicated by the @author tags. All rights reserved.
+  ~ See the copyright.txt in the distribution for a full listing of
+  ~ individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+
+<h:head>
+   <title>Infinispan CDI Quickstart</title>
+   <h:outputScript library="js" name="jquery-1.6.2.min.js"/>
+   <h:outputStylesheet library="css" name="styles.css"/>
+   <script type="text/javascript">
+      $(window).load(function() {
+         $('#name').bind('focus', function() {
+            $(this).attr('value', '');
+         });
+      });
+   </script>
+</h:head>
+
+<h:body>
+
+   <div id="wrapper">
+
+      <div id="header"/>
+
+      <div id="content">
+         <h:form prependId="false">
+            <h2><h:outputText value="Address form"/></h2>
+            <h:messages id="errors" errorClass="error"/>
+            Name: <br/>
+            <h:inputText id="name" value="#{addressController.name}" label="Name" required="true"/> <br />
+            Address: <br />
+            <h:inputText id="street" value="#{addressController.street}" label="Street"/> <br /><br />
+            <h:commandButton value="Store address" action="#{addressController.store}">
+               <f:ajax execute="name street" render="errors result cached-values-title cached-values"/>
+            </h:commandButton>
+            <h:commandButton value="Get address" action="#{addressController.get}">
+               <f:ajax execute="name" render="errors result cached-values-title cached-values"/>
+            </h:commandButton>
+            <h:commandButton value="Remove address" action="#{addressController.remove}">
+               <f:ajax execute="name" render="errors result cached-values-title cached-values"/>
+            </h:commandButton>
+            <br/>
+            <br/>
+
+            <h:outputText id="result" value="#{addressController.result}"/>
+            <br/>
+
+            <!--<h2><h:outputText value="Cache informations"/></h2>-->
+            <!--<ul>-->
+               <!--<li><h:outputText value="Cache name: #{greetingCacheManager.cacheName}"/></li>-->
+               <!--<li><h:outputText value="Eviction strategy: #{greetingCacheManager.evictionStrategy}"/></li>-->
+               <!--<li><h:outputText value="Max entries: #{greetingCacheManager.evictionMaxEntries}"/></li>-->
+               <!--<li><h:outputText value="Expiration lifespan: #{greetingCacheManager.expirationLifespan} ms"/></li>-->
+            <!--</ul>-->
+
+            <h2>
+               <h:outputText id="cached-values-title" value="Cached values - #{addressCacheManager.numberOfEntries}"/>
+               <h:commandButton value="Refresh">
+                  <f:ajax immediate="true" render="cached-values-title cached-values"/>
+               </h:commandButton>
+               <h:commandButton value="Clear cache" action="#{addressCacheManager.clearCache}">
+                  <f:ajax immediate="true" render="cached-values-title cached-values"/>
+               </h:commandButton>
+            </h2>
+            <ul>
+               <h:dataTable id="cached-values" value="#{addressCacheManager.cachedValues}" var="oneCachedValue">
+                  <h:column>
+                     <li><h:outputText value="#{oneCachedValue}"/></li>
+                  </h:column>
+               </h:dataTable>
+            </ul>
+         </h:form>
+      </div>
+
+      <!--<div id="footer">-->
+         <!--<h:outputText value="Infinispan version: #{greetingController.infinispanVersion}"/>-->
+      <!--</div>-->
+   </div>
+
+</h:body>
+
+</html>

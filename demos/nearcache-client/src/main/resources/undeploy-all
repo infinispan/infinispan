@@ -1,0 +1,4 @@
+#!/bin/sh
+
+mvn jboss-as:undeploy -Das.hostname=lo2
+mvn jboss-as:undeploy -Das.hostname=lo3

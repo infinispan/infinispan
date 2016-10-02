@@ -1,0 +1,4 @@
+#!/bin/sh
+
+mvn clean package jboss-as:deploy -Das.hostname=lo2
+mvn jboss-as:deploy -Das.hostname=lo3
