@@ -21,6 +21,10 @@ public class ConfigurationBuilderHolder {
       this(Thread.currentThread().getContextClassLoader());
    }
 
+   public ConfigurationBuilderHolder() {
+      this(Thread.currentThread().getContextClassLoader());
+   }
+
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
       this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
