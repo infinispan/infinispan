@@ -333,6 +333,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(enabled = false, description = "Not stable - https://issues.jboss.org/browse/ISPN-3963")
    public void testCacheManagerRestartReusingConfigurations() {
       withCacheManagers(new MultiCacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
