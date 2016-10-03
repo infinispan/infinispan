@@ -55,7 +55,8 @@ method on the `CacheStream`.  This is applied after the key filter but before an
 
 A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
 regular collection. Infinispan handles all of the translations if necessary behind the scenes and works with all
-of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).
+of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).  Only data local to
+the node where the stream operation is performed will be used, for example invalidation only uses local entries.
 
 ==== Example
 
@@ -102,7 +103,12 @@ WARNING: Please rethink disabling rehash awareness unless you really know what y
 Since the operations are sent across to other nodes they must be serializable by Infinispan marshalling.  This allows the
 operations to be sent to the other nodes.
 
-The simplest way is to cast your lambdas as Serializable as below.
+The simplest way is to use a CacheStream instance and use a lambda just as you would normally.
+Infinispan overrides all of the various Stream intermediate and terminal methods to take
+Serializable versions of the arguments (ie. SerializableFunction, SerializablePredicate...)
+You can find these methods at
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/stream/CacheStream.html[CacheStream].
+This relies on the spec to pick the most specific method as defined link:https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.5[here].
 
 In our previous example we used a `Collector` to collect all the results into a `Map`.
 Unfortunately the link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html[Collectors]
@@ -116,13 +122,113 @@ collector peforms in a distributed fashion at link:user_guide.html#_distributed_
 [source,java]
 ----
 Map<Object, String> jbossValues = cache.entrySet().stream()
+              .filter(e -> e.getValue().contains("Jboss"))
+              .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+----
+
+If however you are not able to use the `Cache` and `CacheStream` interfaces you cannot utilize `Serializable`
+arguments and you must instead cast the lambdas to be `Serializable` manually by casting the lambda to multiple
+interfaces.  It is not a pretty sight but it gets the job done.
+
+[source,java]
+----
+Map<Object, String> jbossValues = cache.entrySet().stream()
               .filter((Serializable & Predicate<Map.Entry<Object, String>>) e -> e.getValue().contains("Jboss"))
               .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 ----
 
-The recommended way is to use an 
+The recommended and most performant way is to use an 
 link:user_guide.html#_advanced_externalizers[AdvancedExternalizer]
-as this provides the smallest payload.
+as this provides the smallest payload.  Unfortunately this means you cannot
+use lamdbas as advanced externalizers require defining the class before hand.
+
+You can use an advanced externalizer as shown below:
+
+[source,java]
+----
+   Map<Object, String> jbossValues = cache.entrySet().stream()
+              .filter(new ContainsFilter("Jboss"))
+              .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+
+   class ContainsFilter implements Predicate<Map.Entry<Object, String>> {
+      private final String target;
+
+      ContainsFilter(String target) {
+         this.target = target;
+      }
+
+      @Override
+      public boolean test(Map.Entry<Object, String> e) {
+         return e.getValue().contains(target);
+      }
+   }
+
+   class JbossFilterExternalizer implements AdvancedExternalizer<ContainsFilter> {
+
+      @Override
+      public Set<Class<? extends ContainsFilter>> getTypeClasses() {
+         return Util.asSet(ContainsFilter.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return CUSTOM_ID;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ContainsFilter object) throws IOException {
+         output.writeUTF(object.target);
+      }
+
+      @Override
+      public ContainsFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new ContainsFilter(input.readUTF());
+      }
+   }
+----
+
+You could also use an advanced externalizer for the `CacheCollector` supplier to reduce the
+payload size even further.
+
+[source,java]
+----
+   Map<Object, String> jbossValues = cache.entrySet().stream()
+              .filter(new ContainsFilter("Jboss"))
+              .collect(CacheCollectors.serializableCollector(ToMapCollectorSupplier.INSTANCE);
+
+ class ToMapCollectorSupplier<K, U> implements Supplier<Collector<Map.Entry<K, U>, ?, Map<K, U>>> {
+      static final ToMapCollectorSupplier INSTANCE = new ToMapCollectorSupplier();
+
+      private ToMapCollectorSupplier() { }
+
+      @Override
+      public Collector<Map.Entry<K, U>, ?, Map<K, U>> get() {
+         return Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue);
+      }
+   }
+
+   class ToMapCollectorSupplierExternalizer implements AdvancedExternalizer<ToMapCollectorSupplier> {
+
+      @Override
+      public Set<Class<? extends ToMapCollectorSupplier>> getTypeClasses() {
+         return Util.asSet(ToMapCollectorSupplier.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return CUSTOM_ID;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ToMapCollectorSupplier object) throws IOException {
+      }
+
+      @Override
+      public ToMapCollectorSupplier readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return ToMapCollectorSupplier.INSTANCE;
+      }
+   }
+----
 
 ==== Parallel Computation
 
@@ -360,8 +466,8 @@ public class WordCountExample {
       c2.put("214", "RedHat community");
 
       Map<String, Integer> wordCountMap = c1.entrySet().parallelStream()
-         .map((Serializable & Function<Map.Entry<String, String>, String[]>) e -> e.getValue().split("\\s"))
-         .flatMap((Serializable & Function<String[], Stream<String>>) Arrays::stream)
+         .map(e -> e.getValue().split("\\s"))
+         .flatMap(Arrays::stream)
          .collect(CacheCollectors.serializableCollector(() -> Collectors.groupingBy(Function.identity(), Collectors.counting())));
    }
 }
@@ -385,8 +491,8 @@ public class WordCountExample {
       // Lines removed
 
       String mostFrequentWord = c1.entrySet().parallelStream()
-         .map((Serializable & Function<Map.Entry<String, String>, String[]>) e -> e.getValue().split("\\s"))
-         .flatMap((Serializable & Function<String[], Stream<String>>) Arrays::stream)
+         .map(e -> e.getValue().split("\\s"))
+         .flatMap(Arrays::stream)
          .collect(CacheCollectors.serializableCollector(() -> Collectors.collectingAndThen(
             Collectors.groupingBy(Function.identity(), Collectors.counting()),
                wordCountMap -> {
@@ -419,8 +525,8 @@ public class WordFrequencyExample {
       // Lines removed
 
       Map<String, Long> wordCount = c1.entrySet().parallelStream()
-              .map((Serializable & Function<Map.Entry<String, String>, String[]>) e -> e.getValue().split("\\s"))
-              .flatMap((Serializable & Function<String[], Stream<String>>) Arrays::stream)
+              .map(e -> e.getValue().split("\\s"))
+              .flatMap(Arrays::stream)
               .collect(CacheCollectors.serializableCollector(() -> Collectors.groupingBy(Function.identity(), Collectors.counting())));
       Optional<Map.Entry<String, Long>> mostFrequent = wordCount.entrySet().parallelStream().reduce(
               (e1, e2) -> e1.getValue() > e2.getValue() ? e1 : e2);
