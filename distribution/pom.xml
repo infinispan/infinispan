@@ -93,7 +93,7 @@
          <artifactId>infinispan-extended-statistics</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-javadoc-embedded</artifactId>
@@ -114,7 +114,7 @@
          <version>${project.version}</version>
          <classifier>javadoc</classifier>
       </dependency>
-      
+
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
@@ -136,7 +136,6 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
-                  
                   <id>xsdocgen</id>
                   <phase>package</phase>
                   <goals>
@@ -158,6 +157,34 @@
                         <java classname="org.infinispan.tools.xsd.XSDoc">
                            <arg value="-o" />
                            <arg value="${project.build.directory}/site/configdocs" />
+                           <arg line="${xsd.fileset}" />
+                           <classpath>
+                              <pathelement path="${plugin_classpath}" />
+                           </classpath>
+                        </java>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>serverxsdocgen</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <target>
+                        <property name="plugin_classpath" refid="maven.plugin.classpath" />
+                        <echo message="Base dir: ${basedir}" />
+                        <path id="xsd.fileset.path">
+                           <fileset casesensitive="yes" dir="${basedir}/../server/integration/build/target/infinispan-server-${project.version}/docs/schema">
+                              <include name="*.xsd" />
+                           </fileset>
+                        </path>
+                        <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
+                        <echo message="XSDs: ${xsd.fileset}" />
+                        <java classname="org.infinispan.tools.xsd.XSDoc">
+                           <arg value="-o" />
+                           <arg value="${project.build.directory}/site/serverconfigdocs" />
                            <arg line="${xsd.fileset}" />
                            <classpath>
                               <pathelement path="${plugin_classpath}" />
@@ -210,7 +237,7 @@
                <outputDirectory>${buildDirectory}/distribution</outputDirectory>
                <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
-               
+
                <attach>false</attach>
             </configuration>
          </plugin>
