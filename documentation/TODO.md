@@ -124,10 +124,6 @@
 * Mention Spring Session
 * Eventually will also contain Paul’s Tomcat adapter
 
-### Hadoop + Spark
-* Move under an overarching Integrations chapter
-* ...
-
 ### JCache
 * Move under an overarching Integrations chapter
 * Remote JCache configuration, example of properties (at least IP:port)
