@@ -113,8 +113,8 @@ public class VehicleId implements Serializable
 Lastly, auto-generated IDs ﻿(e.g., `@GeneratedValue`) is not supported.
 When putting things into the cache with a JPA cache store, the key should be the ID value!
 
-=== Configuration
-==== Sample Programatic Configuration
+==== Configuration
+===== Sample Programatic Configuration
 
 [source,java]
 ----
@@ -134,7 +134,7 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 |entityClass| JPA entity class that is expected to be stored in this cache.  Only one class is allowed. 
 |===============
 
-==== Sample XML Configuration
+===== Sample XML Configuration
 
 [source,xml]
 ----

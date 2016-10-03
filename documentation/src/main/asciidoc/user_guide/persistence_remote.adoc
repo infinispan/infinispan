@@ -1,0 +1,37 @@
+=== Remote store
+The `RemoteStore` is a cache loader and writer implementation that stores data in a remote infinispan cluster. In order to communicate with the remote cluster, the `RemoteStore` uses the HotRod client/server architecture. HotRod bering the load balancing and fault tolerance of calls and the possibility to fine-tune the connection between the RemoteCacheStore and the actual cluster. Please refer to Hot Rod for more information on the protocol, client and server configuration. For a list of RemoteStore configuration refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[javadoc] . Example:
+
+[source,xml]
+----
+<persistence>
+   <remote-store xmlns="urn:infinispan:config:store:remote:8.0" cache="mycache" raw-values="true">
+      <remote-server host="one" port="12111" />
+      <remote-server host="two" />
+      <connection-pool max-active="10" exhausted-action="CREATE_NEW" />
+      <write-behind />
+   </remote-store>
+</persistence>
+----
+
+[source,java]
+----
+
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
+      .fetchPersistentState(false)
+      .ignoreModifications(false)
+      .purgeOnStartup(false)
+      .remoteCacheName("mycache")
+      .rawValues(true)
+.addServer()
+      .host("one").port(12111)
+      .addServer()
+      .host("two")
+      .connectionPool()
+      .maxActive(10)
+      .exhaustedAction(ExhaustedAction.CREATE_NEW)
+      .async().enable();
+
+----
+
+In this sample configuration, the remote cache store is configured to use the remote cache named "mycache" on servers "one" and "two". It also configures connection pooling and provides a custom transport executor. Additionally the cache store is asynchronous.
