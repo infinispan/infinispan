@@ -1,5 +1,15 @@
 ==  Integrations
-Infinispan can be integrated with a number of other frameworks, as detailed below.
+Infinispan can be integrated with a number of other projects, as detailed below.
+
+=== Apache Spark
+
+Infinispan provides an link:$$http://spark.apache.org$$[Apache Spark] connector capable of exposing caches as an RDD, allowing batch and stream jobs to be run against data stored in Infinispan. For further details, see the link:$$https://github.com/infinispan/infinispan-spark/blob/master/README.md$$[Infinispan Spark connector documentation].
+Also check the link:$$https://github.com/infinispan/infinispan-spark/tree/master/examples/twitter/README.md$$[Docker based Twitter demo].
+
+=== Apache Hadoop
+
+The Infinispan Hadoop connector can be used to expose Infinispan as a Hadoop compliant data source and sink that implements link:$$https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/InputFormat.html$$[InputFormat]/link:$$https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/OutputFormat.html$$[OutputFormat].
+For further details, refer to the full link:$$https://github.com/infinispan/infinispan-hadoop/blob/master/README.md$$[documentation].
 
 ===  Using Infinispan as JPA-Hibernate Second Level Cache Provider
 Following some of the principles set out by Brian Stansberry in link:$$http://community.jboss.org/docs/14247$$[Using JBoss Cache 3 as a Hibernate 3.5 Second Level Cache] and taking in account improvements introduced by Infinispan, an Infinispan JPA/Hibernate second level cache provider has been developed. This wiki explains how to configure JPA/Hibernate to use the Infinispan and for those keen on lower level details, the key design decisions made and differences with previous JBoss Cache based cache providers. 
