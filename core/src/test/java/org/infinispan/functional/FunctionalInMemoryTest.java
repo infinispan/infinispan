@@ -26,7 +26,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    static AtomicInteger invocationCount = new AtomicInteger();
 
    public FunctionalInMemoryTest() {
-      isPersistenceEnabled = false;
+      persistence = false;
    }
 
    @Test(dataProvider = "owningModeAndMethod")

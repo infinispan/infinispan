@@ -18,8 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.functional.AbstractWriteKeyCommand;
-import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -100,6 +98,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private ExecutorService executorService;
    private Cache<K, V> cache;
    private Equivalence<? super K> keyEquivalence;
+   private boolean activation;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -123,6 +122,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Start
    public void start() {
       this.keyEquivalence = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      this.activation = cache.getCacheConfiguration().persistence().passivation();
    }
 
    @Override
@@ -384,13 +384,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       boolean skip;
-      // TODO: use executionType instead
-      if (cmd instanceof AbstractWriteKeyCommand || cmd instanceof AbstractWriteManyCommand) {
-         skip = skipLoadForFunctionalWriteCommand((WriteCommand) cmd, key, ctx);
-         if (trace) {
-            log.tracef("Skip load for functional write command %s? %s", cmd, skip);
-         }
-      } else if (cmd instanceof WriteCommand) {
+      if (cmd instanceof WriteCommand) {
          skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
          if (trace) {
             log.tracef("Skip load for write command %s? %s", cmd, skip);
@@ -403,10 +397,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
       }
       return skip;
-   }
-
-   protected boolean skipLoadForFunctionalWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      return skipLoadForWriteCommand(cmd, key, ctx);
    }
 
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
@@ -433,6 +423,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    protected void sendNotification(Object key, Object value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand cmd) {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
+      if (activation) {
+         notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
+      }
    }
 
    @ManagedAttribute(
