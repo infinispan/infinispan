@@ -56,11 +56,6 @@
 * With the ongoing work to remove the dependency on JBoss Marshalling for internals, and aiming to have a fully pluggable user marshaller, this will need to be rewritten in the context of Galder’s PRs
 * Possibly show how one would write an externalizer which supports backwards/forwards compatibility
 
-### Persistence (Will)
-* Split each store documentation into its own distinct .adoc file
-* All cache store docs should be as sub-chapters of the main persistence chapter
-* Details about store internals should go after documentation about configuration and types of stores. They are of interest mostly to store developers
-
 ### Clustering (Dan)
 * Transactions (Pedro)
 * The Total Order docs should be moved under here
