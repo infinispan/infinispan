@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" exclude-result-prefixes="xs html">
-   <xsl:output method="xml" encoding="ISO-8859-1" standalone="yes" version="1.0" doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" indent="yes" />
+   <xsl:output method="html" encoding="ISO-8859-1" standalone="yes" version="1.0" doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" indent="yes" />
 
    <xsl:key name="simpleTypes" match="/xs:schema/xs:simpleType" use="@name"/>
    <xsl:key name="complexTypes" match="/xs:schema/xs:complexType" use="@name"/>
@@ -41,8 +41,16 @@
                   padding: 0.5em;
                }
             </style>
+            <script type="text/javascript">
+               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+               ga('create', 'UA-8601422-4', 'auto');
+               ga('send', 'pageview');
+            </script>
             <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js">
-               //
             </script>
             <script type="text/javascript">
                $(document).ready(function() {
@@ -79,8 +87,17 @@
             <p><xsl:apply-templates select="xs:annotation" /></p>
             <xsl:choose>
                <xsl:when test="@type">
-                  <xsl:variable name="ref" select="substring-after(string(@type), ':')" />
-                  <xsl:apply-templates select="key('complexTypes',$ref)" />
+                  <xsl:variable name="ref">
+                     <xsl:choose>
+                        <xsl:when test="contains(string(@type), ':')">
+                           <xsl:value-of select="substring-after(string(@type), ':')" />
+                        </xsl:when>
+                        <xsl:otherwise>
+                           <xsl:value-of select="string(@type)" />
+                        </xsl:otherwise>
+                     </xsl:choose>
+                  </xsl:variable>
+                  <xsl:apply-templates select="key('complexTypes', $ref)" />
                </xsl:when>
                <xsl:otherwise>
                   <xsl:apply-templates select="xs:complexType" />
@@ -104,8 +121,8 @@
             <xsl:apply-templates select="xs:attribute" />
          </table>
       </xsl:if>
-      <xsl:if test="xs:all | xs:sequence | xs:complexContent">
-         <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent" />
+      <xsl:if test="xs:all | xs:sequence | xs:complexContent | xs:choice">
+         <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent | xs:choice" />
       </xsl:if>
    </xsl:template>
 
@@ -130,8 +147,6 @@
       <xsl:if test="xs:all | xs:sequence | xs:complexContent">
          <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent" />
       </xsl:if>
-      <xsl:variable name="ns" select="substring-before(string(@base), ':')" />
-      <xsl:variable name="ref" select="substring-after(string(@base), ':')" />
       <div>
          <xsl:apply-templates select="/xs:schema" mode="lookup-type">
             <xsl:with-param name="type" select="string(@base)" />
@@ -141,8 +156,16 @@
 
    <xsl:template match="xs:schema" mode="lookup-type">
       <xsl:param name="type" />
-      <xsl:variable name="ns" select="substring-before(string($type), ':')" />
-      <xsl:variable name="ref" select="substring-after(string($type), ':')" />
+      <xsl:variable name="ref">
+         <xsl:choose>
+            <xsl:when test="contains(string($type), ':')">
+               <xsl:value-of select="substring-after(string($type), ':')" />
+            </xsl:when>
+            <xsl:otherwise>
+               <xsl:value-of select="string($type)" />
+            </xsl:otherwise>
+         </xsl:choose>
+      </xsl:variable>
       <xsl:choose>
          <xsl:when test="key('complexTypes',$ref)">
             <xsl:apply-templates select="key('complexTypes',$ref)" />
