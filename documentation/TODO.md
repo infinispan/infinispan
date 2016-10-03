@@ -73,10 +73,6 @@
 ### Consistency guarantees (Dan)
 * Refactor the WIKI page into the documentation, possibly as its own chapter.
 
-### Streams (Will)
-* In the serialization section mention the implicit overloading of lambdas to serializable
-* Also provide an example of how one would implement an AdvancedExternalizer
-
 ### Map/Reduce (Vladimir)
 * This feature no longer exists, it needs to go.
 
