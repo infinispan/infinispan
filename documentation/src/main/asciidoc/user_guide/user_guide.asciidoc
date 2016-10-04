@@ -5,19 +5,7 @@ The Infinispan community
 :toclevels: 3
 :numbered:
 
-Welcome to the official Infinispan user guide.
-This comprehensive document will guide you through every last detail of Infinispan,
-however can be a poor starting point if you are new to Infinispan.
-
-TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
-or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
-
-The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
-are also useful documents to have alongside this user guide.
-
-// For some reason the chapter numbering got messed up when exporting from Confluence...
-
-// The top-level chapter on config.  This will include other sub-chapters.
+include::introduction.adoc[]
 include::configuration.adoc[]
 include::cache_manager.adoc[]
 include::cache_api.adoc[]
