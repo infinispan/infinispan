@@ -34,15 +34,9 @@
 
 ## User Guide (All)
 
-### Introduction (Tristan)
-* We should add an introduction chapter, outlining what Infinispan is and why you would use it.
-
 ### Configuration (Tristan)
-* Clean up / reorganize
 * Always provide both a programmatic and declarative example for each configuration.
 * Provide use-case-driven examples ?
-* Add information about configuration templates and inheritance
-* Rewrite the migration section: we only support migration from our old format to the new one
 
 ### Cache / CacheManager APIs (Galder)
 * Remove the false claim of supporting the JCache API in our Cache interface
