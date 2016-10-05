@@ -1,24 +1,34 @@
 ==  CDI Support
 Infinispan includes integration with link:http://docs.oracle.com/javaee/6/tutorial/doc/giwhb.html[Contexts and Dependency Injection (better known as CDI)]
-via Infinispan's `infinispan-cdi` module.
+via Infinispan's `infinispan-cdi-embedded` or `infinispan-cdi-remote` module.
 Configuration and injection of Infinispan's Cache interface is provided, and it is planned to bridge Cache listeners to the CDI event system as well.
 The module also provide partial support of the JCache (JSR-107) caching annotations - for further details see link:$$https://docs.google.com/document/d/1YZ-lrH6nW871Vd9Z34Og_EqbX_kxxJi55UrSn4yL2Ak/edit?hl=en&amp;pli=1#heading=h.jdfazu3s6oly$$[Chapter 8] of the JCACHE specification.
 
 === Maven Dependencies
-To include CDI support for Infinispan in your project:
+To include CDI support for Infinispan in your project, use one of the following dependencies:
 
-.pom.xml
+.pom.xml for Embedded mode
 [source,xml]
 ----
 <dependency>
     <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cdi</artifactId>
+    <artifactId>infinispan-cdi-embedded</artifactId>
+    <version>${infinispan.version}</version>
+</dependency>
+----
+
+.pom.xml for Hot Rod client mode
+[source,xml]
+----
+<dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cdi-remote</artifactId>
     <version>${infinispan.version}</version>
 </dependency>
 ----
 
 .Which version of Infinispan should I use?
-TIP: We recommend using the latest final version of the infinispan-cdi module.
+TIP: We recommend using the latest final version Infinispan.
 
 === Embedded cache integration
 ==== Inject an embedded cache
@@ -269,7 +279,7 @@ NOTE: To work properly the producers must have the scope @ApplicationScoped . Ot
 
 TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_using_infinispan_as_a_jsr107_jcache_provider, this chapter>> for details.
 
-The infinispan-cdi module provides a partial support of JCache caching annotations.
+The `infinispan-jcache-embedded` and `infinispan-jcache-remote` modules provide partial support of JCache caching annotations with CDI.
 These annotations provide a simple way to handle common use cases.
 The following caching annotations are defined in this specification: 
 
