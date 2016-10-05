@@ -595,7 +595,11 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
       @Override
       public void remove() {
+         if (previousValue == null) {
+            throw new IllegalStateException();
+         }
          cache.remove(previousValue);
+         previousValue = null;
       }
    }
 
@@ -610,7 +614,11 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
       @Override
       public void remove() {
+         if (previousValue == null) {
+            throw new IllegalStateException();
+         }
          cache.remove(previousValue.getKey(), previousValue.getValue());
+         previousValue = null;
       }
 
       @Override
@@ -664,6 +672,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          if (e == null) {
             throw new NoSuchElementException();
          }
+         previousValue = e;
          currentValue = null;
          return e;
       }
