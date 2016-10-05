@@ -248,3 +248,24 @@ If your strings are mostly ASCII, convert them to `UTF-8` and store them as `byt
 
 * Using `String#getBytes("UTF-8")` allows to decrease size of the object
 * Consider using G1 GC with additional JVM flag -`XX:+UseStringDeduplication`. This allows to decrease memory footprint (see http://openjdk.java.net/jeps/192[JEP 192] for details).
+
+=== Use simple cache for local caches
+
+When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using Infinispan API.
+
+This is an example comparison of the difference, randomly reading/writing into cache with 2048 entries as executed on 2&times;8-core Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz:
+
+.Number of operations per second (± std. dev.)
+|===
+| Cache type   | single-threaded cache.get(...) | single-threaded cache.put(...) | 32 threads cache.get(...) | 32 threads cache.put(...)
+
+| Local cache  | 14,321,510 ± 260,807 |  1,141,168 ±  6,079 |   236,644,227 ± 2,657,918 |  2,287,708 ±   100,236
+| Simple cache | 38,144,468 ± 575,420 | 11,706,053 ± 92,515 |   836,510,727 ± 3,176,794 | 47,971,836 ± 1,125,298
+| CHM          | 60,592,770 ± 924,368 | 23,533,141 ± 98,632 | 1,369,521,754 ± 4,919,753 | 75,839,121 ± 3,319,835
+|===
+
+The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equality/hashCode function, which is used as the underlying storage in Infinispan.
+
+Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfals of microbenchmarking, consider these results only aproximative. Your mileage may vary.
+
+Please consult http://infinispan.org/docs/{infinispanversion}/user_guide/user_guide.html#simple_cache[User's Guide] for the limitations of simple cache and configuration.
