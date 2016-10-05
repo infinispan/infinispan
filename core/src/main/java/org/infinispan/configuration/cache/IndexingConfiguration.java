@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -17,6 +18,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
+         .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(new AttributeInitializer<Set<Class<?>>>() {
             @Override
             public Set<Class<?>> initialize() {
