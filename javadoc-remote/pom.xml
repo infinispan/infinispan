@@ -25,6 +25,7 @@
 -ga('send', 'pageview');
 -} catch(err) {}&lt;/script&gt;
       </analytics.code>
+      <maven.deploy.skip>true</maven.deploy.skip>
    </properties>
 
    <dependencies>
