@@ -385,9 +385,15 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       Transaction transaction = ctx.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
-      if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
-            " is not in a valid state to be invoking cache operations on.");
       LocalTransaction localTransaction = txTable.getLocalTransaction(transaction);
+      if (isNotValid(status)) {
+         if (!localTransaction.isEnlisted()) {
+            // This transaction wouldn't be removed by TM.commit() or TM.rollback()
+            txTable.removeLocalTransaction(localTransaction);
+         }
+         throw new IllegalStateException("Transaction " + transaction +
+                                               " is not in a valid state to be invoking cache operations on.");
+      }
       txTable.enlist(transaction, localTransaction);
       return localTransaction;
    }

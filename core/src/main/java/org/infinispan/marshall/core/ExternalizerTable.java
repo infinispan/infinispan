@@ -8,6 +8,7 @@ import org.infinispan.atomic.impl.PutOperation;
 import org.infinispan.atomic.impl.RemoveOperation;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
@@ -82,6 +83,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.ConverterAsCacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -323,6 +325,8 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new StateChunk.Externalizer());
 
       addInternalExternalizer(new Flag.Externalizer());
+      addInternalExternalizer(new ValueMatcher.Externalizer());
+      addInternalExternalizer(new AvailabilityMode.Externalizer());
 
       addInternalExternalizer(new InfinispanCollections.EmptySet.EmptySetExternalizer());
       addInternalExternalizer(new InfinispanCollections.EmptyMap.EmptyMapExternalizer());

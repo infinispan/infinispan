@@ -56,7 +56,9 @@ public class XaTransactionTable extends TransactionTable {
 
    private void removeXidTxMapping(LocalXaTransaction localTx) {
       final Xid xid = localTx.getXid();
-      xid2LocalTx.remove(xid);
+      if (xid != null) {
+         xid2LocalTx.remove(xid);
+      }
    }
 
    public LocalXaTransaction getLocalTransaction(Xid xid) {

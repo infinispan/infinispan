@@ -12,6 +12,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -20,6 +21,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -111,15 +113,34 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retval = invokeNextInterceptor(ctx, command);
-      log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
-      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         if (ctx.getTransaction() == null) throw new IllegalStateException("We must have an associated transaction");
-         List<WriteCommand> mods = Arrays.asList(command.getModifications());
-         broadcastInvalidateForPrepare(mods, ctx);
-      } else {
-         log.tracef("Nothing to invalidate - no modifications in the transaction.");
+      if (command.isOnePhaseCommit()) {
+         Object retval = invokeNextInterceptor(ctx, command);
+         log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
+         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+         if (shouldInvokeRemoteTxCommand(ctx)) {
+            if (ctx.getTransaction() == null) throw new IllegalStateException("We must have an associated transaction");
+            List<WriteCommand> mods = Arrays.asList(command.getModifications());
+            broadcastInvalidateForPrepare(mods, ctx);
+         } else {
+            log.tracef("Nothing to invalidate - no modifications in the transaction.");
+         }
+         return retval;
+      }
+      return super.visitPrepareCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      Object retval = super.visitCommitCommand(ctx, command);
+      Set<Object> affectedKeys = ctx.getAffectedKeys();
+      try {
+         log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
+         invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray(), ctx);
+      } catch (Throwable t) {
+         if (t instanceof RuntimeException)
+            throw t;
+         else
+            throw log.unableToBroadcastInvalidation(t);
       }
       return retval;
    }

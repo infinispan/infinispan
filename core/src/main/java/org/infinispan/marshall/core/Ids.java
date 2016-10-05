@@ -161,6 +161,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    int READ_WRITE_SNAPSHOT_VIEW = 157;
 
+   // 158 - 160 used by functions in commons
+   int AVAILABILITY_MODE = 161;
+   int VALUE_MATCHER = 162;
 }
-
-

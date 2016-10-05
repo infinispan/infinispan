@@ -2,7 +2,16 @@ package org.infinispan.commands.write;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.marshall.core.Ids;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -152,5 +161,38 @@ public enum ValueMatcher {
       // Compare by identity first to catch the case where both are null
       if (a == b) return true;
       return valueEquivalence != null ? valueEquivalence.equals(a, b) : (a != null && a.equals(b));
+   }
+
+   public static class Externalizer extends AbstractExternalizer<ValueMatcher> {
+
+      @Override
+      public Integer getId() {
+         return Ids.VALUE_MATCHER;
+      }
+
+      @Override
+      public Set<Class<? extends ValueMatcher>> getTypeClasses() {
+         Set<Class<? extends ValueMatcher>> classes = new HashSet<Class<? extends ValueMatcher>>(values().length);
+         for (ValueMatcher valueMatcher : values()) {
+            classes.add(valueMatcher.getClass());
+         }
+         return classes;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ValueMatcher ValueMatcher) throws IOException {
+         output.writeByte(ValueMatcher.ordinal());
+      }
+
+      @Override
+      public ValueMatcher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         byte ordinal = input.readByte();
+         try {
+            // values() cached by Class.getEnumConstants()
+            return ValueMatcher.values()[ordinal];
+         } catch (ArrayIndexOutOfBoundsException e) {
+            throw new IllegalStateException("Unknown ValueMatcher index: " + ordinal);
+         }
+      }
    }
 }
