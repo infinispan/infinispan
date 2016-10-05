@@ -137,6 +137,3 @@
 ## Performance Guide (Sebastian)
 * This should be linked in the appropriate places from the User Guide
 
-## Extending Infinispan (Will)
-* At the moment this document is a bit pathetic. I suggest we drop it and fold the information in either the “Contributing to Infinispan” document or the “User Guide”
-
