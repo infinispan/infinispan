@@ -1,211 +1,312 @@
 == Clustering
-Infinispan can be configured to be either local (standalone) or clustered.
-If in a cluster, the cache can be configured to replicate changes to all nodes, to
-invalidate changes across nodes and finally to be used in distributed mode - state
-changes are replicated to a small subset of nodes enough to be fault tolerant but not
-too many nodes to prevent scalability.
+A cache manager can be configured to be either local (standalone) or clustered.
+When clustered, manager instances use JGroups' discovery protocols to automatically
+discover neighboring instances on the same local network and form a cluster.
+
+Creating a local-only cache manager is trivial: just use the no-argument
+`DefaultCacheManager` constructor, or supply the following XML configuration file.
+
+[source,xml]
+----
+<infinispan/>
+----
+
+To start a clustered cache manager, you need to create a clustered configuration.
+
+[source,java]
+----
+GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+DefaultCacheManager manager = new DefaultCacheManager(gcb.build());
+----
+
+[source,xml]
+----
+<infinispan>
+  <cache-container>
+    <transport/>
+  </cache-container>
+</infinispan>
+----
+
+Individual caches can then be configured in different modes:
+
+* *Local*: changes and reads are never replicated. This is the only mode available in
+standalone cache managers.
+* *Invalidation*: changes are not replicated, instead the key is invalidated on all
+nodes; reads are local.
+* *Replicated*: changes are replicated to all nodes, reads are always local.
+* *Distributed*: changes are replicated to a fixed number of nodes, reads request the
+value from at least one of the owner nodes.
 
 
 === Local Mode
 While Infinispan is particularly interesting in clustered mode, it also offers a very
 capable local mode.
-In this mode, it acts as a simple, in-memory data cache similar to JBoss Cache and EHCache.
+In this mode, it acts as a simple, in-memory data cache similar to a `ConcurrentHashMap`.
 
-But why would one use a local cache rather than a map? Caches offer a lot of features
-over and above a simple map, including write-through and write-behind caching to persist
-data, eviction of entries to prevent running out of memory, and support for expirable
-entries.
-Infinispan, specifically, is built around a high-performance, read-biased data container
-which uses modern techniques similar to
-link:http://en.wikipedia.org/wiki/Read-copy-update[read-copy-update]
--- which buys you non-blocking, thread-safe reads even when concurrent writes are taking
-place.
-Infinispan also makes heavy use of compare-and-swap and other lock-free algorithms,
-making it ideal for high-throughput, multi-CPU/multi-core environments.
-Further, Infinispan's Cache API extends the JDK's ConcurrentMap - making migration from a
+But why would one use a local cache rather than a map?
+Caches offer a lot of features over and above a simple map, including write-through and
+write-behind to a persistent store, eviction of entries to prevent running out of memory,
+and expiration.
+
+Infinispan's `Cache` interface extends JDK's `ConcurrentMap` -- making migration from a
 map to Infinispan trivial.
 
-Creating a local-only cache-manager is trivial: just use the _no-argument_ DefaultCacheManager
-constructor, or supply the following XML configuration file
+Infinispan caches also support transactions, either integrating with an existing
+transaction manager or running a separate one.
+Local caches transactions have two choices:
 
-[source,xml]
-----
-<infinispan/>
+1. When to lock?
+*Pessimistic locking* locks keys on a write operation or when the user calls
+`AdvancedCache.lock(keys)` explicitly.
+*Optimistic locking* only locks keys during the transaction commit, and instead it throws
+a `WriteSkewCheckException` at commit time, if another transaction modified the same keys
+after the current transaction read them.
 
-----
-You can also create local caches in a clustering-capable CacheManager.
+2. Isolation level.
+We support *read-committed* and *repeatable read*.
+
 
 include::simple_cache.adoc[]
 
-=== Replicated Mode
-Replication is a simple clustered mode where cache instances automatically discover
-neighboring instances on other JVMs on the same local network, and form a cluster.
-Entries added to any of these cache instances will be replicated to all other cache
-instances in the cluster, and can be retrieved locally from any instance.
-This clustered mode provides a quick and easy way to share state across a cluster,
-however replication practically only performs well in small clusters (under 10 nodes),
-due to the number of replication messages that need to happen - as the cluster size
-increases.
-Infinispan can be configured to use UDP multicast which mitigates this problem to some
-degree.
-
-.Replication mode
-image::images/Figure1_6.png[align="center", title="Replication mode"]
-
-Replication can be synchronous or asynchronous. Use of either one of the options is
-application dependent.
-Synchronous replication blocks the caller (e.g. on a put() ) until the modifications
-have been replicated successfully to all nodes in a cluster.
-Asynchronous replication performs replication in the background (the put() returns
-immediately).
-Infinispan offers a replication queue, where modifications are replicated periodically
-(i.e. interval-based), or when the queue size exceeds a number of elements, or a
-combination thereof.
-A replication queue can therefore offer much higher performance as the actual replication
-is performed by a background thread.
-
-Asynchronous replication is faster (no caller blocking), because synchronous replication
-requires acknowledgments from all nodes in a cluster that they received and applied the
-modification successfully (round-trip time).
-However, when a synchronous replication returns successfully, the caller knows for sure
-that all modifications have been applied to all cache instances, whereas this is not be
-the case with asynchronous replication. With asynchronous replication, errors are simply
-written to a log.
-Even when using transactions, a transaction may succeed but replication may not succeed
-on all cache instances.
-
 
 === Invalidation Mode
-Invalidation is a clustered mode that does not actually share any data at all, but simply
-aims to remove data that may be stale from remote caches. This cache mode only makes
-sense if you have another, permanent store for your data such as a database and are only
-using Infinispan as an optimization in a read-heavy system, to prevent hitting the
-database every time you need some state. If a cache is configured for invalidation rather
-than replication, every time data is changed in a cache other caches in the cluster
-receive a message informing them that their data is now stale and should be evicted from
-memory.
+In invalidation, the caches on different nodes do not actually share any data.
+Instead, when a key is written to, the cache only aims to remove data that may be stale
+from other nodes.
+This cache mode only makes sense if you have another, permanent store for your data such
+as a database and are only using Infinispan as an optimization in a read-heavy system,
+to prevent hitting the database for every read.
+If a cache is configured for invalidation, every time data is changed in a cache, other
+caches in the cluster receive a message informing them that their data is now stale and
+should be removed from memory and from any local store.
 
 .Invalidation mode
-image::images/Figure2_5.png[align="center", title="Invalidation mode"]
+image::images/clustering-invalidation.svg[align="center", title="Invalidation mode"]
 
-Invalidation, when used with a shared cache loader would cause remote caches to refer to
-the shared cache loader to retrieve modified data. The benefit of this is twofold:
-network traffic is minimized as invalidation messages are very small compared to
-replicating updated data, and also that other caches in the cluster look up modified
-data in a lazy manner, only when needed.
+Sometimes the application reads a value from the external store and wants to write it to
+the local cache, without removing it from the other nodes.
+To do this, it must call `Cache.putForExternalRead(key, value)` instead of
+`Cache.put(key, value)`.
 
-Invalidation messages are sent after each modification (no transactions or batches), or
-at the end of a transaction or batch, upon successful commit.
-This is usually more efficient as invalidation messages can be optimized for the
-transaction as a whole rather than on a per-modification basis.
+Invalidation mode can be used with a shared cache store.
+A write operation will both update the shared store, and it would remove the stale values
+from the other nodes' memory.
+The benefit of this is twofold: network traffic is minimized as invalidation messages are
+very small compared to replicating the entire value, and also other caches in the cluster
+look up modified data in a lazy manner, only when needed.
 
-Invalidation too can be synchronous or asynchronous, and just as in the case of
-replication, synchronous invalidation blocks until all caches in the cluster receive
-invalidation messages and have evicted stale data while asynchronous invalidation works
-in a 'fire-and-forget' mode, where invalidation messages are broadcast but doesn't block
-and wait for responses.
+NOTE: Never use invalidation mode with a *local* store.
+The invalidation message will not remove entries in the local store, and some
+nodes will keep seeing the stale value.
+
+An invalidation cache can also be configured with a special cache loader, `ClusterLoader`.
+When `ClusterLoader` is enabled, read operations that do not find the key on the local
+node will request it from all the other nodes first, and store it in memory locally.
+In certain situation it will store stale values, so only use it if you have a high
+tolerance for stale values.
+
+Invalidation mode can be synchronous or asynchronous.
+When synchronous, a write blocks until all nodes in the cluster have evicted the stale
+value. When asynchronous, the originator broadcasts invalidation messages but doesn't
+wait for responses.
+That means other nodes still see the stale value for a while after the write completed on
+the originator.
+
+Transactions can be used to batch the invalidation messages.
+They won't behave like regular transactions though, as locks are only acquired on the
+local node, and entries can be invalidated by other transactions at any time.
+
+
+=== Replicated Mode
+Entries written to a replicated cache on any node will be replicated to all other nodes
+in the cluster, and can be retrieved locally from any node.
+Replicated mode provides a quick and easy way to share state across a cluster,
+however replication practically only performs well in small clusters (under 10 nodes),
+due to the number of messages needed for a write scaling linearly with the cluster size.
+Infinispan can be configured to use UDP multicast, which mitigates this problem to some
+degree.
+
+Each key has a primary owner, which serializes data container updates in order to
+provide consistency.
+To find more about how primary owners are assigned, please read the
+<<key_ownership,Key Ownership>> section.
+
+.Replicated mode
+image::images/clustering-replicated.svg[align="center", title="Replicated mode"]
+
+Replicated mode can be synchronous or asynchronous.
+
+* Synchronous replication blocks the caller (e.g. on a `cache.put(key, value)`) until
+the modifications have been replicated successfully to all the nodes in the cluster.
+* Asynchronous replication performs replication in the background, and write operations
+return immediately.
+Asynchronous replication is not recommended, because communication errors, or errors
+that happen on remote nodes are not reported to the caller.
+
+If transactions are enabled, write operations are not replicated through the primary
+owner.
+
+* With pessimistic locking, each write triggers a lock message, which is
+broadcast to all the nodes.
+During transaction commit, the originator broadcasts a one-phase prepare message and an
+unlock message (optional).
+Either the one-phase prepare or the unlock message is fire-and-forget.
+
+* With optimistic locking, the originator broadcasts a prepare message, a commit message,
+and an unlock message (optional).
+Again, either the one-phase prepare or the unlock message is fire-and-forget.
 
 
 === Distribution Mode
-Distribution is a powerful clustering mode which allows Infinispan to scale linearly as
-more nodes are added to the cluster.
-Distribution makes use of a hash algorithm to determine on which node(s) entries should
-be stored.
-The number of copies that should be maintained in the cluster for each cache entry is
-configurable (*numOwners*).
-The number of copies represents the trade-off between performance and durability of data.
-The more copies you maintain, the lower performance will be, but also the lower the risk
-of losing data due to server outages.
-Regardless of how many copies are maintained, distribution still scales linearly and this
-is key to Infinispan's scalability.
+Distribution tries to keep a fixed number of copies of any entry in the cache,
+configured as `numOwners`.
+This allows the cache to scale linearly, storing more data as nodes are added to the
+cluster.
 
-Another feature of the hash algorithm is that it is deterministic in locating entries
-without resorting to multicast requests or maintaining expensive metadata.
-Doing a GET anywhere will result in at most _numOwners_ remote calls.
-The remote GET requests are staggered: we request the value from the primary owner,
-but if it doesn't respond in a reasonable amount of time, we request the value from
-the backup owners as well.
-(The {{infinispan.stagger.delay}} system property, in milliseconds, controls the delay between requests.)
-A GET may also result in 0 remote calls if the key is present in the local cache.
-Doing a PUT can result in more remote calls, depending on the cache configuration (e.g.
-whether the cache is transactional).
+As nodes join and leave the cluster, there will be times when a key has more or less than
+`numOwners` copies.
+In particular, if `numOwners` nodes leave in quick succession, some entries will be lost,
+so we say that a distributed cache tolerates `numOwners - 1` node failures.
+
+The number of copies represents a trade-off between performance and durability of data.
+The more copies you maintain, the lower performance will be, but also the lower the risk
+of losing data due to server or network failures.
+Regardless of how many copies are maintained, distribution still scales linearly, and
+this is key to Infinispan's scalability.
+
+The owners of a key are split into one *primary owner*, which coordinates writes to the
+key, and zero or more *backup owners*.
+To find more about how primary and backup owners are assigned, please read the
+<<key_ownership,Key Ownership>> section.
+
+.Distributed mode
+image::images/clustering-distributed.svg[align="center", title="Distributed mode"]
+
+A read operation will request the value from the primary owner, but if it doesn't respond
+in a reasonable amount of time, we request the value from the backup owners as well.
+(The `infinispan.stagger.delay` system property, in milliseconds, controls the delay
+between requests.)
+A read operation may require `0` messages if the key is present in the local cache,
+or up to `2 * numOwners` messages if all the owners are slow.
+
+A write operation will also result in at most `2 * numOwners` messages: one message from
+the originator to the primary owner, `numOwners - 1` messages from the primary to the
+backups, and the corresponding ACK messages.
+
+NOTE: Cache topology changes may cause retries and additional messages, both for reads
+and for writes.
+
+Just as replicated mode, distributed mode can also be synchronous or asynchronous.
+And as in replicated mode, asynchronous replication is not recommended because it can
+lose updates.
+In addition to losing updates, asynchronous distributed caches can also see a stale value
+when a thread writes to a key and then immediately reads the same key.
+
+Transactional distributed caches use the same kinds of messages as transactional
+replicated caches, except lock/prepare/commit/unlock messages are sent only to the
+*affected nodes* (all the nodes that own at least one key affected by the transaction)
+instead of being broadcast to all the nodes in the cluster.
+As an optimization, if the transaction writes to a single key and the originator is the
+primary owner of the key, lock messages are not replicated.
 
 
 ==== Read consistency
-Since GETs are sent to all data owners in parallel and the first returning result is used,
-this can lead to data inconsistency when using an _asynchronous_ transport.
-If an updating thread modifies the primary data owner, but updates are only sent to backup
-nodes asynchronously, a concurrent read from the same thread may read a stale value for a
-short period of time until the asynchronous replication completes.
+Even with synchronous replication, distributed caches are not linearizable.
+(For transactional caches, we say they do not support serialization/snapshot isolation.)
+We can have one thread doing a single put:
 
-Note that this is _only_ if the transport is _asynchronous_.
-If using a _synchronous_ transport this behavior is not exhibited.
+[source,java]
+----
+cache.get(k) -> v1
+cache.put(k, v2)
+cache.get(k) -> v2
+----
 
-.Distribution mode
-image::images/Figure3_3.png[align="center", title="Distribution mode"]
+But another thread might see the values in a different order:
 
+[source,java]
+----
+cache.get(k) -> v2
+cache.get(k) -> v1
+----
 
-==== Hashing Algorithms
-The hashing algorithm in Infinispan is based on
-link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing], and even
-though our implementation has diverged a bit, we still use the term *consistent hash*.
+The reason is that read can return the value from *any* owner, depending on how fast
+the primary owner replies.
+The write is not atomic across all the owners -- in fact, the primary commits the update
+only after it receives a confirmation from the backup.
+While the primary is waiting for the confirmation message from the backup, reads from the
+backup will see the new value, but reads from the primary will see the old one.
 
-Unlike in consistent hashing, we split the key space into fixed *segments*.
-The number of segments is configurable (*numSegments*), and it cannot be changed without
+[[key_ownership]]
+==== Key ownership
+Distributed caches split entries into a fixed number of segments, and assign each segment
+to a list of owner nodes.
+Replicated caches do the same, except every node is an owner.
+
+The first node in the owners list is called the *primary owner*, and the others are
+called *backup owners*.
+The segment ownership table is broadcast to every node when the cache topology changes
+(i.e. a node joins or leaves the cluster).
+This way, a node can compute the location of a key itself, without resorting to multicast
+requests or maintaining per-key metadata.
+
+The number of segments is configurable (`numSegments`), but it cannot be changed without
 restarting the cluster.
-The mapping of keys to segments is also fixed -- a key should map to the same segment,
+The mapping of keys to segments is also fixed -- a key must map to the same segment,
 regardless of how the topology of the cluster changes.
+The key-to-segment mapping can be customized by configuring a
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]
+or by using the <<grouping,Grouping API>>.
 
-Each hash segment is mapped to a list of nodes called *owners*.
-The order matters, because the first owner, also known as the *primary owner*, has a
-special role in many cache operations (e.g. locking).
-The other owners are called *backup owners*.
-There is no hard rule on how the segments are mapped to owners, although the hashing
-algorithms generally try to balance the number of segments allocated to each node and at
-the same time minimize the number of segments that have to move after a node joins or
-leaves the cluster.
+There is no hard rule on how segments must be mapped to owners, but the goal is to
+balance the number of segments allocated to each node and at the same time minimize the
+number of segments that have to move after a node joins or leaves the cluster.
+The segment mapping is customizable, and in fact there are five implementations that
+ship with Infinispan:
 
-The hashing algorithm in Infinispan is customizable, and in fact there are five
-implementations that ship with Infinispan by default:
-
-org.infinispan.distribution.ch.DefaultConsistentHashFactory::
-  The default hashing algorithm.
-  It achieves a pretty even distribution, but it has one disadvantage: the mapping of
-  segments to nodes depends on the order in which caches joined the cluster, so a key's
-  owners are not guaranteed to be the same in all the caches running in a cluster.
-org.infinispan.distribution.ch.TopologyAwareConsistentHashFactory::
-  Selected automatically when <<ServerHinting, Server Hinting>> is enabled.
-  Similar to the default algorithm, but also tries to spread each segment's copies across
-  as many sites, racks, or machines as possible.
-org.infinispan.distribution.ch.SyncConsistentHashFactory::
-  An alternative algorithm, closer to consistent hashing (but still not exactly the same).
-  It addresses the weakness of the default algorithm, and always assigns a key to the same
-  node in every cache as long as the cluster is symmetric. It does have some weaknesses of
-  itself, though: the load distribution is less even, and it also moves more segments than
-  necessary on a join or leave.
-org.infinispan.distribution.ch.TopologyAwareSyncConsistentHashFactory::
-  Similar to _SyncConsistentHashFactory_, but adapted for <<ServerHinting, Server Hinting>>.
-org.infinispan.distribution.ch.ReplicatedConsistentHashFactory::
+SyncConsistentHashFactory::
+  An algorithm based on
+  link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing].
+  It always assigns a key to the same node in every cache as long as the cluster is
+  symmetric (i.e. all caches run on all nodes).
+  It does have some weaknesses: the load distribution is a bit uneven, and it also moves
+  more segments than strictly necessary on a join or leave.
+  Selected by default when server hinting is disabled.
+TopologyAwareSyncConsistentHashFactory::
+  Similar to `SyncConsistentHashFactory`, but adapted for
+  <<ServerHinting, Server Hinting>>.
+  Selected by default when server hinting is enabled.
+DefaultConsistentHashFactory::
+  It achieves a more even distribution than `SyncConsistentHashFactory`, but it has one
+  disadvantage: the mapping of segments to nodes depends on the order in which caches
+  joined the cluster, so a key's owners are not guaranteed to be the same in all the
+  caches running in a cluster.
+  Used to be the default from version 5.2 to version 8.1 (with server hinting disabled).
+TopologyAwareConsistentHashFactory::
+  Similar to _DefaultConsistentHashFactory_, but adapted for
+  <<ServerHinting, Server Hinting>>.
+  Used to be the default with from version 5.2 to version 8.1 (with server hinting enabled).
+ReplicatedConsistentHashFactory::
   This algorithm is used internally to implement replicated caches.
   Users should never select this explicitly in a distributed cache.
 
 
 ===== Capacity Factors
+Capacity factors are another way to customize the mapping of segments to nodes.
 The nodes in a cluster are not always identical.
-It is possible to have "non-standard" nodes that take _2x_ as much load as a regular
-node, or _0.5x_ as much load as a regular node, using the *capacityFactor* setting.
+If a node has 2x the memory of a "regular" node, configuring it with a `capacityFactor`
+of `2` tells Infinispan to allocate 2x segments to that node.
 The capacity factor can be any non-negative number, and the hashing algorithm will try to
 assign to each node a load weighted by its capacity factor (both as a primary owner and as
 a backup owner).
 
-NOTE: Capacity factors support is new in Infinispan 6.0.
-
-One interesting use case is nodes with a capacity factor of _0_.
+One interesting use case is nodes with a capacity factor of `0`.
 This could be useful when some nodes are too short-lived to be useful as data owners, but
 they can't use HotRod (or other remote protocols) because they need transactions.
 With cross-site replication as well, the "site master" should only deal with forwarding
 commands between sites and shouldn't handle user requests, so it makes sense to configure
-it with a capacity factor of 0.
+it with a capacity factor of `0`.
 
 
 ===== Hashing Configuration
@@ -235,7 +336,7 @@ at runtime) means that, normally, a node doesn't wait for the presence of other 
 starting. While this is very flexible, it might not be suitable for applications which require
 a specific number of nodes to join the cluster before caches are started. For this reason,
 you can specify how many nodes should have joined the cluster before proceeding with cache
-initialization. To do this, use the _initialClusterSize_ and _initialClusterTimeout_ transport
+initialization. To do this, use the `initialClusterSize` and `initialClusterTimeout` transport
 properties. The declarative XML configuration:
 
 [source,xml]
@@ -258,42 +359,44 @@ the initial nodes do not appear within the specified timeout, the cache manager 
 start.
 
 ==== L1 Caching
-To prevent repeated remote calls when doing multiple GETs, L1 caching can be enabled.
-L1 caching places remotely received values in a near cache for a short period of time
-(configurable) so repeated lookups would not result in remote calls.
-In the above diagram, if L1 was enabled, a subsequent GET for the same key on Server3
-would not result in any remote calls.
+When L1 is enabled, a node will keep the result of remote reads locally for a short
+period of time (configurable, 10 minutes by default), and repeated lookups will return
+the local L1 value instead of asking the owners again.
 
 .L1 caching
-image::images/Figure4_4.png[align="center", title="L1 caching"]
+image::images/clustering-l1.svg[align="center", title="L1 caching"]
 
 L1 caching is not free though.
-Enabling it comes at a cost, and this cost is that every time a key is updated, an
-invalidation message needs to be multicast to ensure nodes with the entry in L1
-invalidates the entry.
-L1 caching causes the requesting node to cache the retrieved entry locally and listen for
-changes to the key on the wire.
-L1-cached entries are given an internal expiry to control memory usage.
-Enabling L1 will improve performance for repeated reads of non-local keys, but will
-increase memory consumption to some degree.
-It offers a nice tradeoff between the "read-mostly" performance of an invalidated data
-grid with the scalability of a distributed one.
+Enabling it comes at a cost, and this cost is that every entry update must broadcast an
+invalidation message to all the nodes.
+L1 entries can be evicted just like any other entry when the the cache is configured
+with a maximum size.
+Enabling L1 will improve performance for repeated reads of non-local keys, but it will
+slow down writes and it will increase memory consumption to some degree.
+
 Is L1 caching right for you?
 The correct approach is to benchmark your application with and without L1 enabled and see
 what works best for your access pattern.
 
-TIP: Looking for Buddy Replication?  Buddy Replication - from JBoss Cache - does not exist
-in Infinispan. 
-See this blog article which discusses the reasons why Buddy Replication was not
-implemented in Infinispan, and how the same effects can be achieved using Infinispan:
-link:http://infinispan.blogspot.com/2009/08/distribution-instead-of-buddy.html[]
-
 
 [[ServerHinting]]
 ==== Server Hinting
-The motivations behind this feature is to ensure when using distribution, backups are not
-picked to reside on the same physical server, rack or data centre.
-For obvious reasons it doesn't work with total replication.
+The following topology hints can be specified:
+
+Machine::
+  This is probably the most useful, when multiple JVM instances run on the
+  same node, or even when multiple virtual machines run on the same physical machine.
+Rack::
+  In larger clusters, nodes located on the same rack are more likely to experience a
+  hardware or network failure at the same time.
+Site::
+  Some clusters may have nodes in multiple physical locations for extra resilience.
+  Note that <<CrossSiteReplication, Cross site replication>> is another alternative for
+  clusters that need to span two or more data centres.
+
+All of the above are optional.
+When provided, the distribution algorithm will try to spread the ownership of each
+segment across as many sites, racks, and machines (in this order) as possible.
 
 ===== Configuration
 The hints are configured at transport level:
@@ -301,68 +404,51 @@ The hints are configured at transport level:
 [source,xml]
 ----
 <transport
-    cluster = "MyCluster"
-    machine = "LinuxServer01"
-    rack = "Rack01"
-    site = "US-WestCoast" />
+    cluster="MyCluster"
+    machine="LinuxServer01"
+    rack="Rack01"
+    site="US-WestCoast" />
 ----
-
-The following topology hints can be specified:
-
-machine::
-  This is probably the most useful, to disambiguate between multiple JVM instances on the
-  same node, or even multiple virtual hosts on the same physical host.
-rack::
-  In larger clusters with nodes occupying more than a single rack, this setting would help
-  prevent backups being stored on the same rack.
-site::
-  To differentiate between nodes in different data centres replicating to each other. Note
-  that <<CrossSiteReplication, Cross site replication>> is another alternative for
-  clusters that need to span two or more data centres.
-
-All of the above are optional, and if not provided, the distribution algorithms provide no
-guarantees that backups will not be stored in instances on the same machine/rack/site.
 
 
 [[KeyAffinityService]]
 ====  Key affinity service
-The key affinity service solves the following problem: for a distributed Infinispan
-cluster one wants to make sure that a value is placed in a certain node.
-Based on a supplied cluster
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/remoting/transport/Address.html[address]
-identifying the node, the service returns a key that will be hashed to that particular
-node.
+In a distributed cache, a key is allocated to a list of nodes with an opaque algorithm.
+There is no easy way to reverse the computation and generate a key that maps to a
+particular node.
+However, we can generate a sequence of (pseudo-)random keys, see what their primary
+owner is, and hand them out to the application when it needs a key mapping to a
+particular node.
 
 ===== API
 Following code snippet depicts how a reference to this service can be obtained and used.
 
 [source,java]
 ----
-// 1. Obtain a reference to a cache manager
-EmbeddedCacheManager cacheManager = getCacheManager();//obtain a reference to a cache manager
-Cache cache = cacheManager.getCache();
- 
+// 1. Obtain a reference to a cache
+Cache cache = ...
+Address address = cache.getCacheManager().getAddress();
+
 // 2. Create the affinity service
 KeyAffinityService keyAffinityService = KeyAffinityServiceFactory.newLocalKeyAffinityService(
       cache,
       new RndKeyGenerator(),
-      Executors.newSingleThreadExecutor(),
+      Executors.newSingleThreadExecutor(),
       100);
- 
-// 3. Obtain a key to be mapped to a certain address
-Object localKey = keyAffinityService.getKeyForAddress(cacheManager.getAddress());
- 
-// 4. This put makes sure that the key resigns on the local node (as obtained cacheManager.getAddress())
+
+// 3. Obtain a key for which the local node is the primary owner
+Object localKey = keyAffinityService.getKeyForAddress(address);
+
+// 4. Insert the key in the cache
 cache.put(localKey, "yourValue");
 ----
 
 The service is started at step 2: after this point it uses the supplied _Executor_ to
 generate and queue keys.
-At step 3, we obtain a key for this service, and use it at step 4, with that guarantee
-that it is distributed on the node identified by `cacheManager.getAddress()`.
+At step 3, we obtain a key from the service, and at step 4 we use it.
 
 ===== Lifecycle
-_KeyAffinityService_ extends _Lifecycle_, which allows stopping and (re)starting it:
+`KeyAffinityService` extends `Lifecycle`, which allows stopping and (re)starting it:
 
 [source,java]
 ----
@@ -372,37 +458,32 @@ public interface Lifecycle {
 }
 ----
 
-The service is instantiated through _KeyAffinityServiceFactory_. All the factory methods
-have an _Executor_ parameter, that is used for asynchronous key generation (so that it
+The service is instantiated through `KeyAffinityServiceFactory`. All the factory methods
+have an `Executor` parameter, that is used for asynchronous key generation (so that it
 won't happen in the caller's thread).
-It is the user's responsibility to handle the shutdown of this _Executor_.
+It is the user's responsibility to handle the shutdown of this `Executor`.
 
-The _KeyAffinityService_, once started, needs to be explicitly stopped. This stops the
+The `KeyAffinityService`, once started, needs to be explicitly stopped. This stops the
 background key generation and releases other held resources.
 
-The only situation in which _KeyAffinityService_ stops by itself is when the cache manager
+The only situation in which `KeyAffinityService` stops by itself is when the cache manager
 with which it was registered is shutdown.
 
 ===== Topology changes
-When a topology change takes place the key ownership from the _KeyAffinityService_ might
-change.
-The key affinity service keep tracks of these topology changes and updates and doesn't
-return stale keys, i.e. keys that would currently map to a different node than the one
-specified.
-However, this does not guarantee that at the time the key is used its node affinity hasn't
-changed, e.g.:
+When the cache topology changes (i.e. nodes join or leave the cluster), the ownership of
+the keys generated by the `KeyAffinityService` might change.
+The key affinity service keep tracks of these topology changes and doesn't return keys
+that would currently map to a different node, but it won't do anything about keys
+generated earlier.
 
-- Thread `T1` reads a key `k1` that maps to node `A`.
-- A topology change happens which makes `k1` map to node `B`.
-- `T1` uses `k1` to add something to the cache. At this point `k1` maps to `B`, a different node than the one
-  requested at the time of read.
+As such, applications should treat `KeyAffinityService` purely as an optimization, and
+they should not rely on the location of a generated key for correctness.
 
-Whilst this is not ideal, it should be a supported behaviour for the application as all
-the already in-use keys might be moved over during cluster change.
-The _KeyAffinityService_ provides an access proximity optimisation for stable clusters which
-doesn't apply during the instability of topology changes.
+In particular, applications should not rely on keys generated by `KeyAffinityService`
+for the same address to always be located together.
+Collocation of keys is only provided by the <<grouping, Grouping API>>.
 
-
+[[grouping]]
 ====  The Grouping API
 Complementary to <<KeyAffinityService, Key affinity service>> and similar to
 link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/atomic/AtomicMap.html[AtomicMap],
@@ -410,21 +491,14 @@ the grouping API allows you to co-locate a group of entries on the same nodes, b
 being able to select the actual nodes.
 
 ===== How does it work?
-Normally, when you store an entry, Infinispan will take a hash code of the key, map the
-hash to a hash segment, and store the entry on the nodes which own that segment.
-Infinispan always uses an algorithm to locate a key, never allowing the nodes on which the
-entry is stored to be specified manually.
-This scheme allows any node to know which nodes owns a key, without having to distribute
-such ownership information.
-This reduces the overhead of Infinispan, but more importantly improves redundancy as there
-is no need to replicate the ownership information in case of node failure.
+By default, the segment of a key is computed using the key's `hashCode()`.
+If you use the grouping API, Infinispan will compute the segment of the group and use
+that as the segment of the key.
+See the <<key_ownership, Key Ownership>> section for more details on how segments are
+then mapped to nodes.
 
-If you use the grouping API, then Infinispan will ignore the hash of the key when deciding
-which _node_ to store the entry on, and instead use a hash of the group.
-Infinispan still uses the hash of the key in its internal data structures, so using the
-grouping API will not slow things down.
-When the group API is in use, it is important that every node can still compute, using an
-algorithm, the owners of every key.
+When the group API is in use, it is important that every node can still compute the
+owners of every key without contacting other nodes.
 For this reason, the group cannot be specified manually.
 The group can either be intrinsic to the entry (generated by the key class) or extrinsic
 (generated by an external function).
@@ -449,79 +523,81 @@ Or, if you are using XML:
 ----
 
 If you have control of the key class (you can alter the class definition, it's not part of
-an unmodifiable library), and the determination of the group is not an orthogonal concern
-to the key class, then we recommend you use an intrinsic group.
-The intrinsic group can be specified using the _@Group_ annotation placed on the method.
+an unmodifiable library), then we recommend using an intrinsic group.
+The intrinsic group is specified by adding the `@Group` annotation to a method.
 Let's take a look at an example:
 
 [source,java]
 ----
 class User {
-   ...
-   String office;
-   ...
+   ...
+   String office;
+   ...
 
-   public int hashCode() {
-      // Defines the hash for the key, normally used to determine location
-      ...
-   }
+   public int hashCode() {
+      // Defines the hash for the key, normally used to determine location
+      ...
+   }
 
-   // Override the location by specifying a group, all keys in the same
-   // group end up with the same owner
-   @Group
-   public String getOffice() {
-      return office;
-   }
-   }
+   // Override the location by specifying a group
+   // All keys in the same group end up with the same owners
+   @Group
+   public String getOffice() {
+      return office;
+   }
+   }
 }
 ----
 
-NOTE: The group must be a `String`
+NOTE: The group method must return a `String`
 
 If you don't have control over the key class, or the determination of the group is an
-orthogonal concern to the key class, we recommend you use an extrinsic group.
-An extrinsic group is specified by implementing the _Grouper_ interface, which has a
-single method computeGroup, which should return the group.
-_Grouper_ acts as an interceptor, passing the previously computed value in.
-The group passed to the first _Grouper_ will be that determined by _@Group_ (if _@Group_
-is defined).
-This allows you even greater control over the group when using an intrinsic group.
-For a grouper to be used when determining the group for a key, its _keyType_ must be
-assignable from the key being grouped.
+orthogonal concern to the key class, we recommend using an extrinsic group.
+An extrinsic group is specified by implementing the `Grouper` interface.
 
-Let's take a look at an example of a _Grouper_:
+[source,java]
+----
+public interface Grouper<T> {
+    String computeGroup(T key, String group);
+
+    Class<T> getKeyType();
+}
+----
+
+If multiple `Grouper` classes are configured for the same key type, all of them will be
+called, receiving the value computed by the previous one.
+If the key class also has a `@Group` annotation, the first `Grouper` will receive the
+group computed by the annotated method.
+This allows you even greater control over the group when using an intrinsic group.
+Let's take a look at an example `Grouper` implementation:
 
 [source,java]
 ----
 public class KXGrouper implements Grouper<String> {
 
-   // A pattern that can extract from a "kX" (e.g. k1, k2) style key
    // The pattern requires a String key, of length 2, where the first character is
    // "k" and the second character is a digit. We take that digit, and perform
-   // modular arithmetic on it to assign it to group "1" or group "2".
-   private static Pattern kPattern = Pattern.compile("(^k)(<a>\\d</a>)$");
+   // modular arithmetic on it to assign it to group "0" or group "1".
+   private static Pattern kPattern = Pattern.compile("(^k)(<a>\\d</a>)$");
 
-    public String computeGroup(String key, String group) {
-        Matcher matcher = kPattern.matcher(key);
-        if (matcher.matches()) {
-            String g = Integer.parseInt(matcher.group(2)) % 2 + "";
-            return g;
-        } else
-            return null;
-    }
+   public String computeGroup(String key, String group) {
+      Matcher matcher = kPattern.matcher(key);
+      if (matcher.matches()) {
+         String g = Integer.parseInt(matcher.group(2)) % 2 + "";
+         return g;
+      } else {
+         return null;
+      }
+   }
 
-    public Class<String> getKeyType() {
-        return String.class;
-    }
+   public Class<String> getKeyType() {
+      return String.class;
+   }
 }
 ----
 
-Here we determine a simple grouper that can take the key class and extract from the group
-from the key using a pattern.
-We ignore any group information specified on the key class.
-
-You must register every grouper you wish to have used. If you are configuring Infinispan
-programmatically:
+`Grouper` implementations must be registered explicitly in the cache configuration.
+If you are configuring Infinispan programmatically:
 
 [source,java]
 ----
@@ -543,123 +619,120 @@ Or, if you are using XML:
 
 ===== Advanced Interface
 
+`AdvancedCache` has two group-specific methods:
+
+link:http://docs.jboss.org/infinispan/{infinispanVersion}/apidocs/org/infinispan/AdvancedCache.html#getGroup-java.lang.String-[getGroup(groupName)]::
+  Retrieves all keys in the cache that belong to a group.
+link:http://docs.jboss.org/infinispan/{infinispanVersion}/apidocs/org/infinispan/AdvancedCache.html#removeGroup-java.lang.String-[removeGroup(groupName)]::
+  Removes all the keys in the cache that belong to a group.
+
+Both methods iterate over the entire data container and store (if present), so they can
+be slow when a cache contains lots of small groups.
+
 NOTE: This interface is available since Infinispan 7.0.0.
 
-+AdvancedCache+ allows to interact with the keys belonging to a group. It is possible to return the +Set+ of keys
-belonging to a group and remove all the keys of the group. Below is the interface available:
-
-[source,java]
-.AdvancedCache.java
-----
-/**
- * It fetches all the keys which belong to the group.
- * <p/>
- * Semantically, it iterates over all the keys in memory and persistence, and performs a read operation in the keys
- * found. Multiple invocations inside a transaction ensures that all the keys previous read are returned and it may
- * return newly added keys to the group from other committed transactions (also known as phantom reads).
- * <p/>
- * The {@code map} returned is immutable and represents the group at the time of the invocation. If you want to add
- * or remove keys from a group use {@link #put(Object, Object)} and {@link #remove(Object)}. To remove all the keys
- * in the group use {@link #removeGroup(String)}.
- * <p/>
- * To improve performance you may use the {@code flag} {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} to avoid
- * fetching the key/value from persistence. However, you will get an inconsistent snapshot of the group.
- *
- * @param groupName the group name.
- * @return an immutable {@link java.util.Map} with the key/value pairs.
- */
-Map<K, V> getGroup(String groupName);
-
-/**
- * It removes all the key which belongs to a group.
- * <p/>
- * Semantically, it fetches the most recent group keys/values and removes them.
- * <p/>
- * Note that, concurrent addition perform by other transactions/threads to the group may not be removed.
- *
- * @param groupName the group name.
- */
-void removeGroup(String groupName);
-----
 
 ===  Asynchronous Options
-When Infinispan instances are clustered, regardless of the cluster mode, data can be
-propagated to other nodes in a synchronous or asynchronous way.
-When synchronous, the sender waits for replies from the receivers and when asynchronous,
-the sender sends the data and does not wait for replies from other nodes in the cluster.
-
-With asynchronous modes, speed is more important than consistency and this is particularly
-advantageous in use cases such as HTTP session replication with sticky sessions enabled.
-In these scenarios, data, or in this case a particular session, is always accessed on the
-same cluster node and only in case of failure is data accessed in a different node.
-This type of architectures allow consistency to be relaxed in favour of increased
-performance.
-
-In order to choose the asynchronous configuration that best suits your application, it's
-important to understand the following configuration settings:
 
 ==== Asynchronous Communications
-Whenever you add
-link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<replicated-cache mode="ASYNC"> or <distributed-cache mode="ASYNC"> or <invalidation-cache mode="ASYNC">`]
-element, you're telling the underlying JGroups layer in Infinispan
-to use asynchronous communication. What this means is that JGroups will send any
-replication/distribution/invalidation request to the wire but will not wait for a reply
-from the receiver.
+All clustered cache modes can be configured to use asynchronous communications with the
+link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`mode="ASYNC"`]
+attribute on the `<replicated-cache/>`, `<distributed-cache>`, or `<invalidation-cache/>`
+element.
 
-==== Replication Queue
-The aim of the replication queue is to batch the individual cache operations and send them
-as one, as opposed to sending each cache operation individually.
-As a result, replication queue enabled configurations perform generally better compared to
-those that have it switched off because less RPC messages are sent, fewer envelopes are
-used...etc.
-The only real trade off to the replication queue is that the queue is flushed periodically
-(based on time or queue size) and hence it might take longer for the
-replication/distribution/invalidation to be realised across the cluster.
-When replication queue is turned off, data is placed directly on the wire and hence it
-takes less for data to arrive to other nodes.
+With asynchronous communications, the originator node does not receive any
+acknowledgement from the other nodes about the status of the operation, so there is no
+way to check if it succeeded on other nodes.
+
+We do not recommend asynchronous communications in general, as they can cause
+inconsistencies in the data, and the results are hard to reason about.
+Nevertheless, sometimes speed is more important than consistency, and the option is
+available for those cases.
 
 ==== Asynchronous API
-Finally, the <<_asynchronous_api, Asynchronous API>> can be used to emulate non-blocking
-APIs, whereby calls are handed over to a different thread and asynchronous API calls
-return to the client immediately.
-Using this API can lead to reordering, so you should avoid
-calling modifying asynchronous methods on the same keys.
+The <<_asynchronous_api, Asynchronous API>> allows you to use synchronous communications,
+but without blocking the user thread.
+
+There is one caveat:
+The asynchronous operations do NOT preserve the program order.
+If a thread calls `cache.putAsync(k, v1); cache.putAsync(k, v2)`, the final value of `k`
+may be either `v1` or `v2`.
+The advantage over using asynchronous communications is that the final value can't be
+`v1` on one node and `v2` on another.
+
+NOTE: Prior to version 9.0, the asynchronous API was emulated by borrowing a thread from
+an internal thread pool and running a blocking operation on that thread.
 
 ==== Return Values
-Regardless of the asynchronous option used, the return values of cache operations are
-reliable.
-If talking about return values of cache operations that return previous value, the
-correctness of these returns are guaranteed as well regardless of the clustering mode.
-With replication, the previous value is already available locally, and with distribution,
-regardless of whether it's asynchronous or synchronous, Infinispan sends a synchronous
-request to get the previous value if not present locally.
-If on the other hand the asynchronous API is used, client code needs to get hold of the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html[NotifiyngFuture]
-returned by the async operation in order to be able to query the previous value.
+Because the `Cache` interface extends `java.util.Map`, write methods like
+`put(key, value)` and `remove(key)` return the previous value by default.
+
+In some cases, the return value may not be correct:
+
+1. When using `AdvancedCache.withFlags()` with `Flag.IGNORE_RETURN_VALUE`,
+`Flag.SKIP_REMOTE_LOOKUP`, or `Flag.SKIP_CACHE_LOAD`.
+2. When the cache is configured with `unreliable-return-values="true"`.
+3. When using asynchronous communications.
+4. When there are multiple concurrent writes to the same key, and the cache topology
+changes.
+The topology change will make Infinispan retry the write operations, and a retried
+operation's return value is not reliable.
+
+Transactional caches return the correct previous value in cases 3 and 4.
+However, transactional caches also have a gotcha: in distributed mode, the
+read-committed isolation level is implemented as repeatable-read.
+That means this example of "double-checked locking" won't work:
+
+[source,java]
+----
+Cache cache = ...
+TransactionManager tm = ...
+
+tm.begin();
+try {
+   Integer v1 = cache.get(k);
+   // Increment the value
+   Integer v2 = cache.put(k, v1 + 1);
+   if (Objects.equals(v1, v2) {
+      // success
+   } else {
+      // retry
+   }
+} finally {
+  tm.commit();
+}
+----
+
+The correct way to implement this is to use
+`cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(k)`.
+
+In caches with optimistic locking writes can return a stale previous value as well, and
+the only way protect against it is to enable write-skew checks and to catch
+`WriteSkewException`.
 
 
 === Partition handling
 
 An Infinispan cluster is built out of a number of nodes where data is stored. In order
-not to lose data in the presence of node failures, Infinispan copies the same data - cache
-entry in Infinispan parlance - over multiple nodes. This level of data redundancy is
-configured through the *numOwners* configuration attribute and ensures that as long as
-fewer than *numOwners* nodes crash simultaneously, Infinispan has a copy of the data
+not to lose data in the presence of node failures, Infinispan copies the same data -- cache
+entry in Infinispan parlance -- over multiple nodes. This level of data redundancy is
+configured through the `numOwners` configuration attribute and ensures that as long as
+fewer than `numOwners` nodes crash simultaneously, Infinispan has a copy of the data
 available.
 
-However there might be catastrophic situations in which more than *numOwners* nodes
+However, there might be catastrophic situations in which more than `numOwners` nodes
 disappear from the cluster:
 
-- split brain. Caused e.g. by a router crash, this splits the cluster in two or more
+Split brain:: Caused e.g. by a router crash, this splits the cluster in two or more
 partitions, or sub-clusters that operate independently. In these circumstances,
 multiple clients reading/writing from different partitions see different versions
 of the same cache entry, which for many application is problematic. Note there are
 ways to alleviate the possibility for the split brain to happen, such as redundant networks or
  link:https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-networkscripts-interfaces-chan.html[IP bonding].
  These only reduce the window of time for the problem to occur, though.
-- *numOwners* nodes crash in sequence. When at least *numOwners* nodes crash in rapid
-sequence and Infinispan does not have the time to properly rebalance its state between
-crashes, the result is partial data lost.
+`numOwners` nodes crash in sequence:: When at least `numOwners` nodes crash in rapid
+succession and Infinispan does not have the time to properly rebalance its state between
+crashes, the result is partial data loss.
 
 The partition handling functionality discussed in this section allows the user to
 be informed when data has been lost, temporarily or permanently, and wait for the cluster to heal.
@@ -695,22 +768,22 @@ the data, and each partition could write conflicting updates in the cache.
 
 With partition handling enabled, if we detect a split, each partition does
 not start a rebalance immediately, but first it checks whether it should
-enter degraded mode instead:
+enter *DEGRADED* mode instead:
 
 - If at least one segment has lost all its owners (meaning at least
   _numOwners_ nodes left since the last rebalance ended), the partition enters
-  degraded mode.
+  DEGRADED mode.
 - If the partition does not contain a simple majority of the nodes (floor(numNodes/2) + 1)
-  in the _latest stable topology_, the partition also enters degraded mode.
+  in the _latest stable topology_, the partition also enters DEGRADED mode.
 - Otherwise the partition keeps functioning normally, and it starts a rebalance.
 
 The _stable topology_ is updated every time a rebalance operation ends and the coordinator determines
 that another rebalance is not necessary.
 
-These rules ensures that at most one partition stays in available mode, and
-the other partitions enter degraded mode.
+These rules ensures that at most one partition stays in AVAILABLE mode, and
+the other partitions enter DEGRADED mode.
 
-When a partition is in degraded mode, it only allows access to the keys that are wholly owned:
+When a partition is in DEGRADED mode, it only allows access to the keys that are wholly owned:
 
 - Requests (reads and writes) for entries that have all the copies on nodes within
 this partition are honoured.
@@ -726,15 +799,15 @@ mode with `numOwners = 2`.
 Further on, consider three keys `k1`, `k2` and `k3` (that might exist in the cache or not)
 such that `owners(k1) = {A,B}`, `owners(k2) = {B,C}` and `owners(k3) = {C,D}`.
 Then the network splits in two partitions, `N1 = {A, B}` and `N2 = {C, D}`, they enter
-degraded mode and behave like this:
+DEGRADED mode and behave like this:
 
 - on `N1`, `k1` is available for read/write, `k2` (partially owned) and `k3` (not owned)
 are not available and accessing them results in an `AvailabilityException`
 - on `N2`, `k1` and `k2` are not available for read/write, `k3` is available
 
 A relevant aspect of the partition handling process is the fact that when a
-split brain happens, the resulting partitions rely on the original consistent
-hash function (the one that existed before the split brain) in order
+split brain happens, the resulting partitions rely on the original segment
+mapping (the one that existed before the split brain) in order
 to calculate key ownership. So it doesn't matter if `k1`, `k2`, or `k3` already
 existed cache or not, their availability is the same.
 
@@ -769,27 +842,27 @@ left the JGroups view because of a process/machine crash, or because of a
 network failure: whenever a node leaves the JGroups cluster abruptly, it is
 assumed to be because of a network problem.
 
-If the configured number of copies (_numOwners_) is greater than 1, the
+If the configured number of copies (`numOwners`) is greater than 1, the
 cluster can remain available and will try to make new replicas of the data
 on the crashed node. However, other nodes might crash during the rebalance process.
-If more than _numOwners_ nodes crash in a short interval of time, there is a
+If more than `numOwners` nodes crash in a short interval of time, there is a
 chance that some cache entries have disappeared from the cluster altogether.
 In this case, with partition handling functionality enabled, Infinispan
-assumes (incorrectly) that there is a split brain and enters degraded mode
+assumes (incorrectly) that there is a split brain and enters DEGRADED mode
 as described in the split-brain section.
 
-The administrator can also shut down more than *numOwners* nodes in
+The administrator can also shut down more than `numOwners` nodes in
 rapid succession, causing the loss of the data stored only on those nodes.
 When the administrator shuts down a node gracefully, Infinispan knows that
 the node can't come back.
 However, the cluster doesn't keep track of how each node left, and the cache
-still enters _degraded_ mode as if those nodes had crashed.
+still enters DEGRADED mode as if those nodes had crashed.
 
 At this stage there is no way for the cluster to recover its state,
 except stopping it and repopulating it on restart with the data from an
 external source.
-Clusters are expected to be configured with an appropriate *numOwners* in
-order to avoid *numOwners* successive node failures, so this situation
+Clusters are expected to be configured with an appropriate `numOwners` in
+order to avoid `numOwners` successive node failures, so this situation
 should be pretty rare.
 If the application can handle losing some of the data in the cache, the
 administrator can force the availability mode back to AVAILABLE
@@ -824,7 +897,7 @@ dcc.clustering().partitionHandling().enabled(true);
 The availability mode of a cache is exposed in JMX as an attribute in the
 link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#Cache[Cache MBean].
 The attribute is writable, allowing an administrator to forcefully migrate
-a cache from degraded state back to available (at the cost of
+a cache from DEGRADED mode back to AVAILABLE (at the cost of
 consistency).
 
 The availability mode is also accessible via the
@@ -843,5 +916,3 @@ if (!available) {
    ac.setAvailability(AvailabilityMode.AVAILABLE);
 }
 ----
-
-
