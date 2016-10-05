@@ -106,11 +106,11 @@ public class APITxTest extends APINonTxTest {
          tm1.rollback();
       }
    }
-   
+
    public void testEntrySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
       assertEquals(0, cache.size());
       cache.put("k1", "v1");
-	   
+
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
       tm1.begin();
       try {
@@ -123,11 +123,11 @@ public class APITxTest extends APINonTxTest {
          tm1.rollback();
       }
    }
-   
+
    public void testKeySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
       assertEquals(0, cache.size());
       cache.put("k1", "v1");
-	   
+
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
       tm1.begin();
       try {
