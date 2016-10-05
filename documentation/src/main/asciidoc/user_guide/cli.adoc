@@ -1,5 +1,4 @@
-[[_CLI_chapter]]
-==  Command-Line Interface (CLI)
+===  Command-Line Interface (CLI)
 Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
 The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. Infinispan Server includes CLI support out of the box. 
@@ -54,8 +53,8 @@ begin       commit      disconnect  evict       info     
 
 The CLI is based on link:$$https://github.com/aeshell/aesh$$[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation. 
 
-=== Commands
-==== abort
+==== Commands
+===== abort
 The _abort_ command is used to abort a running batch initiated by the _start_ command 
 
 
@@ -67,7 +66,7 @@ The _abort_ command is used to abort a running batch initiated by the _start_ co
 null
 ----
 
-==== begin
+===== begin
 The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled. 
 
 
@@ -78,7 +77,7 @@ The _begin_ command starts a transaction. In order for this command to work, the
 [jmx://localhost:12000/MyCacheManager/namedCache]> commit
 ----
 
-==== cache
+===== cache
 The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache. 
 
 
@@ -89,7 +88,7 @@ ___defaultcache
 [jmx://localhost:12000/MyCacheManager/___defaultcache]>
 ----
 
-==== clearcache
+===== clearcache
 The _clearcache_ command clears a cache from all content. 
 
 
@@ -100,7 +99,7 @@ The _clearcache_ command clears a cache from all content.
 null
 ----
 
-==== commit
+===== commit
 The _commit_ command commits an ongoing transaction 
 
 
@@ -111,7 +110,7 @@ The _commit_ command commits an ongoing transaction
 [jmx://localhost:12000/MyCacheManager/namedCache]> commit
 ----
 
-==== container
+===== container
 The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers 
 
 
@@ -122,7 +121,7 @@ MyCacheManager OtherCacheManager
 [jmx://localhost:12000/OtherCacheManager/]>
 ----
 
-==== create
+===== create
 The _create_ command creates a new cache based on the configuration of an existing cache definition 
 
 
@@ -132,7 +131,7 @@ The _create_ command creates a new cache based on the configuration of an existi
 [jmx://localhost:12000/MyCacheManager/newCache]>
 ----
 
-==== deny
+===== deny
 When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
 The _deny_ command can be used to deny roles previously assigned to a principal:
 
@@ -140,7 +139,7 @@ The _deny_ command can be used to deny roles previously assigned to a principal:
 [remoting://localhost:9999]> deny supervisor to user1
 ---- 
 
-==== disconnect
+===== disconnect
 The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
 
 
@@ -149,7 +148,7 @@ The _disconnect_ command disconnects the currently active connection allowing th
 [disconnected//]
 ----
 
-==== encoding
+===== encoding
 The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures. 
 
 
@@ -164,7 +163,7 @@ rest
 [jmx://localhost:12000/MyCacheManager/namedCache]> encoding hotrod
 ----
 
-==== end
+===== end
 The _end_ command is used to successfully end a running batch initiated by the _start_ command 
 
 
@@ -176,7 +175,7 @@ The _end_ command is used to successfully end a running batch initiated by the _
 a
 ----
 
-==== evict
+===== evict
 The _evict_ command is used to evict from the cache the entry associated with a specific key. 
 
 
@@ -185,7 +184,7 @@ The _evict_ command is used to evict from the cache the entry associated with a 
 [jmx://localhost:12000/MyCacheManager/namedCache]> evict a
 ----
 
-==== get
+===== get
 The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed. 
 
 
@@ -195,7 +194,7 @@ The _get_ command is used to show the value associated to a specified key. For p
 a
 ----
 
-==== grant
+===== grant
 When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
 The _grant_ command can be used to grant new roles to a principal:
 
@@ -203,7 +202,7 @@ The _grant_ command can be used to grant new roles to a principal:
 [remoting://localhost:9999]> grant supervisor to user1
 ---- 
 
-==== info
+===== info
 The _info_ command is used to show the configuration of the currently selected cache or container. 
 
 
@@ -212,7 +211,7 @@ The _info_ command is used to show the configuration of the currently selected c
 GlobalConfiguration{asyncListenerExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@98add58}, asyncTransportExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@7bc9c14c}, evictionScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@7ab1a411}, replicationQueueScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@248a9705}, globalJmxStatistics=GlobalJmxStatisticsConfiguration{allowDuplicateDomains=true, enabled=true, jmxDomain='jboss.infinispan', mBeanServerLookup=org.jboss.as.clustering.infinispan.MBeanServerProvider@6c0dc01, cacheManagerName='local', properties={}}, transport=TransportConfiguration{clusterName='ISPN', machineId='null', rackId='null', siteId='null', strictPeerToPeer=false, distributedSyncTimeout=240000, transport=null, nodeName='null', properties={}}, serialization=SerializationConfiguration{advancedExternalizers={1100=org.infinispan.server.core.CacheValue$Externalizer@5fabc91d, 1101=org.infinispan.server.memcached.MemcachedValue$Externalizer@720bffd, 1104=org.infinispan.server.hotrod.ServerAddress$Externalizer@771c7eb2}, marshaller=org.infinispan.marshall.VersionAwareMarshaller@6fc21535, version=52, classResolver=org.jboss.marshalling.ModularClassResolver@2efe83e5}, shutdown=ShutdownConfiguration{hookBehavior=DONT_REGISTER}, modules={}, site=SiteConfiguration{localSite='null'}}
 ----
 
-==== locate
+===== locate
 The _locate_ command shows the physical location of a specified entry in a distributed cluster. 
 
 
@@ -221,7 +220,7 @@ The _locate_ command shows the physical location of a specified entry in a distr
 [host/node1,host/node2]
 ----
 
-==== put
+===== put
 The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the <<_data_types, Data Types>> section.
 
 
@@ -241,7 +240,7 @@ The put command can optionally specify a lifespan and a maximum idle time.
 [jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10m maxidle 1m
 ----
 
-==== replace
+===== replace
 The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides. 
 
 
@@ -258,7 +257,7 @@ c
 c
 ----
 
-==== roles
+===== roles
 When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
 The _roles_ command can be used to list the roles associated to a specific user, or to all users if one is not given:
 
@@ -267,7 +266,7 @@ The _roles_ command can be used to list the roles associated to a specific user,
 [supervisor, reader]
 ---- 
 
-==== rollback
+===== rollback
 The _rollback_ command rolls back an ongoing transaction 
 
 
@@ -278,7 +277,7 @@ The _rollback_ command rolls back an ongoing transaction
 [jmx://localhost:12000/MyCacheManager/namedCache]> rollback
 ----
 
-==== site
+===== site
 The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline) 
 
 ----
@@ -291,7 +290,7 @@ offline
 [jmx://localhost:12000/MyCacheManager/namedCache]> site --online NYC
 ----
 
-==== start
+===== start
 The _start_ command initiates a batch of operations. 
 
 
@@ -302,7 +301,7 @@ The _start_ command initiates a batch of operations.
 [jmx://localhost:12000/MyCacheManager/namedCache]> end
 ----
 
-==== stats
+===== stats
 The _stats_ command displays statistics about a cache 
 
 
@@ -350,7 +349,7 @@ Client Version 5.2.1.Final
 Server Version 5.2.1.Final
 ----
 
-=== Data Types
+==== Data Types
 
 The CLI understands the following types:
 
@@ -384,6 +383,6 @@ The CLI understands the following types:
 
 *  JSON serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader. 
 
-=== Time Values
+==== Time Values
 A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms).
 
