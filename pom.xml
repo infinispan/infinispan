@@ -97,9 +97,9 @@
         <id>distribution</id>
         <modules>
            <module>documentation</module>
-           <module>javadoc-embedded</module>
-           <module>javadoc-remote</module>
-           <module>javadoc-all</module>
+           <module>javadoc/javadoc-embedded</module>
+           <module>javadoc/javadoc-remote</module>
+           <module>javadoc/javadoc-all</module>
            <module>distribution</module>
         </modules>
      </profile>
