@@ -1,16 +1,19 @@
 package org.infinispan.api;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Map;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * @author William Burns
@@ -103,4 +106,39 @@ public class APITxTest extends APINonTxTest {
          tm1.rollback();
       }
    }
+
+   public void testEntrySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
+      tm1.begin();
+      try {
+         try (CloseableIterator<Map.Entry<Object, Object>> entryIterator = cache.entrySet().iterator()) {
+            entryIterator.next();
+            entryIterator.remove();
+            assertEquals(0, cache.size());
+         }
+      } finally {
+         tm1.rollback();
+      }
+   }
+
+   public void testKeySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
+      tm1.begin();
+      try {
+         try (CloseableIterator<Object> entryIterator = cache.keySet().iterator()) {
+            entryIterator.next();
+            entryIterator.remove();
+            assertEquals(0, cache.size());
+         }
+      } finally {
+         tm1.rollback();
+      }
+   }
+
 }
