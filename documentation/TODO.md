@@ -57,10 +57,6 @@
 ## Locking and concurrency (Pedro)
 * The Versioning paragraph mentions tombstones as if they exist.
 
-### Local mode cache (Radim)
-* The simple cache documentation is erroneously included in the functional map API chapter. Move it here
-* Update the information inside the performance paragraph to include results from the simple cache benchmarks
-
 ### Query + Indexing (Adrian & Gustavo)
 * Add missing parts (CQ)
 
