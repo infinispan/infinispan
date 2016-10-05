@@ -24,6 +24,18 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extract-slot</id>
+                        <goals>
+                            <goal>parse-version</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
                 <version>1.5.3</version>
@@ -61,6 +73,7 @@
                                 <docinfo>true</docinfo>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.version}</infinispanversion>
+                                <infinispanslot>ispn-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
                             </attributes>
                         </configuration>
                     </execution>
@@ -108,7 +121,7 @@
                         <configuration>
                             <target>
                                 <ant antfile="optimize-pdf.xml" inheritRefs="true">
-                                    <target name="optimize-pdf" />
+                                    <target name="optimize-pdf"/>
                                 </ant>
                             </target>
                         </configuration>
