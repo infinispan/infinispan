@@ -127,7 +127,7 @@ To run using maven:
 $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.CustomCacheQuickstart"
 
 
-[source,xml]
+[source,xml,subs=attributes+]
 .infinispan.xml
 ----
 <infinispan
