@@ -1552,36 +1552,35 @@ and you may rest assured that no stray books be left in your application once yo
 Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
 ===  Infinispan modules for WildFly
-The distribution includes a set of modules for WildFly. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an WildFly installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="{infinispanversion}"). 
 
-In order to tell the WildFly deployer that we want to use the Infinispan APIs within our application, we need to add explicit dependencies to the deployment's MANIFEST:
+As the Infinispan modules shipped with link:$$http://http://wildfly.org/$$[Wildfly application server] are tailored to its internal usage, it is recommend to install separate modules
+if you want to use Infinispan in your application that is deployed to Wildfy. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
+Also, there will be no conflict with Wildfly's internal modules since the slot will be different.
 
-.MANIFEST.MF
-[source,JSON]
-----
+[[_Modules_installation_section]]
+==== Installation
 
-Manifest-Version: 1.0
-Dependencies: org.infinispan:{infinispanversion} services
+The modules for Wildfly are available in the link:$$http://infinispan.org/download/$$[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/org/infinispan/core`.
 
-----
+==== Usage
 
-If you are using Maven to generate your artifacts, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file: 
+If you are using Maven to build your application, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
 
 .pom.xml
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 
 <dependencies>
   <dependency>
     <groupId>org.infinispan</groupId>
     <artifactId>infinispan-core</artifactId>
-    <version>5.2.0.Final</version>
+    <version>{infinispanversion}</version>
     <scope>provided</scope>
   </dependency>
   <dependency>
     <groupId>org.infinispan</groupId>
     <artifactId>infinispan-cachestore-jdbc</artifactId>
-    <version>5.2.0.Final</version>
+    <version>{infinispanversion}</version>
     <scope>provided</scope>
   </dependency>
 </dependencies>
@@ -1593,12 +1592,106 @@ If you are using Maven to generate your artifacts, mark the Infinispan dependenc
        <configuration>
          <archive>
            <manifestEntries>
-             <Dependencies>org.infinispan:5.2 services, org.infinispan.cachestore.jdbc:5.2 services</Dependencies>
+             <Dependencies>org.infinispan.core:{infinispanslot} services, org.infinispan.cachestore.jdbc:{infinispanslot} services</Dependencies>
            </manifestEntries>
          </archive>
       </configuration>
     </plugin>
   </plugins>
 </build>
+
+----
+
+The next section illustrates the manifest entries for different types of Infinispan's dependencies.
+
+===== Infinispan core
+
+In order expose only Infinispan core dependencies to your application, add the follow to the manifest:
+
+.MANIFEST.MF
+[source,subs=attributes]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan:{infinispanslot} services
+
+----
+
+===== Remote
+
+If you need to connect to remote Infinispan servers via Hot Rod, including execution of remote queries, use the module ```org.infinispan.remote``` that exposes the needed dependencies conveniently:
+
+.MANIFEST.MF
+[source,subs=attributes]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan.remote:{infinispanslot} services
+
+----
+
+===== Embedded Query
+
+For embedded querying, including the Infinispan Query DSL, Lucene and Hibernate Search Queries, add the following:
+
+.MANIFEST.MF
+[source,subs=attributes]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan:{infinispanslot} services, org.infinispan.query:{infinispanslot} services
+
+----
+
+===== Lucene Directory
+
+Lucene users who wants to simple use Infinispan as a _org.apache.lucene.store.Directory_ don't need to add the query module, the entry below is sufficient:
+
+.MANIFEST.MF
+[source,subs=attributes]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan.lucene-directory:{infinispanslot}
+
+----
+
+===== Hibernate Search directory provider for Infinispan
+
+The Hibernate Search directory provider for Infinispan is also contained within the Infinispan modules zip. It is not necessary to add an entry to the manifest file since the Hibernate Search module already has an optional dependency to it.
+When choosing the Infinispan module zip to use, start by checking which Hibernate Search is in use, more details below.
+
+====== Usage with Wildfy's internal Hibernate Search modules
+
+The Hibernate Search module present in Wildfly 10.x has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
+This dependency will be available once the Infinispan modules are <<_Modules_installation_section,installed>>.
+
+
+====== Usage with other Hibernate Search modules
+
+The module `org.hibernate.search:{infinispanslot}` distributed with Infinispan is to be used together with Infinispan Query only (querying data from caches), and should not be used by Hibernate ORM applications.
+To use a Hibernate Search with a different version that is present in Wildfly, please consult the link:$$https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly$$[Hibernate Search documentation].
+
+Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with Infinispan.
+
+==== Troubleshooting
+
+===== Enable logging
+
+Enabling trace on `org.jboss.modules` can be useful to debug issues like `LinkageError` and `ClassNotFoundException`.
+To enable it at runtime using the Wildfly CLI:
+
+----
+bin/jboss-cli.sh -c '/subsystem=logging/logger=org.jboss.modules:add'
+bin/jboss-cli.sh -c '/subsystem=logging/logger=org.jboss.modules:write-attribute(name=level,value=TRACE)'
+
+----
+===== Print dependency tree
+
+The following command can be used to print all dependencies for a certain module. For example, to obtain the tree for the module `org.infinispan:{infinispanslot}`, execute from `WILDFLY_HOME`:
+
+[subs=attributes]
+----
+java -jar jboss-modules.jar -deptree -mp modules/ "org.infinispan:{infinispanslot}"
 
 ----
