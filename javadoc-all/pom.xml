@@ -24,7 +24,8 @@
 -ga('create', 'UA-8601422-4', 'auto');
 -ga('send', 'pageview');
 -} catch(err) {}&lt;/script&gt;
-            </analytics.code>
+      </analytics.code>
+      <maven.deploy.skip>true</maven.deploy.skip>
    </properties>
 
    <dependencies>
