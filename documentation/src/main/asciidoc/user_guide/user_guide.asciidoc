@@ -31,5 +31,7 @@ include::grid_file_system.adoc[]
 include::cross_site_replication.adoc[]
 include::rolling_upgrades.adoc[]
 include::equivalence.adoc[]
+include::extending.adoc[]
+include::architecture.adoc[]
 include::functional_api.adoc[]
 
