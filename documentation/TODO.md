@@ -78,7 +78,6 @@
 
 ### CDI (Sebastian)
 * Move under an overarching Integrations chapter
-* Make sure we mention split artifacts (embedded and remote)
 * Prevent mentioning configuration overriding 2 times (one for embedded and one for remote)
 
 ### Spring (Sebastian)
