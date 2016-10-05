@@ -49,6 +49,7 @@ import org.springframework.util.Assert;
 public class SpringEmbeddedCacheManager implements CacheManager {
 
    private final EmbeddedCacheManager nativeCacheManager;
+   private boolean useAsynchronousCacheOperations = false;
 
    /**
     * @param nativeCacheManager
@@ -61,7 +62,11 @@ public class SpringEmbeddedCacheManager implements CacheManager {
 
    @Override
    public SpringCache getCache(final String name) {
-      return new SpringCache(this.nativeCacheManager.getCache(name));
+       if (this.useAsynchronousCacheOperations) {
+           return new SpringAsynchronousCache(this.nativeCacheManager.getCache(name));
+       } else {
+           return new SpringCache(this.nativeCacheManager.getCache(name));
+       }
    }
 
    @Override
@@ -88,5 +93,23 @@ public class SpringEmbeddedCacheManager implements CacheManager {
     */
    public void stop() {
       this.nativeCacheManager.stop();
+   }
+
+   public boolean isUseAsynchronousCacheOperations() {
+      return useAsynchronousCacheOperations;
+   }
+
+   /**
+    * Set a value indicating if the SpringCache's returned by this CacheManager should use
+    * using a {@link SpringAsynchronousCache} rather than a {@link SpringCache}
+    *
+    * Setting this value only affects any future calls to {@link #getCache(String)}.
+    *
+    * The default value is false.
+    *
+    * @param useAsynchronousCacheOperations
+    */
+   public void setUseAsynchronousCacheOperations(boolean useAsynchronousCacheOperations) {
+      this.useAsynchronousCacheOperations = useAsynchronousCacheOperations;
    }
 }

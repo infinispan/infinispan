@@ -50,6 +50,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanContextTest extends
 
    private static final String SPRING_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME = "springEmbeddedCacheManagerConfiguredUsingSetters";
 
+
+   private static final String SPRING_EMBEDDED_CACHE_MANAGER_CONFIGURED_WITH_ASYNC_OPS = "springEmbeddedCacheManagerFactoryBeanUsingAsynchronousOperations";
+
    @Test
    public final void shouldCreateAnEmbeddedCacheManagerWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final SpringEmbeddedCacheManager springEmbeddedCacheManagerWithDefaultConfiguration = this.applicationContext
@@ -93,5 +96,25 @@ public class SpringEmbeddedCacheManagerFactoryBeanContextTest extends
                                  + "\". However, it doesn't.",
                         springEmbeddedCacheManagerConfiguredUsingProperties);
       springEmbeddedCacheManagerConfiguredUsingProperties.stop();
+   }
+
+   @Test
+   public final void shouldCreateEmbeddedCacheManagerWithUseAsynchronousOperationsIfPropertyIsSet() {
+       final SpringEmbeddedCacheManager springEmbeddedCacheManagerConfiguredUsingProperties = this.applicationContext
+                .getBean(SPRING_EMBEDDED_CACHE_MANAGER_CONFIGURED_WITH_ASYNC_OPS,
+                         SpringEmbeddedCacheManager.class);
+
+       AssertJUnit
+                .assertNotNull(
+                         "Spring application context should contain a SpringEmbeddedCacheManager configured using properties having bean name = \""
+                                  + SPRING_EMBEDDED_CACHE_MANAGER_CONFIGURED_WITH_ASYNC_OPS
+                                  + "\". However, it doesn't.",
+                         springEmbeddedCacheManagerConfiguredUsingProperties);
+       AssertJUnit
+               .assertEquals("Configured factory bean should have the useAsynchronousOperations property set to true when provided in config, however, it doesn't",
+                             true, springEmbeddedCacheManagerConfiguredUsingProperties.isUseAsynchronousCacheOperations());
+
+       springEmbeddedCacheManagerConfiguredUsingProperties.stop();
+
    }
 }

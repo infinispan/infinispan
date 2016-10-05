@@ -25,6 +25,7 @@ package org.infinispan.spring.provider;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -87,8 +88,82 @@ public class SpringEmbeddedCacheManagerTest {
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + ") should have returned the cache having the provided name. However, the cache returned has a different name.",
                CACHE_NAME_FROM_CONFIGURATION_FILE, cacheExpectedToHaveTheProvidedName.getName());
+
+      assertTrue(
+              "getCache("
+                      + CACHE_NAME_FROM_CONFIGURATION_FILE
+                      + ") should return an instance of SpringCache. However it didn't.",
+              cacheExpectedToHaveTheProvidedName instanceof org.springframework.cache.Cache);
+
       nativeCacheManager.stop();
    }
+
+    /**
+     * Test method for default returned cache type of SpringEmbeddedCache being the normal SpringCache
+     *
+     * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager#getCache(String)}.
+     *
+     * @throws IOException
+     */
+    @Test
+    public final void getCacheShouldNotReturnASpringAsynchronousCacheForDefaultCase() throws IOException {
+       final EmbeddedCacheManager nativeCacheManager = TestCacheManagerFactory.fromStream(
+                SpringEmbeddedCacheManagerTest.class
+                         .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
+       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
+                nativeCacheManager);
+
+       final Cache cacheExpectedToHaveTheProvidedName = objectUnderTest
+                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
+
+       assertFalse(
+               "getCache("
+                       + CACHE_NAME_FROM_CONFIGURATION_FILE
+                       + ") should not return an instance of SpringAsynchronousCache when useAsynchronousOperations is not set. However, it did.",
+               cacheExpectedToHaveTheProvidedName instanceof SpringAsynchronousCache);
+
+       assertTrue(
+                "getCache("
+                        + CACHE_NAME_FROM_CONFIGURATION_FILE
+                        + ") should not return an instance of SpringCache when useAsynchronousOperations is not set. However, it did not.",
+                cacheExpectedToHaveTheProvidedName instanceof SpringCache);
+
+       nativeCacheManager.stop();
+    }
+
+
+    /**
+     * Test method for default returned cache type of SpringEmbeddedCache
+     *
+     * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager#getCache(String)}.
+     *
+     * @throws IOException
+     */
+    @Test
+    public final void getCacheShouldReturnASpringAsynchronousCacheWhenUseAsynchronousOperationsIsSet() throws IOException {
+       final EmbeddedCacheManager nativeCacheManager = TestCacheManagerFactory.fromStream(
+                SpringEmbeddedCacheManagerTest.class
+                         .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
+       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
+                nativeCacheManager);
+       objectUnderTest.setUseAsynchronousCacheOperations(true);
+
+       final Cache cacheExpectedToHaveTheProvidedName = objectUnderTest
+                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
+
+       assertTrue(
+               "getCache("
+                       + CACHE_NAME_FROM_CONFIGURATION_FILE
+                       + ") should return an instance of SpringAsynchronousCache when useAsynchronousOperations is set. However, it did.",
+               cacheExpectedToHaveTheProvidedName instanceof SpringAsynchronousCache);
+
+       nativeCacheManager.stop();
+    }
+
+
+
+
+
 
    /**
     * Test method for

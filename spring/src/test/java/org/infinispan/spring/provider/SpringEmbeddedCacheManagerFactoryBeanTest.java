@@ -221,6 +221,34 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       springEmbeddedCacheManager.stop();
    }
 
+    /**
+     * Test method for
+     * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#setUseAsynchronousCacheOperations(boolean)}
+     * .
+     */
+    @Test
+    public final void springEmbeddedCacheManagerFactoryBeanShouldReturnAsynchronousCachesIfConfiguredToDoSo()
+             throws Exception {
+       final boolean useAsynchronousOperations = true;
+
+       final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean() {
+          @Override
+          protected EmbeddedCacheManager createCacheManager(ConfigurationContainer template) {
+             return TestCacheManagerFactory.createCacheManager(
+                   template.globalConfiguration, template.defaultConfiguration);
+          }
+       };
+       objectUnderTest.setUseAsynchronousCacheOperations(useAsynchronousOperations);
+       objectUnderTest.afterPropertiesSet();
+       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
+
+       assertEquals(
+                "SpringEmbeddedCacheManagerFactoryBean should have set the UseAsynchronousCacheOperations on created SpringEmbeddedCacheManger. However, it didn't.",
+                useAsynchronousOperations, springEmbeddedCacheManager.isUseAsynchronousCacheOperations());
+
+       springEmbeddedCacheManager.stop();
+    }
+
    /**
     * Test method for
     * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#setJmxDomain(java.lang.String)}

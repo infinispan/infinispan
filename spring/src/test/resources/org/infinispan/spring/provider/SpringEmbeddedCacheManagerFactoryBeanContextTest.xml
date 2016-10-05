@@ -45,4 +45,11 @@
       p:jmxDomain="test:jmx.Domain"
       p:cacheManagerName="test.cacheManager" />
 
+    <bean
+       id="springEmbeddedCacheManagerFactoryBeanUsingAsynchronousOperations"
+       class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
+       p:useAsynchronousCacheOperations="true"
+       />
+
+
 </beans>
