@@ -38,7 +38,7 @@ public abstract class AutoBatchSupport {
 
    protected static void assertBatchingSupported(Configuration c) {
       if (!c.isInvocationBatchingEnabled())
-         throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
+         throw new ConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
    }
 
    protected void startAtomic() {
