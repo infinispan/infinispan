@@ -120,6 +120,7 @@ There has been a couple of noticeable additions in Infinispan 5.0 in terms of ex
 .  When global JMX statistics are enabled, the JGroups channel MBean is also registered automatically under the name `org.infinispan:type=channel,cluster={name-of-your-cluster}`, so you can get key information of the group communication transport layer that's used to cluster Infinispan instances. To find out more about the information provided, check the link:http://community.jboss.org/docs/10938[JGroups JMX documentation].
 
 
+include::cli.adoc[]
 === Hawt.io
 link:http://hawt.io[Hawt.io], a slick, fast, HTML5-based open source management console, also has support for Infinispan.
 Refer to link:http://hawt.io/plugins/infinispan/[Hawt.io's documentation] for information regarding this plugin.
