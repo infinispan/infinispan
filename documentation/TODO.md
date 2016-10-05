@@ -76,10 +76,6 @@
 ### Map/Reduce (Vladimir)
 * This feature no longer exists, it needs to go.
 
-### CDI (Sebastian)
-* Move under an overarching Integrations chapter
-* Prevent mentioning configuration overriding 2 times (one for embedded and one for remote)
-
 ### Spring (Sebastian)
 * Move under an overarching Integrations chapter
 * Move to its own paragraph under Integrations
