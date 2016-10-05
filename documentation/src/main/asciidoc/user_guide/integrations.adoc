@@ -1227,6 +1227,12 @@ $$3.$$ Configure persistence.xml to use Infinispan instead of JBoss Cache:
 
 ----
 
+===  Using Infinispan CDI integration
+
+Infinispan supports both injecting remote and embedded Caches as well as bridging events at Cache and CacheManager level.
+
+For more information, have a look at our link:#cdi_support[CDI paragraph].
+
 ===  Using Infinispan as a Spring Cache provider
 Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
 While out of the box Spring's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
