@@ -378,16 +378,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Query luceneQuery = queryParser.parse("Eats");
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery).firstResult(1);
 
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-
-      int count = 0;
-      //noinspection UnusedDeclaration
-      while(found.hasNext()) {
-          count++;
-          found.next();
-      }
-
-      assert (count == 2);
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      Assert.assertEquals(2, countElements(iterator));
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -442,16 +434,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       CacheQuery cacheQuery = manager.getQuery(luceneQuery);
 
-
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-
-      int counter = 0;
-      while(found.hasNext()) {
-         found.next();
-         counter++;
-      }
-
-      AssertJUnit.assertEquals(3, counter);
+      ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+      Assert.assertEquals(3, countElements(iterator));
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -486,6 +470,31 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 1;
+   }
+
+   public void testMaxResults() throws ParseException {
+      loadTestingData();
+
+      queryParser = createQueryParser("blurb");
+      Query luceneQuery = queryParser.parse("eats");
+
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery)
+            .maxResults(1);
+
+      Assert.assertEquals(3, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
+      Assert.assertEquals(1, cacheQuery.list().size());
+      Assert.assertEquals(1, countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))));
+      Assert.assertEquals(1, countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))));
+      Assert.assertEquals(1, countElements(cacheQuery.iterator()));
+   }
+
+   private int countElements(ResultIterator iterator) {
+      int count = 0;
+      while (iterator.hasNext()) {
+         iterator.next();
+         count++;
+      }
+      return count;
    }
 
    public void testClear() {

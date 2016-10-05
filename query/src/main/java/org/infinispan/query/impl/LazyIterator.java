@@ -48,7 +48,7 @@ public class LazyIterator extends AbstractIterator {
       super(resultLoader, fetchSize);
       this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
       this.index = extractor.getFirstIndex();
-      this.max = hSearchQuery.queryResultSize() - 1;
+      this.max = extractor.getMaxIndex();
    }
 
    @Override
