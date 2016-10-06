@@ -8,8 +8,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -24,11 +24,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalCachestoreTest")
 public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
-
-   // As the functional API should not have side effects, it's hard to verify its execution when it does not
-   // have any return value.
-   static AtomicInteger invocationCount = new AtomicInteger();
-
    @Override
    public Object[] factory() {
       return new Object[] {
@@ -42,8 +37,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       return "[passivation=" + passivation + "]";
    }
 
-   @Test(dataProvider = "owningModeAndMethod")
-   public void testLoad(boolean isSourceOwner, Method method) throws InterruptedException {
+   @Test(dataProvider = "owningModeAndWriteMethod")
+   public void testWriteLoad(boolean isSourceOwner, WriteMethod method) throws InterruptedException {
       Object key = getKey(isSourceOwner);
 
       List<Cache<Object, Object>> owners = caches(DIST).stream()
@@ -51,8 +46,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             .collect(Collectors.toList());
 
       method.action.eval(key, wo, rw,
-            (Consumer<ReadEntryView<Object, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
-            (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"), () -> invocationCount);
+            (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> { assertFalse(view.find().isPresent()); return null; },
+            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(2);
 
@@ -67,11 +62,12 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       });
 
       method.action.eval(key, wo, rw,
-            (Consumer<ReadEntryView<Object, String>> & Serializable) view -> {
+            (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
+               return null;
             },
-            (Consumer<WriteEntryView<String>> & Serializable) view -> {}, () -> invocationCount);
+            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {}, getClass());
 
       assertInvocations(4);
    }
@@ -81,13 +77,13 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       return stores.iterator().next();
    }
 
-   @Test(dataProvider = "methods")
-   public void testLoadLocal(Method method) {
+   @Test(dataProvider = "writeMethods")
+   public void testWriteLoadLocal(WriteMethod method) {
       Integer key = 1;
 
       method.action.eval(key, lwo, lrw,
-         (Consumer<ReadEntryView<Integer, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
-         (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"), () -> invocationCount);
+         (Function<ReadEntryView<Integer, String>, Void> & Serializable) view -> { assertFalse(view.find().isPresent()); return null; },
+         (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(1);
 
@@ -100,17 +96,43 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       assertTrue(store.contains(key));
 
       method.action.eval(key, lwo, lrw,
-         (Consumer<ReadEntryView<Object, String>> & Serializable) view -> {
+         (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> {
             assertTrue(view.find().isPresent());
             assertEquals(view.get(), "value");
+            return null;
          },
-         (Consumer<WriteEntryView<String>> & Serializable) view -> {}, () -> invocationCount);
+         (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {}, getClass());
 
       assertInvocations(2);
    }
 
-   @Override
-   protected AtomicInteger invocationCount() {
-      return invocationCount;
+   @Test(dataProvider = "owningModeAndReadMethod")
+   public void testReadLoad(boolean isSourceOwner, ReadMethod method) {
+      Object key = getKey(isSourceOwner);
+      List<Cache<Object, Object>> owners = caches(DIST).stream()
+            .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
+            .collect(Collectors.toList());
+
+      assertTrue((Boolean) method.action.eval(key, ro,
+            (Function<ReadEntryView<Object, String>, Boolean> & Serializable) view -> { assertFalse(view.find().isPresent()); return true; }));
+
+      // we can't add from read-only cache, so we put manually:
+      cache(0, DIST).put(key, "value");
+
+      caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      caches(DIST).forEach(cache -> cache.evict(key));
+      caches(DIST).forEach(cache -> assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString()));
+      owners.forEach(cache -> {
+         Set<DummyInMemoryStore> stores = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class).getStores(DummyInMemoryStore.class);
+         DummyInMemoryStore store = stores.iterator().next();
+         assertTrue(store.contains(key), getAddress(cache).toString());
+      });
+
+      assertEquals(method.action.eval(key, ro,
+            (Function<ReadEntryView<Object, String>, Object> & Serializable) view -> {
+               assertTrue(view.find().isPresent());
+               assertEquals(view.get(), "value");
+               return "OK";
+            }), "OK");
    }
 }

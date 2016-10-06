@@ -19,6 +19,8 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -430,7 +432,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
-      entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      if (command instanceof TxReadOnlyKeyCommand) {
+         // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      } else {
+         entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
       // and we don't "fix" it on the remote node; therefore, the value will be able to change and identity read
@@ -442,8 +449,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
-      for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
+      if (command instanceof TxReadOnlyManyCommand) {
+         // TxReadOnlyManyCommand may apply some mutations on the entry in context so we need to always wrap it
+         for (Object key : command.getKeys()) {
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership(command) || canRead(key));
+         }
+      } else {
+         for (Object key : command.getKeys()) {
+            entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
+         }
       }
       // Repeatable reads are not achievable with functional commands, see visitReadOnlyKeyCommand
       return invokeNext(ctx, command);
@@ -692,32 +706,22 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final class EntryWrappingVisitor extends AbstractVisitor {
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         boolean ignoreOwnership = ignoreOwnership(command);
-         for (Object key : command.getAffectedKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
-         }
-         return invokeNext(ctx, command);
+         return handleWriteManyCommand(ctx, command);
       }
 
       @Override
       public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-         boolean ignoreOwnership = ignoreOwnership(command);
-         for (Object key : command.getAffectedKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
-         }
-         return invokeNext(ctx, command);
+         return handleWriteManyCommand(ctx, command);
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
-         return invokeNext(ctx, command);
+         return handleWriteCommand(ctx, command);
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
-         return invokeNext(ctx, command);
+         return handleWriteCommand(ctx, command);
       }
 
       @Override
@@ -728,7 +732,59 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+         return handleWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+         return handleWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+         return handleWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         return handleWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+         return handleWriteManyCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+         return handleWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+         return handleWriteManyCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+         return handleWriteManyCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+         return handleWriteManyCommand(ctx, command);
+      }
+
+      private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         return invokeNext(ctx, command);
+      }
+
+      private Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command) {
+         boolean ignoreOwnership = ignoreOwnership(command);
+         for (Object key : command.getAffectedKeys()) {
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         }
          return invokeNext(ctx, command);
       }
    }

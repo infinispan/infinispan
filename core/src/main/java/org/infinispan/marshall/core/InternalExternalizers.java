@@ -35,6 +35,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
+import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
@@ -57,6 +58,8 @@ import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParams;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.interceptors.distribution.VersionedResult;
+import org.infinispan.interceptors.distribution.VersionedResults;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.CollectionExternalizer;
 import org.infinispan.marshall.exts.DoubleSummaryStatisticsExternalizer;
@@ -163,6 +166,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new EquivalenceExternalizer(), exts);
       addInternalExternalizer(new ExceptionResponse.Externalizer(), exts);
       addInternalExternalizer(new Flag.Externalizer(), exts);
+      addInternalExternalizer(new FunctionalEntryVersionAdapter.Externalizer(), exts);
       addInternalExternalizer(new GlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer(), exts);
@@ -231,6 +235,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new UnsuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new UnsureResponse.Externalizer(), exts);
       addInternalExternalizer(new UuidExternalizer(), exts);
+      addInternalExternalizer(new VersionedResult.Externalizer(), exts);
+      addInternalExternalizer(new VersionedResults.Externalizer(), exts);
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
 

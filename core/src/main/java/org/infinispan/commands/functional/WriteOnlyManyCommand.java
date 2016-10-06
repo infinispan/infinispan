@@ -5,9 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Consumer;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -15,7 +15,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -24,16 +23,19 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    private Collection<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
+   public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.keys = keys;
       this.f = f;
       this.params = params;
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
+      this.commandInvocationId = command.commandInvocationId;
       this.keys = command.keys;
       this.f = command.f;
       this.params = command.params;
+      this.flags = command.flags;
    }
 
    public WriteOnlyManyCommand() {
@@ -55,18 +57,24 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = CommandInvocationId.readFrom(input);
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, ArrayList::new);
       f = (Consumer<WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    @Override
@@ -76,49 +84,24 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
-
-      // TODO: Simplify with a collect() call
-      List<Void> returns = new ArrayList<>(keys.size());
-      keys.forEach(k -> {
+      for (K k : keys) {
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(k);
-
-         // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
          f.accept(EntryViews.writeOnly(cacheEntry));
-         returns.add(null);
-      });
-      return returns.stream();
+      }
+      return null;
    }
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
+      return false;
    }
 
    @Override
    public Collection<?> getAffectedKeys() {
       return keys;
-   }
-
-   @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
    }
 
    @Override
@@ -139,5 +122,16 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       sb.append(", isForwarded=").append(isForwarded);
       sb.append('}');
       return sb.toString();
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) keys;
+   }
+
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.Write<>(f);
    }
 }

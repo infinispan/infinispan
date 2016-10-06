@@ -17,7 +17,7 @@ import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.functional.ParamsCommand;
+import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -252,7 +252,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
 
-   private <T extends DataWriteCommand & ParamsCommand> BasicInvocationStage visitWriteCommand(InvocationContext ctx,
+   private <T extends DataWriteCommand & FunctionalCommand> BasicInvocationStage visitWriteCommand(InvocationContext ctx,
          VisitableCommand command) throws Throwable {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          T dataWriteCommand = (T) rCommand;
@@ -308,8 +308,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return visitWriteManyCommand(ctx, command);
    }
 
-   private <T extends WriteCommand & ParamsCommand> BasicInvocationStage visitWriteManyCommand(InvocationContext ctx,
-                                                                                               WriteCommand command) throws Throwable {
+   private <T extends WriteCommand & FunctionalCommand> BasicInvocationStage visitWriteManyCommand(InvocationContext ctx,
+                                                                                                   WriteCommand command) throws Throwable {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          T manyEntriesCommand = (T) rCommand;
          if (!isStoreEnabled(manyEntriesCommand) || rCtx.isInTxScope())

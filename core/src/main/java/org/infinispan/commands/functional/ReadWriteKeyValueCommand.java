@@ -24,7 +24,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
+public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
    private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);
 
    public static final byte COMMAND_ID = 51;
@@ -39,6 +39,14 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       super(key, valueMatcher, id, params);
       this.value = value;
       this.f = f;
+   }
+
+   public ReadWriteKeyValueCommand(ReadWriteKeyValueCommand<K, V, R> other) {
+      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
+      this.value = other.value;
+      this.f = other.f;
+      this.prevValue = other.prevValue;
+      this.prevMetadata = other.prevMetadata;
    }
 
    public ReadWriteKeyValueCommand() {
@@ -154,4 +162,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          .toString();
    }
 
+   @Override
+   public Mutation toMutation(K key) {
+      return new Mutations.ReadWriteWithValue<>(value, f);
+   }
 }

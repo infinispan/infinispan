@@ -130,8 +130,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          }
          if (ctx.isInTxScope() && ctx.isOriginLocal()) {
             if (trace) log.trace("Transaction marked for rollback as exception was received.");
-            markTxForRollbackAndRethrow(ctx, th);
-            throw new IllegalStateException("This should not be reached");
+            markTxForRollback(ctx);
          }
          if (ctx.isOriginLocal() && !(th instanceof CacheException)) {
             th = new CacheException(th);
@@ -168,14 +167,13 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       return status.isStopping() && (!ctx.isInTxScope() || !isOngoingTransaction(ctx));
    }
 
-   private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
+   private void markTxForRollback(InvocationContext ctx) throws Throwable {
       if (ctx.isOriginLocal() && ctx.isInTxScope()) {
          Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
          if (transaction != null && isValidRunningTx(transaction)) {
             transaction.setRollbackOnly();
          }
       }
-      throw te;
    }
 
    private boolean isValidRunningTx(Transaction tx) throws Exception {

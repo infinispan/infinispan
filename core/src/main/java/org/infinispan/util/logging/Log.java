@@ -37,6 +37,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityException;
@@ -50,6 +51,7 @@ import org.infinispan.topology.CacheJoinException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -60,6 +62,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Param;
 import org.jgroups.View;
 
 /**
@@ -1474,4 +1477,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The eviction element has been deprecated. Please use the memory element instead", id = 428)
    void evictionDeprecated();
+
+   @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
+   WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);
 }

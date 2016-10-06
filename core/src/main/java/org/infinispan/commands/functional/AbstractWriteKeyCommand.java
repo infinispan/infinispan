@@ -6,7 +6,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.functional.impl.Params;
 
-public abstract class AbstractWriteKeyCommand<K> extends AbstractDataWriteCommand implements ParamsCommand {
+public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
 
    Params params;
    ValueMatcher valueMatcher;

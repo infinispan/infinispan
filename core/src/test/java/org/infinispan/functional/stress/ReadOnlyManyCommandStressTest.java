@@ -2,35 +2,17 @@ package org.infinispan.functional.stress;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
-import org.infinispan.commands.StressTest;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.Traversable;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static org.testng.AssertJUnit.assertEquals;

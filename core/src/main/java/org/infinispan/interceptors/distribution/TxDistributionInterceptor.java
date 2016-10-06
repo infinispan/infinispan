@@ -7,15 +7,32 @@ import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromConte
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
-import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.FunctionalCommand;
+import org.infinispan.commands.functional.Mutation;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -40,11 +57,13 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -63,6 +82,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static final boolean trace = log.isTraceEnabled();
 
    private PartitionHandlingManager partitionHandlingManager;
+
+   private final TxReadOnlyManyHelper txReadOnlyManyHelper = new TxReadOnlyManyHelper();
+   private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
+   private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper();
 
    @Inject
    public void inject(PartitionHandlingManager partitionHandlingManager) {
@@ -121,6 +144,55 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }));
       }
       return invokeNext(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+      return handleTxFunctionalCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      return handleTxFunctionalCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      return handleTxFunctionalCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return handleTxWriteManyEntriesCommand(ctx, command, command.getEntries(), (c, entries) -> new WriteOnlyManyEntriesCommand(c).withEntries(entries));
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      return handleTxFunctionalCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return handleTxWriteManyCommand(ctx, command, command.getAffectedKeys(), (c, keys) -> new WriteOnlyManyCommand(c).withKeys(keys));
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         return handleFunctionalReadManyCommand(ctx, command, readWriteManyHelper);
+      } else {
+         return handleTxWriteManyCommand(ctx, command, command.getAffectedKeys(), readWriteManyHelper::copyForLocal);
+      }
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         return handleFunctionalReadManyCommand(ctx, command, readWriteManyEntriesHelper);
+      } else {
+         return handleTxWriteManyEntriesCommand(ctx, command, command.getEntries(),
+               (c, entries) -> new ReadWriteManyEntriesCommand<>(c).withEntries(entries));
+      }
    }
 
    // ---- TX boundary commands
@@ -286,7 +358,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   protected <C extends AbstractTopologyAffectedCommand, K, V> BasicInvocationStage
+   protected <C extends TopologyAffectedCommand & FlagAffectedCommand, K, V> BasicInvocationStage
          handleTxWriteManyEntriesCommand(InvocationContext ctx,C command, Map<K, V> entries,
                                   BiFunction<C, Map<K, V>, C> copyCommand) {
       Map<K, V> filtered = new HashMap<>(entries.size());
@@ -312,6 +384,68 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return invokeNextAsync(ctx, narrowed, CompletableFuture.allOf(remoteGets.toArray(new CompletableFuture[remoteGets.size()])));
       } else {
          return invokeNext(ctx, narrowed);
+      }
+   }
+
+   protected <C extends VisitableCommand & FlagAffectedCommand, K> BasicInvocationStage handleTxWriteManyCommand(
+         InvocationContext ctx, C command, Collection<K> keys, BiFunction<C, List<K>, C> copyCommand) {
+         List<K> filtered = new ArrayList<>(keys.size());
+      for (K key : keys) {
+         if (ctx.isOriginLocal() || cdl.localNodeIsOwner(key)) {
+            if (ctx.lookupEntry(key) == null) {
+               entryFactory.wrapExternalEntry(ctx, key, null, true);
+            }
+            filtered.add(key);
+         }
+      }
+      return invokeNext(ctx, copyCommand.apply(command, filtered));
+   }
+
+   public <C extends AbstractDataWriteCommand & FunctionalCommand> BasicInvocationStage handleTxFunctionalCommand(InvocationContext ctx, C command) {
+      Object key = command.getKey();
+      if (ctx.isOriginLocal()) {
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (entry == null) {
+            if (isLocalModeForced(command) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+                  || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
+               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               return invokeNext(ctx, command);
+            } else {
+               CacheTopology cacheTopology = checkTopologyId(command);
+               List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(command.getKey());
+
+               List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
+               mutationsOnKey.add(command.toMutation(key));
+               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey);
+
+               return returnWithAsync(rpcManager.invokeRemotelyAsync(owners, remoteRead, staggeredOptions).thenApply(responses -> {
+                  for (Response r : responses.values()) {
+                     if (r instanceof SuccessfulResponse) {
+                        SuccessfulResponse response = (SuccessfulResponse) r;
+                        Object responseValue = response.getResponseValue();
+                        return unwrapFunctionalResultOnOrigin(ctx, command.getKey(), responseValue);
+                     }
+                  }
+                  // If this node has topology higher than some of the nodes and the nodes could not respond
+                  // with the remote entry, these nodes are blocking the response and therefore we can get only timeouts.
+                  // Therefore, if we got here it means that we have lower topology than some other nodes and we can wait
+                  // for it in StateTransferInterceptor and retry the read later.
+                  // TODO: These situations won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
+                  throw new OutdatedTopologyException("Did not get any successful response, got " + responses);
+               }));
+            }
+         }
+         // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
+         return invokeNext(ctx, command);
+      } else {
+         if (!cdl.localNodeIsOwner(key)) {
+            return returnWith(null);
+         }
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (entry == null) {
+            return handleMissingEntryOnRead(command);
+         }
+         return wrapFunctionalResultOnNonOriginOnReturn(invokeNext(ctx, command), entry);
       }
    }
 
@@ -349,5 +483,145 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return cacheConfiguration.clustering().cacheMode().isSynchronous() ?
               rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build() :
               rpcManager.getDefaultRpcOptions(false);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      return handleFunctionalReadManyCommand(ctx, command, txReadOnlyManyHelper);
+   }
+
+   @Override
+   protected ReadOnlyKeyCommand remoteReadOnlyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) {
+      if (!ctx.isInTxScope()) {
+         return command;
+      }
+      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()));
+   }
+
+   private static List<Mutation> getMutationsOnKey(TxInvocationContext ctx, Object key) {
+      TxInvocationContext txCtx = ctx;
+      List<Mutation> mutations = new ArrayList<>();
+      // We don't use getAllModifications() because this goes remote and local mods should not affect it
+      for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
+         if (write.getAffectedKeys().contains(key)) {
+            if (write instanceof FunctionalCommand) {
+               mutations.add(((FunctionalCommand) write).toMutation(key));
+            } else {
+               // Non-functional modification must have retrieved the value into context and we should not do any
+               // remote reads!
+               throw new IllegalStateException("Attempt to remote functional read after non-functional modification! " +
+                     "key=" + key + ", modification=" + write);
+            }
+         }
+      }
+      return mutations;
+   }
+
+   private static List<List<Mutation>> getMutations(InvocationContext ctx, List<Object> keys) {
+      if (!ctx.isInTxScope()) {
+         return null;
+      }
+      TxInvocationContext txCtx = (TxInvocationContext) ctx;
+      List<List<Mutation>> mutations = new ArrayList<>(keys.size());
+      for (int i = keys.size(); i > 0; --i) mutations.add(Collections.emptyList());
+
+      for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
+         for (int i = 0; i < keys.size(); ++i) {
+            Object key = keys.get(i);
+            if (write.getAffectedKeys().contains(key)) {
+               if (write instanceof FunctionalCommand) {
+                  List<Mutation> list = mutations.get(i);
+                  if (list.isEmpty()) {
+                     list = new ArrayList<>();
+                     mutations.set(i, list);
+                  }
+                  list.add(((FunctionalCommand) write).toMutation(key));
+               } else {
+                  // Non-functional modification must have retrieved the value into context and we should not do any
+                  // remote reads!
+                  throw new IllegalStateException("Attempt to remote functional read after non-functional modification! " +
+                        "key=" + key + ", modification=" + write);
+               }
+            }
+         }
+      }
+      return mutations;
+   }
+
+   private class TxReadOnlyManyHelper extends ReadOnlyManyHelper {
+      @Override
+      public ReplicableCommand copyForRemote(ReadOnlyManyCommand command, List<Object> keys, InvocationContext ctx) {
+         List<List<Mutation>> mutations = getMutations(ctx, keys);
+         if (mutations == null) {
+            return new ReadOnlyManyCommand<>(command).withKeys(keys);
+         } else {
+            return new TxReadOnlyManyCommand(command, mutations).withKeys(keys);
+         }
+      }
+   }
+
+   private abstract class BaseFunctionalWriteHelper<C extends FunctionalCommand & WriteCommand> implements ReadManyCommandHelper<C> {
+      @Override
+      public Collection<?> keys(C command) {
+         return command.getAffectedKeys();
+      }
+
+      @Override
+      public ReplicableCommand copyForRemote(C command, List<Object> keys, InvocationContext ctx) {
+         List<List<Mutation>> mutations = getMutations(ctx, keys);
+         // write command is always executed in transactional scope
+         assert mutations != null;
+
+         for (int i = 0; i < keys.size(); ++i) {
+            List<Mutation> list = mutations.get(i);
+            Mutation mutation = command.toMutation(keys.get(i));
+            if (list.isEmpty()) {
+               mutations.set(i, Collections.singletonList(mutation));
+            } else {
+               list.add(mutation);
+            }
+         }
+         return new TxReadOnlyManyCommand(keys, mutations);
+      }
+
+      @Override
+      public void applyLocalResult(MergingCompletableFuture allFuture, Object rv) {
+         int pos = 0;
+         for (Object value : ((List) rv)) {
+            allFuture.results[pos++] = value;
+         }
+      }
+
+      @Override
+      public Object transformResult(Object[] results) {
+         return Arrays.asList(results);
+      }
+
+      @Override
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+         return wrapFunctionalManyResultOnNonOrigin(rCtx, ((WriteCommand) rCommand).getAffectedKeys(), ((List) rv).toArray());
+      }
+   }
+
+   private class ReadWriteManyHelper extends BaseFunctionalWriteHelper<ReadWriteManyCommand> {
+      @Override
+      public ReadWriteManyCommand copyForLocal(ReadWriteManyCommand command, List<Object> keys) {
+         return new ReadWriteManyCommand(command).withKeys(keys);
+      }
+   }
+
+   private class ReadWriteManyEntriesHelper extends BaseFunctionalWriteHelper<ReadWriteManyEntriesCommand> {
+      @Override
+      public ReadWriteManyEntriesCommand copyForLocal(ReadWriteManyEntriesCommand command, List<Object> keys) {
+         return new ReadWriteManyEntriesCommand(command).withEntries(filterEntries(command.getEntries(), keys));
+      }
+
+      private  <K, V> Map<K, V> filterEntries(Map<K, V> originalEntries, List<K> keys) {
+         Map<K, V> entries = new HashMap<>(keys.size());
+         for (K key : keys) {
+            entries.put(key, originalEntries.get(key));
+         }
+         return entries;
+      }
    }
 }
