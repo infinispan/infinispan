@@ -94,7 +94,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       TestingUtil.waitForRehashToComplete(cache1, cache2, cache3);
 
       // Need an additional wait for the non-owned entries to be deleted from the data containers
-      eventually(() -> INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3));
+      eventuallyEquals(INSERTION_COUNT * 2, () -> getDataContainerSize(cache1, cache2, cache3));
 
       // Shared cache loader should have all the contents still
       verifyInitialDataOnLoader(cache3);
@@ -127,7 +127,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       TestingUtil.waitForRehashToComplete(cache1, cache2, cache3);
 
       // Need an additional wait for the non-owned entries to be deleted from the data containers
-      eventually(() -> INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3));
+      eventuallyEquals(INSERTION_COUNT * 2, () -> getDataContainerSize(cache1, cache2, cache3));
 
       // TODO Shouldn't this work?
       //verifyCacheLoaderCount(INSERTION_COUNT * 2, cache1, cache2, cache3);
@@ -159,7 +159,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       TestingUtil.waitForRehashToComplete(cache1, cache2, cache3);
 
       // Need an additional wait for the non-owned entries to be deleted from the data containers
-      eventually(() -> INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3));
+      eventuallyEquals(INSERTION_COUNT * 2, () -> getDataContainerSize(cache1, cache2, cache3));
 
       // TODO Shouldn't this work?
       //verifyCacheLoaderCount(INSERTION_COUNT * 2, cache1, cache2, cache3);
@@ -193,7 +193,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       verifyInitialDataOnLoader(cache3);
 
       // Need an additional wait for the non-owned entries to be deleted from the data containers
-      eventually(() -> INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3));
+      eventuallyEquals(INSERTION_COUNT * 2, () -> getDataContainerSize(cache1, cache2, cache3));
    }
 
    protected int getDataContainerSize(Cache<?, ?>... caches) {

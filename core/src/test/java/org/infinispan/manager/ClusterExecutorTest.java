@@ -178,7 +178,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
             atomicInteger.set(0);
             cm1.executor().execute(() -> atomicInteger.getAndIncrement());
-            eventually(() -> 2 == atomicInteger.get());
+            eventuallyEquals(2, () -> atomicInteger.get());
          }
       });
    }
@@ -192,7 +192,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
             atomicInteger.set(0);
             cm1.executor().execute(() -> atomicInteger.getAndIncrement());
-            eventually(() -> 1 == atomicInteger.get());
+            eventuallyEquals(1, () -> atomicInteger.get());
          }
       });
    }

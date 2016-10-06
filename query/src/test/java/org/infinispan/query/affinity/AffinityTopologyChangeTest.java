@@ -65,7 +65,7 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       CompletableFuture<?> f1 = indexing1.addToCluster().run();
       CompletableFuture<?> f2 = indexing2.addToCluster().run();
 
-      eventually(() -> indexing2.cacheManager.getMembers().size() == 2);
+      eventuallyEquals(2, () -> indexing2.cacheManager.getMembers().size());
 
       CompletableFuture<?> f3 = indexing3.addToCluster().run();
       CompletableFuture<?> f4 = querying.addToCluster().run();
