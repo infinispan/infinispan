@@ -51,11 +51,9 @@
 * Possibly show how one would write an externalizer which supports backwards/forwards compatibility
 
 ### Clustering (Dan)
-* Transactions (Pedro)
-* The Total Order docs should be moved under here
 
-## Locking and concurrency (Pedro)
-* The Versioning paragraph mentions tombstones as if they exist.
+### Transactions (Pedro)
+* Need to redo images.
 
 ### Local mode cache (Radim)
 * The simple cache documentation is erroneously included in the functional map API chapter. Move it here

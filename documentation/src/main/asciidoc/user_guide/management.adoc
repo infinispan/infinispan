@@ -1,4 +1,4 @@
-==  Management Tooling
+==  Management Tooling [[jmx:chapter]]
 Management of Infinispan instances is all about exposing as much relevant statistical information that allows administrators to get a view of the state of each Infinispan instance. Taking in account that a single installation could be made up of several tens or hundreds Infinispan instances, providing clear and concise information in an efficient manner is imperative. The following sections dive into the range of management tooling that Infinispan provides.
 
 === JMX
