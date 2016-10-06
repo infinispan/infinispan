@@ -195,7 +195,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
 
-      listenerNotifier = ClientListenerNotifier.create(codec, marshaller);
+      listenerNotifier = ClientListenerNotifier.create(codec, marshaller, transportFactory);
       transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
