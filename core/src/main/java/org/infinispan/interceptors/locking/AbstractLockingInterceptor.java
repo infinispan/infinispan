@@ -14,8 +14,12 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -23,6 +27,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
@@ -167,6 +172,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
+   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded());
+   }
+
+   @Override
    public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
@@ -184,6 +194,33 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   protected abstract <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
+
+   protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
+      lockManager.unlockAll(ctx);
+      return te;
    }
 
    protected final long getLockTimeoutMillis(FlagAffectedCommand command) {

@@ -2,18 +2,32 @@ package org.infinispan.commands.functional;
 
 import java.util.Set;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
-public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCommand {
+public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
 
+   CommandInvocationId commandInvocationId;
    boolean isForwarded = false;
    int topologyId = -1;
    Params params;
+   // TODO: this is used for the non-modifying read-write commands. Move required flags to Params
+   // and make sure that ClusteringDependentLogic checks them.
+   long flags;
+
+   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId) {
+      this.commandInvocationId = commandInvocationId;
+   }
+
+   protected AbstractWriteManyCommand() {
+   }
 
    @Override
    public int getTopologyId() {
@@ -59,33 +73,47 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Pa
    }
 
    @Override
+   public boolean canBlock() {
+      return true;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+   }
+
+   @Override
    public Set<Flag> getFlags() {
-      return null;  // TODO: Customise this generated block
+      return EnumUtil.enumSetOf(flags, Flag.class);
    }
 
    @Override
    public void setFlags(Set<Flag> flags) {
-      // TODO: Customise this generated block
+      this.flags = EnumUtil.bitSetOf(flags);
    }
 
    @Override
    public void setFlags(Flag... flags) {
-      // TODO: Customise this generated block
+      this.flags = EnumUtil.bitSetOf(flags);
    }
 
    @Override
    public boolean hasFlag(Flag flag) {
-      return false;  // TODO: Customise this generated block
+      return EnumUtil.hasEnum(flags, flag);
    }
 
    @Override
    public long getFlagsBitSet() {
-      return EnumUtil.EMPTY_BIT_SET;
+      return flags;
    }
 
    @Override
    public void setFlagsBitSet(long bitSet) {
-      // TODO: Customise this generated block
+      this.flags = bitSet;
    }
 
    @Override
@@ -97,5 +125,18 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Pa
       this.params = params;
    }
 
+   @Override
+   public Object getKeyLockOwner() {
+      return commandInvocationId;
+   }
 
+   @Override
+   public boolean hasZeroLockAcquisition() {
+      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+   }
+
+   @Override
+   public boolean hasSkipLocking() {
+      return hasFlag(Flag.SKIP_LOCKING);
+   }
 }

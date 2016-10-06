@@ -16,7 +16,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
-public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K> {
+public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
    public static final byte COMMAND_ID = 55;
 
@@ -97,4 +97,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       return true;
    }
 
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.WriteWithValue<>(value, f);
+   }
 }

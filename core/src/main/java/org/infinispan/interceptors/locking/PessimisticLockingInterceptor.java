@@ -14,7 +14,6 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -166,22 +165,21 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       try {
          InvocationStage stage;
          if (hasSkipLocking(command)) {
             stage = invokeNext(ctx, command);
          } else {
-            final Collection<Object> affectedKeys = command.getMap().keySet();
-            if (!needRemoteLocks(ctx, affectedKeys, command)) {
-               acquireLocalLocks(ctx, command, affectedKeys);
+            if (!needRemoteLocks(ctx, keys, command)) {
+               acquireLocalLocks(ctx, command, keys);
                stage = invokeNext(ctx, command);
             } else {
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
-               LockControlCommand lcc = cf.buildLockControlCommand(affectedKeys, command.getFlagsBitSet(),
+               LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
                stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
-                  acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, affectedKeys);
+                  acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, keys);
                   return invokeNext(rCtx, command);
                });
             }
@@ -204,8 +202,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          InvocationStage stage;
          Object key = command.getKey();
          if (hasSkipLocking(command)) {
-            // Mark the key as affected even with SKIP_LOCKING
-            ((TxInvocationContext<?>) ctx).addAffectedKey(key);
+            // Non-modifying functional write commands are executed in non-transactional context on non-originators
+            if (ctx.isInTxScope()) {
+               // Mark the key as affected even with SKIP_LOCKING
+               ((TxInvocationContext<?>) ctx).addAffectedKey(key);
+            }
             stage = invokeNext(ctx, command);
          } else {
             if (!needRemoteLocks(ctx, key, command)) {

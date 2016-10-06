@@ -19,11 +19,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.lifecycle.ComponentStatus;
 
-public final class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
+public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
 
-   private Collection<? extends K> keys;
-   private Function<ReadEntryView<K, V>, R> f;
+   protected Collection<? extends K> keys;
+   protected Function<ReadEntryView<K, V>, R> f;
 
    public ReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       this.keys = keys;
@@ -33,12 +33,22 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffected
    public ReadOnlyManyCommand() {
    }
 
+   public ReadOnlyManyCommand(ReadOnlyManyCommand c) {
+      this.keys = c.keys;
+      this.f = c.f;
+   }
+
    public Collection<? extends K> getKeys() {
       return keys;
    }
 
-   public Function<ReadEntryView<K, V>, R> getFunction() {
-      return f;
+   public void setKeys(Collection<? extends K> keys) {
+      this.keys = keys;
+   }
+
+   public final ReadOnlyManyCommand<K, V, R> withKeys(Collection<? extends K> keys) {
+      setKeys(keys);
+      return this;
    }
 
    @Override
@@ -74,13 +84,13 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffected
       ArrayList<R> retvals = new ArrayList<R>(keys.size());
       for (K k : keys) {
          CacheEntry<K, V> me = lookupCacheEntry(ctx, k);
-         R ret = f.apply(me == null || me.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(me));
+         R ret = f.apply(me.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(me));
          retvals.add(snapshot(ret));
       }
       return retvals.stream();
    }
 
-   private CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
+   protected CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
       return ctx.lookupEntry(key);
    }
 

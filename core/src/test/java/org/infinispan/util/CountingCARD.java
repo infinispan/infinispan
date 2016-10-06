@@ -36,8 +36,8 @@ public class CountingCARD extends CommandAwareRpcDispatcher {
       InboundInvocationHandler handler = gcr.getComponent(InboundInvocationHandler.class);
       GenerationalScheduledThreadPoolExecutor timeoutExecutor = new GenerationalScheduledThreadPoolExecutor(transport.getAddress().toString());
       TimeService timeService = gcr.getComponent(TimeService.class);
-      Executor remoteExecutor = gcr.getComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
       StreamingMarshaller marshaller = gcr.getComponent(StreamingMarshaller.class);
+      Executor remoteExecutor = gcr.getComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
       CountingCARD instance = new CountingCARD(transport, handler, timeoutExecutor, timeService, remoteExecutor, marshaller);
       TestingUtil.replaceField(instance, "dispatcher", transport, JGroupsTransport.class);
       return instance;

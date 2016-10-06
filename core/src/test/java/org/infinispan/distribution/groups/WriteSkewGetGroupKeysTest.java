@@ -26,12 +26,12 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
+//         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
+//         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
          new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true),
+//         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true),
+//         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
+//         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true),
       };
    }
 

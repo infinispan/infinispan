@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;

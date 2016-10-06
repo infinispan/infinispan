@@ -16,6 +16,8 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -443,21 +445,21 @@ public final class EntryViews {
       }
    }
 
-   private static <K, V> MetaParams updateMetaParams(CacheEntry<K, V> entry, MetaParam.Writable[] metas) {
+   private static <K, V> void updateMetaParams(CacheEntry<K, V> entry, MetaParam.Writable[] metas) {
       // TODO: Deal with entry instances that are MetaParamsCacheEntry and merge meta params
       // e.g. check if meta params exist and if so, merge, but also check for old metadata
       // information and merge it individually
 
+      Optional<EntryVersion> version = Optional.ofNullable(entry.getMetadata()).map(m -> m.version());
+      MetaParams metaParams = MetaParams.empty();
+      if (version.isPresent()) {
+         metaParams.add(new MetaParam.MetaEntryVersion(new FunctionalEntryVersionAdapter(version.get())));
+      }
       if (metas.length != 0) {
-         MetaParams metaParams = MetaParams.empty();
          metaParams.addMany(metas);
-         entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
-         return metaParams;
       }
 
-      MetaParams empty = MetaParams.empty();
-      entry.setMetadata(MetaParamsInternalMetadata.from(empty));
-      return empty;
+      entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
    }
 
    private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {

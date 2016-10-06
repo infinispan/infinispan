@@ -9,6 +9,8 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -187,6 +189,12 @@ public class RemoteCommandsFactory {
                break;
             case ReadOnlyManyCommand.COMMAND_ID:
                command = new ReadOnlyManyCommand<>();
+               break;
+            case TxReadOnlyKeyCommand.COMMAND_ID:
+               command = new TxReadOnlyKeyCommand<>();
+               break;
+            case TxReadOnlyManyCommand.COMMAND_ID:
+               command = new TxReadOnlyManyCommand<>();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

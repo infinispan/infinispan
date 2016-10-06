@@ -7,7 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.function.Function;
 
-import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -16,10 +15,10 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
-public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
+public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    public static final int COMMAND_ID = 62;
-   private Function<ReadEntryView<K, V>, R> f;
+   protected Function<ReadEntryView<K, V>, R> f;
 
    public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f) {
       super(key, EnumUtil.EMPTY_BIT_SET);
