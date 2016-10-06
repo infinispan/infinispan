@@ -18,6 +18,7 @@ Infinispan.
  * A link:getting_started/getting_started.html[Getting Started Guide] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/getting_started.pdf[PDF])
  * A link:user_guide/user_guide.html[User Guide] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/user_guide.pdf[PDF])
  * A link:server_guide/server_guide.html[Server Guide] if you are running the JBoss AS-based server components (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/server_guide.pdf[PDF])
+ * A link:performance_guide/performance_guide.html[Performance Guide] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/performance_guide.pdf[PDF])
  * An link:upgrading/upgrading.html[Upgrading Guide] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/upgrading.pdf[PDF])
  * A pretty useful link:glossary/glossary.html[Glossary] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/glossary.pdf[PDF])
  * A set of link:faqs/faqs.html[Frequently Asked Questions] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/faqs.pdf[PDF])

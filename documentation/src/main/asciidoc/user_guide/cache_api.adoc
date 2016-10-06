@@ -19,6 +19,8 @@ Attempting to perform these operations globally would have large performance imp
 
 It should be noted that using certain flags with the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
 
+For more performance tips, have a look at our link:$$../performance_guide/performance_guide.html$$[Performance Guide].
+
 ==== Mortal and Immortal Data
 Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
