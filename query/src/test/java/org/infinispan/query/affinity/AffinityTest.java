@@ -62,7 +62,7 @@ public class AffinityTest extends BaseAffinityTest {
       assertEquals(pickCache().size(), numThreads * ENTRIES);
       cacheList.forEach(c -> {
          CacheQuery q = Search.getSearchManager(c).getQuery(new MatchAllDocsQuery(), Entity.class);
-         eventually(() -> q.list().size() == numThreads * ENTRIES);
+         eventuallyEquals(numThreads * ENTRIES, () -> q.list().size());
       });
 
    }

@@ -360,7 +360,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
                assertTrue(cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() > 0);
                // Stale entries on cache1 are not removed immediately
-               eventually(() -> 10 == cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() +
+               eventuallyEquals(10, () -> cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() +
                      cache2.withFlags(Flag.CACHE_MODE_LOCAL).size());
             } finally {
                TestingUtil.killCacheManagers(cm1);
