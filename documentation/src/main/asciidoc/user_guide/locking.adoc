@@ -10,9 +10,16 @@ MVCC offers many advantages over coarse-grained Java synchronization and even JD
 === Locking implementation details
 Infinispan's MVCC implementation makes use of minimal locks and synchronizations, leaning heavily towards lock-free techniques such as link:http://en.wikipedia.org/wiki/Compare-and-swap[compare-and-swap] and lock-free data structures wherever possible, which helps optimize for multi-CPU and multi-core environments. 
 
-In particular, Infinispan's MVCC implementation is heavily optimized for readers.  Reader threads do not acquire explicit locks for entries, and instead directly read the entry in question.
+In particular, Infinispan's MVCC implementation is heavily optimized for readers.
+Reader threads do not acquire explicit locks for entries, and instead directly read the entry in question.
 
-Writers, on the other hand, need to acquire a write lock.  This ensures only one concurrent writer per entry, causing concurrent writers to queue up to change an entry.  To allow concurrent reads, writers make a copy of the entry they intend to modify, by wrapping the entry in an link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/container/entries/MVCCEntry.html[MVCCEntry] .  This copy isolates concurrent readers from seeing partially modified state.  Once a write has completed, MVCCEntry.commit() will flush changes to the data container and subsequent readers will see the changes written.
+Writers, on the other hand, need to acquire a write lock.
+This ensures only one concurrent writer per entry, causing concurrent writers to queue up to change an entry.
+//link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/container/entries/MVCCEntry.html[MVCCEntry]
+//TODO container package no longer public API (??)
+To allow concurrent reads, writers make a copy of the entry they intend to modify, by wrapping the entry in an `MVCCEntry`.
+This copy isolates concurrent readers from seeing partially modified state.
+Once a write has completed, `MVCCEntry.commit()` will flush changes to the data container and subsequent readers will see the changes written.
 
 ==== How it works in clustered caches?
 
@@ -29,112 +36,101 @@ NOTE: If the operation is conditional and it fails on the primary owner, it is n
 
 NOTE: If the operation is executed locally in the primary owner, the first step is skipped.
 
-===== Pessimistic transactional cache
+==== Transactional caches
 
-In pessimist transactional caches, the locks are acquired during write/lock operations.
-
-. A lock request is sent to the primary owner (can be an explicit lock request or an operation)
-. The primary owner tries to acquire the lock:
-.. If it succeed, it sends back a positive reply;
-.. Otherwise, a negative reply is sent and the transaction is rollback.
-
-NOTE: For conditional operations and write skew check (if enabled), the validation is performed in the originator.
-
-===== Optimistic transactional cache
-
-In optimistic transactional caches, the locks are acquired during transaction prepare time.
-
-. The prepare is sent to all the owners.
-. The primary owners try to acquire the locks needed:
-.. If locking succeeds, it performs the write skew check.
-.. If the write skew check succeeds (or is disabled), send a positive reply.
-.. Otherwise, a negative reply is sent and the transaction is rolled back.
-
-NOTE: For conditional commands, the validation still happens on the originator. In addition to that, the write skew check is done in the primary owner.
+The transactional cache supports optimistic and pessimistic locking mode.
+Check section <<tx:locking>> for more information about it.
 
 ==== Isolation levels
-Infinispan offers two isolation levels - link:http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED[READ_COMMITTED] (the default) and link:http://en.wikipedia.org/wiki/Isolation_level#REPEATABLE_READ[REPEATABLE_READ], configurable via the link:http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.locking.html[`<locking />`] configuration element.
 
-These isolation levels determine when readers see a concurrent write, and are internally implemented using different subclasses of link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/container/entries/MVCCEntry.html[MVCCEntry], which have different behaviour in how state is committed back to the data container.
-
-Here's a more detailed example that should help understand the difference between READ_COMMITTED and REPEATABLE_READ in the context of Infinispan. With read committed, if between two consecutive read calls on the same key, the key has been updated by another transaction, the second read will return the new updated value:
-
-
-. Thread1: tx.begin()
-. Thread1: cache.get(k) returns v
-. Thread2: tx.begin()
-. Thread2: cache.get(k) returns v
-. Thread2: cache.put(k, v2)
-. Thread2: tx.commit()
-. Thread1: cache.get(k) returns v2!
-
-With REPEATABLE_READ, step 7 will still return v. So, if you're going to retrieve the same key multiple times within a transaction, you should use REPEATABLE_READ.
+Isolation level affects what transactions can read when running concurrently with other transaction.
+Check section <<tx:isolation-levels>> for more details about it.
 
 ==== The LockManager
-The LockManager is a component that is responsible for locking an entry for writing.
-The LockManager makes use of a LockContainer to locate/hold/create locks.
-LockContainers come in two broad flavours, with support for lock striping and with support for one lock per entry.
+The `LockManager` is a component that is responsible for locking an entry for writing.
+The `LockManager` makes use of a `LockContainer` to locate/hold/create locks.
+`LockContainers` come in two broad flavours, with support for lock striping and with support for one lock per entry.
 
 ==== Lock striping
-Lock striping entails the use of a fixed-size, shared collection of locks for the entire cache, with locks being allocated to entries based on the entry's key's hash code.  Similar to the way the JDK's ConcurrentHashMap allocates locks, this allows for a highly scalable, fixed-overhead locking mechanism in exchange for potentially unrelated entries being blocked by the same lock.
+Lock striping entails the use of a fixed-size, shared collection of locks for the entire cache, with locks being allocated to entries based on the entry's key's hash code.
+Similar to the way the JDK's `ConcurrentHashMap` allocates locks, this allows for a highly scalable, fixed-overhead locking mechanism in exchange for potentially unrelated entries being blocked by the same lock.
 
-The alternative is to disable lock striping - which would mean a _new_ lock is created per entry.  This approach _may_ give you greater concurrent throughput, but it will be at the cost of additional memory usage, garbage collection churn, etc. 
+The alternative is to disable lock striping - which would mean a _new_ lock is created per entry.
+This approach _may_ give you greater concurrent throughput, but it will be at the cost of additional memory usage, garbage collection churn, etc.
 
 .Default lock striping settings
-IMPORTANT: From Infinispan 5.0, lock striping is disabled by default, due to potential deadlocks that can happen if locks for different keys end up in the same lock stripe. Previously, in Infinispan 4.x lock striping used to be enabled by default.
+IMPORTANT: From Infinispan 5.0, lock striping is disabled by default, due to potential deadlocks that can happen if locks for different keys end up in the same lock stripe.
+Previously, in Infinispan 4.x lock striping used to be enabled by default.
 
-The size of the shared lock collection used by lock striping can be tuned using the `concurrencyLevel` attribute of the link:http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.locking.html[`<locking />`] configuration element. 
+The size of the shared lock collection used by lock striping can be tuned using the `concurrencyLevel` attribute of the `<locking /> configuration element.
 
-==== Concurrency levels
-In addition to determining the size of the striped lock container, this concurrency level is also used to tune any JDK ConcurrentHashMap based collections where related, such as internal to DataContainers.
-Please refer to the JDK ConcurrentHashMap Javadocs for a detailed discussion of concurrency levels, as this parameter is used in exactly the same way in Infinispan.
-
-==== Consistency
-The fact that a single owner is locked (as opposed to all owners being locked) does not break the following consistency guarantee: if key K is hashed to nodes {A, B} and transaction TX1 acquires a lock for K, let's say on A. If another transaction, TX2, is started on B (or any other node) and TX2 tries to lock K then it will fail with a timeout as the lock is already held by TX1. The reason for this is the that the lock for a key K is always, deterministically, acquired on the same node of the cluster, regardless of where the transaction originates.
-
-===  Data Versioning
-Infinispan will offer three forms of data versioning, including simple, partition aware and external.  Each case is described in detail below.
-
-==== Simple versioning
-The purpose of simple versioning is to provide a reliable mechanism of write skew checks when using optimistic transactions, REPEATABLE_READ and a clustered cache.  Write skew checks are performed at prepare-time to ensure a concurrent transaction hasn't modified an entry while it was read and potentially updated based on the value read.
-
-When operating in LOCAL mode, write skew checks rely on Java object references to compare differences and this is adequate to provide a reliable write-skew check, however this technique is useless in a cluster and a more reliable form of versioning is necessary to provide reliable write skew checks.
-
-Simple versioning is an implementation of the proposed EntryVersion interface, backed by a long that is incremented each time the entry is updated. 
-
-==== Partition-aware versioning
-This versioning scheme makes use of link:http://en.wikipedia.org/wiki/Vector_clock[vector clocks] to provide a network partition resilient form of versioning. 
-
-Unlike simple versioning, which is maintained per entry, a vector clock's node counter is maintained per-node.
-
-==== External versioning
-
-This scheme is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets its data version information directly from a database.
-
-In this scheme, a mechanism to pass in the version becomes necessary, and overloaded versions of put() and putForExternalRead() will be provided in AdvancedCache to take in an external data version.  This is then stored on the InvocationContext and applied to the entry at commit time. 
-
-Write skew checks cannot and will not be performed in the case of external data versioning.
-
-==== Tombstones
-To deal with deletions of entries, tombstones will be maintained as null entries that have been deleted, so that version information of the deleted entry can be maintained and write skews can still be detected.  However this is an expensive thing to do, and as such, is a configuration option, disabled by default. Further, tombstones will follow a strict lifespan and will be cleared from the system after a specific amount of time. 
-
-==== Configuration
-By default versioning will be _disabled_.  This will mean write skew checks when using transactions and _REPEATABLE_READ_ as an isolation level will be unreliable when used in a cluster.
-Note that this doesn't affect single-node, LOCAL mode usage. 
+*Configuration example:*
 
 [source,xml]
 ----
-
-<versioning scheme="SIMPLE|NONE" />
-
+<locking striping="false|true"/>
 ----
 
 Or
 
 [source,java]
 ----
-
-new ConfigurationBuilder().versioning().scheme(SIMPLE);
-
+new ConfigurationBuilder().locking().useLockStriping(false|true);
 ----
+
+==== Concurrency levels
+In addition to determining the size of the striped lock container, this concurrency level is also used to tune any JDK `ConcurrentHashMap` based collections where related, such as internal to ``DataContainer``s.
+Please refer to the JDK `ConcurrentHashMap` Javadocs for a detailed discussion of concurrency levels, as this parameter is used in exactly the same way in Infinispan.
+
+*Configuration example:*
+
+[source,xml]
+----
+<locking concurrency-level="32"/>
+----
+
+Or
+
+[source,java]
+----
+new ConfigurationBuilder().locking().concurrencyLevel(32);
+----
+
+==== Lock timeout
+
+The lock timeout specifies the amount of time, in milliseconds, to wait for a contented lock.
+
+*Configuration example:*
+
+[source,xml]
+----
+<locking acquire-timeout="10000"/>
+----
+
+Or
+
+[source,java]
+----
+new ConfigurationBuilder().locking().lockAcquisitionTimeout(10000);
+//alternatively
+new ConfigurationBuilder().locking().lockAcquisitionTimeout(10, TimeUnit.SECONDS);
+----
+
+==== Consistency
+The fact that a single owner is locked (as opposed to all owners being locked) does not break the following consistency guarantee:
+if key `K` is hashed to nodes `{A, B}` and transaction `TX1` acquires a lock for `K`, let's say on `A`.
+If another transaction, `TX2`, is started on `B` (or any other node) and `TX2` tries to lock `K` then it will fail with a timeout as the lock is already held by `TX1`.
+The reason for this is the that the lock for a key `K` is always, deterministically, acquired on the same node of the cluster, regardless of where the transaction originates.
+
+===  Data Versioning
+Infinispan supports two forms of data versioning: simple and external.
+The simple versioning is used in transactional caches for write skew check.
+Check section <<tx:write-skew>> section for detail about it.
+
+The external versioning is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets its data version information directly from a database.
+
+In this scheme, a mechanism to pass in the version becomes necessary, and overloaded versions of `put()` and `putForExternalRead()` will be provided in `AdvancedCache` to take in an external data version.
+This is then stored on the `InvocationContext` and applied to the entry at commit time.
+
+NOTE: Write skew checks cannot and will not be performed in the case of external data versioning.
 
