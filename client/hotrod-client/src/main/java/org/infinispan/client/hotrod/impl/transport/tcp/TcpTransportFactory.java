@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -96,7 +96,7 @@ public class TcpTransportFactory implements TransportFactory {
            .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
 
    private final BlockingQueue<AddClientListenerOperation> disconnectedListeners =
-         new ArrayBlockingQueue<>(32);
+         new LinkedBlockingQueue<>();
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
@@ -408,7 +408,7 @@ public class TcpTransportFactory implements TransportFactory {
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
          TcpTransport tcpTransport = pool.borrowObject(server);
-         reconnectListenersIfNeeded(tcpTransport);
+         reconnectListenersIfNeeded();
          return tcpTransport;
       } catch (Exception e) {
          String message = "Could not fetch transport";
@@ -419,12 +419,14 @@ public class TcpTransportFactory implements TransportFactory {
       }
    }
 
-   private void reconnectListenersIfNeeded(TcpTransport tcpTransport) {
+   private void reconnectListenersIfNeeded() {
       if (!disconnectedListeners.isEmpty()) {
          List<AddClientListenerOperation> drained = new ArrayList<>();
          disconnectedListeners.drainTo(drained);
          for (AddClientListenerOperation op : drained) {
-            log.tracef("Reconnecting client listener with id %s", Util.printArray(op.listenerId));
+            if (trace) {
+               log.tracef("Reconnecting client listener with id %s", Util.printArray(op.listenerId));
+            }
             op.execute();
          }
       }

@@ -312,7 +312,7 @@ public class ClientListenerNotifier {
 
       private void tryFailoverClientListener() {
          try {
-            log.debugf("Connection reset by peer, so failover client listener");
+            log.debug("Connection reset by peer, so failover client listener");
             failoverClientListener(op.listenerId);
          } catch (TransportException e) {
             log.debug("Unable to failover client listener, so ignore connection reset");
