@@ -1140,7 +1140,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   // Non resident was already evicted and now it is no longer in the
                   // queue or the stack so it is effectively gone - however we want to
                   // remove the now null node
-                  removedLIR.setState(Recency.EVICTING);
                   Collection<LIRSNode<K, V>> nodesToEvict = nodesToEvictTL.get();
                   if (nodesToEvict == null) {
                      nodesToEvict = new ArrayList<>();
