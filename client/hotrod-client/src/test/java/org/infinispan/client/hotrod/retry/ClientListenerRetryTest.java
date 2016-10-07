@@ -1,7 +1,8 @@
 package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.test.TestingUtil.replaceField;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,32 +12,34 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
+import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.protocol.Codec25;
+import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.jboss.byteman.contrib.bmunit.BMNGListener;
-import org.jboss.byteman.contrib.bmunit.BMRule;
-import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
  * Tests for a client with a listener when connection to the server drops.
  */
 @Test(groups = "functional", testName = "client.hotrod.retry.ClientListenerRetryTest")
-@Listeners(BMNGListener.class)
 @SuppressWarnings("unused")
 public class ClientListenerRetryTest extends MultiHotRodServersTest {
 
-   static volatile boolean induceFailure;
-   static volatile boolean handled;
-
-   static final Throwable FAIL_WITH = new IOException("Connection reset by peer");
-
    private AtomicInteger counter = new AtomicInteger(0);
+   private FailureInducingCodec failureInducingCodec = new FailureInducingCodec();
 
    @Override
    protected void createCacheManagers() throws Throwable {
       createHotRodServers(2, getCacheConfiguration());
+      clients.forEach(rcm -> {
+         Object listenerNotifier = extractField(rcm, "listenerNotifier");
+         replaceField(failureInducingCodec, "codec", listenerNotifier, ClientListenerNotifier.class);
+      });
    }
 
    private ConfigurationBuilder getCacheConfiguration() {
@@ -45,15 +48,6 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
    }
 
    @Test
-   @BMRule(name = "Induce failure during event receiving",
-         isInterface = true,
-         targetClass = "org.infinispan.client.hotrod.impl.protocol.Codec",
-         targetMethod = "readEvent",
-         binding = "failWithException:Throwable = org.infinispan.client.hotrod.retry.ClientListenerRetryTest.FAIL_WITH;" +
-               "induceFailure:boolean = org.infinispan.client.hotrod.retry.ClientListenerRetryTest.induceFailure",
-         condition = "induceFailure",
-         action = "org.infinispan.client.hotrod.retry.ClientListenerRetryTest.handled = true; " +
-               "throw new org.infinispan.client.hotrod.exceptions.TransportException(failWithException, $1.getRemoteSocketAddress())")
    public void testConnectionDrop() throws Exception {
       RemoteCache<Integer, String> remoteCache = client(0).getCache();
       Listener listener = new Listener();
@@ -61,15 +55,13 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
 
       assertListenerActive(remoteCache, listener);
 
-      induceFailure = true;
+      failureInducingCodec.induceFailure();
 
       addItems(remoteCache, 10);
 
-      induceFailure = false;
+      failureInducingCodec.resetFailure();
 
       assertListenerActive(remoteCache, listener);
-
-      assertTrue(handled);
    }
 
    private void addItems(RemoteCache<Integer, String> cache, int items) {
@@ -103,6 +95,27 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
    @Override
    protected int maxRetries() {
       return 10;
+   }
+
+   private static class FailureInducingCodec extends Codec25 {
+      private volatile boolean failure;
+      private final IOException failWith = new IOException("Connection reset by peer");
+
+      @Override
+      public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller) {
+         if (failure) {
+            throw new TransportException(failWith, transport.getRemoteSocketAddress());
+         }
+         return super.readEvent(transport, expectedListenerId, marshaller);
+      }
+
+      private void induceFailure() {
+         failure = true;
+      }
+
+      private void resetFailure() {
+         failure = false;
+      }
    }
 
 }
