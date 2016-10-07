@@ -75,11 +75,9 @@
       <module>cdi/remote</module>
       <module>server/integration</module>
       <module>jcache</module>
-      <module>as-modules/embedded</module>
-      <module>as-modules/client</module>
+      <module>wildfly-modules</module>
       <module>integrationtests</module>
-      <module>integrationtests/as-integration-embedded</module>
-      <module>integrationtests/as-integration-client</module>
+      <module>integrationtests/wildfly-modules</module>
       <module>integrationtests/as-lucene-directory</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
