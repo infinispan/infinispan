@@ -70,8 +70,7 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
 
          log.tracef("Called with a non-tx invocation context: %s", ctx);
          InvocationContext txInvocationContext = invocationContextFactory.createInvocationContext(true, -1);
-         return invokeNext(txInvocationContext, command).handle(
-               (rCtx, rCommand, rv, t) -> suspendTransaction());
+         return invokeNext(txInvocationContext, command);
       } finally {
          suspendTransaction();
       }
