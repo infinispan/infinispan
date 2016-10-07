@@ -323,8 +323,7 @@ def release():
 
       prettyprint("Step 7: Uploading Artifacts", Levels.INFO)
       do_task(upload_artifacts, ["%s/distribution/target/distribution" % base_dir, version], async_processes)
-      do_task(upload_artifacts, ["%s/as-modules/client/target/distribution" % base_dir, version], async_processes)
-      do_task(upload_artifacts, ["%s/as-modules/embedded/target/distribution" % base_dir, version], async_processes)
+      do_task(upload_artifacts, ["%s/wildfly-modules/target/distribution" % base_dir, version], async_processes)
       do_task(upload_artifacts, ["%s/server/integration/target/distribution" % base_dir, version], async_processes)
       prettyprint("Step 7: Complete", Levels.INFO)
 
