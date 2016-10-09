@@ -9,15 +9,7 @@ package org.infinispan.client.hotrod.event;
  *
  * @param <K> type of key created.
  */
-public interface ClientCacheEntryModifiedEvent<K> extends ClientEvent {
-
-   /**
-    * Modifiedcache entry's key.
-    * @return an instance of the key with which a cache entry has been
-    * modified in the remote server(s).
-    */
-   K getKey();
-
+public interface ClientCacheEntryModifiedEvent<K> extends ClientCacheEntryEvent<K> {
    /**
     * Provides access to the version of the modified cache entry. This version
     * can be used to invoke conditional operations on the server, such as

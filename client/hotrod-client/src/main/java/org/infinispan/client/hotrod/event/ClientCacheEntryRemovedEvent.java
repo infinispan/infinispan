@@ -5,15 +5,7 @@ package org.infinispan.client.hotrod.event;
  *
  * @param <K> type of key created.
  */
-public interface ClientCacheEntryRemovedEvent<K> extends ClientEvent {
-
-   /**
-    * Created cache entry's key.
-    * @return an instance of the key with which a cache entry has been
-    * created in remote server.
-    */
-   K getKey();
-
+public interface ClientCacheEntryRemovedEvent<K> extends ClientCacheEntryEvent<K> {
    /**
     * This will be true if the write command that caused this had to be retried
     * again due to a topology change.  This could be a sign that this event

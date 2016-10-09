@@ -9,14 +9,7 @@ package org.infinispan.client.hotrod.event;
  *
  * @param <K> type of key created.
  */
-public interface ClientCacheEntryCreatedEvent<K> extends ClientEvent {
-
-   /**
-    * Created cache entry's key.
-    * @return an instance of the key with which a cache entry has been
-    * created in the remote server(s).
-    */
-   K getKey();
+public interface ClientCacheEntryCreatedEvent<K> extends ClientCacheEntryEvent<K> {
 
    /**
     * Provides access to the version of the created cache entry. This version
