@@ -1,0 +1,376 @@
+= Infinispan Server Guide
+The Infinispan Community
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+
+== About the Infinispan Server
+Infinispan Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST. The server itself is built on top of the robust foundation provided by JBoss AS 7.2, therefore delegating services such as configuration, datasources, transactions, logging and security to the respective subsystems. Because Infinispan Server is closely tied to the latest releases of Infinispan and JGroups, the subsystems which control these components are slightly different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc). For this reason, the configuration of these subsystems should use the Infinispan Server-specific schema. See the Configuration section for more information.
+
+== Getting Started
+To get started using the server, download the Infinispan Server distribution, unpack it to a local directory and launch it using the bin/standalone.sh or bin/standalone.bat scripts depending on your platform. This will start a single-node server using the standalone/configuration/standalone.xml configuration file, with four endpoints, one for each of the supported protocols. These endpoints allow access to all of the caches configured in the Infinispan subsystem (apart from the Memcached endpoint which, because of the protocol's design, only allows access to a single cache). The server also comes with a script ( clustered.sh/clustered.bat ) which provides an easy way to start a clustered server by using the standalone/configuration/clustered.xml configuration file. If you start the server in clustered mode on multiple hosts, they should automatically discover each other using UDP multicast and form a cluster. If you want to start multiple nodes on a single host, start each one by specifying a port offset using the jboss.socket.binding.port-offset property together with a unique jboss.node.name as follows: 
+
+ bin/clustered.sh -Djboss.socket.binding.port-offset=100 -Djboss.node.name=nodeA 
+
+If, for some reason, you cannot use UDP multicast, you can use TCP discovery. Read the *JGroups Subsystem Configuration* section below for details on how to configure TCP discovery. 
+
+The server distribution also provides a set of example configuration files in the docs/examples/configs which illustrate a variety of possible configurations and use-cases. To use them, just copy them to the standalone/configuration directory and start the server using the following syntax: 
+
+ bin/standalone.sh -c configuration_file_name.xml 
+
+For more information regarding the parameters supported by the startup scripts, refer to the JBoss AS 7.2 documentation on link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117092$$[Command line parameters], bearing in mind that Infinispan Server does not currently support managed servers, also known as domain mode. 
+
+== CLI
+The link:../user_guide/user_guide.html#_CLI_chapter[Infinispan CLI] can be used to connect to the server. You need to use the remoting protocol and connect to port 9999. By default the CLI will use the special silent SASL authenticator, which won't require a username/password: 
+
+
+----
+
+bin/ispn-cli.sh
+[disconnected//]> connect localhost
+[remoting://localhost:9999/local/]> cache default
+[remoting://localhost:9999/local/default]> encoding hotrod
+[remoting://localhost:9999/local/default]> put a a
+[remoting://localhost:9999/local/default]> get a
+a
+
+----
+
+== Configuration
+Since the server is based on the JBoss AS 7.2 codebase, it must configured be using the AS configuration schema, apart from the JGroups, Infinispan and Endpoint subsytems.
+
+=== JGroups subsystem configuration
+The JGroups subsystem configures the network transport and is only required when clustering multiple Infinispan Server nodes together.
+
+The subsystem declaration is enclosed in the following XML element:
+
+[source,xml]
+----
+
+<subsystem xmlns="urn:jboss:domain:jgroups:1.2" default-stack="${jboss.default.jgroups.stack:udp}">
+  ...
+</subsystem>
+
+----
+
+Within the subsystem, you need to declare the stacks that you wish to use and name them. The default-stack attribute in the subsystem declaration must point to one of the declared stacks. You can switch stacks from the command-line using the jboss.default.jgroups.stack property: 
+
+ bin/clustered.sh -Djboss.default.jgroups.stack=tcp 
+
+A stack declaration is composed of a transport (UDP or TCP) followed by a list of protocols. For each of these elements you can tune specific properties adding child <property name="prop_name">prop_value</property> elements. Since the amount of protocols and their configuration options in JGroups is huge, please refer to the appropriate link:$$http://www.jgroups.org/manual/html/protlist.html$$[JGroups Protocol documentation] . The following are the default stacks: 
+
+[source,xml]
+----
+
+ <stack name="udp">
+    <transport type="UDP" socket-binding="jgroups-udp"/>
+    <protocol type="PING"/>
+    <protocol type="MERGE2"/>
+    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
+    <protocol type="FD_ALL"/>
+    <protocol type="pbcast.NAKACK"/>
+    <protocol type="UNICAST2"/>
+    <protocol type="pbcast.STABLE"/>
+    <protocol type="pbcast.GMS"/>
+    <protocol type="UFC"/>
+    <protocol type="MFC"/>
+    <protocol type="FRAG2"/>
+    <protocol type="RSVP"/>
+</stack>
+<stack name="tcp">
+    <transport type="TCP" socket-binding="jgroups-tcp"/>
+    <protocol type="MPING" socket-binding="jgroups-mping"/>
+    <protocol type="MERGE2"/>
+    <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
+    <protocol type="FD"/>
+    <protocol type="VERIFY_SUSPECT"/>
+    <protocol type="pbcast.NAKACK">
+        <property name="use_mcast_xmit">false</property>
+    </protocol>
+    <protocol type="UNICAST2"/>
+    <protocol type="pbcast.STABLE"/>
+    <protocol type="pbcast.GMS"/>
+    <protocol type="UFC"/>
+    <protocol type="MFC"/>
+    <protocol type="FRAG2"/>
+    <protocol type="RSVP"/>
+</stack>
+
+----
+
+The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast. If you need to use a different protocol, look at the link:$$http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols$$[JGroups Discovery Protocols] . The following example stack configures the TCPPING discovery protocol with two initial hosts: 
+
+[source,xml]
+----
+
+<stack name="tcp">
+    <transport type="TCP" socket-binding="jgroups-tcp"/>
+    <protocol type="TCPPING">
+        <property name="initial_hosts">HostA[7800],HostB[7800]</property>
+    </protocol>
+    <protocol type="MERGE2"/>
+    <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
+    <protocol type="FD"/>
+    <protocol type="VERIFY_SUSPECT"/>
+    <protocol type="pbcast.NAKACK">
+        <property name="use_mcast_xmit">false</property>
+    </protocol>
+    <protocol type="UNICAST2"/>
+    <protocol type="pbcast.STABLE"/>
+    <protocol type="pbcast.GMS"/>
+    <protocol type="UFC"/>
+    <protocol type="MFC"/>
+    <protocol type="FRAG2"/>
+    <protocol type="RSVP"/>
+</stack>
+
+----
+
+=== Infinispan subsystem configuration
+The Infinispan subsystem configures the cache containers and caches. Its schema differs from the default Infinispan library declarative because it needs to adhere to the application server standards, but the underlying concepts are the same.
+
+The subsystem declaration is enclosed in the following XML element:
+
+[source,xml]
+----
+
+<subsystem xmlns="urn:infinispan:server:core:5.2" default-cache-container="clustered">
+  ...
+</subsystem>
+
+----
+
+==== Containers
+One major difference between the Infinispan library schema and the server schema is that in the latter multiple containers can be declared. A container is declared as follows:
+
+[source,xml]
+----
+
+<cache-container name="clustered" default-cache="default">
+  ...
+</cache-container>
+
+----
+
+Another difference is the lack of an implicit default cache, but the ability to specify a named cache as the default.
+
+If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only. 
+
+[source,xml]
+----
+
+<transport executor="infinispan-transport" lock-timeout="60000" stack="udp" cluster="my-cluster-name"/>
+
+----
+
+==== Caches
+Now you can declare your caches. Please be aware that only the caches declared in the configuration will be available to the endpoints and that attempting to access an undefined cache is an illegal operation. Contrast this with the default Infinispan library behaviour where obtaining an undefined cache will implicitly create one using the default settings. The following are example declarations for all four available types of caches:
+
+[source,xml]
+----
+
+<local-cache name="default" start="EAGER">
+  ...
+</local-cache>
+
+<replicated-cache name="replcache" mode="SYNC" remote-timeout="30000" start="EAGER">
+  ...
+</replicated-cache>
+
+<invalidation-cache name="invcache" mode="SYNC" remote-timeout="30000" start="EAGER">
+  ...
+</invalidation-cache>
+<distributed-cache name="distcache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+  ...
+</distributed-cache>
+
+----
+
+==== Expiration
+To define a default expiration for entries in a cache, add the `<expiration/>` element as follows: 
+
+[source,xml]
+----
+
+<expiration lifespan="2000" max-idle="1000"/>
+
+----
+
+The possible attributes for the expiration element are:
+
+
+*  _lifespan_ maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire. 
+
+
+*  _max-idle_ maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire. 
+
+
+*  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1. 
+
+==== Eviction
+To define an eviction strategy for a cache, add the `<eviction/>` element as follows: 
+
+[source,xml]
+----
+
+<eviction strategy="LIRS" max-entries="1000"/>
+
+----
+
+The possible attributes for the eviction element are:
+
+
+*  _strategy_ sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction). 
+
+
+*  _max-entries_ maximum number of entries in a cache instance. If selected value is not a power of two the actual value will default to the least power of two larger than selected value. -1 means no limit. 
+
+==== Locking
+To define the locking configuration for a cache, add the `<locking/>` element as follows: 
+
+[source,xml]
+----
+
+<locking isolation="REPEATABLE_READ" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
+
+----
+
+The possible attributes for the locking element are:
+
+
+*  _isolation_ sets the cache locking isolation level. Can be NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE. Defaults to REPEATABLE_READ 
+
+
+*  _striping_ if true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system. 
+
+
+*  _acquire-timeout_ maximum time to attempt a particular lock acquisition. 
+
+
+*  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan. 
+
+
+*  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance. 
+
+==== Transactions
+
+While it is possible to configure server caches to be transactional, none of the available protocols offer transaction capabilities.
+
+==== Loaders and Stores
+
+TODO
+
+=== Endpoint subsystem configuration
+
+The endpoint subsystem exposes a whole container (or in the case of Memcached, a single cache) over a specific connector protocol. You can define as many connector as you need, provided they bind on different interfaces/ports.
+
+The subsystem declaration is enclosed in the following XML element:
+
+[source,xml]
+----
+
+ <subsystem xmlns="urn:infinispan:server:endpoint:5.3">
+  ...
+ </subsystem>
+
+----
+
+==== Hot Rod
+The following connector declaration enables a HotRod server using the _hotrod_ socket binding (declared within a `<socket-binding-group />` element) and exposing the caches declared in the _local_ container, using defaults for all other settings. 
+
+[source,xml]
+----
+
+<hotrod-connector socket-binding="hotrod" cache-container="local" />
+
+----
+
+The connector will create a supporting topology cache with default settings. If you wish to tune these settings add the `<topology-state-transfer />` child element to the connector as follows:
+
+[source,xml]
+----
+
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+   <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+</hotrod-connector>
+
+----
+
+The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
+
+Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS7.2 link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows: 
+
+[source,xml]
+----
+
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+    <security ssl="true" security-realm="ApplicationRealm" require-ssl-client-auth="false" />
+</hotrod-connector>
+
+----
+
+==== Memcached
+The following connector declaration enables a Memcached server using the _memcached_ socket binding (declared within a `<socket-binding-group />` element) and exposing the _memcachedCache_ cache declared in the _local_ container, using defaults for all other settings. Because of limitations in the Memcached protocol, only one cache can be exposed by a connector. If you wish to expose more than one cache, declare additional memcached-connectors on different socket-bindings. 
+
+[source,xml]
+----
+
+<memcached-connector socket-binding="memcached" cache-container="local"/>
+
+----
+
+==== WebSocket
+
+[source,xml]
+----
+
+<websocket-connector socket-binding="websocket" cache-container="local"/>
+
+----
+
+==== REST
+The REST connector differs from the above connectors because it piggybacks on the web subsystem. Therefore configurations such as socket binding, worker threads, timeouts, etc must be performed on the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117098$$[web subsystem] . 
+
+[source,xml]
+----
+
+<rest-connector virtual-server="default-host" cache-container="local" security-domain="other" auth-method="BASIC"/>
+
+----
+
+==== Common Protocol Connector Settings
+
+The HotRod, Memcached and WebSocket protocol connectors support a number of tuning attributes in their declaration:
+
+
+*  _worker-threads_ Sets the number of worker threads. Defaults to 160.
+
+
+*  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout) 
+
+
+*  _tcp-nodelay_ Affects TCP NODELAY on the TCP stack. Defaults to enabled. 
+
+
+*  _send-buffer-size_ Sets the size of the send buffer. Defaults to 
+
+
+*  _receive-buffer-size_ Sets the size of the receive buffer. Defaults to 
+
+==== Protocol Interoperability
+
+By default each protocol stores data in the cache in the most efficient format for that protocol, so that no transformations are required when retrieving entries. If instead you need to access the same data from multiple protocols, you should enable compatibility mode on the caches that you want to share. This is done by adding the `<compatibility />` element to a cache definition, as follows:
+
+[source,xml]
+----
+
+<cache-container name="local" default-cache="default">
+    <local-cache name="default" start="EAGER">
+        <transaction mode="NONE"/>
+        <compatibility enabled="true"/>
+    </local-cache>
+</cache-container>
+
+----
+
