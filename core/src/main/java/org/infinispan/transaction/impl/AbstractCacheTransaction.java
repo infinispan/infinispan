@@ -65,7 +65,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private EntryVersionsMap updatedEntryVersions;
    private EntryVersionsMap versionsSeenMap;
-   private EntryVersionsMap lookedUpRemoteVersions;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -289,19 +288,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
       this.updatedEntryVersions = updatedEntryVersions;
-   }
-
-   @Override
-   public EntryVersion getLookedUpRemoteVersion(Object key) {
-      return lookedUpRemoteVersions != null ? lookedUpRemoteVersions.get(key) : null;
-   }
-
-   @Override
-   public void putLookedUpRemoteVersion(Object key, EntryVersion version) {
-      if (lookedUpRemoteVersions == null) {
-         lookedUpRemoteVersions = new EntryVersionsMap();
-      }
-      lookedUpRemoteVersions.put(key, (IncrementableEntryVersion) version);
    }
 
    @Override

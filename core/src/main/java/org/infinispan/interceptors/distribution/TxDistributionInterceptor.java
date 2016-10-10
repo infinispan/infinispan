@@ -356,10 +356,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       InternalCacheEntry ice = retrieveFromProperSource(key, ctx, command, isWrite).get();
 
       if (ice != null) {
-         if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-            ((TxInvocationContext) ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
-         }
-
          EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
          entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
          return ice;
