@@ -14,6 +14,8 @@ import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
+ * Invocation stage that completed with an exception.
+ *
  * @author Dan Berindei
  * @since 9.0
  */
@@ -92,6 +94,11 @@ public class ExceptionStage extends AbstractInvocationStage {
    @Override
    public Object get() throws Throwable {
       throw throwable;
+   }
+
+   @Override
+   public boolean isDone() {
+      return true;
    }
 
    @Override

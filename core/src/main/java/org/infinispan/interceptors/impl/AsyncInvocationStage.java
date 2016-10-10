@@ -19,6 +19,14 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * Invocation stage representing a computation that may or may not be done yet.
+ *
+ * It id only meant to support the simplest asynchronous invocation, starting with
+ * {@link org.infinispan.interceptors.BaseAsyncInterceptor#returnWithAsync(CompletableFuture)}
+ * and only adding synchronous handlers on top of it.
+ * Calling {@link #compose(InvocationComposeHandler)} or {@link #thenCompose(InvocationComposeSuccessHandler)}
+ * will create a full {@link ComposedAsyncInvocationStage}.
+ *
  * @author Dan Berindei
  * @since 9.0
  */
@@ -49,6 +57,11 @@ public class AsyncInvocationStage extends AbstractInvocationStage
       } catch (CompletionException e) {
          throw e.getCause();
       }
+   }
+
+   @Override
+   public boolean isDone() {
+      return future.isDone();
    }
 
    @Override

@@ -210,6 +210,34 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       assertEquals("v1", invokeFuture.get(10, SECONDS));
    }
 
+   public void testGoAsyncX2() throws Exception {
+      CompletableFuture<Object> f1 = new CompletableFuture<>();
+      CompletableFuture<Object> f2 = new CompletableFuture<>();
+      CompletableFuture<Object> f3 = new CompletableFuture<>();
+      AsyncInterceptorChain chain = newInterceptorChain(new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).compose(
+                  (stage, rCtx, rCommand, rv, t) -> goAsync(f2.thenApply(o -> returnWithAsync(f3))));
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return goAsync(f1.thenApply(this::returnWith));
+         }
+      });
+      InvocationContext context = newInvocationContext();
+
+      CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, testCommand);
+      assertFalse(invokeFuture.isDone());
+      f1.complete("v1");
+      assertFalse(invokeFuture.isDone());
+      f2.complete("v2");
+      assertFalse(invokeFuture.isDone());
+      f3.complete("v3");
+      assertEquals("v3", invokeFuture.get(10, SECONDS));
+   }
+
    public void testSyncException() throws Exception {
       testException(new ExceptionTestCallbacks() {
 
