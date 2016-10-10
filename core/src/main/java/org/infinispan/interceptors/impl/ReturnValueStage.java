@@ -13,6 +13,8 @@ import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessHandler;
 
 /**
+ * Invocation stage representing a computation that already completed successfully.
+ *
  * @author Dan Berindei
  * @since 9.0
  */
@@ -84,6 +86,11 @@ public class ReturnValueStage extends AbstractInvocationStage {
    @Override
    public Object get() throws Throwable {
       return returnValue;
+   }
+
+   @Override
+   public boolean isDone() {
+      return true;
    }
 
    private void updateValue(Object newReturnValue) {

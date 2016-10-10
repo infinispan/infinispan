@@ -19,6 +19,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * Invocation stage representing a computation that may or may not be done yet.
+ *
+ * In order to support {@link InvocationStage#compose(InvocationComposeHandler)},
+ * it must be asynchronous at two levels: both the {@code stageFuture} and the {@code BasicInvocationStage}
+ * returned by it can complete in the future.
+ *
  * @author Dan Berindei
  * @since 9.0
  */
@@ -38,7 +44,7 @@ public class ComposedAsyncInvocationStage extends AbstractInvocationStage
    }
 
    private ComposedAsyncInvocationStage(InvocationContext ctx, VisitableCommand command,
-         InvocationComposeHandler handler) {
+                                        InvocationComposeHandler handler) {
       super(ctx, command);
       this.handler = handler;
    }
@@ -51,6 +57,11 @@ public class ComposedAsyncInvocationStage extends AbstractInvocationStage
       } catch (CompletionException e) {
          throw e.getCause();
       }
+   }
+
+   @Override
+   public boolean isDone() {
+      return stageFuture.isDone() && stageFuture.join().isDone();
    }
 
    @Override
@@ -119,30 +130,14 @@ public class ComposedAsyncInvocationStage extends AbstractInvocationStage
 
    @Override
    public BasicInvocationStage apply(BasicInvocationStage stage, Throwable t) {
-      Object rv;
-      if (t != null) {
-         stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
-         rv = null;
-      } else {
-         try {
-            rv = stage.get();
-         } catch (Throwable t1) {
-            t = t1;
-            rv = null;
-         }
-      }
-
       if (handler == null) {
          return new ExceptionStage(ctx, command, new NullPointerException("Handler must be set for apply"));
       }
-      try {
-         if (trace) log.tracef("Executing invocation handler %s with command %s", Stages.className(handler), command);
-         stage = handler.apply(stage, ctx, command, rv, t);
-         // This stage won't execute any handlers, so we don't need updateCommand
-      } catch (Throwable t1) {
-         if (trace) log.tracef(t1, "Exception in invocation handler %s", handler);
-         stage = new ExceptionStage(ctx, command, t1);
+
+      if (t != null) {
+         stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
       }
-      return stage;
+
+      return stage.toInvocationStage(ctx, command).compose(handler);
    }
 }

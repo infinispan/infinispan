@@ -20,9 +20,17 @@ public interface BasicInvocationStage {
    Object get() throws Throwable;
 
    /**
+    * @return {@code true} if the invocation is completed, {@code false} otherwise.
+    */
+   boolean isDone();
+
+   /**
     * Convert to {@link CompletableFuture}, used internally by the asynchronous API.
     */
    CompletableFuture<Object> toCompletableFuture();
 
+   /**
+    * Convert to a full {@link InvocationStage}, used internally by the asynchronous API.
+    */
    InvocationStage toInvocationStage(InvocationContext newCtx, VisitableCommand newCommand);
 }
