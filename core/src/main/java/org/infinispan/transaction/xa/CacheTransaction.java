@@ -102,9 +102,11 @@ public interface CacheTransaction {
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
 
-   void putLookedUpRemoteVersion(Object key, EntryVersion version);
+   @Deprecated
+   default void putLookedUpRemoteVersion(Object key, EntryVersion version) {}
 
-   EntryVersion getLookedUpRemoteVersion(Object key);
+   @Deprecated
+   default EntryVersion getLookedUpRemoteVersion(Object key) { return null; }
 
    boolean keyRead(Object key);
 

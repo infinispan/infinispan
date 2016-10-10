@@ -50,14 +50,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
          if (trace) {
             log.tracef("No entry for key %s found in data container" , toStr(key));
          }
-         prevVersion = ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
-         if (prevVersion == null) {
-            if (trace) {
-               log.tracef("No looked up remote version for key %s found in context" , toStr(key));
-            }
-            //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
-            return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
-         }
+         prevVersion = versionGenerator.nonExistingVersion();
       } else {
          prevVersion = ice.getMetadata().version();
          if (prevVersion == null)
@@ -73,7 +66,9 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       if (trace) {
          log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, versionSeen, key, result);
       }
-      return InequalVersionComparisonResult.AFTER != result;
+      // TODO: there is a risk associated with versions that are not monotonous per entry - if an entry is removed
+      // and then written several times, it can reach the previous version.
+      return InequalVersionComparisonResult.EQUAL == result;
    }
 
    // This entry is only used when versioning is enabled, and in these
