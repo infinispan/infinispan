@@ -11,6 +11,7 @@ import java.util.List;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.Immutables;
@@ -137,7 +138,9 @@ public interface ClusteringDependentLogic {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {
-               ((RemoveCommand)command).notify(ctx, previousValue, previousMetadata, false);
+               ((RemoveCommand) command).notify(ctx, previousValue, previousMetadata, false);
+            } else if (command instanceof InvalidateCommand) {
+               notifier.notifyCacheEntryInvalidated(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
             } else {
                if (expired) {
                   notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
