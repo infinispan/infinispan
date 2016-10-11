@@ -12,6 +12,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
@@ -64,8 +65,8 @@ public class InvalidateL1Command extends InvalidateCommand {
       return COMMAND_ID;
    }
 
-   public void init(Configuration config, DistributionManager dm, CacheNotifier n, DataContainer dc) {
-      super.init(n, config);
+   public void init( DistributionManager dm, CacheNotifier n, DataContainer dc) {
+      super.init(n);
       this.dm = dm;
       this.dataContainer = dc;
    }
@@ -78,10 +79,14 @@ public class InvalidateL1Command extends InvalidateCommand {
          InternalCacheEntry ice = dataContainer.get(k);
          if (ice != null) {
             DataLocality locality = dm.getLocality(k);
-
             if (!locality.isLocal()) {
                if (trace) log.tracef("Invalidating key %s.", k);
-               invalidate(ctx, k);
+               MVCCEntry e = (MVCCEntry) ctx.lookupEntry(k);
+               notify(ctx, e, true);
+               e.setRemoved(true);
+               e.setChanged(true);
+               e.setCreated(false);
+               e.setValid(false);
             } else {
                log.tracef("Not invalidating key %s as it is local now", k);
             }

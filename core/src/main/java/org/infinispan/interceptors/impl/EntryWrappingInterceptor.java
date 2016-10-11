@@ -252,7 +252,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -286,7 +286,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
          if (trace) log.tracef("Entry to be removed: %s", toStr(key));
       }
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -394,7 +394,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -489,7 +489,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -501,7 +501,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -519,7 +519,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    @Override
@@ -530,7 +530,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
    }
 
    private Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {
@@ -620,8 +620,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext ctx,
-         WriteCommand command) throws Throwable {
+   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForWriteCommand(InvocationContext ctx,
+                                                                              WriteCommand command) throws Throwable {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {

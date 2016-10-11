@@ -358,11 +358,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
-            ic.init(notifier, configuration);
+            ic.init(notifier);
             break;
          case InvalidateL1Command.COMMAND_ID:
             InvalidateL1Command ilc = (InvalidateL1Command) c;
-            ilc.init(configuration, distributionManager, notifier, dataContainer);
+            ilc.init(distributionManager, notifier, dataContainer);
             break;
          case PrepareCommand.COMMAND_ID:
          case VersionedPrepareCommand.COMMAND_ID:
