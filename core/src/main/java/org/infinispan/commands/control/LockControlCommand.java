@@ -227,7 +227,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       return unlock ? Collections.emptyList() : Collections.unmodifiableCollection(keys);
    }
 

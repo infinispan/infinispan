@@ -56,7 +56,7 @@ public abstract class BaseLockingAction implements Action {
       return UPDATER.compareAndSet(this, expectedState, newState);
    }
 
-   private void filterByPrimaryOwner(Collection<Object> keys, Collection<Object> toAdd) {
+   private void filterByPrimaryOwner(Collection<?> keys, Collection<Object> toAdd) {
       keys.forEach(key -> {
          if (LockUtil.getLockOwnership(key, clusteringDependentLogic) == LockUtil.LockOwnership.PRIMARY) {
             toAdd.add(key);
@@ -67,7 +67,7 @@ public abstract class BaseLockingAction implements Action {
    protected final List<Object> getAndUpdateFilteredKeys(ActionState state) {
       List<Object> filteredKeys = state.getFilteredKeys();
       if (filteredKeys == null) {
-         Collection<Object> rawKeys = state.getCommand().getKeysToLock();
+         Collection<?> rawKeys = state.getCommand().getKeysToLock();
          filteredKeys = new ArrayList<>(rawKeys.size());
          filterByPrimaryOwner(rawKeys, filteredKeys);
          state.updateFilteredKeys(filteredKeys);

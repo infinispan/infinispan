@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -141,8 +142,8 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
-      return null;  // TODO: Customise this generated block
+   public Collection<?> getAffectedKeys() {
+      return entries.keySet();
    }
 
    @Override
@@ -167,9 +168,5 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    @Override
    public boolean alwaysReadsExistingValues() {
       return false;
-   }
-
-   public Set<? extends K> getKeys() {
-      return entries.keySet();
    }
 }

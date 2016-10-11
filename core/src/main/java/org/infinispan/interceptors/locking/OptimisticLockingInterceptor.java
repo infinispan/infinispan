@@ -60,7 +60,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      final Collection<Object> keysToLock = command.getKeysToLock();
+      final Collection<?> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
          if (command.isRetriedCommand() && ctx.isOriginLocal()) {

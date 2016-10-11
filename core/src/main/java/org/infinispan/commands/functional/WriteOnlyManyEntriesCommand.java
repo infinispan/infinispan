@@ -3,6 +3,7 @@ package org.infinispan.commands.functional;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -91,8 +92,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
-      return null;  // TODO: Customise this generated block
+   public Collection<?> getAffectedKeys() {
+      return entries.keySet();
    }
 
    @Override
@@ -123,9 +124,5 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    @Override
    public boolean isWriteOnly() {
       return true;
-   }
-
-   public Set<? extends K> getKeys() {
-      return entries.keySet();
    }
 }

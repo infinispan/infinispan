@@ -125,7 +125,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
                ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
          } else {
-            Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
+            Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
          }
          if (ctx.isInTxScope() && ctx.isOriginLocal()) {
@@ -140,7 +140,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       }
    }
 
-   private Collection<Object> extractWrittenKeys(InvocationContext ctx, VisitableCommand command) {
+   private Collection<?> extractWrittenKeys(InvocationContext ctx, VisitableCommand command) {
       if (command instanceof WriteCommand) {
          return ((WriteCommand) command).getAffectedKeys();
       } else if (command instanceof LockControlCommand) {

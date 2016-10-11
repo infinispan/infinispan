@@ -112,7 +112,7 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       //no keys to lock
       return Collections.emptyList();
    }

@@ -7,7 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
@@ -155,7 +154,7 @@ public class InvalidateCommand extends AbstractFlagAffectedCommand implements Wr
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
+   public Collection<?> getAffectedKeys() {
       return CollectionFactory.makeSet(keys);
    }
 
@@ -164,7 +163,7 @@ public class InvalidateCommand extends AbstractFlagAffectedCommand implements Wr
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       return Arrays.asList(keys);
    }
 

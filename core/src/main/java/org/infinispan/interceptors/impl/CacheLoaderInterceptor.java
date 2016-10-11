@@ -183,7 +183,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return visitDataCommand(ctx, command);
    }
 
-   private <T extends FlagAffectedCommand> BasicInvocationStage visitManyDataCommand(InvocationContext ctx, T command, Collection<?> keys)
+   private BasicInvocationStage visitManyDataCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
          throws Throwable {
       for (Object key : keys) {
          loadIfNeeded(ctx, key, command);
@@ -298,12 +298,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    @Override
    public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
-      return visitManyDataCommand(ctx, command, command.getKeys());
+      return visitManyDataCommand(ctx, command, command.getAffectedKeys());
    }
 
    @Override
    public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
-      return visitManyDataCommand(ctx, command, command.getKeys());
+      return visitManyDataCommand(ctx, command, command.getAffectedKeys());
    }
 
    protected final boolean isConditional(WriteCommand cmd) {

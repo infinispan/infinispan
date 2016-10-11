@@ -127,7 +127,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       if (command.hasSkipLocking()) {
          return null;
       }
-      Collection<Object> keys = command.getKeysToLock();
+      Collection<?> keys = command.getKeysToLock();
       if (keys.isEmpty()) {
          return null;
       }
