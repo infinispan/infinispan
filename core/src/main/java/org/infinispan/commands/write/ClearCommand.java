@@ -3,8 +3,8 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
@@ -102,7 +102,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
+   public Collection<?> getAffectedKeys() {
       return Collections.emptySet();
    }
 

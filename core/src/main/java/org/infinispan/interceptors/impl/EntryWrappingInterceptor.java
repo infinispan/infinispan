@@ -495,7 +495,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
          throws Throwable {
-      for (Object key : command.getKeys()) {
+      for (Object key : command.getAffectedKeys()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
@@ -514,7 +514,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
          throws Throwable {
-      for (Object key : command.getKeys()) {
+      for (Object key : command.getAffectedKeys()) {
          if (shouldWrap(key, ctx, command)) {
             entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
          }

@@ -212,7 +212,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
    private void simulateLocking(TxInvocationContext context, PrepareCommand command,
                                 ClusteringDependentLogic clusteringDependentLogic) {
-      Collection<Object> affectedKeys = command.getAffectedKeys();
+      Collection<?> affectedKeys = command.getAffectedKeys();
       //this map is only populated after locks are acquired. However, no locks are acquired when total order is enabled
       //so we need to populate it here
       context.addAllAffectedKeys(command.getAffectedKeys());

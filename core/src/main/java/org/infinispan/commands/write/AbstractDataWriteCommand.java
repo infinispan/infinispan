@@ -2,7 +2,6 @@ package org.infinispan.commands.write;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -28,7 +27,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
+   public Collection<?> getAffectedKeys() {
       return Collections.singleton(key);
    }
 
@@ -43,7 +42,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       return getAffectedKeys();
    }
 

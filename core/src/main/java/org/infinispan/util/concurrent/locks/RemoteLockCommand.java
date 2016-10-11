@@ -21,7 +21,7 @@ public interface RemoteLockCommand {
     *
     * @return a {@link Collection} of keys to lock.
     */
-   Collection<Object> getKeysToLock();
+   Collection<?> getKeysToLock();
 
    /**
     * It returns the lock owner of the key.

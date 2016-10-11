@@ -4,7 +4,6 @@ import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -288,29 +287,29 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
          throws Throwable {
-      return visitWriteManyCommand(ctx, command, command.getKeys());
+      return visitWriteManyCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command)
          throws Throwable {
-      return visitWriteManyCommand(ctx, command, command.getKeys());
+      return visitWriteManyCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
          throws Throwable {
-      return visitWriteManyCommand(ctx, command, command.getKeys());
+      return visitWriteManyCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command)
          throws Throwable {
-      return visitWriteManyCommand(ctx, command, command.getKeys());
+      return visitWriteManyCommand(ctx, command);
    }
 
    private <T extends WriteCommand & ParamsCommand> BasicInvocationStage visitWriteManyCommand(InvocationContext ctx,
-         VisitableCommand command, Collection<?> keys) throws Throwable {
+                                                                                               WriteCommand command) throws Throwable {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          T manyEntriesCommand = (T) rCommand;
          if (!isStoreEnabled(manyEntriesCommand) || rCtx.isInTxScope())
@@ -320,7 +319,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          switch (persistMode.get()) {
             case PERSIST:
                int storedCount = 0;
-               for (Object key : keys) {
+               for (Object key : ((WriteCommand) rCommand).getAffectedKeys()) {
                   CacheEntry entry = rCtx.lookupEntry(key);
                   if (entry != null) {
                      if (entry.isRemoved()) {
