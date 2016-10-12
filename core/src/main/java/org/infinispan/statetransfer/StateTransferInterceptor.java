@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -172,7 +173,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return visitReadCommand(ctx, command, command::setConsistentHash);
    }
 
-   private InvocationStage visitReadCommand(InvocationContext ctx, FlagAffectedCommand command,
+   private InvocationStage visitReadCommand(InvocationContext ctx, AbstractTopologyAffectedCommand command,
          Consumer<ConsistentHash> consistentHashUpdater) throws Throwable {
       if (isLocalOnly(command)) {
          return invokeNext(ctx, command);
@@ -196,12 +197,12 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (trace)
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId(), rCommand);
-         FlagAffectedCommand flagAffectedCommand = (FlagAffectedCommand) rCommand;
-         int newTopologyId = Math.max(currentTopologyId(), flagAffectedCommand.getTopologyId() + 1);
-         flagAffectedCommand.setTopologyId(newTopologyId);
+         AbstractTopologyAffectedCommand cmd = (AbstractTopologyAffectedCommand) rCommand;
+         int newTopologyId = Math.max(currentTopologyId(), cmd.getTopologyId() + 1);
+         cmd.setTopologyId(newTopologyId);
          waitForTopology(newTopologyId);
 
-         return visitReadCommand(rCtx, flagAffectedCommand, consistentHashUpdater);
+         return visitReadCommand(rCtx, cmd, consistentHashUpdater);
       });
    }
 

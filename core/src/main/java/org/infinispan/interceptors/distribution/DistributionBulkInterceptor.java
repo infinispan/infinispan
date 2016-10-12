@@ -14,7 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.Caches;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -76,9 +76,9 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    protected static class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V>
            implements CacheSet<CacheEntry<K, V>> {
       protected final CacheSet<CacheEntry<K, V>> entrySet;
-      protected final LocalFlagAffectedCommand command;
+      protected final FlagAffectedCommand command;
 
-      private BackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command) {
+      private BackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, FlagAffectedCommand command) {
          super(cache);
          this.entrySet = entrySet;
          this.command = command;
@@ -159,7 +159,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    protected static class TxBackingEntrySet<K, V> extends BackingEntrySet<K, V> {
       private final LocalTxInvocationContext ctx;
 
-      private TxBackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command,
+      private TxBackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, FlagAffectedCommand command,
                                 LocalTxInvocationContext ctx) {
          super(cache, entrySet, command);
          this.ctx = ctx;
@@ -248,9 +248,9 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    protected static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V>
            implements CacheSet<K> {
       protected final CacheSet<CacheEntry<K, V>> entrySet;
-      protected final LocalFlagAffectedCommand command;
+      protected final FlagAffectedCommand command;
 
-      public BackingKeySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command) {
+      public BackingKeySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> entrySet, FlagAffectedCommand command) {
          super(cache);
          this.entrySet = entrySet;
          this.command = command;
@@ -314,7 +314,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    private static class TxBackingKeySet<K, V> extends BackingKeySet<K, V> {
       private final LocalTxInvocationContext ctx;
 
-      public TxBackingKeySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command,
+      public TxBackingKeySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> entrySet, FlagAffectedCommand command,
                              LocalTxInvocationContext ctx) {
          super(cache, entrySet, command);
          this.ctx = ctx;

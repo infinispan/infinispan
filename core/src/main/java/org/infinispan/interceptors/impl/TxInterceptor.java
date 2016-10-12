@@ -16,7 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -272,7 +272,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
          if (rCtx.isInTxScope()) {
             CacheSet<K> set = (CacheSet<K>) rv;
-            return new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, (LocalFlagAffectedCommand) rCommand), set) {
+            return new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
                @Override
                public CloseableIterator<K> iterator() {
                   return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
@@ -313,7 +313,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          if (rCtx.isInTxScope()) {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
             return new AbstractDelegatingEntryCacheSet<K, V>(
-                  Caches.getCacheWithFlags(cache, (LocalFlagAffectedCommand) rCommand), set) {
+                  Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
                @Override
                public CloseableIterator<CacheEntry<K, V>> iterator() {
                   return new TransactionAwareEntryCloseableIterator<>(super.iterator(),

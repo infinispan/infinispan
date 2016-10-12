@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -185,7 +185,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       return visitDataWriteCommand(ctx, command);
    }
 
-   protected final long getLockTimeoutMillis(LocalFlagAffectedCommand command) {
+   protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
       return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 : cacheConfiguration.locking().lockAcquisitionTimeout();
    }
 
@@ -210,7 +210,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
    }
 
-   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
+   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
       return command.hasFlag(Flag.SKIP_LOCKING);
    }
 }

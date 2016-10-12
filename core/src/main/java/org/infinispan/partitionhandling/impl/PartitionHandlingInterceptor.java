@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -50,7 +50,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       this.distributionManager = distributionManager;
    }
 
-   private boolean performPartitionCheck(InvocationContext ctx, LocalFlagAffectedCommand command) {
+   private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
       // We always perform partition check if this is a remote command
       if (!ctx.isOriginLocal()) {
          return true;

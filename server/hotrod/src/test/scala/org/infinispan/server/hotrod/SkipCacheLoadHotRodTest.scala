@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
 
-import org.infinispan.commands.{LocalFlagAffectedCommand, VisitableCommand}
+import org.infinispan.commands.{FlagAffectedCommand, VisitableCommand}
 import org.infinispan.commons.CacheException
 import org.infinispan.context.{Flag, InvocationContext}
 import org.infinispan.interceptors.base.BaseCustomInterceptor
@@ -163,7 +163,7 @@ class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
 
    protected override def handleDefault(ctx: InvocationContext, command: VisitableCommand): AnyRef = {
       command match {
-         case flagAffectedCommand: LocalFlagAffectedCommand =>
+         case flagAffectedCommand: FlagAffectedCommand =>
             val hasFlag = flagAffectedCommand.hasFlag(Flag.SKIP_CACHE_LOAD)
             if (expectSkipLoadFlag && !hasFlag) {
                throw new CacheException("SKIP_CACHE_LOAD flag is expected!")

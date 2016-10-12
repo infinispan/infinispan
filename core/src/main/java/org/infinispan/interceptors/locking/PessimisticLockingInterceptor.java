@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
@@ -103,7 +103,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    }
 
-   private boolean readNeedsLock(InvocationContext ctx, LocalFlagAffectedCommand command) {
+   private boolean readNeedsLock(InvocationContext ctx, FlagAffectedCommand command) {
       return ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command);
    }
 
@@ -131,7 +131,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
                stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
-                  acquireLocalLocks(rCtx, (LocalFlagAffectedCommand) rCommand, keys);
+                  acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, keys);
                   return invokeNext(rCtx, command);
                });
             }
@@ -147,7 +147,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   private void acquireLocalLocks(InvocationContext ctx, LocalFlagAffectedCommand command, Collection<?> keys)
+   private void acquireLocalLocks(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
          throws InterruptedException {
       lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, keys, getLockTimeoutMillis(command));
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keys);
@@ -180,7 +180,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                LockControlCommand lcc = cf.buildLockControlCommand(affectedKeys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
                stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
-                  acquireLocalLocks(rCtx, (LocalFlagAffectedCommand) rCommand, affectedKeys);
+                  acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, affectedKeys);
                   return invokeNext(rCtx, command);
                });
             }
@@ -351,7 +351,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private boolean needRemoteLocks(InvocationContext ctx, Collection<?> keys,
-         LocalFlagAffectedCommand command) throws Throwable {
+         FlagAffectedCommand command) throws Throwable {
       boolean needBackupLocks = ctx.isOriginLocal() && (!isLockOwner(keys) || isStateTransferInProgress());
       boolean needRemoteLock = false;
       if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
@@ -365,7 +365,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       return needRemoteLock;
    }
 
-   private boolean needRemoteLocks(InvocationContext ctx, Object key, LocalFlagAffectedCommand command)
+   private boolean needRemoteLocks(InvocationContext ctx, Object key, FlagAffectedCommand command)
          throws Throwable {
       boolean needBackupLocks = ctx.isOriginLocal() && (!isLockOwner(key) || isStateTransferInProgress());
       boolean needRemoteLock = false;

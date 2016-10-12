@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -68,7 +67,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    /**
     *  This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
     * operation is invoked that would cause a remote get to occur (which is controlled by whether or not the
-    * {@link L1NonTxInterceptor#skipL1Lookup(LocalFlagAffectedCommand, Object)} method returns
+    * {@link L1NonTxInterceptor#skipL1Lookup(FlagAffectedCommand, Object)} method returns
     * true.  This map <b>MUST</b> have the value inserted removed in a finally block after the remote get is done to
     * prevent reference leaks.
     * <p>
@@ -193,7 +192,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   protected boolean skipL1Lookup(LocalFlagAffectedCommand command, Object key) {
+   protected boolean skipL1Lookup(FlagAffectedCommand command, Object key) {
       return command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
             || command.hasFlag(Flag.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key)
             || dataContainer.containsKey(key);

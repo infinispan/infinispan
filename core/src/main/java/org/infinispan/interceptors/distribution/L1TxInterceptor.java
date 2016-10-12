@@ -2,7 +2,7 @@ package org.infinispan.interceptors.distribution;
 
 import java.util.concurrent.Future;
 
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -60,7 +60,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    }
 
    @Override
-   protected boolean skipL1Lookup(LocalFlagAffectedCommand command, Object key) {
+   protected boolean skipL1Lookup(FlagAffectedCommand command, Object key) {
       // TODO: need to skip L1 lookups when the command doesn't require the value to be returned like unsafe return values or write skew check ??
       return super.skipL1Lookup(command, key);
    }

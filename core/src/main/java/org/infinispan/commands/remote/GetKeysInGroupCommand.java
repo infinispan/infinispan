@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
@@ -24,7 +24,7 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implements VisitableCommand {
+public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand implements VisitableCommand {
 
    public static final byte COMMAND_ID = 43;
 
