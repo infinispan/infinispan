@@ -2,7 +2,7 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -12,7 +12,7 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand implements DataCommand {
+public abstract class AbstractDataCommand extends AbstractTopologyAffectedCommand implements DataCommand {
    protected Object key;
 
    @Override

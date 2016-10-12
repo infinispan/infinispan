@@ -6,7 +6,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -138,7 +138,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected final long getLockAcquisitionTimeout(LocalFlagAffectedCommand command, boolean skipLocking) {
+   protected final long getLockAcquisitionTimeout(FlagAffectedCommand command, boolean skipLocking) {
       if (!skipLocking)
          return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
                0 : cacheConfiguration.locking().lockAcquisitionTimeout();
@@ -146,11 +146,11 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
       return -1;
    }
 
-   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
+   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
       return command.hasFlag(Flag.SKIP_LOCKING);
    }
 
-   protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
+   protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, FlagAffectedCommand command) {
       Set<Flag> flags = command.getFlags();
       if (flags != null && !flags.isEmpty()) {
          return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));

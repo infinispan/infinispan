@@ -18,7 +18,6 @@ import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -492,7 +491,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
    }
 
-   private boolean usingSkipIndexCleanup(final LocalFlagAffectedCommand command) {
+   private boolean usingSkipIndexCleanup(final FlagAffectedCommand command) {
       return command != null && command.hasFlag(Flag.SKIP_INDEX_CLEANUP);
    }
 

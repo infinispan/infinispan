@@ -65,16 +65,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Pa
    }
 
    @Override
-   public Metadata getMetadata() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public void setFlags(Set<Flag> flags) {
       // TODO: Customise this generated block
    }

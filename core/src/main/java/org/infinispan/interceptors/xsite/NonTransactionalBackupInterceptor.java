@@ -65,11 +65,11 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       if (command instanceof PutKeyValueCommand) {
          PutKeyValueCommand putCommand = (PutKeyValueCommand) command;
          return commandsFactory.buildPutKeyValueCommand(putCommand.getKey(), putCommand.getValue(),
-                                                        command.getMetadata(), command.getFlagsBitSet());
+                                                        putCommand.getMetadata(), putCommand.getFlagsBitSet());
       } else if (command instanceof ReplaceCommand) {
          ReplaceCommand replaceCommand = (ReplaceCommand) command;
          return commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(), replaceCommand.getNewValue(),
-                                                        command.getMetadata(), command.getFlagsBitSet());
+                                                        replaceCommand.getMetadata(), replaceCommand.getFlagsBitSet());
       } else if (command instanceof RemoveCommand) {
          return commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
       }

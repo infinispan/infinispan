@@ -269,7 +269,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          if (!rCtx.isInTxScope()) {
             ClearCommand clearCommand = (ClearCommand) rCommand;
-            applyChanges(rCtx, clearCommand, clearCommand.getMetadata());
+            applyChanges(rCtx, clearCommand, null);
          }
 
          if (trace)
@@ -463,21 +463,21 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
@@ -508,7 +508,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
       wrapEntryForPutIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
@@ -580,7 +580,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       cdl.commitEntry(entry, metadata, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
-   private void applyChanges(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
+   private void applyChanges(InvocationContext ctx, WriteCommand command, Metadata metadata) {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
@@ -625,7 +625,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, writeCommand, writeCommand.getMetadata());
+            applyChanges(rCtx, writeCommand, null);
          }
 
          if (trace)

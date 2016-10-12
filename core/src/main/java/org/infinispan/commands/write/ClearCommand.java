@@ -6,7 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -19,7 +19,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
+public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
    public static final byte COMMAND_ID = 5;
    private CacheNotifier<Object, Object> notifier;

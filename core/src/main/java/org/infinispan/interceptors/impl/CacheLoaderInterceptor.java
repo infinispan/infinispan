@@ -17,7 +17,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.functional.AbstractWriteKeyCommand;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -310,7 +309,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return cmd.isConditional();
    }
 
-   protected final boolean hasSkipLoadFlag(LocalFlagAffectedCommand cmd) {
+   protected final boolean hasSkipLoadFlag(FlagAffectedCommand cmd) {
       return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
    }
 

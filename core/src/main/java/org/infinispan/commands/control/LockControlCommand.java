@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -19,7 +20,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TransactionalRemoteLockCommand {
+public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TopologyAffectedCommand, TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
@@ -214,16 +214,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    @Override
    public void setFlagsBitSet(long bitSet) {
       this.flags = bitSet;
-   }
-
-   @Override
-   public Metadata getMetadata() {
-      return null;
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // no-op
    }
 
    @Override

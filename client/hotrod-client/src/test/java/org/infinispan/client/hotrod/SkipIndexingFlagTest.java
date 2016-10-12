@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
@@ -227,8 +227,8 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
 
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         if (command instanceof LocalFlagAffectedCommand) {
-            boolean hasFlag = ((LocalFlagAffectedCommand) command).hasFlag(Flag.SKIP_INDEXING);
+         if (command instanceof FlagAffectedCommand) {
+            boolean hasFlag = ((FlagAffectedCommand) command).hasFlag(Flag.SKIP_INDEXING);
             if (expectSkipIndexingFlag && !hasFlag) {
                throw new CacheException("SKIP_INDEXING flag is expected!");
             } else if (!expectSkipIndexingFlag && hasFlag) {

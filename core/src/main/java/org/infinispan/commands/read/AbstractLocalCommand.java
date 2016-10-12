@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.commands.AbstractLocalFlagAffectedCommand;
+import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -17,7 +17,7 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedCommand implements LocalCommand {
+public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand implements LocalCommand {
 
    public byte getCommandId() {
       return 0;  // no-op
@@ -46,9 +46,4 @@ public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedComm
    public boolean canBlock() {
       return false;
    }
-
-   protected static boolean noTxModifications(InvocationContext ctx) {
-      return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
-   }
-
 }

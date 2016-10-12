@@ -301,16 +301,18 @@ public class BackupSenderImpl implements BackupSender {
             continue;
          }
          WriteCommand filteredCommand = writeCommand;
-         if (writeCommand instanceof PutKeyValueCommand && ((PutKeyValueCommand) writeCommand).isPutIfAbsent()) {
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(((PutKeyValueCommand) writeCommand).getKey(),
-                                                                      ((PutKeyValueCommand) writeCommand).getValue(),
-                                                                      writeCommand.getMetadata(),
-                                                                      writeCommand.getFlagsBitSet());
+         PutKeyValueCommand putCommand;
+         if (writeCommand instanceof PutKeyValueCommand && (putCommand = (PutKeyValueCommand) writeCommand).isPutIfAbsent()) {
+            filteredCommand = commandsFactory.buildPutKeyValueCommand(putCommand.getKey(),
+                                                                      putCommand.getValue(),
+                                                                      putCommand.getMetadata(),
+                                                                      putCommand.getFlagsBitSet());
          } else if (writeCommand instanceof ReplaceCommand) {
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(((ReplaceCommand) writeCommand).getKey(),
-                                                                      ((ReplaceCommand) writeCommand).getNewValue(),
-                                                                      writeCommand.getMetadata(),
-                                                                      writeCommand.getFlagsBitSet());
+            ReplaceCommand replaceCommand = (ReplaceCommand) writeCommand;
+            filteredCommand = commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(),
+                                                                      replaceCommand.getNewValue(),
+                                                                      replaceCommand.getMetadata(),
+                                                                      replaceCommand.getFlagsBitSet());
          } else if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
             filteredCommand = commandsFactory.buildRemoveCommand(((RemoveCommand) writeCommand).getKey(), null,
                                                                  writeCommand.getFlagsBitSet());
