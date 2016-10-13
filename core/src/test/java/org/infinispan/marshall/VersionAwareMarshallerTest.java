@@ -132,12 +132,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testJGroupsAddressMarshalling() throws Exception {
-      JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress address = new JGroupsAddress(UUID.randomUUID());
       marshallAndAssertEquality(address);
    }
 
    public void testGlobalTransactionMarshalling() throws Exception {
-      JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress jGroupsAddress = new JGroupsAddress(UUID.randomUUID());
       GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
       marshallAndAssertEquality(gtx);
    }
@@ -161,7 +161,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       Map<Integer, GlobalTransaction> m3 = new HashMap<Integer, GlobalTransaction>();
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
+         JGroupsAddress jGroupsAddress = new JGroupsAddress(UUID.randomUUID());
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
          m1.put(1000 * i, gtx);
          m2.put(1000 * i, gtx);
@@ -216,7 +216,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testSingletonListMarshalling() throws Exception {
-      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(UUID.randomUUID()), false);
       List<GlobalTransaction> l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
@@ -260,13 +260,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(UUID.randomUUID()), false);
          m1.put(1000 * i, gtx);
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c10);
 
-      Address local = new JGroupsAddress(new IpAddress(12345));
+      Address local = new JGroupsAddress(UUID.randomUUID());
       GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
       PrepareCommand c11 = new PrepareCommand(cacheName, gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
