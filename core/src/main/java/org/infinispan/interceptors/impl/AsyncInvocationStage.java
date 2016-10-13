@@ -53,7 +53,7 @@ public class AsyncInvocationStage extends AbstractInvocationStage
    @Override
    public Object get() throws Throwable {
       try {
-         return future.join();
+         return CompletableFutures.await(future);
       } catch (CompletionException e) {
          throw e.getCause();
       }
