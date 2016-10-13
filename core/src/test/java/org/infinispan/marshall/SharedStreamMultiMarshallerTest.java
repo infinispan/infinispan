@@ -19,6 +19,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +36,7 @@ public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
    public void testSharingStream() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
       cm.getCache(); // Start cache so that global marshaller is resolved
-      JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress address = new JGroupsAddress(UUID.randomUUID());
       PutKeyValueCommand cmd = new PutKeyValueCommand(
             "k", "v", false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(),
             CommandInvocationId.generateId(null));
@@ -98,7 +99,7 @@ public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
    public void testIndividualStream() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
       cm.getCache(); // Start cache so that global marshaller is resolved
-      JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress address = new JGroupsAddress(UUID.randomUUID());
       try {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);
