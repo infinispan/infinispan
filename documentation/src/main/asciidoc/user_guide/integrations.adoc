@@ -1483,6 +1483,13 @@ Now, you will need to add Infinispan and Spring integration module to your class
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
+            <version>${version.spring}</version>
+        </dependency>
+        <!-- depending on a use case, one should use Spring Context or Spring Boot jars -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${version.spring}</version>
         </dependency>
     </dependencies>
 ----
@@ -1548,8 +1555,76 @@ void deleteBook(Integer bookId) {...}
 
 and you may rest assured that no stray books be left in your application once you decide to remove them.
 
+==== Externalizing session using Spring Session
+
+link:$$http://docs.spring.io/spring-session/docs/current/reference/html5$$[Spring Session] is a very convenient way to externalize user session into Infinispan cluster.
+
+Spring Session integration allows to use both - embedded and client/server mode. Each mode requires using proper artifacts (`infinispan-spring4-embedded` or `infinispan-spring4-remote`).
+An example is shown below:
+
+[source,xml]
+----
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-embedded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring4-embedded</artifactId>
+            <version>${version.spring}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${version.spring}</version>
+        </dependency>
+        <dependency>
+           <groupId>org.springframework</groupId>
+           <artifactId>spring-session</artifactId>
+           <version>${version.spring}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.springframework</groupId>
+           <artifactId>spring-web</artifactId>
+           <version>${version.spring}</version>
+       </dependency>
+    </dependencies>
+----
+
+Spring Session integration has been based on Infinispan Spring Cache support so it requires creating a `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
+The next step it to use `@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` configuration annotation which turns on Spring Session.
+
+`@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` annotations have 2 optional parameters:
+
+* maxInactiveIntervalInSeconds - which sets session expiration time in seconds. The default is set to `1800`.
+* cacheName - cache name which is used for storing sessions. The default is set to `sessions`.
+
+A complete, annotation based configuration example is shown below:
+
+[source, java]
+----
+@EnableInfinispanEmbeddedHttpSession
+@Configuration
+public class Config {
+
+   @Bean
+   public SpringEmbeddedCacheManagerFactoryBean springCacheManager() {
+      return new SpringEmbeddedCacheManagerFactoryBean();
+   }
+
+   //An optional configuration bean which is responsible for replacing the default cookie
+   //for obtaining configuration.
+   //For more information refer to Spring Session documentation.
+   @Bean
+   public HttpSessionStrategy httpSessionStrategy() {
+      return new HeaderHttpSessionStrategy();
+   }
+}
+----
+
 ==== Conclusion
-Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
+Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache and session abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
 ===  Infinispan modules for WildFly
 The distribution includes a set of modules for WildFly. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an WildFly installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="{infinispanversion}"). 

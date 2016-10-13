@@ -90,6 +90,7 @@
       <module>integrationtests/all-embedded-it</module>
       <module>integrationtests/all-embedded-query-it</module>
       <module>integrationtests/all-remote-it</module>
+      <module>integrationtests/spring-boot-it</module>
    </modules>
 
    <profiles>

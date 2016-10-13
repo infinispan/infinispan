@@ -13,6 +13,11 @@
  *     interface for easing usage of JBoss Infinispan within the Spring programming model.<br/><br/>
  *     See package {@link org.infinispan.spring.support <code>org.infinispan.spring.support</code>}.
  *   </li>
+ *   <li>
+ *     Provide implementations of Spring's Session
+ *     {@link org.springframework.session.SessionRepository <code>SessionRepository</code>} interface for session
+ *     management with Spring and Spring Security.
+ *   </li>
  * </ol>
  * </p>
  */
