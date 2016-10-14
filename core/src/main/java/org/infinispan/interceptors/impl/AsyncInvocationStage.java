@@ -1,8 +1,8 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.VisitableCommand;
@@ -54,7 +54,7 @@ public class AsyncInvocationStage extends AbstractInvocationStage
    public Object get() throws Throwable {
       try {
          return CompletableFutures.await(future);
-      } catch (CompletionException e) {
+      } catch (ExecutionException e) {
          throw e.getCause();
       }
    }
