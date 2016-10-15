@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.CacheContainer;
@@ -111,11 +112,13 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
 
     @CacheStarted
     public void cacheStarted(CacheStartedEvent event) {
-        InfinispanLogger.ROOT_LOGGER.cacheStarted(event.getCacheName(), this.name);
+        if (!event.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
+            InfinispanLogger.ROOT_LOGGER.cacheStarted(event.getCacheName(), this.name);
     }
 
     @CacheStopped
     public void cacheStopped(CacheStoppedEvent event) {
-        InfinispanLogger.ROOT_LOGGER.cacheStopped(event.getCacheName(), this.name);
+        if (!event.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
+            InfinispanLogger.ROOT_LOGGER.cacheStopped(event.getCacheName(), this.name);
     }
 }
