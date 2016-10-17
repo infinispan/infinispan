@@ -455,6 +455,27 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    }
 
    @Override
+   @ManagedAttribute(
+         description = "Amount in bytes of off-heap memory used by this cache container",
+         displayName = "Off-Heap memory used",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getOffHeapMemoryUsed() {
+      return calculateOffHeapUsed();
+   }
+
+   protected long calculateOffHeapUsed() {
+      long totalOffHeapUsed = 0;
+      for (Stats stats : getEnabledStats()) {
+         long offHeapUsed = stats.getOffHeapMemoryUsed();
+         if (offHeapUsed > 0) {
+            totalOffHeapUsed += offHeapUsed;
+         }
+      }
+      return totalOffHeapUsed;
+   }
+
+   @Override
    public long getRetrievals() {
       return getHits() + getMisses();
    }

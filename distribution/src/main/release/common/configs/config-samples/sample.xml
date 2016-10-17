@@ -229,10 +229,9 @@
    -->
    <!--
    <local-cache name="evictionCache">
-      <eviction
-         max-entries="5000"
-         strategy="FIFO"
-      />
+      <memory>
+        <object size="5000"/>
+      </memory>
       <expiration
          interval="500"
          lifespan="60000"

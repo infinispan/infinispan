@@ -15,6 +15,7 @@ public enum Attribute {
     // KEEP THESE IN ALPHABETICAL ORDER!
 
     ACQUIRE_TIMEOUT("acquire-timeout"),
+    ADDRESS_COUNT("address-count"),
     AFTER("after"),
     ALIASES("aliases"),
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
@@ -40,6 +41,7 @@ public enum Attribute {
     DEFAULT_CACHE("default-cache"),
     ENABLED("enabled"),
     EXECUTOR("executor"),
+    EVICTION("eviction"),
     @Deprecated
     EVICTION_EXECUTOR("eviction-executor"),
     EXPIRATION_EXECUTOR("expiration-executor"),

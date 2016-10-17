@@ -112,6 +112,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
       return builder.compatibility();
    }
 
+   @Override
+   public MemoryConfigurationBuilder memory() {
+      return builder.memory();
+   }
+
    protected ConfigurationBuilder getBuilder() {
       return builder;
    }

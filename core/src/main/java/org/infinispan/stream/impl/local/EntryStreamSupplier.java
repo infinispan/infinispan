@@ -7,7 +7,9 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -37,12 +39,21 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<CacheEntry<K, V>> stream;
       if (keysToFilter != null) {
-         // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         stream = keysToFilter.stream().map(advancedCache::getCacheEntry).filter(e -> e != null);
+         // Make sure we aren't going remote to retrieve these
+         AdvancedCache<K, V> advancedCache =  AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+               .withFlags(Flag.CACHE_MODE_LOCAL);
+         // Need to box the key to get the correct segment
+         TypeConverter<Object, Object, Object, Object> typeConverter =
+               advancedCache.getComponentRegistry().getComponent(TypeConverter.class);
+         // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
+         // unbox, this way we avoid multiple calls and just do the one.
+         stream = keysToFilter.stream()
+               .map(typeConverter::boxKey)
+               .map(advancedCache::getCacheEntry)
+               .filter(e -> e != null);
       } else {
          stream = supplier.get();
       }

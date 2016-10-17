@@ -30,6 +30,7 @@ public class ModelKeys {
     static final String CONFIGURATION_SUFFIX = "-configuration";
 
     static final String ACQUIRE_TIMEOUT = "acquire-timeout";
+    static final String ADDRESS_COUNT = "address-count";
     static final String ALIAS = "alias";
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
@@ -48,6 +49,7 @@ public class ModelKeys {
     static final String BACKUP_FOR = "backup-for";
     static final String BATCH_SIZE = "batch-size";
     static final String BATCHING = "batching";
+    static final String BINARY_NAME = "BINARY";
     static final String BINARY_KEYED_TABLE = "binary-keyed-table";
     static final String BINARY_KEYED_TABLE_NAME = "BINARY_KEYED_TABLE";
     static final String BLOCK_SIZE = "block-size";
@@ -159,6 +161,7 @@ public class ModelKeys {
     static final String MAX_RETRIES = "max-retries";
     static final String MAX_THREADS = "max-threads";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
+    static final String MEMORY = "memory";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MIN_THREADS = "min-threads";
     static final String MODE = "mode";
@@ -166,6 +169,8 @@ public class ModelKeys {
     static final String MODULE = "module";
     static final String NAME = "name";
     static final String NOTIFICATIONS = "notifications";
+    static final String OBJECT_NAME = "OBJECT";
+    static final String OFF_HEAP_NAME = "OFF-HEAP";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
     static final String OWNERS = "owners";
     static final String PARTITION_HANDLING = "partition-handling";

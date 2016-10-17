@@ -27,7 +27,9 @@
    <cache-container default-cache="default">
       <local-cache name="default">
          <locking acquire-timeout="15000" striping="false" concurrency-level="1000"/>
-         <eviction strategy="NONE"/>
+         <memory>
+            <object/>
+         </memory>
          <expiration interval="-1"/>
          <store-as-binary keys="false" values="false"/>
          <data-container key-equivalence="org.infinispan.commons.equivalence.AnyServerEquivalence"

@@ -102,8 +102,10 @@
          <state-transfer enabled="true" timeout="120000" chunk-size="1000"/>
       </distributed-cache>
       <local-cache name="evictionCache">
-         <eviction max-entries="5000"  thread-policy="PIGGYBACK" strategy="LRU"/>
          <expiration interval="500" lifespan="60000" max-idle="1000"/>
+         <memory>
+            <object size="5000"/>
+         </memory>
       </local-cache>
       <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>
       <distributed-cache name="withDeadlockDetection" mode="SYNC" remote-timeout="20000" statistics="false" deadlock-detection-spin="1221" />

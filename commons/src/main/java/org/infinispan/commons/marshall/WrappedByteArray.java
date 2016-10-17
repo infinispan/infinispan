@@ -21,19 +21,53 @@ public class WrappedByteArray implements WrappedBytes {
       this.hashCode = Arrays.hashCode(bytes);
    }
 
+   public WrappedByteArray(byte[] bytes, int hashCode) {
+      this.bytes = bytes;
+      this.hashCode = hashCode;
+   }
+
+   @Override
    public byte[] getBytes() {
       return bytes;
    }
 
    @Override
+   public int backArrayOffset() {
+      return 0;
+   }
+
+   @Override
+   public int getLength() {
+      return bytes.length;
+   }
+
+   @Override
+   public byte getByte(int offset) {
+      return bytes[offset];
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null) return false;
+      Class<?> oClass = o.getClass();
+      if (getClass() != oClass) {
+         return WrappedBytes.class.isAssignableFrom(oClass) && equalsWrappedBytes((WrappedBytes) o);
+      }
 
       WrappedByteArray that = (WrappedByteArray) o;
 
       return Arrays.equals(bytes, that.bytes);
+   }
 
+   public boolean equalsWrappedBytes(WrappedBytes other) {
+      int length = getLength();
+      if (other.getLength() != length) return false;
+      if (other.hashCode() != hashCode()) return false;
+      for (int i = 0; i < length; ++i) {
+         if (getByte(i) != other.getByte(i)) return false;
+      }
+      return true;
    }
 
    @Override

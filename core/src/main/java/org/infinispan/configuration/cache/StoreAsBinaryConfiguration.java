@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * both.
  * <p />
  * @see StoreAsBinaryConfigurationBuilder
+ * @deprecated Use {@link MemoryConfiguration} instead
  */
 public class StoreAsBinaryConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).autoPersist(false).build();

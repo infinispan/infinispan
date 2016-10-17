@@ -16,6 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Controls the eviction settings for the cache.
+ * @deprecated Use {@link MemoryConfiguration} instead
  */
 public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EvictionConfiguration> {
    private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
@@ -76,6 +77,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    public EvictionConfigurationBuilder size(long size) {
       attributes.attribute(SIZE).set(size);
+      memory().size(size);
       return this;
    }
 
@@ -94,6 +96,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    public EvictionConfigurationBuilder type(EvictionType type) {
       attributes.attribute(TYPE).set(type);
+      memory().evictionType(type);
       return this;
    }
 

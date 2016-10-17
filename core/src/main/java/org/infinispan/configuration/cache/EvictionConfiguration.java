@@ -11,6 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Controls the eviction settings for the cache.
+ * @deprecated Use {@link MemoryConfiguration} instead
  */
 public class EvictionConfiguration {
    static final Log log = LogFactory.getLog(EvictionConfiguration.class);

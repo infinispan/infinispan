@@ -30,7 +30,6 @@
         <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
             <expiration max-idle="-1"/>
             <indexing index="NONE"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>
@@ -42,7 +41,6 @@
         <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
             <expiration max-idle="-1"/>
             <indexing index="NONE"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>
@@ -54,7 +52,6 @@
         <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
             <expiration max-idle="-1"/>
             <indexing index="NONE"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>

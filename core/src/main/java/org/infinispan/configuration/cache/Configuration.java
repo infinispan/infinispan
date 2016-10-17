@@ -20,6 +20,7 @@ public class Configuration {
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
+   private final MemoryConfiguration memoryConfiguration;
    private final DeadlockDetectionConfiguration deadlockDetectionConfiguration;
    private final EvictionConfiguration evictionConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
@@ -54,6 +55,7 @@ public class Configuration {
                  VersioningConfiguration versioningConfiguration,
                  SitesConfiguration sitesConfiguration,
                  CompatibilityModeConfiguration compatibilityConfiguration,
+                 MemoryConfiguration memoryConfiguration,
                  List<?> modules) {
       this.template = template;
       this.attributes = attributes.checkProtection();
@@ -76,6 +78,7 @@ public class Configuration {
       this.securityConfiguration = securityConfiguration;
       this.sitesConfiguration = sitesConfiguration;
       this.compatibilityConfiguration = compatibilityConfiguration;
+      this.memoryConfiguration = memoryConfiguration;
       Map<Class<?>, Object> modulesMap = new HashMap<Class<?>, Object>();
       for(Object module : modules) {
          modulesMap.put(module.getClass(), module);
@@ -107,6 +110,11 @@ public class Configuration {
       return deadlockDetectionConfiguration;
    }
 
+   /**
+    *
+    * @return
+    * @deprecated please use {@link Configuration#memory()}
+    */
    public EvictionConfiguration eviction() {
       return evictionConfiguration;
    }
@@ -134,6 +142,8 @@ public class Configuration {
    public LockingConfiguration locking() {
       return lockingConfiguration;
    }
+
+   public MemoryConfiguration memory() { return memoryConfiguration; }
 
    @SuppressWarnings("unchecked")
    public <T> T module(Class<T> moduleClass) {

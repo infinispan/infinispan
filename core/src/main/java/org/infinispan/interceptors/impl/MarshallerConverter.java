@@ -13,13 +13,16 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
+ * Converter that uses the given marshaller to box and unbox values
  * @author wburns
  * @since 9.0
  */
 public class MarshallerConverter implements TypeConverter<Object, Object, Object, Object> {
    private final StreamingMarshaller marshaller;
-   public MarshallerConverter(StreamingMarshaller marshaller) {
+   private final boolean convertAll;
+   public MarshallerConverter(StreamingMarshaller marshaller, boolean convertAll) {
       this.marshaller = marshaller;
+      this.convertAll = convertAll;
    }
    @Override
    public Object unboxKey(Object key) {
@@ -37,7 +40,7 @@ public class MarshallerConverter implements TypeConverter<Object, Object, Object
 
    @Override
    public Object boxKey(Object target) {
-      if (target == null || isTypeExcluded(target.getClass())) {
+      if (target == null || (!convertAll && isTypeExcluded(target.getClass()))) {
          return target;
       }
       try {
@@ -68,7 +71,8 @@ public class MarshallerConverter implements TypeConverter<Object, Object, Object
             type.equals(Boolean.class) || type.equals(Character.class) ||
             type.equals(Byte.class) || type.equals(Short.class) || type.equals(Integer.class) ||
             type.equals(Long.class) || type.equals(Float.class) || type.equals(Double.class) ||
-            (type.isArray() && isTypeExcluded(type.getComponentType())) || type.equals(GlobalTransaction.class) || Address.class.isAssignableFrom(type) ||
+            // We cannot exclude array as we can't tell the difference between byte[] and WrappedByteArray
+            type.equals(GlobalTransaction.class) || Address.class.isAssignableFrom(type) ||
             ReplicableCommand.class.isAssignableFrom(type) || type.equals(WrappedByteArray.class);
    }
 }

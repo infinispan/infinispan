@@ -2,8 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.DataContainerConfiguration.DATA_CONTAINER;
-import static org.infinispan.configuration.cache.DataContainerConfiguration.KEY_EQUIVALENCE;
-import static org.infinispan.configuration.cache.DataContainerConfiguration.VALUE_EQUIVALENCE;
 
 import java.util.Properties;
 
@@ -18,7 +16,7 @@ import org.infinispan.container.DataContainer;
  * Controls the data container for the cache.
  *
  * @author pmuir
- *
+ * @Deprecated Please use {@link MemoryConfiguration}
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration> {
 
@@ -77,7 +75,6 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @Deprecated Equivalence is to be removed (byte[] are directly supported)
     */
    public <K> DataContainerConfigurationBuilder keyEquivalence(Equivalence<K> keyEquivalence) {
-      attributes.attribute(KEY_EQUIVALENCE).set(keyEquivalence);
       return this;
    }
 
@@ -93,7 +90,6 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @Deprecated Equivalence is to be removed (byte[] are directly supported)
     */
    public <V> DataContainerConfigurationBuilder valueEquivalence(Equivalence<V> valueEquivalence) {
-      attributes.attribute(VALUE_EQUIVALENCE).set(valueEquivalence);
       return this;
    }
 

@@ -6,7 +6,9 @@
 
    <cache-container default-cache="default">
       <local-cache name="default">
-         <eviction max-entries="1000" />
+         <memory>
+            <object size="1000"/>
+         </memory>
       </local-cache>
    </cache-container>
 

@@ -14,6 +14,7 @@ import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
+import org.infinispan.container.StorageType;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
@@ -79,14 +80,17 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          String cacheName) throws Exception {
       AdvancedCache<K, V> cache = new CacheImpl<K, V>(cacheName);
       CompatibilityModeConfiguration compatibilityModeConfiguration = configuration.compatibility();
+      StorageType type = configuration.memory().storageType();
       Marshaller marshaller;
       TypeConverter converter;
       if (compatibilityModeConfiguration.enabled()) {
          converter = new WrappedByteArrayConverter();
          marshaller = compatibilityModeConfiguration.marshaller();
          cache = new CompatibilityAdvancedCache<>(cache, marshaller, converter);
-      } else if (configuration.storeAsBinary().enabled()) {
-         converter = new MarshallerConverter(globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class));
+      } else if (type != StorageType.OBJECT) {
+         // Both other types require storing as byte[]
+         converter = new MarshallerConverter(globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class),
+               type == StorageType.OFF_HEAP);
          marshaller = null;
          cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
       } else {
@@ -114,6 +118,15 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          cache = new SimpleCacheImpl<>(cacheName);
       }
       this.configuration = configuration;
+      StorageType type = configuration.memory().storageType();
+      TypeConverter converter;
+      if (type != StorageType.OBJECT) {
+         converter = new MarshallerConverter(globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class),
+               type == StorageType.OFF_HEAP);
+      } else {
+         converter = new WrappedByteArrayConverter();
+      }
+      cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override
          protected void bootstrapComponents() {
@@ -135,6 +148,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
       componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+      componentRegistry.registerComponent(converter, TypeConverter.class);
       return cache;
    }
 

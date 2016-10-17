@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
@@ -372,6 +373,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writePersistence(writer, configuration);
       configuration.versioning().attributes().write(writer, Element.VERSIONING.getLocalName());
       writeDataContainer(writer, configuration);
+      writeDataContainer(writer, configuration);
       writeIndexing(writer, configuration);
       writeCustomInterceptors(writer, configuration);
       writeSecurity(writer, configuration);
@@ -406,9 +408,17 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       if (attributes.isModified()) {
          writer.writeStartElement(Element.DATA_CONTAINER);
          attributes.write(writer, DataContainerConfiguration.DATA_CONTAINER, Attribute.CLASS);
-         attributes.write(writer, DataContainerConfiguration.KEY_EQUIVALENCE, Attribute.KEY_EQUIVALENCE);
-         attributes.write(writer, DataContainerConfiguration.VALUE_EQUIVALENCE, Attribute.VALUE_EQUIVALENCE);
          writeTypedProperties(writer, dataContainer.properties());
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeMemory(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
+      MemoryConfiguration memory = configuration.memory();
+      AttributeSet attributes = memory.attributes();
+      if (attributes.isModified()) {
+         writer.writeStartElement(Element.MEMORY);
+         attributes.write(writer, MemoryConfiguration.STORAGE_TYPE, memory.storageType());
          writer.writeEndElement();
       }
    }

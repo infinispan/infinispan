@@ -175,8 +175,10 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
 
         resourceRegistration.registerSubModel(new LockingConfigurationResource(this));
         resourceRegistration.registerSubModel(new TransactionConfigurationResource(this));
-        resourceRegistration.registerSubModel(new EvictionConfigurationResource(this));
         resourceRegistration.registerSubModel(new ExpirationConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryBinaryConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryObjectConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryOffHeapConfigurationResource(this));
         resourceRegistration.registerSubModel(new CompatibilityConfigurationResource(this));
         resourceRegistration.registerSubModel(new IndexingConfigurationResource(this));
         resourceRegistration.registerSubModel(new LoaderConfigurationResource(this));

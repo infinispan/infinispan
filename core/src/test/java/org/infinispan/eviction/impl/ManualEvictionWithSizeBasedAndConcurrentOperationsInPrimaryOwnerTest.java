@@ -484,11 +484,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void purgeExpired() {
-         delegate.purgeExpired();
-      }
-
-      @Override
       public void evict(K key) {
          run(beforeEvict);
          delegate.evict(key);

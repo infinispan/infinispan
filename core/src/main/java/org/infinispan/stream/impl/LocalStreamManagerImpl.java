@@ -17,7 +17,6 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
@@ -56,7 +55,6 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private RpcManager rpc;
    private CommandsFactory factory;
    private boolean hasLoader;
-   private Equivalence<? super K> keyEquivalence;
 
    private Address localAddress;
 
@@ -104,27 +102,19 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       }
    }
 
-   private static <K, V> Cache unwrapCache(Cache<K, V> cache) {
-      if (cache instanceof AbstractDelegatingCache) {
-         return unwrapCache(((AbstractDelegatingCache) cache).getDelegate());
-      }
-      return cache;
-   }
-
    @Inject
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
            Configuration configuration, CommandsFactory factory) {
       // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
       // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
       // stack in the operation itself.
-      this.cache = unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
       this.cacheName = ByteString.fromString(cache.getName());
       this.registry = registry;
       this.stm = stm;
       this.rpc = rpc;
       this.factory = factory;
       this.hasLoader = configuration.persistence().usingStores();
-      this.keyEquivalence = configuration.dataContainer().keyEquivalence();
    }
 
    @Start
@@ -192,15 +182,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       Stream<CacheEntry<K, V>> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
               .filterKeys(keysToInclude).filterKeySegments(segments);
       if (!keysToExclude.isEmpty()) {
-         // AnyEquivalence is how HashSet works so we don't need to worry then
-         if (!(keyEquivalence instanceof AnyEquivalence)) {
-            // We have to add all the keys into an equivalent hash set to make sure we are excluding them properly
-            Set<K> equivKeys = new EquivalentHashSet<>(keyEquivalence);
-            keysToExclude.forEach(equivKeys::add);
-            return stream.filter(e -> !equivKeys.contains(e.getKey()));
-         } else {
-            return stream.filter(e -> !keysToExclude.contains(e.getKey()));
-         }
+         return stream.filter(e -> !keysToExclude.contains(e.getKey()));
       }
       return stream;
    }

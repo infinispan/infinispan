@@ -2,7 +2,9 @@
             <cache-container name="local" default-cache="stringWithPassivation" start="EAGER">
 
                 <local-cache name="stringWithPassivation" start="EAGER" >
-                    <eviction strategy="LRU" size="2" />
+                    <memory>
+                        <object size="2"/>
+                    </memory>
                     <string-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="STRING_WITH_PASSIVATION_STORE">
                         <property name="databaseType">${database.type}</property>
                         <string-keyed-table prefix="STRING_WITH_PASSIVATION">
@@ -37,7 +39,9 @@
                 </local-cache>
 
                 <local-cache name="binaryWithPassivation" start="EAGER" >
-                    <eviction strategy="LRU" size="2" />
+                    <memory>
+                        <object size="2"/>
+                    </memory>
                     <binary-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="BINARY_WITH_PASSIVATION_STORE">
                         <property name="databaseType">${database.type}</property>
                         <binary-keyed-table prefix="BINARY_WITH_PASSIVATION">
@@ -60,7 +64,9 @@
                 </local-cache>
 
                 <local-cache name="mixedWithPassivation" start="EAGER" >
-                    <eviction strategy="LRU" size="2" />
+                    <memory>
+                        <object size="2"/>
+                    </memory>
                     <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="MIXED_WITH_PASSIVATION_STORE">
                         <property name="databaseType">${database.type}</property>
                         <binary-keyed-table prefix="MIXED_WITH_PASSIVATION_BKT">
@@ -93,5 +99,4 @@
                 </local-cache>
 
             </cache-container>
-           <cache-container name="security"/>
         </subsystem>

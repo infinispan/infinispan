@@ -62,7 +62,6 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(0, TimeUnit.MINUTES).build());
-      dc.purgeExpired();
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       Thread.sleep(100);
@@ -80,8 +79,6 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(100);
-      assert dc.size() == 0;
-      dc.purgeExpired();
       assert dc.size() == 0;
    }
 

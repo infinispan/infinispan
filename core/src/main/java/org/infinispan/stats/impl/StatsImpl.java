@@ -18,6 +18,7 @@ public class StatsImpl implements Stats {
    final long timeSinceStart;
    final int currentNumberOfEntries;
    final long totalNumberOfEntries;
+   final long offHeapMemoryUsed;
    final long retrievals;
    final long stores;
    final long hits;
@@ -40,6 +41,7 @@ public class StatsImpl implements Stats {
          timeSinceStart = mgmtInterceptor.getTimeSinceStart();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
          totalNumberOfEntries = mgmtInterceptor.getStores();
+         offHeapMemoryUsed = mgmtInterceptor.getOffHeapMemoryUsed();
          retrievals = mgmtInterceptor.getHits() + mgmtInterceptor.getMisses();
          stores = mgmtInterceptor.getStores();
          hits = mgmtInterceptor.getHits();
@@ -55,6 +57,7 @@ public class StatsImpl implements Stats {
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
          totalNumberOfEntries = -1;
+         offHeapMemoryUsed = -1;
          retrievals = -1;
          stores = -1;
          hits = -1;
@@ -76,6 +79,7 @@ public class StatsImpl implements Stats {
          timeSinceStart = other.getTimeSinceStart();
          currentNumberOfEntries = other.getCurrentNumberOfEntries();
          totalNumberOfEntries = other.getTotalNumberOfEntries();
+         offHeapMemoryUsed = other.getOffHeapMemoryUsed();
          retrievals = other.getRetrievals();
          stores = other.getStores();
          hits = other.getHits();
@@ -91,6 +95,7 @@ public class StatsImpl implements Stats {
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
          totalNumberOfEntries = -1;
+         offHeapMemoryUsed = -1;
          retrievals = -1;
          stores = -1;
          hits = -1;
@@ -122,6 +127,11 @@ public class StatsImpl implements Stats {
    @Override
    public long getTotalNumberOfEntries() {
       return totalNumberOfEntries;
+   }
+
+   @Override
+   public long getOffHeapMemoryUsed() {
+      return 0;
    }
 
    @Override

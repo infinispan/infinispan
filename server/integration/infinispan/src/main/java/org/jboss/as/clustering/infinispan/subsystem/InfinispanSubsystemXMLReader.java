@@ -38,6 +38,8 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -47,6 +49,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
@@ -940,6 +943,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 this.parseEviction(reader, cache, operations);
                 break;
             }
+            case MEMORY: {
+                this.parseMemory(reader, cache, operations);
+                break;
+            }
             case EXPIRATION: {
                 this.parseExpiration(reader, cache, operations);
                 break;
@@ -1110,33 +1117,42 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         operations.put(transactionAddress, transaction);
     }
 
-    private void parseEviction(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+    private void parseMemory(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case BINARY: {
+                    parseMemoryBinary(reader, cache, operations);
+                    break;
+                }
+                case OFF_HEAP: {
+                    parseMemoryOffHeap(reader, cache, operations);
+                    break;
+                }
+                case OBJECT: {
+                    parseMemoryObject(reader, cache, operations);
+                    break;
+                }
+                default:
+                    throw ParseUtils.unexpectedElement(reader);
+            }
+            if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+                ParseUtils.unexpectedElement(reader);
+            }
+        }
+    }
 
-        PathAddress evictionAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(EvictionConfigurationResource.PATH);
-        ModelNode eviction = Util.createAddOperation(evictionAddress);
+    private void parseMemoryObject(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+
+        PathAddress objectAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(MemoryObjectConfigurationResource.PATH);
+        ModelNode object = Util.createAddOperation(objectAddress);
 
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
-                case STRATEGY: {
-                    EvictionConfigurationResource.EVICTION_STRATEGY.parseAndSetParameter(value, eviction, reader);
-                    break;
-                }
-                case MAX_ENTRIES: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
-                        throw ParseUtils.unexpectedAttribute(reader, i);
-                    } else {
-                        EvictionConfigurationResource.SIZE.parseAndSetParameter(value, eviction, reader);
-                    }
-                    break;
-                }
-                case TYPE: {
-                    EvictionConfigurationResource.TYPE.parseAndSetParameter(value, eviction, reader);
-                    break;
-                }
                 case SIZE: {
-                    EvictionConfigurationResource.SIZE.parseAndSetParameter(value, eviction, reader);
+                    MemoryObjectConfigurationResource.SIZE.parseAndSetParameter(value, object, reader);
                     break;
                 }
                 default: {
@@ -1145,7 +1161,124 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
         ParseUtils.requireNoContent(reader);
-        operations.put(evictionAddress, eviction);
+        operations.put(objectAddress, object);
+    }
+
+    private void parseMemoryBinary(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+
+        PathAddress binaryAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(MemoryBinaryConfigurationResource.PATH);
+        ModelNode binary = Util.createAddOperation(binaryAddress);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case EVICTION: {
+                    MemoryBinaryConfigurationResource.EVICTION.parseAndSetParameter(value, binary, reader);
+                    break;
+                }
+                case SIZE: {
+                    MemoryBinaryConfigurationResource.SIZE.parseAndSetParameter(value, binary, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(binaryAddress, binary);
+    }
+
+    private void parseMemoryOffHeap(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress offHeapAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(MemoryOffHeapConfigurationResource.PATH);
+        ModelNode offHeap = Util.createAddOperation(offHeapAddress);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case EVICTION: {
+                    MemoryOffHeapConfigurationResource.EVICTION.parseAndSetParameter(value, offHeap, reader);
+                    break;
+                }
+                case SIZE: {
+                    MemoryOffHeapConfigurationResource.SIZE.parseAndSetParameter(value, offHeap, reader);
+                    break;
+                }
+                case ADDRESS_COUNT: {
+                    MemoryOffHeapConfigurationResource.ADDRESS_COUNT.parseAndSetParameter(value, offHeap, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(offHeapAddress, offHeap);
+    }
+
+    private void parseEviction(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+
+        if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+            throw ParseUtils.unexpectedElement(reader);
+        }
+
+        boolean enabled = false;
+        long size = -1;
+        String type = null;
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case STRATEGY: {
+                    enabled = EvictionStrategy.valueOf(value).isEnabled();
+                    break;
+                }
+                case MAX_ENTRIES: {
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    }
+                }
+                // falls through
+                case SIZE: {
+                    size = Long.valueOf(value);
+                    break;
+                }
+                case TYPE: {
+                    type = value;
+                    break;
+                }
+
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+
+        // Need to set the memory location as well so xml can be updated properly
+        if (enabled && size > 0) {
+            PathElement path;
+            SimpleAttributeDefinition sizeAtt;
+            if (type == null || type.equals(EvictionType.COUNT.toString())) {
+                path = MemoryObjectConfigurationResource.PATH;
+                sizeAtt = MemoryObjectConfigurationResource.SIZE;
+            } else {
+                path = MemoryBinaryConfigurationResource.PATH;
+                sizeAtt = MemoryBinaryConfigurationResource.SIZE;
+            }
+            PathAddress memoryAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(path);
+            ModelNode memory = Util.createAddOperation(memoryAddress);
+            sizeAtt.parseAndSetParameter(String.valueOf(size), memory, reader);
+            if (EvictionType.MEMORY.toString().equals(type)) {
+                MemoryBinaryConfigurationResource.EVICTION.parseAndSetParameter(type, memory, reader);
+            }
+            operations.put(memoryAddress, memory);
+        }
+
+        ParseUtils.requireNoContent(reader);
     }
 
     private void parseExpiration(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {

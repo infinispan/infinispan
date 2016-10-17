@@ -39,6 +39,7 @@ public enum Attribute {
     // must be first
     UNKNOWN((String) null),
     ACQUIRE_TIMEOUT(ModelKeys.ACQUIRE_TIMEOUT),
+    ADDRESS_COUNT(ModelKeys.ADDRESS_COUNT),
     ALIASES(ModelKeys.ALIASES),
     APPEND_CACHE_NAME_TO_PATH(ModelKeys.APPEND_CACHE_NAME_TO_PATH),
     @Deprecated
@@ -74,6 +75,7 @@ public enum Attribute {
     DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
     @Deprecated EAGER_LOCKING("eager-locking"),
     ENABLED(ModelKeys.ENABLED),
+    EVICTION(ModelKeys.EVICTION),
     @Deprecated
     EVICTION_EXECUTOR(ModelKeys.EVICTION_EXECUTOR),
     @Deprecated

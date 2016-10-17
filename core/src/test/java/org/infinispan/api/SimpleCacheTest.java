@@ -4,6 +4,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.CustomInterceptorConfigTest;
@@ -28,7 +29,8 @@ public class SimpleCacheTest extends APINonTxTest {
       cb.simpleCache(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cb);
 
-      assertTrue(cm.getCache() instanceof SimpleCacheImpl);
+      cache = AbstractDelegatingCache.unwrapCache(cm.getCache());
+      assertTrue(cache instanceof SimpleCacheImpl);
       return cm;
    }
 

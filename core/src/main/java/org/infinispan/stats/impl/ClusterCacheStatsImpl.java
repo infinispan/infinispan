@@ -56,6 +56,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private static final String HITS = "hits";
    private static final String MISSES = "misses";
    private static final String NUMBER_OF_ENTRIES = "numberOfEntries";
+   private static final String OFF_HEAP_MEMORY_USED = "offHeapMemoryUsed";
    private static final String STORES = "stores";
 
    //LockManager
@@ -92,6 +93,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private long hits;
    private long evictions;
    private long numberOfEntries;
+   private long offHeapMemoryUsed;
    private long averageWriteTime;
    private long averageReadTime;
    private long averageRemoveTime;
@@ -381,6 +383,21 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    }
 
    @Override
+   @ManagedAttribute(
+         description = "Amount in bytes of off-heap memory used across the cluster for this cache",
+         displayName = "Cluster wide off-sheap memory used",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getOffHeapMemoryUsed() {
+      if (isStatisticsEnabled()) {
+         fetchClusterWideStatsIfNeeded();
+         return offHeapMemoryUsed;
+      } else {
+         return -1;
+      }
+   }
+
+   @Override
    public long getRetrievals() {
       return getHits() + getMisses();
    }
@@ -395,6 +412,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       hits = 0;
       evictions = 0;
       numberOfEntries = 0;
+      offHeapMemoryUsed = 0;
       averageWriteTime = 0;
       averageReadTime = 0;
       averageRemoveTime = 0;
@@ -554,6 +572,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       numberOfEntries = getCacheMode(cache).isReplicated() ?
             cache.getStats().getCurrentNumberOfEntries() :
             addLongAttributes(responseList, NUMBER_OF_ENTRIES);
+      offHeapMemoryUsed = addLongAttributes(responseList, OFF_HEAP_MEMORY_USED);
       removeHits = addLongAttributes(responseList, REMOVE_HITS);
       removeMisses = addLongAttributes(responseList, REMOVE_MISSES);
       stores = addLongAttributes(responseList, STORES);
@@ -684,6 +703,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
          } else if (!cacheMode.isReplicated()){
             map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries());
          }
+         map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
          map.put(STORES, stats.getStores());
          map.put(REMOVE_HITS, stats.getRemoveHits());
          map.put(REMOVE_MISSES, stats.getRemoveMisses());

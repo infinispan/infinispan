@@ -44,6 +44,7 @@ import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -58,6 +59,7 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.StorageType;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -1489,6 +1491,10 @@ public class Parser implements ConfigurationParser {
             parseDataContainer(reader, holder);
             break;
          }
+         case MEMORY: {
+            parseMemory(reader, holder);
+            break;
+         }
          case BACKUPS: {
             this.parseBackups(reader, builder);
             break;
@@ -1533,7 +1539,105 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      builder.dataContainer().withProperties(parseProperties(reader));
+      Properties properties = new Properties();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTY: {
+               parseProperty(reader, properties);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      builder.dataContainer().withProperties(properties);
+   }
+
+   private void parseMemory(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case OFFHEAP:
+               memoryBuilder.storageType(StorageType.OFF_HEAP);
+               parseOffHeapMemoryAttributes(reader, holder);
+               break;
+            case OBJECT:
+               memoryBuilder.storageType(StorageType.OBJECT);
+               parseObjectMemoryAttributes(reader, holder);
+               break;
+            case BINARY:
+               memoryBuilder.storageType(StorageType.BINARY);
+               parseBinaryMemoryAttributes(reader, holder);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseOffHeapMemoryAttributes(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SIZE:
+               memoryBuilder.size(Long.parseLong(value));
+               break;
+            case EVICTION:
+               memoryBuilder.evictionType(EvictionType.valueOf(value));
+               break;
+            case ADDRESS_COUNT:
+               memoryBuilder.addressCount(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseObjectMemoryAttributes(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SIZE:
+               memoryBuilder.size(Long.parseLong(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseBinaryMemoryAttributes(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SIZE:
+               memoryBuilder.size(Long.parseLong(value));
+               break;
+            case EVICTION:
+               memoryBuilder.evictionType(EvictionType.valueOf(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseStoreAsBinary(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1541,6 +1645,7 @@ public class Parser implements ConfigurationParser {
       Boolean binaryKeys = null;
       Boolean binaryValues = null;
       builder.storeAsBinary().enable();
+      builder.memory().storageType(StorageType.BINARY);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -1745,6 +1850,7 @@ public class Parser implements ConfigurationParser {
    }
 
    protected void parseEviction(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      log.evictionDeprecated();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
@@ -1755,7 +1861,7 @@ public class Parser implements ConfigurationParser {
             }
             case MAX_ENTRIES: {
                log.evictionMaxEntriesDeprecated();
-               builder.eviction().size(Long.parseLong(value));
+               builder.eviction().maxEntries(Long.parseLong(value));
                break;
             }
             case THREAD_POLICY: {

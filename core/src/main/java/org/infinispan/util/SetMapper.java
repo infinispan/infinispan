@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.commons.util.DistinctFunction;
+import org.infinispan.commons.util.InjectiveFunction;
 
 /**
  * A set that maps another one to a new one of a possibly different type.  Note this set is read only
  * and doesn't accept write operations.
  * <p>
- * This class currently only accepts a {@link Function} that also implements {@link DistinctFunction} so that it can
+ * This class currently only accepts a {@link Function} that also implements {@link InjectiveFunction} so that it can
  * guarantee the resulting mapped values are distinct from each other.  This is important as many operations because
  * very costly if this is not true.
  * <p>
@@ -19,12 +19,12 @@ import org.infinispan.commons.util.DistinctFunction;
  * @author wburns
  * @since 9.0
  */
-public class SetMapper<E, R> extends CollectionMapper<E, R> {
+public class SetMapper<E, R> extends CollectionMapper<E, R> implements Set<R> {
    public SetMapper(Set<E> realCollection, Function<? super E, ? extends R> mapper) {
       super(realCollection, mapper);
-      if (!(mapper instanceof DistinctFunction)) {
+      if (!(mapper instanceof InjectiveFunction)) {
          throw new IllegalArgumentException("Function must also provided distinct values as evidented by implementing" +
-                 "the marker interface DistinctFunction");
+                 "the marker interface InjectiveFunction");
       }
    }
 }

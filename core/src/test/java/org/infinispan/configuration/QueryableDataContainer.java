@@ -112,12 +112,6 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    }
 
    @Override
-   public void purgeExpired() {
-      loggedOperations.add("purgeExpired()" );
-      delegate.purgeExpired();
-   }
-
-   @Override
    public void evict(Object key) {
       loggedOperations.add("evict(" + key + ")");
       delegate.evict(key);

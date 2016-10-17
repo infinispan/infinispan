@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.LongAdder;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -42,12 +43,15 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
 
    private TimeService timeService;
    private DataContainer dataContainer;
+   private OffHeapMemoryAllocator allocator;
    private Configuration configuration;
 
    @Inject
-   public void injectDependencies(TimeService timeService, DataContainer dataContainer, Configuration configuration) {
+   public void injectDependencies(TimeService timeService, DataContainer dataContainer,
+         OffHeapMemoryAllocator allocator, Configuration configuration) {
       this.timeService = timeService;
       this.dataContainer = dataContainer;
+      this.allocator = allocator;
       this.configuration = configuration;
    }
 
@@ -248,6 +252,16 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    @Override
    public long getTotalNumberOfEntries() {
       return stores.longValue();
+   }
+
+   @ManagedAttribute(
+         description = "Amount in bytes of off-heap memory used by this cache",
+         displayName = "Off-Heap memory used",
+         displayType = DisplayType.SUMMARY
+   )
+   @Override
+   public long getOffHeapMemoryUsed() {
+      return allocator.getAllocatedAmount();
    }
 
    @ManagedOperation(

@@ -16,8 +16,10 @@
       </local-cache>
       <local-cache name="simpleLocalCache"/>
       <local-cache name="localCacheWithEviction">
-         <eviction strategy="LRU" max-entries="10" />
          <expiration lifespan="10000" />
+         <memory>
+            <object size="10"/>
+         </memory>
       </local-cache>
       <replicated-cache name="replSync" />
       <replicated-cache name="replAsync" mode="ASYNC" />

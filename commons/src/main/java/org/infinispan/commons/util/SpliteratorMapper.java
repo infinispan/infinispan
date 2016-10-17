@@ -45,7 +45,7 @@ public class SpliteratorMapper<E, S> implements Spliterator<S> {
    @Override
    public int characteristics() {
       int characteristics = spliterator.characteristics();
-      if (mapper instanceof DistinctFunction) {
+      if (mapper instanceof InjectiveFunction) {
          return characteristics;
       } else {
          // Have to unset distinct if the function wasn't distinct

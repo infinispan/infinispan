@@ -208,6 +208,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(MetricKeys.NUMBER_OF_ENTRIES, "cache");
         sharedAttributeResolver.put(MetricKeys.NUMBER_OF_LOCKS_AVAILABLE, "cache");
         sharedAttributeResolver.put(MetricKeys.NUMBER_OF_LOCKS_HELD, "cache");
+        sharedAttributeResolver.put(MetricKeys.OFF_HEAP_MEMORY_USED, "cache");
         sharedAttributeResolver.put(MetricKeys.SITES_OFFLINE, "cache");
         sharedAttributeResolver.put(MetricKeys.SITES_ONLINE, "cache");
         sharedAttributeResolver.put(MetricKeys.PREPARES, "cache");
@@ -236,6 +237,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.SECURITY, "cache");
         sharedAttributeResolver.put(ModelKeys.LOCKING, null);
         sharedAttributeResolver.put(ModelKeys.TRANSACTION, null);
+        sharedAttributeResolver.put(ModelKeys.MEMORY, null);
         sharedAttributeResolver.put(ModelKeys.EVICTION, null);
         sharedAttributeResolver.put(ModelKeys.EXPIRATION, null);
         sharedAttributeResolver.put(ModelKeys.INDEXING, null);
