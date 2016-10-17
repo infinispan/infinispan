@@ -339,7 +339,9 @@ final class InternalExternalizerTable {
       extId = addInternalExternalizer(new DldGlobalTransaction.Externalizer(), extId);
       extId = addInternalExternalizer(new DoubleSummaryStatisticsExternalizer(), extId);
       extId = addInternalExternalizer(new EmbeddedMetadata.Externalizer(), extId);
+      extId = addInternalExternalizer(new EntryViews.NoValueReadOnlyViewExternalizer(), extId);
       extId = addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer(), extId);
+      extId = addInternalExternalizer(new EntryViews.ReadOnlySnapshotViewExternalizer(), extId);
       extId = addInternalExternalizer(new EnumSetExternalizer(), extId);
       extId = addInternalExternalizer(new EquivalenceExternalizer(), extId);
       extId = addInternalExternalizer(new ExceptionResponse.Externalizer(), extId);

@@ -164,6 +164,10 @@ final class ExternallyMarshallable {
             || className.equals("org.infinispan.server.infinispan.task.DistributedServerTask") // prod
 
             || className.equals("org.infinispan.jcache.annotation.DefaultCacheKey") // prod
+
+            || className.equals("org.infinispan.security.ExecutionAuthorizationTest$SimpleCallable")
+            || className.equals("org.infinispan.cdi.embedded.test.distexec.DistributedExecutorCDITest$SimpleCallable")
+            || className.equals("org.infinispan.server.core.transport.NettyTransport$ConnectionAdderTask") // prod
             ;
    }
 
