@@ -6,8 +6,19 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.KnownComponentNames;
@@ -41,12 +52,14 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private ExecutorService asyncExecutor;
    private AdvancedCache<K, V> cache;
+   private boolean needTransaction;
 
    @Inject
-   public void inject(AdvancedCache<K, V> cache,
+   public void inject(AdvancedCache<K, V> cache, Configuration configuration,
            @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor) {
       this.cache = cache;
       this.asyncExecutor = asyncExecutor;
+      needTransaction = configuration.transaction().transactionMode().isTransactional();
    }
 
    @Override
@@ -108,7 +121,29 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    private void removeExpired(K key, V value, Long lifespan) {
-      cache.removeExpired(key, value, lifespan);
+      if (needTransaction) {
+         TransactionManager tm = cache.getTransactionManager();
+         try {
+            Transaction tx = tm.suspend();
+            try {
+               tm.begin();
+               cache.removeExpired(key, value, lifespan);
+            } catch (NotSupportedException | SystemException e) {
+               tm.rollback();
+               throw e;
+            } finally {
+               tm.commit();
+            }
+            if (tx != null) {
+               tm.resume(tx);
+            }
+         } catch (RollbackException | NotSupportedException | SystemException | HeuristicMixedException |
+               HeuristicRollbackException | InvalidTransactionException e) {
+            throw new CacheException(e);
+         }
+      } else {
+         cache.removeExpired(key, value, lifespan);
+      }
    }
 
    @Override
