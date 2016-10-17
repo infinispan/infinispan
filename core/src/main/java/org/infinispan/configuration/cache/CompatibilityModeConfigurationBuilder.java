@@ -40,6 +40,10 @@ public class CompatibilityModeConfigurationBuilder
       return this;
    }
 
+   public boolean isEnabled() {
+      return attributes.attribute(ENABLED).get();
+   }
+
    /**
     * Sets whether compatibility mode is enabled or disabled.
     *

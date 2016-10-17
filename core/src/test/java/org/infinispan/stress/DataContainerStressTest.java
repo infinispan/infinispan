@@ -56,8 +56,8 @@ public class DataContainerStressTest {
    }
 
    public void testEntryBoundedDataContainer() throws InterruptedException {
-      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, NUM_KEYS - NUM_KEYS / 4, EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, EvictionType.COUNT);
+      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, NUM_KEYS - NUM_KEYS / 4,
+            EvictionType.COUNT);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }
@@ -65,8 +65,8 @@ public class DataContainerStressTest {
    public void testMemoryBoundedDataContainer() throws InterruptedException {
       // The key length could be 4 or 5 (90% of the time it will be 5)
       // The value length could be 6 or 7 (90% of the time it will be 7)
-      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, threeQuarterMemorySize(NUM_KEYS, 5, 20), EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, EvictionType.MEMORY);
+      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, threeQuarterMemorySize(NUM_KEYS, 5, 20),
+            EvictionType.MEMORY);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }

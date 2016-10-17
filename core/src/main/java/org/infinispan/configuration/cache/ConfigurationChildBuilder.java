@@ -44,6 +44,8 @@ public interface ConfigurationChildBuilder {
 
    CompatibilityModeConfigurationBuilder compatibility();
 
+   MemoryConfigurationBuilder memory();
+
    default ConfigurationChildBuilder template(boolean template) {
       return this;
    }

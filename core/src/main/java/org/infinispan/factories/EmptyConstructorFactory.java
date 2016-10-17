@@ -4,6 +4,10 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.container.offheap.OffHeapEntryFactory;
+import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
+import org.infinispan.container.offheap.OffHeapMemoryAllocator;
+import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -28,7 +32,8 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
                               InboundInvocationHandler.class, PersistentUUIDManager.class,
-                              RemoteCommandsFactory.class, TimeService.class})
+                              RemoteCommandsFactory.class, TimeService.class, OffHeapEntryFactory.class,
+                              OffHeapMemoryAllocator.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -49,6 +54,10 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new EventLogManagerImpl();
       else if (componentType.equals(PersistentUUIDManager.class))
          return (T) new PersistentUUIDManagerImpl();
+      else if (componentType.equals(OffHeapEntryFactory.class))
+         return componentType.cast(new OffHeapEntryFactoryImpl());
+      else if (componentType.equals(OffHeapMemoryAllocator.class))
+         return componentType.cast(new UnpooledOffHeapMemoryAllocator());
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

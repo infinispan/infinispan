@@ -24,11 +24,11 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
-import org.infinispan.commons.util.DistinctFunction;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.compat.ConverterKeyMapper;
 import org.infinispan.compat.ConverterEntryMapper;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.compat.ConverterValueMapper;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -477,7 +477,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          return new CloseableSpliteratorMapper<>(actualCollection.spliterator(),
-               (DistinctFunction & Function<CacheEntry<K, V>, CacheEntry<K, V>>) entry -> {
+               (InjectiveFunction & Function<CacheEntry<K, V>, CacheEntry<K, V>>) entry -> {
                   K key = entry.getKey();
                   K unboxedKey = unboxKey(key);
                   V value = entry.getValue();
@@ -566,7 +566,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
       @Override
       public CloseableSpliterator<K> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (DistinctFunction & Function<K, K>)
+         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (InjectiveFunction & Function<K, K>)
                TypeConverterDelegatingAdvancedCache.this::unboxKey);
       }
 
@@ -613,7 +613,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
       @Override
       public CloseableSpliterator<V> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (DistinctFunction & Function<V, V>)
+         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (InjectiveFunction & Function<V, V>)
                TypeConverterDelegatingAdvancedCache.this::unboxValue);
       }
 
@@ -677,7 +677,11 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public V getOrDefault(Object key, V defaultValue) {
-      return super.getOrDefault(boxKey((K) key), defaultValue);
+      V returned = super.getOrDefault(boxKey((K) key), defaultValue);
+      if (returned == defaultValue) {
+         return returned;
+      }
+      return unboxValue(returned);
    }
 
    @Override

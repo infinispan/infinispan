@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InvocationBatchingConfigurationBuilder;
 import org.infinispan.configuration.cache.JMXStatisticsConfigurationBuilder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfigurationBuilder;
@@ -193,6 +194,11 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
 
    @Override
    public CompatibilityModeConfigurationBuilder compatibility() {
+      return null;
+   }
+
+   @Override
+   public MemoryConfigurationBuilder memory() {
       return null;
    }
 

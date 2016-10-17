@@ -15,8 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CollectionFactory;
@@ -29,8 +27,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
@@ -92,19 +88,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       return (Caffeine<K, V>) Caffeine.newBuilder();
    }
 
-   protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
-         EvictionStrategy strategy, EvictionThreadPolicy policy, EvictionType thresholdPolicy) {
-      DefaultEvictionListener evictionListener;
-      // translate eviction policy and strategy
-      switch (policy) {
-         case PIGGYBACK:
-         case DEFAULT:
-            evictionListener = new DefaultEvictionListener();
-            break;
-         default:
-            throw new IllegalArgumentException("No such eviction thread policy " + strategy);
-      }
-
+   protected DefaultDataContainer(int concurrencyLevel, long thresholdSize, EvictionType thresholdPolicy) {
+      DefaultEvictionListener evictionListener = new DefaultEvictionListener();
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
       switch (thresholdPolicy) {
@@ -155,23 +140,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
     * Method invoked when memory policy is used
     * @param concurrencyLevel
     * @param thresholdSize
-    * @param strategy
-    * @param policy
     * @param sizeCalculator
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
-                                  EvictionStrategy strategy, EvictionThreadPolicy policy,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
-      DefaultEvictionListener evictionListener;
-      // translate eviction policy and strategy
-      switch (policy) {
-         case PIGGYBACK:
-         case DEFAULT:
-            evictionListener = new DefaultEvictionListener();
-            break;
-         default:
-            throw new IllegalArgumentException("No such eviction thread policy " + policy);
-      }
+      DefaultEvictionListener evictionListener = new DefaultEvictionListener();
 
       EntrySizeCalculator<K, InternalCacheEntry<K, V>> calc = new CacheEntrySizeCalculator<>(sizeCalculator);
 
@@ -198,16 +171,13 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
-            EvictionStrategy strategy, EvictionThreadPolicy thredPolicy,
             EvictionType thresholdPolicy) {
-      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
-            thredPolicy, thresholdPolicy);
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, thresholdPolicy);
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
-                                                                        EvictionStrategy strategy, EvictionThreadPolicy thredPolicy,
                                                                         EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
-      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy, thredPolicy, sizeCalculator);
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, sizeCalculator);
    }
 
    public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel) {
@@ -347,12 +317,6 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    @Override
    public Set<InternalCacheEntry<K, V>> entrySet() {
       return new EntrySet();
-   }
-
-   @Override
-   public void purgeExpired() {
-      // Just calls to expiration manager to handle this
-      expirationManager.processExpiration();
    }
 
    @Override

@@ -5,6 +5,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -166,6 +169,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+      cache.replaceAll(function);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(K key, V value) {
       return cache.putAsync(key, value);
    }
@@ -320,8 +328,28 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.compute(key, remappingFunction);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeIfPresent(key, remappingFunction);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      return cache.computeIfAbsent(key, mappingFunction);
+   }
+
+   @Override
    public V get(Object key) {
       return cache.get(key);
+   }
+
+   @Override
+   public V getOrDefault(Object key, V defaultValue) {
+      return cache.getOrDefault(key, defaultValue);
    }
 
    @Override
@@ -337,6 +365,16 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> t) {
       cache.putAll(t);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return cache.merge(key, value, remappingFunction);
+   }
+
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
+      cache.forEach(action);
    }
 
    @Override
@@ -437,6 +475,20 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    public Cache<K, V> getDelegate() {
+      return cache;
+   }
+
+   /**
+    * Fully unwraps a given cache returning the base cache.  Will unwrap all <b>AbstractDelegatingCache</b> wrappers.
+    * @param cache
+    * @param <K>
+    * @param <V>
+    * @return
+    */
+   public static <K, V> Cache unwrapCache(Cache<K, V> cache) {
+      if (cache instanceof AbstractDelegatingCache) {
+         return unwrapCache(((AbstractDelegatingCache) cache).getDelegate());
+      }
       return cache;
    }
 }

@@ -419,9 +419,9 @@
                     <xs:documentation>The cache transaction configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="eviction" type="tns:eviction" minOccurs="0">
+            <xs:element name="memory" type="tns:memory" minOccurs="0">
                 <xs:annotation>
-                    <xs:documentation>The cache eviction configuration.</xs:documentation>
+                    <xs:documentation>The cache memory configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="expiration" type="tns:expiration" minOccurs="0">
@@ -644,20 +644,81 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:complexType name="eviction">
-        <xs:attribute name="strategy" type="tns:eviction-strategy" default="NONE">
-            <xs:annotation>
-                <xs:documentation>Sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="type" type="tns:eviction-type" default="COUNT">
-            <xs:annotation>
-                <xs:documentation>Specifies whether to use entry count or memory-based approximation to decide when to evict entries.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
+    <xs:complexType name="memory">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <xs:element name="object" type="tns:memory-object">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Store keys and values as instance variables.  Instances of byte[] will be wrapped to ensure equality.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="binary" type="tns:memory-binary">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Store keys and values as byte[] instances.  Key and value will be serialized to binary representations.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="off-heap" type="tns:memory-off-heap">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Store keys and values as byte[] off of the Java heap.  Key and value will be serialized to binary
+                            representations and stored in native memory as to not take up Java heap.  Temporary objects will be
+                            put onto Java heap temporarily until processing is completed.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="memory-object">
         <xs:attribute name="size" type="xs:long" default="-1">
             <xs:annotation>
-                <xs:documentation>Maximum size to use for eviction. When using the COUNT type, this is the maximum number of entries in a cache instance. When using the MEMORY type, this is the maximum number of allocated bytes used by a cache's datacontainer. A value of -1 means no limit.</xs:documentation>
+                <xs:documentation>The size of the eviction cache as a long.  Limits the cache to this normal by the amount of
+                    entries in the cache.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="memory-binary">
+        <xs:attribute name="size" type="xs:long" default="-1">
+            <xs:annotation>
+                <xs:documentation>The size of the eviction cache as a long.  If the configured type is COUNT, this will be
+                    how many entries can be stored.  If the configured type is MEMORY, this will be how much memory
+                    in bytes can be stored.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="eviction">
+            <xs:annotation>
+                <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
+                    the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="memory-off-heap">
+        <xs:attribute name="size" type="xs:long" default="-1">
+            <xs:annotation>
+                <xs:documentation>The size of the eviction cache as a long.  If the configured type is COUNT, this will be
+                    how many entries can be stored.  If the configured type is MEMORY, this will be how much memory
+                    in bytes can be stored.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="eviction">
+            <xs:annotation>
+                <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
+                    the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="address-count" type="xs:int" default="1048576">
+            <xs:annotation>
+                <xs:documentation>How many address pointers to use.  For optimal performance you will want more
+                    address pointers than you expect to have entries.  This is similar to the size of an array backing
+                    a hash map.  Without collisions lookups and writes will be constant time.  Each pointer will take
+                    up 8 bytes of memory thus the default will use 8 MB of off heap memory.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

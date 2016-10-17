@@ -340,13 +340,26 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
-        if (cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME).isDefined()) {
-            writer.writeStartElement(Element.EVICTION.getLocalName());
-            ModelNode eviction = cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
-            this.writeOptional(writer, Attribute.STRATEGY, eviction, ModelKeys.STRATEGY);
-            this.writeOptional(writer, Attribute.MAX_ENTRIES, eviction, ModelKeys.MAX_ENTRIES);
-            this.writeOptional(writer, Attribute.TYPE, eviction, ModelKeys.TYPE);
-            this.writeOptional(writer, Attribute.SIZE, eviction, ModelKeys.SIZE);
+        ModelNode memory = cache.get(ModelKeys.MEMORY);
+        if (memory.isDefined()) {
+            ModelNode memoryValues;
+            writer.writeStartElement(Element.MEMORY.getLocalName());
+            if ((memoryValues = memory.get(ModelKeys.BINARY_NAME)).isDefined()) {
+                writer.writeStartElement(Element.BINARY.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
+                writer.writeEndElement();
+            } else if ((memoryValues = memory.get(ModelKeys.OBJECT_NAME)).isDefined()) {
+                writer.writeStartElement(Element.OBJECT.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                writer.writeEndElement();
+            } else if ((memoryValues = memory.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
+                writer.writeStartElement(Element.OFF_HEAP.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
+                this.writeOptional(writer, Attribute.ADDRESS_COUNT, memoryValues, ModelKeys.ADDRESS_COUNT);
+                writer.writeEndElement();
+            }
             writer.writeEndElement();
         }
 

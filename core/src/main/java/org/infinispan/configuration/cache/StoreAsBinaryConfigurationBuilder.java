@@ -7,6 +7,7 @@ import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.STOR
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.StorageType;
 
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
@@ -18,6 +19,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * both.
  * <p />
  * @see StoreAsBinaryConfiguration
+ * @deprecated Please use {@link MemoryConfigurationBuilder#storageType(StorageType)} method instead
  */
 public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<StoreAsBinaryConfiguration> {
    private final AttributeSet attributes;
@@ -32,6 +34,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder enable() {
       attributes.attribute(ENABLED).set(true);
+      getBuilder().memory().storageType(StorageType.BINARY);
       return this;
    }
 
@@ -40,6 +43,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder disable() {
       attributes.attribute(ENABLED).set(false);
+      getBuilder().memory().storageType(StorageType.OBJECT);
       return this;
    }
 
@@ -49,6 +53,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder enabled(boolean enabled) {
       attributes.attribute(ENABLED).set(enabled);
+      getBuilder().memory().storageType(enabled ? StorageType.BINARY : StorageType.OBJECT);
       return this;
    }
 

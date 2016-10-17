@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Random;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.StorageType;
 import org.infinispan.marshall.CustomClass;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ public class MemoryBasedEvictionFunctionalStoreAsBinaryTest extends MemoryBasedE
    @Override
    protected void configure(ConfigurationBuilder cb) {
       super.configure(cb);
-      cb.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(true);
+      cb.memory().storageType(StorageType.BINARY);
    }
 
    public void testCustomClass() throws Exception {

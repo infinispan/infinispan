@@ -17,7 +17,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.DistinctFunction;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.util.CacheCollectionMapper;
 import org.infinispan.util.CacheSetMapper;
@@ -313,7 +313,7 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    }
 
    @SerializeWith(ValueToTypedValueFunction.Externalizer.class)
-   public static final class ValueToTypedValueFunction<T> implements Function<T, T>, DistinctFunction<T, T> {
+   public static final class ValueToTypedValueFunction<T> implements Function<T, T>, InjectiveFunction<T, T> {
       private final DataType dataType;
       private final Optional<Marshaller> marshaller;
 
@@ -343,7 +343,7 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
 
    @SerializeWith(EntryToTypedEntryFunction.Externalizer.class)
    public static final class EntryToTypedEntryFunction<K, V>
-         implements Function<Entry<K, V>, Entry<K, V>>, DistinctFunction<Entry<K, V>, Entry<K, V>> {
+         implements Function<Entry<K, V>, Entry<K, V>>, InjectiveFunction<Entry<K, V>, Entry<K, V>> {
       private final DataType dataType;
       private final Optional<Marshaller> marshaller;
 

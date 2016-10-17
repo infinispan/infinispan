@@ -35,6 +35,12 @@ public interface Stats {
    long getTotalNumberOfEntries();
 
    /**
+    * The amount of off-heap memory used by this cache
+    * @return
+    */
+   long getOffHeapMemoryUsed();
+
+   /**
     * @return Number of put operations on the cache.
     */
    long getStores();

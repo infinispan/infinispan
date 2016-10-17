@@ -21,8 +21,10 @@
                     timeout="600000"/>
         </distributed-cache>
         <distributed-cache name="memcachedCache" start="EAGER" mode="SYNC">
-            <eviction strategy="LRU" size="1" type="COUNT"/>
-            <file-store passivation="true" path="dc" purge="true" shared="false"/>
+          <memory>
+            <object size="1"/>
+          </memory>
+          <file-store passivation="true" path="dc" purge="true" shared="false"/>
         </distributed-cache>
     </cache-container>
     <cache-container name="security"/>

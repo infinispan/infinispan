@@ -17,7 +17,7 @@ final class ExternallyMarshallable {
       Package pkg = clazz.getPackage();
       if (pkg == null) {
          if (clazz.isArray()) {
-            return false;
+            return true;
          } else {
             throw new IllegalStateException("No package info for " + clazz + ", runtime-generated class?");
          }
@@ -63,6 +63,11 @@ final class ExternallyMarshallable {
             || className.equals("org.infinispan.util.logging.events.EventLogLevel") // prod
             || className.equals("org.infinispan.util.logging.events.EventLogCategory") // prod
             || className.equals("java.util.Date") // test
+            || className.equals("java.lang.Byte") // test
+            || className.equals("java.lang.Integer") // test
+            || className.equals("java.lang.Double") // test
+            || className.equals("java.lang.Short") // test
+            || className.equals("java.lang.Long") // test
             || className.startsWith("org.infinispan.test") // test
             || className.startsWith("org.infinispan.server.test") // test
             || className.startsWith("org.infinispan.it") // test

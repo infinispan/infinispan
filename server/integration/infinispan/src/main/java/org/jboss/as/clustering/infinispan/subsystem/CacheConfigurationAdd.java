@@ -63,6 +63,7 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.StorageType;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -445,20 +446,31 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             builder.transaction().invocationBatching().disable();
         }
 
-        // eviction is a child resource
-        if (cache.hasDefined(ModelKeys.EVICTION) && cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME).isDefined()) {
-            ModelNode eviction = cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
-
-            final EvictionStrategy strategy = EvictionStrategy.valueOf(EvictionConfigurationResource.EVICTION_STRATEGY.resolveModelAttribute(context, eviction).asString());
-            builder.eviction().strategy(strategy);
-
-            if (strategy.isEnabled()) {
-                final long size = EvictionConfigurationResource.SIZE.resolveModelAttribute(context, eviction).asLong();
-                builder.eviction().size(size);
-                final EvictionType type = EvictionType.valueOf(EvictionConfigurationResource.TYPE.resolveModelAttribute(context, eviction).asString());
-                builder.eviction().type(type);
+        // memory is a child resource
+        if (cache.hasDefined(ModelKeys.MEMORY)) {
+            ModelNode memoryNode = cache.get(ModelKeys.MEMORY);
+            ModelNode node;
+            if ((node = memoryNode.get(ModelKeys.OBJECT_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.OBJECT);
+                final long size = MemoryObjectConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+            } else if ((node = memoryNode.get(ModelKeys.BINARY_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.BINARY);
+                final long size = MemoryBinaryConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+                final EvictionType type = EvictionType.valueOf(MemoryBinaryConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionType(type);
+            } else if ((node = memoryNode.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.OFF_HEAP);
+                final long size = MemoryOffHeapConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+                final EvictionType type = EvictionType.valueOf(MemoryOffHeapConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionType(type);
+                final int addressCount = MemoryOffHeapConfigurationResource.ADDRESS_COUNT.resolveModelAttribute(context, node).asInt();
+                builder.memory().addressCount(addressCount);
             }
         }
+
         // expiration is a child resource
         if (cache.hasDefined(ModelKeys.EXPIRATION) && cache.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME).isDefined()) {
 

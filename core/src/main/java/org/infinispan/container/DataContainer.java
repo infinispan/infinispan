@@ -123,14 +123,6 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    Set<InternalCacheEntry<K, V>> entrySet();
 
    /**
-    * This method just calls to {@link ExpirationManager#processExpiration()}
-    * @deprecated This method doesn't allow for proper expiration notifications when a cache loader is also in use.
-    * @see ExpirationManager#processExpiration()
-    */
-   @Deprecated
-   void purgeExpired();
-
-   /**
     * Atomically, it removes the key from {@code DataContainer} and passivates it to persistence.
     * <p/>
     * The passivation must be done by invoking the method {@link org.infinispan.eviction.PassivationManager#passivate(org.infinispan.container.entries.InternalCacheEntry)}.

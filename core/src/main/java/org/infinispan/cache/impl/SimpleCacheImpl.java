@@ -23,6 +23,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -85,6 +86,7 @@ import org.infinispan.stats.Stats;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -1399,12 +1401,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class EntrySet extends EntrySetBase<Entry<K, V>> implements CacheSet<Entry<K, V>> {
       @Override
       public CloseableIterator<Entry<K, V>> iterator() {
-         return Closeables.iterator(dataContainer.iterator());
+         return Closeables.iterator(new DataContainerRemoveIterator<>(SimpleCacheImpl.this));
       }
 
       @Override
       public CloseableSpliterator<Entry<K, V>> spliterator() {
-         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+         return Closeables.spliterator(iterator(), dataContainer.size(),
                Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
@@ -1439,12 +1441,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class CacheEntrySet extends EntrySetBase<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return Closeables.iterator(dataContainer.iterator());
+         return Closeables.iterator(new DataContainerRemoveIterator<>(SimpleCacheImpl.this));
       }
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+         return Closeables.spliterator(iterator(), dataContainer.size(),
                Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
@@ -1594,7 +1596,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return Closeables.iterator(new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getKey));
+         return Closeables.iterator(new IteratorMapper<>(new DataContainerRemoveIterator<>(SimpleCacheImpl.this), Map.Entry::getKey));
       }
 
       @Override

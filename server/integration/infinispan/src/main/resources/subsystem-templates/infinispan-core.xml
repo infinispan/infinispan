@@ -44,11 +44,15 @@
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="memory-bounded" mode="SYNC" start="EAGER">
-               <eviction strategy="LRU" size="10000000" type="MEMORY"/>
+               <memory>
+                  <binary size="10000000" eviction="MEMORY"/>
+               </memory>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC" start="EAGER">
-               <eviction strategy="LRU" size="10000" type="COUNT"/>
+               <memory>
+                  <object size="10000"/>
+               </memory>
                <file-store shared="false" fetch-state="true" passivation="true">
                   <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
@@ -106,7 +110,9 @@
             <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
@@ -129,7 +135,9 @@
             <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
@@ -170,7 +178,9 @@
             <global-state />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <mixed-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="true" purge="false">
                   <binary-keyed-table prefix="ISPN_MIX_BKT" create-on-start="true" drop-on-exit="false">
                      <id-column name="id" type="VARCHAR" />
@@ -187,7 +197,9 @@
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="false" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_MC_SK">
                      <id-column name="id" type="VARCHAR" />
@@ -218,14 +230,18 @@
             <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LIRS" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
                <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
@@ -246,7 +262,9 @@
             <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" size="1000" type="COUNT"/>
+               <memory>
+                  <object size="1000"/>
+               </memory>
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />

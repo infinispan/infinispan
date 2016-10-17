@@ -1470,4 +1470,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Timeout after %s waiting for acks", id = 427)
    TimeoutException timeoutWaitingForAcks(String timeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The eviction element has been deprecated. Please use the memory element instead", id = 428)
+   void evictionDeprecated();
 }

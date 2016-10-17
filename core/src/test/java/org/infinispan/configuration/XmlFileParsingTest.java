@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.container.StorageType;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -179,11 +180,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testKeyValueEquivalence() throws Exception {
+   public void testOffHeap() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <data-container key-equivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\"/>\n" +
+            "      <memory>\n" +
+            "        <off-heap/>\n" +
+            "      </memory>\n" +
             "   </local-cache>\n" +
             "</cache-container>" +
             INFINISPAN_END_TAG;
@@ -194,14 +197,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             Configuration cfg = cm.getDefaultCacheConfiguration();
             assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
             assertTrue(cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence);
+            assertEquals(StorageType.OFF_HEAP, cfg.memory().storageType());
          }
       });
 
       config = INFINISPAN_START_TAG_NO_SCHEMA +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <data-container key-equivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\" \n" +
-            "                      value-equivalence=\"org.infinispan.commons.equivalence.ByteArrayEquivalence\" />\n" +
+            "      <memory/>\n" +
             "   </local-cache>\n" +
             "</cache-container>" +
             INFINISPAN_END_TAG;
@@ -212,6 +215,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             Configuration cfg = cm.getDefaultCacheConfiguration();
             assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
             assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
+            assertEquals(StorageType.OBJECT, cfg.memory().storageType());
+         }
+      });
+
+      config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
+            "      <memory>\n" +
+            "         <binary/>\n" +
+            "      </memory>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
+      is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Configuration cfg = cm.getDefaultCacheConfiguration();
+            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
+            assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
+            assertEquals(StorageType.BINARY, cfg.memory().storageType());
          }
       });
    }
@@ -515,11 +539,9 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       }
 
       c = cm.getCacheConfiguration("evictionCache");
-      assertEquals(5000, c.eviction().maxEntries());
-      assertEquals(EvictionStrategy.LRU, c.eviction().strategy());
+      assertEquals(5000, c.memory().size());
       assertEquals(60000, c.expiration().lifespan());
       assertEquals(1000, c.expiration().maxIdle());
-      assertEquals(EvictionThreadPolicy.PIGGYBACK, c.eviction().threadPolicy());
       assertEquals(500, c.expiration().wakeUpInterval());
 
       c = cm.getCacheConfiguration("withDeadlockDetection");

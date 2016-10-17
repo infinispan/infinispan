@@ -38,6 +38,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SitesConfigurationBuilder sites;
    private final CompatibilityModeConfigurationBuilder compatibility;
+   private final MemoryConfigurationBuilder memory;
    private final AttributeSet attributes;
 
    private boolean template = false;
@@ -62,6 +63,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.compatibility = new CompatibilityModeConfigurationBuilder(this);
+      this.memory = new MemoryConfigurationBuilder(this);
    }
 
    @Override
@@ -95,6 +97,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return deadlockDetection;
    }
 
+   /**
+    *
+    * @return
+    * @deprecated Use {@link ConfigurationBuilder#memory()} instead
+    */
    @Override
    public EvictionConfigurationBuilder eviction() {
       return eviction;
@@ -164,6 +171,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public CompatibilityModeConfigurationBuilder compatibility() {
       return compatibility;
    }
+
+   @Override
+   public MemoryConfigurationBuilder memory() { return memory; }
 
    public List<Builder<?>> modules() {
       return modules;
@@ -269,7 +279,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
                storeAsBinary.create(), transaction.create(), unsafe.create(), versioning.create(), sites.create(),
-               compatibility.create(),
+               compatibility.create(), memory.create(),
                modulesConfig);
    }
 
@@ -293,6 +303,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.sites.read(template.sites());
       this.versioning.read(template.versioning());
       this.compatibility.read(template.compatibility());
+      this.memory.read(template.memory());
 
       for (Object c : template.modules().values()) {
          Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));

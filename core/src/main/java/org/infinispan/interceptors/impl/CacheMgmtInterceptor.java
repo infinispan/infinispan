@@ -18,6 +18,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -42,6 +43,7 @@ import org.infinispan.util.concurrent.StripedCounters;
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private DataContainer dataContainer;
    private TimeService timeService;
+   private OffHeapMemoryAllocator allocator;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -49,9 +51,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject
    @SuppressWarnings("unused")
-   public void setDependencies(DataContainer dataContainer, TimeService timeService) {
+   public void setDependencies(DataContainer dataContainer, TimeService timeService, OffHeapMemoryAllocator allocator) {
       this.dataContainer = dataContainer;
       this.timeService = timeService;
+      this.allocator = allocator;
    }
 
    @Start
@@ -348,6 +351,15 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    public int getNumberOfEntries() {
       return dataContainer.sizeIncludingExpired();
+   }
+
+   @ManagedAttribute(
+         description = "Amount of memory in bytes allocated in off-heap",
+         displayName = "Off-Heap Memory Used",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getOffHeapMemoryUsed() {
+      return allocator.getAllocatedAmount();
    }
 
    @ManagedAttribute(

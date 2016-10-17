@@ -12,10 +12,10 @@
                         concurrency-level="500" 
                         striping="false" />
                     <transaction mode="NONE" />
-                    <eviction 
-                        strategy="LRU" 
-                        size="2"/>
-                    <remote-store 
+                    <memory>
+                        <object size="2"/>
+                    </memory>
+                    <remote-store
                         cache="default"
                         socket-timeout="60000" 
                         tcp-no-delay="true" 
@@ -37,9 +37,9 @@
                             concurrency-level="500"
                             striping="false" />
                     <transaction mode="NONE" />
-                    <eviction
-                            strategy="LRU"
-                            size="2"/>
+                    <memory>
+                        <object size="2"/>
+                    </memory>
                     <remote-store
                             cache="default"
                             read-only="true"

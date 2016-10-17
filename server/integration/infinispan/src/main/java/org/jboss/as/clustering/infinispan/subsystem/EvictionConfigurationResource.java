@@ -40,6 +40,7 @@ import org.jboss.dmr.ModelType;
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  * @author Tristan Tarrant
+ * @deprecated Replaced by {@link MemoryObjectConfigurationResource}
  */
 public class EvictionConfigurationResource extends CacheConfigurationChildResource {
 
