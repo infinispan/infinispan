@@ -58,6 +58,18 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+         <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-core</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>${uberjar.deps.optional}</optional>
