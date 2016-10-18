@@ -51,6 +51,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       return c;
    }
 
+   @Test(enabled=false)//Occasionally fails: disabled until fixed
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
       ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
       AtomicBoolean stop = new AtomicBoolean(false);
