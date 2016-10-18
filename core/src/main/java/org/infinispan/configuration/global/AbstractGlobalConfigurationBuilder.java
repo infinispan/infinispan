@@ -35,6 +35,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.serialization();
    }
 
+   /**
+    * @deprecated This method always returns {@code null} now.
+    * Set thread pool via {@link TransportConfigurationBuilder#transportThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
       return globalConfig.listenerThreadPool();
