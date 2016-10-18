@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -165,7 +166,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
          output.writeObject(object.value);
          output.writeObject(object.oldValue);
          output.writeObject(object.metadata);
-         output.writeObject(object.type);
+         MarshallUtil.marshallEnum(object.type, output);
          output.writeObject(object.origin);
          output.writeObject(object.transaction);
          output.writeBoolean(object.commandRetried);
@@ -175,7 +176,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
       public ClusterEvent readObject(ObjectInput input) throws IOException, ClassNotFoundException {
 
          return new ClusterEvent(input.readObject(), input.readObject(), input.readObject(),
-                                 (Metadata)input.readObject(),(Type)input.readObject(),
+                                 (Metadata)input.readObject(),(Type) MarshallUtil.unmarshallEnum(input, Type::valueOf),
                                  (Address)input.readObject(), (GlobalTransaction)input.readObject(),
                                  input.readBoolean());
       }

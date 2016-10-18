@@ -24,6 +24,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -84,9 +85,11 @@ import org.infinispan.marshall.exts.LongSummaryStatisticsExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.MetaParamExternalizers;
 import org.infinispan.marshall.exts.OptionalExternalizer;
+import org.infinispan.marshall.exts.QueueExternalizers;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -264,7 +267,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MapExternalizer());
       addInternalExternalizer(new SetExternalizer());
       addInternalExternalizer(new EnumSetExternalizer());
-      addInternalExternalizer(new ArrayExternalizers.ListArray());
+      addInternalExternalizer(new ArrayExternalizers());
       addInternalExternalizer(new SingletonListExternalizer());
       addInternalExternalizer(new CollectionExternalizer());
 
@@ -399,6 +402,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new PersistentUUID.Externalizer());
 
       addInternalExternalizer(new Immutables.ImmutableEntryExternalizer());
+      addInternalExternalizer(new EquivalenceExternalizer());
+      addInternalExternalizer(new QueueExternalizers());
+      addInternalExternalizer(new UuidExternalizer());
+      addInternalExternalizer(new Immutables.ImmutableSetWrapperExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

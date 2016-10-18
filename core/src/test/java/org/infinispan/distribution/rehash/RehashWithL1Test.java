@@ -4,10 +4,14 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -95,6 +99,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       assertEquals(0, cache(2).size());
    }
 
+   @SerializeWith(MyBaseControlledConsistentHashFactory.Ext.class)
    private static class MyBaseControlledConsistentHashFactory extends BaseControlledConsistentHashFactory {
       public MyBaseControlledConsistentHashFactory() {
          super(1);
@@ -103,6 +108,18 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       @Override
       protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          return Collections.singletonList(members.get(members.size() - 1));
+      }
+
+      public static final class Ext implements Externalizer<MyBaseControlledConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, MyBaseControlledConsistentHashFactory object) {
+            // No-op
+         }
+
+         @Override
+         public MyBaseControlledConsistentHashFactory readObject(ObjectInput input) {
+            return new MyBaseControlledConsistentHashFactory();
+         }
       }
    }
 }
