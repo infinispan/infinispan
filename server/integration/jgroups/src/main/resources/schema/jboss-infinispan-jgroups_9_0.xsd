@@ -86,7 +86,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="module" type="xs:string" default="org.wildfly.clustering.server">
+        <xs:attribute name="module" type="xs:string" default="${Server.ChannelDefinition.module}">
             <xs:annotation>
                 <xs:documentation>Indicates the module from which to load clustering services.</xs:documentation>
             </xs:annotation>
@@ -173,7 +173,7 @@
                 <xs:documentation>Provides an address/port binding for a protocol.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="module" type="xs:string" default="org.jgroups">
+        <xs:attribute name="module" type="xs:string" default="${Server.ProtocolDefinition.module}">
             <xs:annotation>
                 <xs:documentation>Indicates the module from which to load this protocol.</xs:documentation>
             </xs:annotation>
@@ -195,7 +195,7 @@
                         </xs:annotation>
                     </xs:element>
                 </xs:sequence>
-                <xs:attribute name="shared" type="xs:boolean" default="true">
+                <xs:attribute name="shared" type="xs:boolean" default="${Server.TransportDefinition.shared}">
                     <xs:annotation>
                         <xs:documentation>Indicates whether or not the channels created for this stack should use a single, shared transport.</xs:documentation>
                     </xs:annotation>

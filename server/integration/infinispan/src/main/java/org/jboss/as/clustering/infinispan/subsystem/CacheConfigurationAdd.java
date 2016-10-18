@@ -953,10 +953,12 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
     }
 
     private void buildStringKeyedTable(TableManipulationConfigurationBuilder<?, ?> builder, OperationContext context, ModelNode table) throws OperationFailedException {
+        String defaultTableNamePrefix = BaseJDBCStoreConfigurationResource.STRING_KEYED_TABLE_PREFIX.getDefaultValue().asString();
         ModelNode tableNamePrefix = BaseJDBCStoreConfigurationResource.PREFIX.resolveModelAttribute(context, table);
+
         builder.batchSize(BaseJDBCStoreConfigurationResource.BATCH_SIZE.resolveModelAttribute(context, table).asInt())
               .fetchSize(BaseJDBCStoreConfigurationResource.FETCH_SIZE.resolveModelAttribute(context, table).asInt())
-              .tableNamePrefix(tableNamePrefix.isDefined() ? tableNamePrefix.asString() : "ispn_entry")
+              .tableNamePrefix(tableNamePrefix.isDefined() ? tableNamePrefix.asString() : defaultTableNamePrefix)
               .idColumnName(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "id"))
               .idColumnType(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "VARCHAR"))
               .dataColumnName(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "datum"))

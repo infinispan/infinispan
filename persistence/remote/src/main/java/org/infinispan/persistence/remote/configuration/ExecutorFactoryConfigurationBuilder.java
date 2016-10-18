@@ -6,7 +6,6 @@ import static org.infinispan.persistence.remote.configuration.ExecutorFactoryCon
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -15,10 +14,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * Configures executor factory.
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements Builder<ExecutorFactoryConfiguration> {
-   private final AttributeSet attributes;
    ExecutorFactoryConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
-      super(builder);
-      attributes = ExecutorFactoryConfiguration.attributeSet();
+      super(builder, ExecutorFactoryConfiguration.attributeDefinitionSet());
    }
 
    /**

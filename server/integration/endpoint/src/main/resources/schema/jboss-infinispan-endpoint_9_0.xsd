@@ -183,7 +183,7 @@
                     other nodes. Defaults to true.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional" default="true">
+        <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional" default="${Server.TopologyStateTransfer.await-initial-retrieval}">
             <xs:annotation>
                 <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only applies when lazy-retrieval is false. Defaults to true.</xs:documentation>
             </xs:annotation>
@@ -380,7 +380,7 @@
             <xs:element name="
             sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="false">
+        <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="${Server.Encryption.require-ssl-client-auth}">
             <xs:annotation>
                 <xs:documentation>Whether to require client certificate authentication. Defaults to false.</xs:documentation>
             </xs:annotation>

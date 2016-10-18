@@ -162,7 +162,7 @@
                 <xs:documentation>Indicates the default cache for this cache container.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="start" type="tns:controller-mode" default="LAZY">
+        <xs:attribute name="start" type="tns:controller-mode" default="${Server.CacheContainer.start}">
             <xs:annotation>
                 <xs:documentation>Should this cache container be started on server startup, or lazily when requested by a service or deployment.</xs:documentation>
             </xs:annotation>
@@ -187,12 +187,12 @@
                 <xs:documentation>Defines the executor used by the state transfer. Deprecated: please use the state-transfer-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">
+        <xs:attribute name="module" type="xs:string" default="${Server.CacheContainer.module}">
             <xs:annotation>
                 <xs:documentation>Defines the module whose class loader should be used when building this cache container.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="statistics" type="xs:boolean" default="true">
+        <xs:attribute name="statistics" type="xs:boolean" default="${Server.CacheContainer.statistics}">
             <xs:annotation>
                 <xs:documentation>Determines whether or not the cache container should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
             </xs:annotation>
@@ -220,7 +220,7 @@
                 <xs:documentation>Defines the executor used for asynchronous transport communication.  Deprecated: please use the transport-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="lock-timeout" type="xs:long" default="240000">
+        <xs:attribute name="lock-timeout" type="xs:long" default="${Server.Transport.lock-timeout}">
             <xs:annotation>
                 <xs:documentation>
                     Infinispan uses a distributed lock to maintain a coherent transaction log during state transfer or rehashing, which means that only one cache can be doing state transfer or rehashing at the same time.
@@ -234,7 +234,7 @@
                 <xs:documentation>Defines the executor used for processing remote (non-total order) commands. Deprecated: please use the remote-command-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="strict-peer-to-peer" type="xs:boolean" default="false">
+        <xs:attribute name="strict-peer-to-peer" type="xs:boolean" default="${Server.Transport.strict-peer-to-peer}">
             <xs:annotation>
                 <xs:documentation>
                     Makes clustered operations fail with NamedCacheNotFoundException if the named cache does not exist on remote nodes.
@@ -367,7 +367,7 @@
     </xs:complexType>
 
     <xs:complexType name="global-state-path">
-        <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
+        <xs:attribute name="relative-to" type="xs:string" default="${Server.GlobalState.relative-to}">
             <xs:annotation>
                 <xs:documentation>The base directory in which to store the state</xs:documentation>
             </xs:annotation>
@@ -507,12 +507,12 @@
                             </xs:annotation>
                         </xs:element>
                     </xs:sequence>
-                    <xs:attribute name="index" type="tns:indexing" default="NONE">
+                    <xs:attribute name="index" type="tns:indexing" default="${Server.Indexing.indexing}">
                         <xs:annotation>
                             <xs:documentation>The indexing mode of the cache. Defaults to NONE.</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
-                    <xs:attribute name="auto-config" type="xs:boolean" default="false">
+                    <xs:attribute name="auto-config" type="xs:boolean" default="${Server.Indexing.auto-config}">
                         <xs:annotation>
                             <xs:documentation>Whether or not to apply automatic index configuration based on cache type</xs:documentation>
                         </xs:annotation>
@@ -537,12 +537,12 @@
                 <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="start" type="tns:controller-mode" default="LAZY">
+        <xs:attribute name="start" type="tns:controller-mode" default="${Server.CacheContainer.start}">
             <xs:annotation>
                 <xs:documentation>Should this cache be started on server startup, or lazily when requested by a service or deployment.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="batching" type="xs:boolean" default="false">
+        <xs:attribute name="batching" type="xs:boolean" default="${Server.Cache.batching}">
             <xs:annotation>
                 <xs:documentation>Enables invocation batching for this cache. Defaults to false.</xs:documentation>
             </xs:annotation>
@@ -562,12 +562,12 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="statistics" type="xs:boolean" default="false">
+        <xs:attribute name="statistics" type="xs:boolean" default="${Server.Cache.statistics}">
             <xs:annotation>
                 <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="statistics-available" type="xs:boolean" default="true">
+        <xs:attribute name="statistics-available" type="xs:boolean" default="${Server.Cache.statistics-available}">
             <xs:annotation>
                 <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
             </xs:annotation>
@@ -577,7 +577,7 @@
     <xs:complexType name="local-cache">
         <xs:complexContent>
             <xs:extension base="tns:cache">
-                <xs:attribute name="simple-cache" type="xs:boolean" default="false">
+                <xs:attribute name="simple-cache" type="xs:boolean" default="${Server.Cache.simple-cache}">
                     <xs:annotation>
                         <xs:documentation>This cache will be using optimized (faster) implementation that does not support transactions/invocation batching, persistence, custom interceptors, indexing, store-as-binary or compatibility. Also, this type of cache does not support Map-Reduce jobs or Distributed Executor framework.</xs:documentation>
                     </xs:annotation>
@@ -587,22 +587,22 @@
     </xs:complexType>
 
     <xs:complexType name="locking">
-        <xs:attribute name="isolation" type="tns:isolation" default="READ_COMMITTED">
+        <xs:attribute name="isolation" type="tns:isolation" default="${Server.Locking.isolation}">
             <xs:annotation>
                 <xs:documentation>Sets the cache locking isolation level. Defaults to READ_COMMITTED. When using REPEATABLE_READ with optimistic locking, write skew checking will be enabled.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="striping" type="xs:boolean" default="false">
+        <xs:attribute name="striping" type="xs:boolean" default="${Server.Locking.striping}">
             <xs:annotation>
                 <xs:documentation>If true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="acquire-timeout" type="xs:long" default="15000">
+        <xs:attribute name="acquire-timeout" type="xs:long" default="${Server.Locking.acquire-timeout}">
             <xs:annotation>
                 <xs:documentation>Maximum time to attempt a particular lock acquisition.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="concurrency-level" type="xs:int" default="1000">
+        <xs:attribute name="concurrency-level" type="xs:int" default="${Server.Locking.concurrency-level}">
             <xs:annotation>
                 <xs:documentation>Concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan.</xs:documentation>
             </xs:annotation>
@@ -610,22 +610,22 @@
     </xs:complexType>
 
     <xs:complexType name="transaction">
-        <xs:attribute name="mode" type="tns:transaction-mode" default="NONE">
+        <xs:attribute name="mode" type="tns:transaction-mode" default="${Server.Transaction.mode}">
             <xs:annotation>
                 <xs:documentation>Sets the cache transaction mode to one of NONE, NON_XA, NON_DURABLE_XA, FULL_XA.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="stop-timeout" type="xs:long" default="30000">
+        <xs:attribute name="stop-timeout" type="xs:long" default="${Server.Transaction.stop-timeout}">
             <xs:annotation>
                 <xs:documentation>If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing remote and local transactions to finish. The amount of time to wait for is defined by the cache stop timeout.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="locking" type="tns:locking-mode" default="OPTIMISTIC">
+        <xs:attribute name="locking" type="tns:locking-mode" default="${Server.Transaction.locking}">
             <xs:annotation>
                 <xs:documentation>The locking mode for this cache, one of OPTIMISTIC or PESSIMISTIC.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="notifications" type="xs:boolean" default="true">
+        <xs:attribute name="notifications" type="xs:boolean" default="${Server.Transaction.notifications}">
             <xs:annotation>
                 <xs:documentation>
                     Enables or disables triggering transactional notifications on cache listeners. By default is enabled.
@@ -714,17 +714,17 @@
     </xs:complexType>
 
     <xs:complexType name="expiration">
-        <xs:attribute name="max-idle" type="xs:long" default="-1">
+        <xs:attribute name="max-idle" type="xs:long" default="${Server.Expiration.max-idle}">
             <xs:annotation>
                 <xs:documentation>Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="lifespan" type="xs:long" default="-1">
+        <xs:attribute name="lifespan" type="xs:long" default="${Server.Expiration.lifespan}">
             <xs:annotation>
                 <xs:documentation>Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="interval" type="xs:long" default="5000">
+        <xs:attribute name="interval" type="xs:long" default="${Server.Expiration.interval}">
             <xs:annotation>
                 <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.</xs:documentation>
             </xs:annotation>
@@ -732,7 +732,7 @@
     </xs:complexType>
 
     <xs:complexType name="compatibility">
-        <xs:attribute name="enabled" type="xs:boolean" default="false">
+        <xs:attribute name="enabled" type="xs:boolean" default="${Server.Compatibility.enabled}">
             <xs:annotation>
                 <xs:documentation>Enables compatibility mode for this cache. Disabled by default.</xs:documentation>
             </xs:annotation>
@@ -752,7 +752,7 @@
                         <xs:documentation>Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="remote-timeout" type="xs:long" default="17500">
+                <xs:attribute name="remote-timeout" type="xs:long" default="${Server.ClusteredCache.remote-timeout}">
                     <xs:annotation>
                         <xs:documentation>In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.</xs:documentation>
                     </xs:annotation>
@@ -802,23 +802,23 @@
                         </xs:annotation>
                     </xs:element>
                 </xs:sequence>
-                <xs:attribute name="owners" type="xs:int" default="2">
+                <xs:attribute name="owners" type="xs:int" default="${Server.DistributedCache.owners}">
                     <xs:annotation>
                         <xs:documentation>Number of cluster-wide replicas for each cache entry.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="segments" type="xs:int" default="256">
+                <xs:attribute name="segments" type="xs:int" default="${Server.DistributedCache.segments}">
                     <xs:annotation>
                         <xs:documentation>Number of hash space segments (per cluster). The recommended value is 10 * cluster size. The default value is 80</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="capacity-factor" type="xs:double" default="1">
+                <xs:attribute name="capacity-factor" type="xs:double" default="${Server.DistributedCache.capacity-factor}">
                     <xs:annotation>
                         <xs:documentation>Controls the proportion of entries that will reside on the local node,
                             compared to the other nodes in the cluster. Value must be positive. The default is 1</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="l1-lifespan" type="xs:long" default="0">
+                <xs:attribute name="l1-lifespan" type="xs:long" default="${Server.DistributedCache.l1-lifespan}">
                     <xs:annotation>
                         <xs:documentation>Maximum lifespan in milliseconds of an entry placed in the L1 cache. Defaults to 0 which means L1 is disabled.</xs:documentation>
                     </xs:annotation>
@@ -840,12 +840,12 @@
                 <xs:documentation>Uniquely identifies this loader.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="shared" type="xs:boolean" default="false">
+        <xs:attribute name="shared" type="xs:boolean" default="${Server.BaseLoader.shared}">
             <xs:annotation>
                 <xs:documentation>This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="preload" type="xs:boolean" default="false">
+        <xs:attribute name="preload" type="xs:boolean" default="${Server.BaseLoader.preload}">
             <xs:annotation>
                 <xs:documentation>If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process.</xs:documentation>
             </xs:annotation>
@@ -882,7 +882,7 @@
                 <xs:documentation>Uniquely identifies this store.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="shared" type="xs:boolean" default="false">
+        <xs:attribute name="shared" type="xs:boolean" default="${Server.BaseLoader.shared}">
             <xs:annotation>
                 <xs:documentation>This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store.</xs:documentation>
             </xs:annotation>
@@ -892,32 +892,32 @@
                 <xs:documentation>This setting should be set to true when the underlying cache store supports transactions and it is desirable for the underlying store and the cache to remain synchronized. With this enabled any Exceptions thrown whilst writing to the underlying store will result in both the store's and cache's transactions rollingback.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="preload" type="xs:boolean" default="false">
+        <xs:attribute name="preload" type="xs:boolean" default="${Server.BaseLoader.preload}">
             <xs:annotation>
                 <xs:documentation>If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="passivation" type="xs:boolean" default="false">
+        <xs:attribute name="passivation" type="xs:boolean" default="${Server.BaseStore.passivation}">
             <xs:annotation>
                 <xs:documentation>If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back to memory and removed from the persistent store. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through' configuration.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="fetch-state" type="xs:boolean" default="true">
+        <xs:attribute name="fetch-state" type="xs:boolean" default="${Server.BaseStore.fetch-state}">
             <xs:annotation>
                 <xs:documentation>If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="purge" type="xs:boolean" default="true">
+        <xs:attribute name="purge" type="xs:boolean" default="${Server.BaseStore.purge}">
             <xs:annotation>
                 <xs:documentation>If true, purges this cache store when it starts up.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="singleton" type="xs:boolean" default="false">
+        <xs:attribute name="singleton" type="xs:boolean" default="${Server.BaseStore.singleton}">
             <xs:annotation>
                 <xs:documentation>If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store. Deprecated: A shared store should be used instead, as this limits store writes to the primary owner of a key</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="read-only" type="xs:boolean" default="false">
+        <xs:attribute name="read-only" type="xs:boolean" default="${Server.BaseStore.read-only}">
             <xs:annotation>
                 <xs:documentation>If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store.</xs:documentation>
             </xs:annotation>
@@ -925,7 +925,7 @@
     </xs:complexType>
 
     <xs:complexType name="write-behind">
-        <xs:attribute name="modification-queue-size" type="xs:int" default="1024">
+        <xs:attribute name="modification-queue-size" type="xs:int" default="${Server.StoreWriteBehind.modification-queue-size}">
             <xs:annotation>
                 <xs:documentation>
                     Maximum number of entries in the asynchronous queue. When the queue is full, the store becomes write-through.
@@ -933,7 +933,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="thread-pool-size" type="xs:int" default="1">
+        <xs:attribute name="thread-pool-size" type="xs:int" default="${Server.StoreWriteBehind.thread-pool-size}">
             <xs:annotation>
                 <xs:documentation>
                     Size of the thread pool whose threads are responsible for applying the modifications to the cache store.
@@ -968,7 +968,7 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
+                <xs:attribute name="relative-to" type="xs:string" default="${Server.FileStore.relative-to}">
                     <xs:annotation>
                         <xs:documentation>The base directory in which to store the cache state.</xs:documentation>
                     </xs:annotation>
@@ -996,7 +996,7 @@
                         <xs:documentation>The name of the remote cache.  If undefined, the default cache will be used.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="socket-timeout" type="xs:long" default="60000">
+                <xs:attribute name="socket-timeout" type="xs:long" default="${Server.RemoteStore.socket-timeout}">
                     <xs:annotation>
                         <xs:documentation>
                             Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds.
@@ -1004,21 +1004,21 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="tcp-no-delay" type="xs:boolean" default="true">
+                <xs:attribute name="tcp-no-delay" type="xs:boolean" default="${Server.RemoteStore.tcp-no-delay}">
                     <xs:annotation>
                         <xs:documentation>
                             Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="false">
+                <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${Server.RemoteStore.hotrod-wrapping}">
                     <xs:annotation>
                         <xs:documentation>
                             Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="raw-values" type="xs:boolean" default="false">
+                <xs:attribute name="raw-values" type="xs:boolean" default="${Server.RemoteStore.raw-values}">
                     <xs:annotation>
                         <xs:documentation>
                             Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This will make the remote cache interoperable between direct RemoteCacheManager clients and RemoteCacheStore stores
@@ -1052,12 +1052,12 @@
                     <xs:element name="connection-pool" type="tns:rest-connection-pool" minOccurs="1" maxOccurs="unbounded"/>
                 </xs:sequence>
 
-                <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="false">
+                <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="${Server.RestStore.append-cache-name-to-path}">
                     <xs:annotation>
                         <xs:documentation>Whether to append the name of the cache to the path.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="path" type="xs:string" default="/rest/___defaultcache">
+                <xs:attribute name="path" type="xs:string" default="${Server.RestStore.path}">
                     <xs:annotation>
                         <xs:documentation>The path portion of the URI of the remote REST endpoint.</xs:documentation>
                     </xs:annotation>
@@ -1067,32 +1067,32 @@
     </xs:complexType>
 
     <xs:complexType name="rest-connection-pool">
-        <xs:attribute name="buffer-size" type="xs:int" default="8192">
+        <xs:attribute name="buffer-size" type="xs:int" default="${Server.RestStore.buffer-size}">
            <xs:annotation>
                <xs:documentation>The size of the socket buffer.</xs:documentation>
            </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="connection-timeout" type="xs:int" default="60000">
+        <xs:attribute name="connection-timeout" type="xs:int" default="${Server.RestStore.connection-timeout}">
            <xs:annotation>
                <xs:documentation>A connection timeout for remote cache communication.</xs:documentation>
            </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="max-connections-per-host" type="xs:int" default="4">
+        <xs:attribute name="max-connections-per-host" type="xs:int" default="${Server.RestStore.max-connections-per-host}">
            <xs:annotation>
                <xs:documentation>The maximum number of connections per host.</xs:documentation>
            </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="max-total-connections" type="xs:int" default="20">
+        <xs:attribute name="max-total-connections" type="xs:int" default="${Server.RestStore.max-total-connections}">
            <xs:annotation>
                <xs:documentation>The maximum number of total connections.</xs:documentation>
            </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="socket-timeout" type="xs:int" default="60000">
+        <xs:attribute name="socket-timeout" type="xs:int" default="${Server.RestStore.socket-timeout}">
            <xs:annotation>
                <xs:documentation>A socket timeout for remote cache communication.</xs:documentation>
            </xs:annotation>
        </xs:attribute>
-       <xs:attribute name="tcp-no-delay" type="xs:boolean" default="true">
+       <xs:attribute name="tcp-no-delay" type="xs:boolean" default="${Server.RestStore.tcp-no-delay}">
            <xs:annotation>
                <xs:documentation>Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.</xs:documentation>
            </xs:annotation>
@@ -1145,7 +1145,7 @@
     <xs:complexType name="string-keyed-table">
         <xs:complexContent>
             <xs:extension base="tns:table">
-                <xs:attribute name="prefix" type="xs:string" default="ispn_entry">
+                <xs:attribute name="prefix" type="xs:string" default="${Server.BaseJDBCStore.stringKeyedTablePrefix}">
                     <xs:annotation>
                         <xs:documentation>Defines the prefix prepended to the cache name used when composing the name of the cache entry table.</xs:documentation>
                     </xs:annotation>
@@ -1172,22 +1172,22 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="fetch-size" type="xs:int" default="100">
+        <xs:attribute name="fetch-size" type="xs:int" default="${Server.BaseJDBCStore.fetch-size}">
             <xs:annotation>
                 <xs:documentation>The fetch size used when querying from this table.  Used to avoid heap memory exhaustion when query is large.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="batch-size" type="xs:int" default="100">
+        <xs:attribute name="batch-size" type="xs:int" default="${Server.BaseJDBCStore.batch-size}">
             <xs:annotation>
                 <xs:documentation>The statement batch size used when modifying this table.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="create-on-start" type="xs:boolean" default="false">
+        <xs:attribute name="create-on-start" type="xs:boolean" default="${Server.BaseJDBCStore.create-on-start}">
             <xs:annotation>
                 <xs:documentation>Determines whether database tables should be created by the store on startup.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="drop-on-exit" type="xs:boolean" default="false">
+        <xs:attribute name="drop-on-exit" type="xs:boolean" default="${Server.BaseJDBCStore.drop-on-exit}">
             <xs:annotation>
                 <xs:documentation>Determines whether database tables should be dropped by the store on shutdown.</xs:documentation>
             </xs:annotation>
@@ -1252,7 +1252,7 @@
                         </xs:annotation>
                     </xs:element>
                 </xs:sequence>
-                <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
+                <xs:attribute name="relative-to" type="xs:string" default="${Server.RocksDBStore.relative-to}">
                     <xs:annotation>
                         <xs:documentation>The base directory in which to store the cache state.</xs:documentation>
                     </xs:annotation>
@@ -1290,7 +1290,7 @@
                 <xs:documentation>The base directory in which to store expired cache state.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="queue-size" type="xs:integer" default="10000">
+        <xs:attribute name="queue-size" type="xs:integer" default="${Server.RocksDBExpiration.queue-size}">
             <xs:annotation>
                 <xs:documentation>Expired entry queue size.</xs:documentation>
             </xs:annotation>
@@ -1298,7 +1298,7 @@
     </xs:complexType>
 
     <xs:complexType name="rocksdb-compression">
-        <xs:attribute name="type" type="tns:rocksdb-compression-mode" default="NONE">
+        <xs:attribute name="type" type="tns:rocksdb-compression-mode" default="${Server.RocksDBCompression.type}">
             <xs:annotation>
                 <xs:documentation>The type of compression to be used by RocksDB store.</xs:documentation>
             </xs:annotation>
@@ -1341,22 +1341,22 @@
     </xs:simpleType>
 
     <xs:complexType name="state-transfer">
-        <xs:attribute name="enabled" type="xs:boolean" default="true">
+        <xs:attribute name="enabled" type="xs:boolean" default="${Server.StateTransfer.enabled}">
             <xs:annotation>
                 <xs:documentation>If enabled, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="timeout" type="xs:long" default="240000">
+        <xs:attribute name="timeout" type="xs:long" default="${Server.StateTransfer.timeout}">
             <xs:annotation>
                 <xs:documentation>The maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="chunk-size" type="xs:integer" default="512">
+        <xs:attribute name="chunk-size" type="xs:integer" default="${Server.StateTransfer.chunk-size}">
             <xs:annotation>
                 <xs:documentation>The number of cache entries to batch in each transfer.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="await-initial-transfer" type="xs:boolean" default="true">
+        <xs:attribute name="await-initial-transfer" type="xs:boolean" default="${Server.StateTransfer.await-initial-transfer}">
             <xs:annotation>
                 <xs:documentation>If enabled, this will cause the cache to wait for initial state transfer to complete before responding to requests.</xs:documentation>
             </xs:annotation>
@@ -1364,7 +1364,7 @@
     </xs:complexType>
 
     <xs:complexType name="partition-handling">
-        <xs:attribute name="enabled" type="xs:boolean" default="true">
+        <xs:attribute name="enabled" type="xs:boolean" default="${Server.PartitionHandling.enabled}">
             <xs:annotation>
                 <xs:documentation>If enabled, the cache will enter degraded mode when it loses too many nodes.</xs:documentation>
             </xs:annotation>
@@ -1395,7 +1395,7 @@
                     </xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
-                    <xs:attribute name="chunk-size" type="xs:int" default="512">
+                    <xs:attribute name="chunk-size" type="xs:int" default="${Server.BackupSiteStateTransfer.chunk-size}">
                         <xs:annotation>
                             <xs:documentation>
                                 If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
@@ -1403,7 +1403,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
-                    <xs:attribute name="timeout" type="xs:long" default="1200000">
+                    <xs:attribute name="timeout" type="xs:long" default="${Server.BackupSiteStateTransfer.timeout}">
                         <xs:annotation>
                             <xs:documentation>
                                 The time (in milliseconds) to wait for the backup site acknowledge the state chunk
@@ -1411,7 +1411,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
-                    <xs:attribute name="max-retries" type="xs:int" default="30">
+                    <xs:attribute name="max-retries" type="xs:int" default="${Server.BackupSiteStateTransfer.max-retries}">
                         <xs:annotation>
                             <xs:documentation>
                                 The maximum number of retries when a push state command fails. A value &lt;= 0 (zero) mean that
@@ -1419,7 +1419,7 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
-                    <xs:attribute name="wait-time" type="xs:long" default="2000">
+                    <xs:attribute name="wait-time" type="xs:long" default="${Server.BackupSiteStateTransfer.wait-time}">
                         <xs:annotation>
                             <xs:documentation>
                                 The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default
@@ -1435,22 +1435,22 @@
                 <xs:documentation>Name of the remote site where this cache backups data.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="strategy" type="tns:mode" default="ASYNC">
+        <xs:attribute name="strategy" type="tns:mode" default="${Server.BackupSite.strategy}">
             <xs:annotation>
                 <xs:documentation>The strategy used for backing up data: "SYNC" or "ASYNC". Defaults to "ASYNC"</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="WARN">
+        <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="${Server.BackupSite.failure-policy}">
             <xs:annotation>
                 <xs:documentation>Decides what the system would do in case of failure during backup. Defaults to "FAIL"</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="timeout" type="xs:long" default="10000">
+        <xs:attribute name="timeout" type="xs:long" default="${Server.BackupSite.timeout}">
             <xs:annotation>
                 <xs:documentation>The timeout(millis) to be used when backing up data remotely. Defaults to 10 secs.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="enabled" type="xs:boolean" default="true">
+        <xs:attribute name="enabled" type="xs:boolean" default="${Server.BackupSite.enabled}">
             <xs:annotation>
                 <xs:documentation>If 'false' then no data is backed up to this site. Defaults to 'true'.</xs:documentation>
             </xs:annotation>
@@ -1458,12 +1458,12 @@
     </xs:complexType>
 
     <xs:complexType name="take-offline">
-        <xs:attribute name="after-failures" type="xs:int" default="0">
+        <xs:attribute name="after-failures" type="xs:int" default="${Server.BackupSite.after-failures}">
             <xs:annotation>
                 <xs:documentation>The number of failed request operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after 'min-wait'.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="min-wait" type="xs:long" default="0">
+        <xs:attribute name="min-wait" type="xs:long" default="${Server.BackupSite.min-wait}">
             <xs:annotation>
                 <xs:documentation>The minimal number of millis to wait before taking this site offline, even in the case 'after-failures' is reached. If smaller or equal to 0, then only 'after-failures' is considered.</xs:documentation>
             </xs:annotation>
@@ -1794,7 +1794,7 @@
                     </xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
-                    <xs:attribute name="enabled" type="xs:boolean" default="true">
+                    <xs:attribute name="enabled" type="xs:boolean" default="${Server.CacheAuthorization.enabled}">
                         <xs:annotation>
                             <xs:documentation>
                                 Enables authorization checks for this cache. Defaults to true if the authorization element is present.

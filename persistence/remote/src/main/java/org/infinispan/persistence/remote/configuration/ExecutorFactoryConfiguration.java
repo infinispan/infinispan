@@ -9,15 +9,9 @@ import org.infinispan.executors.DefaultExecutorFactory;
 
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {
    static final AttributeDefinition<ExecutorFactory> EXECUTOR_FACTORY = AttributeDefinition.builder("executorFactory", null, ExecutorFactory.class)
-         .initializer(new AttributeInitializer<ExecutorFactory>() {
+         .initializer(DefaultExecutorFactory::new).immutable().build();
 
-            @Override
-            public ExecutorFactory initialize() {
-               return new DefaultExecutorFactory();
-            }
-         }).immutable().build();
-
-   public static AttributeSet attributeSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExecutorFactoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), EXECUTOR_FACTORY);
    };
 

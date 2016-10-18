@@ -1,5 +1,14 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.EXHAUSTED_ACTION;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_ACTIVE;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_IDLE;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_TOTAL;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MIN_EVICTABLE_IDLE_TIME;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MIN_IDLE;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.TEST_WHILE_IDLE;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.TIME_BETWEEN_EVICTION_RUNS;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -11,17 +20,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<ConnectionPoolConfiguration> {
-   private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
-   private int maxActive = -1;
-   private int maxTotal = -1;
-   private int maxIdle = -1;
-   private int minIdle = 1;
-   private long timeBetweenEvictionRuns = 120000;
-   private long minEvictableIdleTime = 1800000;
-   private boolean testWhileIdle = true;
 
    ConnectionPoolConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
-      super(builder);
+      super(builder, ConnectionPoolConfiguration.attributeDefinitionSet());
    }
 
    /**
@@ -29,7 +30,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * exhausted.
     */
    public ConnectionPoolConfigurationBuilder exhaustedAction(ExhaustedAction exhaustedAction) {
-      this.exhaustedAction = exhaustedAction;
+      this.attributes.attribute(EXHAUSTED_ACTION).set(exhaustedAction);
       return this;
    }
 
@@ -41,7 +42,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * limit.
     */
    public ConnectionPoolConfigurationBuilder maxActive(int maxActive) {
-      this.maxActive = maxActive;
+      this.attributes.attribute(MAX_ACTIVE).set(maxActive);
       return this;
    }
 
@@ -52,7 +53,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * exhausted. The default setting for this parameter is -1 (no limit).
     */
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
-      this.maxTotal = maxTotal;
+      this.attributes.attribute(MAX_TOTAL).set(maxTotal);
       return this;
    }
 
@@ -62,7 +63,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * default setting for this parameter is -1.
     */
    public ConnectionPoolConfigurationBuilder maxIdle(int maxIdle) {
-      this.maxIdle = maxIdle;
+      this.attributes.attribute(MAX_IDLE).set(maxIdle);
       return this;
    }
 
@@ -74,7 +75,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * setting for this parameter is 1.
     */
    public ConnectionPoolConfigurationBuilder minIdle(int minIdle) {
-      this.minIdle = minIdle;
+      this.attributes.attribute(MIN_IDLE).set(minIdle);
       return this;
    }
 
@@ -84,7 +85,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * this parameter is 2 minutes.
     */
    public ConnectionPoolConfigurationBuilder timeBetweenEvictionRuns(long timeBetweenEvictionRuns) {
-      this.timeBetweenEvictionRuns = timeBetweenEvictionRuns;
+      this.attributes.attribute(TIME_BETWEEN_EVICTION_RUNS).set(timeBetweenEvictionRuns);
       return this;
    }
 
@@ -96,7 +97,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * minutes).
     */
    public ConnectionPoolConfigurationBuilder minEvictableIdleTime(long minEvictableIdleTime) {
-      this.minEvictableIdleTime = minEvictableIdleTime;
+      this.attributes.attribute(MIN_EVICTABLE_IDLE_TIME).set(minEvictableIdleTime);
       return this;
    }
 
@@ -107,7 +108,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * The default setting for this parameter is true.
     */
    public ConnectionPoolConfigurationBuilder testWhileIdle(boolean testWhileIdle) {
-      this.testWhileIdle = testWhileIdle;
+      this.attributes.attribute(TEST_WHILE_IDLE).set(testWhileIdle);
       return this;
    }
 
@@ -121,19 +122,12 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
 
    @Override
    public ConnectionPoolConfiguration create() {
-      return new ConnectionPoolConfiguration(exhaustedAction, maxActive, maxTotal, maxIdle, minIdle, timeBetweenEvictionRuns, minEvictableIdleTime, testWhileIdle);
+      return new ConnectionPoolConfiguration(attributes.protect());
    }
 
    @Override
    public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template) {
-      exhaustedAction = template.exhaustedAction();
-      maxActive = template.maxActive();
-      maxTotal = template.maxTotal();
-      maxIdle = template.maxIdle();
-      minIdle = template.minIdle();
-      timeBetweenEvictionRuns = template.timeBetweenEvictionRuns();
-      minEvictableIdleTime = template.minEvictableIdleTime();
-      testWhileIdle = template.testWhileIdle();
+      this.attributes.read(template.attributes());
       return this;
    }
 }

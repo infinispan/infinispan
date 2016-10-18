@@ -1,5 +1,6 @@
 package org.infinispan.persistence.rest.configuration;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
 import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
@@ -12,9 +13,11 @@ import org.infinispan.persistence.rest.metadata.MetadataHelper;
  */
 public abstract class AbstractRestStoreConfigurationChildBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements RestStoreConfigurationChildBuilder<S> {
    private final RestStoreConfigurationBuilder builder;
+   protected final AttributeSet attributes;
 
-   protected AbstractRestStoreConfigurationChildBuilder(RestStoreConfigurationBuilder builder) {
+   protected AbstractRestStoreConfigurationChildBuilder(RestStoreConfigurationBuilder builder, AttributeSet attributes) {
       super(builder);
+      this.attributes = attributes;
       this.builder = builder;
    }
 

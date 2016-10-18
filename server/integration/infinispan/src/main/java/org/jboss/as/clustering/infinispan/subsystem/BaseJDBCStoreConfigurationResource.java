@@ -120,6 +120,10 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setDefaultValue(new ModelNode().set("type"))
                     .build();
 
+    static final SimpleAttributeDefinition STRING_KEYED_TABLE_PREFIX = new SimpleAttributeDefinitionBuilder("stringKeyedTablePrefix", ModelType.STRING)
+          .setDefaultValue(new ModelNode().set("ispn_entry"))
+          .build();
+
     static final ObjectTypeAttributeDefinition ID_COLUMN = ObjectTypeAttributeDefinition.
             Builder.of("id-column", COLUMN_NAME, COLUMN_TYPE).
             setAllowNull(true).

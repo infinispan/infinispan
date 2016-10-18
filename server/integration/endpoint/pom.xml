@@ -15,7 +15,6 @@
 
    <build>
       <plugins>
-         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
@@ -90,6 +89,21 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+                  <configuration>
+                     <attributeDefType>SERVER</attributeDefType>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
@@ -114,6 +128,12 @@
                  <groupId>org.wildfly</groupId>
              </exclusion>
          </exclusions>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-commons</artifactId>
+         <scope>compile</scope>
       </dependency>
 
       <dependency>
