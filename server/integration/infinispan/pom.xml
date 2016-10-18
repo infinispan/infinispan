@@ -32,12 +32,20 @@
             <artifactId>wildfly-threads</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-transactions</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -161,6 +169,9 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                </configuration>
                 <executions>
                     <execution>
                         <id>serialize_component_metadata</id>
@@ -182,6 +193,21 @@
                                     <value>false</value>
                                 </systemProperty>
                             </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-defaults-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extract-defaults</id>
+                        <goals>
+                            <goal>extract-defaults</goal>
+                        </goals>
+                        <configuration>
+                            <attributeDefType>SERVER</attributeDefType>
                         </configuration>
                     </execution>
                 </executions>

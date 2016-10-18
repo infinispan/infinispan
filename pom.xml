@@ -21,6 +21,7 @@
       <module>parent</module>
       <module>commons</module>
       <module>commons-test</module>
+      <module>plugins/infinispan-defaults-maven-plugin</module>
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>

@@ -1,24 +1,25 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.RemoteServerConfiguration.HOST;
+import static org.infinispan.persistence.remote.configuration.RemoteServerConfiguration.PORT;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<RemoteServerConfiguration> {
-   private String host;
-   private int port = 11222;
 
    RemoteServerConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
-      super(builder);
+      super(builder, RemoteServerConfiguration.attributeDefinitionSet());
    }
 
    public RemoteServerConfigurationBuilder host(String host) {
-      this.host = host;
+      this.attributes.attribute(HOST).set(host);
       return this;
    }
 
    public RemoteServerConfigurationBuilder port(int port) {
-      this.port = port;
+      this.attributes.attribute(PORT).set(port);
       return this;
    }
 
@@ -32,14 +33,12 @@ public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigu
 
    @Override
    public RemoteServerConfiguration create() {
-      return new RemoteServerConfiguration(host, port);
+      return new RemoteServerConfiguration(attributes.protect());
    }
 
    @Override
    public RemoteServerConfigurationBuilder read(RemoteServerConfiguration template) {
-      this.host = template.host();
-      this.port = template.port();
-
+      attributes.read(template.attributes());
       return this;
    }
 }

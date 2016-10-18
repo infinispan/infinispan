@@ -29,7 +29,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="batch-size" type="xs:long" default="100">
+        <xs:attribute name="batch-size" type="xs:long" default="${JpaStore.batchSize}">
           <xs:annotation>
             <xs:documentation>
               The batch size is used during cache store streaming. Default is
@@ -37,7 +37,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="store-metadata" type="xs:boolean" default="true">
+        <xs:attribute name="store-metadata" type="xs:boolean" default="${JpaStore.storeMetadata}">
           <xs:annotation>
             <xs:documentation>
               Store Infinispan metadata (expiration, versioning) with the

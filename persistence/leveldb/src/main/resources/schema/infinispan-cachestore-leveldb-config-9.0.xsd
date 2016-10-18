@@ -47,17 +47,17 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="block-size" type="xs:integer">
+        <xs:attribute name="block-size" type="xs:integer" default="${RocksDBStore.blockSize}">
           <xs:annotation>
             <xs:documentation>Cache store block size.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="cache-size" type="xs:long">
+        <xs:attribute name="cache-size" type="xs:long" default="${RocksDBStore.cacheSize}}">
           <xs:annotation>
             <xs:documentation>Cache size for the cache store.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="clear-threshold" type="xs:integer">
+        <xs:attribute name="clear-threshold" type="xs:integer" default="${RocksDBStore.clearThreshold}">
           <xs:annotation>
             <xs:documentation>Cache store cache clear threshold.</xs:documentation>
           </xs:annotation>
@@ -72,7 +72,7 @@
         <xs:documentation>The base directory in which to store expired cache state.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="queue-size" type="xs:integer" default="10000">
+    <xs:attribute name="queue-size" type="xs:integer" default="${RocksDBStore.expiryQueueSize}">
       <xs:annotation>
         <xs:documentation>Expired entry queue size.</xs:documentation>
       </xs:annotation>
@@ -80,7 +80,7 @@
   </xs:complexType>
 
   <xs:complexType name="leveldb-compression">
-    <xs:attribute name="type" type="tns:leveldb-compression-mode" default="NONE">
+    <xs:attribute name="type" type="tns:leveldb-compression-mode" default="${RocksDBStore.compressionType}">
       <xs:annotation>
         <xs:documentation>The type of compression to be used by LevelDB store.</xs:documentation>
       </xs:annotation>
@@ -103,7 +103,7 @@
   </xs:simpleType>
 
   <xs:complexType name="leveldb-implementation">
-    <xs:attribute name="type" type="tns:leveldb-implementation-type" default="AUTO">
+    <xs:attribute name="type" type="tns:leveldb-implementation-type" default="${LevelDBStore.implementationType}">
       <xs:annotation>
         <xs:documentation>The LevelDB store implementation to use.</xs:documentation>
       </xs:annotation>

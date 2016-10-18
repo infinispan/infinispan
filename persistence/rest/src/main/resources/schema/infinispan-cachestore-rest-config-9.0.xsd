@@ -17,17 +17,17 @@
           <xs:element name="connection-pool" type="tns:rest-connection-pool" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
 
-        <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="false">
+        <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="${RestStore.appendCacheNameToPath}">
           <xs:annotation>
             <xs:documentation>Whether to append the name of the cache to the path.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="path" type="xs:string" default="/rest/___defaultcache">
+        <xs:attribute name="path" type="xs:string" default="${RestStore.path}">
           <xs:annotation>
             <xs:documentation>The path portion of the URI of the remote REST endpoint.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="key-to-string-mapper" type="xs:string" default="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper">
+        <xs:attribute name="key-to-string-mapper" type="xs:string" default="${RestStore.key2StringMapper}">
           <xs:annotation>
             <xs:documentation>
               The name of a class to use for converting keys to strings. Defaults to
@@ -47,32 +47,32 @@
   </xs:complexType>
 
   <xs:complexType name="rest-connection-pool">
-    <xs:attribute name="buffer-size" type="xs:int" default="8192">
+    <xs:attribute name="buffer-size" type="xs:int" default="${ConnectionPool.bufferSize}">
       <xs:annotation>
         <xs:documentation>The size of the socket buffer.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="connection-timeout" type="xs:int" default="60000">
+    <xs:attribute name="connection-timeout" type="xs:int" default="${ConnectionPool.connectionTimeout}">
       <xs:annotation>
         <xs:documentation>A connection timeout for remote cache communication.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-connections-per-host" type="xs:int" default="4">
+    <xs:attribute name="max-connections-per-host" type="xs:int" default="${ConnectionPool.maxConnectionsPerHostTimeout}">
       <xs:annotation>
         <xs:documentation>The maximum number of connections per host.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-total-connections" type="xs:int" default="20">
+    <xs:attribute name="max-total-connections" type="xs:int" default="${ConnectionPool.maxTotalConnections}">
       <xs:annotation>
         <xs:documentation>The maximum number of total connections.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="socket-timeout" type="xs:int" default="60000">
+    <xs:attribute name="socket-timeout" type="xs:int" default="${ConnectionPool.socketTimeout}">
       <xs:annotation>
         <xs:documentation>A socket timeout for remote cache communication.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="tcp-no-delay" type="xs:boolean" default="true">
+    <xs:attribute name="tcp-no-delay" type="xs:boolean" default="${ConnectionPool.tcpNoDelay}">
       <xs:annotation>
         <xs:documentation>Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.</xs:documentation>
       </xs:annotation>

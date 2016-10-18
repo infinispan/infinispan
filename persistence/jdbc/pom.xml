@@ -15,6 +15,12 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
@@ -138,6 +144,18 @@
                         </artifact>
                      </artifacts>
                   </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
                </execution>
             </executions>
          </plugin>

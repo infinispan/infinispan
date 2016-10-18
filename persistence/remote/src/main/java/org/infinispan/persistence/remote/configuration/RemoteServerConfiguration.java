@@ -1,27 +1,40 @@
 package org.infinispan.persistence.remote.configuration;
 
-public class RemoteServerConfiguration {
-   private final String host;
-   private final int port;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
-   RemoteServerConfiguration(String host, int port) {
-      this.host = host;
-      this.port = port;
+public class RemoteServerConfiguration {
+
+   static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", null, String.class).immutable().build();
+   static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", 11222).immutable().build();
+
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(RemoteServerConfiguration.class, HOST, PORT);
+   }
+
+   private final AttributeSet attributes;
+
+   RemoteServerConfiguration(AttributeSet attibutes) {
+      this.attributes = attibutes;
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
    public String host() {
-      return host;
+      return attributes.attribute(HOST).get();
    }
 
    public int port() {
-      return port;
+      return attributes.attribute(PORT).get();
    }
 
    @Override
    public String toString() {
       return "RemoteServerConfiguration{" +
-            "host='" + host + '\'' +
-            ", port=" + port +
+            "host='" + host() + '\'' +
+            ", port=" + port() +
             '}';
    }
 
@@ -32,15 +45,15 @@ public class RemoteServerConfiguration {
 
       RemoteServerConfiguration that = (RemoteServerConfiguration) o;
 
-      if (port != that.port) return false;
-      return host != null ? host.equals(that.host) : that.host == null;
+      if (port() != that.port()) return false;
+      return host() != null ? host().equals(that.host()) : that.host() == null;
 
    }
 
    @Override
    public int hashCode() {
-      int result = host != null ? host.hashCode() : 0;
-      result = 31 * result + port;
+      int result = host() != null ? host().hashCode() : 0;
+      result = 31 * result + port();
       return result;
    }
 }

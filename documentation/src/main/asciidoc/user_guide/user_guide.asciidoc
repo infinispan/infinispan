@@ -5,6 +5,9 @@ The Infinispan community
 :toclevels: 3
 :numbered:
 
+// Load all default values here for use in all sub-chapters
+include::{defaults}[]
+
 include::introduction.adoc[]
 include::configuration.adoc[]
 include::cache_manager.adoc[]

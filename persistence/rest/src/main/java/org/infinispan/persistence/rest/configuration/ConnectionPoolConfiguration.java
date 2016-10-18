@@ -1,58 +1,67 @@
 package org.infinispan.persistence.rest.configuration;
 
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.serializing.SerializedWith;
+
 /**
  * ConnectionPoolConfiguration.
  *
  * @author Tristan Tarrant
  * @since 6.0
  */
+@BuiltBy(ConnectionPoolConfigurationBuilder.class)
 public class ConnectionPoolConfiguration {
-   private final int connectionTimeout;
-   private final int maxConnectionsPerHost;
-   private final int maxTotalConnections;
-   private final int bufferSize;
-   private final int socketTimeout;
-   private final boolean tcpNoDelay;
+   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", 60000).immutable().build();
+   static final AttributeDefinition<Integer> MAX_CONNECTIONS_PER_HOST = AttributeDefinition.builder("maxConnectionsPerHostTimeout", 4).immutable().build();
+   static final AttributeDefinition<Integer> MAX_TOTAL_CONNECTIONS = AttributeDefinition.builder("maxTotalConnections", 20).immutable().build();
+   static final AttributeDefinition<Integer> BUFFER_SIZE = AttributeDefinition.builder("bufferSize", 8192).immutable().build();
+   static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", 60000).immutable().build();
+   static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).immutable().build();
 
-   ConnectionPoolConfiguration(int connectionTimeout, int maxConnectionsPerHost, int maxTotalConnections, int bufferSize, int socketTimeout,
-         boolean tcpNoDelay) {
-      this.connectionTimeout = connectionTimeout;
-      this.maxConnectionsPerHost = maxConnectionsPerHost;
-      this.maxTotalConnections = maxTotalConnections;
-      this.bufferSize = bufferSize;
-      this.socketTimeout = socketTimeout;
-      this.tcpNoDelay = tcpNoDelay;
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(ConnectionPoolConfiguration.class, CONNECTION_TIMEOUT, MAX_CONNECTIONS_PER_HOST,
+            MAX_TOTAL_CONNECTIONS, BUFFER_SIZE, SOCKET_TIMEOUT, TCP_NO_DELAY);
+   }
+
+   private final AttributeSet attributes;
+
+   public ConnectionPoolConfiguration(AttributeSet attributes) {
+      this.attributes = attributes;
    }
 
    public int connectionTimeout() {
-      return connectionTimeout;
+      return attributes.attribute(CONNECTION_TIMEOUT).get();
    }
 
    public int maxConnectionsPerHost() {
-      return maxConnectionsPerHost;
+      return attributes.attribute(MAX_CONNECTIONS_PER_HOST).get();
    }
 
    public int maxTotalConnections() {
-      return maxTotalConnections;
+      return attributes.attribute(MAX_TOTAL_CONNECTIONS).get();
    }
 
    public int bufferSize() {
-      return bufferSize;
+      return attributes.attribute(BUFFER_SIZE).get();
    }
 
    public int socketTimeout() {
-      return socketTimeout;
+      return attributes.attribute(SOCKET_TIMEOUT).get();
    }
 
    public boolean tcpNoDelay() {
-      return tcpNoDelay;
+      return attributes.attribute(TCP_NO_DELAY).get();
    }
 
    @Override
    public String toString() {
-      return "ConnectionPoolConfiguration [connectionTimeout=" + connectionTimeout + ", maxConnectionsPerHost=" + maxConnectionsPerHost + ", maxTotalConnections="
-            + maxTotalConnections + ", bufferSize=" + bufferSize + ", socketTimeout=" + socketTimeout + ", tcpNoDelay="
-            + tcpNoDelay + "]";
+      return "ConnectionPoolConfiguration [connectionTimeout=" + connectionTimeout() + ", maxConnectionsPerHost=" + maxConnectionsPerHost() + ", maxTotalConnections="
+            + maxTotalConnections() + ", bufferSize=" + bufferSize() + ", socketTimeout=" + socketTimeout() + ", tcpNoDelay="
+            + tcpNoDelay() + "]";
    }
 
    @Override
@@ -62,23 +71,23 @@ public class ConnectionPoolConfiguration {
 
       ConnectionPoolConfiguration that = (ConnectionPoolConfiguration) o;
 
-      if (connectionTimeout != that.connectionTimeout) return false;
-      if (maxConnectionsPerHost != that.maxConnectionsPerHost) return false;
-      if (maxTotalConnections != that.maxTotalConnections) return false;
-      if (bufferSize != that.bufferSize) return false;
-      if (socketTimeout != that.socketTimeout) return false;
-      return tcpNoDelay == that.tcpNoDelay;
+      if (connectionTimeout() != that.connectionTimeout()) return false;
+      if (maxConnectionsPerHost() != that.maxConnectionsPerHost()) return false;
+      if (maxTotalConnections() != that.maxTotalConnections()) return false;
+      if (bufferSize() != that.bufferSize()) return false;
+      if (socketTimeout() != that.socketTimeout()) return false;
+      return tcpNoDelay() == that.tcpNoDelay();
 
    }
 
    @Override
    public int hashCode() {
-      int result = connectionTimeout;
-      result = 31 * result + maxConnectionsPerHost;
-      result = 31 * result + maxTotalConnections;
-      result = 31 * result + bufferSize;
-      result = 31 * result + socketTimeout;
-      result = 31 * result + (tcpNoDelay ? 1 : 0);
+      int result = connectionTimeout();
+      result = 31 * result + maxConnectionsPerHost();
+      result = 31 * result + maxTotalConnections();
+      result = 31 * result + bufferSize();
+      result = 31 * result + socketTimeout();
+      result = 31 * result + (tcpNoDelay() ? 1 : 0);
       return result;
    }
 }

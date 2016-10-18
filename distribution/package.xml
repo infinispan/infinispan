@@ -152,7 +152,7 @@
          <mkdir dir="@{dir}/schema" />
          <copy todir="@{dir}/schema">
             <fileset dir="${basedir}/..">
-               <include name="**/src/main/resources/schema/*-${infinispan.core.schema.version}.xsd" />
+               <include name="**/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                <include name="**/src/main/resources/org/infinispan/spring/config/*${infinispan.core.schema.version}.xsd" />
             </fileset>
             <mapper type="flatten" />

@@ -105,6 +105,18 @@
                <threadCount>1</threadCount>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
    <dependencies>

@@ -114,6 +114,23 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+                  <configuration>
+                     <jars>
+                        <jar>infinispan-cachestore-rocksdb</jar>
+                     </jars>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 </project>
