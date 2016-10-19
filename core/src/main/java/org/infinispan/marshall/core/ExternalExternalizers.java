@@ -86,6 +86,12 @@ final class ExternalExternalizers {
          return ext.readObject(input);
       }
 
+      @Override
+      public String toString() {
+         // Each adapter is represented by the externalizer it delegates to, so just return the class name
+         return ext.getClass().getName();
+      }
+
    }
 
 }

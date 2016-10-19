@@ -73,7 +73,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -848,14 +848,9 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   public static StreamingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+   public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
       GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
-      return gcr.getComponent(StreamingMarshaller.class);
-   }
-
-   public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
-      GlobalComponentRegistry gcr = extractField(cacheContainer, "globalComponentRegistry");
-      return gcr.getComponent(ExternalizerTable.class);
+      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class);
    }
 
    /**

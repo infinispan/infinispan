@@ -296,6 +296,18 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    static final int NOT_FOUND                      = -1;
 
+   public <T> Externalizer<T> findExternalizerFor(Object obj) {
+      Class<?> clazz = obj.getClass();
+      Externalizer ext = internalExts.get(clazz);
+      if (ext == null) {
+         ext = externalExts.get(clazz);
+         if (ext == null)
+            ext = findAnnotatedExternalizer(clazz);
+      }
+
+      return ext;
+   }
+
    void writeNullableObject(Object obj, BytesObjectOutput out) throws IOException {
       if (obj == null)
          out.writeByte(ID_NULL);
@@ -327,7 +339,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       return null;
    }
 
-   <T> AdvancedExternalizer<T> findExternalizer(ObjectInput in) throws IOException {
+   <T> AdvancedExternalizer<T> findExternalizerIn(ObjectInput in) throws IOException {
       int type = in.readUnsignedByte();
       switch (type) {
          case ID_INTERNAL:
