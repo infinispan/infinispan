@@ -343,7 +343,7 @@ public class TestCacheManagerFactory {
       amendTransport(cfg, new TransportFlags());
    }
 
-   private static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
+   public static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
       org.infinispan.configuration.global.GlobalConfiguration gc = builder.build();
       if (gc.transport().transport() != null) { //this is local
          String testName = TestResourceTracker.getCurrentTestName();
