@@ -63,7 +63,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
          @Override
          public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-            AdvancedExternalizer<Object> ext = marshaller.findExternalizer(unmarshaller);
+            AdvancedExternalizer<Object> ext = marshaller.findExternalizerIn(unmarshaller);
             return ext.readObject(unmarshaller);
          }
       });

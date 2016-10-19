@@ -2,13 +2,13 @@ package org.infinispan.lucene;
 
 import java.io.IOException;
 
+import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.marshalling.ObjectTable.Writer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -58,16 +58,15 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
    }
 
    private void verifyExternalizerForType(Object keySampleType, Class expectedExcternalizerClass) throws IOException {
-      ExternalizerTable externalizerTable = TestingUtil.extractExtTable(cacheManager);
+      GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cacheManager);
+      Externalizer<Object> ext = marshaller.findExternalizerFor(keySampleType);
 
-      Writer objectWriter = externalizerTable.getObjectWriter(keySampleType);
-
-      AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignExternalizerAdapter",
-            objectWriter.getClass().toString(),
-            "class org.infinispan.marshall.core.ExternalizerTable$ForeignExternalizerAdapter");
+      AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignAdvancedExternalizer",
+            ext.getClass().toString(),
+            "class org.infinispan.marshall.core.ExternalExternalizers$ForeignAdvancedExternalizer");
 
       AssertJUnit.assertEquals("Type of delegate used by the adapter doesn't match expected: " + expectedExcternalizerClass.getClass(),
-            "class " + objectWriter.toString(),
+            "class " + ext.toString(),
             expectedExcternalizerClass.toString());
    }
 
