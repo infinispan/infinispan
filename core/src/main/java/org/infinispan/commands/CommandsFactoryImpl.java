@@ -73,6 +73,7 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -87,7 +88,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -164,7 +165,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private TimeService timeService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-   private ExternalizerTable externalizerTable;
+   private StreamingMarshaller marshaller;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
@@ -178,7 +179,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, ExternalizerTable externalizerTable) {
+                                 ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -204,7 +205,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.timeService = timeService;
-      this.externalizerTable = externalizerTable;
+      this.marshaller = marshaller;
    }
 
    @Start(priority = 1)
@@ -709,7 +710,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (ann != null)
          return ValueMatcher.valueOf(ann.valueMatcher().toString());
 
-      Externalizer ext = externalizerTable.getExternalizer(o);
+      Externalizer ext = ((GlobalMarshaller) marshaller).findExternalizerFor(o);
       if (ext != null && ext instanceof LambdaExternalizer)
          return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
 
