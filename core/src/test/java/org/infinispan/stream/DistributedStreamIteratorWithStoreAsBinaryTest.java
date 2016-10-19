@@ -18,6 +18,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
@@ -102,7 +103,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       assertFalse(iterator.hasNext());
    }
 
-   private static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String>, Serializable {
+   private static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String>, Serializable, ExternalPojo {
       private final Map<MagicKey, String> allowedEntries;
 
       public MagicKeyStringFilter(Map<MagicKey, String> allowedEntries) {

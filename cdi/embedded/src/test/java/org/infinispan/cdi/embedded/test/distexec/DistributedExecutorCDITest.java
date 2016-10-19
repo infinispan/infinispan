@@ -11,6 +11,7 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.Input;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.distexec.DistributedExecutorTest;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.Archive;
@@ -51,7 +52,7 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
    }
 
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;

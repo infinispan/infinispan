@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -244,7 +245,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new StaticConverter();
       }
 
-      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
+      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable, ExternalPojo {
          @Override
          public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
@@ -328,7 +329,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       }
 
       static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
-         implements Serializable {
+         implements Serializable, ExternalPojo {
          private final Object[] params;
          private final CallbackCounter counter = new NumericCallbackCounter();
 

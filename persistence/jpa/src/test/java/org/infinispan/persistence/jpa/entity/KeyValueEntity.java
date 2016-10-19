@@ -6,11 +6,13 @@ import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import org.infinispan.marshall.core.ExternalPojo;
+
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Entity
-public class KeyValueEntity implements Serializable {
+public class KeyValueEntity implements Serializable, ExternalPojo {
    @Id
    private String k; // key is reserved word in SQL
 

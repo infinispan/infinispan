@@ -2,7 +2,9 @@ package org.infinispan.test.data;
 
 import java.io.Serializable;
 
-public class Person implements Serializable {
+import org.infinispan.marshall.core.ExternalPojo;
+
+public class Person implements Serializable, ExternalPojo {
 
    private static final long serialVersionUID = -885384294556845285L;
 

@@ -7,9 +7,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.util.concurrent.ReclosableLatch;
 
-public class Key implements Externalizable {
+public class Key implements Externalizable, ExternalPojo {
    private static final long serialVersionUID = 4745232904453872125L;
 
    private String value;

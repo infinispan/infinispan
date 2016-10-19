@@ -3,11 +3,13 @@ package org.infinispan.atomic;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import org.infinispan.marshall.core.ExternalPojo;
+
 /**
  * @author anistor@redhat.com
  * @since 5.3
  */
-public class TestDeltaAware implements DeltaAware, Serializable {
+public class TestDeltaAware implements DeltaAware, Serializable, ExternalPojo {
 
    private String firstComponent;
    private String secondComponent;
@@ -50,7 +52,7 @@ public class TestDeltaAware implements DeltaAware, Serializable {
       this.secondComponent = secondComponent;
    }
 
-   static class TestDelta implements Delta, Serializable {
+   static class TestDelta implements Delta, Serializable, ExternalPojo {
 
       private final HashMap<String, String> changeLog = new HashMap<String, String>();
 

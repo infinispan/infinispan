@@ -23,6 +23,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
@@ -133,7 +134,7 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       }
    }
 
-   public static class CustomEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable {
+   public static class CustomEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable, ExternalPojo {
 
       private transient ProtoStreamMarshaller marshaller;
       private String firstParam;

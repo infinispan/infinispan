@@ -108,7 +108,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       }
    }
 
-   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
+   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
       private static final long serialVersionUID = 1L;
       public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
       Integer balance;

@@ -6,6 +6,7 @@ import java.util.{Collections, Optional}
 
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.marshall.core.ExternalPojo
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
@@ -325,7 +326,7 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
 
 object AbstractHotRodClusterEventsTest {
 
-   class AcceptedKeyFilterFactory extends CacheEventFilterFactory with Serializable {
+   class AcceptedKeyFilterFactory extends CacheEventFilterFactory with Serializable with ExternalPojo {
       var staticKey: Option[Bytes] = _
       override def getFilter[K, V](params: Array[AnyRef]): CacheEventFilter[K, V] = {
          new CacheEventFilter[Bytes, Bytes] with Serializable {
@@ -338,7 +339,7 @@ object AbstractHotRodClusterEventsTest {
       }.asInstanceOf[CacheEventFilter[K, V]]
    }
 
-   class AcceptedKeyValueConverterFactory extends CacheEventConverterFactory with Serializable {
+   class AcceptedKeyValueConverterFactory extends CacheEventConverterFactory with Serializable with ExternalPojo {
       var staticKey: Option[Bytes] = _
       override def getConverter[K, V, C](params: Array[AnyRef]): CacheEventConverter[K, V, C] = {
          new CacheEventConverter[Bytes, Bytes, Bytes] with Serializable {

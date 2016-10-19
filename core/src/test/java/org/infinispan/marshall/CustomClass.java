@@ -2,7 +2,9 @@ package org.infinispan.marshall;
 
 import java.io.Serializable;
 
-public class CustomClass implements Serializable {
+import org.infinispan.marshall.core.ExternalPojo;
+
+public class CustomClass implements Serializable, ExternalPojo {
    final String val;
 
    public CustomClass(String val) {

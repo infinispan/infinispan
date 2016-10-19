@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
@@ -223,7 +224,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    }
 
    static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
-            Serializable {
+            Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 623845442163221832L;
@@ -251,7 +252,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       }
    }
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;

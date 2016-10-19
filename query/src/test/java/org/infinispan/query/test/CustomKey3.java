@@ -2,7 +2,9 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-public class CustomKey3 implements Serializable {
+import org.infinispan.marshall.core.ExternalPojo;
+
+public class CustomKey3 implements Serializable, ExternalPojo {
    private static final long serialVersionUID = -8825579871900146417L;
 
    String str;
