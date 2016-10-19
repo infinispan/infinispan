@@ -1,5 +1,6 @@
 package org.infinispan.spring.session;
 
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.provider.SpringCache;
@@ -16,7 +17,9 @@ public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRe
 
    @BeforeClass
    public void beforeClass() {
-      embeddedCacheManager = new DefaultCacheManager();
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalConfigurationBuilder.globalJmxStatistics().cacheManagerName("InfinispanEmbeddedSessionRepositoryTest");
+      embeddedCacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());
    }
 
    @AfterMethod
