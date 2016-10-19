@@ -1,0 +1,51 @@
+== Management
+
+=== CLI
+You can use the +CLI+ to perform management operations on a standalone node or a domain controller.
+
+----
+
+bin/ispn-cli.sh
+[disconnected /] connect
+[standalone@localhost:9990 /] cd subsystem=datagrid-infinispan
+[standalone@localhost:9990 subsystem=datagrid-infinispan] cd cache-container=local
+[standalone@localhost:9990 cache-container=local] cd local-cache=default
+[standalone@localhost:9990 local-cache=default]
+
+----
+
+The +CLI+ is extremely powerful and supports a number of useful features to navigate the management resource tree
+as well as inspecting single resources or entire subtrees. It is also possible to batch multiple commands together so that
+they are applied as a single operation.
+
+=== Console
+
+TODO
+
+=== JMX
+
+You can monitor an Infinispan Server over JMX in two ways:
+
+* Use JConsole or VisualVM running locally as the same user. This will use a local link:http://www.oracle.com/technetwork/java/jvmstat-142257.html[jvmstat] connection and requires no additional setup
+* Use JMX remoting (aka JSR-160) to connect from any host. This requires connecting through the management port (usually 9990) using a special protocol which respects the server security configuration
+
+To setup a client for JMX remoting you need to add the +$ISPN_HOME/bin/client/jboss-client.jar+ to your client's classpath and use one of the following service URLs:
+
+* `service:jmx:remote-http-jmx://host:port` for plain connections through the management interface
+* `service:jmx:remote-https-jmx://host:port` for TLS connections through the management interface (although this requires having the appropriate keys available)
+* `service:jmx:remoting-jmx://localhost:port` for connections through the remoting interface (necessary for connecting to individual servers in a domain)
+
+The JMX subsystem registers a service with the Remoting endpoint so that remote access to JMX can be obtained over the exposed Remoting connector.
+This is switched on by default in standalone mode and accessible over port 9990 but in domain mode it is switched off so it needs to be enabled.
+In domain mode the port will be the port of the Remoting connector for the Server instance to be monitored.
+
+[source,xml]
+----
+
+<subsystem xmlns="urn:jboss:domain:jmx:1.3">
+    <expose-resolved-model/>
+    <expose-expression-model/>
+    <remoting-connector use-management-endpoint="false"/>
+</subsystem>
+
+----
