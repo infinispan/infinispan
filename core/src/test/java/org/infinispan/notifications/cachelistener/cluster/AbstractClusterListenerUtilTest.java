@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -142,7 +143,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class LifespanFilter<K, V> implements KeyValueFilter<K, V>, Serializable {
+   protected static class LifespanFilter<K, V> implements KeyValueFilter<K, V>, Serializable, ExternalPojo {
       public LifespanFilter(long lifespan) {
          this.lifespan = lifespan;
       }
@@ -159,7 +160,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class NewLifespanLargerFilter<K, V> implements CacheEventFilter<K, V>, Serializable {
+   protected static class NewLifespanLargerFilter<K, V> implements CacheEventFilter<K, V>, Serializable, ExternalPojo {
       @Override
       public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
          // If neither metadata is provided dont' raise the event (this will preclude all creations and removals)
@@ -171,7 +172,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class LifespanConverter implements CacheEventConverter<Object, String, Object>, Serializable {
+   protected static class LifespanConverter implements CacheEventConverter<Object, String, Object>, Serializable, ExternalPojo {
       public LifespanConverter(boolean returnOriginalValueOrNull, long lifespanThreshold) {
          this.returnOriginalValueOrNull = returnOriginalValueOrNull;
          this.lifespanThreshold = lifespanThreshold;
@@ -195,7 +196,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class StringTruncator implements CacheEventConverter<Object, String, String>, Serializable {
+   protected static class StringTruncator implements CacheEventConverter<Object, String, String>, Serializable, ExternalPojo {
       private final int beginning;
       private final int length;
 
@@ -214,14 +215,14 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class StringAppender implements CacheEventConverter<Object, String, String>, Serializable {
+   protected static class StringAppender implements CacheEventConverter<Object, String, String>, Serializable, ExternalPojo {
       @Override
       public String convert(Object key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
          return oldValue + (oldMetadata != null ? oldMetadata.lifespan() : "null") + newValue + (newMetadata != null ? newMetadata.lifespan() : "null");
       }
    }
 
-   protected static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object>, Serializable {
+   protected static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object>, Serializable, ExternalPojo {
       private final boolean throwExceptionOnNonFilterAndConverterMethods;
       private final Object convertedValue;
 

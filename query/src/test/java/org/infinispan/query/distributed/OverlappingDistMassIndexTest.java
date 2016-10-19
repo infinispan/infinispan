@@ -12,6 +12,7 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.testng.annotations.Test;
 
 /**
@@ -46,7 +47,7 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
 }
 
 @Indexed(index = "commonIndex")
-class Transaction implements Serializable {
+class Transaction implements Serializable, ExternalPojo {
 
    @Field(analyze = Analyze.NO)
    int size;
@@ -69,7 +70,7 @@ class Transaction implements Serializable {
 }
 
 @Indexed(index = "commonIndex")
-class Block implements Serializable {
+class Block implements Serializable, ExternalPojo {
 
    @Field(analyze = Analyze.NO)
    int height;

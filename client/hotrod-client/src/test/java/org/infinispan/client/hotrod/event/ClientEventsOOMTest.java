@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -166,7 +167,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          return new CustomConverter<K, V, C>();
       }
 
-      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable {
+      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable, ExternalPojo {
          @Override
          public C convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
             // all baby godzillas get converted to full grown godzillas

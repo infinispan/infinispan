@@ -371,6 +371,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
+      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
       out.writeByte(ID_UNKNOWN);
       if (external instanceof StreamingMarshaller)
          ((StreamingMarshaller) external).objectToObjectStream(obj, out);

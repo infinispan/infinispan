@@ -13,6 +13,7 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 
@@ -159,7 +160,7 @@ public class UserHS extends UserBase {
 /**
  * Parent class for UserHS to demonstrate inheritance of indexed attributes.
  */
-abstract class UserBase implements User, Serializable {
+abstract class UserBase implements User, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

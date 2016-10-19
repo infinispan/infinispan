@@ -30,6 +30,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.ReplListener;
@@ -471,7 +472,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       });
    }
 
-   class NonIndexedClass implements Serializable {
+   class NonIndexedClass implements Serializable, ExternalPojo {
       public String description;
 
       NonIndexedClass(String description) {

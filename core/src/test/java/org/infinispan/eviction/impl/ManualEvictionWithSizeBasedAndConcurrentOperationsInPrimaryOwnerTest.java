@@ -29,6 +29,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
@@ -385,7 +386,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       return controlledDataContainer;
    }
 
-   public static class SameHashCodeKey implements Serializable {
+   public static class SameHashCodeKey implements Serializable, ExternalPojo {
 
       private final String name;
       private final int hashCode;

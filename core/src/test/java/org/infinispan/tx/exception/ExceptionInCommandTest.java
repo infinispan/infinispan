@@ -9,6 +9,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -53,7 +54,7 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
       tm(0).commit();
    }
 
-   private static class MyDelta implements Delta , Serializable {
+   private static class MyDelta implements Delta , Serializable, ExternalPojo {
       public DeltaAware merge(DeltaAware d) {
          String threadName = Thread.currentThread().getName();
          if (threadName.contains("OOB-") || threadName.contains("remote-"))

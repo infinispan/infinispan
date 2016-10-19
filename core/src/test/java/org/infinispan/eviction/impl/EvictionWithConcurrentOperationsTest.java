@@ -31,6 +31,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -493,7 +494,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
                  Arrays.toString(expectedValues));
    }
 
-   public static class SameHashCodeKey implements Serializable {
+   public static class SameHashCodeKey implements Serializable, ExternalPojo {
 
       private final String name;
 

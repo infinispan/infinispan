@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -148,7 +149,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       int i;
    }
 
-   public static class ContainerData implements Serializable {
+   public static class ContainerData implements Serializable, ExternalPojo {
       int i;
       NonSerializabeData non_serializable_data;
       private static final long serialVersionUID = -8322197791060897247L;

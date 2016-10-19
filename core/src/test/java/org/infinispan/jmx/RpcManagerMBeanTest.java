@@ -29,6 +29,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -175,7 +176,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class SlowToSerialize implements Externalizable {
+   public static class SlowToSerialize implements Externalizable, ExternalPojo {
       String val;
       transient long delay;
 

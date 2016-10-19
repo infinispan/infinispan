@@ -23,6 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ProjectionConstants;
@@ -211,7 +212,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
    }
 
    @Indexed(index = "FooIndex")
-   public static class Foo implements Serializable {
+   public static class Foo implements Serializable, ExternalPojo {
       private String bar;
 
       public Foo(String bar) {

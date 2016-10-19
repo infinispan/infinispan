@@ -26,12 +26,9 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
 
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
-
       BufferSizePredictor sizePredictor = marshallableTypeHints
             .getBufferSizePredictor(obj.getClass());
       int estimatedSize = sizePredictor.nextSize(obj);
-
       ObjectOutput jbossOut = marshaller.startObjectOutput(
             new JBossByteOutput(out), false, estimatedSize);
       try {

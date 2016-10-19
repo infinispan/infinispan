@@ -7,6 +7,7 @@ import java.util.Map;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -16,7 +17,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 7.0
  */
 public class ReplicatedControlledConsistentHashFactory
-      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
+      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable, ExternalPojo {
    private volatile List<Address> membersToUse;
    private int[] primaryOwnerIndices;
 

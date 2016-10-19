@@ -5,11 +5,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -59,7 +58,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       assertEquals(p2, cache.get("key-hexastyle"));
    }
 
-   public static class ManualEvictionPojo implements Externalizable {
+   public static class ManualEvictionPojo implements Externalizable, ExternalPojo {
       int i;
 
       @Override
