@@ -92,7 +92,8 @@ public class PropertyFormatter {
          if (cls.getName().startsWith("org.infinispan.config") && !cls.isEnum()) {
             for (Method m : getMethods(obj.getClass())) {
                if (m.getParameterTypes().length != 0 || "toString".equals(m.getName())
-                     || "hashCode".equals(m.getName()) || "toProperties".equals(m.getName())) {
+                     || "hashCode".equals(m.getName()) || "toProperties".equals(m.getName())
+                     || m.isAnnotationPresent(Deprecated.class)) {
                   continue;
                }
                try {
