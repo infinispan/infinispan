@@ -1452,4 +1452,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while handling view %s", id = 421)
    void viewHandlingError(int viewId, @Cause Throwable t);
+
+   @Message(value="Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 422)
+   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
+
 }
