@@ -1,6 +1,6 @@
 ==  Streams
 
-Java 8 introduced the concept of a link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html[Stream]
+Java 8 introduced the concept of a link:{jdkdocroot}/java/util/stream/Stream.html[Stream]
 which allows functional-style operations on collections rather than having to procedurally
 iterate over the data yourself. Stream operations can be implemented in a fashion very
 similar to MapReduce.  Streams, just like MapReduce allow you to perform processing
@@ -10,11 +10,11 @@ Also since we can control how the entries are iterated upon we can more efficien
 a cache that is distributed if you want it to perform all of the operations across the cluster
 concurrently.
 
-A stream is retrieved from the link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#entrySet--[entrySet],
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#keySet--[keySet] or
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#values--[values] collections returned from the
-Cache by invoking the link:https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html#stream--[stream] or
-link:https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html#parallelStream--[parallelStream] methods.
+A stream is retrieved from the link:{javadocroot}/org/infinispan/Cache.html#entrySet--[entrySet],
+link:{javadocroot}/org/infinispan/Cache.html#keySet--[keySet] or
+link:{javadocroot}/org/infinispan/Cache.html#values--[values] collections returned from the
+Cache by invoking the link:{jdkdocroot}/java/util/Collection.html#stream--[stream] or
+link:{jdkdocroot}/java/util/Collection.html#parallelStream--[parallelStream] methods.
 
 === Common stream operations
 
@@ -25,13 +25,13 @@ you are using.
 
 It is possible to filter the stream so that it only operates upon a given subset of keys.  This can be done
 by invoking the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#filterKeys-java.util.Set-[filterKeys]
+link:{javadocroot}/org/infinispan/CacheStream.html#filterKeys-java.util.Set-[filterKeys]
 method on the `CacheStream`.  This should always be used over a Predicate
-link:http://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html?is-external=true#filter-java.util.function.Predicate-[filter]
+link:{jdkdocroot}/java/util/stream/Stream.html?is-external=true#filter-java.util.function.Predicate-[filter]
 and will be faster if the predicate was holding all keys.
 
 If you are familiar with the ``AdvancedCache`` interface you may be wondering why you even use
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html#getAll-java.util.Set-[getAll]
+link:{javadocroot}/org/infinispan/AdvancedCache.html#getAll-java.util.Set-[getAll]
 over this keyFilter.  There are some small benefits (mostly smaller payloads) to using getAll
 if you need the entries as is and need them all in memory in the local node.  However if you
 need to do processing on these elements a stream is recommended since you will get both
@@ -46,9 +46,9 @@ link:http://spark.apache.org/[Apache Spark].
 
 This option is only supported for replicated and distributed caches.  This allows the user to operate upon
 a subset of data at a time as determined by the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner].
+link:{javadocroot}/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner].
 The segments can be filtered by invoking
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#filterKeySegments-java.util.Set-[filterKeySegments]
+link:{javadocroot}/org/infinispan/CacheStream.html#filterKeySegments-java.util.Set-[filterKeySegments]
 method on the `CacheStream`.  This is applied after the key filter but before any intermediate operations are performed.
 
 === Local/Invalidation
@@ -91,7 +91,7 @@ duplicate processing.
 
 It is possible but highly discouraged to disable rehash awareness on the stream.  This should only be considered if
 your request can handle only seeing a subset of data if a rehash occurs.  This can be done by invoking
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#disableRehashAware--[CacheStream.disableRehashAware()]
+link:{javadocroot}/org/infinispan/CacheStream.html#disableRehashAware--[CacheStream.disableRehashAware()]
 The performance gain for most operations when a rehash doesn't occur is completely negligible.
 The only exceptions are for iterator and forEach, which will use less memory, since they do not have
 to keep track of processed keys.
@@ -107,17 +107,17 @@ The simplest way is to use a CacheStream instance and use a lambda just as you w
 Infinispan overrides all of the various Stream intermediate and terminal methods to take
 Serializable versions of the arguments (ie. SerializableFunction, SerializablePredicate...)
 You can find these methods at
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/stream/CacheStream.html[CacheStream].
+link:{javadocroot}/org/infinispan/stream/CacheStream.html[CacheStream].
 This relies on the spec to pick the most specific method as defined link:https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.5[here].
 
 In our previous example we used a `Collector` to collect all the results into a `Map`.
-Unfortunately the link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html[Collectors]
+Unfortunately the link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
 class doesn't produce Serializable instances.  Thus if you need to use these, you can use the newly provided
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
+link:{javadocroot}/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
 class which allows for a `Supplier<Collector>` to be provided.  This instance could then use the
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html[Collectors]
+link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
 to supply a `Collector` which is not serialized. You can read more details about how the
-collector peforms in a distributed fashion at link:user_guide.html#_distributed_stream_execution[distributed execution].
+collector peforms in a distributed fashion at link:user_guide.html#distributed_stream_execution[distributed execution].
 
 [source,java]
 ----
@@ -137,8 +137,8 @@ Map<Object, String> jbossValues = cache.entrySet().stream()
               .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 ----
 
-The recommended and most performant way is to use an 
-link:user_guide.html#_advanced_externalizers[AdvancedExternalizer]
+The recommended and most performant way is to use an
+link:user_guide.html#advanced_externalizers[AdvancedExternalizer]
 as this provides the smallest payload.  Unfortunately this means you cannot
 use lamdbas as advanced externalizers require defining the class before hand.
 
@@ -237,8 +237,8 @@ actually they always have to control one of the options.  There are 2 ways these
 
 ===== Local to each node
 When a stream is created from the cache collection the end user can choose between invoking
-link:https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html#stream--[stream] or
-link:https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html#parallelStream--[parallelStream]
+link:{jdkdocroot}/java/util/Collection.html#stream--[stream] or
+link:{jdkdocroot}/java/util/Collection.html#parallelStream--[parallelStream]
 method.  Depending on if the parallel stream was picked will enable multiple threading for
 each node locally.  Note that some operations like a rehash aware iterator and forEach operations
 will always use a sequential stream locally.  This could be enhanced at some point to allow for
@@ -252,8 +252,8 @@ perform concurrent requests.  The iterator, method to reduce overall memory pres
 only performs sequential requests which actually performs slightly better.
 
 If a user wishes to change this default however they can do so by invoking the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#sequentialDistribution--[sequentialDistribution]
-or link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#parallelDistribution--[parallelDistribution]
+link:{javadocroot}/org/infinispan/CacheStream.html#sequentialDistribution--[sequentialDistribution]
+or link:{javadocroot}/org/infinispan/CacheStream.html#parallelDistribution--[parallelDistribution]
 methods on the `CacheStream`.   Note that currently intermediate operations return a `Stream` instance
 so you must make sure to invoke these methods before calling another intermediate operation.
 
@@ -263,7 +263,7 @@ so you must make sure to invoke these methods before calling another intermediat
 It is possible to set a timeout value for the operation requests. This timeout is used only for remote requests timing out and
 it is on a per request basis. The former means the local execution will not timeout and the latter means if you have a failover
 scenario as described above the subsequent requests each have a new timeout.  If no timeout is specified it uses the
-replication timeout as a default timeout. You can set the timeout in your task by doing the following: 
+replication timeout as a default timeout. You can set the timeout in your task by doing the following:
 
 [source,java]
 ----
@@ -272,17 +272,17 @@ stream.timeout(1, TimeUnit.MINUTES);
 ----
 
 For more information about this, please check the java doc in
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
+link:{javadocroot}/org/infinispan/CacheStream.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
 javadoc.
 
 ==== Injection
 
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html[Stream]
+The link:{jdkdocroot}/java/util/stream/Stream.html[Stream]
 has a terminal operation called
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#forEach-java.util.function.Consumer-[forEach]
+link:{jdkdocroot}/java/util/stream/Stream.html#forEach-java.util.function.Consumer-[forEach]
 which allows for running some sort of side effect operation on the data.  In this case it may be desirable to get a reference to
 the `Cache` that is backing this Stream.  If your `Consumer` implements the
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/stream/CacheAware.html[CacheAware]
+link:{javadocroot}/org/infinispan/stream/CacheAware.html[CacheAware]
 interface the `injectCache` method be invoked before the accept method from the `Consumer` interface.
 
 ==== Distributed Stream execution
@@ -311,57 +311,57 @@ The following paragraphs describe how the distributed reductions work for the va
 be required to be serializable instead of the final result.
 
 allMatch noneMatch anyMatch::
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#allMatch-java.util.function.Predicate-[allMatch]
+The link:{jdkdocroot}/java/util/stream/Stream.html#allMatch-java.util.function.Predicate-[allMatch]
 operation is ran on each node and then all the results are logically anded together locally
 to get the appropriate value.  The
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#noneMatch-java.util.function.Predicate-[noneMatch]
+link:{jdkdocroot}/java/util/stream/Stream.html#noneMatch-java.util.function.Predicate-[noneMatch]
 and
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#anyMatch-java.util.function.Predicate-[anyMatch]
+link:{jdkdocroot}/java/util/stream/Stream.html#anyMatch-java.util.function.Predicate-[anyMatch]
 operations use a logical or instead. These methods also have early termination support,
 stopping remote and local operations once the final result is known.
 
 collect::
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.stream.Collector-[collect]
+The link:{jdkdocroot}/java/util/stream/Stream.html#collect-java.util.stream.Collector-[collect]
 method is interesting in that it can do a few extra steps.  The remote node performs
 everything as normal except it doesn't perform the final
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html#finisher--[finisher]
+link:{jdkdocroot}/java/util/stream/Collector.html#finisher--[finisher]
 upon the result and instead sends back the fully combined results.  The local thread
-then link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html#combiner--[combines]
+then link:{jdkdocroot}/java/util/stream/Collector.html#combiner--[combines]
 the remote and local result into a value which is then finally finished.  The key
 here to remember is that the final value doesn't have to be serializable but rather
-the values produced from the link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html#supplier--[supplier]
-and link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html#combiner--[combiner]
+the values produced from the link:{jdkdocroot}/java/util/stream/Collector.html#supplier--[supplier]
+and link:{jdkdocroot}/java/util/stream/Collector.html#combiner--[combiner]
 methods.
 
 count::
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#count--[count]
+The link:{jdkdocroot}/java/util/stream/Stream.html#count--[count]
 method just adds the numbers together from each node.
 
 findAny findFirst::
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--[findAny]
+The link:{jdkdocroot}/java/util/stream/Stream.html#findAny--[findAny]
 operation returns just the first value they find, whether it was from a remote node
 or locally.  Note this supports early termination in that once a value is found it
 will not process others.  Note the findFirst method is special since it requires a sorted
 intermediate operation, which is detailed in the
-link:user_guide.html#_intermediate_operation_exceptions[exceptions] section.
+link:user_guide.html#intermediate_operation_exceptions[exceptions] section.
 
 max min::
-The link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#max-java.util.Comparator-[max] and
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#min-java.util.Comparator-[min] methods find the respective min or max value on each node then a final
+The link:{jdkdocroot}/java/util/stream/Stream.html#max-java.util.Comparator-[max] and
+link:{jdkdocroot}/java/util/stream/Stream.html#min-java.util.Comparator-[min] methods find the respective min or max value on each node then a final
 reduction is performed locally to ensure only the min or max across all nodes is returned.
 
 reduce::
-The various reduce methods link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-java.util.function.BinaryOperator-[1] , 
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-[2] , 
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-U-java.util.function.BiFunction-java.util.function.BinaryOperator-[3] will end up serializing
+The various reduce methods link:{jdkdocroot}/java/util/stream/Stream.html#reduce-java.util.function.BinaryOperator-[1] ,
+link:{jdkdocroot}/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-[2] ,
+link:{jdkdocroot}/java/util/stream/Stream.html#reduce-U-java.util.function.BiFunction-java.util.function.BinaryOperator-[3] will end up serializing
 the result as much as the accumulator can do.  Then it will accumulate the local and remote results together locally, before combining if you have provided that.  Note this means
 a value coming from the combiner doesn't have to be Serializable.
 
 ==== Key based rehash aware operators
 
-The link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#iterator--[iterator],
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#spliterator--[spliterator]
-and link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#forEach-java.util.function.Consumer-[forEach]
+The link:{javadocroot}/org/infinispan/CacheStream.html#iterator--[iterator],
+link:{javadocroot}/org/infinispan/CacheStream.html#spliterator--[spliterator]
+and link:{javadocroot}/org/infinispan/CacheStream.html#forEach-java.util.function.Consumer-[forEach]
 are unlike the other terminal operators in that the rehash awareness has to keep
 track of what keys per segment have been processed instead of just segments.  This is
 to guarantee an exactly once (iterator & spliterator) or at least once behavior (forEach)
@@ -383,7 +383,7 @@ in a completed batch will be ran again when the rehash failure operation occurs.
 node will not cause this issue as the rehash failover doesn't occur until all responses are received.
 
 These operations batch sizes are both controlled by the same value which can be configured by invoking
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#distributedBatchSize-int-[distributedBatchSize]
+link:{javadocroot}/org/infinispan/CacheStream.html#distributedBatchSize-int-[distributedBatchSize]
 method on the `CacheStream`.  This value will default to the `chunkSize` configured in state transfer.
 Unfortunately this value is a tradeoff with memory usage vs performance vs at least once and your
 mileage may vary.
@@ -398,11 +398,11 @@ remote iteration process is very costly.
 ==== Intermediate operation exceptions
 
 There are some intermediate operations that have special exceptions, these are
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#skip-long-[skip],
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#peek-java.util.function.Consumer-[peek],
-sorted link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#sorted-java.util.Comparator-[1]
-link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#sorted--[2].
-& link:https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#distinct--[distinct].
+link:{jdkdocroot}/java/util/stream/Stream.html#skip-long-[skip],
+link:{jdkdocroot}/java/util/stream/Stream.html#peek-java.util.function.Consumer-[peek],
+sorted link:{jdkdocroot}/java/util/stream/Stream.html#sorted-java.util.Comparator-[1]
+link:{jdkdocroot}/java/util/stream/Stream.html#sorted--[2].
+& link:{jdkdocroot}/java/util/stream/Stream.html#distinct--[distinct].
 All of these methods have some sort of artificial iterator implanted in the stream
 processing to guarantee correctness, they are documented as below.  Note this means
 these operations may cause possibly severe performance degradation.

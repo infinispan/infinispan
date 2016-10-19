@@ -1,22 +1,21 @@
 ==  Querying
 Infinispan supports indexing and searching of Java objects stored in the grid using powerful search APIs
 which complement its main Map-like API. Historically, searching was first available in Infinispan via
-link:$$http://lucene.apache.org/$$[Apache Lucene]'s API but since version 6.0 Infinispan provides its own link:$$#_infinispan_s_query_dsl$$[query API]
+link:http://lucene.apache.org/[Apache Lucene]'s API but since version 6.0 Infinispan provides its own link:#infinispan_s_query_dsl[query API]
 based on a simple and expressive internal DSL. Searching with the new API is available for both embedded and remote
 clients while the Lucene based API is only available to embedded clients. The remote querying capability is further
-described in the link:$$#_querying_via_the_java_hot_rod_client$$[Hot Rod client chapter].
+described in the link:#querying_via_the_java_hot_rod_client[Hot Rod client chapter].
 
 === The infinispan-query module
-This module adds indexing and querying capabilities to Infinispan. It uses link:$$http://hibernate.org/subprojects/search$$[Hibernate Search]
-and link:$$http://lucene.apache.org/$$[Apache Lucene] to index and search objects in the cache. It allows users to
+This module adds indexing and querying capabilities to Infinispan. It uses link:http://hibernate.org/subprojects/search[Hibernate Search]
+and link:http://lucene.apache.org/[Apache Lucene] to index and search objects in the cache. It allows users to
 obtain objects within the cache without needing to know the keys to each object that they want to obtain. You can search
 your objects based on some of its properties. For example to retrieve all red cars (exact metadata match), or all books
 about a specific topic (full text search and relevance scoring).
 
 The queries can be expressed as Lucene queries, built directly using the Lucene Query API or built with the help of Hibernate Search Query DSL. Alternatively, you can also use Infinispan's own query DSL which most users might find easier to use than the one based on Lucene at the cost of not being able to access some of the powerful capabilities which are specific to the underlying Lucene implementation.
 
-==== Configuration
-Indexing must be enabled in the configuration (as explained in <<sid-68355029,XML Configuration>> or <<sid-68355029,Programmatic configuration>> ). This will trigger automatic indexing of objects stored in the cache; there are several different ways to specify how these objects need to be indexed explained in the following paragraphs. To run queries you use the _SearchManager_ which exposes all necessary methods to get started.
+Indexing must be enabled in the configuration (as explained in <<query:configuration-xml,XML Configuration>> or <<query:configuration-api,Programmatic configuration>> ). This will trigger automatic indexing of objects stored in the cache; there are several different ways to specify how these objects need to be indexed explained in the following paragraphs. To run queries you use the _SearchManager_ which exposes all necessary methods to get started.
 
 === Simple example
 We're going to store _Book_ instances in Infinispan; each _Book_ will be defined as in the following example; we have to choose which properties are indexed, and for each property we can optionally choose advanced indexing options using the annotations defined in the Hibernate Search project.
@@ -96,7 +95,7 @@ for (Object book : objectList) {
 
 A part from _list()_ you have the option for streaming results, or use pagination.
 
-This barely scratches the surface of all what is possible to do: see the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single$$[Hibernate Search reference documentation] to learn about sorting, numeric fields, declarative filters, caching filters, complex object graph indexing, custom types and the powerful faceting search API.
+This barely scratches the surface of all what is possible to do: see the link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single[Hibernate Search reference documentation] to learn about sorting, numeric fields, declarative filters, caching filters, complex object graph indexing, custom types and the powerful faceting search API.
 
 ==== Notable differences with Hibernate Search
 Using _@DocumentId_ to mark a field as identifier does not apply to Infinispan values; in Infinispan Query the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , custom types and custom _FieldBridge_ implementations.
@@ -139,8 +138,8 @@ Using this technique, you don't have to annotated your custom key type:
 org.infinispan.query.SearchManager.registerKeyTransformer(Class<?>, Class<? extends Transformer>)
 ----
 
-=== Configuration
-==== Configuration via XML
+=== Configuration [[query:configuration]]
+==== Configuration via XML [[query:configuration-xml]]
 To enable indexing via XML, you need to add the `<indexing />` element to your cache configuration, and optionally pass additional properties to the embedded Hibernate Search engine:
 
 [source,xml]
@@ -157,7 +156,7 @@ To enable indexing via XML, you need to add the `<indexing />` element to your c
 
 ----
 
-In this example the index is stored in memory, so when this nodes is shutdown the index is lost: good for a quick demo, but in real world cases you'll want to use the default (store on filesystem) or store the index in Infinispan as well. For the complete reference of properties to define, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] .
+In this example the index is stored in memory, so when this nodes is shutdown the index is lost: good for a quick demo, but in real world cases you'll want to use the default (store on filesystem) or store the index in Infinispan as well. For the complete reference of properties to define, refer to the link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration[Hibernate Search documentation] .
 
 ==== Automatic configuration
 
@@ -180,7 +179,7 @@ The auto config adds the following properties for replicated and local caches:
 [options="header",cols="1,3,10"]
 |==============================================================================
 | Property name | value | description
-| hibernate.search.default.directory_provider | filesystem | Filesystem based index. More details at link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration-directory$$[Hibernate Search documentation]
+| hibernate.search.default.directory_provider | filesystem | Filesystem based index. More details at link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration-directory[Hibernate Search documentation]
 | hibernate.search.default.exclusive_index_use | true | indexing operation in exclusive mode, allowing Hibernate Search to optimize writes
 | hibernate.search.default.indexmanager | near-real-time | make use of Lucene near real time feature, meaning indexed objects are promptly available to searches
 | hibernate.search.default.reader.strategy | shared | Reuse index reader across several queries, thus avoiding reopening it
@@ -195,7 +194,7 @@ The auto config properties for distributed caches are:
 [options="header",cols="1,3,10"]
 |==============================================================================
 | Property name | value | description
-| hibernate.search.default.directory_provider | infinispan | Indexes stored in Infinispan. More details at link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories$$[Hibernate Search documentation]
+| hibernate.search.default.directory_provider | infinispan | Indexes stored in Infinispan. More details at link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories[Hibernate Search documentation]
 | hibernate.search.default.exclusive_index_use | true | indexing operation in exclusive mode, allowing Hibernate Search to optimize writes
 | hibernate.search.default.indexmanager | org.infinispan.query.indexmanager.InfinispanIndexManager | Delegates index writing to a single node in the Infinispan cluster
 | hibernate.search.default.reader.strategy | shared | Reuse index reader across several queries, avoiding reopening it
@@ -214,7 +213,7 @@ The most common _Lucene Directory_ implementations used with _Infinispan Query_ 
 
 Of course having a shared index vs. an independent index on each node directly affects behaviour of the Query module; some combinations might not make much sense.
 
-==== Using programmatic configuration and index mapping
+==== Using programmatic configuration and index mapping [[query:configuration-api]]
 
 In the following example we start Infinispan programmatically, avoiding XML configuration files, and also map an object _Author_ which is to be stored in the grid and made searchable on two properties but without annotating the class.
 
@@ -255,7 +254,7 @@ Assert.assertEquals(cq.getResultSize(), 1);
 === Cache modes and managing indexes
 Index management is currently controlled by the _Configuration.setIndexLocalOnly()_ setter, or the `<indexing index="LOCAL" />` XML element. If you set this to true, only modifications made locally on each node are considered in indexing. Otherwise, remote changes are considered too.
 
-Regarding actually configuring a Lucene directory, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] on how to pass in the appropriate Lucene configuration via the Properties object passed to QueryHelper.
+Regarding actually configuring a Lucene directory, refer to the link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration[Hibernate Search documentation] on how to pass in the appropriate Lucene configuration via the Properties object passed to QueryHelper.
 
 ==== LOCAL
 In local mode, you may use any Lucene Directory implementation. Also the option _indexLocalOnly_ isn't meaningful.
@@ -263,7 +262,7 @@ In local mode, you may use any Lucene Directory implementation. Also the option 
 ==== REPLICATION
 In replication mode, each node can have its own local copy of the index. So indexes can either be stored locally on each node (RAMDirectory, FSDirectory, etc) but you need to set _indexLocalOnly_ to _false_ , so that each node will apply needed updates it receives from other nodes in addition to the updates started locally. Any Directory implementation can be used, but you have to make sure that when a new node is started it receives an up to date copy of the index; typically rsync is well suited for this task, but being an external operation you might end up with a slightly out-of-sync index, especially if updates are very frequent.
 
-Alternately, if you use some form of shared storage for indexes (see _Sharing the Index_ ), you then have to set _indexLocalOnly_ to _true_ so that each node will apply only the changes originated locally; in this case there's no risk in having an out-of-sync index, but to avoid write contention on the index you should make sure that a single node is "in charge" of updating the index. Again, the Hibernate Search reference documentation describes means to use link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jms-backend$$[a JMS queue] or link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jgroups-backend$$[JGroups] to send indexing tasks to a master node.
+Alternately, if you use some form of shared storage for indexes (see _Sharing the Index_ ), you then have to set _indexLocalOnly_ to _true_ so that each node will apply only the changes originated locally; in this case there's no risk in having an out-of-sync index, but to avoid write contention on the index you should make sure that a single node is "in charge" of updating the index. Again, the Hibernate Search reference documentation describes means to use link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jms-backend[a JMS queue] or link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jgroups-backend[JGroups] to send indexing tasks to a master node.
 
 The diagram below shows a replicated deployment, in which each node has a local index.
 
@@ -282,12 +281,12 @@ Indexing or searching of elements under INVALIDATION mode is not supported.
 === Sharing the Index
 The most simple way to share an index is to use some form of shared storage for the indexes, like an _FSDirectory_ on a shared disk; however this form is problematic as the _FSDirectory_ relies on specific locking semantics which are often incompletely implemented on network filesystems, or not reliable enough; if you go for this approach make sure to search for potential problems on the Lucene mailing lists for other experiences and workarounds. Good luck, test well.
 
-There are many alternative Directory implementations you can find, one of the most suited approaches when working with Infinispan is of course to store the index in an Infinispan cache: have a look at the <<sid-68355039,InfinispanDirectoryProvider>> , as all Infinispan based layers it can be combined with persistent CacheLoaders to keep the index on a shared filesystem without the locking issues, or alternatively in a database, cloud storage, or any other CacheLoader implementation; you could backup the index in the same store used to backup your values.
+There are many alternative Directory implementations you can find, one of the most suited approaches when working with Infinispan is of course to store the index in an Infinispan cache: have a look at the <<integrations:lucene-directory,InfinispanDirectoryProvider>> , as all Infinispan based layers it can be combined with persistent CacheLoaders to keep the index on a shared filesystem without the locking issues, or alternatively in a database, cloud storage, or any other CacheLoader implementation; you could backup the index in the same store used to backup your values.
 
-For full documentation on clustering the Lucene engine, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] to properly configure it clustered.
+For full documentation on clustering the Lucene engine, refer to the link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration[Hibernate Search documentation] to properly configure it clustered.
 
 === Clustering the Index in Infinispan
-Again the configuration details are in the Hibernate Search reference, in particular in the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories$$[infinispan-directories] section. This backend will by default start a secondary Infinispan CacheManager, and optionally take another Infinispan configuration file: don't reuse the same configuration or you will start grids recursively! It is currently not possible to share the same CacheManager.
+Again the configuration details are in the Hibernate Search reference, in particular in the link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories[infinispan-directories] section. This backend will by default start a secondary Infinispan CacheManager, and optionally take another Infinispan configuration file: don't reuse the same configuration or you will start grids recursively! It is currently not possible to share the same CacheManager.
 
 === Rebuilding the Index
 Occasionally you might need to rebuild the Lucene index by reconstructing it from the data stored in the Cache. You need to rebuild the index if you change the definition of what is indexed on your types, or if you change for example some _Analyzer_ parameter, as Analyzers affect how the index is defined. Also, you might need to rebuild the index if you had it destroyed by some system administration mistake. To rebuild the index just get a reference to the MassIndexer and start it; beware if might take some time as it needs to reprocess all data in the grid!
@@ -298,11 +297,11 @@ SearchManager searchManager = Search.getSearchManager(cache);
 searchManager.getMassIndexer().start();
 ----
 
-TIP: This is also available as a `start` JMX operation on the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#MassIndexer[MassIndexer MBean]
+TIP: This is also available as a `start` JMX operation on the link:{javadocroot}/jmxComponents.html#MassIndexer[MassIndexer MBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
 
 === Obtaining query statistics
-Query link:$$http://docs.jboss.org/hibernate/search/4.4/api/org/hibernate/search/stat/Statistics.html$$[_Statistics_]
+Query link:http://docs.jboss.org/hibernate/search/4.4/api/org/hibernate/search/stat/Statistics.html[_Statistics_]
 can be obtained from the _SearchManager_, as demonstrated in the following code snippet.
 
 [source,java]
@@ -311,13 +310,13 @@ SearchManager searchManager = Search.getSearchManager(cache);
 org.hibernate.search.stat.Statistics statistics = searchManager.getStatistics();
 ----
 
-TIP: This data is also available via JMX through the link:$$http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7624$$[Hibernate Search StatisticsInfoMBean]
+TIP: This data is also available via JMX through the link:http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7624[Hibernate Search StatisticsInfoMBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=Statistics`.
 Please note this MBean is always registered by Infinispan but the statistics are collected only if
-link:$$#_enabling_jmx_statistics$$[statistics collection is enabled] at cache level.
+link:#enabling_jmx_statistics[statistics collection is enabled] at cache level.
 
 WARNING: Hibernate Search has its own configuration properties `hibernate.search.jmx_enabled` and `hibernate.search.generate_statistics`
-for JMX statistics as explained link:$$http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7595$$[here].
+for JMX statistics as explained link:http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7595[here].
 Using them with Infinispan Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
 
 === Infinispan's Query DSL
@@ -331,9 +330,9 @@ The current implementation of indexing and searching is still based on
 Hibernate Search and Lucene so all indexing related aspects presented in this chapter still apply.
 
 The new API simplifies the writing of queries by not exposing the user to the low level details of constructing Lucene
-query objects and also has the advantage of being available to link:$$#_querying_via_the_java_hot_rod_client$$[remote Hot Rod clients].
+query objects and also has the advantage of being available to link:#querying_via_the_java_hot_rod_client[remote Hot Rod clients].
 But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
-from link:$$#_simple_example$$[previous example].
+from link:#simple_example[previous example].
 
 .Query example using Infinispan's query DSL
 [source,java]
@@ -365,7 +364,7 @@ query over multiple caches or creating queries that target several entity types 
 The _QueryBuilder_ accumulates search criteria and configuration specified through the invocation of its DSL methods and is
 ultimately used to build a _Query_ object by the invocation of the `QueryBuilder.build()` method that completes the
 construction. Being a stateful object, it cannot be used for constructing multiple queries at the same time
-(except for link:$$#_nested_conditions$$[nested queries]) but can be reused afterwards.
+(except for link:#nested_conditions[nested queries]) but can be reused afterwards.
 
 NOTE: This _QueryBuilder_ is different from the one from Hibernate Search but has a somewhat similar purpose, hence the
 same name. We are considering renaming it in near future to prevent ambiguity.
@@ -380,7 +379,7 @@ Constructing a query is a hierarchical process of composing multiple criteria an
 The simplest possible form of a query criteria is a restriction on the values of an entity attribute according to a
 filtering operator that accepts zero or more arguments. The entity attribute is specified by invoking the
 `having(String attributePath)` method of the query builder which returns an intermediate context object
-(link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html[_FilterConditionEndContext_])
+(link:{javadocroot}/org/infinispan/query/dsl/FilterConditionEndContext.html[_FilterConditionEndContext_])
 that exposes all the available operators. Each of the methods defined by _FilterConditionEndContext_ is an operator that
 accepts an argument, except for `between` which has two arguments and `isNull` which has no arguments. The arguments are
 statically evaluated at the time the query is constructed, so if you're looking for a feature similar to SQL's
@@ -725,7 +724,7 @@ NOTE: Continuous Queries can use the full power of the Query DSL except: groupin
 ==== Running Continuous Queries
 
 To create a continuous query you'll start by creating a Query object first. This is described in
-link:$$#infinispan_s_query_dsl$$[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
+link:#infinispan_s_query_dsl[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
 object of your cache and register the query and a continuous query listener (_org.infinispan.query.api.continuous.ContinuousQueryListener_)
 with it. A ContinuousQuery object associated to a cache can be obtained by calling the static method _org.infinispan.client.hotrod.Search.getContinuousQuery(RemoteCache<K, V> cache)_
 if running in remote mode or _org.infinispan.query.Search.getContinuousQuery(Cache<K, V> cache)_ when running in embedded mode.
@@ -818,6 +817,6 @@ of new matching events from the cache it listens to.
 === More Query DSL samples
 
 Probably the best way to explore using the Query DSL API is to have a look at our tests suite.
-link:$$https://github.com/infinispan/infinispan/blob/master/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java$$[QueryDslConditionsTest]
+link:https://github.com/infinispan/infinispan/blob/master/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java[QueryDslConditionsTest]
 is a fine example.
 

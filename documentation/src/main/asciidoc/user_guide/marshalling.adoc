@@ -13,15 +13,15 @@ Since performance is a very important factor in this process, Infinispan uses JB
 === Support For Non-Serializable Objects
 From a users perspective, a very common concern is whether Infinispan supports storing non-Serializable objects. In 4.0, an Infinispan cache instance can only store non-Serializable key or value objects if, and only if:
 
-*  cache is configured to be a local cache _and..._ 
-*  cache is not configured with lazy serialization _and..._ 
+*  cache is configured to be a local cache _and..._
+*  cache is not configured with lazy serialization _and..._
 * cache is not configured with any write-behind cache store
 
 If either of these options is true, key/value pairs in the cache will need to be marshalled and currently they require to either to extend `java.io.Serializable` or `java.io.Externalizable`.
 
-TIP: Since Infinispan 5.0, marshalling non-Serializable key/value objects is supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects. <<_plugging_infinispan_with_user_defined_externalizers, This section>> has more details. 
+TIP: Since Infinispan 5.0, marshalling non-Serializable key/value objects are supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects. <<plugging_infinispan_with_user_defined_externalizers, This section>> has more details.
 
-If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in Infinispan, you could alternatively use something like link:http://x-stream.github.io/[XStream] to convert your Non-Serializable objects into a String that can be stored into Infinispan. You can find an example on how to use XStream link:http://anonsvn.jboss.org/repos/infinispan/trunk/core/src/test/java/org/infinispan/marshall/TestObjectStreamMarshaller.java[here] . The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do.
+If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in Infinispan, you could alternatively use something like link:http://x-stream.github.io/[XStream] to convert your Non-Serializable objects into a String that can be stored into Infinispan. The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do.
 
 ==== Store As Binary
 Store as binary enables data to be stored in its serialized form. This can be useful to achieve lazy deserialization, which is the mechanism by which Infinispan by which serialization and deserialization of objects is deferred till the point in time in which they are used and needed. This typically means that any deserialization happens using the thread context class loader of the invocation that requires deserialization, and is an effective mechanism to provide classloader isolation. By default lazy deserialization is disabled but if you want to enable it, you can do it like this:
@@ -45,22 +45,21 @@ builder.storeAsBinary().enable();
 
 ===== Equality Considerations
 
-When using lazy deserialization/storing as binary, keys and values are wrapped as link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/marshall/core/MarshalledValue[MarshalledValue]s.
-It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object. 
+When using lazy deserialization/storing as binary, keys and values are wrapped as link:{javadocroot}/org/infinispan/marshall/core/MarshalledValue[MarshalledValue]s.
+It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object.
 
 This has a particular effect on the behavior of equality.
 The equals() method of this class will either compare binary representations (byte arrays) or delegate to the wrapped object instance's equals() method, depending on whether both instances being compared are in serialized or deserialized form at the time of comparison.
 If one of the instances being compared is in one form and the other in another form, then one instance is either serialized or deserialized.
-The preference will be to compare object representations, unless the cache is link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#compact()[compacted], in which case byte array comparison is favored.
 
 This will affect the way keys stored in the cache will work, when `storeAsBinary` is used, since comparisons happen on the key which will be wrapped by a MarshalledValue. Implementers of equals() methods on their keys need to be aware of the behavior of equality comparison, when a key is wrapped as a MarshalledValue, as detailed above.
 
 ===== Store-by-value via defensive copying
-The configuration `storeAsBinary` offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
+The configuration `storeAsBinary` offers the possibility to enable defensive copying, which allows for store-by-value like behaviour.
 
 Infinispan marshalls objects the moment they're stored, hence changes made to object references are not stored in the cache, not even for local caches. This provides store-by-value like behaviour. Enabling `storeAsBinary` can be achieved:
 
-*  Via XML at the Cache level, either under `<*-cache />` or `<default />` elements: 
+*  Via XML at the Cache level, either under `<*-cache />` or `<default />` elements:
 
 [source,xml]
 ----
@@ -78,12 +77,12 @@ builder.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(tru
 ----
 
 === Advanced Configuration
-Internally, Infinispan uses an implementation of link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/marshall/Marshaller.html[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization.
+Internally, Infinispan uses an implementation of link:{javadocroot}/org/infinispan/marshall/Marshaller.html[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization.
 
-By default, Infinispan uses the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example:
+By default, Infinispan uses the link:{javadocroot}/org/infinispan/marshall/VersionAwareMarshaller.html[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example:
 
 
-*  Via XML at the CacheManager level, under `<cache-manager />` element: 
+*  Via XML at the CacheManager level, under `<cache-manager />` element:
 
 [source,xml]
 ----
@@ -167,8 +166,8 @@ in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1
 -> type classloader = sun.misc.Launcher$AppClassLoader@198dfaf
 ->...file:/opt/eclipse/configuration/org.eclipse.osgi/bundles/285/1/.cp/eclipse-testng.jar
 ->...file:/opt/eclipse/configuration/org.eclipse.osgi/bundles/285/1/.cp/lib/testng-jdk15.jar
-->...file:/home/galder/jboss/infinispan/code/trunk/core/target/test-classes/ 
-->...file:/home/galder/jboss/infinispan/code/trunk/core/target/classes/ 
+->...file:/home/galder/jboss/infinispan/code/trunk/core/target/test-classes/
+->...file:/home/galder/jboss/infinispan/code/trunk/core/target/classes/
 ->...file:/home/galder/.m2/repository/org/testng/testng/5.9/testng-5.9-jdk15.jar
 ->...file:/home/galder/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar
 ->...file:/home/galder/.m2/repository/org/easymock/easymockclassextension/2.4/easymockclassextension-2.4.jar
@@ -201,19 +200,19 @@ Finding the root cause of marshalling/unmarshalling exceptions can sometimes be 
 ===  User Defined Externalizers
 One of the key aspects of Infinispan is that it often needs to marshall/unmarshall objects in order to provide some of its functionality. For example, if it needs to store objects in a write-through or write-behind cache store, the stored objects need marshalling. If a cluster of Infinispan nodes is formed, objects shipped around need marshalling. Even if you enable lazy deserialization, objects need to be marshalled so that they can be lazily unmarshalled with the correct classloader.
 
-Using standard JDK serialization is slow and produces payloads that are too big and can affect bandwidth usage. On top of that, JDK serialization does not work well with objects that are supposed to be immutable. In order to avoid these issues, Infinispan uses link:http://jboss.org/jbossmarshalling[JBoss Marshalling] for marshalling/unmarshalling objects. JBoss Marshalling is fast, produces very space efficient payloads, and on top of that  during unmarshalling, it enables users to have full control over how to construct objects, hence allowing objects to carry on being immutable. 
+Using standard JDK serialization is slow and produces payloads that are too big and can affect bandwidth usage. On top of that, JDK serialization does not work well with objects that are supposed to be immutable. In order to avoid these issues, Infinispan uses link:http://jboss.org/jbossmarshalling[JBoss Marshalling] for marshalling/unmarshalling objects. JBoss Marshalling is fast, produces very space efficient payloads, and on top of that  during unmarshalling, it enables users to have full control over how to construct objects, hence allowing objects to carry on being immutable.
 
 Starting with 5.0, users of Infinispan can now benefit from this marshalling framework as well, and they can provide their own externalizer implementations, but before finding out how to provide externalizers, let's look at the benefits they bring.
 
 ==== Benefits of Externalizers
-The JDK provides a simple way to serialize objects which, in its simplest form, is just a matter of extending link:http://docs.oracle.com/javase/6/docs/api/java/io/Serializable.html[java.io.Serializable] , but as it's well known, this is known to be slow and it generates payloads that are far too big. An alternative way to do serialization, still relying on JDK serialization, is for your objects to extend link:http://docs.oracle.com/javase/6/docs/api/java/io/Externalizable.html[java.io.Externalizable] . This allows for users to provide their own ways to marshall/unmarshall classes, but has some serious issues because, on top of relying on slow JDK serialization, it forces the class that you want to serialize to extend this interface, which has two side effects: The first is that you're forced to modify the source code of the class that you want to marshall/unmarshall which you might not be able to do because you either, don't own the source, or you don't even have it. Secondly, since Externalizable implementations do not control object creation, you're forced to add set methods in order to restore the state, hence potentially forcing your immutable objects to become mutable.
+The JDK provides a simple way to serialize objects which, in its simplest form, is just a matter of extending link:{jdkdocroot}/java/io/Serializable.html[java.io.Serializable] , but as it's well known, this is known to be slow and it generates payloads that are far too big. An alternative way to do serialization, still relying on JDK serialization, is for your objects to extend link:{jdkdocroot}/java/io/Externalizable.html[java.io.Externalizable] . This allows for users to provide their own ways to marshall/unmarshall classes, but has some serious issues because, on top of relying on slow JDK serialization, it forces the class that you want to serialize to extend this interface, which has two side effects: The first is that you're forced to modify the source code of the class that you want to marshall/unmarshall which you might not be able to do because you either, don't own the source, or you don't even have it. Secondly, since Externalizable implementations do not control object creation, you're forced to add set methods in order to restore the state, hence potentially forcing your immutable objects to become mutable.
 
-Instead of relying on JDK serialization, Infinispan uses JBoss Marshalling to serialize objects and requires any classes to be serialized to be associated with an link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer] interface implementation that knows how to transform an object of a particular class into a serialized form and how to read an object of that class from a given input. Infinispan does not force the objects to be serialized to implement Externalizer. In fact, it is recommended that a separate class is used to implement the Externalizer interface because, contrary to JDK serialization, Externalizer implementations control how objects of a particular class are created when trying to read an object from a stream. This means that readObject() implementations are responsible of creating object instances of the target class, hence giving users a lot of flexibility on how to create these instances (whether direct instantiation, via factory or reflection), and more importantly, allows target classes to carry on being immutable. This type of externalizer architecture promotes good OOP designs principles, such as the principle of link:http://en.wikipedia.org/wiki/Single_responsibility_principle[single responsibility] .
+Instead of relying on JDK serialization, Infinispan uses JBoss Marshalling to serialize objects and requires any classes to be serialized to be associated with an link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer] interface implementation that knows how to transform an object of a particular class into a serialized form and how to read an object of that class from a given input. Infinispan does not force the objects to be serialized to implement Externalizer. In fact, it is recommended that a separate class is used to implement the Externalizer interface because, contrary to JDK serialization, Externalizer implementations control how objects of a particular class are created when trying to read an object from a stream. This means that readObject() implementations are responsible of creating object instances of the target class, hence giving users a lot of flexibility on how to create these instances (whether direct instantiation, via factory or reflection), and more importantly, allows target classes to carry on being immutable. This type of externalizer architecture promotes good OOP designs principles, such as the principle of link:http://en.wikipedia.org/wiki/Single_responsibility_principle[single responsibility] .
 
 It's quite common, and in general recommended, that Externalizer implementations are stored as inner static public classes within classes that they externalize. The advantages of doing this is that related code stays together, making it easier to maintain. In Infinispan, there are two ways in which Infinispan can be plugged with user defined externalizers:
 
 ==== User Friendly Externalizers
-In the simplest possible form, users just need to provide an link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer] implementation for the type that they want to marshall/unmarshall, and then annotate the marshalled type class with {@link SerializeWith} annotation indicating the externalizer class to use. For example:
+In the simplest possible form, users just need to provide an link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer] implementation for the type that they want to marshall/unmarshall, and then annotate the marshalled type class with {@link SerializeWith} annotation indicating the externalizer class to use. For example:
 
 [source,java]
 ----
@@ -233,14 +232,14 @@ public class Person {
 
    public static class PersonExternalizer implements Externalizer<Person> {
       @Override
-      public void writeObject(ObjectOutput output, Person person) 
+      public void writeObject(ObjectOutput output, Person person)
             throws IOException {
          output.writeObject(person.name);
          output.writeInt(person.age);
       }
 
       @Override
-      public Person readObject(ObjectInput input) 
+      public Person readObject(ObjectInput input)
             throws IOException, ClassNotFoundException {
          return new Person((String) input.readObject(), input.readInt());
       }
@@ -265,7 +264,7 @@ Even though this way of defining externalizers is very user friendly, it has som
 If you're affected by any of these disadvantages, an alternative method to provide externalizers is available via more advanced externalizers:
 
 ==== Advanced Externalizers
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer] provides an alternative way to provide externalizers for marshalling/unmarshalling user defined classes that overcome the deficiencies of the more user-friendly externalizer definition model explained in Externalizer. For example:
+link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer] provides an alternative way to provide externalizers for marshalling/unmarshalling user defined classes that overcome the deficiencies of the more user-friendly externalizer definition model explained in Externalizer. For example:
 
 [source,java]
 ----
@@ -309,7 +308,7 @@ public class Person {
 
 ----
 
-The first noticeable difference is that this method does not require user classes to be annotated in anyway, so it can be used with classes for which source code is not available or that cannot be modified. The bound between the externalizer and the classes that are marshalled/unmarshalled is set by providing an implementation for link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html#getTypeClasses--[getTypeClasses()] which should return the list of classes that this externalizer can marshall:
+The first noticeable difference is that this method does not require user classes to be annotated in anyway, so it can be used with classes for which source code is not available or that cannot be modified. The bound between the externalizer and the classes that are marshalled/unmarshalled is set by providing an implementation for link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html#getTypeClasses--[getTypeClasses()] which should return the list of classes that this externalizer can marshall:
 
 ===== Linking Externalizers with Marshaller Classes
 Once the Externalizer's readObject() and writeObject() methods have been implemented, it's time to link them up together with the type classes that they externalize. To do so, the Externalizer implementation must provide a getTypeClasses() implementation. For example:
@@ -348,7 +347,7 @@ public Set<Class<? extends List>> getTypeClasses() {
 ----
 
 ===== Externalizer Identifier
-Secondly, in order to save the maximum amount of space possible in the payloads generated, advanced externalizers require externalizer implementations to provide a positive identified via link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html#getId--[getId()] implementations or via XML/programmatic configuration that identifies the externalizer when unmarshalling a payload.  In order for this to work however, advanced externalizers require externalizers to be registered on cache manager creation time via XML or programmatic configuration which will be explained in next section. On the contrary, externalizers based on Externalizer and SerializeWith require no pre-registration whatsoever. Internally, Infinispan uses this advanced externalizer mechanism in order to marshall/unmarshall internal classes.
+Secondly, in order to save the maximum amount of space possible in the payloads generated, advanced externalizers require externalizer implementations to provide a positive identified via link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html#getId--[getId()] implementations or via XML/programmatic configuration that identifies the externalizer when unmarshalling a payload.  In order for this to work however, advanced externalizers require externalizers to be registered on cache manager creation time via XML or programmatic configuration which will be explained in next section. On the contrary, externalizers based on Externalizer and SerializeWith require no pre-registration whatsoever. Internally, Infinispan uses this advanced externalizer mechanism in order to marshall/unmarshall internal classes.
 
 So, getId() should return a positive integer that allows the externalizer to be identified at read time to figure out which Externalizer should read the contents of the incoming buffer, or it can return null. If getId() returns null, it is indicating that the id of this advanced externalizer will be defined via XML/programmatic configuration, which will be explained in next section.
 

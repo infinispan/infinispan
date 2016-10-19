@@ -15,7 +15,7 @@ Reader threads do not acquire explicit locks for entries, and instead directly r
 
 Writers, on the other hand, need to acquire a write lock.
 This ensures only one concurrent writer per entry, causing concurrent writers to queue up to change an entry.
-//link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/container/entries/MVCCEntry.html[MVCCEntry]
+//link:{javadocroot}/org/infinispan/container/entries/MVCCEntry.html[MVCCEntry]
 //TODO container package no longer public API (??)
 To allow concurrent reads, writers make a copy of the entry they intend to modify, by wrapping the entry in an `MVCCEntry`.
 This copy isolates concurrent readers from seeing partially modified state.

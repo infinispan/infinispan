@@ -13,7 +13,7 @@ Or you can use a certain static configuration defined in XML as a starting point
 There are two main configuration abstractions in Infinispan: `global` and `cache`.
 
 .Global configuration
-Global configuration defines global settings shared among all cache instances created by a single link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager].
+Global configuration defines global settings shared among all cache instances created by a single link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager].
 Shared resources like thread pools, serialization/marshalling settings, transport and network settings, JMX domains are all part of global configuration.
 
 .Cache configuration
@@ -200,7 +200,7 @@ Cache<String, String> cache = manager.getCache(newCacheName);
 
 ----
 
-Refer to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/CacheManager.html[CacheManager] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
+Refer to link:{javadocroot}/org/infinispan/manager/CacheManager.html[CacheManager] , link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:{javadocroot}/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
 
 ==== ConfigurationBuilder Programmatic Configuration API
 While the above paragraph shows how to combine declarative and programmatic configuration, starting from an XML configuration is completely optional.
@@ -222,7 +222,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
 
 ----
 
-Sometimes you might also want to enable collection of link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html[global JMX statistics]
+Sometimes you might also want to enable collection of link:{javadocroot}/jmxComponents.html[global JMX statistics]
 at cache manager level or get information about the transport. To enable global JMX statistics simply do:
 
 [source,java]

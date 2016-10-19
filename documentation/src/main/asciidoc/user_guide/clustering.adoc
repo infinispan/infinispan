@@ -486,7 +486,7 @@ Collocation of keys is only provided by the <<grouping, Grouping API>>.
 [[grouping]]
 ====  The Grouping API
 Complementary to <<KeyAffinityService, Key affinity service>> and similar to
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/atomic/AtomicMap.html[AtomicMap],
+link:{javadocroot}/org/infinispan/atomic/AtomicMap.html[AtomicMap],
 the grouping API allows you to co-locate a group of entries on the same nodes, but without
 being able to select the actual nodes.
 
@@ -710,7 +710,6 @@ In caches with optimistic locking writes can return a stale previous value as we
 the only way protect against it is to enable write-skew checks and to catch
 `WriteSkewException`.
 
-
 === Partition handling
 
 An Infinispan cluster is built out of a number of nodes where data is stored. In order
@@ -895,13 +894,13 @@ dcc.clustering().partitionHandling().enabled(true);
 ==== Monitoring and administration
 
 The availability mode of a cache is exposed in JMX as an attribute in the
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#Cache[Cache MBean].
+link:{javadocroot}/jmxComponents.html#Cache[Cache MBean].
 The attribute is writable, allowing an administrator to forcefully migrate
 a cache from DEGRADED mode back to AVAILABLE (at the cost of
 consistency).
 
 The availability mode is also accessible via the
-link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html[AdvancedCache]
+link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache]
 interface:
 
 [source,java]

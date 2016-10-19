@@ -2,7 +2,7 @@
 Running Infinispan in embedded mode is very easy. First, we'll set up a project, and then we'll run Infinispan, and start adding data.
 
 .embedded-cache quickstart
-TIP: All the code discussed in this tutorial is available in the link:$$https://github.com/infinispan/infinispan-quickstart/tree/master/embedded-cache$$[embedded-cache quickstart].
+TIP: All the code discussed in this tutorial is available in the link:https://github.com/infinispan/infinispan-quickstart/tree/master/embedded-cache[embedded-cache quickstart].
 
 === Creating a new Infinispan project
 The only thing you need to set up Infinispan is add it's dependencies to your project.
@@ -27,9 +27,9 @@ to the `<dependencies>` section of the POM.
 You'll need to substitute `${infinispan.version}` for the version of Infinispan you wish to use. 
 
 .Which version of Infinispan should I use?
-TIP: We recommend using the latest stable version of Infinispan. All releases are displayed on the link:$$http://www.infinispan.org/download$$[downloads page]. 
+TIP: We recommend using the latest stable version of Infinispan. All releases are displayed on the link:http://www.infinispan.org/download[downloads page]. 
 
-Alternatively, you can link:$$https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml$$[use the POM] from the quickstart that accompanies this tutorial. 
+Alternatively, you can link:https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml[use the POM] from the quickstart that accompanies this tutorial. 
 
 ==== Ant users
 If you are using Ant, or another build system which doesn't provide declarative dependency management, then the Infinispan distribution zip contains a lib/ directory. Add the contents of this to the build classpath.

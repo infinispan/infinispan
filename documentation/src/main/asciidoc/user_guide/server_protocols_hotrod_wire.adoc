@@ -2,16 +2,16 @@
 The following articles provides detailed information about each version of
 the custom TCP client/server Hot Rod protocol.
 
-* link:$$#_hot_rod_protocol_1_0$$[Hot Rod Protocol 1.0]
-* link:$$#_hot_rod_protocol_1_1$$[Hot Rod Protocol 1.1]
-* link:$$#_hot_rod_protocol_1_2$$[Hot Rod Protocol 1.2]
-* link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
-* link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
-* link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
-* link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
-* link:$$#_hot_rod_protocol_2_3$$[Hot Rod Protocol 2.3]
-* link:$$#_hot_rod_protocol_2_4$$[Hot Rod Protocol 2.4]
-* link:$$#_hot_rod_protocol_2_5$$[Hot Rod Protocol 2.5]
+* link:#hot_rod_protocol_1_0[Hot Rod Protocol 1.0]
+* link:#hot_rod_protocol_1_1[Hot Rod Protocol 1.1]
+* link:#hot_rod_protocol_1_2[Hot Rod Protocol 1.2]
+* link:#hot_rod_protocol_1_3[Hot Rod Protocol 1.3]
+* link:#hot_rod_protocol_2_0[Hot Rod Protocol 2.0]
+* link:#hot_rod_protocol_2_1[Hot Rod Protocol 2.1]
+* link:#hot_rod_protocol_2_2[Hot Rod Protocol 2.2]
+* link:#hot_rod_protocol_2_3[Hot Rod Protocol 2.3]
+* link:#hot_rod_protocol_2_4[Hot Rod Protocol 2.4]
+* link:#hot_rod_protocol_2_5[Hot Rod Protocol 2.5]
 
 ===== Hot Rod Protocol 1.0
 
@@ -53,7 +53,7 @@ byte, values from 128 to 16,383 are stored in two bytes, and so on:
 always use the maximum size (5 bytes) no matter how small the endoded value is.
 In order to have a small payload for negative values too, signed vInts uses ZigZag
 encoding on top of the vInt encoding.
-More details link:$$http://developers.google.com/protocol-buffers/docs/encoding#types$$[here]
+More details link:http://developers.google.com/protocol-buffers/docs/encoding#types[here]
 
 * vLong : Refers to unsigned variable length long values similar to vInt but
 applied to longer values. They're between 1 and 9 bytes long.
@@ -151,7 +151,7 @@ The header for a response is composed of:
 | Message ID             | vLong      | ID of the message, matching the request
 for which the response is sent.
 | Opcode                 | 1 byte     | Response operation code: +
-+0x02+ = put (since 1.0) + 
++0x02+ = put (since 1.0) +
 +0x04+ = get (since 1.0) +
 +0x06+ = putIfAbsent (since 1.0) +
 +0x08+ = replace (since 1.0) +
@@ -169,10 +169,10 @@ for which the response is sent.
 +0x20+ = query (since 1.3) +
 +0x22+ = authMechList (since 2.0) +
 +0x24+ = auth (since 2.0) +
-+0x26+ = addClientListener (since 2.0) + 
-+0x28+ = removeClientListener (since 2.0) + 
-+0x2A+ = size (since 2.0) + 
-+0x2C+ = exec (since 2.1) + 
++0x26+ = addClientListener (since 2.0) +
++0x28+ = removeClientListener (since 2.0) +
++0x2A+ = size (since 2.0) +
++0x2C+ = exec (since 2.1) +
 +0x2E+ = putAll (since 2.1) +
 +0x30+ = getAll (since 2.1) +
 +0x32+ = iterationStart (since 2.3) +
@@ -251,7 +251,7 @@ Topology ID
 Globally configured number of copies for each Infinispan distributed key
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
-See link:#_hot_rod_hash_functions[Hot Rod hash functions] for details.
+See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
 Modulus used by Infinispan for for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
@@ -284,7 +284,7 @@ It's important to note that since hash headers rely on the consistent hash
 algorithm used by the server and this is a factor of the cache interacted with,
 hash-distribution-aware headers can only be returned to operations that target
 a particular cache. Currently ping command does not target any cache
-(this is to change as per link:$$https://jira.jboss.org/jira/browse/ISPN-424$$[ISPN-424])
+(this is to change as per link:https://jira.jboss.org/jira/browse/ISPN-424[ISPN-424])
 , hence calls to ping command with hash-topology-aware client settings will
 return a hash-distribution-aware header with "Num Key Owners",
 "Hash Function Version", "Hash space size" and each individual host's hash
@@ -401,7 +401,7 @@ Response (0x20):
 entries need to be read from the stream. So, when it's set to 1, it means
 that an entry follows, whereas when it's set to 0, it's the end of stream and
 no more entries are left to read. For more information on BulkGet look
-link:$$http://community.jboss.org/docs/DOC-15592$$[here]
+link:http://community.jboss.org/docs/DOC-15592[here]
 | Key 1 Length        | vInt       | Length of key
 | Key 1               | byte array | Retrieved key
 | Value 1 Length      | vInt       | Length of value
@@ -869,7 +869,7 @@ Topology ID
 Globally configured number of copies for each Infinispan distributed key
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
-See link:#_hot_rod_hash_functions[Hot Rod hash functions] for details.
+See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
 Modulus used by Infinispan for for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
@@ -913,7 +913,7 @@ hash position of each server both with and without virtual nodes configured.
 Here are the rules clients should follow when trying to calculate a node's
 hash code:
 
-$$1.$$  With _virtual nodes disabled_ : Once clients have received the base
+1\.  With _virtual nodes disabled_ : Once clients have received the base
 hash code of the server, they need to normalize it in order to find the exact
 position of the hash wheel. The process of normalization involves passing the
 base hash code to the hash function, and then do a small calculation to avoid
@@ -926,7 +926,7 @@ public static int getNormalizedHash(int nodeBaseHashCode, Hash hashFct) {
 }
 ----
 
-$$2.$$  With _virtual nodes enabled_ : In this case, each node represents N
+2\.  With _virtual nodes enabled_ : In this case, each node represents N
 different virtual nodes, and to calculate each virtual node's hash code, we
 need to take the the range of numbers between 0 and N-1 and apply the
 following logic:
@@ -1060,7 +1060,7 @@ Response (0x1E):
 keys need to be read from the stream. So, when it's set to 1, it means
 that an entry follows, whereas when it's set to 0, it's the end of stream and
 no more entries are left to read. For more information on BulkGet look
-link:$$http://community.jboss.org/docs/DOC-15592$$[here]
+link:http://community.jboss.org/docs/DOC-15592[here]
 | Key 1 Length        | vInt       | Length of key
 | Key 1               | byte array | Retrieved key
 | More                | 1 byte     |
@@ -1112,9 +1112,9 @@ Response (0x20):
 |==============================================================================
 
 As of Infinispan 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
-defined in link:$$https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto$$[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
+defined in link:https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
 These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
-compatible (according to the rules defined link:$$https://developers.google.com/protocol-buffers/docs/proto#updating$$[here]) no new Hot Rod
+compatible (according to the rules defined link:https://developers.google.com/protocol-buffers/docs/proto#updating[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
 
 ===== Hot Rod Protocol 2.0
@@ -1231,7 +1231,7 @@ Port that Hot Rod clients can use to communicat with this cluster member.
 | ...                                          | ...                      |
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
-See link:#_hot_rod_hash_functions[Hot Rod hash functions] for details.
+See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Num segments in topology                     | vInt                     |
 Total number of segments in the topology
 | Number of owners in segment                  | 1 byte                   |
@@ -1273,7 +1273,7 @@ Response (0x22):
 | ...etc |        |
 |==============================================================================
 
-The purpose of this operation is to obtain the list of valid SASL authentication mechs supported by the server. The client 
+The purpose of this operation is to obtain the list of valid SASL authentication mechs supported by the server. The client
 will then need to issue an Authenticate request with the preferred mech.
 
 .Authenticate
@@ -1285,7 +1285,7 @@ Request (0x23):
 | Field Name          | Size       | Value
 | Header | variable | Request header
 | Mech   | string   | String containing the name of the mech chosen by the client for authentication. Empty on the successive invocations
-| Response length | vInt | Length of the SASL client response 
+| Response length | vInt | Length of the SASL client response
 | Response data   | byte array | The SASL client response
 |==============================================================================
 
@@ -1295,7 +1295,7 @@ Response (0x24):
 |==============================================================================
 | Field Name          | Size       | Value
 | Header | variable | Response header
-| Completed | byte | 0 if further processing is needed, 1 if authentication is complete 
+| Completed | byte | 0 if further processing is needed, 1 if authentication is complete
 | Challenge length | vInt | Length of the SASL server challenge
 | Challenge data   | byte array | The SASL server challenge
 |==============================================================================
@@ -1851,7 +1851,7 @@ entries live.
 
 In Infinispan 4.2 and earlier, the hash space was hardcoded to 10240, but
 since 5.0, the hash space is
-link:$$http://docs.oracle.com/javase/6/docs/api/java/lang/Integer.html#MAX_VALUE$$[Integer.MAX_INT] .
+link:{jdkdocroot}/java/lang/Integer.html#MAX_VALUE[Integer.MAX_INT] .
 Please note that since Hot Rod clients should not assume a particular hash
 space by default, every time a hash-topology change is detected, this value is
 sent back to the client via the Hot Rod protocol.
@@ -1869,23 +1869,23 @@ as the hash function version parameter.
 
 .  Version 1 (single byte, 0x01) The initial version of the hash function in
 use is based on
-link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java$$[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:$$http://sites.google.com/site/murmurhash/$$[Austin Appleby's MurmurHash 2.0 page].
+link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:http://sites.google.com/site/murmurhash/[Austin Appleby's MurmurHash 2.0 page].
 Other implementations are detailed on
-link:$$http://en.wikipedia.org/wiki/MurmurHash$$[Wikipedia] .
+link:http://en.wikipedia.org/wiki/MurmurHash[Wikipedia] .
 This hash function was the default one used by the Hot Rod server until Infinispan 4.2.1.
 Since Infinispan 5.0, the server never uses hash version 1.
 Since Infinispan 9.0, the client ignores hash version 1.
 
 .  Version 2 (single byte, 0x02) Since Infinispan 5.0, a new hash function is
 used by default which is based on
-link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java$$[Austin Appleby's MurmurHash 3.0 algorithm].
+link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java[Austin Appleby's MurmurHash 3.0 algorithm].
 Detailed information about the hash function can be found in this
-link:$$http://code.google.com/p/smhasher/wiki/MurmurHash3$$[wiki].
+link:http://code.google.com/p/smhasher/wiki/MurmurHash3[wiki].
 Compared to 2.0, it provides better performance and spread.
 Since Infinispan 7.0, the server only uses version 2 for HotRod 1.x clients.
 
 . Version 3 (single byte, 0x03) Since Infinispan 7.0, a new hash function is used by default.
 The function is still based on
-link:$$http://code.google.com/p/smhasher/wiki/MurmurHash3$$[wiki],
+link:http://code.google.com/p/smhasher/wiki/MurmurHash3[wiki],
 but is also aware of the hash segments used in the server's
-link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].
+link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].

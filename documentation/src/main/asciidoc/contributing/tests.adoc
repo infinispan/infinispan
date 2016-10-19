@@ -1,5 +1,5 @@
 == Running and Writing Tests
-Tests are written using the link:$$http://testng.org/$$[TestNG] framework. 
+Tests are written using the link:http://testng.org/[TestNG] framework. 
 
 === Running the tests
 Before running the actual tests it is highly recommended to configure adjust suite's memory setting by updating the `MAVEN_OPTS` variables. E.g.
@@ -52,7 +52,7 @@ To do this, simply use the `skipTests` property:
 Note that you should _never_ use `-Dmaven.test.skip=true` since modules' test classes depend on other module test classes, and this will cause compilation errors. 
 
 ==== Running tests using `@Parameters`
-If you want to execute tests relying on TestNG's `@Parameters` from an IDE (such as Eclipse or IntelliJ IDEA), please read link:$$http://infinispan.blogspot.com/2009/06/executing-testng-tests-relying-on.html$$[this blog entry] . 
+If you want to execute tests relying on TestNG's `@Parameters` from an IDE (such as Eclipse or IntelliJ IDEA), please read link:http://infinispan.blogspot.com/2009/06/executing-testng-tests-relying-on.html[this blog entry] . 
 
 ==== Enabling TRACE in test logs
 When you run tests, you can get TRACE logging via using the `traceTests` profile 
@@ -175,7 +175,7 @@ If you want to enforce a JMX domain name, this can be done by using one of the `
 These methods must be used with care, and you are responsible for ensuring no domain name collisions happen when the parallel suite is executed. 
 * Use obscure words. Insert uncommon or obscure words into the cache that has been generated with a random word generator.
 In a multi-threaded environment like Infinispan's testsuite, grepping for these words can greatly help the debugging process.
-You may find link:$$http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx$$[this random word generator] useful. 
+You may find link:http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx[this random word generator] useful. 
 * Use the test method name as the key. Grab the test method and use it as part of the cached key.
 You can dynamically grab the test method using code like this: 
 
