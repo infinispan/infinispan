@@ -39,8 +39,6 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
    private static final int NUM_NODES = 2;
 
-   private static final int NUM_OWNERS = 1;
-
    private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
    private RemoteCache<Integer, byte[]> remoteCache;
@@ -63,8 +61,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    private ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash().numOwners(NUM_OWNERS);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       //playing with OOM - weird things might happen when JVM will struggle for life
       builder.clustering().remoteTimeout(5, TimeUnit.MINUTES);
       return hotRodCacheConfiguration(builder);
