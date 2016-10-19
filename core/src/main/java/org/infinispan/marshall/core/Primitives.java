@@ -177,13 +177,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          out.write(obj, 0, len);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          out.write(obj, 0, len);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -196,13 +196,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          writeBooleans(obj, out);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          writeBooleans(obj, out);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -241,13 +241,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (char v : obj) out.writeChar(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (char v : obj) out.writeChar(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -260,13 +260,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (double v : obj) out.writeDouble(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (double v : obj) out.writeDouble(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -279,13 +279,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (float v : obj) out.writeFloat(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (float v : obj) out.writeFloat(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -298,13 +298,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (int v : obj) out.writeInt(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (int v : obj) out.writeInt(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -317,13 +317,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (long v : obj) out.writeLong(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (long v : obj) out.writeLong(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -336,13 +336,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (short v : obj) out.writeShort(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (short v : obj) out.writeShort(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -355,13 +355,13 @@ final class Primitives {
       final int len = obj.length;
       if (len == 0) {
          out.writeByte(ID_ARRAY_EMPTY);
-      } else if (len <= 256) {
+      } else if (len <= ID_SMALL) {
          out.writeByte(ID_ARRAY_SMALL);
-         out.writeByte(len);
+         out.writeByte(len - 1);
          for (Object v : obj) out.writeObject(v);
-      } else if (len <= 65536) {
+      } else if (len <= ID_MEDIUM) {
          out.writeByte(ID_ARRAY_MEDIUM);
-         out.writeShort(len);
+         out.writeShort(len - 1);
          for (Object v : obj) out.writeObject(v);
       } else {
          out.writeByte(ID_ARRAY_LARGE);
@@ -376,9 +376,9 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new byte[]{};
          case ID_ARRAY_SMALL:
-            return readFully(mkByteArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readFully(mkByteArray(in.readUnsignedByte() + 1), in);
          case ID_ARRAY_MEDIUM:
-            return readFully(mkByteArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readFully(mkByteArray(in.readUnsignedShort() + 1), in);
          case ID_ARRAY_LARGE:
             return readFully(new byte[in.readInt()], in);
          default:
@@ -386,8 +386,8 @@ final class Primitives {
       }
    }
 
-   private static byte[] mkByteArray(int len, int limit) {
-      return new byte[len == 0 ? limit : len];
+   private static byte[] mkByteArray(int len) {
+      return new byte[len];
    }
 
    private static byte[] readFully(byte[] arr, BytesObjectInput in) {
@@ -402,9 +402,9 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new boolean[]{};
          case ID_ARRAY_SMALL:
-            return readBooleans(mkBooleanArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readBooleans(mkBooleanArray(in.readUnsignedByte() + 1), in);
          case ID_ARRAY_MEDIUM:
-            return readBooleans(mkBooleanArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readBooleans(mkBooleanArray(in.readUnsignedShort() + 1), in);
          case ID_ARRAY_LARGE:
             return readBooleans(new boolean[in.readInt()], in);
          default:
@@ -412,8 +412,8 @@ final class Primitives {
       }
    }
 
-   private static boolean[] mkBooleanArray(int len, int limit) {
-      return new boolean[len == 0 ? limit : len];
+   private static boolean[] mkBooleanArray(int len) {
+      return new boolean[len];
    }
 
    private static boolean[] readBooleans(boolean[] arr, BytesObjectInput in) {
@@ -459,9 +459,9 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new char[]{};
          case ID_ARRAY_SMALL:
-            return readChars(mkCharArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readChars(mkCharArray(in.readUnsignedByte() + 1), in);
          case ID_ARRAY_MEDIUM:
-            return readChars(mkCharArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readChars(mkCharArray(in.readUnsignedShort() + 1), in);
          case ID_ARRAY_LARGE:
             return readChars(new char[in.readInt()], in);
          default:
@@ -469,8 +469,8 @@ final class Primitives {
       }
    }
 
-   private static char[] mkCharArray(int len, int limit) {
-      return new char[len == 0 ? limit : len];
+   private static char[] mkCharArray(int len) {
+      return new char[len];
    }
 
    private static char[] readChars(char[] arr, BytesObjectInput in) {
@@ -485,18 +485,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new double[]{};
          case ID_ARRAY_SMALL:
-            return readDoubles(mkDoubleArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readDoubles(new double[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readDoubles(mkDoubleArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readDoubles(new double[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readDoubles(new double[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static double[] mkDoubleArray(int len, int limit) {
-      return new double[len == 0 ? limit : len];
    }
 
    private static double[] readDoubles(double[] arr, BytesObjectInput in) {
@@ -511,18 +507,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new float[]{};
          case ID_ARRAY_SMALL:
-            return readFloats(mkFloatArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readFloats(new float[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readFloats(mkFloatArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readFloats(new float[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readFloats(new float[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static float[] mkFloatArray(int len, int limit) {
-      return new float[len == 0 ? limit : len];
    }
 
    private static float[] readFloats(float[] arr, BytesObjectInput in) {
@@ -537,18 +529,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new int[]{};
          case ID_ARRAY_SMALL:
-            return readInts(mkIntArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readInts(new int[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readInts(mkIntArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readInts(new int[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readInts(new int[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static int[] mkIntArray(int len, int limit) {
-      return new int[len == 0 ? limit : len];
    }
 
    private static int[] readInts(int[] arr, BytesObjectInput in) {
@@ -563,18 +551,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new long[]{};
          case ID_ARRAY_SMALL:
-            return readLongs(mkLongArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readLongs(new long[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readLongs(mkLongArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readLongs(new long[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readLongs(new long[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static long[] mkLongArray(int len, int limit) {
-      return new long[len == 0 ? limit : len];
    }
 
    private static long[] readLongs(long[] arr, BytesObjectInput in) {
@@ -589,18 +573,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new short[]{};
          case ID_ARRAY_SMALL:
-            return readShorts(mkShortArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readShorts(new short[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readShorts(mkShortArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readShorts(new short[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readShorts(new short[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static short[] mkShortArray(int len, int limit) {
-      return new short[len == 0 ? limit : len];
    }
 
    private static short[] readShorts(short[] arr, BytesObjectInput in) {
@@ -615,18 +595,14 @@ final class Primitives {
          case ID_ARRAY_EMPTY:
             return new Object[]{};
          case ID_ARRAY_SMALL:
-            return readObjects(mkObjectArray(in.readUnsignedByte(), ID_SMALL), in);
+            return readObjects(new Object[in.readUnsignedByte() + 1], in);
          case ID_ARRAY_MEDIUM:
-            return readObjects(mkObjectArray(in.readUnsignedShort(), ID_MEDIUM), in);
+            return readObjects(new Object[in.readUnsignedShort() + 1], in);
          case ID_ARRAY_LARGE:
             return readObjects(new Object[in.readInt()], in);
          default:
             throw new IOException("Unknown array type: " + Integer.toHexString(type));
       }
-   }
-
-   private static Object[] mkObjectArray(int len, int limit) {
-      return new Object[len == 0 ? limit : len];
    }
 
    private static Object[] readObjects(Object[] arr, BytesObjectInput in) throws IOException, ClassNotFoundException {
