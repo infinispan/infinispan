@@ -16,10 +16,12 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -54,7 +56,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private ClassToExternalizerMap externalExts;
    private IdToExternalizerMap reverseExternalExts;
 
-   private StreamingMarshaller external;
+   private Marshaller external;
+
+   public GlobalMarshaller() {
+   }
+
+   public GlobalMarshaller(Marshaller external) {
+      this.external = external;
+   }
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
@@ -80,9 +89,16 @@ public class GlobalMarshaller implements StreamingMarshaller {
          log.tracef("External reverse externalizers: %s", reverseExternalExts);
       }
 
-      // TODO: Make external marshaller configurable
-      this.external = new ExternalJBossMarshaller(this, gcr.getGlobalConfiguration());
-      external.start();
+      if (external == null) {
+         // TODO: Make external marshaller configurable
+         this.external = startDefaultExternalMarshaller(gcr.getGlobalConfiguration());
+      }
+   }
+
+   public Marshaller startDefaultExternalMarshaller(GlobalConfiguration globalCfg) {
+      StreamingMarshaller marshaller = new ExternalJBossMarshaller(this, globalCfg);
+      marshaller.start();
+      return marshaller;
    }
 
    @Override
@@ -92,7 +108,12 @@ public class GlobalMarshaller implements StreamingMarshaller {
       reverseInternalExts.clear();
       externalExts.clear();
       reverseExternalExts.clear();
-      external.stop();
+      stopDefaultExternalMarshaller();
+   }
+
+   public void stopDefaultExternalMarshaller() {
+      if (external instanceof StreamingMarshaller)
+         ((StreamingMarshaller) external).stop();
    }
 
    @Override
@@ -344,7 +365,17 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
       out.writeByte(ID_UNKNOWN);
-      external.objectToObjectStream(obj, out);
+      if (external instanceof StreamingMarshaller)
+         ((StreamingMarshaller) external).objectToObjectStream(obj, out);
+      else {
+         try {
+            byte[] bytes = external.objectToByteBuffer(obj);
+            out.writeInt(bytes.length);
+            out.write(bytes);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
    private void writeAnnotated(Object obj, BytesObjectOutput out, Externalizer ext) throws IOException {
@@ -440,11 +471,18 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
 
    private Object readUnknown(BytesObjectInput in) throws IOException, ClassNotFoundException {
-      try {
-         return external.objectFromObjectStream(in);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return null;
+      if (external instanceof StreamingMarshaller) {
+         try {
+            return ((StreamingMarshaller) external).objectFromObjectStream(in);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+         }
+      } else {
+         int length = in.readInt();
+         byte[] bytes = new byte[length];
+         in.readFully(bytes);
+         return external.objectFromByteBuffer(bytes);
       }
    }
 

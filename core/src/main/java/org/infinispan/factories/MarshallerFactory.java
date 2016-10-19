@@ -24,7 +24,7 @@ public class MarshallerFactory extends EmptyConstructorFactory implements AutoIn
       if (configMarshaller == null) {
          comp = new GlobalMarshaller();
       } else {
-         comp = configMarshaller;
+         comp = new GlobalMarshaller(configMarshaller);
       }
 
       try {
