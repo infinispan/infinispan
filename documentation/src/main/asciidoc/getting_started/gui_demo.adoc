@@ -1,5 +1,5 @@
 == Infinispan GUI demo
-This document walks you through using the Infinispan GUI demo that ships with Infinispan, and assumes that you have link:$$http://www.infinispan.org/download$$[downloaded] the latest version of Infinispan and unzipped the archive. 
+This document walks you through using the Infinispan GUI demo that ships with Infinispan, and assumes that you have link:http://www.infinispan.org/download[downloaded] the latest version of Infinispan and unzipped the archive. 
 I will refer to the Infinispan directory created by unzipping the archive as `${INFINISPAN_HOME}`.
 
 NOTE: You will need either the -bin.zip or -all.zip version for this demo.

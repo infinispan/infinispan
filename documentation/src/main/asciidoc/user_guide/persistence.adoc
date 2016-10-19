@@ -12,7 +12,7 @@ The integration with the persistent store is done through the following SPI: Cac
 
 These SPIs allow for the following features:
 
-* Alignment with link:http://jcp.org/en/jsr/detail?id=107[JSR-107]. The link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
+* Alignment with link:http://jcp.org/en/jsr/detail?id=107[JSR-107]. The link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
 
 * Simplified Transaction Integration. All necessary locking is handled by Infinispan automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
 
@@ -260,21 +260,21 @@ image::images/Figure2_1_persistence_API.png[align="center", title="Persistence S
 
 Some notes about the classes:
 
-* link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer] - abstracts the serialized form of an object
+* link:{javadocroot}/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer] - abstracts the serialized form of an object
 
-* link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] - abstracts the information held within
-  a persistent store corresponding to a key-value added to the cache. Provides method for reading this information both in serialized (link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer]) and deserialized (Object) format. Normally data read from the store is kept in serialized format and lazily deserialized on demand, within the
-  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] implementation
+* link:{javadocroot}/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] - abstracts the information held within
+  a persistent store corresponding to a key-value added to the cache. Provides method for reading this information both in serialized (link:{javadocroot}/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer]) and deserialized (Object) format. Normally data read from the store is kept in serialized format and lazily deserialized on demand, within the
+  link:{javadocroot}/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] implementation
 
-* link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] provide basic methods for reading and writing to a store
+* link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] provide basic methods for reading and writing to a store
 
-* link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader] and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
+* link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader] and link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
 
 A provider might choose to only implement a subset of these interfaces:
 
-* Not implementing the  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
+* Not implementing the  link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
 
-* If a loader does not implement the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter]
+* If a loader does not implement the link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter]
 inteface, then it will not participate in preloading nor in cache iteration
 (required also for stream operations).
 

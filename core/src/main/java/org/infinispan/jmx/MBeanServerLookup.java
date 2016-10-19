@@ -10,6 +10,7 @@ import javax.management.MBeanServer;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.jmx.PlatformMBeanServerLookup
  * @since 4.0
+ * @public
  */
 public interface MBeanServerLookup {
    /**

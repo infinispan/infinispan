@@ -5,7 +5,7 @@ the hard work of forming a cluster.
 
 .clustered-cache quickstart
 TIP: All the code discussed in this tutorial is available in the
-link:$$https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache$$[clustered-cache quickstart].
+link:https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache[clustered-cache quickstart].
 
 === Sharing JGroups channels
 By default all caches created from a single CacheManager share the same JGroups channel and multiplex RPC messages over it.
@@ -145,7 +145,7 @@ DefaultCacheManager cacheManager = new DefaultCacheManager(
 );
 ----
 
-The link:$$http://www.jgroups.org/manual/html/index.html$$[JGroups documentation] provides extensive advice on getting
+The link:http://www.jgroups.org/manual/html/index.html[JGroups documentation] provides extensive advice on getting
 JGroups working on your network.
 If you are new to configuring JGroups, you may get a little lost, so you might want to try tweaking these configuration
 parameters:

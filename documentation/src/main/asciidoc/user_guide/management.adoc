@@ -5,9 +5,9 @@ Management of Infinispan instances is all about exposing as much relevant statis
 Over the years, link:http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html[JMX] has become the de facto standard for management and administration of middleware and as a result, the Infinispan team has decided to standardize on this technology for the exposure of management and statistical information.
 
 ==== Understanding The Exposed MBeans
-By connecting to the VM(s) where Infinispan is running with a standard JMX GUI such as link:http://docs.oracle.com/javase/6/docs/technotes/guides/management/jconsole.html[JConsole] or link:http://docs.oracle.com/javase/6/docs/technotes/guides/visualvm/[VisualVM] you should find the following MBeans:
+By connecting to the VM(s) where Infinispan is running with a standard JMX GUI such as link:https://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html[JConsole] or link:https://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/[VisualVM] you should find the following MBeans:
 
-*  For CacheManager level JMX statistics, without further configuration, you should see an MBean called _org.infinispan:type=CacheManager,name="DefaultCacheManager"_ with link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#CacheManager[properties specified by the CacheManager MBean] .
+*  For CacheManager level JMX statistics, without further configuration, you should see an MBean called _org.infinispan:type=CacheManager,name="DefaultCacheManager"_ with link:{javadocroot}/jmxComponents.html#CacheManager[properties specified by the CacheManager MBean] .
 
 *  Using the cacheManagerName attribute in globalJmxStatistics XML element, or using the corresponding GlobalJmxStatisticsConfigurationBuilder.cacheManagerName(String cacheManagerName) call, you can name the cache manager in such way that the name is used as part of the JMX object name. So, if the name had been "Hibernate2LC", the JMX name for the cache manager would have been: _org.infinispan:type=CacheManager,name="Hibernate2LC"_ . This offers a nice and clean way to manage environments where multiple cache managers are deployed, which follows link:http://www.oracle.com/technetwork/java/javase/tech/best-practices-jsp-136021.html[JMX best practices] .
 
@@ -15,11 +15,11 @@ By connecting to the VM(s) where Infinispan is running with a standard JMX GUI s
 
 *  ${name-of-cache} has been substituted by the actual cache name. If this cache represents the default cache, its name will be `___defaultCache`.
 
-*  ${cache-mode} has been substituted by the cache mode of the cache. The cache mode is represented by the lower case version of the possible enumeration values shown link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/CacheMode[here].
+*  ${cache-mode} has been substituted by the cache mode of the cache. The cache mode is represented by the lower case version of the possible enumeration values shown link:{javadocroot}/org/infinispan/configuration/cache/CacheMode[here].
 
 *  ${name-of-cache-manager} has been substituted by the name of the cache manager to which this cache belongs. The name is derived from the _cacheManagerName_ attribute value in `globalJmxStatistics` element.
 
-*  ${component-name} has been substituted by one of the JMX component names in the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html[JMX reference documentation] .
+*  ${component-name} has been substituted by one of the JMX component names in the link:{javadocroot}/jmxComponents.html[JMX reference documentation] .
 
 For example, the cache store JMX component MBean for a default cache configured with synchronous distribution would have the following name: `org.infinispan:type=Cache,name="___defaultcache(dist_sync)",manager="DefaultCacheManager",component=CacheStore`
 
@@ -60,7 +60,7 @@ Enabling Cache statistics collections differs depending on the configuration sty
 ==== Multiple JMX Domains
 There can be situations where several CacheManager instances are created in a single VM, or Cache names belonging to different CacheManagers under the same VM clash.
 
-Using different JMX domains for multi cache manager environments should be last resort. 
+Using different JMX domains for multi cache manager environments should be last resort.
 Instead, it's possible to name a cache manager in such way that it can easily be identified and used by monitoring tools. For example:
 
 
@@ -88,7 +88,7 @@ Using either of these options should result on the CacheManager MBean name being
 For the time being, you can still set your own jmxDomain if you need to and we also allow duplicate domains, or rather duplicate JMX names, but these should be limited to very special cases where different cache managers within the same JVM are named equally.
 
 ==== Registering MBeans In Non-Default MBean Servers
-Let's discuss where Infinispan registers all these MBeans. By default, Infinispan registers them in the link:http://docs.oracle.com/javase/6/docs/api/java/lang/management/ManagementFactory.html#getPlatformMBeanServer()[standard JVM MBeanServer platform] . However, users might want to register these MBeans in a different MBeanServer instance. For example, an application server might work with a different MBeanServer instance to the default platform one. In such cases, users should implement the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/jmx/MBeanServerLookup.html[MBeanServerLookup interface] provided by Infinispan so that the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/jmx/MBeanServerLookup.html#getMBeanServer()[getMBeanServer() method] returns the MBeanServer under which Infinispan should register the management MBeans. You can find an example in the default link:http://anonsvn.jboss.org/repos/infinispan/tags/4.0.0.FINAL/core/src/main/java/org/infinispan/jmx/PlatformMBeanServerLookup.java[PlatformMBeanServerLookup class] used by Infinispan. So, once you have your implementation ready, simply configure Infinispan with the fully qualified name of this class. For example:
+Let's discuss where Infinispan registers all these MBeans. By default, Infinispan registers them in the link:{jdkdocroot}/java/lang/management/ManagementFactory.html#getPlatformMBeanServer--[standard JVM MBeanServer platform] . However, users might want to register these MBeans in a different MBeanServer instance. For example, an application server might work with a different MBeanServer instance to the default platform one. In such cases, users should implement the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html[MBeanServerLookup interface] provided by Infinispan so that the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html#getMBeanServer--[getMBeanServer() method] returns the MBeanServer under which Infinispan should register the management MBeans. Once you have your implementation ready, simply configure Infinispan with the fully qualified name of this class. For example:
 
 
 * Via XML:
@@ -117,7 +117,7 @@ There has been a couple of noticeable additions in Infinispan 5.0 in terms of ex
 
 .  MBeans related to Infinispan servers are now available that for the moment focus on the transport layer. A new MBean named `org.infinispan:type=Server,name={Memcached|HotRod},component=Transport` offers information such as: host name, port, bytes read, byte written, number of worker threads, etc.
 
-.  When global JMX statistics are enabled, the JGroups channel MBean is also registered automatically under the name `org.infinispan:type=channel,cluster={name-of-your-cluster}`, so you can get key information of the group communication transport layer that's used to cluster Infinispan instances. To find out more about the information provided, check the link:http://community.jboss.org/docs/10938[JGroups JMX documentation].
+.  When global JMX statistics are enabled, the JGroups channel MBean is also registered automatically under the name `org.infinispan:type=channel,cluster={name-of-your-cluster}`, so you can get key information of the group communication transport layer that's used to cluster Infinispan instances.
 
 
 include::cli.adoc[]

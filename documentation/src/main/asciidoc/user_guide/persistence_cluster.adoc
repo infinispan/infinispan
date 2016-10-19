@@ -24,6 +24,6 @@ b.persistence()
 
 ----
 
-For a list of ClusterCacheLoader configuration refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[javadoc] .
+For a list of ClusterCacheLoader configuration refer to the link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[javadoc] .
 
 NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.

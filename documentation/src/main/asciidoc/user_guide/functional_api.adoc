@@ -4,7 +4,7 @@ Infinispan 8 introduces a new experimental API for interacting with your
 data which takes advantage of the functional programming additions and
 improved asynchronous programming capabilities available in Java 8.
 
-Infinispan's link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
+Infinispan's link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
 is a distilled map-like asynchronous API which uses functions to interact with data.
 
 === Asynchronous and Lazy
@@ -13,19 +13,19 @@ Being an asynchronous API, all methods that return a single result,
 return a CompletableFuture which wraps the result, so you can use the
 resources of your system more efficiently by having the possibility to
 receive callbacks when the
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
+link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
 has completed, or you can chain or compose them with other CompletableFuture.
 
 For those operations that return multiple results, the API returns
 instances of a
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
 interface which offers a lazy pull-style
 API for working with multiple results.
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
 ,​ being a lazy pull-style API, can still be asynchronous underneath
 since the user can decide to work on the traversable at a later stage,
 and the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Traversable.html[`​Traversable`]
 implementation itself can decide when to compute
 those results.
 
@@ -33,11 +33,11 @@ those results.
 
 Since the content of the functions is transparent to Infinispan, the API
 has been split into 3 interfaces for read­-only (
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
 )​, read­-write (
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
 )​ and write­-only (
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
 )​ operations respectively, in order to provide hints to the Infinispan
 internals on the type of work needed to support functions.
 
@@ -45,16 +45,16 @@ internals on the type of work needed to support functions.
 
 To construct any of the read-only, write-only or read-write map
 instances, an Infinispan
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html[`AdvancedCache`]
+link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`]
 is required, which is retrieved from the Cache Manager, and using the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html[`AdvancedCache`]
+link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`]
 , static method
 factory methods are used to create
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
 ,
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
 or
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
 :
 
 [source,java]
@@ -79,7 +79,7 @@ is temporary.
 Read-only operations have the advantage that no locks are acquired
 for the duration of the operation. Here's an example on how to the
 equivalent operation for
-link:https://docs.oracle.com/javase/8/docs/api/java/util/Map.html#get-java.lang.Object-[Map.get(K)]
+link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]
 :
 
 [source,java]
@@ -114,23 +114,23 @@ as entries, which include both key and value information.
 ==== Read-Only Entry View
 
 The function parameters for read-only maps provide the user with a
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html[read-only entry view]
+link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html[read-only entry view]
 to interact with the data in the cache, which include these operations:
 
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#key--[`key()`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#key--[`key()`]
 method returns the key for which this function is being executed.
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#find--[`find()`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#find--[`find()`]
 returns a Java 8 `Optional` wrapping the value if present,
 otherwise it returns an empty optional. Unless the value is guaranteed to
 be associated with the key, it's recommended to use `find()` to verify
 whether there's a value associated with the key.
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#get--[`get()`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#get--[`get()`]
 returns the value associated with the key. If the key has no value
 associated with it, calling `get()` throws a `NoSuchElementException`.
 `get()` can be considered as a shortcut of `ReadEntryView.find().get()`
 which should be used only when the caller has guarantees that there's
 definitely a value associated with the key.
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class<T> type)`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class<T> type)`]
 allows metadata parameter information
 associated with the cache entry to be looked up, for example: entry
 lifespan, last  accessed time...etc.
@@ -148,7 +148,7 @@ flag, but the use case is so common that in this new functional API, this
 optimization is provided as a first-class citizen.
 
 Using
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[write-only map API]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[write-only map API]
 , an operation equivalent to
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`javax.cache.Cache` (`JCache`)]
 's void returning
@@ -172,7 +172,7 @@ readFuture.thenAccept(System.out::println);
 ----
 
 Multiple key/value pairs can be stored in one go using
-https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalMany-java.util.Map-java.util.function.BiConsumer-[`evalMany`]
+{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalMany-java.util.Map-java.util.function.BiConsumer-[`evalMany`]
 API:
 
 [source,java]
@@ -188,7 +188,7 @@ writerAllFuture.thenAccept(x -> "Write completed");
 
 To remove all contents of the cache, there are two possibilities with
 different semantics. If using
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
 each cached entry is iterated over and the function is called
 with that entry's information. Using this method also results in listeners
 (see <<_functional_listeners, functional listeners section>> for more information)
@@ -203,7 +203,7 @@ removeAllFuture.thenAccept(x -> "All entries removed");
 ----
 
 The alternative way to remove all entries is to call
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#truncate--[`truncate`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#truncate--[`truncate`]
 operation which clears the entire cache contents in one go without
 invoking any listeners and is best-effort:
 
@@ -218,17 +218,17 @@ truncateFuture.thenAccept(x -> "Cache contents cleared");
 [[_write_only_entry_view]]
 ==== Write-Only Entry View
 The function parameters for write-only maps provide the user with a
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html[write-only entry view]
+link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html[write-only entry view]
 to modify the data in the cache, which include these
 operations:
 
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#set-V-org.infinispan.commons.api.functional.MetaParam.Writable...-[`set(V, MetaParam.Writable...)`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#set-V-org.infinispan.commons.api.functional.MetaParam.Writable...-[`set(V, MetaParam.Writable...)`]
 method allows for a new value to be
 associated with the cache entry for which this function is executed, and it
 optionally takes zero or more metadata parameters to be stored along with
 the value (see <<_meta_parameter, Metadata Parameter Handling section>> to
 find out more).
-* link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#remove--[`remove()`]
+* link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#remove--[`remove()`]
 method removes the cache entry, including both value and metadata
 parameters associated with this key.
 
@@ -239,13 +239,13 @@ this category CAS-like (Compare­And­Swap) operations can be found.
 This type of operations require previous value associated with the key
 to be read and for locks to be acquired before executing the function.
 The vast majority of operations within
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
 APIs fall within this category, and they can easily be implemented using the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
 . Moreover, with
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
 , you can make CAS­like comparisons not only based on value equality
 but based on metadata parameter equality such as version information,
 and you can send back previous value or boolean instances to signal
@@ -270,7 +270,7 @@ CompletableFuture<Optional<String>> readWriteFuture = readWriteMap.eval("key1", 
 readWriteFuture.thenAccept(System.out::println);
 ----
 
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[`ConcurrentMap.replace(K, V, V)`]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[`ConcurrentMap.replace(K, V, V)`]
 is a replace function that compares the
 value present in the map and if it's equals to the value passed in as
 first parameter, the second value is stored, returning a boolean
@@ -306,7 +306,7 @@ value and metadata parameters to be read.
 The function parameters for read-write maps provide the user with the
 possibility to query the information associated with the key, including
 value and metadata parameters, and the user can also use this
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadWriteEntryView.html[read-write entry view]
+link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadWriteEntryView.html[read-write entry view]
 to modify the data in the cache.
 
 The operations are exposed by read-write entry views are a union of
@@ -315,7 +315,7 @@ and <<_write_only_entry_view, write-only entry views>>
 
 [[_meta_parameter]]
 === Metadata Parameter Handling
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/MetaParam.html[Metadata parameters]
+link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.html[Metadata parameters]
 provide extra information about the cache entry, such
 as version information, lifespan, last accessed/used time...etc. Some of
 these can be provided by the user, e.g. version, lifespan...etc, but some
@@ -325,7 +325,7 @@ accessed/used time.
 The functional map API provides a flexible way to store metadata parameters
 along with an cache entry. To be able to store a metadata parameter, it must
 extend
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/MetaParam.Lookup.html[`MetaParam.Writable`]
+link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.Lookup.html[`MetaParam.Writable`]
 interface, and implement the methods to allow the
 internal logic to extra the data. Storing is done via the
 `set(V, MetaParam.Writable...)` method in
@@ -333,7 +333,7 @@ internal logic to extra the data. Storing is done via the
 <<_read_write_entry_view, read-write entry view>> function parameters.
 
 Querying metadata parameters is available via the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class)`]
+link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class)`]
 method
 available via <<_read_write_entry_view, read-write entry view>> or
 <<_read_only_entry_view, read-only entry view>> or function parameters.
@@ -359,7 +359,7 @@ readFuture.thenAccept(System.out::println);
 ----
 
 If the metadata parameter is generic, for example
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/MetaParam.MetaEntryVersion.html[`MetaEntryVersion<T>`]
+link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.MetaEntryVersion.html[`MetaEntryVersion<T>`]
 , retrieving the metadata parameter along with a specific type can be tricky
 if using `.class` static helper in a class because it does not return a
 `Class<T>` but only `Class`, and hence any generic information in the class is
@@ -405,24 +405,24 @@ for the metadata parameters already provided by the functional map API.
 
 [[_invocation_parameter]]
 === Invocation Parameter
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Param.html[Per-invocation parameters]
+link:{javadocroot}/org/infinispan/commons/api/functional/Param.html[Per-invocation parameters]
 are applied to regular functional map API calls to
 alter the behaviour of certain aspects. Adding per invocation parameters is
 done using the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.html#withParams-org.infinispan.commons.api.functional.Param...-[`withParams(Param<?>...)`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.html#withParams-org.infinispan.commons.api.functional.Param...-[`withParams(Param<?>...)`]
 method.
 
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Param.FutureMode.html[`Param.FutureMode`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Param.FutureMode.html[`Param.FutureMode`]
 tweaks whether a method returning a
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
+link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
 will span a thread to invoke the method, or instead will use the caller
 thread. By default, whenever a call is made to a method returning a
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
+link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
 , a separate thread will be span to execute the method asynchronously.
 However, if the caller will immediately block waiting for the
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
+link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
 to complete, spanning a different thread is wasteful, and hence
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Param.FutureMode.html#COMPLETED[`Param.FutureMode.COMPLETED`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Param.FutureMode.html#COMPLETED[`Param.FutureMode.COMPLETED`]
 can be passed as per-invocation parameter to avoid creating that extra thread. Example:
 
 [source,java]
@@ -443,7 +443,7 @@ a persistence store. By passing PersistenceMode.SKIP as parameter,
 the write operation skips the persistence store and its effects are only
 seen in the in-memory contents of the cache. PersistenceMode.SKIP can
 be used to implement an
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html#evict-K-[`Cache.evict()`]
+link:{javadocroot}/org/infinispan/Cache.html#evict-K-[`Cache.evict()`]
 method which removes data from memory but leaves the persistence store
 untouched:
 
@@ -477,12 +477,12 @@ get notified when events take place. These notifications are post-event, so
 that means the events are received after the event has happened.
 
 The listeners that can be registered are split into two categories:
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.html[write listeners]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.html[write listeners]
 and
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[read-write listeners].
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[read-write listeners].
 
 ==== Write Listeners
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.html[Write listeners]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.html[Write listeners]
 enable user to register listeners for any cache entry write events
 that happen in either a read-write or write-only functional map.
 
@@ -494,25 +494,25 @@ entry has been written.
 However, write event listeners can distinguish between entry removals
 and cache entry create/modify-update events because they can query
 what the new entry's value via
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#find--[`ReadEntryView.find()`]
+link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#find--[`ReadEntryView.find()`]
 method.
 
 Adding a write listener is done via the WriteListeners interface
 which is accessible via both
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
 and
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#listeners--[`WriteOnlyMap.listeners()`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#listeners--[`WriteOnlyMap.listeners()`]
  method.
 
 A write listener implementation can be defined either passing a function
 to
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.html#onWrite-java.util.function.Consumer-[`onWrite(Consumer<ReadEntryView<K, V>>)`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.html#onWrite-java.util.function.Consumer-[`onWrite(Consumer<ReadEntryView<K, V>>)`]
 method, or passing a
 WriteListener implementation to
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener-[`add(WriteListener<K, V>)`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener-[`add(WriteListener<K, V>)`]
 method.
 Either way, all these methods return an
-link:https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html[AutoCloseable]
+link:{jdkdocroot}/java/lang/AutoCloseable.html[AutoCloseable]
 instance that can be used to de-register the function listener:
 
 [source,java]
@@ -544,7 +544,7 @@ writeCloseHanlder.close();
 ----
 
 ==== Read-Write Listeners
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[Read-write listeners]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[Read-write listeners]
 enable users to register listeners for cache entry created, modified
 and removed events, and also register listeners for any cache entry
 write events.
@@ -556,18 +556,18 @@ differentiation between create, modified and removed can be fully
 guaranteed.
 
 Adding a read-write listener is done via the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[`ReadWriteListeners`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[`ReadWriteListeners`]
 interface which is accessible via
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
+link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
 method.
 
 If interested in only one of the event types, the simplest way to add a
 listener is to pass a function to either
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onCreate-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onCreate`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onCreate-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onCreate`]
 ,
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onModify-org.infinispan.commons.api.functional.EntryView.ReadEntryView-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onModify`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onModify-org.infinispan.commons.api.functional.EntryView.ReadEntryView-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onModify`]
 or
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onRemove-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onRemove`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onRemove-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onRemove`]
 methods. All these methods return an AutoCloseable instance that can be
 used to de-register the function listener:
 
@@ -607,9 +607,9 @@ modifyClose.close();
 
 If listening for two or more event types, it's better to pass in an
 implementation of
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.WriteListener.html[`ReadWriteListener`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.WriteListener.html[`ReadWriteListener`]
 interface via the
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener-[`ReadWriteListeners.add()`]
+link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener-[`ReadWriteListeners.add()`]
 method. `ReadWriteListener` offers the same `onCreate`/`onModify`/`onRemove`
 callbacks with default method implementations that are empty:
 
@@ -664,7 +664,7 @@ to the method and the functions are replicated to other nodes.
 There are multiple ways in which a function can be marshalled. The simplest
 way, which is also the most costly option in terms of payload size, is
 to mark the function as
-link:http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html[`Serializable`]
+link:{jdkdocroot}/java/io/Serializable.html[`Serializable`]
 :
 
 [source,java]
@@ -682,7 +682,7 @@ CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
 ----
 
 A more economical way to marshall a function is to provide an Infinispan
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`]
+link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`]
 for it:
 
 [source,java]
@@ -719,16 +719,16 @@ class SetStringConstant implements Consumer<WriteEntryView<String>> {
 To help users take advantage of the tiny payloads generated by
 `Externalizer`-based functions, the functional API comes with a helper
 class called
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/MarshallableFunctions.html[`org.infinispan.commons.marshall.MarshallableFunctions`]
+link:{javadocroot}/org/infinispan/commons/marshall/MarshallableFunctions.html[`org.infinispan.commons.marshall.MarshallableFunctions`]
 which provides marshallable functions for some of the most commonly user
 functions.
 
 In fact, all the functions required to implement
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
 using the functional map API have been defined in
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/marshall/MarshallableFunctions.html[`MarshallableFunctions`].
+link:{javadocroot}/org/infinispan/commons/marshall/MarshallableFunctions.html[`MarshallableFunctions`].
 For example, here is an implementation of JCache's
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java#L283[`boolean putIfAbsent(K, V)`]
 using functional map API which can be run in a cluster:
@@ -750,7 +750,7 @@ future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
 
 This new API is meant to complement existing Key/Value Infinispan API
 offerings, so you'll still be able to use
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 or
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
 standard APIs if that's what suits your use case best.
@@ -765,7 +765,7 @@ instead these can be notified when remote operations complete and then
 chain them with other subsequent operations.
 
 * Users wanting to go beyond the standard operations exposed by
-link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
 , for example, if you want to do a replace

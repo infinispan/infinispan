@@ -1,7 +1,7 @@
 ==  CDI Support
 Infinispan includes integration with link:http://www.cdi-spec.org[Contexts and Dependency Injection (better known as CDI)] via Infinispan's `infinispan-cdi-embedded` or `infinispan-cdi-remote` module. 
 CDI is part of link:http://www.oracle.com/technetwork/java/javaee/tech/index-jsp-142185.html[Java EE specification] and aims for managing beans' lifecycle inside the container.
-The integration allows to inject Cache interface and bridge Cache and CacheManager events. JCache annotations (JSR-107) are supported by `infinispan-jcache` and `infinispan-jcache-remote` artifacts. For more information have a look at link:$$http://download.oracle.com/otndocs/jcp/jcache-1_0-fr-spec/index.html$$[Chapter 11] of the JCACHE specification.
+The integration allows to inject Cache interface and bridge Cache and CacheManager events. JCache annotations (JSR-107) are supported by `infinispan-jcache` and `infinispan-jcache-remote` artifacts. For more information have a look at link:http://download.oracle.com/otndocs/jcp/jcache-1_0-fr-spec/index.html[Chapter 11] of the JCACHE specification.
 
 === Maven Dependencies
 To include CDI support for Infinispan in your project, use one of the following dependencies:

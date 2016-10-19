@@ -240,7 +240,7 @@ GlobalConfigurationBuilder builder = ...
 builder.serialization().addAdvancedExternalizer(new Book.BookExternalizer());
 ----
 
-For more information, please refer to the link:$$../user_guide/user_guide.html#benefits_of_externalizers$$[User's Guide].
+For more information, please refer to the link:../user_guide/user_guide.html#benefits_of_externalizers[User's Guide].
 
 === Storing Strings efficiently
 
@@ -253,7 +253,7 @@ If your strings are mostly ASCII, convert them to `UTF-8` and store them as `byt
 
 When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using Infinispan API.
 
-This is an example comparison of the difference, randomly reading/writing into cache with 2048 entries as executed on 2&times;8-core Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz:
+This is an example comparison of the difference, randomly reading/writing into cache with 2048 entries as executed on 2x8-core Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz:
 
 .Number of operations per second (± std. dev.)
 |===

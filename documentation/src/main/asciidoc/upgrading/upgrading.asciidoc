@@ -210,8 +210,8 @@ In order to use all of the latest features, make sure you change the namespace d
 
 === Transaction
 
-The default transaction enlistment model has changed ( link:$$https://issues.jboss.org/browse/ISPN-1284$$[ISPN-1284] ) from link:$$http://docs.oracle.com/javase/6/docs/api/javax/transaction/xa/XAResource.html$$[`XAResource`] to link:$$http://docs.oracle.com/javaee/6/api/javax/transaction/Synchronization.html$$[`Synchronization`].
-Also now, if the `XAResource` enlistment is used, then link:../user_guide/user_guide.html#_transaction_recovery[recovery] is enabled by default.
+The default transaction enlistment model has changed ( link:https://issues.jboss.org/browse/ISPN-1284[ISPN-1284] ) from link:{jdkdocroot}/javax/transaction/xa/XAResource.html[`XAResource`] to link:{jdkdocroot}/javax/transaction/Synchronization.html[`Synchronization`].
+Also now, if the `XAResource` enlistment is used, then link:../user_guide/user_guide.html#transaction_recovery[recovery] is enabled by default.
 
 In practical terms, if you were using the default values, this should not cause any backward compatibility issues but an increase in performance of about 5-7%. However in order to use the old configuration defaults, you need to configure the following:
 
@@ -232,23 +232,23 @@ builder.transaction().useSynchronization(false).recovery().enabled(false)
 
 === Cache Loader and Store configuration
 
-Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#_cache_loaders_and_stores[Cache Loaders and Stores] documentation. 
+Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation. 
 
 === Virtual Nodes and Segments
 
-The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments. Please refer to the link:../user_guide/user_guide.html#_clustering_modes[Clustering modes] documentation for details.
+The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments. Please refer to the link:../user_guide/user_guide.html#clustering_modes[Clustering modes] documentation for details.
 
 ==  Upgrading from 5.0 to 5.1
 === API
 
 The cache and cache manager hierarchies have changed slightly in 5.1 with the introduction of 
-link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html$$[`BasicCache`]
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
 and 
-link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html$$[`BasicCacheContainer`]
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]
 , which are parent classes of existing 
-link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html$$[`Cache`]
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Cache`]
 and 
-link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html$$[`CacheContainer`]
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
 classes respectively. What's important is that Hot Rod clients must now code
 against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
 So previous code that was written like this will no longer compile. 
@@ -302,7 +302,7 @@ Eviction's `maxEntries` is used as guide for the entire cache, but eviction happ
 
 === Transactions
 
-* A cache marked as `TRANSACTIONAL` cannot be accessed outside of a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:$$https://github.com/jsr107$$[JSR-107] as well as to provide more consistent behavior. 
+* A cache marked as `TRANSACTIONAL` cannot be accessed outside of a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior. 
 
 * In 5.0, commit and rollback phases were asynchronous by default. Starting with 5.1, these are now synchronous by default, to provide the guarantees required by a single lock-owner model.
 

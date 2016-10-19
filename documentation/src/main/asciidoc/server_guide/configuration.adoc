@@ -29,7 +29,7 @@ You can switch stacks from the command-line using the jboss.default.jgroups.stac
 A stack declaration is composed of a transport (UDP or TCP) followed by a list of protocols.
 For each of these elements you can tune specific properties adding child <property name="prop_name">prop_value</property> elements.
 Since the amount of protocols and their configuration options in JGroups is huge, please refer to the appropriate
-link:$$http://www.jgroups.org/manual/html/protlist.html$$[JGroups Protocol documentation] .
+link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol documentation] .
 The following are the default stacks:
 
 [source,xml]
@@ -71,7 +71,7 @@ The following are the default stacks:
 
 The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast.
 If you need to use a different protocol, look at the
-link:$$http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols$$[JGroups Discovery Protocols] .
+link:http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols[JGroups Discovery Protocols] .
 The following example stack configures the TCPPING discovery protocol with two initial hosts:
 
 [source,xml]
@@ -172,7 +172,7 @@ The JGroups subsystem can be configured so that nodes need to authenticate each 
 
 In the above example the nodes will use the +DIGEST-MD5+ mech to authenticate against the +ClusterRealm+. In order to join, nodes need to have the +cluster+ role. If the +cluster-role+ attribute is not specified it defaults to the name of the Infinispan +cache-container+, as described below.
 Each node identifies itself using the +client_name+ property. If none is explicitly specified, the hostname on which the server is running will be used. This name can also be overridden by specifying the +jboss.node.name+ system property.
-The +client_password+ property contains the password of the node. It is recommended that this password be stored in the Vault. Refer to link:$$https://community.jboss.org/wiki/AS7UtilisingMaskedPasswordsViaTheVault$$[AS7: Utilising masked passwords via the vault] for instructions on how to do so.
+The +client_password+ property contains the password of the node. It is recommended that this password be stored in the Vault. Refer to link:https://community.jboss.org/wiki/AS7UtilisingMaskedPasswordsViaTheVault[AS7: Utilising masked passwords via the vault] for instructions on how to do so.
 When using the GSSAPI mech, +client_name+ will be used as the name of a Kerberos-enabled login module defined within the security domain subsystem:
 
 [source,xml]
@@ -386,7 +386,7 @@ The connector will create a supporting topology cache with default settings. If 
 
 The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
 
-Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows:
+Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:{wildflydocroot}/Security%20Realms[documentation] on this. Next add the `<security />` element to the HotRod connector as follows:
 
 [source,xml]
 ----
@@ -417,7 +417,6 @@ The following connector declaration enables a Memcached server using the _memcac
 ----
 
 ==== REST
-The REST connector differs from the above connectors because it piggybacks on the web subsystem. Therefore configurations such as socket binding, worker threads, timeouts, etc must be performed on the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117098$$[web subsystem] .
 
 [source,xml]
 ----

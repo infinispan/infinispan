@@ -4,25 +4,25 @@ Alternatively, if transaction support is disabled, it is equivalent to using aut
 
 On every cache operation Infinispan does the following:
 
-. Retrieves the current link:http://docs.oracle.com/javaee/7/api/javax/transaction/Transaction.htmll[Transaction] associated with the thread
-. If not already done, registers link:http://docs.oracle.com/javaee/7/api/javax/transaction/xa/XAResource.html[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
+. Retrieves the current link:{javaeedocroot}/javax/transaction/Transaction.htmll[Transaction] associated with the thread
+. If not already done, registers link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
 
-In order to do this, the cache has to be provided with a reference to the environment's link:http://docs.oracle.com/javaee/7/api/javax/transaction/TransactionManager.html[TransactionManager].
-This is usually done by configuring the cache with the class name of an implementation of the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/transaction/lookup/TransactionManagerLookup.html[TransactionManagerLookup] interface.
+In order to do this, the cache has to be provided with a reference to the environment's link:{javaeedocroot}/javax/transaction/TransactionManager.html[TransactionManager].
+This is usually done by configuring the cache with the class name of an implementation of the link:{javadocroot}/org/infinispan/transaction/lookup/TransactionManagerLookup.html[TransactionManagerLookup] interface.
 When the cache starts, it will create an instance of this class and invoke its `getTransactionManager()` method, which returns a reference to the `TransactionManager`.
 
 Infinispan ships with several transaction manager lookup classes:
 
 .Transaction manager lookup implementations
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html[DummyTransactionManagerLookup]:
+*  link:{javadocroot}/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html[DummyTransactionManagerLookup]:
 This provides with a dummy transaction manager which should only be used for testing.
 Being a dummy, this is not recommended for production use a it has some severe limitations to do with concurrent transactions and recovery.
 
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]:
+*  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]:
 If you're running Infinispan in a standalone environment, this should be your default choice for transaction manager.
 It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the dummy transaction manager.
 
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]:
+*  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]:
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
 If no transaction manager can be found, it defaults on the dummy transaction manager.
 
@@ -101,7 +101,7 @@ Default is `OPTIMISTIC`.
 ** `NONE` - non transactional cache
 ** `FULL_XA` - XA transactional cache with recovery enabled. Check section <<tx:recovery>> for more details about recovery.
 ** `NON_DURABLE_XA` - XA transactional cache with recovery disabled.
-** `NON_XA` - transactional cache with integration via link:http://docs.oracle.com/javaee/7/api/javax/transaction/Synchronization.html[Synchronization] instead of XA.
+** `NON_XA` - transactional cache with integration via link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronization] instead of XA.
 Check section <<tx:sync-enlist>> for details.
 ** `BATCH`-  transactional cache using batch to group operations. Check section <<tx:batching>> for details.
 * `notifications` - enables/disables triggering transactional events in cache listeners. Default is `true`.
@@ -264,7 +264,7 @@ new ConfigurationBuilder().deadlockDetection().enable().spinDuration(1, TimeUnit
 
 Some clues on when to enable deadlock detection.
 
-* A high number of transaction rolling back due to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/util/concurrent/TimeoutException.html[TimeoutException] is an indicator that this functionality might help.
+* A high number of transaction rolling back due to link:{javadocroot}/org/infinispan/util/concurrent/TimeoutException.html[TimeoutException] is an indicator that this functionality might help.
 * `TimeoutException` might be caused by other causes as well, but deadlocks will always result in this exception being thrown.
 
 Generally, when you have a high contention on a set of keys, deadlock detection may help.
@@ -274,13 +274,13 @@ For more details on how deadlock detection works, benchmarks and design details 
 NOTE: deadlock detection only runs on an a per cache basis: deadlocks that spread over two or more caches won't be detected.
 
 === Dealing with exceptions
-If a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
+If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 === Enlisting Synchronizations [[tx:sync-enlist]]
-By default Infinispan registers itself as a first class participant in distributed transactions through link:http://docs.oracle.com/javaee/7/api/javax/transaction/xa/XAResource.html[XAResource].
+By default Infinispan registers itself as a first class participant in distributed transactions through link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource].
 There are situations where Infinispan is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case Infinispan is used as a 2nd level cache in Hibernate.
 
-Starting with 5.0 release, Infinispan allows transaction enlistment through link:http://docs.oracle.com/javaee/7/api/javax/transaction/Synchronization.html[Synchronisation].
+Starting with 5.0 release, Infinispan allows transaction enlistment through link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronisation].
 To enable it just use `NON_XA` transaction mode.
 
 ``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-US/JBoss_Enterprise_Application_Platform/5/html/Administration_And_Configuration_Guide/lrco-overview.html[last resource commit optimization]).
@@ -374,7 +374,7 @@ This cache can be specified through the `recovery-cache` configuration attribut
 If not specified infinispan will configure a local cache for you.
 
 It is possible (though not mandated) to share same recovery cache between all the Infinispan caches that have recovery enabled.
-If the default recovery cache is overridden, then the specified recovery cache must use a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
+If the default recovery cache is overridden, then the specified recovery cache must use a link:{javadocroot}/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
 
 ==== Integration with the transaction manager
 Even though this is transaction manager specific, generally a transaction manager would need a reference to a `XAResource` implementation in order to invoke `XAResource.recover()` on it.
@@ -507,7 +507,7 @@ To use total order in your cache, you need to add the `TOA` protocol in your `jg
 <tom.TOA />
 ----
 
-NOTE: Check the link:$$http://jgroups.org/manual-3.x/html/index.html$$[JGroups Manual] for more details.
+NOTE: Check the link:http://jgroups.org/manual-3.x/html/index.html[JGroups Manual] for more details.
 
 NOTE: If you are interested in detail how JGroups guarantees total order, check the link::http://jgroups.org/manual/index.html#TOA[TOA manual].
 

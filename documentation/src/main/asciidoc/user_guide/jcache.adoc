@@ -1,6 +1,6 @@
 ==  JCache (JSR-107) provider
 Starting with version 7.0.0, Infinispan provides an implementation of
-JCache 1.0.0 API ( link:$$http://www.jcp.org/en/jsr/detail?id=107$$[JSR-107] ).
+JCache 1.0.0 API ( link:http://www.jcp.org/en/jsr/detail?id=107[JSR-107] ).
 JCache specifies a standard Java API for caching temporary Java objects in
 memory. Caching java objects can help get around bottlenecks arising from
 using data that is expensive to retrieve (i.e. DB or web service), or data
@@ -61,8 +61,8 @@ Cache<String, String> cache = cacheManager.createCache("namedCache",
 
 === Store and retrieve data
 Even though JCache API does not extend neither
-link:http://docs.oracle.com/javase/7/docs/api/java/util/Map.html[java.util.Map]
-not link:http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap],
+link:{jdkdocroot}/java/util/Map.html[java.util.Map]
+not link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap],
 it providers a key/value API to store and retrieve data:
 
 [source,java]
@@ -77,11 +77,11 @@ cache.put("hello", "world"); // Notice that javax.cache.Cache.put(K) returns voi
 String value = cache.get("hello"); // Returns "world"
 ----
 
-Contrary to standard link:http://docs.oracle.com/javase/7/docs/api/java/util/Map.html[java.util.Map],
+Contrary to standard link:{jdkdocroot}/java/util/Map.html[java.util.Map],
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java[javax.cache.Cache]
 comes with two basic put methods called put and getAndPut. The former returns
 `void` whereas the latter returns the previous value associated with the key.
-So, the equivalent of link:$$http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#put(K,%20V)$$[java.util.Map.put(K)]
+So, the equivalent of link:{jdkdocroot}/java/util/Map.html#put-K-V-[java.util.Map.put(K)]
 in JCache is link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java#L230[javax.cache.Cache.getAndPut(K)].
 
 
@@ -91,18 +91,18 @@ distribution in mind. The reason why javax.cache.Cache offers two put methods
 is because standard java.util.Map put call forces implementors to calculate
 the previous value. When a persistent store is in use, or the cache is
 distributed, returning the previous value could be an expensive operation, and
-often users call standard link:$$http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#put(K, V)$$[java.util.Map.put(K)]
+often users call standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[java.util.Map.put(K)]
 without using the return value. Hence, JCache users need to think about
 whether the return value is relevant to them, in which case they need to call
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java#L230[javax.cache.Cache.getAndPut(K)] ,
-otherwise they can call link:$$http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#put(K,%20V)$$[java.util.Map.put(K)]
+otherwise they can call link:{jdkdocroot}/java/util/Map.html#put-K-V-[java.util.Map.put(K, V)]
 which avoids returning the potentially expensive operation of returning the
 previous value.
 
 
 === Comparing java.util.concurrent.ConcurrentMap and javax.cache.Cache APIs
 Here's a brief comparison of the data manipulation APIs provided by
-link:http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap]
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap]
 and link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java[javax.cache.Cache] APIs.
 
 [options="header"]
@@ -110,14 +110,14 @@ and link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/java
 |Operation| `java.util.concurrent.ConcurrentMap<K, V>` | `javax.cache.Cache<K, V>`
 |store and no return| N/A | `void put(K key)`
 |store and return previous value| `V put(K key)` | `V getAndPut(K key)`
-|store if not present| `V putIfAbsent(K key, V value)` | `boolean putIfAbsent(K key, V value)` 
-|retrieve| `V get(Object key)` | `V get(K key)` 
+|store if not present| `V putIfAbsent(K key, V value)` | `boolean putIfAbsent(K key, V value)`
+|retrieve| `V get(Object key)` | `V get(K key)`
 |delete if present| `V remove(Object key)` | `boolean remove(K key)`
-|delete and return previous value| `V remove(Object key)` | `V getAndRemove(K key)` 
-|delete conditional| `boolean remove(Object key, Object value)` | `boolean remove(K key, V oldValue)` 
-|replace if present| `V replace(K key, V value)` | `boolean replace(K key, V value)` 
+|delete and return previous value| `V remove(Object key)` | `V getAndRemove(K key)`
+|delete conditional| `boolean remove(Object key, Object value)` | `boolean remove(K key, V oldValue)`
+|replace if present| `V replace(K key, V value)` | `boolean replace(K key, V value)`
 |replace and return previous value| `V replace(K key, V value)` | `V getAndReplace(K key, V value)`
-|replace conditional| `boolean replace(K key, V oldValue, V newValue)` | `boolean replace(K key, V oldValue, V newValue)` 
+|replace conditional| `boolean replace(K key, V oldValue, V newValue)` | `boolean replace(K key, V oldValue, V newValue)`
 
 |===============
 
@@ -125,7 +125,7 @@ Comparing the two APIs, it's obvious to see that, where possible, JCache
 avoids returning the previous value to avoid operations doing expensive
 network or IO operations. This is an overriding principle in the design of
 JCache API. In fact, there's a set of operations that are present in
-link:http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap] ,
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap] ,
 but are not present in the link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java[javax.cache.Cache]
 because they could be expensive to compute in a distributed cache.
 The only exception is iterating over the contents of the cache:
@@ -137,7 +137,7 @@ The only exception is iterating over the contents of the cache:
 |return all keys in the cache| `Set<K> keySet()` | N/A
 |return all values in the cache| `Collection<V> values()` | N/A
 |return all entries in the cache| `Set<Map.Entry<K, V>> entrySet()` | N/A
-|iterate over the cache| use `iterator()` method on keySet, values or entrySet | `Iterator<Cache.Entry<K, V>> iterator()` 
+|iterate over the cache| use `iterator()` method on keySet, values or entrySet | `Iterator<Cache.Entry<K, V>> iterator()`
 
 |===============
 

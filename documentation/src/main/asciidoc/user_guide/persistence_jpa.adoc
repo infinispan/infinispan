@@ -159,9 +159,9 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 |===============
 
 ==== Additional References
-Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/JpaConfigurationTest.java$$[test case] for code samples in action. 
+Refer to the link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/JpaConfigurationTest.java[test case] for code samples in action. 
 
-Refer to link:$$https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml$$[test configurations] for configuration samples. 
+Refer to link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml[test configurations] for configuration samples. 
 
 ==== Javadoc
 

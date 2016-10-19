@@ -1,7 +1,7 @@
 == Architectural Overview
 
 This section contains a high level overview of Infinispan's internal
-architecture.  This document is geared towards people with an interest in 
+architecture.  This document is geared towards people with an interest in
 extending or enhancing Infinispan, or just curious about Infinispan’s internals.
 
 === Cache hierarchy
@@ -93,7 +93,7 @@ commands, but also acts in a chain.  A chain of interceptors all visit the
 command, one in turn, until all registered interceptors visit the command.
 
 The class to note is the
-link:://https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor].
+link:://{javadocroot}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor].
 This abstract class implements the interceptor pattern, and also implements
 Visitor.  Infinispan's interceptors extend CommandInterceptor, and these add
 specific behaviour to specific commands, such as distribution across a network
@@ -101,9 +101,9 @@ or writing through to disk.
 
 There is also an experimental asynchronous interceptor which can be used.
 The interface used for asynchronous interceptors is
-link:://https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/interceptors/AsyncInterceptor.html[AsyncInterceptor]
+link:://{javadocroot}/org/infinispan/interceptors/AsyncInterceptor.html[AsyncInterceptor]
 and a base implementation which should be used when a custom implementation is desired
-link:://https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/interceptors/BaseCustomAsyncInterceptor.html[BaseCustomAsyncInterceptor].
+link:://{javadocroot}/org/infinispan/interceptors/BaseCustomAsyncInterceptor.html[BaseCustomAsyncInterceptor].
 Note this class also implements the `Visitor` interface.
 
 
