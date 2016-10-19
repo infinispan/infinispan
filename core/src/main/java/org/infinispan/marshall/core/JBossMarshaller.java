@@ -1,8 +1,10 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.util.function.BiConsumer;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
@@ -33,19 +35,17 @@ import org.jboss.marshalling.Unmarshaller;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   final ExternalizerTable externalizerTable;
-   ExternalizerTableProxy proxy;
    final GlobalConfiguration globalCfg;
+   final GlobalMarshaller marshaller;
 
    public JBossMarshaller() {
-      this.externalizerTable = null;
       this.globalCfg = null;
+      this.marshaller = null;
    }
 
-   public JBossMarshaller(ExternalizerTable externalizerTable,
-         GlobalConfiguration globalCfg) {
-      this.externalizerTable = externalizerTable;
+   public JBossMarshaller(GlobalMarshaller marshaller, GlobalConfiguration globalCfg) {
       this.globalCfg = globalCfg;
+      this.marshaller = marshaller;
    }
 
    @Override
@@ -54,8 +54,19 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
 
-      proxy = new ExternalizerTableProxy(externalizerTable);
-      baseCfg.setObjectTable(proxy);
+      baseCfg.setObjectTable(new ObjectTable() {
+         @Override
+         public Writer getObjectWriter(Object object) throws IOException {
+            BiConsumer<ObjectOutput, Object> writer = marshaller.findWriter(object);
+            return writer != null ? writer::accept : null;
+         }
+
+         @Override
+         public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
+            AdvancedExternalizer<Object> ext = marshaller.findExternalizerIn(unmarshaller);
+            return ext.readObject(unmarshaller);
+         }
+      });
 
       ClassResolver classResolver = globalCfg.serialization().classResolver();
       if (classResolver == null) {
@@ -73,55 +84,13 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       super.stop();
       // Just in case, to avoid leaking class resolver which references classloader
       baseCfg.setClassResolver(null);
-      // Remove the ExternalizerTable reference from all the threads.
-      // Don't need to re-populate the proxy on start, as the component is volatile.
-      proxy.clear();
    }
 
    @Override
    public boolean isMarshallableCandidate(Object o) {
       return super.isMarshallableCandidate(o)
-            || externalizerTable.isMarshallableCandidate(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || o.getClass().getAnnotation(Externalize.class) != null;
    }
 
-   /**
-    * Proxy for {@code ExternalizerTable}, used to remove the references to the real {@code ExternalizerTable}
-    * from all the threads that have a {@code PerThreadInstanceHolder}.
-    *
-    * This is useful because {@code ExternalizerTable} can keep lots of other objects alive through its
-    * {@code GlobalComponentRegistry} and {@code RemoteCommandsFactory} fields.
-    */
-   private static final class ExternalizerTableProxy implements ObjectTable {
-      private ExternalizerTable externalizerTable;
-
-      public ExternalizerTableProxy(ExternalizerTable externalizerTable) {
-         this.externalizerTable = externalizerTable;
-         log.tracef("Initialized proxy %s with table %s", this, externalizerTable);
-      }
-
-      public void clear() {
-         externalizerTable = null;
-         log.tracef("Cleared proxy %s", this);
-      }
-
-      @Override
-      public Writer getObjectWriter(Object o) throws IOException {
-         return getExternalizerTable().getObjectWriter(o);
-      }
-
-      @Override
-      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-         return getExternalizerTable().readObject(input);
-      }
-
-      private ExternalizerTable getExternalizerTable() {
-         ExternalizerTable table = this.externalizerTable;
-         if (table == null) {
-            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
-         }
-         return table;
-      }
-   }
 }

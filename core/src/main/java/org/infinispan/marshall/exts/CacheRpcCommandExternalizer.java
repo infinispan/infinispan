@@ -1,10 +1,8 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.util.Set;
 
 import org.infinispan.commands.CancelCommand;
@@ -31,10 +29,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.BufferSizePredictor;
-import org.infinispan.commons.marshall.DelegatingObjectInput;
-import org.infinispan.commons.marshall.DelegatingObjectOutput;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
@@ -60,13 +54,10 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 public final class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCommand> {
    private final GlobalComponentRegistry gcr;
    private final ReplicableCommandExternalizer cmdExt;
-   private final StreamingMarshaller globalMarshaller;
 
    public CacheRpcCommandExternalizer(GlobalComponentRegistry gcr, ReplicableCommandExternalizer cmdExt) {
       this.cmdExt = cmdExt;
       this.gcr = gcr;
-      //Cache this locally to avoid having to look it up often:
-      this.globalMarshaller = gcr.getComponent(StreamingMarshaller.class);
    }
 
    @Override
@@ -101,18 +92,11 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
-      marshallParameters(command, globalMarshaller, output);
+      marshallParameters(command, output);
    }
 
-   private void marshallParameters(CacheRpcCommand cmd, StreamingMarshaller marshaller, ObjectOutput oo) throws IOException {
-      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
-      int estimatedSize = sizePredictor.nextSize(cmd);
-      ObjectOutput paramsOutput = marshaller.startObjectOutput(convertObjectOutput(oo), true, estimatedSize);
-      try {
-         cmdExt.writeCommandParameters(paramsOutput, cmd);
-      } finally {
-         marshaller.finishObjectOutput(paramsOutput);
-      }
+   private void marshallParameters(CacheRpcCommand cmd, ObjectOutput oo) throws IOException {
+      cmdExt.writeCommandParameters(oo, cmd);
    }
 
    @Override
@@ -123,14 +107,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       ByteString cacheName = ByteString.readObject(input);
 
       //create the object input
-      ObjectInput paramsInput = globalMarshaller.startObjectInput(convertInputStream(input), true);
-      CacheRpcCommand cacheRpcCommand;
-      try {
-         cacheRpcCommand = cmdExt.fromStream(methodId, type, cacheName);
-         cmdExt.readCommandParameters(paramsInput, cacheRpcCommand);
-      } finally {
-         globalMarshaller.finishObjectInput(paramsInput);
-      }
+      CacheRpcCommand cacheRpcCommand = cmdExt.fromStream(methodId, type, cacheName);
+      cmdExt.readCommandParameters(input, cacheRpcCommand);
       return cacheRpcCommand;
    }
 
@@ -139,15 +117,4 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       return Ids.CACHE_RPC_COMMAND;
    }
 
-   private static OutputStream convertObjectOutput(ObjectOutput objectOutput) {
-      return objectOutput instanceof OutputStream ?
-            (OutputStream) objectOutput :
-            new DelegatingObjectOutput(objectOutput);
-   }
-
-   private static InputStream convertInputStream(ObjectInput objectInput) {
-      return objectInput instanceof InputStream ?
-            (InputStream) objectInput :
-            new DelegatingObjectInput(objectInput);
-   }
 }

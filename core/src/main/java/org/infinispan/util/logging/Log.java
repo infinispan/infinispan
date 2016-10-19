@@ -1455,4 +1455,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed waiting for topology %d", id = 422)
    TimeoutException failedWaitingForTopology(int requestTopologyId);
+
+   @Message(value="Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 423)
+   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
+
 }

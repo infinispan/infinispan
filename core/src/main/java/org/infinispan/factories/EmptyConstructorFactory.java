@@ -7,7 +7,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -28,7 +27,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  */
 
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
-                              ExternalizerTable.class, InboundInvocationHandler.class, PersistentUUIDManager.class,
+                              InboundInvocationHandler.class, PersistentUUIDManager.class,
                               RemoteCommandsFactory.class, TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -40,8 +39,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new BackupReceiverRepositoryImpl();
       else if (componentType.equals(CancellationService.class))
          return (T) new CancellationServiceImpl();
-      else if (componentType.equals(ExternalizerTable.class))
-         return (T) new ExternalizerTable();
       else if (componentType.equals(InboundInvocationHandler.class))
          return (T) new GlobalInboundInvocationHandler();
       else if (componentType.equals(RemoteCommandsFactory.class))
