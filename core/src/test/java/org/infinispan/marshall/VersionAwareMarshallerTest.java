@@ -79,6 +79,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -609,7 +610,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
             readObj, writeObj);
    }
 
-   public static class Pojo implements Externalizable {
+   public static class Pojo implements Externalizable, ExternalPojo {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
@@ -659,7 +660,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class Parent implements Serializable {
+   static class Parent implements Serializable, ExternalPojo {
        private final String id;
        private final Child1 child1Obj;
 
@@ -695,7 +696,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
        }
    }
 
-   static class Human implements Serializable {
+   static class Human implements Serializable, ExternalPojo {
 
       int age;
 
@@ -721,7 +722,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class HumanComparator implements Comparator<Human>, Serializable {
+   static class HumanComparator implements Comparator<Human>, Serializable, ExternalPojo {
 
       @Override
       public int compare(Human o1, Human o2) {

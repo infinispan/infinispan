@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertNull;
 import java.io.Serializable;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.BaseStoreTest;
@@ -119,7 +120,7 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
 
    }
 
-   private static final class FixedHashKey implements Serializable {
+   private static final class FixedHashKey implements Serializable, ExternalPojo {
       String s;
       int i;
 

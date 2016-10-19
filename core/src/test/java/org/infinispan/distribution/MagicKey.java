@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -27,7 +28,7 @@ import org.infinispan.remoting.transport.Address;
  * Note that this only works if all the caches have joined a single cluster before creating the key.
  * If the cluster membership changes then the keys may move to other servers.
  */
-public class MagicKey implements Serializable {
+public class MagicKey implements Serializable, ExternalPojo {
    /**
     * The serialVersionUID
     */

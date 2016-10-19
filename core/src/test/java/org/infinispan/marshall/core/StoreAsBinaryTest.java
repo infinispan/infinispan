@@ -587,7 +587,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class Pojo implements Externalizable {
+   public static class Pojo implements Externalizable, ExternalPojo {
       public int i;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);
@@ -645,7 +645,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
+   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
       private static final long serialVersionUID = 1L;
 //      Integer id;
       public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
@@ -687,7 +687,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class CustomReadObjectMethod implements Serializable {
+   public static class CustomReadObjectMethod implements Serializable, ExternalPojo {
       private static final long serialVersionUID = 1L;
       String lastName;
       String ssn;

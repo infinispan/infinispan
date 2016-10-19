@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -79,7 +80,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class SleepingSimpleCallable implements Callable<Integer>, Serializable {
+   static class SleepingSimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /**
        *

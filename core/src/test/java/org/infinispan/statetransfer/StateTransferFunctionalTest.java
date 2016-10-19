@@ -18,6 +18,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -75,7 +76,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       return cm;
    }
 
-   public static class DelayTransfer implements Serializable {
+   public static class DelayTransfer implements Serializable, ExternalPojo {
 
       private static final long serialVersionUID = 6361429803359702822L;
 

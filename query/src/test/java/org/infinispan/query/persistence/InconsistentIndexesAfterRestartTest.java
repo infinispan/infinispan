@@ -20,6 +20,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -114,7 +115,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     }
 
     @Indexed
-    public static class SEntity implements Serializable {
+    public static class SEntity implements Serializable, ExternalPojo {
 
         public static final String IDX_NAME = "name";
 
