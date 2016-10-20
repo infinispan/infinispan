@@ -6,7 +6,10 @@ import java.io.ObjectOutput;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 
-final class BytesObjectOutput implements ObjectOutput, PositionalBuffer.Output {
+/**
+ * Array backed, expandable {@link ObjectOutput} implementation.
+ */
+final class BytesObjectOutput implements ObjectOutput {
 
    final GlobalMarshaller marshaller;
 
@@ -247,22 +250,6 @@ final class BytesObjectOutput implements ObjectOutput, PositionalBuffer.Output {
    @Override
    public void close() {
       // No-op
-   }
-
-   @Override
-   public int savePosition() {
-      int posBefore = pos;
-      pos = ensureCapacity(4);
-      return posBefore;
-   }
-
-   @Override
-   public int writePosition(int offset) {
-      bytes[offset] = (byte) (pos >> 24);
-      bytes[offset+1] = (byte) (pos >> 16);
-      bytes[offset+2] = (byte) (pos >> 8);
-      bytes[offset+3] = (byte) pos;
-      return pos;
    }
 
    private int ensureCapacity(int len) {

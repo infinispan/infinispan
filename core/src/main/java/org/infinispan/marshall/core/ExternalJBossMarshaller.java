@@ -10,6 +10,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.jboss.marshalling.ByteInput;
 import org.jboss.marshalling.ByteOutput;
@@ -27,45 +28,29 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
 
-      if (out instanceof PositionalBuffer.Output) {
-         PositionalBuffer.Output posOut = (PositionalBuffer.Output) out;
+      BufferSizePredictor sizePredictor = marshallableTypeHints
+            .getBufferSizePredictor(obj.getClass());
+      int estimatedSize = sizePredictor.nextSize(obj);
 
-         BufferSizePredictor sizePredictor = marshallableTypeHints
-               .getBufferSizePredictor(obj.getClass());
-         int estimatedSize = sizePredictor.nextSize(obj);
-
-         int beforePos = posOut.savePosition();
-
-         ObjectOutput jbossOut = marshaller.startObjectOutput(
-               new JBossByteOutput(out), false, estimatedSize);
-         try {
-            jbossOut.writeObject(obj);
-         } finally {
-            marshaller.finishObjectOutput(jbossOut);
-         }
-
-         int afterPos = posOut.writePosition(beforePos);
-         sizePredictor.recordSize(afterPos - beforePos);
-      } else {
-         throw new IOException("External JBoss Marshalling requires position tracking object output");
+      ObjectOutput jbossOut = marshaller.startObjectOutput(
+            new JBossByteOutput(out), false, estimatedSize);
+      try {
+         jbossOut.writeObject(obj);
+      } finally {
+         marshaller.finishObjectOutput(jbossOut);
       }
    }
 
    @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      if (in instanceof PositionalBuffer.Input) {
-         PositionalBuffer.Input posIn = (PositionalBuffer.Input) in;
-
-         int pos = in.readInt();
-         ObjectInput jbossIn = marshaller.startObjectInput(new JBossByteInput(in), false);
-         try {
-            return jbossIn.readObject();
-         } finally {
-            marshaller.finishObjectInput(jbossIn);
-            posIn.rewindPosition(pos);
-         }
-      } else {
-         throw new IOException("External JBoss Marshalling requires position rewinding object output");
+      ExtendedRiverUnmarshaller jbossIn = (ExtendedRiverUnmarshaller)
+            marshaller.startObjectInput(new JBossByteInput(in), false);
+      try {
+         return jbossIn.readObject();
+      } finally {
+         // Rewind by skipping backwards (negatively)
+         in.skipBytes(-jbossIn.getUnreadBufferedCount());
+         marshaller.finishObjectInput(jbossIn);
       }
    }
 

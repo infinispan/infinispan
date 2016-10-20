@@ -35,4 +35,11 @@ public class ExtendedRiverUnmarshaller extends RiverUnmarshaller {
       }
    }
 
+   /**
+    * Returns number unread buffered bytes.
+    */
+   public int getUnreadBufferedCount() {
+      return limit - position;
+   }
+
 }
