@@ -6,14 +6,20 @@ import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -95,4 +101,30 @@ public class ServerEventLoggerTest extends AbstractInfinispanTest {
          }
       });
    }
+
+   public void testLocalServerEventLoggingPreloading() {
+      deleteGlobalPersistentState();
+      EmbeddedCacheManager cm = startCacheManager();
+      EventLogger eventLogger = EventLogManager.getEventLogger(cm);
+      eventLogger.info(EventLogCategory.CLUSTER, "message #1");
+      TestingUtil.killCacheManagers(cm);
+      cm = startCacheManager();
+      eventLogger = EventLogManager.getEventLogger(cm);
+      eventLogger.info(EventLogCategory.CLUSTER, "message #5");
+   }
+
+   public EmbeddedCacheManager startCacheManager() {
+      GlobalConfigurationBuilder globaCfg = new GlobalConfigurationBuilder();
+      globaCfg.globalState().enable();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(
+            globaCfg, new ConfigurationBuilder());
+      cm.getCache();
+      return cm;
+   }
+
+   private static void deleteGlobalPersistentState() {
+      GlobalConfiguration globalCfg = new GlobalConfigurationBuilder().build();
+      new File(globalCfg.globalState().persistentLocation() + "/___event_log_cache.dat").delete();
+   }
+
 }

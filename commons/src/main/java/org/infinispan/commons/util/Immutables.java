@@ -545,6 +545,30 @@ public class Immutables {
       }
    }
 
+   public static class ImmutableSetWrapperExternalizer extends AbstractExternalizer<Set> {
+      @Override
+      public void writeObject(ObjectOutput output, Set set) throws IOException {
+         MarshallUtil.marshallCollection(set, output);
+      }
+
+      @Override
+      public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Set<Object> set = MarshallUtil.unmarshallCollection(input, HashSet::new);
+         return Immutables.immutableSetWrap(set);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_SET;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends Set>> getTypeClasses() {
+         return Util.<Class<? extends Set>>asSet(ImmutableSetWrapper.class);
+      }
+   }
+
    private static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
       private static final long serialVersionUID = 708144227046742221L;
 
