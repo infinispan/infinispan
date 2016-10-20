@@ -21,7 +21,7 @@ final class ExternalExternalizers {
 
    static ClassToExternalizerMap load(GlobalConfiguration globalCfg) {
       // TODO Add initial value and load factor
-      ClassToExternalizerMap exts = new ClassToExternalizerMap(16, 0x0.6p0f);
+      ClassToExternalizerMap exts = new ClassToExternalizerMap(4, 0x0.6p0f);
 
       Map<Integer, AdvancedExternalizer<?>> cfgExts = globalCfg.serialization().advancedExternalizers();
       for (Map.Entry<Integer, AdvancedExternalizer<?>> config : cfgExts.entrySet()) {
