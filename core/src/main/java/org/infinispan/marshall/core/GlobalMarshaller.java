@@ -75,8 +75,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    @Start(priority = 8) // Should start after the externalizer table and before transport
    public void start() {
       internalExts = InternalExternalizers.load(this, gcr, cmdFactory);
-      // TODO: Reverse map could be compacted if reducing externalizer id gaps (~102 externalizers)
-      reverseInternalExts = internalExts.reverseMap(256);
+      reverseInternalExts = internalExts.reverseMap(128);
       if (trace) {
          log.tracef("Internal class to externalizer ids: %s", internalExts);
          log.tracef("Internal reverse externalizers: %s", reverseInternalExts);
@@ -90,7 +89,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
 
       if (external == null) {
-         // TODO: Make external marshaller configurable
          this.external = startDefaultExternalMarshaller(gcr.getGlobalConfiguration());
       }
    }
