@@ -3,7 +3,14 @@ package org.infinispan.marshall.core;
 import java.io.IOException;
 import java.io.ObjectInput;
 
-final class BytesObjectInput implements ObjectInput, PositionalBuffer.Input {
+/**
+ * Array backed, expandable {@link ObjectInput} implementation.
+ *
+ * {@link #skip(long)} and {@link #skipBytes(int)} have been enhanced so that
+ * if a negative number is passed in, they skip backwards effectively
+ * providing rewind capabilities.
+ */
+final class BytesObjectInput implements ObjectInput {
 
    final byte bytes[];
 
@@ -51,12 +58,19 @@ final class BytesObjectInput implements ObjectInput, PositionalBuffer.Input {
 
    @Override
    public long skip(long n) {
-      long skip = bytes.length - pos;
-      if (skip < pos)
-         skip = n < 0 ? 0 : n;
+      if (n > 0) {
+         long skip = bytes.length - pos;
+         if (skip < pos)
+            skip = n;
 
-      pos += skip;
-      return skip;
+         pos += skip;
+         return skip;
+      } else {
+         int idx = Math.min(bytes.length, pos);
+         long skip = idx + n;
+         pos = (int) (skip + offset);
+         return skip;
+      }
    }
 
    @Override
@@ -216,14 +230,6 @@ final class BytesObjectInput implements ObjectInput, PositionalBuffer.Input {
       pos = count;
 
       return new String(chararr, 0, chararr_count);
-   }
-
-   @Override
-   public void rewindPosition(int p) {
-      if (offset == 0)
-         pos = p;
-      else
-         pos = p + offset;
    }
 
    String readString() {
