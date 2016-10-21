@@ -182,13 +182,13 @@ public class OutboundTransferTask implements Runnable {
       } catch (Throwable t) {
          // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
          if (isCancelled()) {
-            log.debugf("Transfer of segments %s of cache %s to node %s cancelled", segments, cacheName, destination);
+            log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s", destination, segments);
          } else {
             log.failedOutBoundTransferExecution(t);
          }
       }
       if (trace) {
-         log.tracef("Outbound transfer of segments %s of cache %s to node %s is complete", segments, cacheName, destination);
+         log.tracef("Completed outbound transfer to node %s, segments %s", destination, segments);
       }
    }
 
@@ -230,9 +230,9 @@ public class OutboundTransferTask implements Runnable {
       if (!chunks.isEmpty()) {
          if (trace) {
             if (isLast) {
-               log.tracef("Sending last chunk containing %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, segments, cacheName, destination);
+               log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination, accumulatedEntries, segments);
             } else {
-               log.tracef("Sending %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, entriesBySegment.keySet(), cacheName, destination);
+               log.tracef("Sending to node %s %d cache entries from segments %s", destination, accumulatedEntries, entriesBySegment.keySet());
             }
          }
 
@@ -245,9 +245,9 @@ public class OutboundTransferTask implements Runnable {
             cancel();
          } catch (Exception e) {
             if (isCancelled()) {
-               log.debugf("Stopping cancelled transfer of segments %s of cache %s to node %s", segments, cacheName, destination);
+               log.debugf("Stopping cancelled transfer to node %s, segments %s", destination, segments);
             } else {
-               log.errorf(e, "Failed to send entries to node %s : %s", destination, e.getMessage());
+               log.errorf(e, "Failed to send entries to node %s: %s", destination, e.getMessage());
             }
          }
       }
@@ -261,8 +261,8 @@ public class OutboundTransferTask implements Runnable {
    public void cancelSegments(Set<Integer> cancelledSegments) {
       if (segments.removeAll(cancelledSegments)) {
          if (trace) {
-            log.tracef("Cancelling outbound transfer of segments %s of cache %s to node %s (remaining segments %s)",
-                  cancelledSegments, cacheName, destination, segments);
+            log.tracef("Cancelling outbound transfer to node %s, segments %s (remaining segments %s)",
+                       destination, cancelledSegments, segments);
          }
          entriesBySegment.keySet().removeAll(cancelledSegments);  // here we do not update accumulatedEntries but this inaccuracy does not cause any harm
          if (segments.isEmpty()) {
@@ -276,7 +276,7 @@ public class OutboundTransferTask implements Runnable {
     */
    public void cancel() {
       if (runnableFuture != null && !runnableFuture.isCancelled()) {
-         log.debugf("Cancelling outbound transfer of segments %s of cache %s to node %s", segments, cacheName, destination);
+         log.debugf("Cancelling outbound transfer to node %s, segments %s", destination, segments);
          runnableFuture.cancel(true);
       }
    }
