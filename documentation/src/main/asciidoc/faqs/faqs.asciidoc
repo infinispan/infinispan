@@ -180,9 +180,15 @@ If, for put operations, you don't need the previous values existing in the cache
 ----
 
 Note that in this case the value returned by `cache.put()` is not reliable.
-This optimization skips a cache store read and can have very significant performance improvement effects. 
+This optimization skips a cache store read and can have very significant performance improvement effects.
+
+For more information, check out our link:$$../performance_guide/performance_guide.html$$[Performance Guide].
 
 TIP: More flags are described at link:$$../user_guide/user_guide.html#_invocation_flags$$[Per-Invocation Flags]
+
+=== How to speed up Infinispan?
+
+Have a look at our link:$$../performance_guide/performance_guide.html$$[Performance Guide].
 
 === Locking and Transaction questions
 ==== Does Infinispan support distributed eager locking?

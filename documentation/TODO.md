@@ -57,10 +57,6 @@
 ## Locking and concurrency (Pedro)
 * The Versioning paragraph mentions tombstones as if they exist.
 
-### Local mode cache (Radim)
-* The simple cache documentation is erroneously included in the functional map API chapter. Move it here
-* Update the information inside the performance paragraph to include results from the simple cache benchmarks
-
 ### Query + Indexing (Adrian & Gustavo)
 * Add missing parts (CQ)
 
@@ -134,6 +130,4 @@
 * Even questions that are related to product (sme-jdg, customer portal, etc) can be of use (obviously purged from any product reference)
 * Things we CANNOT do are also important, and we should point out any limitations
 
-## Performance Guide (Sebastian)
-* This should be linked in the appropriate places from the User Guide
 
