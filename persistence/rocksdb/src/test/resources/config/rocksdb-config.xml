@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+   <cache-container>
+      <local-cache name="testCache">
+         <persistence passivation="false">
+            <rocksdb-store path="/tmp/rocksdb/52/data" shared="true" preload="true">
+               <expiration path="/tmp/rocksdb/52/expired"/>
+            </rocksdb-store>
+         </persistence>
+      </local-cache>
+   </cache-container>
+
+</infinispan>
