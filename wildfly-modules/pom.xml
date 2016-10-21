@@ -30,7 +30,7 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-leveldb</artifactId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
       </dependency>
 
       <dependency>
@@ -115,7 +115,7 @@
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-queryparser</artifactId>
@@ -151,7 +151,7 @@
          <artifactId>lucene-backward-codecs</artifactId>
          <version>${version.lucene}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>org.xerial.snappy</groupId>
          <artifactId>snappy-java</artifactId>

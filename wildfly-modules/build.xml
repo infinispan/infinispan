@@ -71,8 +71,8 @@
             <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jdbc" />
         </module-def>
 
-        <module-def name="org.infinispan.persistence.leveldb" slot="${infinispan.slot}">
-            <maven-resource group="org.infinispan" artifact="infinispan-cachestore-leveldb" />
+        <module-def name="org.infinispan.persistence.rocksdb" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-cachestore-rocksdb" />
         </module-def>
 
         <module-def name="org.infinispan.persistence.remote" slot="${infinispan.slot}">
@@ -173,12 +173,8 @@
             <maven-resource group="net.oauth.core" artifact="oauth" />
         </module-def>
        
-        <module-def name="org.fusesource.leveldbjni-all" slot="${infinispan.slot}">
-            <maven-resource group="org.fusesource.leveldbjni" artifact="leveldbjni-all" />
-        </module-def>
-
-        <module-def name="org.iq80.leveldb" slot="${infinispan.slot}">
-            <maven-resource group="org.iq80.leveldb" artifact="leveldb" />
+        <module-def name="org.rocksdb.rocksdbjni" slot="${infinispan.slot}">
+            <maven-resource group="org.rocksdb" artifact="rocksdbjni" />
         </module-def>
 
         <module-def name="org.apache.lucene" slot="${lucene.slot}">
