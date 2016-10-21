@@ -5,20 +5,20 @@
     <config>
         <!-- Core configs -->
         <standalone
-          template="configuration/standalone/template.xml" 
-          subsystems="configuration/standalone/subsystems.xml" 
+          template="configuration/standalone/template.xml"
+          subsystems="configuration/standalone/subsystems.xml"
           output-file="standalone/configuration/standalone.xml" />
         <standalone
-          template="configuration/standalone/template.xml" 
-          subsystems="configuration/standalone/subsystems-clustered.xml" 
+          template="configuration/standalone/template.xml"
+          subsystems="configuration/standalone/subsystems-clustered.xml"
           output-file="standalone/configuration/clustered.xml" />
         <standalone
-          template="configuration/standalone/template.xml" 
-          subsystems="configuration/standalone/subsystems-cloud.xml" 
+          template="configuration/standalone/template.xml"
+          subsystems="configuration/standalone/subsystems-cloud.xml"
           output-file="standalone/configuration/cloud.xml" />
-        <domain 
-          template="configuration/domain/template.xml" 
-          subsystems="configuration/domain/subsystems.xml" 
+        <domain
+          template="configuration/domain/template.xml"
+          subsystems="configuration/domain/subsystems.xml"
           output-file="domain/configuration/domain.xml" />
         <host
           template="configuration/host/host.xml"
@@ -31,7 +31,7 @@
         <host
           template="configuration/host/host-slave.xml"
           subsystems="configuration/host/subsystems.xml"
-          output-file="domain/configuration/host-slave.xml" />  
+          output-file="domain/configuration/host-slave.xml" />
         <!-- Example configs -->
         <standalone
            template="configuration/standalone/template.xml"
@@ -39,8 +39,8 @@
            output-file="docs/examples/configs/standalone-fcs-local.xml"/>
         <standalone
            template="configuration/standalone/template.xml"
-           subsystems="configuration/examples/subsystems-leveldb-cs-local.xml"
-           output-file="docs/examples/configs/standalone-leveldb-cs-local.xml"/>
+           subsystems="configuration/examples/subsystems-rocksdb-cs-local.xml"
+           output-file="docs/examples/configs/standalone-rocksdb-cs-local.xml"/>
         <standalone
            template="configuration/standalone/template.xml"
            subsystems="configuration/examples/subsystems-indexing.xml"
@@ -93,7 +93,7 @@
            template="configuration/examples/template-vault.xml"
            subsystems="configuration/examples/subsystems-node-auth.xml"
            output-file="docs/examples/configs/standalone-node-auth.xml"/>
-        
+
     </config>
     <mkdirs>
         <dir name="domain/data/content"/>

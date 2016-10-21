@@ -494,23 +494,22 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             }
         }
 
-        if (cache.get(ModelKeys.LEVELDB_STORE).isDefined()) {
-            for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
-                ModelNode store = levelDbStoreEntry.getValue();
-                writer.writeStartElement(Element.LEVELDB_STORE.getLocalName());
+        if (cache.get(ModelKeys.ROCKSDB_STORE).isDefined()) {
+            for (Property rocksDbStoreEntry : cache.get(ModelKeys.ROCKSDB_STORE).asPropertyList()) {
+                ModelNode store = rocksDbStoreEntry.getValue();
+                writer.writeStartElement(Element.ROCKSDB_STORE.getLocalName());
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
-                LevelDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
+                name.get(ModelKeys.NAME).set(rocksDbStoreEntry.getName());
+                RocksDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
                 this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
                 this.writeOptional(writer, Attribute.CACHE_SIZE, store, ModelKeys.CACHE_SIZE);
                 this.writeOptional(writer, Attribute.CLEAR_THRESHOLD, store, ModelKeys.CLEAR_THRESHOLD);
                 this.writeStoreAttributes(writer, store);
-                this.writeStoreExpiration(writer, store);
-                this.writeStoreImplementation(writer, store);
-                this.writeStoreCompression(writer, store);
+                this.writeRocksDBStoreExpiration(writer, store);
+                this.writeRocksDBStoreCompression(writer, store);
                 this.writeStoreProperties(writer, store);
                 writer.writeEndElement();
             }
@@ -704,7 +703,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-    private void writeStoreExpiration(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+    private void writeRocksDBStoreExpiration(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         if (store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME).isDefined()) {
             ModelNode expiration = store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME);
             writer.writeStartElement(Element.EXPIRATION.getLocalName());
@@ -715,20 +714,11 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-    private void writeStoreCompression(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+    private void writeRocksDBStoreCompression(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         if (store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME).isDefined()) {
             ModelNode compression = store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
             writer.writeStartElement(Element.COMPRESSION.getLocalName());
             this.writeOptional(writer, Attribute.TYPE, compression, ModelKeys.TYPE);
-            writer.writeEndElement();
-        }
-    }
-
-    private void writeStoreImplementation(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
-        if (store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME).isDefined()) {
-            ModelNode implementation = store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME);
-            writer.writeStartElement(Element.IMPLEMENTATION.getLocalName());
-            this.writeOptional(writer, Attribute.TYPE, implementation, ModelKeys.IMPLEMENTATION);
             writer.writeEndElement();
         }
     }

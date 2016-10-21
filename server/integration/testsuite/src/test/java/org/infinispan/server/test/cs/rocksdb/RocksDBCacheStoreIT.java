@@ -1,4 +1,4 @@
-package org.infinispan.server.test.cs.leveldb;
+package org.infinispan.server.test.cs.rocksdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Hex;
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -24,38 +23,38 @@ import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.ITestUtils;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.rocksdb.Options;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksIterator;
 
 /**
- * Tests LevelDB cache store.
+ * Tests RocksDB cache store.
  *
  * @author Michal Linhard (mlinhard@redhat.com)
  *
  */
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)
-public class LevelDBCacheStoreIT {
-    private static final Log log = LogFactory.getLog(LevelDBCacheStoreIT.class);
+public class RocksDBCacheStoreIT {
+    private static final Log log = LogFactory.getLog(RocksDBCacheStoreIT.class);
 
-    @InfinispanResource("leveldb")
+    @InfinispanResource("rocksdb")
     RemoteInfinispanServer server;
-    // in suite-client-local this is testsuite/standalone-leveldb-local.xml
+    // in suite-client-local this is testsuite/standalone-rocksdb-local.xml
 
     @ArquillianResource
     ContainerController controller;
 
-    public static final String CONTAINER = "leveldb";
+    public static final String CONTAINER = "rocksdb";
 
-    private static File dataDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "leveldbtestcache");
-    private static File expiredDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "leveldb-expiredtestcache");
+    private static File dataDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "rocksdbtestcache");
+    private static File expiredDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "rocksdb-expiredtestcache");
 
     private final TestMarshaller clientMarshaller = new TestMarshaller();
 
@@ -97,7 +96,7 @@ public class LevelDBCacheStoreIT {
     }
 
     @Test
-    public void testDataRetrievableViaLevelDbApi() throws Exception {
+    public void testDataRetrievableViaRocksDbApi() throws Exception {
         removeDataFilesIfExists();
         controller.start(CONTAINER);
         RemoteInfinispanCacheManager managerJmx = server.getCacheManager("local");
@@ -115,13 +114,15 @@ public class LevelDBCacheStoreIT {
         assertTrue(expiredDir.isDirectory());
         controller.stop(CONTAINER);
 
-        DB db = Iq80DBFactory.factory.open(dataDir, new Options());
+        RocksDB db = RocksDB.open(new Options(), dataDir.getAbsolutePath());
 
-        log.tracef("LevelDB file " + dataDir.getAbsolutePath() + " contents:");
-       for (Entry<byte[], byte[]> entry : db) {
-          log.tracef("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""
-                + Hex.encodeHexString(entry.getValue()) + "\"");
-          assertNotNull(entry.getValue());
+        log.tracef("RocksDB file " + dataDir.getAbsolutePath() + " contents:");
+
+
+        for(RocksIterator i = db.newIterator(); i.isValid(); i.next()) {
+            log.tracef("key \"" + Hex.encodeHexString(i.key()) + "\": value \""
+                + Hex.encodeHexString(i.value()) + "\"");
+          assertNotNull(i.value());
        }
     }
 

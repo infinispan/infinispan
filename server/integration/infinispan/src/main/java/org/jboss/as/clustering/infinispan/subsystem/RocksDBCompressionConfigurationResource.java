@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.persistence.leveldb.configuration.CompressionType;
+import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -40,7 +40,7 @@ import org.jboss.dmr.ModelType;
  * @author Galder Zamarreño
  * @author Tristan Tarrant
  */
-public class LevelDBCompressionConfigurationResource extends CacheChildResource {
+public class RocksDBCompressionConfigurationResource extends CacheChildResource {
 
     public static final PathElement PATH = PathElement.pathElement(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
 
@@ -56,8 +56,8 @@ public class LevelDBCompressionConfigurationResource extends CacheChildResource 
     static final AttributeDefinition[] ATTRIBUTES = {TYPE};
 
 
-    public LevelDBCompressionConfigurationResource(RestartableResourceDefinition parent) {
-        super(PATH, ModelKeys.COMPRESSION, parent, ATTRIBUTES);
+    public RocksDBCompressionConfigurationResource(RestartableResourceDefinition parent) {
+        super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.ROCKSDB_STORE, ModelKeys.COMPRESSION), parent, ATTRIBUTES);
     }
 
 }

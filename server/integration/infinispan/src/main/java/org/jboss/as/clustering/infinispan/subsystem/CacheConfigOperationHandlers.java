@@ -57,10 +57,9 @@ public class CacheConfigOperationHandlers {
     static final OperationStepHandler BINARY_KEYED_JDBC_STORE_ADD = new BinaryKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler MIXED_KEYED_JDBC_STORE_ADD = new MixedKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler REMOTE_STORE_ADD = new RemoteCacheStoreAdd();
-    static final OperationStepHandler LEVELDB_STORE_ADD = new LevelDBCacheStoreAdd();
-    static final OperationStepHandler LEVELDB_EXPIRATION_ADD = new CacheConfigAdd(LevelDBExpirationConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(LevelDBCompressionConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_IMPLEMENTATION_ADD = new CacheConfigAdd(LevelDBImplementationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler ROCKSDB_STORE_ADD = new RocksDBCacheStoreAdd();
+    static final OperationStepHandler ROCKSDB_EXPIRATION_ADD = new CacheConfigAdd(RocksDBExpirationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(RocksDBCompressionConfigurationResource.ATTRIBUTES);
     static final OperationStepHandler REST_STORE_ADD = new RestCacheStoreAdd();
 
     /**
@@ -328,9 +327,9 @@ public class CacheConfigOperationHandlers {
         }
     }
 
-    private static class LevelDBCacheStoreAdd extends AbstractCacheStoreAdd {
-        LevelDBCacheStoreAdd() {
-            super(LevelDBStoreConfigurationResource.LEVELDB_STORE_ATTRIBUTES);
+    private static class RocksDBCacheStoreAdd extends AbstractCacheStoreAdd {
+        RocksDBCacheStoreAdd() {
+            super(RocksDBStoreConfigurationResource.ROCKSDB_STORE_ATTRIBUTES);
         }
     }
 

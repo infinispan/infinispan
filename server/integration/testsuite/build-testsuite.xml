@@ -10,17 +10,14 @@
     <property name="infinispan.parts" value="file:///${resources.configs}/infinispan" />
     <property name="datasource.parts" value="file:///${resources.configs}/datasource" />
     <property name="other.parts" value="file:///${resources.configs}/parts" />
-    <property name="leveldb.compression" value="SNAPPY" />
-    <property name="leveldb.impl" value="JAVA" />
-    <property name="leveldb.patch" value="false" />
+    <property name="rocksdb.compression" value="SNAPPY" />
     <property name="zip.dist" value="false" />
     <property name="zip.dist.old" value="false" />
     <property name="trace" value="none"/>
     <property name="new.server.schema.version" value="${new.server.schema.version}"/>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
-        <filter token="leveldb.compression" value="${leveldb.compression}" />
-        <filter token="leveldb.impl" value="${leveldb.impl}" />
+        <filter token="rocksdb.compression" value="${rocksdb.compression}" />
         <filter token="resources.dir" value="${resources.dir}" />
     </filterset>
 
@@ -68,19 +65,6 @@
                 </for>
                 <move file="${server1.dist}-tmp/${dir.in.zip}" tofile="${server1.dist}" />
                 <delete dir="${server1.dist}-tmp" />
-                <if>
-                    <equals arg1="${leveldb.patch}" arg2="true" />
-                    <then>
-                        <property name="leveldb.module1" value="modules/system/layers/base/org/fusesource/leveldbjni-all/main" />
-                        <property name="leveldb.module2" value="modules/system/layers/base/org/iq80/leveldb/main" />
-                        <copy todir="${server1.dist}/${leveldb.module1}" overwrite="true">
-                            <fileset dir="${server.build.dist}/${leveldb.module1}" />
-                        </copy>
-                        <copy todir="${server1.dist}/${leveldb.module2}" overwrite="true">
-                            <fileset dir="${server.build.dist}/${leveldb.module2}" />
-                        </copy>
-                    </then>
-                </if>
             </else>
         </if>
 
@@ -198,9 +182,9 @@
         <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing-secured.xml" modifyInfinispan="${infinispan.parts}/indexing-secured.xml" hotrodAuth="${infinispan.parts}/hotrod-auth-clustered.xml" filtering="true"/>
-        <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml" modifyInfinispan="${infinispan.parts}/leveldb-local.xml" filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml" modifyInfinispan="${infinispan.parts}/leveldb-dist.xml" filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml" modifyInfinispan="${infinispan.parts}/leveldb-repl.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-rocksdb-local.xml" modifyInfinispan="${infinispan.parts}/rocksdb-local.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-rocksdb-dist.xml" modifyInfinispan="${infinispan.parts}/rocksdb-dist.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-rocksdb-repl.xml" modifyInfinispan="${infinispan.parts}/rocksdb-repl.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml" modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml" modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"

@@ -16,7 +16,7 @@
 
     <dependencies>
 
-        
+
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-feature-pack</artifactId>
@@ -29,21 +29,10 @@
             </exclusions>
         </dependency>
 
-        
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-jdbc</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-leveldb</artifactId>
+            <artifactId>infinispan-cachestore-jdbc</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -62,7 +51,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
-                <dependency>
+
+        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-rest</artifactId>
             <exclusions>
@@ -72,7 +62,19 @@
                 </exclusion>
             </exclusions>
         </dependency>
-                <dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-rocksdb</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-interpreter</artifactId>
             <exclusions>
@@ -236,7 +238,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-hotrod</artifactId>
@@ -281,7 +283,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-tasks</artifactId>
@@ -358,7 +360,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-management-console</artifactId>
@@ -369,7 +371,7 @@
             <artifactId>jgroups</artifactId>
         </dependency>
 
-        
+
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
@@ -404,7 +406,7 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
@@ -469,17 +471,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.fusesource.leveldbjni</groupId>
-            <artifactId>leveldbjni-all</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>*</artifactId>
-                    <groupId>*</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.hibernate.hql</groupId>
             <artifactId>hibernate-hql-parser</artifactId>
             <exclusions>
@@ -513,17 +504,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-        <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling-osgi</artifactId>
         </dependency>
@@ -531,6 +511,17 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-netty4</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.rocksdb</groupId>
+            <artifactId>rocksdbjni</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -549,7 +540,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-io</artifactId>
@@ -673,7 +664,7 @@
                                     <rules>
                                         <banTransitiveDependencies>
                                             <excludes>
-                                                
+
                                                 <exclude>com.sun:tools</exclude>
                                                 <exclude>sun.jdk:jconsole</exclude>
                                             </excludes>

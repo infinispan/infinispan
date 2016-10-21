@@ -111,22 +111,12 @@ What it does:
     </logger>
 INFO: We do not set TRACE level for console logger here because multiple servers are running and it slows down test execution
 
-LevelDB specifics
+RocksDB specifics
 -----------------
 properties:
 
-  leveldb.compression - sets compression type, allowed values: SNAPPY, NONE
-  leveldb.impl        - sets implementation type, allowed values: AUTO, JAVA, JNI
-  leveldb.patch       - used with -Dzip.dist. Patches the zip distribution with dependencies of leveldb cache store taken from upstream build.
+  rocksdb.compression - sets compression type, allowed values: SNAPPY, NONE, ZLIB, BZ2LIB, LZ4, LZ4HC
 
-Running test in JDK 6
---------------------
-
-When want to run testsuite on JDK 6, you have to set following profile
-
-  -P testsuite-jdk6
-
-This profile assumes that environment JAVA_HOME_16 is set properly.
 
 Note about generating a keystore with keytool
 ---------------------------------------------

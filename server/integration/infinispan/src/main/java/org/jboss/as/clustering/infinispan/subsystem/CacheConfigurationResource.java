@@ -188,7 +188,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
         resourceRegistration.registerSubModel(new BinaryKeyedJDBCStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new MixedKeyedJDBCStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new RemoteStoreConfigurationResource(this));
-        resourceRegistration.registerSubModel(new LevelDBStoreConfigurationResource(this));
+        resourceRegistration.registerSubModel(new RocksDBStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new RestStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new CacheSecurityConfigurationResource(this));
     }

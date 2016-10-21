@@ -37,9 +37,9 @@ import org.jboss.dmr.ModelType;
  *
  * @author Galder Zamarreño
  */
-public class LevelDBStoreConfigurationResource extends BaseStoreConfigurationResource {
+public class RocksDBStoreConfigurationResource extends BaseStoreConfigurationResource {
 
-    public static final PathElement LEVELDB_STORE_PATH = PathElement.pathElement(ModelKeys.LEVELDB_STORE);
+    public static final PathElement ROCKSDBSTORE_PATH = PathElement.pathElement(ModelKeys.ROCKSDB_STORE);
 
     // attributes
     static final SimpleAttributeDefinition PATH =
@@ -81,24 +81,23 @@ public class LevelDBStoreConfigurationResource extends BaseStoreConfigurationRes
                     .setDefaultValue(new ModelNode().set(10000))
                     .build();
 
-    static final AttributeDefinition[] LEVELDB_STORE_ATTRIBUTES = {PATH, BLOCK_SIZE, CACHE_SIZE, CLEAR_THRESHOLD};
+    static final AttributeDefinition[] ROCKSDB_STORE_ATTRIBUTES = {PATH, BLOCK_SIZE, CACHE_SIZE, CLEAR_THRESHOLD};
 
     static final SimpleAttributeDefinition NAME =
             new SimpleAttributeDefinitionBuilder(BaseStoreConfigurationResource.NAME)
-                    .setDefaultValue(new ModelNode().set(ModelKeys.LEVELDB_STORE_NAME))
+                    .setDefaultValue(new ModelNode().set(ModelKeys.ROCKSDB_STORE_NAME))
                     .build();
 
-    public LevelDBStoreConfigurationResource(CacheConfigurationResource parent) {
-        super(LEVELDB_STORE_PATH, ModelKeys.LEVELDB_STORE, parent, LEVELDB_STORE_ATTRIBUTES);
+    public RocksDBStoreConfigurationResource(CacheConfigurationResource parent) {
+        super(ROCKSDBSTORE_PATH, ModelKeys.ROCKSDB_STORE, parent, ROCKSDB_STORE_ATTRIBUTES);
     }
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
         // child resources
-        resourceRegistration.registerSubModel(new LevelDBExpirationConfigurationResource(resource));
-        resourceRegistration.registerSubModel(new LevelDBCompressionConfigurationResource(resource));
-        resourceRegistration.registerSubModel(new LevelDBImplementationConfigurationResource(resource));
+        resourceRegistration.registerSubModel(new RocksDBExpirationConfigurationResource(resource));
+        resourceRegistration.registerSubModel(new RocksDBCompressionConfigurationResource(resource));
     }
 
 }

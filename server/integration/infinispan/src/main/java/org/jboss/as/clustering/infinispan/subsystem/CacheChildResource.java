@@ -26,6 +26,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 
 /**
@@ -47,6 +48,15 @@ abstract class CacheChildResource extends SimpleResourceDefinition {
         super(path, new InfinispanResourceDescriptionResolver(resourceKey),
                 new RestartCacheResourceAdd(resource.getPathElement().getKey(), resource.getServiceInstaller(), attributes),
                 new RestartCacheResourceRemove(resource.getPathElement().getKey(), resource.getServiceInstaller()));
+        this.resource = resource;
+        this.attributes = attributes;
+    }
+
+    CacheChildResource(PathElement path, ResourceDescriptionResolver resolver, RestartableResourceDefinition resource,
+                       AttributeDefinition[] attributes) {
+        super(path, resolver,
+              new RestartCacheResourceAdd(resource.getPathElement().getKey(), resource.getServiceInstaller(), attributes),
+              new RestartCacheResourceRemove(resource.getPathElement().getKey(), resource.getServiceInstaller()));
         this.resource = resource;
         this.attributes = attributes;
     }

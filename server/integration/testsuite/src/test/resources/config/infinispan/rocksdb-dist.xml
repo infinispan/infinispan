@@ -17,13 +17,12 @@
                     <state-transfer 
                         enabled="true" 
                         timeout="600000" />
-                    <leveldb-store path="leveldb" block-size="1024"
+                    <rocksdb-store path="rocksdb" block-size="1024"
                         cache-size="50000" clear-threshold="100000" passivation="false"
                         purge="false" >
-                        <expiration path="leveldb-expired" queue-size="2000" />
-                        <compression type="${leveldb.compression}" />
-                        <implementation type="${leveldb.impl}" />
-                    </leveldb-store>
+                        <expiration path="rocksdb-expired" queue-size="2000" />
+                        <compression type="${rocksdb.compression}" />
+                    </rocksdb-store>
                 </distributed-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <distributed-cache 
@@ -39,13 +38,12 @@
                     <state-transfer 
                         enabled="true" 
                         timeout="600000" />
-                    <leveldb-store path="leveldb-mc" block-size="1024"
+                    <rocksdb-store path="rocksdb-mc" block-size="1024"
                         cache-size="50000" clear-threshold="100000" passivation="false"
                         purge="false" >
-                        <expiration path="leveldb-expired-mc" queue-size="2000" />
-                        <compression type="${leveldb.compression}" />
-                        <implementation type="${leveldb.impl}" />
-                    </leveldb-store>
+                        <expiration path="rocksdb-expired-mc" queue-size="2000" />
+                        <compression type="${rocksdb.compression}" />
+                    </rocksdb-store>
                 </distributed-cache>
                 <distributed-cache
                     name="namedCache"

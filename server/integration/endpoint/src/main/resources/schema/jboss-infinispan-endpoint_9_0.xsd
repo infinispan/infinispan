@@ -377,7 +377,8 @@
 
     <xs:complexType name="encryption">
         <xs:sequence>
-            <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="
+            sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="false">
             <xs:annotation>
