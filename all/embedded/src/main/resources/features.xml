@@ -32,4 +32,8 @@
       <bundle>wrap:mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
       <bundle>wrap:mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
    </feature>
+
+   <feature name="rocksdb" version="${version.rocksdb}">
+      <bundle>wrap:mvn:org.rocksdb/rocksdbjni/${version.rocksdb}</bundle>
+   </feature>
 </features>
