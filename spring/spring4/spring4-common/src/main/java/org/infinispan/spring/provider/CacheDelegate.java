@@ -1,5 +1,7 @@
 package org.infinispan.spring.provider;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -64,6 +66,13 @@ class CacheDelegate implements Cache {
       this.nativeCache.put(key, value != null ? value : NullValue.NULL);
    }
 
+   /**
+    * @see org.infinispan.commons.api.BasicCache#put(Object, Object, long, TimeUnit)
+    */
+   public void put(Object key, Object value, long lifespan, TimeUnit unit) {
+      this.nativeCache.put(key, value != null ? value : NullValue.NULL, lifespan, unit);
+   }
+
    @Override
    public ValueWrapper putIfAbsent(Object key, Object value) {
       return toValueWrapper(this.nativeCache.putIfAbsent(key, value));
@@ -103,5 +112,4 @@ class CacheDelegate implements Cache {
       }
       return new SimpleValueWrapper(value);
    }
-
 }

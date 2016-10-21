@@ -39,7 +39,10 @@ The interface `SegmentCompletionListener` has moved from the interface
 `org.infinispan.CacheStream` to the new `org.infinispan.BaseCacheStream`.
 
 === Spring module dependency changes
-All Infinispan dependencies from Spring modules (both embedded and remote) are now in provided scope. One can decide whether use small jars or uber jars but they need to be added to the classpath on client side. Here is an example:
+All Infinispan, Spring and Logger dependencies are now in provided scope. One can decide whether use small jars or uber jars but they need to be added to the classpath on client side.
+It also gives one freedom in choosing Spring (or Spring Boot) version.
+
+Here is an example:
 [source,xml]
 ----
 <dependencies>
@@ -51,8 +54,17 @@ All Infinispan dependencies from Spring modules (both embedded and remote) are n
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-spring4-embedded</artifactId>
    </dependency>
+   <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+   </dependency>
+   <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session</artifactId>
+   </dependency>
 </dependencies>
 ----
+
 Additionally there is no Logger implementation specified (since this may vary depending on use case).
 
 === Total order executor is not removed
