@@ -18,8 +18,8 @@
     <bean id="jpaStoreLifecycleManager" class="org.infinispan.persistence.jpa.impl.JpaStoreLifecycleManager"/>
     <service ref="jpaStoreLifecycleManager" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
 
-    <bean id="levelDBStoreConfigurationParser" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser"/>
-    <service ref="levelDBStoreConfigurationParser" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="rocksDBStoreConfigurationParser" class="org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationParser"/>
+    <service ref="rocksDBStoreConfigurationParser" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 
     <bean id="remoteStoreConfigurationParser" class="org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser"/>
     <service ref="remoteStoreConfigurationParser" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>

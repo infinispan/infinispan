@@ -60,8 +60,8 @@
                </file-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-leveldb-store" mode="SYNC" start="EAGER">
-               <leveldb-store shared="false" fetch-state="true" passivation="false"/>
+            <distributed-cache-configuration name="persistent-rocksdb-store" mode="SYNC" start="EAGER">
+               <rocksdb-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-jdbc-string-keyed" mode="SYNC" owners="2" start="EAGER">
@@ -122,7 +122,7 @@
          </cache-container>
       </replacement>
    </supplement>
-   <supplement name="leveldb-cs-local">
+   <supplement name="rocksdb-cs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
@@ -130,21 +130,20 @@
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
-               <leveldb-store passivation="true" path="level-dc" purge="true" shared="false" />
+               <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <leveldb-store passivation="false" path="level-mc" purge="true" shared="false">
-                  <expiration path="leveldb-mc-expired"/>
-               </leveldb-store>
+               <rocksdb-store passivation="false" path="rocksdb-mc" purge="true" shared="false">
+                  <expiration path="rocksdb-mc-expired"/>
+               </rocksdb-store>
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />
-               <leveldb-store path="leveldb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
-                  <expiration path="leveldb-nc-expired" queue-size="2000"/>
+               <rocksdb-store path="rocksdb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
+                  <expiration path="rocksdb-nc-expired" queue-size="2000"/>
                   <compression type="SNAPPY"/>
-                  <implementation type="JAVA"/>
-               </leveldb-store>
+               </rocksdb-store>
             </local-cache>
          </cache-container>
       </replacement>

@@ -68,7 +68,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-leveldb</artifactId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

@@ -148,8 +148,6 @@
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.11</version.junit>
-      <version.leveldb>0.7</version.leveldb>
-      <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>2.5</version.log4j>
       <version.lucene>5.5.2</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
@@ -650,16 +648,6 @@
             <groupId>net.spy</groupId>
             <artifactId>spymemcached</artifactId>
             <version>${version.spymemcached}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.fusesource.leveldbjni</groupId>
-            <artifactId>leveldbjni-all</artifactId>
-            <version>${version.leveldbjni}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb</artifactId>
-            <version>${version.leveldb}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -2046,6 +2034,7 @@
                               <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
                               <source>${dir.ispn}/persistence/remote/src/main/java</source>
                               <source>${dir.ispn}/persistence/rest/src/main/java</source>
+                              <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
                               <source>${dir.ispn}/persistence/soft-index/src/main/java</source>
                               <source>${dir.ispn}/query/src/main/java</source>
                               <source>${dir.ispn}/query-dsl/src/main/java</source>

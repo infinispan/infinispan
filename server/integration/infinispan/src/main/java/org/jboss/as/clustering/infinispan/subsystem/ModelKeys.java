@@ -128,7 +128,8 @@ public class ModelKeys {
     static final String JDBC_STORE = "jdbc-store";
     static final String JDBC_STORE_NAME = "JDBC_STORE";
     static final String KEEPALIVE_TIME = "keepalive-time";
-    static final String LEVELDB_STORE = "leveldb-store";
+    static final String ROCKSDB_EXPIRATION = "expiration-db";
+    static final String ROCKSDB_STORE = "rocksdb-store";
     static final String LOADER = "loader";
     static final String LOADER_NAME = "LOADER";
     static final String STRING_KEYED_JDBC_STORE = "string-keyed-jdbc-store";
@@ -141,7 +142,7 @@ public class ModelKeys {
     static final String MIXED_KEYED_JDBC_STORE_NAME = "MIXED_KEYED_JDBC_STORE";
     static final String JNDI_NAME = "jndi-name";
     static final String L1_LIFESPAN = "l1-lifespan";
-    static final String LEVELDB_STORE_NAME = "LEVELDB_STORE";
+    static final String LEVELDB_STORE = "leveldb-store";
     static final String LIFESPAN = "lifespan";
     static final String LISTENER_EXECUTOR = "listener-executor";
     static final String LOCAL_CACHE = "local-cache";
@@ -201,6 +202,7 @@ public class ModelKeys {
     static final String REPLICATION_QUEUE_EXECUTOR = "replication-queue-executor";
     static final String REST_STORE = "rest-store";
     static final String REST_STORE_NAME = "REST_STORE";
+    static final String ROCKSDB_STORE_NAME = "ROCKSDB_STORE";
     static final String ROLE = "role";
     static final String ROLES = "roles";
     static final String SECURITY = "security";

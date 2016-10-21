@@ -41,6 +41,7 @@ import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguratio
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.rest.configuration.RestStoreConfiguration;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -967,19 +968,18 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.persistence().passivation());
       assertTrue(config.persistence().usingStores());
       assertEquals(1, config.persistence().stores().size());
-      assertTrue(config.persistence().stores().get(0) instanceof LevelDBStoreConfiguration);
+      assertTrue(config.persistence().stores().get(0) instanceof RocksDBStoreConfiguration);
 
-      LevelDBStoreConfiguration levelDBStoreConfiguration = (LevelDBStoreConfiguration) config.persistence().stores().get(0);
-      assertEquals("/tmp/leveldb/data", levelDBStoreConfiguration.location());
-      assertEquals("/tmp/leveldb/expired", levelDBStoreConfiguration.expiredLocation());
-      assertEquals("JAVA", levelDBStoreConfiguration.implementationType().name());
-      assertTrue(levelDBStoreConfiguration.shared());
-      assertTrue(levelDBStoreConfiguration.preload());
-      assertEquals(20, levelDBStoreConfiguration.clearThreshold());
-      assertEquals(30, levelDBStoreConfiguration.expiryQueueSize());
-      assertEquals(10, levelDBStoreConfiguration.blockSize().intValue());
-      assertEquals(50,levelDBStoreConfiguration.cacheSize().longValue());
-      assertEquals("SNAPPY", levelDBStoreConfiguration.compressionType().name());
+      RocksDBStoreConfiguration rocksDBStoreConfiguration = (RocksDBStoreConfiguration) config.persistence().stores().get(0);
+      assertEquals("/tmp/leveldb/data", rocksDBStoreConfiguration.location());
+      assertEquals("/tmp/leveldb/expired", rocksDBStoreConfiguration.expiredLocation());
+      assertTrue(rocksDBStoreConfiguration.shared());
+      assertTrue(rocksDBStoreConfiguration.preload());
+      assertEquals(20, rocksDBStoreConfiguration.clearThreshold());
+      assertEquals(30, rocksDBStoreConfiguration.expiryQueueSize());
+      assertEquals(10, rocksDBStoreConfiguration.blockSize().intValue());
+      assertEquals(50,rocksDBStoreConfiguration.cacheSize().longValue());
+      assertEquals("SNAPPY", rocksDBStoreConfiguration.compressionType().name());
 
       //-------------------------------------------------------------------------------------------
       config = cm.getCacheConfiguration("withJpaStore");

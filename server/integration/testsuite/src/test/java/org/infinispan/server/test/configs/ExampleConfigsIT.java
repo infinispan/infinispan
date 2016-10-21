@@ -311,11 +311,11 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "standalone-leveldb-cs-local")})
-    public void testLevelDBCacheStoreConfig() throws Exception {
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", DEFAULT_CACHE_NAME), "level-dcdefault", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", MEMCACHED_CACHE_NAME), "level-mcmemcachedCache", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", NAMED_CACHE_NAME), "leveldb-ncnamedCache", 2.1);
+    @WithRunningServer({@RunningServer(name = "standalone-rocksdb-cs-local")})
+    public void testRocksDBCacheStoreConfig() throws Exception {
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", DEFAULT_CACHE_NAME), "rocksdb-dcdefault", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", MEMCACHED_CACHE_NAME), "rocksdb-mcmemcachedCache", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", NAMED_CACHE_NAME), "rocksdb-ncnamedCache", 2.1);
     }
 
     @Test

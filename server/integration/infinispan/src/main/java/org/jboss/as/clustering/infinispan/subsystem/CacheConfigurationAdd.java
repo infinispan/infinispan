@@ -72,12 +72,11 @@ import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguratio
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
-import org.infinispan.persistence.leveldb.configuration.CompressionType;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
+import org.infinispan.persistence.rocksdb.configuration.CompressionType;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -128,7 +127,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
     private static final String[] loaderKeys = new String[] { ModelKeys.LOADER, ModelKeys.CLUSTER_LOADER };
     private static final String[] storeKeys = new String[] { ModelKeys.STORE, ModelKeys.FILE_STORE,
             ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.BINARY_KEYED_JDBC_STORE, ModelKeys.MIXED_KEYED_JDBC_STORE,
-            ModelKeys.REMOTE_STORE, ModelKeys.LEVELDB_STORE, ModelKeys.REST_STORE };
+            ModelKeys.REMOTE_STORE, ModelKeys.REST_STORE, ModelKeys.ROCKSDB_STORE };
 
     public static synchronized Configuration getDefaultConfiguration(CacheMode cacheMode) {
         if (defaults == null) {
@@ -737,10 +736,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.protocolVersion(ProtocolVersion.parseVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString()));
             }
             return builder;
-        } else if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {
-            final LevelDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(LevelDBStoreConfigurationBuilder.class);
-            final String path = ((resolvedValue = LevelDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "data";
-            final String relativeTo = ((resolvedValue = LevelDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+        } else if (storeKey.equals(ModelKeys.ROCKSDB_STORE)) {
+            final RocksDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(RocksDBStoreConfigurationBuilder.class);
+            final String path = ((resolvedValue = RocksDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "data";
+            final String relativeTo = ((resolvedValue = RocksDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
             Injector<PathManager> injector = new SimpleInjector<PathManager>() {
                 volatile PathManager.Callback.Handle callbackHandle;
                 @Override
@@ -763,8 +762,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             final String expirationPath;
             if (expirationDefined) {
                 ModelNode expiration = store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME);
-                expirationPath = LevelDBExpirationConfigurationResource.PATH.resolveModelAttribute(context, expiration).asString();
-                builder.expiryQueueSize(LevelDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
+                expirationPath = RocksDBExpirationConfigurationResource.PATH.resolveModelAttribute(context, expiration).asString();
+                builder.expiryQueueSize(RocksDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
             } else {
                 expirationPath = InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "expiration";
             }
@@ -796,15 +795,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
             if (store.hasDefined(ModelKeys.COMPRESSION)) {
                 ModelNode node = store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
-                final CompressionType compressionType = CompressionType.valueOf(LevelDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
+                final CompressionType compressionType = CompressionType.valueOf(RocksDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
                 builder.compressionType(compressionType);
             }
 
-            if (store.hasDefined(ModelKeys.IMPLEMENTATION)) {
-                ModelNode node = store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME);
-                final LevelDBStoreConfiguration.ImplementationType implementationType = LevelDBStoreConfiguration.ImplementationType.valueOf(LevelDBImplementationConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
-                builder.implementationType(implementationType);
-            }
             return builder;
         } else if (storeKey.equals(ModelKeys.REST_STORE)) {
                 final RestStoreConfigurationBuilder builder = persistenceBuilder.addStore(RestStoreConfigurationBuilder.class);

@@ -143,11 +143,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
             <scope>test</scope>

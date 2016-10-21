@@ -24,7 +24,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.AfterClass;
@@ -160,19 +160,19 @@ public class EmbeddedAllTest {
    }
 
    @Test
-   public void testAllEmbeddedLevelDbStore() {
+   public void testAllEmbeddedRocksDbStore() {
 
-      ConfigurationBuilder builderLevelDbLocalCache = new ConfigurationBuilder();
-      builderLevelDbLocalCache.clustering().cacheMode(CacheMode.LOCAL)
+      ConfigurationBuilder builderRocksDbLocalCache = new ConfigurationBuilder();
+      builderRocksDbLocalCache.clustering().cacheMode(CacheMode.LOCAL)
             .persistence().passivation(true)
-            .addStore(LevelDBStoreConfigurationBuilder.class)
-            .location("/tmp/leveldb/data")
-            .expiredLocation("/tmp/leveldb/expired").build();
+            .addStore(RocksDBStoreConfigurationBuilder.class)
+            .location("/tmp/rocksdb/data")
+            .expiredLocation("/tmp/rocksdb/expired").build();
 
-      manager.defineConfiguration("leveldb-local-cache", builderLevelDbLocalCache.build());
-      Cache<Object, Object> levelDbLocalCache = manager.getCache("leveldb-local-cache");
+      manager.defineConfiguration("rocksdb-local-cache", builderRocksDbLocalCache.build());
+      Cache<Object, Object> rocksDbLocalCache = manager.getCache("rocksdb-local-cache");
 
-      testDataSurvived(levelDbLocalCache);
+      testDataSurvived(rocksDbLocalCache);
    }
 
    @Test

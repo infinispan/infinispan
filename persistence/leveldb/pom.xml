@@ -14,12 +14,8 @@
 
    <dependencies>
       <dependency>
-         <groupId>org.fusesource.leveldbjni</groupId>
-         <artifactId>leveldbjni-all</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.iq80.leveldb</groupId>
-         <artifactId>leveldb</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
