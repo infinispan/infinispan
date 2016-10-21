@@ -4,8 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
@@ -43,8 +46,9 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    private static final int NUM_KEYS = 20;
    private static final String TEST_CACHE_NAME = "testCache";
 
-   private final Map<Integer, AtomicInteger> invalidationCounts = CollectionFactory.makeConcurrentMap();
-   private final Map<Integer, AtomicInteger> l1InvalidationCounts = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> invalidationCounts = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> l1InvalidationCounts = CollectionFactory.makeConcurrentMap();
+   private Map<Object, Integer> previousOwners = Collections.emptyMap();
 
    @Override
    protected void createCacheManagers() {
@@ -66,13 +70,13 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       cb.customInterceptors().addInterceptor().index(0).interceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
-            incrementCounter(invalidationCounts, index, invalidateCommand.getKeys().length);
+            incrementCounter(invalidationCounts, index, invalidateCommand.getKeys());
             return invokeNextInterceptor(ctx, invalidateCommand);
          }
 
          @Override
          public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
-            incrementCounter(l1InvalidationCounts, index, invalidateL1Command.getKeys().length);
+            incrementCounter(l1InvalidationCounts, index, invalidateL1Command.getKeys());
             return invokeNextInterceptor(ctx, invalidateL1Command);
          }
       });
@@ -92,26 +96,22 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       return cb.build(true);
    }
 
-   private void incrementCounter(Map<Integer, AtomicInteger> counterMap, int index, int delta) {
-      AtomicInteger counter = counterMap.get(index);
-      if (counter == null) {
-         counter = new AtomicInteger(0);
-         counterMap.put(index, counter);
+   private void incrementCounter(ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> counterMap, int index, Object[] keys) {
+      ConcurrentMap<Object, AtomicInteger> counters = counterMap.computeIfAbsent(index, ignored -> CollectionFactory.makeConcurrentMap());
+      for (Object key : keys) {
+         counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
       }
-      counter.addAndGet(delta);
    }
 
-   private int getCounter(Map<Integer, AtomicInteger> counterMap, int index) {
-      AtomicInteger counter = counterMap.get(index);
-      return counter != null ? counter.get() : 0;
+   private int getCounter(ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> counterMap, int index) {
+      ConcurrentMap<Object, AtomicInteger> counters = counterMap.get(index);
+      return counters == null ? 0 : counters.values().stream().mapToInt(AtomicInteger::get).sum();
    }
 
-   private int getSum(Map<Integer, AtomicInteger> counterMap) {
-      int sum = 0;
-      for (AtomicInteger c : counterMap.values()) {
-         sum += c.get();
-      }
-      return sum;
+   private int getSum(ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> counterMap) {
+      return counterMap.values().stream().flatMapToInt(
+            m -> m.values().stream().mapToInt(AtomicInteger::get)
+      ).sum();
    }
 
    public void testRehashWithPreload() {
@@ -169,6 +169,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       int clusterSize = getCacheManagers().size();
       int joiner = clusterSize - 1;
 
+      HashMap<Object, Integer> currentOwners = new HashMap<>();
       for (int i = 0; i < clusterSize; i++) {
          Cache<String, String> testCache = manager(i).getCache(TEST_CACHE_NAME);
          DistributionManager dm = testCache.getAdvancedCache().getDistributionManager();
@@ -179,9 +180,12 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
             if (!dm.getLocality(key).isLocal()) {
                assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
                      dataContainer.containsKey(key));
-            } else if (preload) {
-               assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it does not appear there",
-                     dataContainer.containsKey(key));
+            } else {
+               currentOwners.put(key, i);
+               if (preload) {
+                  assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it does not appear there",
+                        dataContainer.containsKey(key));
+               }
             }
          }
       }
@@ -196,38 +200,52 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       int joinerSize = advancedCache(joiner, TEST_CACHE_NAME).getDataContainer().size();
       if (preload) {
          // L1 is disabled, so no InvalidateL1Commands
-         assertEquals(0, getSum(l1InvalidationCounts));
+         assertEquals(String.valueOf(l1InvalidationCounts), 0, getSum(l1InvalidationCounts));
 
          // The joiner has preloaded the entire store, and the entries not owned have been invalidated
-         assertEquals(NUM_KEYS - joinerSize, getCounter(invalidationCounts, joiner));
+         assertEquals(String.valueOf(invalidationCounts.get(joiner)), NUM_KEYS - joinerSize, getCounter(invalidationCounts, joiner));
 
          // The other nodes have invalidated the entries moved to the joiner
          if (clusterSize > 1) {
-            assertEquals(NUM_KEYS, getSum(invalidationCounts));
+            int expectedInvalidations = computeDiff(previousOwners, currentOwners) + (NUM_KEYS - joinerSize);
+            assertEquals(String.valueOf(invalidationCounts), expectedInvalidations, getSum(invalidationCounts));
          }
       } else {
          // L1 is disabled, so no InvalidateL1Commands
-         assertEquals(0, getSum(l1InvalidationCounts));
+         assertEquals(String.valueOf(l1InvalidationCounts), 0, getSum(l1InvalidationCounts));
 
          // No entries to invalidate on the joiner
-         assertEquals(0, getCounter(invalidationCounts, joiner));
+         assertEquals(String.valueOf(invalidationCounts), 0, getCounter(invalidationCounts, joiner));
 
          // The other nodes have invalidated the entries moved to the joiner
          if (clusterSize > 1) {
-            assertEquals(joinerSize, getSum(invalidationCounts));
+            // Nodes did not have any entries in memory and therefore none were moved to the joiner or invalidated
+            assertEquals(String.valueOf(invalidationCounts), 0, getSum(invalidationCounts));
          }
       }
 
+      previousOwners = currentOwners;
       // Reset stats for the next check
       store.clearStats();
       invalidationCounts.clear();
       l1InvalidationCounts.clear();
    }
 
+   private int computeDiff(Map<Object, Integer> previous, Map<Object, Integer> current) {
+      assertEquals(previous.size(), current.size());
+      int diff = 0;
+      for (Map.Entry<Object, Integer> pair : previous.entrySet()) {
+         if (Integer.compare(pair.getValue(), current.get(pair.getKey())) != 0) ++diff;
+      }
+      return diff;
+   }
+
    private void printCacheContents() {
       log.debugf("%d cache managers: %s", getCacheManagers().size(), getCacheManagers());
       for (int i = 0; i < getCacheManagers().size(); i++) {
          Cache<String, String> testCache = manager(i).getCache(TEST_CACHE_NAME);
+         DataContainer<String, String> dataContainer = testCache.getAdvancedCache().getDataContainer();
+         log.debugf("DC on %s has %d keys: %s", address(i), dataContainer.size(), dataContainer.keySet());
          Set<String> keySet = testCache.keySet();
          log.debugf("Cache %s has %d keys: %s", address(i), keySet.size(), keySet);
       }
