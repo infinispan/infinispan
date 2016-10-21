@@ -86,8 +86,8 @@ public class IspnKarafOptions {
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-core", "org.infinispan.core"));
    }
 
-   public static Option featureLevelDbJni() {
-      return mvnFeature("org.infinispan", "infinispan-cachestore-leveldb", "infinispan-cachestore-leveldb-jni");
+   public static Option featureRocksDBJNI() {
+      return mvnFeature("org.infinispan", "infinispan-cachestore-rocksdb", "infinispan-cachestore-rocksdb");
    }
 
    public static Option featureRemoteStore() {
@@ -119,11 +119,12 @@ public class IspnKarafOptions {
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jpa", "org.infinispan.cachestore-jpa"));
    }
 
-   public static Option featureEmbededUberJarAndTests() throws Exception {
+   public static Option featureEmbeddedUberJarAndTests() throws Exception {
       return composite(mvnFeature("org.infinispan", "infinispan-embedded", "infinispan-embedded"),
                        mvnFeature("org.infinispan", "infinispan-embedded", "c3p0"),
                        mvnFeature("org.infinispan", "infinispan-embedded", "hikaricp"),
                        mvnFeature("org.infinispan", "infinispan-embedded", "hibernate"),
+                       mvnFeature("org.infinispan", "infinispan-embedded", "rocksdb"),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-core", "org.infinispan.embedded"),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jdbc", "org.infinispan.embedded"),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jpa", "org.infinispan.embedded"));
@@ -318,7 +319,7 @@ public class IspnKarafOptions {
                           featureIspnCoreAndTests(),
                           featureJdbcStoreAndTests(),
                           featureJpaStoreAndTests(),
-                          featureLevelDbJni(),
+                          featureRocksDBJNI(),
                           featureRemoteStore(),
                           bundleH2Database(),
                           hibernatePersistenceH2(),
@@ -326,7 +327,7 @@ public class IspnKarafOptions {
       } else {
          return composite(commonOptions(),
                           featureKarafJNDI(),
-                          featureEmbededUberJarAndTests(),
+                          featureEmbeddedUberJarAndTests(),
                           bundleSplitTestPackages(),
                           bundleH2Database(),
                           hibernatePersistenceH2(),

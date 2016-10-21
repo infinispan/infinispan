@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -23,22 +23,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Test the Infinispan LevelDB CacheStore AS module integration
+ * Test the Infinispan RocksDB CacheStore AS module integration
  *
  * @author Tristan Tarrant
  * @since 7.0
  */
 @RunWith(Arquillian.class)
-public class InfinispanStoreLevelDBIT {
+public class InfinispanStoreRocksDBIT {
 
    @Deployment
    public static Archive<?> deployment() {
-      return ShrinkWrap.create(WebArchive.class, "leveldb.war").addClass(InfinispanStoreLevelDBIT.class).add(manifest(), "META-INF/MANIFEST.MF");
+      return ShrinkWrap.create(WebArchive.class, "rocksdb.war").addClass(InfinispanStoreRocksDBIT.class).add(manifest(), "META-INF/MANIFEST.MF");
    }
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, org.infinispan.persistence.leveldb:" + Version.getModuleSlot() + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, org.infinispan.persistence.rocksdb:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
    }
 
@@ -56,7 +56,7 @@ public class InfinispanStoreLevelDBIT {
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addStore(LevelDBStoreConfigurationBuilder.class)
+      builder.persistence().addStore(RocksDBStoreConfigurationBuilder.class)
             .location(tmpDirectory(this.getClass()));
 
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());

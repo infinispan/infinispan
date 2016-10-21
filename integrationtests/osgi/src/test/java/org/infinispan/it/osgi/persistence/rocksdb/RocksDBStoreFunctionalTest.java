@@ -1,4 +1,4 @@
-package org.infinispan.it.osgi.persistence.leveldb;
+package org.infinispan.it.osgi.persistence.rocksdb;
 
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
@@ -6,8 +6,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
@@ -29,7 +28,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 @Category(PerSuite.class)
-public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
+public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    private static String tmpDirectory;
 
@@ -40,7 +39,7 @@ public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @BeforeClass
    public static void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(JniLevelDBStoreFunctionalTest.class);
+      tmpDirectory = TestingUtil.tmpDirectory(RocksDBStoreFunctionalTest.class);
    }
 
    @AfterClass
@@ -64,8 +63,7 @@ public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder p, boolean preload) {
       createStoreBuilder(p)
-            .preload(preload)
-            .implementationType(LevelDBStoreConfiguration.ImplementationType.JNI);
+            .preload(preload);
       return p;
    }
 
@@ -99,8 +97,8 @@ public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
       super.testStoreByteArrays(this.getClass().getMethod("testStoreByteArrays"));
    }
 
-   LevelDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {
-      return loaders.addStore(LevelDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry").clearThreshold(2);
+   RocksDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {
+      return loaders.addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry").clearThreshold(2);
    }
 
 }

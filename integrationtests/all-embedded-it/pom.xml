@@ -34,13 +34,17 @@
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
       </dependency>
-      
+
        <dependency>
            <groupId>org.hibernate</groupId>
            <artifactId>hibernate-entitymanager</artifactId>
            <scope>provided</scope>
        </dependency>
-       
+       <dependency>
+           <groupId>org.rocksdb</groupId>
+           <artifactId>rocksdbjni</artifactId>
+           <scope>provided</scope>
+       </dependency>
        <dependency>
            <groupId>com.mchange</groupId>
            <artifactId>c3p0</artifactId>
@@ -51,12 +55,12 @@
            <artifactId>HikariCP</artifactId>
            <scope>provided</scope>
        </dependency>
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.11</version>
-         <scope>test</scope>
-      </dependency>
+       <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.11</version>
+          <scope>test</scope>
+       </dependency>
    </dependencies>
 
     <profiles>

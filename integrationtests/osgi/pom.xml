@@ -96,17 +96,14 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-leveldb</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.fusesource.leveldbjni</groupId>
-         <artifactId>leveldbjni-all</artifactId>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -125,6 +122,11 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-osgi</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.rocksdb</groupId>
+         <artifactId>rocksdbjni</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
