@@ -1,13 +1,6 @@
 package org.infinispan.persistence.leveldb.configuration;
 
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.BLOCK_SIZE;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.CACHE_SIZE;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.CLEAR_THRESHOLD;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.COMPRESSION_TYPE;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.EXPIRED_LOCATION;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.EXPIRY_QUEUE_SIZE;
 import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.IMPLEMENTATION_TYPE;
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.LOCATION;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -15,8 +8,9 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- *
+ * @deprecated Use the RocksDB Cache Store instead
  */
+@Deprecated
 public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<LevelDBStoreConfiguration, LevelDBStoreConfigurationBuilder> {
 
    public LevelDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
@@ -24,12 +18,12 @@ public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    public LevelDBStoreConfigurationBuilder location(String location) {
-      attributes.attribute(LOCATION).set(location);
+      attributes.attribute("location").set(location);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder expiredLocation(String expiredLocation) {
-      attributes.attribute(EXPIRED_LOCATION).set(expiredLocation);
+      attributes.attribute("expiredLocation").set(expiredLocation);
       return self();
    }
 
@@ -39,27 +33,27 @@ public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    public LevelDBStoreConfigurationBuilder blockSize(int blockSize) {
-      attributes.attribute(BLOCK_SIZE).set(blockSize);
+      attributes.attribute("blockSize").set(blockSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder cacheSize(long cacheSize) {
-      attributes.attribute(CACHE_SIZE).set(cacheSize);
+      attributes.attribute("cacheSize").set(cacheSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
-      attributes.attribute(EXPIRY_QUEUE_SIZE).set(expiryQueueSize);
+      attributes.attribute("expiryQueueSize").set(expiryQueueSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
-      attributes.attribute(CLEAR_THRESHOLD).set(clearThreshold);
+      attributes.attribute("clearThreshold").set(clearThreshold);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder compressionType(CompressionType compressionType) {
-      attributes.attribute(COMPRESSION_TYPE).set(compressionType);
+      attributes.attribute("compressionType").set(compressionType);
       return self();
    }
 

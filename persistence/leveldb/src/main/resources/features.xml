@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <features name="infinispan-cachestore-leveldb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
-   <feature name="infinispan-cachestore-leveldb-jni" version="${project.version}">
-      <bundle>mvn:org.fusesource.leveldbjni/leveldbjni-all/${version.leveldbjni}</bundle>
-      <bundle>mvn:org.fusesource.leveldbjni/leveldbjni/${version.leveldbjni}</bundle>
+   <feature name="infinispan-cachestore-leveldb" version="${project.version}">
       <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
-   </feature>
-   <feature name="infinispan-cachestore-leveldb-java" version="${project.version}">
-      <feature version="${project.version}">infinispan-cachestore-leveldb-jni</feature>
-      <bundle>wrap:mvn:org.iq80.leveldb/leveldb/${version.leveldb}$Bundle-SymbolicName=leveldb&amp;Bundle-Version=${version.leveldb}</bundle>
    </feature>
 </features>

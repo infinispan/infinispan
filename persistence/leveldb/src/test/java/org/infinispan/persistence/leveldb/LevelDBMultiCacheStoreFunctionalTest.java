@@ -26,8 +26,8 @@ public class LevelDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalT
    @Override
    protected LevelDBStoreConfigurationBuilder buildCacheStoreConfig(PersistenceConfigurationBuilder p, String discriminator) throws Exception {
       LevelDBStoreConfigurationBuilder store = p.addStore(LevelDBStoreConfigurationBuilder.class);
-      store.location(tmpDir.getAbsolutePath() + File.separator + "leveldb" + File.separator + "data-" + discriminator);
-      store.expiredLocation(tmpDir.getAbsolutePath() + File.separator + "leveldb" + File.separator + "expired-data-" + discriminator);
+      store.location(tmpDir.getAbsolutePath() + File.separator + "rocksdb" + File.separator + "data-" + discriminator);
+      store.expiredLocation(tmpDir.getAbsolutePath() + File.separator + "rocksdb" + File.separator + "expired-data-" + discriminator);
       store.implementationType(LevelDBStoreConfiguration.ImplementationType.JAVA);
       return store;
    }
