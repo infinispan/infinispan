@@ -40,10 +40,6 @@ ObjectStore
 *.idx
 # Persisted metadata
 *.dat
-# Antlr-generated
-IspnCliQLLexer.java
-IspnCliQLParser.java
-IspnCliQL.tokens
 # OS X generated file
 .DS_Store
 # Checkstlye in Eclipse
