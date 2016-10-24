@@ -860,42 +860,6 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-
-   private void retryTransferTask(InboundTransferTask task) {
-      if (trace) log.tracef("Retrying failed task: %s", task);
-      task.cancel();
-
-      LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(50));
-
-      // look for other sources for the failed segments and replace all failed tasks with new tasks to be retried
-      // remove+add needs to be atomic
-      synchronized (transferMapsLock) {
-         Set<Integer> failedSegments = new HashSet<Integer>();
-         Set<Address> excludedSources = new HashSet<>();
-         if (removeTransfer(task)) {
-            excludedSources.add(task.getSource());
-            failedSegments.addAll(task.getSegments());
-         } else {
-            log.debugf("Failed to remove the failed inbound transfer %s", task);
-         }
-
-         // should re-add only segments we still own and are not already in
-         failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
-         // When the cache stops, the write CH stays unchanged, but the transfers map is cleared
-         failedSegments.retainAll(transfersBySegment.keySet());
-
-         if (!failedSegments.isEmpty()) {
-            Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
-            findSources(failedSegments, sources, excludedSources);
-            for (Map.Entry<Address, Set<Integer>> e : sources.entrySet()) {
-               addTransfer(e.getKey(), e.getValue());
-            }
-         } else {
-            log.debugf("No unfinished segments to retry for inbound transfer %s", task);
-         }
-      }
-   }
-
    /**
     * Cancel transfers for segments we no longer own.
     *
@@ -1066,14 +1030,8 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    void onTaskCompletion(final InboundTransferTask inboundTransfer) {
-      retryOrNotifyCompletion(inboundTransfer);
-   }
-
-   private void retryOrNotifyCompletion(InboundTransferTask inboundTransfer) {
-      if (!inboundTransfer.isCompletedSuccessfully() && !inboundTransfer.isCancelled()) {
-         retryTransferTask(inboundTransfer);
-      } else {
-         if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
+      if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
+      if (inboundTransfer.isCompletedSuccessfully()) {
          removeTransfer(inboundTransfer);
          notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
       }

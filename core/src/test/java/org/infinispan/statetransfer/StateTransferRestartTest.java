@@ -70,26 +70,6 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
    private MockTransport mockTransport = new MockTransport();
 
-   private void waitForStateTransfer(Cache... caches) throws InterruptedException {
-      StateTransferManager[] stm = new StateTransferManager[caches.length];
-      for (int i = 0; i < stm.length; i++) {
-         stm[i] = TestingUtil.extractComponent(caches[i], StateTransferManager.class);
-      }
-      while (true) {
-         boolean inProgress = false;
-         for (StateTransferManager aStm : stm) {
-            if (aStm.isStateTransferInProgress()) {
-               inProgress = true;
-               break;
-            }
-         }
-         if (!inProgress) {
-            break;
-         }
-         wait(100);
-      }
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
@@ -116,38 +96,32 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       for (int k = 0; k < numKeys; k++) {
          c0.put(k, k);
       }
-      waitForStateTransfer(c0, c1);
+      TestingUtil.waitForRehashToComplete(c0, c1);
 
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
 
-      mockTransport.callOnStateResponseCommand = new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            fork(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  log.info("KILLING the c1 cache");
-                  try {
-                     DISCARD d3 = TestingUtil.getDiscardForCache(c1);
-                     d3.setDiscardAll(true);
-                     d3.setExcludeItself(true);
-                     TestingUtil.killCacheManagers(manager(c1));
-                  } catch (Exception e) {
-                     log.info("there was some exception while killing cache");
-                  }
-                  return null;
-               }
-            });
+      mockTransport.callOnStateResponseCommand = () -> {
+         fork((Callable<Void>) () -> {
+            log.info("KILLING the c1 cache");
             try {
-               // sleep and wait to be killed
-               Thread.sleep(25000);
-            } catch (InterruptedException e) {
-               log.info("Interrupted as expected.");
-               Thread.currentThread().interrupt();
+               DISCARD d3 = TestingUtil.getDiscardForCache(c1);
+               d3.setDiscardAll(true);
+               d3.setExcludeItself(true);
+               TestingUtil.killCacheManagers(manager(c1));
+            } catch (Exception e) {
+               log.info("there was some exception while killing cache");
             }
             return null;
+         });
+         try {
+            // sleep and wait to be killed
+            Thread.sleep(25000);
+         } catch (InterruptedException e) {
+            log.info("Interrupted as expected.");
+            Thread.currentThread().interrupt();
          }
+         return null;
       };
 
       log.info("adding cache c2");
@@ -161,12 +135,8 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       log.infof("c0 entrySet size before : %d", c0.entrySet().size());
       log.infof("c2 entrySet size before : %d", c2.entrySet().size());
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return c0.entrySet().size() == numKeys && c2.entrySet().size() == numKeys;
-         }
-      });
+      eventuallyEquals(numKeys, () -> c0.entrySet().size());
+      eventuallyEquals(numKeys, () -> c2.entrySet().size());
 
       log.info("Ending the test");
    }
