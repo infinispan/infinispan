@@ -18,7 +18,6 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -51,7 +50,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final Address destination;
 
-   private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
+   private final Set<Integer> segments = new CopyOnWriteArraySet<>();
 
    private final int stateTransferChunkSize;
 
@@ -157,20 +156,17 @@ public class OutboundTransferTask implements Runnable {
          if (stProvider != null) {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               AdvancedCacheLoader.CacheLoaderTask task = new AdvancedCacheLoader.CacheLoaderTask() {
-                  @Override
-                  public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-                        int segmentId = readCh.getSegment(me.getKey());
-                        if (segments.contains(segmentId)) {
-                           try {
-                              InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
-                              sendEntry(icv, segmentId);
-                           } catch (CacheException e) {
-                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                           }
-                        }
+               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
+                  int segmentId = readCh.getSegment(me.getKey());
+                  if (segments.contains(segmentId)) {
+                     try {
+                        InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
+                        sendEntry(icv, segmentId);
+                     } catch (CacheException e) {
+                        log.failedLoadingValueFromCacheStore(me.getKey(), e);
                      }
-                  };
+                  }
+               };
                stProvider.process(filter, task, new WithinThreadExecutor(), true, true);
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
@@ -182,7 +178,10 @@ public class OutboundTransferTask implements Runnable {
       } catch (Throwable t) {
          // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
          if (isCancelled()) {
-            log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s", destination, segments);
+            if (trace) {
+               log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s", destination,
+                          segments);
+            }
          } else {
             log.failedOutBoundTransferExecution(t);
          }
@@ -199,21 +198,17 @@ public class OutboundTransferTask implements Runnable {
          accumulatedEntries = 0;
       }
 
-      List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
-      if (entries == null) {
-         entries = new ArrayList<InternalCacheEntry>();
-         entriesBySegment.put(segmentId, entries);
-      }
+      List<InternalCacheEntry> entries = entriesBySegment.computeIfAbsent(segmentId, k -> new ArrayList<>());
       entries.add(ice);
       accumulatedEntries++;
    }
 
    private void sendEntries(boolean isLast) {
-      List<StateChunk> chunks = new ArrayList<StateChunk>();
+      List<StateChunk> chunks = new ArrayList<>();
       for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
          List<InternalCacheEntry> entries = e.getValue();
          if (!entries.isEmpty() || isLast) {
-            chunks.add(new StateChunk(e.getKey(), new ArrayList<InternalCacheEntry>(entries), isLast));
+            chunks.add(new StateChunk(e.getKey(), new ArrayList<>(entries), isLast));
             entries.clear();
          }
       }
@@ -222,7 +217,7 @@ public class OutboundTransferTask implements Runnable {
          for (int segmentId : segments) {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
-               chunks.add(new StateChunk(segmentId, Collections.<InternalCacheEntry>emptyList(), true));
+               chunks.add(new StateChunk(segmentId, Collections.emptyList(), true));
             }
          }
       }

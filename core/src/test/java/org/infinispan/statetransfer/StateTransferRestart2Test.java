@@ -44,26 +44,6 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder cfgBuilder;
 
-   private void waitForStateTransfer(Cache... caches) throws InterruptedException {
-      StateTransferManager[] stm = new StateTransferManager[caches.length];
-      for (int i = 0; i < stm.length; i++) {
-         stm[i] = TestingUtil.extractComponent(caches[i], StateTransferManager.class);
-      }
-      while (true) {
-         boolean inProgress = false;
-         for (StateTransferManager aStm : stm) {
-            if (aStm.isStateTransferInProgress()) {
-               inProgress = true;
-               break;
-            }
-         }
-         if (!inProgress) {
-            break;
-         }
-         wait(100);
-      }
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
@@ -90,7 +70,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       for (int k = 0; k < numKeys; k++) {
          c0.put(k, k);
       }
-      waitForStateTransfer(c0, c1);
+      TestingUtil.waitForRehashToComplete(c0, c1);
 
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
@@ -113,17 +93,14 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
                d1.setDiscardAll(true);
                d1.setExcludeItself(true);
 
-               fork(new Callable<Void>() {
-                  @Override
-                  public Void call() throws Exception {
-                     log.info("KILLING the c1 cache");
-                     try {
-                        TestingUtil.killCacheManagers(manager(c1));
-                     } catch (Exception e) {
-                        log.info("there was some exception while killing cache");
-                     }
-                     return null;
+               fork((Callable<Void>) () -> {
+                  log.info("KILLING the c1 cache");
+                  try {
+                     TestingUtil.killCacheManagers(manager(c1));
+                  } catch (Exception e) {
+                     log.info("there was some exception while killing cache");
                   }
+                  return null;
                });
             }
             return super.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder,
@@ -142,12 +119,8 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       log.infof("c0 entrySet size before : %d", c0.entrySet().size());
       log.infof("c2 entrySet size before : %d", c2.entrySet().size());
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return c0.entrySet().size() == numKeys && c2.entrySet().size() == numKeys;
-         }
-      });
+      eventuallyEquals(numKeys, () -> c0.entrySet().size());
+      eventuallyEquals(numKeys, () -> c2.entrySet().size());
 
       log.info("Ending the test");
    }
