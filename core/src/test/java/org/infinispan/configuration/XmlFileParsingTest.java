@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
@@ -99,6 +100,22 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       });
 
+   }
+
+   @Test(expectedExceptions=CacheConfigurationException.class)
+   public void testDuplicateCacheNames() throws Exception {
+      String config = InfinispanStartTag.LATEST +
+            "<cache-container default-cache=\"duplicatename\">" +
+            "   <transport cluster=\"demoCluster\"/>\n" +
+            "   <distributed-cache name=\"duplicatename\">\n" +
+            "   </distributed-cache>\n" +
+            "   <distributed-cache name=\"duplicatename\">\n" +
+            "   </distributed-cache>\n" +
+            "</cache-container>" +
+            TestingUtil.INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromStream(is);
    }
 
    public void testNoSchemaWithStuff() throws IOException {
