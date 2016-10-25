@@ -2159,20 +2159,20 @@ public class Parser implements ConfigurationParser {
    }
 
    private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
-      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
-      if (builder == null) {
-         builder = holder.newConfigurationBuilder(name).template(template);
-         if (baseConfigurationName != null) {
-            ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
-            if (baseConfigurationBuilder == null) {
-               throw log.undeclaredConfiguration(baseConfigurationName, name);
-            }
-            Configuration baseConfiguration = baseConfigurationBuilder.build();
-            if (!baseConfiguration.isTemplate()) {
-               throw log.noConfiguration(baseConfigurationName);
-            }
-            builder.read(baseConfiguration);
+      if (holder.getNamedConfigurationBuilders().containsKey(name)) {
+         throw log.duplicateCacheName(name);
+      }
+      ConfigurationBuilder builder = holder.newConfigurationBuilder(name).template(template);
+      if (baseConfigurationName != null) {
+         ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
+         if (baseConfigurationBuilder == null) {
+            throw log.undeclaredConfiguration(baseConfigurationName, name);
          }
+         Configuration baseConfiguration = baseConfigurationBuilder.build();
+         if (!baseConfiguration.isTemplate()) {
+            throw log.noConfiguration(baseConfigurationName);
+         }
+         builder.read(baseConfiguration);
       }
 
       return builder;

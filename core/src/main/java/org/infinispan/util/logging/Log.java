@@ -1508,4 +1508,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to validate %s with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
    void warnConfigurationForAnnotationMissing(String name);
+
+   @Message(value = "Cache with name %s is defined more than once!", id = 438)
+   CacheConfigurationException duplicateCacheName(String name);
+
 }
