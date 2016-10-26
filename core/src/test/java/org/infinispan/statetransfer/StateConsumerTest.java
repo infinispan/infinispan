@@ -41,6 +41,7 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -126,6 +127,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // create dependencies
       Cache cache = mock(Cache.class);
       when(cache.getName()).thenReturn("testCache");
+      when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
 
       pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L,
                                                      TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(),
