@@ -1,7 +1,6 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
-import static org.jgroups.Message.Flag.NO_FC;
 
 import java.util.Collection;
 import java.util.List;
@@ -53,9 +52,9 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
    private static final boolean FORCE_MCAST = SecurityActions.getBooleanProperty("infinispan.unsafe.force_multicast");
    private static long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(
          SecurityActions.getIntProperty("infinispan.stagger.delay", 5));
-   public static final short REPLY_FLAGS_TO_CLEAR =
-         (short) (Message.Flag.RSVP.value() | Message.Flag.INTERNAL.value() | Message.Flag.NO_TOTAL_ORDER.value());
-   public static final short REPLY_FLAGS_TO_SET = NO_FC.value();
+   public static final short REPLY_FLAGS_TO_CLEAR = (short) (Message.Flag.RSVP.value() | Message.Flag.INTERNAL.value());
+   public static final short REPLY_FLAGS_TO_SET =
+         (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
