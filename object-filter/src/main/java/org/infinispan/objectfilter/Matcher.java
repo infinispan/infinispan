@@ -20,9 +20,9 @@ public interface Matcher {
 
    FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType);
 
-   FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType);
+   FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType);
 
-   FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType);
+   FilterSubscription registerFilter(String queryString, FilterCallback callback, Object... eventType);
 
    void unregisterFilter(FilterSubscription filterSubscription);
 
@@ -51,7 +51,7 @@ public interface Matcher {
 
    ObjectFilter getObjectFilter(Query query);
 
-   ObjectFilter getObjectFilter(String jpaQuery);
+   ObjectFilter getObjectFilter(String queryString);
 
-   ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc);
+   ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc);
 }

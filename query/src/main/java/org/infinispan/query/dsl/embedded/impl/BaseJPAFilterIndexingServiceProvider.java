@@ -84,7 +84,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
                                                   IndexedFilter<?, ?, ?> indexedFilter,
                                                   Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
       final Matcher matcher = getMatcher(indexedFilter);
-      final String jpaQuery = getJPAQuery(indexedFilter);
+      final String queryString = getQueryString(indexedFilter);
       final Map<String, Object> namedParameters = getNamedParameters(indexedFilter);
       final boolean isDelta = isDelta(indexedFilter);
 
@@ -95,7 +95,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
       }
       Callback<K, V> callback = new Callback<>(isDelta, matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
-      callback.subscription = matcher.registerFilter(jpaQuery, namedParameters, callback, eventTypes);
+      callback.subscription = matcher.registerFilter(queryString, namedParameters, callback, eventTypes);
    }
 
    /**
@@ -342,7 +342,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
    protected abstract Matcher getMatcher(IndexedFilter<?, ?, ?> indexedFilter);
 
-   protected abstract String getJPAQuery(IndexedFilter<?, ?, ?> indexedFilter);
+   protected abstract String getQueryString(IndexedFilter<?, ?, ?> indexedFilter);
 
    protected abstract Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter);
 

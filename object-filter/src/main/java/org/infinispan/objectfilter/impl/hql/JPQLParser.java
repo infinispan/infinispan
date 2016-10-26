@@ -27,7 +27,7 @@ public final class JPQLParser<TypeMetadata> {
    public JPQLParser() {
    }
 
-   public FilterParsingResult<TypeMetadata> parse(String jpaQuery, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+   public FilterParsingResult<TypeMetadata> parse(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
 
       QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(propertyHelper));
 
@@ -37,7 +37,7 @@ public final class JPQLParser<TypeMetadata> {
 
       SingleEntityHavingQueryBuilderImpl havingQueryBuilder = new SingleEntityHavingQueryBuilderImpl(propertyHelper.getEntityNamesResolver(), propertyHelper);
 
-      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<>(jpaQuery, propertyHelper, queryBuilder, havingQueryBuilder, makeParamPlaceholderMap());
+      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<>(queryString, propertyHelper, queryBuilder, havingQueryBuilder, makeParamPlaceholderMap());
 
       QueryRendererProcessor rendererProcessor = new QueryRendererProcessor(rendererDelegate);
 
@@ -54,7 +54,7 @@ public final class JPQLParser<TypeMetadata> {
          }
       };
 
-      return queryParser.parseQuery(jpaQuery, chain);
+      return queryParser.parseQuery(queryString, chain);
    }
 
    /**

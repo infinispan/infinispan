@@ -26,8 +26,8 @@ public class JPAFilterIndexingServiceProvider extends BaseJPAFilterIndexingServi
       return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getMatcher();
    }
 
-   protected String getJPAQuery(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getJPAQuery();
+   protected String getQueryString(IndexedFilter<?, ?, ?> indexedFilter) {
+      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getQueryString();
    }
 
    protected Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter) {

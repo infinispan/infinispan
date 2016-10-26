@@ -91,9 +91,9 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
-            new JPAFilterAndConverter(jpaQuery, namedParameters, matcher.getClass());
+   protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(queryString, namedParameters) :
+            new JPAFilterAndConverter(queryString, namedParameters, matcher.getClass());
    }
 
    @Override

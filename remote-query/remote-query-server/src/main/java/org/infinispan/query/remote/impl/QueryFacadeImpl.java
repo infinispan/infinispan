@@ -59,7 +59,7 @@ public final class QueryFacadeImpl implements QueryFacade {
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
          Map<String, Object> namedParameters = getNamedParameters(request);
 
-         BaseQuery q = queryEngine.buildQuery(null, request.getJpqlString(), namedParameters, startOffset, maxResults);
+         BaseQuery q = queryEngine.buildQuery(null, request.getQueryString(), namedParameters, startOffset, maxResults);
 
          QueryResponse response = makeResponse(q);
          return ProtobufUtil.toByteArray(serCtx, response);

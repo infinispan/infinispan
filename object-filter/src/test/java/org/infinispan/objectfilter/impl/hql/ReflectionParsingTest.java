@@ -22,8 +22,8 @@ public class ReflectionParsingTest extends AbstractParsingTest<Class<?>> {
 
    @Test
    public void testParsingResult() throws Exception {
-      String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Class<?>> result = parser.parse(jpaQuery, propertyHelper);
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
+      FilterParsingResult<Class<?>> result = parser.parse(queryString, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 

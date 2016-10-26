@@ -45,8 +45,8 @@ public final class AggregationExpr extends PropertyValueExpr {
    }
 
    @Override
-   public String toJpaString() {
-      return propertyPath.getAggregationType().name() + "(" + super.toJpaString() + ")";
+   public String toQueryString() {
+      return propertyPath.getAggregationType().name() + "(" + super.toQueryString() + ")";
    }
 
    @Override

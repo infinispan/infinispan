@@ -30,8 +30,8 @@ public final class Search {
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
-      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<K, V>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
-      return new JPACacheEventFilterConverter<K, V, ObjectFilter.FilterResult>(filterAndConverter);
+      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<>(baseQuery.getQueryString(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
+      return new JPACacheEventFilterConverter<>(filterAndConverter);
    }
 
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
@@ -45,7 +45,7 @@ public final class Search {
    }
 
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(Cache<K, V> cache) {
-      return new ContinuousQueryImpl<K, V>(cache);
+      return new ContinuousQueryImpl<>(cache);
    }
 
    public static SearchManager getSearchManager(Cache<?, ?> cache) {

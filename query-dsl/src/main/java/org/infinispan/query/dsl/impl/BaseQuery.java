@@ -20,7 +20,7 @@ public abstract class BaseQuery implements Query {
 
    protected final QueryFactory queryFactory;
 
-   protected final String jpaQuery;
+   protected final String queryString;
 
    protected final Map<String, Object> namedParameters;
 
@@ -31,10 +31,10 @@ public abstract class BaseQuery implements Query {
    protected final int maxResults;
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?
-   protected BaseQuery(QueryFactory queryFactory, String jpaQuery, Map<String, Object> namedParameters, String[] projection,
+   protected BaseQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection,
                        long startOffset, int maxResults) {
       this.queryFactory = queryFactory;
-      this.jpaQuery = jpaQuery;
+      this.queryString = queryString;
       this.namedParameters = namedParameters;
       this.projection = projection != null && projection.length > 0 ? projection : null;
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
@@ -45,8 +45,8 @@ public abstract class BaseQuery implements Query {
       return queryFactory;
    }
 
-   public String getJPAQuery() {
-      return jpaQuery;
+   public String getQueryString() {
+      return queryString;
    }
 
    @Override

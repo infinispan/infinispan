@@ -39,7 +39,7 @@ public final class FilterParsingResult<TypeMetadata> {
       }
    }
 
-   private final String jpaQuery;
+   private final String queryString;
    private final Set<String> parameterNames;
    private final BooleanExpr whereClause;
    private final BooleanExpr havingClause;
@@ -51,7 +51,7 @@ public final class FilterParsingResult<TypeMetadata> {
    private final SortField[] sortFields;
 
    //todo [anistor] make package local
-   public FilterParsingResult(String jpaQuery,
+   public FilterParsingResult(String queryString,
                               Set<String> parameterNames,
                               BooleanExpr whereClause,
                               BooleanExpr havingClause,
@@ -59,7 +59,7 @@ public final class FilterParsingResult<TypeMetadata> {
                               PropertyPath[] projectedPaths, Class<?>[] projectedTypes,
                               PropertyPath[] groupBy,
                               SortField[] sortFields) {
-      this.jpaQuery = jpaQuery;
+      this.queryString = queryString;
       this.parameterNames = parameterNames;
       this.whereClause = whereClause;
       this.havingClause = havingClause;
@@ -74,8 +74,8 @@ public final class FilterParsingResult<TypeMetadata> {
       this.sortFields = sortFields;
    }
 
-   public String getJpaQuery() {
-      return jpaQuery;
+   public String getQueryString() {
+      return queryString;
    }
 
    public Set<String> getParameterNames() {
@@ -171,7 +171,7 @@ public final class FilterParsingResult<TypeMetadata> {
    @Override
    public String toString() {
       return "FilterParsingResult [" +
-            " jpaQuery=" + jpaQuery
+            " queryString=" + queryString
             + ", targetEntityName=" + targetEntityName
             + ", parameterNames=" + parameterNames
             + ", whereClause=" + whereClause

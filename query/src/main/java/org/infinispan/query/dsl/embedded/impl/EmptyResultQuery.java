@@ -18,9 +18,9 @@ import org.infinispan.query.dsl.QueryFactory;
  */
 final class EmptyResultQuery extends BaseEmbeddedQuery {
 
-   EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
+   EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                     long startOffset, int maxResults) {
-      super(queryFactory, cache, jpaQuery, namedParameters, null, startOffset, maxResults);
+      super(queryFactory, cache, queryString, namedParameters, null, startOffset, maxResults);
    }
 
    @Override
@@ -51,7 +51,7 @@ final class EmptyResultQuery extends BaseEmbeddedQuery {
    @Override
    public String toString() {
       return "EmptyResultQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

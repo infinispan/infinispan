@@ -40,9 +40,9 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
     */
    private int resultSize;
 
-   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
+   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                                String[] projection, long startOffset, int maxResults) {
-      super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
    }
 
@@ -150,7 +150,7 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
    @Override
    public String toString() {
       return "BaseEmbeddedQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

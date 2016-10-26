@@ -39,7 +39,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
    /**
     * The JPA query to execute.
     */
-   private final String jpaQuery;
+   private final String queryString;
 
    private final Map<String, Object> namedParameters;
 
@@ -58,11 +58,11 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
     */
    private ObjectFilter objectFilter;
 
-   public JPAFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      if (jpaQuery == null || matcherImplClass == null) {
+   public JPAFilterAndConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+      if (queryString == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
-      this.jpaQuery = jpaQuery;
+      this.queryString = queryString;
       this.namedParameters = namedParameters;
       this.matcherImplClass = matcherImplClass;
    }
@@ -83,22 +83,22 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
    public ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          if (queryCache != null) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, matcherImplClass);
+            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(jpaQuery);
+               objectFilter = matcher.getObjectFilter(queryString);
                queryCache.put(queryCacheKey, objectFilter);
             }
             this.objectFilter = objectFilter;
          } else {
-            objectFilter = matcher.getObjectFilter(jpaQuery);
+            objectFilter = matcher.getObjectFilter(queryString);
          }
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
 
-   public String getJPAQuery() {
-      return jpaQuery;
+   public String getQueryString() {
+      return queryString;
    }
 
    public Map<String, Object> getNamedParameters() {
@@ -119,14 +119,14 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
    @Override
    public String toString() {
-      return "JPAFilterAndConverter{jpaQuery='" + jpaQuery + "'}";
+      return "JPAFilterAndConverter{queryString='" + queryString + "'}";
    }
 
    public static final class JPAFilterAndConverterExternalizer extends AbstractExternalizer<JPAFilterAndConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAFilterAndConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.jpaQuery);
+         output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
             UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
@@ -142,7 +142,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
       @Override
       public JPAFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String jpaQuery = input.readUTF();
+         String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
@@ -154,7 +154,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAFilterAndConverter(jpaQuery, namedParameters, matcherImplClass);
+         return new JPAFilterAndConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override

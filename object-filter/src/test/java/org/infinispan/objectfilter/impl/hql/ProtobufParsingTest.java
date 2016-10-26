@@ -31,8 +31,8 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
    @Test
    public void testParsingResult() throws Exception {
-      String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Descriptor> result = parser.parse(jpaQuery, propertyHelper);
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
+      FilterParsingResult<Descriptor> result = parser.parse(queryString, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 

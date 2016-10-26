@@ -25,10 +25,10 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
    @Override
    public Query build() {
       JPAQueryGenerator generator = new JPAQueryGenerator();
-      String jpqlString = accept(generator);
+      String queryString = accept(generator);
       if (trace) {
-         log.tracef("JPQL string : %s", jpqlString);
+         log.tracef("Query string : %s", queryString);
       }
-      return new DelegatingQuery(queryEngine, queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+      return new DelegatingQuery(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
    }
 }

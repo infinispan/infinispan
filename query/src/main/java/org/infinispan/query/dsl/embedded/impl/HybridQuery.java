@@ -26,11 +26,11 @@ class HybridQuery extends BaseEmbeddedQuery {
 
    protected final Query baseQuery;
 
-   HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
+   HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                ObjectFilter objectFilter,
                long startOffset, int maxResults,
                Query baseQuery) {
-      super(queryFactory, cache, jpaQuery, namedParameters, objectFilter.getProjection(), startOffset, maxResults);
+      super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults);
       this.objectFilter = objectFilter;
       this.baseQuery = baseQuery;
    }
@@ -95,7 +95,7 @@ class HybridQuery extends BaseEmbeddedQuery {
    @Override
    public String toString() {
       return "HybridQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

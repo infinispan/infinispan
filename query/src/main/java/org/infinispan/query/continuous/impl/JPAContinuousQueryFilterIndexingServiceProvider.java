@@ -45,8 +45,8 @@ public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilt
    }
 
    @Override
-   protected String getJPAQuery(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPAContinuousQueryCacheEventFilterConverter) indexedFilter).getJPAQuery();
+   protected String getQueryString(IndexedFilter<?, ?, ?> indexedFilter) {
+      return ((JPAContinuousQueryCacheEventFilterConverter) indexedFilter).getQueryString();
    }
 
    @Override

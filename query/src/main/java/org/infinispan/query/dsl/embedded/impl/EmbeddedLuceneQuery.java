@@ -39,7 +39,7 @@ final class EmbeddedLuceneQuery extends BaseQuery {
                        Map<String, Object> namedParameters, FilterParsingResult<?> parsingResult,
                        String[] projection, ResultProcessor resultProcessor,
                        long startOffset, int maxResults) {
-      super(queryFactory, parsingResult.getJpaQuery(), namedParameters, projection, startOffset, maxResults);
+      super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults);
       if (resultProcessor instanceof RowProcessor && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
@@ -90,7 +90,7 @@ final class EmbeddedLuceneQuery extends BaseQuery {
    @Override
    public String toString() {
       return "EmbeddedLuceneQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             '}';
    }

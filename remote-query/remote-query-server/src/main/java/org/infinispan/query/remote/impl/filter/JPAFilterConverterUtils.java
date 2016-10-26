@@ -28,7 +28,7 @@ class JPAFilterConverterUtils {
    private JPAFilterConverterUtils() {
    }
 
-   static String unmarshallJPQL(Object[] params) {
+   static String unmarshallQueryString(Object[] params) {
       try {
          return (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
       } catch (IOException | ClassNotFoundException e) {

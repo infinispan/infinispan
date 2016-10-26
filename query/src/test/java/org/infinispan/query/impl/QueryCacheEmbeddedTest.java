@@ -72,13 +72,13 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
             .toBuilder();
 
       // compute the same jpa query as it would be generated for the above query
-      String jpaQuery = ((BaseQueryBuilder) queryQueryBuilder).accept(new JPAQueryGenerator());
+      String queryString = ((BaseQueryBuilder) queryQueryBuilder).accept(new JPAQueryGenerator());
 
       // everything set up, test follows ...
 
       AtomicReference<Object> lastGetResult = captureLastGetResult(queryCacheSpy);
 
-      KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, FilterParsingResult.class);
+      KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, FilterParsingResult.class);
 
       // ensure that the query cache does not have it already
       FilterParsingResult cachedParsingResult = queryCache.get(queryCacheKey);
