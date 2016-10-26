@@ -116,33 +116,17 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    @Override
    public String visit(AndCondition booleanCondition) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("(");
-      sb.append(booleanCondition.getFirstCondition().accept(this));
-      sb.append(") AND ( ");
-      sb.append(booleanCondition.getSecondCondition().accept(this));
-      sb.append(")");
-      return sb.toString();
+      return '(' + booleanCondition.getFirstCondition().accept(this) + ") AND (" + booleanCondition.getSecondCondition().accept(this) + ')';
    }
 
    @Override
    public String visit(OrCondition booleanCondition) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("(");
-      sb.append(booleanCondition.getFirstCondition().accept(this));
-      sb.append(") OR ( ");
-      sb.append(booleanCondition.getSecondCondition().accept(this));
-      sb.append(")");
-      return sb.toString();
+      return '(' + booleanCondition.getFirstCondition().accept(this) + ") OR (" + booleanCondition.getSecondCondition().accept(this) + ')';
    }
 
    @Override
    public String visit(NotCondition notCondition) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("NOT (");
-      sb.append(notCondition.getFirstCondition().accept(this));
-      sb.append(")");
-      return sb.toString();
+      return "NOT (" + notCondition.getFirstCondition().accept(this) + ')';
    }
 
    @Override
@@ -175,6 +159,7 @@ public class JPAQueryGenerator implements Visitor<String> {
       StringBuilder sb = new StringBuilder();
       ValueRange range = operator.getArgument();
       if (!range.isIncludeLower() || !range.isIncludeUpper()) {
+         // if any of the bounds are not included then we cannot use BETWEEN and need to resort to comparison
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
                (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
@@ -186,6 +171,7 @@ public class JPAQueryGenerator implements Visitor<String> {
                (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
          appendArgument(sb, range.getTo());
       } else {
+         // if the bounds are included then we can use BETWEEN
          if (operator.getAttributeCondition().isNegated()) {
             sb.append("NOT ");
          }
