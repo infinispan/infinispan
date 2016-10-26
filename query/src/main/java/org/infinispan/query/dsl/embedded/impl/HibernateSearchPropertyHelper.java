@@ -60,7 +60,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (resolvedProperty != null) {
             List<String> translatedPropertyPath = new ArrayList<>(propertyPath.length);
             for (EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
-               translatedPropertyPath.add(embeddedTypeMetadata.getEmbeddedFieldName());
+               translatedPropertyPath.add(embeddedTypeMetadata.getEmbeddedPropertyName());
             }
             if (resolvedProperty.propertyMetadata != null) {
                translatedPropertyPath.add(resolvedProperty.propertyMetadata.getPropertyAccessorName());
@@ -163,7 +163,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (resolvedProperty != null) {
             TypeMetadata typeMetadata = resolvedProperty.rootTypeMetadata;
             for (EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
-               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), embeddedTypeMetadata.getEmbeddedFieldName());
+               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), embeddedTypeMetadata.getEmbeddedPropertyName());
                if (accessor.isMultiple()) {
                   return true;
                }
@@ -328,7 +328,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
          boolean found = false;
          for (EmbeddedTypeMetadata embeddedTypeMetadata : typeMetadata.getEmbeddedTypeMetadata()) {
-            if (embeddedTypeMetadata.getEmbeddedFieldName().equals(propertyPath[i])) {
+            if (embeddedTypeMetadata.getEmbeddedPropertyName().equals(propertyPath[i])) {
                embeddedTypeMetadataList.add(embeddedTypeMetadata);
                if (i == propertyPath.length - 1) {
                   return new ResolvedProperty(rootTypeMetadata, embeddedTypeMetadataList, null, null);

@@ -5,6 +5,7 @@ import org.apache.lucene.document.Field;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.hibernate.search.engine.impl.LuceneOptionsImpl;
+import org.hibernate.search.engine.metadata.impl.BackReference;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
@@ -23,13 +24,13 @@ import org.infinispan.query.remote.impl.QueryFacadeImpl;
 final class IndexingTagHandler implements TagHandler {
 
    private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
-         new DocumentFieldMetadata.Builder(null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+         new DocumentFieldMetadata.Builder(new BackReference<>(), new BackReference<>(), null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .indexNullAs(QueryFacadeImpl.NULL_TOKEN_CODEC)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
 
    private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
-         new DocumentFieldMetadata.Builder(null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+         new DocumentFieldMetadata.Builder(new BackReference<>(), new BackReference<>(), null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .indexNullAs(QueryFacadeImpl.NULL_TOKEN_CODEC)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);

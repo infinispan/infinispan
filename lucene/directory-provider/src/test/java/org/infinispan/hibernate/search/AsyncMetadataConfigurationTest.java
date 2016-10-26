@@ -5,9 +5,11 @@ import static org.junit.Assert.assertEquals;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.test.util.HibernateManualConfiguration;
 import org.hibernate.search.testsupport.BytemanHelper;
+import org.hibernate.search.testsupport.BytemanHelper.BytemanAccessor;
 import org.hibernate.search.testsupport.setup.SearchConfigurationForTest;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -21,6 +23,9 @@ import org.junit.runner.RunWith;
  */
 @RunWith(BMUnitRunner.class)
 public class AsyncMetadataConfigurationTest {
+
+   @Rule
+   public BytemanAccessor byteman = BytemanHelper.createAccessor();
 
    @Test
    @BMRule(targetClass = "org.infinispan.lucene.impl.DirectoryBuilderImpl",
@@ -77,6 +82,6 @@ public class AsyncMetadataConfigurationTest {
       }
 
       new SearchIntegratorBuilder().configuration(configuration).buildSearchIntegrator();
-      assertEquals("The directory provider was not started", 1, BytemanHelper.getAndResetInvocationCount());
+      assertEquals("The directory provider was not started", 1, byteman.getAndResetInvocationCount());
    }
 }
