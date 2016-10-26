@@ -30,72 +30,72 @@ import org.testng.annotations.Test;
 import static org.testng.AssertJUnit.assertEquals;
 
 public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
-    private final CacheMode mode;
-    private final boolean autoCommit;
+   private final CacheMode mode;
+   private final boolean autoCommit;
 
-    protected ControlledTimeService timeService;
+   protected ControlledTimeService timeService;
 
-    protected AutoCommitExpiryTest(CacheMode mode, boolean autoCommit) {
-        this.mode = mode;
-        this.autoCommit = autoCommit;
-    }
+   protected AutoCommitExpiryTest(CacheMode mode, boolean autoCommit) {
+      this.mode = mode;
+      this.autoCommit = autoCommit;
+   }
 
-    @Test
-    public void testNoAutCommitAndExpiryListener() throws SystemException, NotSupportedException,
-          HeuristicRollbackException, HeuristicMixedException, RollbackException {
-        ExpiryListener expiryListener = new ExpiryListener();
+   @Test
+   public void testNoAutCommitAndExpiryListener() throws SystemException, NotSupportedException,
+         HeuristicRollbackException, HeuristicMixedException, RollbackException {
+      ExpiryListener expiryListener = new ExpiryListener();
 
-        Cache<String, String> applicationCache = cacheManager.getCache();
-        applicationCache.addListener(expiryListener);
+      Cache<String, String> applicationCache = cacheManager.getCache();
+      applicationCache.addListener(expiryListener);
 
-        TransactionManager tm = applicationCache.getAdvancedCache().getTransactionManager();
-        tm.begin();
-        applicationCache.put("test1", "value1", 1, TimeUnit.SECONDS);
-        tm.commit();
+      TransactionManager tm = applicationCache.getAdvancedCache().getTransactionManager();
+      tm.begin();
+      applicationCache.put("test1", "value1", 1, TimeUnit.SECONDS);
+      tm.commit();
 
-        tm.begin();
-        applicationCache.put("test2", "value2", 1, TimeUnit.SECONDS);
-        tm.commit();
+      tm.begin();
+      applicationCache.put("test2", "value2", 1, TimeUnit.SECONDS);
+      tm.commit();
 
-        timeService.advance(TimeUnit.SECONDS.toMillis(10));
+      timeService.advance(TimeUnit.SECONDS.toMillis(10));
 
-        ExpirationManager manager = applicationCache.getAdvancedCache().getExpirationManager();
-        manager.processExpiration();
+      ExpirationManager manager = applicationCache.getAdvancedCache().getExpirationManager();
+      manager.processExpiration();
 
-        eventually(() -> 2 == expiryListener.getCount());
-    }
+      eventually(() -> 2 == expiryListener.getCount());
+   }
 
-    @Override
-    protected EmbeddedCacheManager createCacheManager() throws Exception {
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        if (mode.isClustered()) {
-            builder.clustering().cacheMode(mode);
-        }
-        builder
-              .jmxStatistics().enable()
-              .transaction()
-              .transactionMode(TransactionMode.TRANSACTIONAL)
-              .transactionManagerLookup(new DummyTransactionManagerLookup())
-              .autoCommit(autoCommit);
-        EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      if (mode.isClustered()) {
+         builder.clustering().cacheMode(mode);
+      }
+      builder
+            .jmxStatistics().enable()
+            .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .autoCommit(autoCommit);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
 
-        timeService = new ControlledTimeService(0);
-        TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
-        return cm;
-    }
+      timeService = new ControlledTimeService(0);
+      TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
+      return cm;
+   }
 
-    @Listener(primaryOnly = true, observation = Listener.Observation.POST)
-    public class ExpiryListener {
+   @Listener(primaryOnly = true, observation = Listener.Observation.POST)
+   public class ExpiryListener {
 
-        private final AtomicInteger counter = new AtomicInteger();
+      private final AtomicInteger counter = new AtomicInteger();
 
-        public int getCount() {
-            return counter.get();
-        }
+      public int getCount() {
+         return counter.get();
+      }
 
-        @CacheEntryExpired
-        public void expired(CacheEntryExpiredEvent<String, String> event) {
-            counter.incrementAndGet();
-        }
-    }
+      @CacheEntryExpired
+      public void expired(CacheEntryExpiredEvent<String, String> event) {
+         counter.incrementAndGet();
+      }
+   }
 }
