@@ -34,7 +34,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
    /**
     * The JPA query to execute.
     */
-   protected final String jpaQuery;
+   protected final String queryString;
 
    protected final Map<String, Object> namedParameters;
 
@@ -58,11 +58,11 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
     */
    protected ObjectFilter objectFilter;
 
-   public JPAContinuousQueryCacheEventFilterConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      if (jpaQuery == null || matcherImplClass == null) {
+   public JPAContinuousQueryCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+      if (queryString == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
-      this.jpaQuery = jpaQuery;
+      this.queryString = queryString;
       this.namedParameters = namedParameters;
       this.matcherImplClass = matcherImplClass;
    }
@@ -71,8 +71,8 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
       return matcher;
    }
 
-   public String getJPAQuery() {
-      return jpaQuery;
+   public String getQueryString() {
+      return queryString;
    }
 
    public Map<String, Object> getNamedParameters() {
@@ -95,15 +95,15 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
    protected ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          if (queryCache != null) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, matcherImplClass);
+            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(jpaQuery);
+               objectFilter = matcher.getObjectFilter(queryString);
                queryCache.put(queryCacheKey, objectFilter);
             }
             this.objectFilter = objectFilter;
          } else {
-            objectFilter = matcher.getObjectFilter(jpaQuery);
+            objectFilter = matcher.getObjectFilter(queryString);
          }
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
@@ -139,14 +139,14 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
 
    @Override
    public String toString() {
-      return "JPAContinuousQueryCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
+      return "JPAContinuousQueryCacheEventFilterConverter{queryString='" + queryString + "'}";
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryCacheEventFilterConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAContinuousQueryCacheEventFilterConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.jpaQuery);
+         output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
             UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
@@ -162,7 +162,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
 
       @Override
       public JPAContinuousQueryCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String jpaQuery = input.readUTF();
+         String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
@@ -174,7 +174,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryCacheEventFilterConverter(jpaQuery, namedParameters, matcherImplClass);
+         return new JPAContinuousQueryCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override

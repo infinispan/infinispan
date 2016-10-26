@@ -126,17 +126,17 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(Query query) {
-      return getObjectFilter(((BaseQuery) query).getJPAQuery(), null);
+      return getObjectFilter(((BaseQuery) query).getQueryString(), null);
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery) {
-      return getObjectFilter(jpaQuery, null);
+   public ObjectFilter getObjectFilter(String queryString) {
+      return getObjectFilter(queryString, null);
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
+   public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
+      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(queryString, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -167,18 +167,18 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), callback, eventType);
+      return registerFilter(baseQuery.getQueryString(), baseQuery.getNamedParameters(), callback, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
-      return registerFilter(jpaQuery, null, callback, eventType);
+   public FilterSubscription registerFilter(String queryString, FilterCallback callback, Object... eventType) {
+      return registerFilter(queryString, null, callback, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback
+   public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback
          callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
+      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(queryString, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
 
       write.lock();
@@ -188,7 +188,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             filterRegistry = new FilterRegistry<>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(queryString, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }

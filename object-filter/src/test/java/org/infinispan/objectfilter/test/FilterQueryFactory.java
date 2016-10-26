@@ -57,18 +57,18 @@ public final class FilterQueryFactory extends BaseQueryFactory {
       @Override
       public Query build() {
          JPAQueryGenerator generator = new JPAQueryGenerator();
-         String jpqlString = accept(generator);
+         String queryString = accept(generator);
          if (log.isTraceEnabled()) {
-            log.tracef("JPQL string : %s", jpqlString);
+            log.tracef("Query string : %s", queryString);
          }
-         return new FilterQuery(queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+         return new FilterQuery(queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
       }
    }
 
    private static final class FilterQuery extends BaseQuery {
 
-      FilterQuery(QueryFactory queryFactory, String jpaQuery, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
-         super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      FilterQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+         super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       }
 
       @Override

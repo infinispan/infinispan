@@ -4,5 +4,5 @@ package org.infinispan.objectfilter.impl.syntax;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public interface ValueExpr extends Visitable, JPAString {
+public interface ValueExpr extends Visitable, ToQueryString {
 }

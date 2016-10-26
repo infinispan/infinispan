@@ -40,8 +40,8 @@ public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKey
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
    }
 
-   public JPABinaryProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
-      this.delegate = new JPAProtobufFilterAndConverter(jpaQuery, namedParameters);
+   public JPABinaryProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
+      this.delegate = new JPAProtobufFilterAndConverter(queryString, namedParameters);
    }
 
    private JPABinaryProtobufFilterAndConverter(JPAProtobufFilterAndConverter delegate) {

@@ -75,7 +75,7 @@ public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 
    private JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> makeFilter(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return new JPAContinuousQueryCacheEventFilterConverter<>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
+      return new JPAContinuousQueryCacheEventFilterConverter<>(baseQuery.getQueryString(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
    }
 
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)

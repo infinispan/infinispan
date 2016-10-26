@@ -38,8 +38,8 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    private boolean isCompatMode;
 
-   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      super(jpaQuery, namedParameters, matcherImplClass);
+   public JPAContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+      super(queryString, namedParameters, matcherImplClass);
    }
 
    @Override
@@ -103,14 +103,14 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    @Override
    public String toString() {
-      return "JPAContinuousQueryProtobufCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
+      return "JPAContinuousQueryProtobufCacheEventFilterConverter{queryString='" + queryString + "'}";
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryProtobufCacheEventFilterConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.jpaQuery);
+         output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
             UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
@@ -126,7 +126,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
       @Override
       public JPAContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String jpaQuery = input.readUTF();
+         String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
@@ -138,7 +138,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery, namedParameters, matcherImplClass);
+         return new JPAContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override

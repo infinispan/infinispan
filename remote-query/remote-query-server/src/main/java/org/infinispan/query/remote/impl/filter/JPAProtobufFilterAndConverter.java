@@ -32,8 +32,8 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    private boolean isCompatMode;
 
-   public JPAProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
-      super(jpaQuery, namedParameters, ProtobufMatcher.class);
+   public JPAProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
+      super(queryString, namedParameters, ProtobufMatcher.class);
    }
 
    @Override
@@ -60,14 +60,14 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    @Override
    public String toString() {
-      return "JPAProtobufFilterAndConverter{jpaQuery='" + getJPAQuery() + "'}";
+      return "JPAProtobufFilterAndConverter{queryString='" + getQueryString() + "'}";
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAProtobufFilterAndConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAProtobufFilterAndConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.getJPAQuery());
+         output.writeUTF(filterAndConverter.getQueryString());
          Map<String, Object> namedParameters = filterAndConverter.getNamedParameters();
          if (namedParameters != null) {
             UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
@@ -82,7 +82,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
       @Override
       public JPAProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String jpaQuery = input.readUTF();
+         String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
@@ -93,7 +93,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
                namedParameters.put(paramName, paramValue);
             }
          }
-         return new JPAProtobufFilterAndConverter(jpaQuery, namedParameters);
+         return new JPAProtobufFilterAndConverter(queryString, namedParameters);
       }
 
       @Override

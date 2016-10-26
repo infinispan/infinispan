@@ -27,9 +27,9 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    private JPAFilterAndConverter<?, ?> filter;
 
    EmbeddedQuery(QueryEngine queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
-                 String jpaQuery, Map<String, Object> namedParameters, String[] projection,
+                 String queryString, Map<String, Object> namedParameters, String[] projection,
                  long startOffset, int maxResults) {
-      super(queryFactory, cache, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults);
       this.queryEngine = queryEngine;
    }
 
@@ -42,7 +42,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    private JPAFilterAndConverter createFilter() {
       // filter is created first time only
       if (filter == null) {
-         filter = queryEngine.createAndWireFilter(jpaQuery, namedParameters);
+         filter = queryEngine.createAndWireFilter(queryString, namedParameters);
 
          // force early validation!
          filter.getObjectFilter();
@@ -64,7 +64,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    @Override
    public String toString() {
       return "EmbeddedQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

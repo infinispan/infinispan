@@ -22,9 +22,9 @@ final class DelegatingQuery extends BaseQuery {
    private BaseQuery query;
 
    DelegatingQuery(QueryEngine queryEngine, QueryFactory queryFactory,
-                   String jpaQuery, Map<String, Object> namedParameters, String[] projection,
+                   String queryString, Map<String, Object> namedParameters, String[] projection,
                    long startOffset, int maxResults) {
-      super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.queryEngine = queryEngine;
    }
 
@@ -39,7 +39,7 @@ final class DelegatingQuery extends BaseQuery {
    private Query createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = queryEngine.buildQuery(queryFactory, jpaQuery, namedParameters, startOffset, maxResults);
+         query = queryEngine.buildQuery(queryFactory, queryString, namedParameters, startOffset, maxResults);
       }
       return query;
    }
@@ -57,7 +57,7 @@ final class DelegatingQuery extends BaseQuery {
    @Override
    public String toString() {
       return "DelegatingQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

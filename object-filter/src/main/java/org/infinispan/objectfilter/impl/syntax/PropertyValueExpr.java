@@ -77,7 +77,7 @@ public class PropertyValueExpr implements ValueExpr {
    }
 
    @Override
-   public String toJpaString() {
+   public String toQueryString() {
       StringBuilder sb = new StringBuilder();
       boolean isFirst = true;
       for (String p : propertyPath) {

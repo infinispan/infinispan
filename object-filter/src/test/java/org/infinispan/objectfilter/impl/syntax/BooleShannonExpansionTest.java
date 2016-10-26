@@ -39,12 +39,12 @@ public class BooleShannonExpansionTest {
    });
 
    /**
-    * @param jpaQuery        the input JPA query to parse and expand
+    * @param queryString     the input query to parse and expand
     * @param expectedExprStr the expected 'toString()' of the output AST
-    * @param expectedJpa     the expected equivalent JPA of the AST
+    * @param expectedQuery   the expected equivalent JPA of the AST
     */
-   private void assertExpectedTree(String jpaQuery, String expectedExprStr, String expectedJpa) {
-      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery, propertyHelper);
+   private void assertExpectedTree(String queryString, String expectedExprStr, String expectedQuery) {
+      FilterParsingResult<Class<?>> parsingResult = parser.parse(queryString, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {
@@ -53,56 +53,56 @@ public class BooleShannonExpansionTest {
       } else {
          assertNull(expr);
       }
-      if (expectedJpa != null) {
-         String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
-         assertEquals(expectedJpa, jpaOut);
+      if (expectedQuery != null) {
+         String queryOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
+         assertEquals(expectedQuery, queryOut);
       }
    }
 
    @Test
    public void testNothingToExpand() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person",
-                         null,
-                         "FROM org.infinispan.objectfilter.test.model.Person");
+            null,
+            "FROM org.infinispan.objectfilter.test.model.Person");
    }
 
    @Test
    public void testExpansionNotNeeded() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
-                               "p.surname = 'Adrian' or p.name = 'Nistor'",
-                         "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
-                         "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
+                  "p.surname = 'Adrian' or p.name = 'Nistor'",
+            "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
+            "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
    }
 
    @Test
    public void testExpansionNotPossible() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
-                               "p.license = 'A' or p.name = 'Nistor'",
-                         "CONST_TRUE",
-                         "FROM org.infinispan.objectfilter.test.model.Person");
+                  "p.license = 'A' or p.name = 'Nistor'",
+            "CONST_TRUE",
+            "FROM org.infinispan.objectfilter.test.model.Person");
    }
 
    @Test
    public void testExpansionNotPossible2() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
-                               "p.name = 'A' and p.name > 'A'",
-                         "CONST_FALSE",
-                         null);
+                  "p.name = 'A' and p.name > 'A'",
+            "CONST_FALSE",
+            null);
    }
 
    @Test
    public void testExpansionPossible() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
-                               "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor'",
-                         "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
-                         "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
+                  "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor'",
+            "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
+            "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
    }
 
    @Test
    public void testExpansionTooBig() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
-                               "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor' and license = 'PPL'",
-                         "CONST_TRUE",
-                         "FROM org.infinispan.objectfilter.test.model.Person");
+                  "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor' and license = 'PPL'",
+            "CONST_TRUE",
+            "FROM org.infinispan.objectfilter.test.model.Person");
    }
 }

@@ -140,7 +140,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       PredicateIndex<AttributeMetadata, AttributeId> predicateIndex = new PredicateIndex<>(metadataAdapter);
       root = predicateIndex.getRoot();
 
-      filterSubscription = new FilterSubscriptionImpl<>(parsingResult.getJpaQuery(), namedParameters, false, metadataAdapter, beTree,
+      filterSubscription = new FilterSubscriptionImpl<>(parsingResult.getQueryString(), namedParameters, false, metadataAdapter, beTree,
             emptyCallback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, null);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);

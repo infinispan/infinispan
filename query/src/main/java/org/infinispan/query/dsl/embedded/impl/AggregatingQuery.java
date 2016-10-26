@@ -27,12 +27,12 @@ final class AggregatingQuery extends HybridQuery {
 
    private final boolean twoPhaseAcc;
 
-   AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
+   AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                     int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                     ObjectFilter objectFilter,
                     long startOffset, int maxResults,
                     BaseQuery baseQuery) {
-      super(queryFactory, cache, jpaQuery, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
+      super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
       if (baseQuery.getProjection() == null) {
          throw new IllegalArgumentException("Base query must use projections");
       }
@@ -57,7 +57,7 @@ final class AggregatingQuery extends HybridQuery {
    @Override
    public String toString() {
       return "AggregatingQuery{" +
-            "jpaQuery=" + jpaQuery +
+            "queryString=" + queryString +
             ", namedParameters=" + namedParameters +
             ", noOfGroupingColumns=" + noOfGroupingColumns +
             ", accumulators=" + Arrays.toString(accumulators) +

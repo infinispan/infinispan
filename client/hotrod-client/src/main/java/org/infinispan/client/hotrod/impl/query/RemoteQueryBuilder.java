@@ -28,10 +28,10 @@ final class RemoteQueryBuilder extends BaseQueryBuilder {
    @Override
    public Query build() {
       RemoteJPAQueryGenerator generator = new RemoteJPAQueryGenerator(serializationContext);
-      String jpqlString = accept(generator);
+      String queryString = accept(generator);
       if (trace) {
-         log.tracef("JPQL string : %s", jpqlString);
+         log.tracef("Query string : %s", queryString);
       }
-      return new RemoteQuery(queryFactory, cache, serializationContext, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+      return new RemoteQuery(queryFactory, cache, serializationContext, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
    }
 }

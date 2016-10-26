@@ -157,7 +157,7 @@ public final class ConstantValueExpr implements ValueExpr {
    }
 
    @Override
-   public String toJpaString() {
+   public String toQueryString() {
       if (constantValue instanceof ParamPlaceholder) {
          return constantValue.toString();
       }

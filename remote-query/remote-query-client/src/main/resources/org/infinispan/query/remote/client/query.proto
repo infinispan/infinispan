@@ -8,12 +8,12 @@ package org.infinispan.query.remote.client;
 message QueryRequest {
 
    /**
-    * The query string, expressed in JPA query language.
+    * The query string, expressed in Infinispan's query language (a JPA subset with full-text enhancements).
     * NOTE: currently only a limited subset of the JPA query language is supported.
     */
-   required string jpqlString = 1;
+   required string queryString = 1;
 
-   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the jpqlString
+   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the query string
 
    /**
     * The number of matching results to skip before the first returned result.

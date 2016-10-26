@@ -62,6 +62,9 @@ public class QueryEngine {
 
    protected final AdvancedCache<?, ?> cache;
 
+   /**
+    * Is the cache indexed?
+    */
    protected final boolean isIndexed;
 
    protected final BaseMatcher matcher;
@@ -112,9 +115,9 @@ public class QueryEngine {
       return searchFactory;
    }
 
-   public BaseQuery buildQuery(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   public BaseQuery buildQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (log.isDebugEnabled()) {
-         log.debugf("Building query for : %s", jpqlString);
+         log.debugf("Building query for : %s", queryString);
       }
 
       if (authorizationManager != null) {
@@ -123,11 +126,11 @@ public class QueryEngine {
 
       checkParameters(namedParameters);
 
-      FilterParsingResult<?> parsingResult = parse(jpqlString);
+      FilterParsingResult<?> parsingResult = parse(queryString);
       if (parsingResult.hasGroupingOrAggregations()) {
-         return buildQueryWithAggregations(queryFactory, jpqlString, namedParameters, startOffset, maxResults, parsingResult);
+         return buildQueryWithAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults, parsingResult);
       }
-      return buildQueryNoAggregations(queryFactory, jpqlString, namedParameters, startOffset, maxResults, parsingResult);
+      return buildQueryNoAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults, parsingResult);
    }
 
    /**
@@ -143,7 +146,7 @@ public class QueryEngine {
       }
    }
 
-   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
+   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.getProjectedPaths() == null) {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -210,7 +213,7 @@ public class QueryEngine {
       if (parsingResult.getHavingClause() != null) {
          BooleanExpr normalizedHavingClause = booleanFilterNormalizer.normalize(parsingResult.getHavingClause());
          if (normalizedHavingClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = JPATreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityName(), columns, propertyHelper));
@@ -221,7 +224,7 @@ public class QueryEngine {
 
       for (PropertyPath p : columns.keySet()) {
          if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
-            return buildQueryWithRepeatedAggregations(queryFactory, jpqlString, namedParameters, startOffset, maxResults,
+            return buildQueryWithRepeatedAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults,
                   parsingResult, havingClause, columns, noOfGroupingColumns);
          }
       }
@@ -262,7 +265,7 @@ public class QueryEngine {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(JPATreePrinter.printTree(normalizedWhereClause));
@@ -312,8 +315,8 @@ public class QueryEngine {
    }
 
    /**
-    * Swaps all occurrences of PropertyPaths in given expression tree (the HAVING clause) with new PropertyPaths according to the mapping
-    * found in {@code columns} map.
+    * Swaps all occurrences of PropertyPaths in given expression tree (the HAVING clause) with new PropertyPaths
+    * according to the mapping found in {@code columns} map.
     */
    private BooleanExpr swapVariables(BooleanExpr expr, String targetEntityName,
                                      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
@@ -373,7 +376,7 @@ public class QueryEngine {
             PropertyPath p = new PropertyPath(null, propertyValueExpr.getPropertyPath());
             RowPropertyHelper.ColumnMetadata c = columns.get(p);
             if (c == null) {
-               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toJpaString());
+               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toQueryString());
             }
             return new PropertyValueExpr(c.getColumnName(), propertyValueExpr.isRepeated(), propertyValueExpr.getPrimitiveType());
          }
@@ -396,7 +399,7 @@ public class QueryEngine {
       return expr.acceptVisitor(new PropertyReplacer());
    }
 
-   private BaseQuery buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults,
+   private BaseQuery buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
                                                         FilterParsingResult<?> parsingResult, String havingClause,
                                                         LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns) {
       // these types of aggregations can only be computed in memory
@@ -409,7 +412,7 @@ public class QueryEngine {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(JPATreePrinter.printTree(normalizedWhereClause));
@@ -490,7 +493,7 @@ public class QueryEngine {
             startOffset, maxResults, projectingAggregatingQuery);
    }
 
-   private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters,
+   private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
                                               long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
@@ -518,13 +521,13 @@ public class QueryEngine {
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
          // the query is a contradiction, there are no matches
-         return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
+         return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
       }
 
       // if cache is indexed but there is no actual 'where' filter clause and we do have sorting or projections we should still use the index, otherwise just go for a non-indexed fetch-all
       if (!isIndexed || (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE) && parsingResult.getProjections() == null && parsingResult.getSortFields() == null) {
          // fully non-indexed execution because the filter matches everything or there is no indexing at all
-         return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
+         return new EmbeddedQuery(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       BooleShannonExpansion.IndexedFieldProvider indexedFieldProvider = getIndexedFieldProvider(parsingResult);
@@ -625,22 +628,23 @@ public class QueryEngine {
 
       if (expansion == ConstantBooleanExpr.TRUE) {
          // expansion leads to a full non-indexed query or the expansion is too long/complex
-         return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
+         return new EmbeddedQuery(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       // some fields are indexed, run a hybrid query
       FilterParsingResult<?> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null);
       Query expandedQuery = new EmbeddedLuceneQuery(this, queryFactory, namedParameters, fpr, null, makeResultProcessor(null), -1, -1);
-      return new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(matcher, jpqlString, namedParameters, null), startOffset, maxResults, expandedQuery);
+      return new HybridQuery(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery);
    }
 
    /**
-    * Make a new FilterParsingResult after normalizing the query. This FilterParsingResult is not supposed to have grouping/aggregation.
+    * Make a new FilterParsingResult after normalizing the query. This FilterParsingResult is not supposed to have
+    * grouping/aggregation.
     */
    private FilterParsingResult<?> makeFilterParsingResult(FilterParsingResult<?> parsingResult, BooleanExpr normalizedWhereClause,
                                                           PropertyPath[] projection, Class<?>[] projectedTypes, SortField[] sortFields) {
-      String jpaQuery = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
-      return new FilterParsingResult(jpaQuery, parsingResult.getParameterNames(),
+      String queryString = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
+      return new FilterParsingResult(queryString, parsingResult.getParameterNames(),
             normalizedWhereClause, null,
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
             projection, projectedTypes, null, sortFields);
@@ -654,32 +658,32 @@ public class QueryEngine {
       return null;
    }
 
-   private FilterParsingResult<?> parse(String jpqlString) {
+   private FilterParsingResult<?> parse(String queryString) {
       FilterParsingResult<?> parsingResult;
       if (queryCache != null) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpqlString, FilterParsingResult.class);
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, FilterParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = matcher.getParser().parse(jpqlString, matcher.getPropertyHelper());
+            parsingResult = matcher.getParser().parse(queryString, matcher.getPropertyHelper());
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = matcher.getParser().parse(jpqlString, matcher.getPropertyHelper());
+         parsingResult = matcher.getParser().parse(queryString, matcher.getPropertyHelper());
       }
       return parsingResult;
    }
 
-   private ObjectFilter getObjectFilter(BaseMatcher matcher, String jpqlString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
+   private ObjectFilter getObjectFilter(BaseMatcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
       ObjectFilter objectFilter;
       if (queryCache != null) {
-         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<>(jpqlString, new KeyValuePair<>(matcher.getClass(), acc));
+         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<>(queryString, new KeyValuePair<>(matcher.getClass(), acc));
          objectFilter = queryCache.get(queryCacheKey);
          if (objectFilter == null) {
-            objectFilter = matcher.getObjectFilter(jpqlString, acc);
+            objectFilter = matcher.getObjectFilter(queryString, acc);
             queryCache.put(queryCacheKey, objectFilter);
          }
       } else {
-         objectFilter = matcher.getObjectFilter(jpqlString, acc);
+         objectFilter = matcher.getObjectFilter(queryString, acc);
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
@@ -689,8 +693,8 @@ public class QueryEngine {
             BooleShannonExpansion.IndexedFieldProvider.NO_INDEXING;
    }
 
-   protected final JPAFilterAndConverter createAndWireFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      final JPAFilterAndConverter filter = createFilter(jpaQuery, namedParameters);
+   protected final JPAFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
+      final JPAFilterAndConverter filter = createFilter(queryString, namedParameters);
 
       SecurityActions.doPrivileged(() -> {
          cache.getComponentRegistry().wireDependencies(filter);
@@ -700,8 +704,8 @@ public class QueryEngine {
       return filter;
    }
 
-   protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      return new JPAFilterAndConverter(jpaQuery, namedParameters, ReflectionMatcher.class);
+   protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return new JPAFilterAndConverter(queryString, namedParameters, ReflectionMatcher.class);
    }
 
    /**
@@ -709,7 +713,7 @@ public class QueryEngine {
     */
    protected CacheQuery buildLuceneQuery(FilterParsingResult<?> filterParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (log.isDebugEnabled()) {
-         log.debugf("Building Lucene query for : %s", filterParsingResult.getJpaQuery());
+         log.debugf("Building Lucene query for : %s", filterParsingResult.getQueryString());
       }
 
       if (!isIndexed) {
@@ -720,6 +724,11 @@ public class QueryEngine {
 
       LuceneQueryParsingResult luceneParsingResult = transform(filterParsingResult, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
+
+      if (log.isDebugEnabled()) {
+         log.debugf("The resulting Lucene query is : %s", luceneQuery.toString());
+      }
+
       CacheQuery cacheQuery = getSearchManager().getQuery(luceneQuery, getTargetedClass(filterParsingResult));
 
       if (luceneParsingResult.getSort() != null) {
@@ -749,7 +758,7 @@ public class QueryEngine {
    private <TypeMetadata> LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
       LuceneQueryParsingResult<TypeMetadata> luceneParsingResult;
       if (queryCache != null && parsingResult.getParameterNames().isEmpty()) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(parsingResult.getJpaQuery(), LuceneQueryParsingResult.class);
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(parsingResult.getQueryString(), LuceneQueryParsingResult.class);
          luceneParsingResult = queryCache.get(queryCacheKey);
          if (luceneParsingResult == null) {
             luceneParsingResult = createLuceneMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));

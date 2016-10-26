@@ -22,7 +22,7 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
  */
 final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
 
-   private final String jpaQuery;
+   private final String queryString;
 
    private final Set<String> parameterNames;
 
@@ -40,13 +40,13 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
 
    private List<Class<?>> projectedTypes;
 
-   FilterRendererDelegate(String jpaQuery,
+   FilterRendererDelegate(String queryString,
                           ObjectPropertyHelper<TypeMetadata> propertyHelper,
                           SingleEntityQueryBuilder<BooleanExpr> builder,
                           SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
                           Map<String, Object> namedParameters) {
       super(propertyHelper, propertyHelper.getEntityNamesResolver(), builder, namedParameters);
-      this.jpaQuery = jpaQuery;
+      this.queryString = queryString;
       this.propertyHelper = propertyHelper;
       this.havingBuilder = havingBuilder;
       this.parameterNames = namedParameters.keySet();
@@ -112,7 +112,7 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
       return new FilterParsingResult<>(
-            jpaQuery,
+            queryString,
             Collections.unmodifiableSet(new HashSet<>(parameterNames)),
             builder.build(),
             havingBuilder != null ? havingBuilder.build() : null,

@@ -21,7 +21,7 @@ public final class JPATreePrinter {
             throw new IllegalArgumentException("The WHERE clause must not be a contradiction");
          }
          if (whereClause != ConstantBooleanExpr.TRUE) {
-            sb.append(" WHERE ").append(whereClause.toJpaString());
+            sb.append(" WHERE ").append(whereClause.toQueryString());
          }
       }
       return sb.toString();

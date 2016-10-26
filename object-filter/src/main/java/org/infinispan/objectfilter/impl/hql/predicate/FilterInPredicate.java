@@ -16,7 +16,7 @@ class FilterInPredicate extends InPredicate<BooleanExpr> {
    private final ValueExpr valueExpr;
 
    FilterInPredicate(ValueExpr valueExpr, List<Object> values) {
-      super(valueExpr.toJpaString(), values);
+      super(valueExpr.toQueryString(), values);
       this.valueExpr = valueExpr;
    }
 
