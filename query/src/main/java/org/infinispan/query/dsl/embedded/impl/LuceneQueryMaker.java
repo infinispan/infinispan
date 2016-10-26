@@ -32,6 +32,10 @@ import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
 /**
+ * An *Expr {@link Visitor} that transforms a {@link FilterParsingResult} into a {@link LuceneQueryParsingResult}.
+ * <p>
+ * NOTE: This is not stateless, not threadsafe, so it can only be used for a single transformation at a time.
+ *
  * @author anistor@redhat.com
  * @since 9.0
  */
@@ -41,6 +45,7 @@ public final class LuceneQueryMaker implements Visitor<Query, Query> {
 
    private static final char LUCENE_SINGLE_CHARACTER_WILDCARD = '?';
    private static final char LUCENE_MULTIPLE_CHARACTERS_WILDCARD = '*';
+   private static final char LUCENE_WILDCARD_ESCAPE_CHARACTER = '\\';
 
    private final QueryContextBuilder queryContextBuilder;
    private final HibernateSearchPropertyHelper propertyHelper;
@@ -214,19 +219,29 @@ public final class LuceneQueryMaker implements Visitor<Query, Query> {
       String[] propertyPath = propertyValueExpr.getPropertyPath();
       ensureNotAnalyzed(propertyPath);
       StringBuilder lucenePattern = new StringBuilder(likeExpr.getPattern());
+      // transform 'Like' pattern into Lucene wildcard pattern
+      boolean isEscaped = false;
       for (int i = 0; i < lucenePattern.length(); i++) {
-         switch (lucenePattern.charAt(i)) {
-            case LUCENE_MULTIPLE_CHARACTERS_WILDCARD:
-            case LUCENE_SINGLE_CHARACTER_WILDCARD:
-               lucenePattern.insert(i, '\\');
+         char c = lucenePattern.charAt(i);
+         if (!isEscaped && c == likeExpr.getEscapeChar()) {
+            isEscaped = true;
+            lucenePattern.deleteCharAt(i);
+         } else {
+            if (isEscaped) {
+               isEscaped = false;
+            } else {
+               if (c == LikeExpr.MULTIPLE_CHARACTERS_WILDCARD) {
+                  lucenePattern.setCharAt(i, LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
+                  continue;
+               } else if (c == LikeExpr.SINGLE_CHARACTER_WILDCARD) {
+                  lucenePattern.setCharAt(i, LUCENE_SINGLE_CHARACTER_WILDCARD);
+                  continue;
+               }
+            }
+            if (c == LUCENE_SINGLE_CHARACTER_WILDCARD || c == LUCENE_MULTIPLE_CHARACTERS_WILDCARD) {
+               lucenePattern.insert(i, LUCENE_WILDCARD_ESCAPE_CHARACTER);
                i++;
-               break;
-            case '%':
-               lucenePattern.setCharAt(i, LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
-               break;
-            case '_':
-               lucenePattern.setCharAt(i, LUCENE_SINGLE_CHARACTER_WILDCARD);
-               break;
+            }
          }
       }
       return applyFieldBridge(propertyPath, queryBuilder.keyword().wildcard().onField(StringHelper.join(propertyPath)))
