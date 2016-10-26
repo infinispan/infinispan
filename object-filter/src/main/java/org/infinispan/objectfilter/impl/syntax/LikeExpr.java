@@ -6,8 +6,15 @@ package org.infinispan.objectfilter.impl.syntax;
  */
 public final class LikeExpr implements PrimaryPredicateExpr {
 
+   public static final char SINGLE_CHARACTER_WILDCARD = '_';
+
+   public static final char MULTIPLE_CHARACTERS_WILDCARD = '%';
+
+   public static final char DEFAULT_ESCAPE_CHARACTER = '\\';
+
    private final ValueExpr child;
    private final String pattern;
+   private final char escapeChar = DEFAULT_ESCAPE_CHARACTER;
 
    public LikeExpr(ValueExpr child, String pattern) {
       this.child = child;
@@ -21,6 +28,10 @@ public final class LikeExpr implements PrimaryPredicateExpr {
 
    public String getPattern() {
       return pattern;
+   }
+
+   public char getEscapeChar() {
+      return escapeChar;
    }
 
    @Override

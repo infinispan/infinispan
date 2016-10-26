@@ -8,8 +8,8 @@ import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.EqualsCondition;
 import org.infinispan.objectfilter.impl.predicateindex.IntervalPredicate;
 import org.infinispan.objectfilter.impl.predicateindex.IsNullCondition;
+import org.infinispan.objectfilter.impl.predicateindex.LikeCondition;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
-import org.infinispan.objectfilter.impl.predicateindex.RegexCondition;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanOperatorExpr;
@@ -128,9 +128,10 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       } else if (condition instanceof IsNullExpr) {
          addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, IsNullCondition.INSTANCE));
       } else if (condition instanceof LikeExpr) {
-         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, new RegexCondition(((LikeExpr) condition).getPattern())));
+         LikeExpr likeExpr = (LikeExpr) condition;
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, new LikeCondition(likeExpr.getPattern(), likeExpr.getEscapeChar())));
       } else {
-         throw new IllegalStateException("Unexpected condition type: " + condition);
+         throw new IllegalStateException("Unexpected condition type (" + condition.getClass().getSimpleName() + "): " + condition);
       }
    }
 
