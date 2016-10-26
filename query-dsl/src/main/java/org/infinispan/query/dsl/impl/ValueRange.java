@@ -11,7 +11,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class ValueRange {
+final class ValueRange {
 
    private static final Log log = Logger.getMessageLogger(Log.class, ValueRange.class.getName());
 
@@ -60,12 +60,6 @@ class ValueRange {
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(includeLower ? '[' : '(')
-            .append(from)
-            .append(", ")
-            .append(to)
-            .append(includeUpper ? ']' : ')');
-      return sb.toString();
+      return (includeLower ? "[" : "(") + from + ", " + to + (includeUpper ? "]" : ")");
    }
 }
