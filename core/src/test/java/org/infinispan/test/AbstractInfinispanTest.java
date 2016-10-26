@@ -162,8 +162,9 @@ public class AbstractInfinispanTest {
          TimeUnit timeUnit) {
       try {
          long timeoutNanos = timeUnit.toNanos(timeout);
-         // We want 10 loops with the sleep time increasing in arithmetic progression
-         int loops = 10;
+         // We want the sleep time to increase in arithmetic progression
+         // 30 loops with the default timeout of 30 seconds means the initial wait is ~ 65 millis
+         int loops = 30;
          int progressionSum = loops * (loops + 1) / 2;
          long initialSleepNanos = timeoutNanos / progressionSum;
          long sleepNanos = initialSleepNanos;
