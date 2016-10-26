@@ -711,6 +711,9 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void findSources(Set<Integer> segments, Map<Address, Set<Integer>> sources, Set<Address> excludedSources) {
+      if (cache.getStatus().isTerminated())
+         return;
+
       for (Integer segmentId : segments) {
          Address source = findSource(segmentId, excludedSources);
          // ignore all segments for which there are no other owners to pull data from.
@@ -773,7 +776,11 @@ public class StateConsumerImpl implements StateConsumer {
                failed = true;
                exclude = true;
             } catch (Exception e) {
-               if (!cache.getStatus().isTerminated()) {
+               if (cache.getStatus().isTerminated()) {
+                  log.debugf("Cache %s has stopped while requesting transactions", cacheName);
+                  sources.clear();
+                  return;
+               } else {
                   log.failedToRetrieveTransactionsForSegments(cacheName, source, segments, e);
                }
                // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
