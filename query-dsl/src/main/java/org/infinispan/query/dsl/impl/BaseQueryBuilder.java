@@ -68,7 +68,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    @Override
    public QueryBuilder orderBy(Expression pathExpression, SortOrder sortOrder) {
       if (sortCriteria == null) {
-         sortCriteria = new ArrayList<SortCriteria>();
+         sortCriteria = new ArrayList<>();
       }
       sortCriteria.add(new SortCriteria(pathExpression, sortOrder));
       return this;
