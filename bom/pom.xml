@@ -421,6 +421,11 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-elasticsearch</artifactId>
+            <version>${version.hibernate.search}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
             <version>${version.hibernate.core}</version>
          </dependency>

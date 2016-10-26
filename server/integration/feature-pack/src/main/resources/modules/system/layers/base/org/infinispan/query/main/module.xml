@@ -10,6 +10,7 @@
         <module name="javax.transaction.api" />
         <module name="org.apache.lucene"/>
         <module name="org.hibernate.search.engine" />
+        <module name="org.hibernate.search.elasticsearch" />
         <module name="org.infinispan"/>
         <module name="org.infinispan.query.dsl"/>
         <module name="org.infinispan.objectfilter"/>
