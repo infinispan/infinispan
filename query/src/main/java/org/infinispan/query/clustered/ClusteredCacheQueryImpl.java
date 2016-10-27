@@ -1,7 +1,6 @@
 package org.infinispan.query.clustered;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -43,8 +42,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
-      this.hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
-               .targetedEntities(Arrays.asList(classes));
+      this.hSearchQuery = searchFactory.createHSQuery(luceneQuery, classes);
    }
 
    @Override

@@ -1,6 +1,5 @@
 package org.infinispan.query.impl;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -57,10 +56,7 @@ public class CacheQueryImpl implements CacheQuery {
                          Class<?>... classes) {
       this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache;
-      hSearchQuery = searchFactory.createHSQuery();
-      hSearchQuery
-         .luceneQuery(luceneQuery)
-         .targetedEntities(Arrays.asList(classes));
+      hSearchQuery = searchFactory.createHSQuery(luceneQuery, classes);
 
       if (timeoutExceptionFactory != null) {
          hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
