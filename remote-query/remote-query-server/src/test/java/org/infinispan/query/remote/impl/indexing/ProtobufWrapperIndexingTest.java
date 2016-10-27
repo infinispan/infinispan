@@ -81,8 +81,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
             .matching("Adrian")
             .createQuery();
 
-      List<EntityInfo> queryEntityInfos = searchFactory.createHSQuery().luceneQuery(luceneQuery2)
-            .targetedEntities(Collections.<Class<?>>singletonList(ProtobufValueWrapper.class))
+      List<EntityInfo> queryEntityInfos = searchFactory.createHSQuery(luceneQuery2, ProtobufValueWrapper.class)
             .projection("surname")
             .queryEntityInfos();
 
