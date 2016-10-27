@@ -5,14 +5,21 @@ import org.jgroups.Address;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import net.jcip.annotations.ThreadSafe;
+
+/**
+ * Pre-allocated holder for multiple responses. Until the response is received,
+ * or node is marked as suspected/unreachable the value is <code>null</code>.
+ *
+ * This class is safe against concurrent access by multiple threads.
+ */
+@ThreadSafe
 public class Responses implements Iterable<Rsp<Response>> {
    public static final Responses EMPTY = new Responses(Collections.emptyList());
    private final Address[] addresses;
@@ -25,6 +32,13 @@ public class Responses implements Iterable<Rsp<Response>> {
       this.responses = new AtomicReferenceArray<>(size);
    }
 
+   /**
+    * Constructs a new instance with responses from all recipients marked
+    * as suspected.
+    *
+    * @param dests Collection of recipients.
+    * @return
+    */
    public static Responses suspected(Collection<Address> dests) {
       Responses responses = new Responses(dests);
       for (int i = 0; i < responses.addresses.length; ++i) {
@@ -35,6 +49,13 @@ public class Responses implements Iterable<Rsp<Response>> {
       return responses;
    }
 
+   /**
+    * Constructs new instance using existing {@link RspList}. If the response
+    * was not received and the node was neither marked as suspected nor unreachable
+    * the response in this instance will be <code>null</code>.
+    *
+    * @param results Received responses.
+    */
    public Responses(RspList<Response> results) {
       int size = results.size();
       this.addresses = new Address[size];
@@ -42,7 +63,10 @@ public class Responses implements Iterable<Rsp<Response>> {
       int i = 0;
       for (Rsp<Response> rsp : results) {
          addresses[i] = rsp.getSender();
-         responses.set(i, rsp);
+         // keep non-received response as null
+         if (rsp.wasReceived() || rsp.wasSuspected() || rsp.wasUnreachable()) {
+            responses.set(i, rsp);
+         }
          ++i;
       }
    }
