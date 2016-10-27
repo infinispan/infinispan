@@ -1,5 +1,9 @@
 package org.infinispan.eviction.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +20,12 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
 
-   private static final int CACHE_SIZE=128;
+   private static final int CACHE_SIZE = 64;
 
    private EvictionListener evictionListener;
 
@@ -43,18 +49,28 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    }
 
    public void testSimpleEvictionMaxEntries() throws Exception {
-      for (int i = 0; i < CACHE_SIZE*2; i++) {
-         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
+      for (int i = 0; i < CACHE_SIZE * 2; i++) {
+         cache.put("key-" + (i + 1), "value-" + (i + 1));
       }
-      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
-      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
-      assert CACHE_SIZE == evictionListener.getEvictedEvents() : "eviction events count should be same with case size: " + evictionListener.getEvictedEvents();
+      assertEquals("cache size too big: " + cache.size(), CACHE_SIZE, cache.size());
+      assertEquals("eviction events count should be same with case size: " + evictionListener.getEvictedEvents(),
+            CACHE_SIZE, evictionListener.getEvictedEvents().size());
 
       for (int i = 0; i < CACHE_SIZE; i++) {
-         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
+         cache.put("key-" + (i + 1), "value-" + (i + 1));
       }
-      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
-      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
+      assertEquals(CACHE_SIZE, cache.size());
+      int expectedEvictions;
+      if (getEvictionStrategy() == EvictionStrategy.LIRS) {
+         // Eviction count will be Size + (Size * .05) rounded up (since the first elements will be in resident blocks
+         // so they won't cause evictions to occur
+         expectedEvictions = (int) Math.ceil(CACHE_SIZE + (CACHE_SIZE * .05));
+      } else {
+         // Otherwise is LRU and that will evict on each write
+         expectedEvictions = CACHE_SIZE * 2;
+      }
+      assertEquals("eviction events count should be same with case size: " + evictionListener.getEvictedEvents(),
+            expectedEvictions, evictionListener.getEvictedEvents().size());
    }
 
    public void testSimpleExpirationMaxIdle() throws Exception {
@@ -131,7 +147,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    @Listener
    public static class EvictionListener {
 
-      private AtomicLong evictedEvents = new AtomicLong();
+      private List<Map.Entry> evictedEntries = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e){
@@ -140,11 +156,11 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          assert key != null;
          assert e.getCache() != null;
          assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;
-         evictedEvents.addAndGet(e.getEntries().size());
+         e.getEntries().entrySet().stream().forEach(entry -> evictedEntries.add((Map.Entry) entry));
       }
 
-      public long getEvictedEvents() {
-         return evictedEvents.get();
+      public List<Map.Entry> getEvictedEvents() {
+         return evictedEntries;
       }
    }
 }
