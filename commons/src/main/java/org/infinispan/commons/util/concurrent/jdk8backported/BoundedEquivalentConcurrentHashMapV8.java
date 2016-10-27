@@ -713,7 +713,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                }
 
                if (removed) {
-                  V value = map.replaceNode(node.key, null, null, true);
+                  V value = map.replaceNode(node.key, null, null, false, true);
                   if (value != null) {
                      evictedEntries.add(node);
                      decCreate += sizeCalculator.calculateSize(node.key, value);
@@ -868,8 +868,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       private final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
             new SizeAndEvicting(0, 0));
-
-      final ThreadLocal<Collection<LIRSNode<K, V>>> nodesToEvictTL = new ThreadLocal<>();
 
       public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
          this.map = map;
@@ -1127,6 +1125,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
             DequeNode<LIRSNode<K, V>> removedStackNode = (DequeNode<LIRSNode<K, V>>) nodeDetails[0];
             removedLIR = (LIRSNode<K, V>) nodeDetails[1];
+            boolean shouldRemove = false;
             synchronized (removedLIR) {
                if (removedStackNode != removedLIR.stackNode) {
                   continue;
@@ -1139,13 +1138,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                case HIR_NONRESIDENT:
                   // Non resident was already evicted and now it is no longer in the
                   // queue or the stack so it is effectively gone - however we want to
-                  // remove the now null node
-                  Collection<LIRSNode<K, V>> nodesToEvict = nodesToEvictTL.get();
-                  if (nodesToEvict == null) {
-                     nodesToEvict = new ArrayList<>();
-                     nodesToEvictTL.set(nodesToEvict);
-                  }
-                  nodesToEvict.add(removedLIR);
+                  // remove the now null node - must be done outside of node synchronized block
+                  // to prevent dead lock
+                  removedLIR.setState(Recency.EVICTING);
+                  shouldRemove = true;
                case HIR_RESIDENT:
                   // Leave it in the queue if it was a resident
                   removedLIR.setStackNode(null);
@@ -1157,6 +1153,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   // no longer LIRS
                   break;
                }
+            }
+            if (shouldRemove) {
+               // We skip notification since we already were notified of removal - but only remove if the value
+               // is still NULL_VALUE
+               map.replaceNode(removedLIR.getKey(), null, null, true, false);
             }
          }
       }
@@ -1431,22 +1432,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                break;
             }
          }
-         // If this is non null it is also non empty
-         Collection<LIRSNode<K, V>> tlEvicted = nodesToEvictTL.get();
-         if (tlEvicted == null) {
-            tlEvicted = Collections.emptyList();
-         } else {
-            nodesToEvictTL.remove();
-         }
-         if (evictCount != 0 || !tlEvicted.isEmpty()) {
+         if (evictCount != 0) {
             @SuppressWarnings("unchecked")
-            LIRSNode<K, V>[] queueContents = new LIRSNode[evictCount + tlEvicted.size()];
-            Iterator<LIRSNode<K, V>> tlIterator = tlEvicted.iterator();
+            LIRSNode<K, V>[] queueContents = new LIRSNode[evictCount];
             int offset = 0;
-            while (tlIterator.hasNext()) {
-               queueContents[evictCount + offset] = tlIterator.next();
-               offset++;
-            }
             int evictedValues = evictCount;
             int decEvict = evictCount;
             Object[] hirDetails = new Object[2];
@@ -1547,7 +1536,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                               synchronized (evict) {
                                  if (evict.state == Recency.EVICTING) {
                                     evict.setState(Recency.EVICTED);
-                                    V prevValue = map.replaceNode(evict.getKey(), null, null, true);
+                                    V prevValue = map.replaceNode(evict.getKey(), null, null, false, true);
                                     removedNodes.add(new Node<>(-1, null, evict.getKey(),
                                           prevValue, null));
                                  } else if (evict.state == Recency.HIR_NONRESIDENT) {
@@ -2692,7 +2681,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    final V replaceNode(Object key, V value, Object cv) {
-      return replaceNode(key, value, cv, false);
+      return replaceNode(key, value, cv, false, false);
    }
 
    @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -2709,7 +2698,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Replaces node value with v, conditional upon match of cv if
     * non-null.  If resulting value is null, delete.
     */
-   final V replaceNode(Object key, V value, Object cv, boolean isEvict) {
+   final V replaceNode(Object key, V value, Object cv, boolean skipListener, boolean isEvict) {
       int hash = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
       for (Node<K,V>[] tab = table;;) {
          Node<K,V> f; int n, i, fh;
@@ -2736,27 +2725,33 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                               oldVal = ev;
                               if (value != null) {
                                  e.val = value;
-                                 if (oldVal == null) {
-                                    evictionPolicy.onEntryMiss(e, value);
-                                 } else {
-                                    evictionPolicy.onEntryHitWrite(e, value);
+                                 if (!skipListener) {
+                                    if (oldVal == null) {
+                                       evictionPolicy.onEntryMiss(e, value);
+                                    } else {
+                                       evictionPolicy.onEntryHitWrite(e, value);
+                                    }
                                  }
                               }
                               else if (pred != null) {
-                                 if (!isEvict) {
-                                    evictionPolicy.onEntryRemove(e);
-                                 }
-                                 if (oldVal != null) {
-                                    notifyListenerOfRemoval(e, isEvict);
+                                 if (!skipListener) {
+                                    if (!isEvict) {
+                                       evictionPolicy.onEntryRemove(e);
+                                    }
+                                    if (oldVal != null) {
+                                       notifyListenerOfRemoval(e, isEvict);
+                                    }
                                  }
                                  pred.next = e.next;
                               }
                               else {
-                                 if (!isEvict) {
-                                    evictionPolicy.onEntryRemove(e);
-                                 }
-                                 if (oldVal != null) {
-                                    notifyListenerOfRemoval(e, isEvict);
+                                 if (!skipListener) {
+                                    if (!isEvict) {
+                                       evictionPolicy.onEntryRemove(e);
+                                    }
+                                    if (oldVal != null) {
+                                       notifyListenerOfRemoval(e, isEvict);
+                                    }
                                  }
                                  setTabAt(tab, i, e.next);
                               }
@@ -2780,21 +2775,25 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            oldVal = pv;
                            if (value != null) {
                               p.val = value;
-                              if (oldVal == null) {
-                                 evictionPolicy.onEntryMiss(p, value);
-                              } else {
-                                 evictionPolicy.onEntryHitWrite(p, value);
+                              if (!skipListener) {
+                                 if (oldVal == null) {
+                                    evictionPolicy.onEntryMiss(p, value);
+                                 } else {
+                                    evictionPolicy.onEntryHitWrite(p, value);
+                                 }
                               }
                            }
                            else {
                               if (t.removeTreeNode(p)) {
                                  setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
                               }
-                              if (!isEvict) {
-                                 evictionPolicy.onEntryRemove(p);
-                              }
-                              if (pv != null) {
-                                notifyListenerOfRemoval(p, isEvict);
+                              if (!skipListener) {
+                                 if (!isEvict) {
+                                    evictionPolicy.onEntryRemove(p);
+                                 }
+                                 if (pv != null) {
+                                    notifyListenerOfRemoval(p, isEvict);
+                                 }
                               }
                            }
                         }
