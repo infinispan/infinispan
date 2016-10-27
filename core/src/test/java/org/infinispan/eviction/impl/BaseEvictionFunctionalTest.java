@@ -3,6 +3,7 @@ package org.infinispan.eviction.impl;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
@@ -20,6 +21,8 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
 
    private static final int CACHE_SIZE=128;
 
+   private EvictionListener evictionListener;
+
    protected BaseEvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -28,18 +31,26 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.eviction().maxEntries(CACHE_SIZE)
+      builder.eviction().size(CACHE_SIZE)
             .strategy(getEvictionStrategy()).expiration().wakeUpInterval(100L).locking()
             .useLockStriping(false) // to minimize chances of deadlock in the unit test
             .invocationBatching();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       cache = cm.getCache();
-      cache.addListener(new EvictionListener());
+      evictionListener = new EvictionListener();
+      cache.addListener(evictionListener);
       return cm;
    }
 
    public void testSimpleEvictionMaxEntries() throws Exception {
       for (int i = 0; i < CACHE_SIZE*2; i++) {
+         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
+      }
+      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
+      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
+      assert CACHE_SIZE == evictionListener.getEvictedEvents() : "eviction events count should be same with case size: " + evictionListener.getEvictedEvents();
+
+      for (int i = 0; i < CACHE_SIZE; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
@@ -120,6 +131,8 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    @Listener
    public static class EvictionListener {
 
+      private AtomicLong evictedEvents = new AtomicLong();
+
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e){
          assert e.isPre() || !e.isPre();
@@ -127,6 +140,11 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          assert key != null;
          assert e.getCache() != null;
          assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;
+         evictedEvents.addAndGet(e.getEntries().size());
+      }
+
+      public long getEvictedEvents() {
+         return evictedEvents.get();
       }
    }
 }
