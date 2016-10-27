@@ -46,6 +46,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -122,6 +124,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private EntryFactory entryFactory;
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
+   private VersionGenerator versionGenerator;
    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private CommandsFactory commandFactory;
    private boolean isInvalidation;
@@ -134,6 +137,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private StateTransferManager stateTransferManager;
    private Address localAddress;
    private boolean useRepeatableRead;
+   private boolean writeSkewCheck;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -148,7 +152,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          commitContextEntries(rCtx, dataCommand, null);
       } else if (useRepeatableRead) {
          // The entry must be in the context
-         rCtx.lookupEntry(dataCommand.getKey()).setSkipLookup(true);
+         CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
+         cacheEntry.setSkipLookup(true);
+         if (writeSkewCheck) {
+            addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
+         }
       }
 
       // Entry visit notifications used to happen in the CallInterceptor
@@ -172,7 +180,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
                     CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
                     XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier,
-                    StateTransferManager stateTransferManager) {
+                    StateTransferManager stateTransferManager, VersionGenerator versionGenerator) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
@@ -183,6 +191,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       this.groupManager = groupManager;
       this.notifier = notifier;
       this.stateTransferManager = stateTransferManager;
+      this.versionGenerator = versionGenerator;
    }
 
    @Start
@@ -193,6 +202,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+      writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
@@ -402,7 +412,21 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       // We don't make sure that all read entries have skipLookup here, since EntryFactory does that
       // for those we have really read, and there shouldn't be any null-read entries.
-      return invokeNext(ctx, command);
+      InvocationStage stage = invokeNext(ctx, command);
+      if (ctx.isInTxScope() && useRepeatableRead) {
+         return stage.thenAccept((rCtx, rCommand, rv) -> {
+            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
+            for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
+               CacheEntry cacheEntry = keyEntry.getValue();
+               cacheEntry.setSkipLookup(true);
+               if (writeSkewCheck) {
+                  addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
+               }
+            }
+         });
+      } else {
+         return stage;
+      }
    }
 
    @Override
@@ -591,14 +615,29 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (trace)
             log.tracef("The return value is %s", toStr(rv));
          if (useRepeatableRead) {
+            boolean addVersionRead = writeSkewCheck && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
+            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
             for (Object key : writeCommand.getAffectedKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
                if (cacheEntry != null) {
                   cacheEntry.setSkipLookup(true);
+                  if (addVersionRead) {
+                     addVersionRead(txCtx, cacheEntry, key);
+                  }
                }
             }
          }
       });
+   }
+
+   private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
+      EntryVersion version;
+      if (cacheEntry != null && cacheEntry.getMetadata() != null) {
+         version = cacheEntry.getMetadata().version();
+      } else {
+         version = versionGenerator.nonExistingVersion();
+      }
+      rCtx.getCacheTransaction().addVersionRead(key, version);
    }
 
    /**
@@ -619,6 +658,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
+               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
+                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
+               }
             }
          }
       });

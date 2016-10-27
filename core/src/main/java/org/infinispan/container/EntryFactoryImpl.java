@@ -6,15 +6,18 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
@@ -39,14 +42,18 @@ public class EntryFactoryImpl implements EntryFactory {
    private Configuration configuration;
    private PersistenceManager persistenceManager; // hack for DeltaAware
    private TimeService timeService;
+   private VersionGenerator versionGenerator;
+   private boolean useVersioning;
 
    @Inject
    public void injectDependencies(DataContainer dataContainer, Configuration configuration,
-                                  TimeService timeService, PersistenceManager persistenceManager) {
+                                  TimeService timeService, PersistenceManager persistenceManager,
+                                  VersionGenerator versionGenerator) {
       this.container = dataContainer;
       this.configuration = configuration;
       this.timeService = timeService;
       this.persistenceManager = persistenceManager;
+      this.versionGenerator = versionGenerator;
    }
 
    @Start (priority = 8)
@@ -54,6 +61,10 @@ public class EntryFactoryImpl implements EntryFactory {
       useRepeatableRead = configuration.transaction().transactionMode().isTransactional()
             && configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       isL1Enabled = configuration.clustering().l1().enabled();
+      // Write-skew check implies isolation level = REPEATABLE_READ && locking mode = OPTIMISTIC
+      useVersioning = configuration.clustering().cacheMode().isClustered() &&
+            configuration.transaction().transactionMode().isTransactional() &&
+            configuration.locking().writeSkewCheck();
    }
 
    @Override
@@ -255,11 +266,21 @@ public class EntryFactoryImpl implements EntryFactory {
       }
 
       if (trace) log.tracef("Creating new entry for key %s", toStr(key));
-      MVCCEntry mvccEntry = useRepeatableRead ? new RepeatableReadEntry(key, value, metadata) :
-            new ReadCommittedEntry(key, value, metadata);
-
-      mvccEntry.setSkipLookup(cacheEntry != null && cacheEntry.skipLookup());
-      return mvccEntry;
+      if (useRepeatableRead) {
+         MVCCEntry mvccEntry;
+         if (useVersioning) {
+            if (metadata == null) {
+               metadata = new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build();
+            }
+            mvccEntry = new ClusteredRepeatableReadEntry(key, value, metadata);
+         } else {
+            mvccEntry = new RepeatableReadEntry(key, value, metadata);
+         }
+         mvccEntry.setSkipLookup(cacheEntry != null && cacheEntry.skipLookup());
+         return mvccEntry;
+      } else {
+         return new ReadCommittedEntry(key, value, metadata);
+      }
    }
 
    private DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry, InvocationContext ctx) {
