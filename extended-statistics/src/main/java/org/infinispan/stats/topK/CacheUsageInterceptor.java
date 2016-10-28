@@ -56,7 +56,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    @Override
    public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
-         streamSummaryContainer.addGet(command.getKey(), command.getRemotelyFetchedValue() != null);
+         streamSummaryContainer.addGet(command.getKey(), isRemote(command.getKey()));
       }
       return invokeNext(ctx, command);
    }
@@ -65,7 +65,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
-            streamSummaryContainer.addGet(key, command.getRemotelyFetched().containsKey(key));
+            streamSummaryContainer.addGet(key, isRemote(key));
          }
       }
       return invokeNext(ctx, command);

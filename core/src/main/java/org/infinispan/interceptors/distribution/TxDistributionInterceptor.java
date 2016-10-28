@@ -10,16 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -28,8 +26,6 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -107,31 +103,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
-      return invokeNext(ctx, command);
-   }
-
-   @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitGetCommand(ctx, command);
-   }
-
-   @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
-         throws Throwable {
-      return visitGetCommand(ctx, command);
-   }
-
-   private InvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command)
-         throws Throwable {
-      Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
-      // If the cache entry has the value lock flag set, skip the remote get.
-      if (ctx.isOriginLocal() && valueIsMissing(entry)) {
-         if (readNeedsRemoteValue(ctx, command)) {
-            remoteGet(ctx, key, false, command);
-         }
-      }
-
       return invokeNext(ctx, command);
    }
 
@@ -294,11 +265,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private InvocationStage handleTxWriteCommand(InvocationContext ctx, WriteCommand command, Object key)
+   private InvocationStage handleTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command, Object key)
          throws Throwable {
       // see if we need to load values from remote sources first
       try {
-         CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, key);
+         CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, key, true);
          InvocationStage stage;
          if (remoteGetFuture == null) {
             stage = invokeNext(ctx, command);
@@ -337,30 +308,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected CompletableFuture<?> remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key)
-         throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (!valueIsMissing(entry)) {
-         // The entry already exists in the context, and it shouldn't be re-fetched
-         return null;
-      }
-      if (writeNeedsRemoteValue(ctx, command, key)) {
-         remoteGet(ctx, key, true, command);
-      }
-      return null;
-   }
-
-   protected InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite,
-                                          FlagAffectedCommand command) throws Throwable {
+   protected CompletableFuture<?> remoteGet(InvocationContext ctx, AbstractDataCommand command, Object key, boolean isWrite) throws Throwable {
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromProperSource(key, ctx, command, isWrite).get();
-
-      if (ice != null) {
-         EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
-         entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
-         return ice;
-      }
-      return null;
+      return retrieveFromProperSource(key, ctx, command, isWrite).thenAccept(ice -> {
+         if (ice != null) {
+            EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+            entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
+         }
+      });
    }
 
    private RpcOptions createCommitRpcOptions() {
