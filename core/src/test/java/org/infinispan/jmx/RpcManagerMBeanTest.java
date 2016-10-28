@@ -160,7 +160,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          memberList.add(mockAddress2);
          Transport transport = mock(Transport.class);
          when(transport.getMembers()).thenReturn(memberList);
-         when(transport.getAddress()).thenReturn(null);
+         when(transport.getAddress()).thenReturn(mockAddress1);
          when(transport.invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class), any(ResponseMode.class),
                anyLong(), any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean())).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);

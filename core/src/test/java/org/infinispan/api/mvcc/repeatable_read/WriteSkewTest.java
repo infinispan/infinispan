@@ -195,6 +195,19 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       assertEquals("Wrong value for key k1.", "v2", cache.get("k1"));
    }
 
+   /** Checks that multiple modifications compare the initial value and the write skew does not fire */
+   public void testNoWriteSkewWithMultipleModifications() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      cache.put("k1", "init");
+      tm.begin();
+      assertEquals("init", cache.get("k1"));
+      cache.put("k1", "v2");
+      cache.put("k2", "v3");
+      tm.commit();
+   }
+
    /**
     * Verifies we can insert and then remove a value in the same transaction.
     * See also ISPN-2075.

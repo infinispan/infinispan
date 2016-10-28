@@ -51,12 +51,11 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry<K, V> entry = ctx.lookupEntry(key);
 
-      // Could be that the key is not local, 'null' is how this is signalled
-      // When the entry is local, the entry is NullCacheEntry instead
-      if (entry == null) return null;
+      if (entry == null) {
+         throw new IllegalStateException();
+      }
 
-      ReadEntryView<K, V> ro = (entry == null || entry.isNull())
-         ? EntryViews.noValue((K) key) : EntryViews.readOnly(entry);
+      ReadEntryView<K, V> ro = entry.isNull() ? EntryViews.noValue((K) key) : EntryViews.readOnly(entry);
       R ret = f.apply(ro);
       return snapshot(ret);
    }
@@ -67,20 +66,15 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
    public String toString() {
       return "ReadOnlyKeyCommand{" +
             "key=" + key +
-            "f=" + f +
+            ", f=" + f +
             '}';
    }
 

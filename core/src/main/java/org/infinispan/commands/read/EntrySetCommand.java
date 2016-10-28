@@ -50,8 +50,8 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return null;
    }
 
    @Override

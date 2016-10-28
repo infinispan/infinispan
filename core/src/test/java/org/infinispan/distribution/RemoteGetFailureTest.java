@@ -116,6 +116,22 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       cacheManagers.clear();
    }
 
+   public void testDelayed(Method m) {
+      initAndCheck(m);
+
+      CountDownLatch release = new CountDownLatch(1);
+      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(null, release), 0);
+
+      long requestStart = System.nanoTime();
+      assertEquals(m.getName(), cache(0).get(key));
+      long requestEnd = System.nanoTime();
+      long remoteTimeout = cache(0).getCacheConfiguration().clustering().remoteTimeout();
+      long delay = TimeUnit.NANOSECONDS.toMillis(requestEnd - requestStart);
+      assertTrue(delay < remoteTimeout);
+
+      release.countDown();
+   }
+
    public void testExceptionFromBothOwners(Method m) {
       initAndCheck(m);
 

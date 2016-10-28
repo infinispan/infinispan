@@ -5,10 +5,11 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -16,6 +17,7 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -94,7 +96,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // The previous values map is only used by the query interceptor to locate the index for the old value
-      Map<Object, Object> previousValues = new HashMap<>();
+      List<Entry<Object, Object>> previousValues = hasFlag(Flag.IGNORE_RETURN_VALUES) ? null : new ArrayList<>(map.size());
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry contextEntry = lookupMvccEntry(ctx, key);
@@ -105,14 +107,17 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
             // Even though putAll() returns void, QueryInterceptor reads the previous values
             // TODO The previous values are not correct if the entries exist only in a store
-            previousValues.put(key, previousValue);
+            if (previousValues != null) {
+               previousValues.add(Immutables.immutableEntry(key, previousValue));
+            }
 
             if (contextEntry.isCreated()) {
                notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
             } else {
-               notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata,
-                                                 true, ctx, this);
+               notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue,
+                     previousMetadata, true, ctx, this);
             }
+
             contextEntry.setValue(newValue);
             Metadatas.updateMetadata(contextEntry, metadata);
             contextEntry.setChanged(true);
@@ -127,6 +132,11 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    public void setMap(Map<Object, Object> map) {
       this.map = map;
+   }
+
+   public final PutMapCommand withMap(Map<Object, Object> map) {
+      setMap(map);
+      return this;
    }
 
    @Override
@@ -237,7 +247,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;
+      return !hasFlag(Flag.IGNORE_RETURN_VALUES);
    }
 
    @Override
@@ -251,8 +261,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return hasFlag(Flag.IGNORE_RETURN_VALUES) ? LoadType.DONT_LOAD : LoadType.PRIMARY;
    }
 
    @Override

@@ -18,6 +18,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
+// TODO: the command does not carry previous values to backup, so it can cause
+// the values on primary and backup owners to diverge in case of topology change
 public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
 
    public static final byte COMMAND_ID = 50;
@@ -92,12 +94,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
-   }
 }

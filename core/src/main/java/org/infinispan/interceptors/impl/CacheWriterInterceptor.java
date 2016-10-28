@@ -372,6 +372,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    protected boolean isProperWriter(InvocationContext ctx, FlagAffectedCommand command, Object key) {
+      // TODO: use cdl.shouldCommit
       return true;
    }
 

@@ -2,7 +2,6 @@ package org.infinispan.container.entries;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CHANGED;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
@@ -30,7 +29,8 @@ public class ReadCommittedEntry implements MVCCEntry {
    private static final Log log = LogFactory.getLog(ReadCommittedEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected Object key, value, oldValue;
+   protected Object key;
+   protected Object value;
    protected long created, lastUsed;
    protected byte flags = 0;
    protected Metadata metadata;
@@ -40,16 +40,6 @@ public class ReadCommittedEntry implements MVCCEntry {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
-   }
-
-   @Override
-   public byte getStateFlags() {
-      return flags;
-   }
-
-   @Override
-   public void copyStateFlagsFrom(StateChangingEntry other) {
-      this.flags = other.getStateFlags();
    }
 
    // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
@@ -63,7 +53,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       EVICTED(1 << 4),
       EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
-      COPIED(1 << 7);
+      ;
 
       final byte mask;
 
@@ -122,25 +112,8 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public final Object setValue(Object value) {
-      Object oldValue = this.value;
-      this.value = value;
-      return oldValue;
-   }
-
-   @Override
    public boolean isNull() {
       return value == null;
-   }
-
-   @Override
-   public void copyForUpdate() {
-      if (isFlagSet(COPIED)) return; // already copied
-
-      setFlag(COPIED); //mark as copied
-
-      // if newly created, then nothing to copy.
-      if (!isCreated()) oldValue = value;
    }
 
    @Override
@@ -175,7 +148,6 @@ public class ReadCommittedEntry implements MVCCEntry {
             container.put(compact(key), compact(value),
                   providedMetadata == null ? metadata : providedMetadata);
          }
-         reset();
       }
    }
 
@@ -188,20 +160,6 @@ public class ReadCommittedEntry implements MVCCEntry {
          }
       }
       return val;
-   }
-
-   private void reset() {
-      oldValue = null;
-      flags = 0;
-      setValid(true);
-   }
-
-   @Override
-   public final void rollback() {
-      if (isChanged()) {
-         value = oldValue;
-         reset();
-      }
    }
 
    @Override
@@ -233,6 +191,13 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public long getLastUsed() {
       return lastUsed;
+   }
+
+   @Override
+   public Object setValue(Object value) {
+      Object prev = this.value;
+      this.value = value;
+      return prev;
    }
 
    @Override
@@ -337,28 +302,13 @@ public class ReadCommittedEntry implements MVCCEntry {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + toStr(key) +
             ", value=" + toStr(value) +
-            ", oldValue=" + toStr(oldValue) +
             ", isCreated=" + isCreated() +
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isValid=" + isValid() +
             ", isExpired=" + isExpired() +
-            ", skipRemoteGet=" + skipLookup() +
+            ", skipLookup=" + skipLookup() +
             ", metadata=" + metadata +
             '}';
    }
-
-   @Override
-   public boolean undelete(boolean doUndelete) {
-      if (isRemoved() && doUndelete) {
-         if (trace) log.trace("Entry is deleted in current scope.  Un-deleting.");
-         setExpired(false);
-         setRemoved(false);
-         setValid(true);
-         setValue(null);
-         return true;
-      }
-      return false;
-   }
-
 }

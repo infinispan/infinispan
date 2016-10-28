@@ -28,13 +28,13 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer, long flagsBitSet) {
+   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer, long flagsBitSet) {
       this.notifier = notifier;
       this.dataContainer = dataContainer;
       setFlagsBitSet(flagsBitSet);
    }
 
-   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer) {
+   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer) {
       this.notifier = notifier;
       this.dataContainer = dataContainer;
    }
@@ -127,8 +127,8 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override

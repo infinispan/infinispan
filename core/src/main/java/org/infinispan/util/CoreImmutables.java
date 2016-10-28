@@ -126,11 +126,6 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public boolean undelete(boolean doUndelete) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
       public void reincarnate() {
          throw new UnsupportedOperationException();
       }
@@ -198,11 +193,6 @@ public class CoreImmutables extends Immutables {
       @Override
       public boolean isLoaded() {
          return entry.isLoaded();
-      }
-
-      @Override
-      public void rollback() {
-         throw new UnsupportedOperationException();
       }
 
       @Override

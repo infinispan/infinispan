@@ -123,14 +123,15 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected void beforeInvokeRemotely(ReplicableCommand command) {
-         super.beforeInvokeRemotely(command);
+      protected Object beforeInvokeRemotely(ReplicableCommand command) {
+         Object arg = super.beforeInvokeRemotely(command);
          log.debugf("Before invoke remotely %s", command);
+         return arg;
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
-         Map<Address, Response> result = super.afterInvokeRemotely(command, responseMap);
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+         Map<Address, Response> result = super.afterInvokeRemotely(command, responseMap, argument);
          log.debugf("After invoke remotely %s. Responses=%s", command, result);
          if (!triggered && command instanceof PrepareCommand) {
             log.debugf("Triggering %s and %s", TX1_LOCKED, TX1_UNSURE);

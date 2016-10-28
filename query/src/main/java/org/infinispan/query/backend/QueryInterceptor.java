@@ -1,8 +1,8 @@
 package org.infinispan.query.backend;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +25,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -170,8 +172,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      command.setFlagsBitSet(EnumUtil.unsetEnum(command.getFlagsBitSet(), Flag.IGNORE_RETURN_VALUES));
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
-         Map<Object, Object> previousValues = (Map<Object, Object>) rv;
+         Collection<Map.Entry<Object, Object>> previousValues = (Collection<Map.Entry<Object, Object>>) rv;
          processPutMapCommand(((PutMapCommand) rCommand), rCtx, previousValues, null);
       });
    }
@@ -324,11 +327,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             for (int i = 0; i < writeCommands.length; i++) {
                final WriteCommand writeCommand = writeCommands[i];
                if (writeCommand instanceof PutKeyValueCommand) {
-                  processPutKeyValueCommand((PutKeyValueCommand) writeCommand, txInvocationContext,
-                        stateBeforePrepare[i], transactionContext);
+                  processPutKeyValueCommand((PutKeyValueCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                        transactionContext);
                } else if (writeCommand instanceof PutMapCommand) {
                   processPutMapCommand((PutMapCommand) writeCommand, txInvocationContext,
-                        (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
+                        (Collection<Map.Entry<Object, Object>>) stateBeforePrepare[i], transactionContext);
                } else if (writeCommand instanceof RemoveCommand) {
                   processRemoveCommand((RemoveCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
                         transactionContext);
@@ -343,12 +346,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       });
    }
 
-   private Map<Object, Object> getPreviousValues(Set<Object> keySet) {
-      HashMap<Object, Object> previousValues = new HashMap<>();
+   private Collection<Map.Entry<Object, Object>> getPreviousValues(Set<Object> keySet) {
+      Collection<Map.Entry<Object, Object>> previousValues = new ArrayList<>();
       for (Object key : keySet) {
          InternalCacheEntry internalCacheEntry = dataContainer.get(key);
          Object previousValue = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
-         previousValues.put(key, previousValue);
+         previousValues.add(Immutables.immutableEntry(key, previousValue));
       }
       return previousValues;
    }
@@ -414,14 +417,14 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * @param previousValues a map with the previous values, before processing the given PutMapCommand
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
-   private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
+   private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Collection<Map.Entry<Object, Object>> previousValues, TransactionContext transactionContext) {
       Map<Object, Object> dataMap = command.getMap();
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       // Loop through all the keys and put those key-value pairings into lucene.
-      for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
+      for (Map.Entry<Object, Object> entry : previousValues) {
          final Object key = extractValue(entry.getKey());
-         final Object value = extractValue(entry.getValue());
-         final Object previousValue = previousValues.get(key);
+         final Object value = extractValue(dataMap.get(key));
+         final Object previousValue = entry.getValue();
          if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
             if (shouldModifyIndexes(command, ctx, key)) {

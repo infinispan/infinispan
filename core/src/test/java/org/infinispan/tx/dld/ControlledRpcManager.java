@@ -105,13 +105,14 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
+   protected Object beforeInvokeRemotely(ReplicableCommand command) {
       failIfNeeded(command);
       waitBefore(command);
+      return null;
    }
 
    @Override
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
+   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
       waitAfter(command);
       return responseMap;
    }

@@ -67,13 +67,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K> 
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override

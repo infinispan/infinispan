@@ -13,14 +13,31 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
     * @deprecated Since 8.0, use {@link #copyForUpdate()} instead.
     */
    @Deprecated
-   default void copyForUpdate(DataContainer<? super K, ? super V> container) {
-      copyForUpdate();
+   default void copyForUpdate(DataContainer<? super K, ? super V> container) {}
+
+   /**
+    * Does not change the previously held value upon command retry.
+    */
+   default V setValue(V newValue, boolean retry) {
+      return setValue(newValue);
+   }
+
+   /**
+    * Returns entry value before command invocation.
+    * @param retry
+    * @return
+    */
+   default V getValue(boolean retry) {
+      return getValue();
    }
 
    /**
     * Makes internal copies of the entry for updates
+    *
+    * @deprecated since 9.0 noop
     */
-   void copyForUpdate();
+   @Deprecated
+   default void copyForUpdate() {}
 
    void setChanged(boolean isChanged);
 

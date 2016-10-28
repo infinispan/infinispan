@@ -130,7 +130,8 @@ public interface CacheTransaction {
     * <p/>
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
     */
-   void replaceVersionRead(Object key, EntryVersion version);
+   @Deprecated
+   default void replaceVersionRead(Object key, EntryVersion version) { addVersionRead(key, version);}
 
    /**
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.

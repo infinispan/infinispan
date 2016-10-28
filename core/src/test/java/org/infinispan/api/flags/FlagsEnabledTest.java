@@ -82,7 +82,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       MagicKey nonLocalKey = new MagicKey("nonLocal", cache2);
       cache1.put(nonLocalKey, "value");
-      // Write skew check needs the previous version on the originator AND on the primary owner
+      // In transactional mode the value is loaded locally and later correct version is verified by WSC
       int cache1Loads = isTxCache() ? 1 : 0;
       assertLoadsAndReset(cache1, cache1Loads, cache2, 1);
 
@@ -93,6 +93,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             cache1LocalOnly.withFlags(SKIP_CACHE_LOAD);
       MagicKey localKey2 = new MagicKey("local2", cache1);
       cache1SkipRemoteAndStores.put(localKey2, "value");
+      // local-mode operation does not get into PrepareCommand as modification and WSC is not executed
+      // (though, it's committed as it's in context and it's stored as it is retured by localTransaction.getAllModifications()
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       assertCacheValue(cache1, localKey2, "value");
@@ -206,8 +208,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    private void assertLoadsAndReset(Cache<?, ?> cache1, int expected1, Cache<?, ?> cache2, int expected2) {
       DummyInMemoryStore store1 = getCacheStore(cache1);
       DummyInMemoryStore store2 = getCacheStore(cache2);
-      assertEquals(cache1 + ": " + expected1 + ", " + cache2 + ": " + expected2,
-                   cache1 + ": " + store1.stats().get("load") + ", " + cache2 + ": " + store2.stats().get("load"));
+      assertEquals(expected1, (int) store1.stats().get("load"));
+      assertEquals(expected2, (int) store2.stats().get("load"));
       store1.clearStats();
       store2.clearStats();
    }

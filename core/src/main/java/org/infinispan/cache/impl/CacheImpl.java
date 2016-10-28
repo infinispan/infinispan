@@ -125,7 +125,7 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
-   private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
+   private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
 
    protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
@@ -1178,6 +1178,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, InvocationContext ctx) {
       InfinispanCollections.assertNotNullEntries(map, "map");
       Metadata merged = applyDefaultMetadata(metadata);
+      // Vanilla PutMapCommand returns previous values; add IGNORE_RETURN_VALUES as the API will drop the return value
+      // interceptors are free to clear this flag if appropriate (since interceptors are the only consumers of the
+      // return value)
+      explicitFlags = EnumUtil.setEnum(explicitFlags, IGNORE_RETURN_VALUES);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, merged, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       executeCommandAndCommitIfNeeded(ctx, command);

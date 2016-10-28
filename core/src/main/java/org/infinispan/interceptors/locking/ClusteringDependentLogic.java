@@ -11,6 +11,7 @@ import java.util.List;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -43,6 +44,7 @@ import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.TimeService;
@@ -60,6 +62,28 @@ import org.infinispan.util.TimeService;
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
 
+   enum Commit {
+      NO_COMMIT(false, false),
+      COMMIT_NON_LOCAL(true, false),
+      COMMIT_LOCAL(true, true);
+
+      private boolean commit;
+      private boolean local;
+
+      Commit(boolean commit, boolean local) {
+         this.commit = commit;
+         this.local = local;
+      }
+
+      public boolean isCommit() {
+         return commit;
+      }
+
+      public boolean isLocal() {
+         return local;
+      }
+   }
+
    boolean localNodeIsOwner(Object key);
 
    boolean localNodeIsPrimaryOwner(Object key);
@@ -68,6 +92,9 @@ public interface ClusteringDependentLogic {
 
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
                     Flag trackFlag, boolean l1Invalidation);
+
+   // TODO: this deserves a better name since we use it to figure out if entry is local
+   Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed);
 
    List<Address> getOwners(Collection<Object> keys);
 
@@ -128,6 +155,11 @@ public interface ClusteringDependentLogic {
          }
       }
 
+      @Override
+      public Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         return Commit.COMMIT_LOCAL;
+      }
+
       protected abstract void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                                 InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
@@ -145,8 +177,7 @@ public interface ClusteringDependentLogic {
                if (expired) {
                   notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
                } else {
-                  notifier.notifyCacheEntryRemoved(
-                          entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+                  notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, previousMetadata, false, ctx, command);
                }
 
                // A write-only command only writes and so can't 100% guarantee
@@ -161,7 +192,7 @@ public interface ClusteringDependentLogic {
             // Notify entry event after container has been updated
             if (created) {
                notifier.notifyCacheEntryCreated(
-                  entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
+                     entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee
                // that an entry has been created, so only send create event
@@ -171,8 +202,8 @@ public interface ClusteringDependentLogic {
 
                functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
             } else {
-               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue, previousMetadata,
-                                                 false, ctx, command);
+               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue,
+                     previousMetadata, false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee
                // that an entry has been created, so only send modify when the
@@ -334,12 +365,14 @@ public interface ClusteringDependentLogic {
 
       @Override
       public boolean localNodeIsOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         return cacheTopology == null || cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
       }
 
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         return cacheTopology == null || cacheTopology.getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
       }
 
       @Override
@@ -410,12 +443,58 @@ public interface ClusteringDependentLogic {
       @Override
       protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+         // Don't allow the CH to change (and state transfer to invalidate entries)
+         // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            super.commitSingleEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+            Commit doCommit = shouldCommit(command, ctx, entry.getKey(), entry.isRemoved());
+            if (doCommit.isCommit()) {
+               boolean created = false;
+               boolean removed = false;
+               boolean expired = false;
+               if (doCommit.isLocal()) {
+                  created = entry.isCreated();
+                  removed = entry.isRemoved();
+                  if (removed && entry instanceof MVCCEntry) {
+                     expired = ((MVCCEntry) entry).isExpired();
+                  }
+               }
+
+               InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
+               Object previousValue = null;
+               Metadata previousMetadata = null;
+               if (previousEntry != null) {
+                  previousValue = previousEntry.getValue();
+                  previousMetadata = previousEntry.getMetadata();
+               }
+               commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+               if (doCommit.isLocal()) {
+                  notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+               }
+            }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
+      }
+
+      public Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         // The logic here should be in sync with the logic in DistributionLogic but without the L1 stuff.
+         // Look for comments there
+         if (command != null && command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
+            return Commit.COMMIT_LOCAL;
+         }
+         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ));
+         if (transactional || !ctx.isOriginLocal() || (command != null &&
+               (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
+            if (localNodeIsOwner(key)) {
+               return Commit.COMMIT_LOCAL;
+            } else if (removed) {
+               return Commit.COMMIT_NON_LOCAL;
+            }
+         } else {
+            return localNodeIsPrimaryOwner(key) ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+         }
+         return Commit.NO_COMMIT;
       }
 
       @Override
@@ -485,15 +564,12 @@ public interface ClusteringDependentLogic {
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            boolean doCommit = true;
-            // ignore locality for removals, even if skipOwnershipCheck is not true
-            boolean skipOwnershipCheck = command != null &&
-                  command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+            Commit doCommit = shouldCommit(command, ctx, entry.getKey(), entry.isRemoved());
 
-            boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey());
-            if (isForeignOwned && !entry.isRemoved()) {
-               if (configuration.clustering().l1().enabled()) {
-                  // transform for L1
+            boolean isL1Write = false;
+            if (!doCommit.isCommit() && configuration.clustering().l1().enabled()) {
+               // transform for L1
+               if (!entry.isRemoved()) {
                   long lifespan;
                   if (metadata != null) {
                      lifespan = metadata.lifespan();
@@ -508,27 +584,28 @@ public interface ClusteringDependentLogic {
                         builder = entry.getMetadata().builder();
                      }
                      metadata = builder
-                           .lifespan(configuration.clustering().l1().lifespan())
-                           .build();
+                        .lifespan(configuration.clustering().l1().lifespan())
+                        .build();
                      metadata = new L1Metadata(metadata);
                   }
-               } else {
-                  doCommit = false;
                }
+               isL1Write = true;
+               doCommit = Commit.COMMIT_NON_LOCAL;
             }
 
-            boolean created = false;
-            boolean removed = false;
-            boolean expired = false;
-            if (!isForeignOwned) {
-               created = entry.isCreated();
-               removed = entry.isRemoved();
-               if (removed && entry instanceof MVCCEntry) {
-                  expired = ((MVCCEntry) entry).isExpired();
+            if (doCommit.isCommit()) {
+               boolean created = false;
+               boolean removed = false;
+               boolean expired = false;
+               if (doCommit.isLocal()) {
+                  created = entry.isCreated();
+                  removed = entry.isRemoved();
+                  if (removed && entry instanceof MVCCEntry) {
+                     expired = ((MVCCEntry) entry).isExpired();
+                  }
                }
-            }
 
-            if (doCommit) {
+               // TODO use value from the entry
                InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
                Object previousValue = null;
                Metadata previousMetadata = null;
@@ -536,16 +613,47 @@ public interface ClusteringDependentLogic {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
-               if (!isForeignOwned) {
-                  notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+               if (isL1Write && previousEntry != null && !previousEntry.isL1Entry()) {
+                  // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
+                  // and therefore we have two contexts on one node)
+               } else {
+                  commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+                  if (doCommit.isLocal()) {
+                     notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+                  }
                }
-            } else
-               entry.rollback();
-
+            }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
+      }
+
+      @Override
+      public Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         // ignore locality for removals, even if skipOwnershipCheck is not true
+         if (command != null && command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
+            return Commit.COMMIT_LOCAL;
+         }
+         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ));
+         // When a command is local-mode, it does not get written by replicating origin -> primary -> backup but
+         // when origin == backup it's written right from the original context
+         // ClearCommand is also broadcast to all nodes from originator, and on originator it should remove entries
+         // for which this node is backup owner even though it did not get the removal from primary owner.
+         if (transactional || !ctx.isOriginLocal() || (command != null &&
+               (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
+            // During ST, entries whose ownership is lost are invalidated by InvalidateCommand
+            // without any flags, and at that point we're no longer owners - the only information is that
+            // the origin is not local and the entry is removed.
+            if (localNodeIsOwner(key)) {
+               return Commit.COMMIT_LOCAL;
+            } else if (removed) {
+               return Commit.COMMIT_NON_LOCAL;
+            }
+         } else {
+            // in non-tx mode, on backup we don't commit in original context, backup command has its own context.
+            return localNodeIsPrimaryOwner(key) ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+         }
+         return Commit.NO_COMMIT;
       }
 
       @Override

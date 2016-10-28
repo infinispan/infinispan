@@ -196,6 +196,7 @@ public final class EntryViews {
       public Void remove() {
          entry.setRemoved(true);
          entry.setChanged(true);
+         entry.setValue(null);
          return null;
       }
 
@@ -239,6 +240,7 @@ public final class EntryViews {
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setChanged(true);
+            entry.setValue(null);
          }
 
          return null;
@@ -309,6 +311,7 @@ public final class EntryViews {
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setChanged(true);
+            entry.setValue(null);
          }
 
          return null;

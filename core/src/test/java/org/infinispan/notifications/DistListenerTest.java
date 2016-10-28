@@ -85,8 +85,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       nonOwner.addListener(listener);
       nonOwner.put(key1, "hello");
       assertModified(false);
-      // TODO: should originators raise these events?  it seems broken
-      assertCreated(true);
+      assertCreated(false);
 
       //listen on non-owner non-putting:
       owner1.put(key1, "hello");

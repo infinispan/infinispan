@@ -89,6 +89,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalAll(%s)", params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
+      // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
+      // therefore we should rather have separate command (or different semantics for keys == null)
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
       WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());

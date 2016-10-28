@@ -2,6 +2,7 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,13 +26,16 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,14 +44,14 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    private PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
-   private DistributionManager distributionManager;
+   private StateTransferManager stateTransferManager;
 
    @Inject
    void init(PartitionHandlingManager partitionHandlingManager, Transport transport,
-         DistributionManager distributionManager) {
+             StateTransferManager stateTransferManager) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.transport = transport;
-      this.distributionManager = distributionManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
@@ -55,8 +59,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       if (!ctx.isOriginLocal()) {
          return true;
       }
-      Set<Flag> flags = command.getFlags();
-      return flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL);
+      return !command.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 
    @Override
@@ -143,6 +146,22 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                // get response.
                throw log.degradedModeKeyUnavailable(dataCommand.getKey());
             } else {
+               // If all owners left and we still haven't received the availability update yet,
+               // we get OutdatedTopologyException from BaseDistributionInterceptor.retrieveFromProperSource
+               if (t instanceof OutdatedTopologyException && performPartitionCheck(rCtx, dataCommand)) {
+                  // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
+                  // and we only fail the operation if _all_ owners have left the cluster.
+                  // TODO Move this to the availability strategy when implementing ISPN-4624
+                  CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+                  if (cacheTopology == null || cacheTopology.getTopologyId() != dataCommand.getTopologyId()) {
+                     // just rethrow the exception
+                     throw t;
+                  }
+                  List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(dataCommand.getKey());
+                  if (!InfinispanCollections.containsAny(transport.getMembers(), owners)) {
+                     throw log.degradedModeKeyUnavailable(dataCommand.getKey());
+                  }
+               }
                throw t;
             }
          }
@@ -219,7 +238,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                missingKeys.removeAll(result.keySet());
                for (Iterator<Object> it = missingKeys.iterator(); it.hasNext(); ) {
                   Object key = it.next();
-                  if (InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
+                  if (InfinispanCollections.containsAny(transport.getMembers(), stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key))) {
                      it.remove();
                   }
                }

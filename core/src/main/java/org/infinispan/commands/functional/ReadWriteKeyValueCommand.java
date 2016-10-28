@@ -103,7 +103,9 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // If the value has been update while on the retry, use the newer value.
       // Also take into account that the value might have been removed.
       // TODO: Configure equivalence function
-      if (valueUnchanged(e, prevValue, value) || valueRemoved(e, prevValue)) {
+      // TODO: this won't work properly until we store if the command was executed or not...
+      Object oldPrevValue = e.getValue(hasFlag(Flag.COMMAND_RETRY));
+      if (valueUnchanged(oldPrevValue, prevValue, value) || valueRemoved(oldPrevValue, prevValue)) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
          R ret = f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata));
          return snapshot(ret);
@@ -113,12 +115,12 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    }
 
 
-   boolean valueRemoved(MVCCEntry<K, V> e, V prevValue) {
-      return valueUnchanged(e, prevValue, null);
+   boolean valueRemoved(Object prevValue, V storedPrevValue) {
+      return valueUnchanged(prevValue, storedPrevValue, null);
    }
 
-   boolean valueUnchanged(MVCCEntry<K, V> e, V prevValue, V value) {
-      return valueMatcher.matches(e, prevValue, value, AnyEquivalence.getInstance());
+   boolean valueUnchanged(Object prevValue, V storedPrevValue, V value) {
+      return valueMatcher.matches(prevValue, storedPrevValue, value, AnyEquivalence.getInstance());
    }
 
    @Override
@@ -132,13 +134,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override

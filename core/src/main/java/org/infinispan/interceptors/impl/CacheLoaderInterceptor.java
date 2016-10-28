@@ -17,8 +17,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.functional.AbstractWriteKeyCommand;
-import org.infinispan.commands.functional.AbstractWriteManyCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -99,6 +98,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private ExecutorService executorService;
    private Cache<K, V> cache;
    private Equivalence<? super K> keyEquivalence;
+   private boolean activation;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -122,6 +122,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Start
    public void start() {
       this.keyEquivalence = cache.getCacheConfiguration().dataContainer().keyEquivalence();
+      this.activation = cache.getCacheConfiguration().persistence().passivation();
    }
 
    @Override
@@ -215,7 +216,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
                entryFactory.wrapExternalEntry(ctx, marshalledEntry.getKey(),
-                                              convert(marshalledEntry, iceFactory), EntryFactory.Wrap.STORE,
+                                              convert(marshalledEntry, iceFactory), false,
                                               false);
             }
          }
@@ -354,9 +355,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       if (entry != null) {
-         EntryFactory.Wrap wrap =
-               cmd instanceof WriteCommand ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
-         entryFactory.wrapExternalEntry(ctx, key, entry, wrap, !cmd.readsExistingValues());
+         entryFactory.wrapExternalEntry(ctx, key, entry, cmd instanceof WriteCommand, cmd.loadType() == VisitableCommand.LoadType.DONT_LOAD);
 
          if (isLoadedValue != null && isLoadedValue.booleanValue()) {
             Object value = entry.getValue();
@@ -369,9 +368,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
-      if (!shouldAttemptLookup(ctx.lookupEntry(key))) {
+      CacheEntry e = ctx.lookupEntry(key);
+      if (!shouldAttemptLookup(e)) {
          if (trace) {
-            log.tracef("Skip load for command %s. Entry already exists in context.", cmd);
+            log.tracef("Skip load for command %s. Entry %s (skipLookup=%s) already exists in context.", cmd, e, e.skipLookup());
          }
          return true;
       }
@@ -384,12 +384,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       boolean skip;
-      if (cmd instanceof AbstractWriteKeyCommand || cmd instanceof AbstractWriteManyCommand) {
-         skip = skipLoadForFunctionalWriteCommand((WriteCommand) cmd, key, ctx);
-         if (trace) {
-            log.tracef("Skip load for functional write command %s? %s", cmd, skip);
-         }
-      } else if (cmd instanceof WriteCommand) {
+      if (cmd instanceof WriteCommand) {
          skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
          if (trace) {
             log.tracef("Skip load for write command %s? %s", cmd, skip);
@@ -404,14 +399,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return skip;
    }
 
-   protected boolean skipLoadForFunctionalWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      return skipLoadForWriteCommand(cmd, key, ctx);
-   }
-
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      if (cmd.readsExistingValues()) {
-         // TODO Could make DELTA_WRITE/ApplyDeltaCommand override SKIP_CACHE_LOAD by changing the next line to
-         // if (hasSkipLoadFlag(cmd) && !cmd.alwaysReadsExistingValues)
+      // TODO loading should be mandatory if there are listeners for previous values
+      if (cmd.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
          if (hasSkipLoadFlag(cmd)) {
             log.tracef("Skipping load for command that reads existing values %s", cmd);
             return true;
@@ -433,6 +423,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    protected void sendNotification(Object key, Object value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand cmd) {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
+      if (activation) {
+         notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
+      }
    }
 
    @ManagedAttribute(

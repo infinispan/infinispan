@@ -42,7 +42,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -159,28 +159,31 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    @Override
    public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitReadCommand(ctx, command, NOP);
+      return handleReadCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
-      return visitReadCommand(ctx, command, NOP);
+      return handleReadCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return visitReadCommand(ctx, command, command::setConsistentHash);
+      return handleReadCommand(ctx, command);
    }
 
-   private InvocationStage visitReadCommand(InvocationContext ctx, AbstractTopologyAffectedCommand command,
-         Consumer<ConsistentHash> consistentHashUpdater) throws Throwable {
+   private InvocationStage handleReadCommand(InvocationContext ctx, AbstractTopologyAffectedCommand command) throws Throwable {
       if (isLocalOnly(command)) {
          return invokeNext(ctx, command);
       }
-      CacheTopology beginTopology = stateTransferManager.getCacheTopology();
-      consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
       updateTopologyId(command);
+
+      // Only catch OutdatedTopologyExceptions on the originator
+      if (!ctx.isOriginLocal()) {
+         return invokeNext(ctx, command);
+      }
+
       return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
          if (t == null)
             return stage;
@@ -192,17 +195,20 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
             throw t;
 
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
-         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
+         // next topology.
+         // Without this, we could retry the command too fast and we could get the
+         // OutdatedTopologyException again.
+         int currentTopologyId = currentTopologyId();
          if (trace)
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
-                  currentTopologyId(), rCommand);
+                  currentTopologyId, rCommand);
          AbstractTopologyAffectedCommand cmd = (AbstractTopologyAffectedCommand) rCommand;
-         int newTopologyId = Math.max(currentTopologyId(), cmd.getTopologyId() + 1);
+         int newTopologyId = Math.max(currentTopologyId, cmd.getTopologyId() + 1);
          cmd.setTopologyId(newTopologyId);
          waitForTopology(newTopologyId);
 
-         return visitReadCommand(rCtx, cmd, consistentHashUpdater);
+         return handleReadCommand(rCtx, cmd);
       });
    }
 
@@ -220,12 +226,12 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    @Override
    public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
-      return visitReadCommand(ctx, command, NOP);
+      return handleReadCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
-      return visitReadCommand(ctx, command, NOP);
+      return handleReadCommand(ctx, command);
    }
 
    /**
@@ -380,13 +386,19 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          }
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
             throw t;
+         WriteCommand writeCommand = (WriteCommand) rCommand;
+         if (writeCommand.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+            // the command is expected to not wait
+            TimeoutException timeoutException = new TimeoutException("Not waiting for new topology as this command has zero timeout set.");
+            timeoutException.addSuppressed(t);
+            throw timeoutException;
+         }
 
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
          // next topology.
          // Without this, we could retry the command too fast and we could get the
          // OutdatedTopologyException again.
          int currentTopologyId = currentTopologyId();
-         WriteCommand writeCommand = (WriteCommand) rCommand;
          if (trace)
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId, writeCommand);

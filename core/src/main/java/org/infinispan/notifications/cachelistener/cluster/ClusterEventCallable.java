@@ -58,6 +58,15 @@ public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Voi
       }
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("ClusterEventCallable{");
+      sb.append("identifier=").append(identifier);
+      sb.append(", events=").append(events);
+      sb.append('}');
+      return sb.toString();
+   }
+
    public static class Externalizer extends AbstractExternalizer<ClusterEventCallable> {
       @Override
       public Set<Class<? extends ClusterEventCallable>> getTypeClasses() {

@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "stress", testName = "stress.PutIfAbsentStressTest",
       description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.")
-public class PutIfAbsentStressTest {
+public class PutIfAbsentStressTest extends AbstractInfinispanTest {
 
    private static final int NODES_NUM = 5;
    private static final int THREAD_PER_NODE = 12;
