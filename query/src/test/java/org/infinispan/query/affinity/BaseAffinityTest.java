@@ -31,9 +31,10 @@ import org.testng.annotations.AfterMethod;
 
 public class BaseAffinityTest extends MultipleCacheManagersTest {
 
+   static final int NUM_OWNERS = 2;
+   static final int NUM_NODES = 3;
    int ENTRIES = 50;
    protected Random random = new Random();
-   protected ConfigurationBuilder cacheCfg;
    protected int REMOTE_TIMEOUT_MINUTES = 3;
 
    protected Map<String, String> getIndexingProperties() {
@@ -43,27 +44,59 @@ public class BaseAffinityTest extends MultipleCacheManagersTest {
       return props;
    }
 
-   protected Configuration getLockCacheConfig() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+   protected ConfigurationBuilder getBaseCacheConfig(CacheMode cacheMode) {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
+      builder.clustering()
+            .remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+            .hash().numOwners(getNumOwners())
+            .keyPartitioner(new AffinityPartitioner());
+      return builder;
+   }
+
+   protected ConfigurationBuilder getBaseIndexCacheConfig(CacheMode cacheMode) {
+      ConfigurationBuilder builder = getBaseCacheConfig(cacheMode);
       builder.indexing().index(Index.NONE);
-      return builder.build();
+      return builder;
+   }
+
+   protected Configuration getLockCacheConfig() {
+      return getBaseIndexCacheConfig(CacheMode.DIST_SYNC).build();
    }
 
    protected Configuration getDataCacheConfig() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-      builder.indexing().index(Index.NONE);
-      return builder.build();
+      return getBaseIndexCacheConfig(CacheMode.DIST_SYNC).build();
+   }
+
+   protected Configuration getMetadataCacheConfig() {
+      return getBaseIndexCacheConfig(CacheMode.DIST_SYNC).build();
+   }
+
+   protected ConfigurationBuilder getCacheConfig() {
+      ConfigurationBuilder configurationBuilder = getBaseCacheConfig(CacheMode.DIST_SYNC);
+      IndexingConfigurationBuilder builder = configurationBuilder.indexing()
+            .index(Index.PRIMARY_OWNER).addIndexedEntity(Entity.class);
+      this.getIndexingProperties().entrySet().forEach(entry -> builder.addProperty(entry.getKey(), entry.getValue()));
+      return configurationBuilder;
+   }
+
+   protected int getNumOwners() {
+      return NUM_OWNERS;
+   }
+
+   protected int getNumNodes() {
+      return NUM_NODES;
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cacheCfg.clustering().remoteTimeout(REMOTE_TIMEOUT_MINUTES, TimeUnit.MINUTES).hash().keyPartitioner(new AffinityPartitioner());
-      IndexingConfigurationBuilder builder = cacheCfg.indexing().index(Index.PRIMARY_OWNER)
-            .addIndexedEntity(Entity.class);
-      this.getIndexingProperties().entrySet().forEach(entry -> builder.addProperty(entry.getKey(), entry.getValue()));
+      createClusteredCaches(getNumNodes(), getCacheConfig());
+      cacheManagers.forEach(
+            cm -> {
+               cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, getLockCacheConfig());
+               cm.defineConfiguration(DEFAULT_INDEXESMETADATA_CACHENAME, getMetadataCacheConfig());
+               cm.defineConfiguration(DEFAULT_INDEXESDATA_CACHENAME, getDataCacheConfig());
+            }
+      );
    }
 
    void checkAffinity() {
@@ -105,7 +138,7 @@ public class BaseAffinityTest extends MultipleCacheManagersTest {
    }
 
    synchronized void addNode() {
-      addClusterEnabledCacheManager(cacheCfg);
+      addClusterEnabledCacheManager(getCacheConfig());
       waitForClusterToForm();
    }
 
