@@ -10,6 +10,8 @@ import java.util.Arrays;
  */
 public class AnyServerEquivalence implements Equivalence<Object> {
 
+    public static final Equivalence<Object> INSTANCE = new AnyServerEquivalence();
+
     private static boolean isByteArray(Object obj) {
         return byte[].class == obj.getClass();
     }
