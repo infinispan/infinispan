@@ -93,7 +93,7 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       protected Cache<String, Entity> cache;
 
       Node addToCluster() {
-         cacheManager = addClusterEnabledCacheManager(cacheCfg);
+         cacheManager = addClusterEnabledCacheManager(getCacheConfig());
          cache = cacheManager.getCache();
          return this;
       }
@@ -188,4 +188,7 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       return cm;
    }
 
+   @Override
+   protected void createCacheManagers() throws Throwable {
+   }
 }

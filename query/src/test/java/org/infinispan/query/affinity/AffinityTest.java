@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.testng.annotations.Test;
@@ -26,15 +25,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "query.AffinityTest")
 public class AffinityTest extends BaseAffinityTest {
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      cacheManagers.forEach(
-            cm -> cm.defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, getLockCacheConfig())
-      );
-      createClusteredCaches(3, cacheCfg);
-   }
 
    public void testConcurrentWrites() throws InterruptedException {
       int numThreads = 2;
