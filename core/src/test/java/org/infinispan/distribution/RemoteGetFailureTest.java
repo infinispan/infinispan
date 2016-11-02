@@ -3,7 +3,6 @@ package org.infinispan.distribution;
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Field;
@@ -25,6 +24,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -36,8 +36,11 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -45,7 +48,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.pbcast.GMS;
@@ -198,30 +200,35 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release1), 0);
       cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release2), 0);
 
-      org.infinispan.remoting.transport.Address address1 = cache(1).getCacheManager().getAddress();
-      org.infinispan.remoting.transport.Address address2 = cache(2).getCacheManager().getAddress();
-      List<org.infinispan.remoting.transport.Address> owners = Arrays.asList(address1, address2);
+      Address address1 = address(1);
+      Address address2 = address(2);
+      List<Address> owners = Arrays.asList(address1, address2);
 
       ClusteredGetCommand clusteredGet = new ClusteredGetCommand(key, ByteString.fromString(cache(0).getName()), 0, AnyEquivalence.getInstance());
       final int timeout = 15;
       RpcOptions rpcOptions = new RpcOptions(timeout, TimeUnit.SECONDS, null, ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
 
-      CompletableFuture<Map<org.infinispan.remoting.transport.Address, Response>> future = cache(0).getAdvancedCache().getRpcManager().invokeRemotelyAsync(owners, clusteredGet, rpcOptions);
+      RpcManager rpcManager = cache(0).getAdvancedCache().getRpcManager();
+      CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(owners, clusteredGet, rpcOptions);
 
       assertTrue(arrival.await(10, TimeUnit.SECONDS));
 
       installNewView(cache(0), cache(0), cache(1));
 
+      // RequestCorrelator processes the view asynchronously, so we need to wait a bit for node 2 to be suspected
+      Thread.sleep(100);
+
       // suspection should not fail the operation
       assertFalse(future.isDone());
       long requestAllowed = System.nanoTime();
       release1.countDown();
-      Map<org.infinispan.remoting.transport.Address, Response> responses = future.get();
+      Map<Address, Response> responses = future.get();
       long requestCompleted = System.nanoTime();
-      assertTrue(responses.get(address1).isSuccessful());
-      assertNotNull(((SuccessfulResponse) responses.get(address1)).getResponseValue());
-      assertTrue(responses.get(address2) instanceof CacheNotFoundResponse);
-      assertTrue(TimeUnit.NANOSECONDS.toSeconds(requestCompleted - requestAllowed) < timeout);
+      long requestSeconds = TimeUnit.NANOSECONDS.toSeconds(requestCompleted - requestAllowed);
+
+      assertTrue("Request took too long: " + requestSeconds, requestSeconds < timeout / 2);
+      assertEquals(SuccessfulResponse.create(new ImmortalCacheValue(m.getName())), responses.get(address1));
+      assertEquals(CacheNotFoundResponse.INSTANCE, responses.get(address2));
       release2.countDown();
    }
 
@@ -261,7 +268,9 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       JGroupsTransport transport = (JGroupsTransport) installing.getCacheManager().getTransport();
       JChannel channel = transport.getChannel();
 
-      Address[] members = Stream.of(cachesInView).map(c -> ((JGroupsTransport) c.getCacheManager().getTransport()).getChannel().getAddress()).toArray(Address[]::new);
+      org.jgroups.Address[] members = Stream.of(cachesInView)
+                                            .map(c -> ((JGroupsAddress) address(c)).getJGroupsAddress())
+                                            .toArray(org.jgroups.Address[]::new);
       View view = View.create(members[0], transport.getViewId() + 1, members);
       ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
    }
