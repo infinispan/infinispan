@@ -4,7 +4,8 @@ import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class QueryMetadataFileFinder implements ModuleMetadataFileFinder {
+public class QueryModuleMetadataFileFinder implements ModuleMetadataFileFinder {
+
    @Override
    public String getMetadataFilename() {
       return "infinispan-query-component-metadata.dat";
