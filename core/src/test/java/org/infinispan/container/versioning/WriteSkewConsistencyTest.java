@@ -29,7 +29,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -45,6 +44,7 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractDelegatingRpcManager;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -59,7 +59,8 @@ import org.testng.annotations.Test;
 public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
-      final Object key = new MagicKey(cache(1), cache(0));
+      // ControlledConsistentHashFactory sets cache(1) as the primary owner and cache(0) as the backup for all keys
+      final Object key = "key";
       final DataContainer<?, ?> primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
       final DataContainer<?, ?> backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
       final VersionGenerator versionGenerator = extractComponent(cache(1), VersionGenerator.class);
@@ -143,7 +144,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    protected final void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      builder.clustering().hash().numSegments(60);
+      builder.clustering().hash().numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(1, 0));
       createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
