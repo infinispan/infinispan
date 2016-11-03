@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -25,6 +26,11 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
    private static final boolean trace = log.isTraceEnabled();
 
    private boolean transactional;
+   /**
+    * Variable that defines whether or not a cache store load is required on an entry create in the context
+    * This is required when RepeatableRead is enabled with WSC
+    */
+   private boolean forceReadOnCreate;
    private ClusteringDependentLogic cdl;
    private StateTransferManager stateTransferManager;
    private boolean distributed;
@@ -38,6 +44,9 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
    @Start(priority = 15)
    private void startClusteredActivationInterceptor() {
       transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      // If write skew is enabled on total order we have to read the entry on a create - in case if it is in the loader
+      forceReadOnCreate = transactional && cacheConfiguration.transaction().transactionProtocol().isTotalOrder() &&
+            cacheConfiguration.locking().writeSkewCheck();
       distributed = cacheConfiguration.clustering().cacheMode().isDistributed();
    }
 
@@ -46,8 +55,11 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
       if (!cmd.alwaysReadsExistingValues()) {
          if (transactional) {
             if (!ctx.isOriginLocal()) {
-               if (trace) log.tracef("Skip load for remote tx write command %s.", cmd);
-               return true;
+               CacheEntry entry;
+               if (!forceReadOnCreate || ((entry = ctx.lookupEntry(key)) != null && !entry.isCreated())) {
+                  if (trace) log.tracef("Skip load for remote tx write command %s.", cmd);
+                  return true;
+               }
             }
          } else {
             if (!cdl.localNodeIsPrimaryOwner(key) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
