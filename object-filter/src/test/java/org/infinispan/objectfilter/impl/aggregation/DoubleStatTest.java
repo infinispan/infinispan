@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl.aggregation;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -30,7 +31,9 @@ public class DoubleStatTest {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(20);
-      assertEquals(30.0d, sum.getSum(), DELTA);
+      Double computedSum = sum.getSum();
+      assertNotNull(computedSum);
+      assertEquals(30.0d, computedSum, DELTA);
    }
 
    @Test
@@ -38,7 +41,9 @@ public class DoubleStatTest {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(20);
-      assertEquals(15.0d, avg.getAvg(), DELTA);
+      Double computedAvg = avg.getAvg();
+      assertNotNull(computedAvg);
+      assertEquals(15.0d, computedAvg, DELTA);
    }
 
    @Test
@@ -46,7 +51,9 @@ public class DoubleStatTest {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.NaN);
-      assertEquals(Double.NaN, sum.getSum(), DELTA);
+      Double computedSum = sum.getSum();
+      assertNotNull(computedSum);
+      assertEquals(Double.NaN, computedSum, DELTA);
    }
 
    @Test
@@ -54,7 +61,9 @@ public class DoubleStatTest {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.NaN);
-      assertEquals(Double.NaN, avg.getAvg(), DELTA);
+      Double computedAvg = avg.getAvg();
+      assertNotNull(computedAvg);
+      assertEquals(Double.NaN, computedAvg, DELTA);
    }
 
    @Test
@@ -62,7 +71,9 @@ public class DoubleStatTest {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.POSITIVE_INFINITY, sum.getSum(), DELTA);
+      Double computedSum = sum.getSum();
+      assertNotNull(computedSum);
+      assertEquals(Double.POSITIVE_INFINITY, computedSum, DELTA);
    }
 
    @Test
@@ -70,7 +81,9 @@ public class DoubleStatTest {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.POSITIVE_INFINITY, avg.getAvg(), DELTA);
+      Double computedAvg = avg.getAvg();
+      assertNotNull(computedAvg);
+      assertEquals(Double.POSITIVE_INFINITY, computedAvg, DELTA);
    }
 
    @Test
@@ -78,7 +91,9 @@ public class DoubleStatTest {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
-      assertEquals(Double.NEGATIVE_INFINITY, sum.getSum(), DELTA);
+      Double computedSum = sum.getSum();
+      assertNotNull(computedSum);
+      assertEquals(Double.NEGATIVE_INFINITY, computedSum, DELTA);
    }
 
    @Test
@@ -86,7 +101,9 @@ public class DoubleStatTest {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);
-      assertEquals(Double.NEGATIVE_INFINITY, avg.getAvg(), DELTA);
+      Double computedAvg = avg.getAvg();
+      assertNotNull(computedAvg);
+      assertEquals(Double.NEGATIVE_INFINITY, computedAvg, DELTA);
    }
 
    @Test
@@ -95,7 +112,9 @@ public class DoubleStatTest {
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
       sum.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.NaN, sum.getSum(), DELTA);
+      Double computedSum = sum.getSum();
+      assertNotNull(computedSum);
+      assertEquals(Double.NaN, computedSum, DELTA);
    }
 
    @Test
@@ -104,6 +123,8 @@ public class DoubleStatTest {
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);
       avg.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.NaN, avg.getAvg(), DELTA);
+      Double computedAvg = avg.getAvg();
+      assertNotNull(computedAvg);
+      assertEquals(Double.NaN, computedAvg, DELTA);
    }
 }
