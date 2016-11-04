@@ -11,4 +11,5 @@ class Stages {
       String fullName = o.getClass().getName();
       return fullName.substring(fullName.lastIndexOf('.') + 1);
    }
+
 }

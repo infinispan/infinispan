@@ -6,8 +6,29 @@ import org.infinispan.context.InvocationContext;
 /**
  * An invocation stage that allows the interceptor to perform more actions after the remaining interceptors have
  * finished executing.
- * <p>
- * It can also be returned directly from {@link AsyncInterceptor#visitCommand(InvocationContext, VisitableCommand)}.
+ *
+ * <p>An instance can be obtained by calling one of the {@link BaseAsyncInterceptor} methods, e.g.
+ * {@link BaseAsyncInterceptor#invokeNext(InvocationContext, VisitableCommand)}.</p>
+ *
+ * <p>The {@code InvocationStage} methods are intentionally very similar to the ones in
+ * {@link java.util.concurrent.CompletionStage}. However, unlike {@link java.util.concurrent.CompletionStage},
+ * adding a handler (e.g. with {@link #compose(InvocationComposeHandler)}) may return the same instance and
+ * execute the handler synchronously, or modify the result of the current stage.
+ * Therefore, saving a stage instance in a local variable/field and doing anything with it after adding a handler
+ * is not allowed:</p>
+ *
+ * <pre>
+ *    InvocationStage stage1 = ...;
+ *
+ *    // The next line may change the result of stage1 to "a"
+ *    InvocationStage stage2 = stage1.thenApply((rCtx, rCommand, rv) -> "a");
+ *
+ *    CompletableFuture&lt;Object&gt; cf = new CompletableFuture&lt;&gt;();
+ *    // The next line might block forever
+ *    InvocationStage stage3 = stage1.thenApply((rCtx, rCommand, rv) -> cf.get());
+ *    // If the stage is async, the next line will block instead
+ *    System.out.println(stage1.get());
+ * </pre>
  *
  * @author Dan Berindei
  * @since 9.0
