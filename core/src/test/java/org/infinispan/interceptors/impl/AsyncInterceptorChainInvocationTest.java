@@ -7,6 +7,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commands.VisitableCommand;
@@ -21,6 +24,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InterceptorChainTest;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestException;
@@ -116,7 +120,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       AsyncInterceptorChain chain = newInterceptorChain(new BaseAsyncInterceptor() {
          @Override
          public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            return goAsync(f.thenApply(this::returnWith));
+            return goAsync(ctx, command, f);
          }
       });
       InvocationContext context = newInvocationContext();
@@ -218,12 +222,13 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).compose(
-                  (stage, rCtx, rCommand, rv, t) -> goAsync(f2.thenApply(o -> returnWithAsync(f3))));
+                  (stage, rCtx, rCommand, rv, t) -> goAsync(ctx, command, f2)
+                        .thenCompose((stage1, rCtx1, rCommand1, rv1) -> returnWithAsync(f3)));
          }
       }, new BaseAsyncInterceptor() {
          @Override
          public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            return goAsync(f1.thenApply(this::returnWith));
+            return goAsync(ctx, command, f1);
          }
       });
       InvocationContext context = newInvocationContext();
@@ -242,7 +247,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       testException(new ExceptionTestCallbacks() {
 
          @Override
-         public BasicInvocationStage perform(BaseAsyncInterceptor interceptor) {
+         public BasicInvocationStage perform(InvocationContext ctx, VisitableCommand command,
+                                             BaseAsyncInterceptor interceptor) {
             throw new TestException("bla");
          }
 
@@ -258,7 +264,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       testException(new ExceptionTestCallbacks() {
 
          @Override
-         public BasicInvocationStage perform(BaseAsyncInterceptor interceptor) {
+         public BasicInvocationStage perform(InvocationContext ctx, VisitableCommand command,
+                                             BaseAsyncInterceptor interceptor) {
             return interceptor.returnWithAsync(f);
          }
 
@@ -274,8 +281,9 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       testException(new ExceptionTestCallbacks() {
 
          @Override
-         public BasicInvocationStage perform(BaseAsyncInterceptor interceptor) {
-            return interceptor.goAsync(f);
+         public BasicInvocationStage perform(InvocationContext ctx, VisitableCommand command,
+                                             BaseAsyncInterceptor interceptor) {
+            return interceptor.goAsync(ctx, command, f);
          }
 
          @Override
@@ -332,7 +340,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       }, new BaseAsyncInterceptor() {
          @Override
          public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            return callbacks.perform(this);
+            return callbacks.perform(ctx, command, this);
          }
       });
       InvocationContext context = newInvocationContext();
@@ -347,12 +355,140 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       assertFalse(thenApply.get());
    }
 
-   protected SingleKeyNonTxInvocationContext newInvocationContext() {
+   public void testAsyncInvocationManyHandlers() throws Exception {
+      CompletableFuture<Object> f = new CompletableFuture<>();
+      AsyncInterceptorChain chain = newInterceptorChain(new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "0");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "1");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "2");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "3");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "4");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "5");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "6");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "7");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "8");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "9");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "a");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "b");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "c");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "d");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "e");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "f");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> rv.toString() + "g");
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return returnWithAsync(f);
+         }
+      });
+      CompletableFuture<Object> invokeFuture = chain.invokeAsync(newInvocationContext(), testCommand);
+      f.complete("h");
+      assertEquals("hgfedcba9876543210", invokeFuture.get());
+   }
+
+   public void testDeadlockWithAsyncStage() throws Exception {
+      CompletableFuture<Object> f1 = new CompletableFuture<>();
+      CompletableFuture<Object> f2 = new CompletableFuture<>();
+      AsyncInterceptorChain chain = newInterceptorChain(new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            InvocationStage stage = invokeNext(ctx, command);
+            stage.thenApply((rCtx, rCommand, rv) -> rv + " " + f2.join());
+            return stage;
+         }
+      }, new BaseAsyncInterceptor() {
+         @Override
+         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            return returnWithAsync(f1);
+         }
+      });
+      InvocationContext context = newInvocationContext();
+
+      CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, testCommand);
+      assertFalse(invokeFuture.isDone());
+      Future<Boolean> fork = fork(() -> f1.complete("v1"));
+      Thread.sleep(100);
+      assertFalse(fork.isDone());
+      assertFalse(invokeFuture.isDone());
+      f2.complete("v2");
+      fork.get(10, SECONDS);
+      assertEquals("v1 v2", invokeFuture.getNow(null));
+   }
+
+
+   private SingleKeyNonTxInvocationContext newInvocationContext() {
       // Actual implementation doesn't matter, we are only testing the BaseAsyncInvocationContext methods
       return new SingleKeyNonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
-   protected AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
+   private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.emptyList(), InterceptorChainTest.class.getClassLoader());
 
@@ -364,7 +500,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
    }
 
    private interface ExceptionTestCallbacks {
-      BasicInvocationStage perform(BaseAsyncInterceptor interceptor);
+      BasicInvocationStage perform(InvocationContext ctx, VisitableCommand command, BaseAsyncInterceptor interceptor);
       void post(CompletableFuture<Object> invokeFuture);
    }
 }

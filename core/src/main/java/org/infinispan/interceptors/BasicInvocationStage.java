@@ -9,6 +9,9 @@ import org.infinispan.context.InvocationContext;
  * A basic interface for invocation stages that can be returned by
  * {@link AsyncInterceptor#visitCommand(InvocationContext, VisitableCommand)}.
  *
+ * <p>An instance can be obtained by calling one of the {@link BaseAsyncInterceptor} methods, e.g.
+ * {@link BaseAsyncInterceptor#returnWith(Object)}.</p>
+ *
  * @author Dan Berindei
  * @since 9.0
  */
