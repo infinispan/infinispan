@@ -1,12 +1,10 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
@@ -24,8 +22,8 @@ public class PerKeyLockContainer implements LockContainer {
    private final ConcurrentMap<Object, InfinispanLock> lockMap;
    private TimeService timeService;
 
-   public PerKeyLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
-      lockMap = new EquivalentConcurrentHashMapV8<>(INITIAL_CAPACITY, concurrencyLevel, keyEquivalence, AnyEquivalence.getInstance());
+   public PerKeyLockContainer() {
+      lockMap = new ConcurrentHashMap<>(INITIAL_CAPACITY);
    }
 
    @Inject

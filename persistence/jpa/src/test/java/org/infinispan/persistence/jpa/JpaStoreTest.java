@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jpa;
 
+import java.io.IOException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
@@ -54,7 +56,7 @@ public class JpaStoreTest extends BaseStoreTest {
 
    @Test(enabled = false)
    @Override
-   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
-      // disabled as this test cannot be executed on JpaStore
+   public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
+      super.testLoadAndStoreBytesValues();
    }
 }

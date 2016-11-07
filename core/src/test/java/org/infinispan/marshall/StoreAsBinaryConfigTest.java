@@ -22,19 +22,19 @@ public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
 
    public void testKeysOnly() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable().storeValuesAsBinary(false);
+      c.storeAsBinary().enable();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       assert ecm.getCache().getCacheConfiguration().storeAsBinary().enabled();
       assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert !ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
+      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
    }
 
    public void testValuesOnly() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable().storeKeysAsBinary(false);
+      c.storeAsBinary().enable();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       assert ecm.getCache().getCacheConfiguration().storeAsBinary().enabled();
-      assert !ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
+      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
       assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
    }
 
@@ -49,20 +49,20 @@ public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
 
    public void testConfigCloning() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable().storeKeysAsBinary(false);
+      c.storeAsBinary().enable();
       ConfigurationBuilder builder = new ConfigurationBuilder().read(c.build());
       Configuration clone = builder.build();
-      assert !clone.storeAsBinary().storeKeysAsBinary();
+      assert clone.storeAsBinary().storeKeysAsBinary();
       assert clone.storeAsBinary().storeValuesAsBinary();
    }
 
    public void testConfigOverriding() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable().storeKeysAsBinary(false);
+      c.storeAsBinary().enable();
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.defineConfiguration("newCache", new ConfigurationBuilder().read(c.build()).storeAsBinary().storeValuesAsBinary(false).storeKeysAsBinary(true).build());
       assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().enabled();
       assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert !ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
+      assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
    }
 }

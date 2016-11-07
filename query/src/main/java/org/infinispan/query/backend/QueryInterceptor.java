@@ -25,6 +25,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -39,7 +40,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
@@ -80,6 +80,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private DistributionManager distributionManager;
    private RpcManager rpcManager;
    protected ExecutorService asyncExecutor;
+   protected TypeConverter typeConverter;
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
 
@@ -104,7 +105,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                                      DistributionManager distributionManager,
                                      RpcManager rpcManager,
                                      DataContainer dataContainer,
-                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+                                     TypeConverter typeConverter) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.distributionManager = distributionManager;
@@ -115,6 +117,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
       this.queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
       this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.queryKnownClasses, new TransactionHelper(transactionManager));
+      this.typeConverter = typeConverter;
    }
 
    @Start
@@ -248,10 +251,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (wrappedValue instanceof MarshalledValue)
-         return ((MarshalledValue) wrappedValue).get();
-      else if (wrappedValue instanceof WrappedByteArray) {
-         return ((WrappedByteArray) wrappedValue).getBytes();
+      if (typeConverter != null) {
+         return typeConverter.unboxValue(wrappedValue);
       }
          return wrappedValue;
    }

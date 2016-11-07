@@ -32,25 +32,25 @@ import org.testng.annotations.Test;
 public class LockContainerTest extends AbstractInfinispanTest {
 
    public void testSingleLockWithPerEntry() throws InterruptedException {
-      PerKeyLockContainer lockContainer = new PerKeyLockContainer(16, AnyEquivalence.getInstance());
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, -1);
    }
 
    public void testSingleCounterTestPerEntry() throws ExecutionException, InterruptedException {
-      PerKeyLockContainer lockContainer = new PerKeyLockContainer(16, AnyEquivalence.getInstance());
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, -1);
    }
 
    public void testSingleLockWithStriped() throws InterruptedException {
-      StripedLockContainer lockContainer = new StripedLockContainer(16, AnyEquivalence.getInstance());
+      StripedLockContainer lockContainer = new StripedLockContainer(16);
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, 16);
    }
 
    public void testSingleCounterWithStriped() throws ExecutionException, InterruptedException {
-      StripedLockContainer lockContainer = new StripedLockContainer(16, AnyEquivalence.getInstance());
+      StripedLockContainer lockContainer = new StripedLockContainer(16);
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, 16);
    }

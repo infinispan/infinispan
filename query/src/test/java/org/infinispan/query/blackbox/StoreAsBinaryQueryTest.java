@@ -9,8 +9,8 @@ import org.testng.annotations.Test;
  * @author Navin Surtani
  * @since 4.0
  */
-@Test(groups="functional", testName = "query.blackbox.MarshalledValueQueryTest")
-public class MarshalledValueQueryTest extends LocalCacheTest {
+@Test(groups="functional", testName = "query.blackbox.StoreAsBinaryQueryTest")
+public class StoreAsBinaryQueryTest extends LocalCacheTest {
    @Override
    protected void enhanceConfig(ConfigurationBuilder c) {
       c.storeAsBinary().enabled(true);

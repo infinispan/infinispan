@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -37,7 +38,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.IdentityEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.annotations.ComponentName;
@@ -671,15 +671,15 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private class CompletedTransactionsInfo {
-      final EquivalentConcurrentHashMapV8<GlobalTransaction, CompletedTransactionInfo> completedTransactions;
-      // The highest transaction id previously cleared, one per originator
-      final EquivalentConcurrentHashMapV8<Address, Long> nodeMaxPrunedTxIds;
+      final ConcurrentMap<GlobalTransaction, CompletedTransactionInfo> completedTransactions;
+      // The ConcurrentMap transaction id previously cleared, one per originator
+      final ConcurrentMap<Address, Long> nodeMaxPrunedTxIds;
       // The highest transaction id previously cleared, with any originator
       volatile long globalMaxPrunedTxId;
 
       public CompletedTransactionsInfo() {
-         nodeMaxPrunedTxIds = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
-         completedTransactions = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         nodeMaxPrunedTxIds = new ConcurrentHashMap<>();
+         completedTransactions = new ConcurrentHashMap<>();
          globalMaxPrunedTxId = -1;
       }
 

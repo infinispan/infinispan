@@ -13,13 +13,11 @@ import org.infinispan.commons.equivalence.Equivalence;
  */
 public class StripedHashFunction<T> {
 
-   private final Equivalence<T> equivalence;
    private final int lockSegmentMask;
    private final int lockSegmentShift;
    private final int numSegments;
 
-   public StripedHashFunction(Equivalence<T> equivalence, int concurrencyLevel) {
-      this.equivalence = equivalence;
+   public StripedHashFunction(int concurrencyLevel) {
       int tempLockSegShift = 0;
       int tmpNumSegments = 1;
       while (tmpNumSegments < concurrencyLevel) {
@@ -58,6 +56,6 @@ public class StripedHashFunction<T> {
     * @return the segment index, between 0 and {@link #getNumSegments()}-1.
     */
    public final int hashToSegment(T object) {
-      return (hash(equivalence.hashCode(object)) >>> lockSegmentShift) & lockSegmentMask;
+      return (hash(object.hashCode()) >>> lockSegmentShift) & lockSegmentMask;
    }
 }

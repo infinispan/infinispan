@@ -18,7 +18,7 @@ public class LockContainerFactory extends AbstractNamedCacheComponentFactory imp
    @Override
    public <T> T construct(Class<T> componentType) {
       return (T) (configuration.locking().useLockStriping() ?
-                        new StripedLockContainer(configuration.locking().concurrencyLevel(), configuration.dataContainer().keyEquivalence()) :
-                        new PerKeyLockContainer(configuration.locking().concurrencyLevel(), configuration.dataContainer().keyEquivalence()));
+                        new StripedLockContainer(configuration.locking().concurrencyLevel()) :
+                        new PerKeyLockContainer());
    }
 }

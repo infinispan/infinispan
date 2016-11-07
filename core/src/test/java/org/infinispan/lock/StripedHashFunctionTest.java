@@ -17,7 +17,7 @@ public class StripedHashFunctionTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      stripedHashFunction = new StripedHashFunction<>(AnyEquivalence.getInstance(), 500);
+      stripedHashFunction = new StripedHashFunction<>(500);
    }
 
    public void testHashingDistribution() {

@@ -486,7 +486,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.storeAsBinary().enabled());
       assertTrue(config.storeAsBinary().storeKeysAsBinary());
-      assertFalse(config.storeAsBinary().storeValuesAsBinary());
+      assertTrue(config.storeAsBinary().storeValuesAsBinary());
       assertTrue(config.storeAsBinary().defensive());
 
       config = cm.getCacheConfiguration("lazyDeserializationCache");
@@ -949,7 +949,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(restStoreConfiguration.purgeOnStartup());
       assertTrue(restStoreConfiguration.shared());
       assertFalse(restStoreConfiguration.preload());
-      assertEquals("org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper", restStoreConfiguration.key2StringMapper());
+      assertEquals("org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper", restStoreConfiguration.key2StringMapper());
       assertEquals("/rest/___defaultcache/", restStoreConfiguration.path());
       assertEquals("localhost", restStoreConfiguration.host());
       assertEquals(18212, restStoreConfiguration.port());

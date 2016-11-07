@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -21,9 +22,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Immutables;
 
 /**
@@ -35,12 +34,12 @@ public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final byte[] EMPTY_BYTES = new byte[0];
+   private static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(new byte[0]);
 
-   private Map<byte[], Collection<SocketAddress>> servers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-   private Map<byte[], ConsistentHash> consistentHashes = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-   private Map<byte[], Integer> segmentsByCache = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-   private Map<byte[], AtomicInteger> topologyIds = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+   private Map<WrappedByteArray, Collection<SocketAddress>> servers = new ConcurrentHashMap<>();
+   private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();
+   private Map<WrappedByteArray, Integer> segmentsByCache = new ConcurrentHashMap<>();
+   private Map<WrappedByteArray, AtomicInteger> topologyIds = new ConcurrentHashMap<>();
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> initialServers, Configuration configuration) {
@@ -50,19 +49,20 @@ public final class TopologyInfo {
    }
 
    private Map<SocketAddress, Set<Integer>> getSegmentsByServer(byte[] cacheName) {
-      ConsistentHash consistentHash = consistentHashes.get(cacheName);
+      WrappedByteArray key = new WrappedByteArray(cacheName);
+      ConsistentHash consistentHash = consistentHashes.get(key);
       if (consistentHash != null) {
          return consistentHash.getSegmentsByServer();
       } else {
-         Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(cacheName));
+         Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(key));
          Optional<Set<Integer>> segments = numSegments.map(n -> range(0, n).boxed().collect(Collectors.toSet()));
          return Immutables.immutableMapWrap(
-               servers.get(cacheName).stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
+               servers.get(key).stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
          );
       }
    }
 
-   public Collection<SocketAddress> getServers(byte[] cacheName) {
+   public Collection<SocketAddress> getServers(WrappedByteArray cacheName) {
       return servers.computeIfAbsent(cacheName, k -> servers.get(EMPTY_BYTES));
    }
 
@@ -78,12 +78,14 @@ public final class TopologyInfo {
       } else {
          hash.init(servers2Hash, numKeyOwners, hashSpace);
       }
-      consistentHashes.put(cacheName, hash);
-      topologyIds.put(cacheName, topologyId);
+      WrappedByteArray key = new WrappedByteArray(cacheName);
+      consistentHashes.put(key, hash);
+      topologyIds.put(key, topologyId);
    }
 
    public void updateTopology(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
          byte[] cacheName, AtomicInteger topologyId) {
+      WrappedByteArray key = new WrappedByteArray(cacheName);
       if (hashFunctionVersion > 0) {
          SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
@@ -91,16 +93,16 @@ public final class TopologyInfo {
          } else {
             hash.init(segmentOwners, numSegments);
          }
-         consistentHashes.put(cacheName, hash);
+         consistentHashes.put(key, hash);
       }
-      segmentsByCache.put(cacheName, numSegments);
-      topologyIds.put(cacheName, topologyId);
+      segmentsByCache.put(key, numSegments);
+      topologyIds.put(key, topologyId);
    }
 
    public Optional<SocketAddress> getHashAwareServer(Object key, byte[] cacheName) {
       Optional<SocketAddress> server = Optional.empty();
       if (isTopologyValid(cacheName)) {
-         ConsistentHash consistentHash = consistentHashes.get(cacheName);
+         ConsistentHash consistentHash = consistentHashes.get(new WrappedByteArray(cacheName));
          if (consistentHash != null) {
             server = Optional.of(consistentHash.getServer(key));
             if (trace) {
@@ -114,7 +116,7 @@ public final class TopologyInfo {
    }
 
    public boolean isTopologyValid(byte[] cacheName) {
-      Integer id = topologyIds.get(cacheName).get();
+      Integer id = topologyIds.get(new WrappedByteArray(cacheName)).get();
       Boolean valid = id != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
       if (trace)
          log.tracef("Is topology id (%s) valid? %b", id, valid);
@@ -126,13 +128,13 @@ public final class TopologyInfo {
       if (cacheName == null || cacheName.length == 0) {
          servers.keySet().forEach(k -> servers.put(k, updatedServers));
       } else {
-         servers.put(cacheName, updatedServers);
+         servers.put(new WrappedByteArray(cacheName), updatedServers);
       }
    }
 
 
    public ConsistentHash getConsistentHash(byte[] cacheName) {
-      return consistentHashes.get(cacheName);
+      return consistentHashes.get(new WrappedByteArray(cacheName));
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -141,12 +143,12 @@ public final class TopologyInfo {
 
    public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
       AtomicInteger id = new AtomicInteger(topologyId);
-      this.topologyIds.put(cacheName, id);
+      this.topologyIds.put(new WrappedByteArray(cacheName), id);
       return id;
    }
 
    public void setTopologyId(byte[] cacheName, int topologyId) {
-      AtomicInteger id = this.topologyIds.get(cacheName);
+      AtomicInteger id = this.topologyIds.get(new WrappedByteArray(cacheName));
       id.set(topologyId);
    }
 
@@ -156,12 +158,13 @@ public final class TopologyInfo {
    }
 
    public int getTopologyId(byte[] cacheName)  {
-      return topologyIds.get(cacheName).get();
+      return topologyIds.get(new WrappedByteArray(cacheName)).get();
    }
 
    public CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName) {
-      return new CacheTopologyInfoImpl(getSegmentsByServer(cacheName), segmentsByCache.get(cacheName),
-         topologyIds.get(cacheName).get());
+      WrappedByteArray key = new WrappedByteArray(cacheName);
+      return new CacheTopologyInfoImpl(getSegmentsByServer(cacheName), segmentsByCache.get(key),
+         topologyIds.get(key).get());
    }
 
 }

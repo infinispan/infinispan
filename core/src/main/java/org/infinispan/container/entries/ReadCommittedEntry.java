@@ -14,7 +14,6 @@ import java.util.Arrays;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -172,22 +171,10 @@ public class ReadCommittedEntry implements MVCCEntry {
             // Can't just rely on the entry's metadata because it could have
             // been modified by the interceptor chain (i.e. new version
             // generated if none provided by the user)
-            container.put(compact(key), compact(value),
-                  providedMetadata == null ? metadata : providedMetadata);
+            container.put(key, value, providedMetadata == null ? metadata : providedMetadata);
          }
          reset();
       }
-   }
-
-   private Object compact(Object val) {
-      if (val instanceof MarshalledValue) {
-         MarshalledValue marshalled = (MarshalledValue) val;
-         if (marshalled.getRaw().size() < marshalled.getRaw().getRaw().length) {
-            byte[] compactedArray = Arrays.copyOfRange(marshalled.getRaw().getRaw(), 0, marshalled.getRaw().size());
-            return new MarshalledValue(compactedArray, marshalled.hashCode(), marshalled.getMarshaller());
-         }
-      }
-      return val;
    }
 
    private void reset() {

@@ -5,6 +5,7 @@ package org.infinispan.commons.equivalence;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated
  */
 public final class AnyEquivalence<T> implements Equivalence<T> {
 

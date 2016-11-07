@@ -1,7 +1,6 @@
 package org.infinispan.container;
 
 import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -16,21 +15,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CaffeineConcurrentMap;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.EntrySizeCalculator;
+import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.commons.util.PeekableMap;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
-import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MarshalledValueEntrySizeCalculator;
+import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
@@ -50,6 +46,7 @@ import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Policy;
@@ -75,6 +72,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    private static final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<K, InternalCacheEntry<K, V>> entries;
+   private final Cache<K, InternalCacheEntry<K, V>> evictionCache;
    protected InternalEntryFactory entryFactory;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
@@ -87,12 +85,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
       entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel);
-   }
-
-   public DefaultDataContainer(int concurrencyLevel,
-         Equivalence<? super K> keyEq) {
-      // If at least one comparing implementation give, use ComparingCHMv8
-      entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel, keyEq, AnyEquivalence.getInstance());
+      evictionCache = null;
    }
 
    private static <K, V> Caffeine<K, V> caffeineBuilder() {
@@ -100,8 +93,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
-         EvictionStrategy strategy, EvictionThreadPolicy policy,
-         Equivalence<? super K> keyEquivalence, EvictionType thresholdPolicy) {
+         EvictionStrategy strategy, EvictionThreadPolicy policy, EvictionType thresholdPolicy) {
       DefaultEvictionListener evictionListener;
       // translate eviction policy and strategy
       switch (policy) {
@@ -118,7 +110,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       switch (thresholdPolicy) {
          case MEMORY:
             CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-                  new MarshalledValueEntrySizeCalculator()));
+                  new PrimitiveEntrySizeCalculator()));
             caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
             break;
          case COUNT:
@@ -127,7 +119,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          default:
             throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
       }
-      entries = new CaffeineConcurrentMap<>(applyListener(caffeine, evictionListener).build());
+      evictionCache = applyListener(caffeine, evictionListener).build();
+      entries = evictionCache.asMap();
    }
 
    private Caffeine<K, InternalCacheEntry<K, V>> applyListener(Caffeine<K, InternalCacheEntry<K, V>> caffeine, DefaultEvictionListener listener) {
@@ -164,12 +157,10 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
     * @param thresholdSize
     * @param strategy
     * @param policy
-    * @param keyEquivalence
     * @param sizeCalculator
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
                                   EvictionStrategy strategy, EvictionThreadPolicy policy,
-                                  Equivalence<? super K> keyEquivalence,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
       DefaultEvictionListener evictionListener;
       // translate eviction policy and strategy
@@ -184,12 +175,12 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
       EntrySizeCalculator<K, InternalCacheEntry<K, V>> calc = new CacheEntrySizeCalculator<>(sizeCalculator);
 
-      com.github.benmanes.caffeine.cache.Cache<K, InternalCacheEntry<K, V>> cache = applyListener(Caffeine.newBuilder()
+      evictionCache = applyListener(Caffeine.newBuilder()
             .weigher((K k, InternalCacheEntry<K, V> v) -> (int) calc.calculateSize(k, v))
             .maximumWeight(thresholdSize), evictionListener)
             .build();
 
-      entries = new CaffeineConcurrentMap<>(cache);
+      entries = evictionCache.asMap();
    }
 
    @Inject
@@ -208,22 +199,15 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
             EvictionStrategy strategy, EvictionThreadPolicy thredPolicy,
-            Equivalence<? super K> keyEquivalence, EvictionType thresholdPolicy) {
+            EvictionType thresholdPolicy) {
       return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
-            thredPolicy, keyEquivalence, thresholdPolicy);
+            thredPolicy, thresholdPolicy);
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
                                                                         EvictionStrategy strategy, EvictionThreadPolicy thredPolicy,
-                                                                        Equivalence<? super K> keyEquivalence,
                                                                         EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
-      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
-              thredPolicy, keyEquivalence, sizeCalculator);
-   }
-
-   public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel,
-         Equivalence<? super K> keyEquivalence) {
-      return new DefaultDataContainer<>(concurrencyLevel, keyEquivalence);
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy, thredPolicy, sizeCalculator);
    }
 
    public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel) {
@@ -306,10 +290,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
    }
 
-   private Policy.Eviction<K, V> eviction() {
-      if (entries instanceof CaffeineConcurrentMap) {
-         com.github.benmanes.caffeine.cache.Cache<K, V> cache = ((CaffeineConcurrentMap) entries).getCache();
-         Optional<Policy.Eviction<K, V>> eviction = cache.policy().eviction();
+   private Policy.Eviction<K, InternalCacheEntry<K, V>> eviction() {
+      if (evictionCache != null) {
+         Optional<Policy.Eviction<K, InternalCacheEntry<K, V>>> eviction = evictionCache.policy().eviction();
          if (eviction.isPresent()) {
             return eviction.get();
          }
@@ -319,13 +302,13 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public long capacity() {
-      Policy.Eviction<K, V> evict = eviction();
+      Policy.Eviction<K, InternalCacheEntry<K, V>> evict = eviction();
       return evict.getMaximum();
    }
 
    @Override
    public void resize(long newSize) {
-      Policy.Eviction<K, V> evict = eviction();
+      Policy.Eviction<K, InternalCacheEntry<K, V>> evict = eviction();
       evict.setMaximum(newSize);
    }
 
@@ -583,8 +566,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (action == null)
          throw new IllegalArgumentException("No action specified");
 
-      ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(32, (K key, InternalCacheEntry<K, V> value) -> {
+      entries.forEach((K key, InternalCacheEntry<K, V> value) -> {
          if (filter.accept(key)) {
             action.accept(key, value);
          }
@@ -603,8 +585,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (action == null)
          throw new IllegalArgumentException("No action specified");
 
-      ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(32, (K key, InternalCacheEntry<K, V> value) -> {
+      entries.forEach((K key, InternalCacheEntry<K, V> value) -> {
          if (filter.accept(key, value.getValue(), value.getMetadata())) {
             action.accept(key, value);
          }

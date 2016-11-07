@@ -8,8 +8,8 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.blackbox.MarshalledValueClusteredQueryCacheTest")
-public class MarshalledValueClusteredQueryCacheTest extends ClusteredQueryTest {
+@Test(groups = "functional", testName = "query.blackbox.StoreAsBinaryClusteredQueryCacheTest")
+public class StoreAsBinaryClusteredQueryCacheTest extends ClusteredQueryTest {
 
    protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
       cacheCfg.storeAsBinary().enabled(true);

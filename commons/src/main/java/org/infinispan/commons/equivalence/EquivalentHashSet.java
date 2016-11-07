@@ -14,6 +14,7 @@ import java.util.Iterator;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated
  */
 public class EquivalentHashSet<E> extends AbstractSet<E> {
 

@@ -26,7 +26,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
-      this.servers = servers.toArray(new InetSocketAddress[servers.size()]);
+      this.servers = servers.toArray(new SocketAddress[servers.size()]);
       // keep the old index if possible so that we don't produce more requests for the first server
       if (index >= this.servers.length) {
          index = 0;

@@ -530,7 +530,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("storeKeyValueBinary");
       assertTrue(c.storeAsBinary().enabled());
       assertTrue(c.storeAsBinary().storeKeysAsBinary());
-      assertTrue(!c.storeAsBinary().storeValuesAsBinary());
+      assertTrue(c.storeAsBinary().storeValuesAsBinary());
    }
 
    private void assertReaperAndTimeoutInfo(Configuration defaultCfg) {

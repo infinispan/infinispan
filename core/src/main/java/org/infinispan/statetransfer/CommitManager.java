@@ -4,10 +4,11 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -29,14 +30,10 @@ public class CommitManager {
 
    private static final Log log = LogFactory.getLog(CommitManager.class);
    private static final boolean trace = log.isTraceEnabled();
-   private final EquivalentConcurrentHashMapV8<Object, DiscardPolicy> tracker;
+   private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
    private DataContainer dataContainer;
    private volatile boolean trackStateTransfer;
    private volatile boolean trackXSiteStateTransfer;
-
-   public CommitManager(Equivalence<Object> keyEq) {
-      tracker = new EquivalentConcurrentHashMapV8<>(keyEq, AnyEquivalence.getInstance());
-   }
 
    @Inject
    public final void inject(DataContainer dataContainer) {

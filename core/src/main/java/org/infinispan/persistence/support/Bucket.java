@@ -23,12 +23,12 @@ public final class Bucket {
    private transient String bucketIdStr;
 
 
-   public Bucket(Equivalence<Object> keyEquivalence) {
-      this.entries = CollectionFactory.makeMap(32, keyEquivalence, AnyEquivalence.<MarshalledEntry>getInstance());
+   public Bucket() {
+      this.entries = new HashMap<>(32);
    }
 
-   public Bucket(Map<Object, MarshalledEntry> entries, Equivalence<Object> keyEquivalence) {
-      this.entries = CollectionFactory.makeMap(entries, keyEquivalence, AnyEquivalence.<MarshalledEntry>getInstance());
+   public Bucket(Map<Object, MarshalledEntry> entries) {
+      this.entries = new HashMap<>(entries);
    }
 
    public final void addEntry(Object key,MarshalledEntry sv) {

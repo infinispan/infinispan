@@ -5,6 +5,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +37,8 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 
@@ -68,7 +67,7 @@ public class TcpTransportFactory implements TransportFactory {
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
    private GenericKeyedObjectPool<SocketAddress, TcpTransport> connectionPool;
    // Per cache request balancing strategy
-   private Map<byte[], FailoverRequestBalancingStrategy> balancers;
+   private Map<WrappedByteArray, FailoverRequestBalancingStrategy> balancers;
    private Configuration configuration;
    private Collection<SocketAddress> initialServers;
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
@@ -90,10 +89,6 @@ public class TcpTransportFactory implements TransportFactory {
    // increased and so any old requests that might have received topology
    // updates won't be allowed to apply since they refer to older views.
    private final AtomicInteger topologyAge = new AtomicInteger(0);
-
-   @GuardedBy("lock")
-   private Map<byte[], Boolean> compatibilityCaches = CollectionFactory
-           .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
 
    private final BlockingQueue<AddClientListenerOperation> disconnectedListeners =
          new LinkedBlockingQueue<>();
@@ -156,14 +151,14 @@ public class TcpTransportFactory implements TransportFactory {
                          connectionFactory,
                          configuration.connectionPool());
          createAndPreparePool(poolFactory);
-         balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-         addBalancer(RemoteCacheManager.cacheNameBytes());
+         balancers = new HashMap<>();
+         addBalancer(new WrappedByteArray(RemoteCacheManager.cacheNameBytes()));
 
          pingServersIgnoreException();
       }
    }
 
-   private FailoverRequestBalancingStrategy addBalancer(byte[] cacheName) {
+   private FailoverRequestBalancingStrategy addBalancer(WrappedByteArray cacheName) {
       FailoverRequestBalancingStrategy balancer;
 
       FailoverRequestBalancingStrategy cfgBalancerInstance = configuration.balancingStrategy();
@@ -267,9 +262,10 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    private FailoverRequestBalancingStrategy getOrCreateIfAbsentBalancer(byte[] cacheName) {
-      FailoverRequestBalancingStrategy balancer = balancers.get(cacheName);
+      WrappedByteArray key = new WrappedByteArray(cacheName);
+      FailoverRequestBalancingStrategy balancer = balancers.get(key);
       if (balancer == null)
-         balancer = addBalancer(cacheName);
+         balancer = addBalancer(key);
       return balancer;
    }
 
@@ -647,7 +643,7 @@ public class TcpTransportFactory implements TransportFactory {
     */
    public FailoverRequestBalancingStrategy getBalancer(byte[] cacheName) {
       synchronized (lock) {
-         return balancers.get(cacheName);
+         return balancers.get(new WrappedByteArray(cacheName));
       }
    }
 

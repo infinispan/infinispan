@@ -9,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -26,22 +25,10 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Cache<InvalidatedPojo, String> cache1, cache2;
       ConfigurationBuilder invlSync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
       invlSync.storeAsBinary().enable();
 
       createClusteredCaches(2, "invlSync", invlSync);
-
-      cache1 = cache(0, "invlSync");
-      cache2 = cache(1, "invlSync");
-
-      assertMarshalledValueInterceptorPresent(cache1);
-      assertMarshalledValueInterceptorPresent(cache2);
-   }
-
-   private void assertMarshalledValueInterceptorPresent(Cache<?, ?> c) {
-      AsyncInterceptorChain ic1 = c.getAdvancedCache().getAsyncInterceptorChain();
-      assert ic1.containsInterceptorType(MarshalledValueInterceptor.class);
    }
 
    public void testModificationsOnSameCustomKey() {

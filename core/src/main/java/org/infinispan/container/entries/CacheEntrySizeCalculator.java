@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
-import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
+import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;

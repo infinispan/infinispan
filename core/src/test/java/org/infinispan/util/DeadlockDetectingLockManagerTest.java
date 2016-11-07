@@ -84,7 +84,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    }
 
    private LockContainer createLockContainer() {
-      PerKeyLockContainer lockContainer = new PerKeyLockContainer(32, AnyEquivalence.getInstance());
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       lockContainer.inject(TIME_SERVICE);
       return lockContainer;
    }

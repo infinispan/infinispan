@@ -50,14 +50,14 @@ public class DataContainerStressTest {
    private static final Log log = LogFactory.getLog(DataContainerStressTest.class);
 
    public void testSimpleDataContainer() throws InterruptedException {
-      DefaultDataContainer dc = DefaultDataContainer.unBoundedDataContainer(5000, ByteArrayEquivalence.INSTANCE);
+      DefaultDataContainer dc = DefaultDataContainer.unBoundedDataContainer(5000);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }
 
    public void testEntryBoundedDataContainer() throws InterruptedException {
       DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, NUM_KEYS - NUM_KEYS / 4, EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, ByteArrayEquivalence.INSTANCE, EvictionType.COUNT);
+              EvictionThreadPolicy.PIGGYBACK, EvictionType.COUNT);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }
@@ -66,7 +66,7 @@ public class DataContainerStressTest {
       // The key length could be 4 or 5 (90% of the time it will be 5)
       // The value length could be 6 or 7 (90% of the time it will be 7)
       DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, threeQuarterMemorySize(NUM_KEYS, 5, 20), EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, ByteArrayEquivalence.INSTANCE, EvictionType.MEMORY);
+              EvictionThreadPolicy.PIGGYBACK, EvictionType.MEMORY);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }

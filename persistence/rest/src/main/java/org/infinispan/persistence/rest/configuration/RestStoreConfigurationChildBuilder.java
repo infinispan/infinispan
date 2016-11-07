@@ -2,6 +2,7 @@ package org.infinispan.persistence.rest.configuration;
 
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
+import org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper;
 import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
 
@@ -25,13 +26,13 @@ public interface RestStoreConfigurationChildBuilder<S> extends StoreConfiguratio
 
    /**
     * The class name of a {@link org.infinispan.persistence.keymappers.Key2StringMapper} to use for mapping keys to strings suitable for
-    * RESTful retrieval/storage. Defaults to {@link org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper}
+    * RESTful retrieval/storage. Defaults to {@link WrappedByteArrayOrPrimitiveMapper}
     */
    RestStoreConfigurationBuilder key2StringMapper(String key2StringMapper);
 
    /**
     * The class of a {@link org.infinispan.persistence.keymappers.Key2StringMapper} to use for mapping keys to strings suitable for
-    * RESTful retrieval/storage. Defaults to {@link org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper}
+    * RESTful retrieval/storage. Defaults to {@link WrappedByteArrayOrPrimitiveMapper}
     */
    RestStoreConfigurationBuilder key2StringMapper(Class<? extends MarshallingTwoWayKey2StringMapper> klass);
 

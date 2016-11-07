@@ -1,6 +1,7 @@
 package org.infinispan.expiration.impl;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -8,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -71,8 +71,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
 
-      this.expiring = new EquivalentConcurrentHashMapV8<>(cfg.dataContainer().keyEquivalence(),
-              cfg.dataContainer().valueEquivalence());
+      this.expiring = new ConcurrentHashMap<>();
    }
 
 

@@ -2,11 +2,10 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
+import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
-import org.infinispan.container.entries.MarshalledValueEntrySizeCalculator;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -39,36 +38,26 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
          //handle case when < 0 value signifies unbounded container
          if(thresholdSize < 0) {
-            return (T) DefaultDataContainer.unBoundedDataContainer(
-                    level, keyEquivalence);
+            return (T) DefaultDataContainer.unBoundedDataContainer(level);
          }
 
          DefaultDataContainer dataContainer;
          switch (st) {
             case NONE:
-               return (T) DefaultDataContainer.unBoundedDataContainer(
-                     level, keyEquivalence);
+               return (T) DefaultDataContainer.unBoundedDataContainer(level);
             case UNORDERED:
             case LRU:
 
                if (configuration.eviction().type() == EvictionType.MEMORY) {
-                  EntrySizeCalculator esc;
-                  if (configuration.storeAsBinary().storeKeysAsBinary() &&
-                          configuration.storeAsBinary().storeValuesAsBinary()) {
-                     esc = new WrappedByteArraySizeCalculator(new MarshalledValueEntrySizeCalculator());
-                  } else {
-                     esc = new WrappedByteArraySizeCalculator<>(new PrimitiveEntrySizeCalculator());
-                  }
+                  EntrySizeCalculator esc = new WrappedByteArraySizeCalculator<>(new PrimitiveEntrySizeCalculator());
                   dataContainer = DefaultDataContainer.boundedDataContainer(
-                          level, thresholdSize, st, configuration.eviction().threadPolicy(), keyEquivalence,
-                          esc);
+                          level, thresholdSize, st, configuration.eviction().threadPolicy(), esc);
                   break;
                }
             case FIFO:
             case LIRS:
                dataContainer = DefaultDataContainer.boundedDataContainer(
-                  level, thresholdSize, st, configuration.eviction().threadPolicy(), keyEquivalence,
-                  configuration.eviction().type());
+                  level, thresholdSize, st, configuration.eviction().threadPolicy(), configuration.eviction().type());
                break;
             default:
                throw new CacheConfigurationException("Unknown eviction strategy "

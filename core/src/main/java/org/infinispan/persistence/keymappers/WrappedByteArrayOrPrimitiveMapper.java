@@ -1,28 +1,24 @@
 package org.infinispan.persistence.keymappers;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Base64;
-import org.infinispan.marshall.core.MarshalledValue;
 
 /**
  * This class is an implementation for {@link TwoWayKey2StringMapper} that supports both primitives
- * and {@link MarshalledValue}s. It extends {@link DefaultTwoWayKey2StringMapper} to achieve this.
+ * and {@link org.infinispan.commons.marshall.WrappedByteArray}s. It extends {@link DefaultTwoWayKey2StringMapper}
+ * to achieve this.
  *
  * @author Justin Hayes
  * @since 5.2
  */
-public class MarshalledValueOrPrimitiveMapper extends DefaultTwoWayKey2StringMapper implements MarshallingTwoWayKey2StringMapper {
+public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMapper implements MarshallingTwoWayKey2StringMapper {
 
-   private MarshalledValue.Externalizer externalizer;
+   private StreamingMarshaller externalizer;
 
    @Override
    public void setMarshaller(StreamingMarshaller marshaller) {
-      externalizer = new MarshalledValue.Externalizer(marshaller);
+      externalizer = marshaller;
    }
 
    @Override
@@ -33,7 +29,7 @@ public class MarshalledValueOrPrimitiveMapper extends DefaultTwoWayKey2StringMap
       } else {
          // Do it ourself
          try {
-            MarshalledValue mv = (MarshalledValue) key;
+            WrappedByteArray mv = (WrappedByteArray) key;
             String serializedObj = serializeObj(mv);
             return serializedObj;
          } catch (Exception ex) {
@@ -51,7 +47,7 @@ public class MarshalledValueOrPrimitiveMapper extends DefaultTwoWayKey2StringMap
          // Do it ourself
          try {
             Object obj = deserializeObj(key);
-            MarshalledValue mv = (MarshalledValue) obj;
+            WrappedByteArray mv = (WrappedByteArray) obj;
             return mv;
          } catch (Exception ex) {
             throw new IllegalArgumentException("Exception occurred deserializing key.", ex);
@@ -66,14 +62,14 @@ public class MarshalledValueOrPrimitiveMapper extends DefaultTwoWayKey2StringMap
     * @return
     * @throws Exception
     */
-   private String serializeObj(MarshalledValue mv) throws Exception {
-      if(externalizer==null)
-         throw new IllegalStateException("Cannot serialize object: undefined marshaller");
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ObjectOutputStream oos = new ObjectOutputStream(baos);
-      externalizer.writeObject(oos, mv);
-      oos.close();
-      return Base64.encodeBytes(baos.toByteArray());
+   private String serializeObj(WrappedByteArray mv) throws Exception {
+//      if(externalizer==null)
+//         throw new IllegalStateException("Cannot serialize object: undefined marshaller");
+//      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//      ObjectOutputStream oos = new ObjectOutputStream(baos);
+//      externalizer.writeObject(oos, mv.getBytes());
+//      oos.close();
+      return Base64.encodeBytes(mv.getBytes());
    }
 
    /**
@@ -84,18 +80,19 @@ public class MarshalledValueOrPrimitiveMapper extends DefaultTwoWayKey2StringMap
     * @return
     * @throws Exception
     */
-   private MarshalledValue deserializeObj(String key) throws Exception {
+   private WrappedByteArray deserializeObj(String key) throws Exception {
       if(externalizer==null)
          throw new IllegalStateException("Cannot deserialize object: undefined marshaller");
       byte[] data = Base64.decode(key);
-      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-      MarshalledValue mv = externalizer.readObject(ois);
-      ois.close();
-      return mv;
+//      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+//      MarshalledValue mv = externalizer.readObject(ois);
+//      ois.close();
+//      return mv;
+      return new WrappedByteArray(data);
    }
 
    @Override
    public boolean isSupportedType(Class<?> keyType) {
-      return keyType.equals(MarshalledValue.class) || super.isSupportedType(keyType);
+      return keyType.equals(WrappedByteArray.class) || super.isSupportedType(keyType);
    }
 }

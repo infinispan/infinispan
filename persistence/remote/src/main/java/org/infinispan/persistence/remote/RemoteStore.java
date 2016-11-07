@@ -140,6 +140,9 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    @Override
    public boolean contains(Object key) throws PersistenceException {
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
       return remoteCache.containsKey(key);
    }
 
