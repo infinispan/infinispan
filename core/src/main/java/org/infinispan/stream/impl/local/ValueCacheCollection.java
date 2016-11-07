@@ -78,7 +78,8 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
    public boolean remove(Object o) {
       try (CloseableIterator<V> it = iterator()) {
          while (it.hasNext()) {
-            if (o.equals(it.next())) {
+            V next = it.next();
+            if (o.equals(next)) {
                it.remove();
                return true;
             }

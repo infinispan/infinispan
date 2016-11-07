@@ -37,7 +37,7 @@ public interface Ids {
 
    int GLOBAL_TRANSACTION = 19;
    int JGROUPS_ADDRESS = 20;
-   int MARSHALLED_VALUE = 21;
+   int WRAPPED_BYTE_ARRAY = 21;
 
    int DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 22;
 
@@ -165,5 +165,9 @@ public interface Ids {
    int LAMBDA_WITH_METAS = 109;
 
    int IMMUTABLE_SET = 110;
+
+   int CONVERTER_KEY_MAPPER = 111;
+   int CONVERTER_VALUE_MAPPER = 112;
+   int CONVERTER_ENTRY_MAPPER = 113;
 
 }

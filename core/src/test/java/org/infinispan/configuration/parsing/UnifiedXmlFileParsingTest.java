@@ -543,7 +543,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("store-as-binary");
       assertTrue(c.storeAsBinary().enabled());
       assertTrue(c.storeAsBinary().storeKeysAsBinary());
-      assertFalse(c.storeAsBinary().storeValuesAsBinary());
+      assertTrue(c.storeAsBinary().storeValuesAsBinary());
    }
 
    private static void assertTemplateConfiguration(EmbeddedCacheManager cm, String name) {

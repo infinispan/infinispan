@@ -50,6 +50,7 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables storing keys as binary.
+    * @deprecated when store as binary is enabled, keys are always stored as binary
     */
    public boolean storeKeysAsBinary() {
       return storeKeysAsBinary.get();
@@ -57,6 +58,7 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables storing values as binary.
+    * @deprecated when store as binary is enabled, values are always stored as binary
     */
    public boolean storeValuesAsBinary() {
       return storeValuesAsBinary.get();

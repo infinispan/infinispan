@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
-   PerKeyLockContainer lc = new PerKeyLockContainer(1000, AnyEquivalence.getInstance());
+   PerKeyLockContainer lc = new PerKeyLockContainer();
 
    public void simpleTest() throws Exception {
       lc.inject(TIME_SERVICE);

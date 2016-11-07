@@ -4,6 +4,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.io.IOException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jdbc.DatabaseType;
@@ -70,12 +72,6 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       tableManager.stop();
 
       stringBasedCacheStore.stop();
-   }
-
-   @Override
-   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
-   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
-      super.testLoadAndStoreMarshalledValues();
    }
 
    @Override

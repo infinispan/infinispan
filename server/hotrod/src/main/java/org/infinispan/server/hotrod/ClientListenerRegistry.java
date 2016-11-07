@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,9 +29,9 @@ import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
@@ -73,8 +74,7 @@ class ClientListenerRegistry {
    private final static boolean isTrace = log.isTraceEnabled();
 
    private final AtomicLong messageId = new AtomicLong();
-   private final ConcurrentMap<byte[], Object> eventSenders = new EquivalentConcurrentHashMapV8<>(
-         ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+   private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
 
    volatile private Optional<Marshaller> marshaller = Optional.empty();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
@@ -155,7 +155,7 @@ class ClientListenerRegistry {
          }
       }
 
-      eventSenders.put(listenerId, clientEventSender);
+      eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
       if (includeState) {
          // If state included, do it async
@@ -248,7 +248,7 @@ class ClientListenerRegistry {
    }
 
    boolean removeClientListener(byte[] listenerId, Cache cache) {
-      Object sender = eventSenders.get(listenerId);
+      Object sender = eventSenders.get(new WrappedByteArray(listenerId));
       if (sender != null) {
          cache.removeListener(sender);
          return true;

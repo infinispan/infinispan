@@ -79,7 +79,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -197,22 +196,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          treeSet.add(new Human().age(i));
       }
       marshallAndAssertEquality(treeSet);
-   }
-
-   public void testMarshalledValueMarshalling() throws Exception {
-      Person p = new Person();
-      p.setName("Bob Dylan");
-      MarshalledValue mv = new MarshalledValue(p, marshaller);
-      marshallAndAssertEquality(mv);
-   }
-
-   public void testMarshalledValueGetMarshalling() throws Exception {
-      Pojo ext = new Pojo();
-      MarshalledValue mv = new MarshalledValue(ext, marshaller);
-      byte[] bytes = marshaller.objectToByteBuffer(mv);
-      MarshalledValue rmv = (MarshalledValue) marshaller.objectFromByteBuffer(bytes);
-      assert rmv.equals(mv) : "Writen[" + mv + "] and read[" + rmv + "] objects should be the same";
-      assert rmv.get() instanceof Pojo;
    }
 
    public void testSingletonListMarshalling() throws Exception {

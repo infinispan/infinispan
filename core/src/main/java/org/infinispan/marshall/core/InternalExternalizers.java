@@ -13,8 +13,12 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.compat.ConverterKeyMapper;
+import org.infinispan.compat.ConverterValueMapper;
+import org.infinispan.compat.ConverterEntryMapper;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -143,6 +147,9 @@ final class InternalExternalizers {
       addInternalExternalizer(new ClusterListenerReplicateCallable.Externalizer(), exts);
       addInternalExternalizer(new CollectionExternalizer(), exts);
       addInternalExternalizer(new CollectionKeyFilter.Externalizer(), exts);
+      addInternalExternalizer(new ConverterKeyMapper.Externalizer(), exts);
+      addInternalExternalizer(new ConverterEntryMapper.Externalizer(), exts);
+      addInternalExternalizer(new ConverterValueMapper.Externalizer(), exts);
       addInternalExternalizer(new CompositeKeyFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DefaultConsistentHash.Externalizer(), exts);
@@ -181,7 +188,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer(), exts);
       addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller), exts);
-      addInternalExternalizer(new MarshalledValue.Externalizer(marshaller), exts);
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer(), exts);
       addInternalExternalizer(new MetadataMortalCacheEntry.Externalizer(), exts);
@@ -227,6 +233,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new UnsuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new UnsureResponse.Externalizer(), exts);
       addInternalExternalizer(new UuidExternalizer(), exts);
+      addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
 
       return exts;

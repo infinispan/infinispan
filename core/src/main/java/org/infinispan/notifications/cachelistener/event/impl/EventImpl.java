@@ -7,7 +7,6 @@ import java.util.Map;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
@@ -86,8 +85,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public K getKey() {
-      if (key instanceof MarshalledValue)
-         key = (K) ((MarshalledValue) key).get();
+//      if (key instanceof MarshalledValue)
+//         key = (K) ((MarshalledValue) key).get();
       return key;
    }
 
@@ -164,8 +163,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
-      if (value instanceof MarshalledValue)
-         value = (V) ((MarshalledValue) value).get();
+//      if (value instanceof MarshalledValue)
+//         value = (V) ((MarshalledValue) value).get();
       return value;
    }
 

@@ -15,12 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
@@ -192,9 +189,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       if (store != null)
          return;
 
-      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
-      Equivalence<byte[]> valueEq = ByteArrayEquivalence.INSTANCE;
-      store = new EquivalentConcurrentHashMapV8<Object, byte[]>(keyEq, valueEq);
+      store = new ConcurrentHashMap<>();
       stats = newStatsMap();
 
       if (storeName != null) {

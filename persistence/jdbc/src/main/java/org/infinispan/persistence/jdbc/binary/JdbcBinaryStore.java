@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import javax.transaction.Transaction;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
@@ -73,7 +72,6 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
 
    private StripedLock locks;
    private JdbcBinaryStoreConfiguration configuration;
-   private Equivalence<Object> keyEquivalence;
 
    public JdbcBinaryStore() {
       super(log);
@@ -89,7 +87,6 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
    public void start() {
       super.start();
       locks = new StripedLock(configuration.lockConcurrencyLevel());
-      keyEquivalence = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
    }
 
    @Override
@@ -383,7 +380,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
          }
 
          if (existingBucket == null) {
-            Bucket bucket = new Bucket(keyEquivalence);
+            Bucket bucket = new Bucket();
             bucket.setBucketId(bucketKey);
             bucket.addEntry(entryKey, entry);
             existingBuckets.put(bucketKey, bucket);
@@ -620,7 +617,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
          bucket.addEntry(me.getKey(), me);
          updateBucket(bucket);
       } else {
-         bucket = new Bucket(keyEquivalence);
+         bucket = new Bucket();
          bucket.setBucketId(bucketId);
          bucket.addEntry(me.getKey(), me);
          insertBucket(bucket);
@@ -641,7 +638,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
    }
 
    public Integer getBuckedId(Object key) {
-      return keyEquivalence.hashCode(key) & 0xfffffc00; // To reduce the number of buckets/locks that may be created.
+      return key.hashCode() & 0xfffffc00; // To reduce the number of buckets/locks that may be created.
    }
 
 
@@ -676,7 +673,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
 
    private Bucket unmarshallBucket(InputStream stream) throws PersistenceException {
       Map<Object, MarshalledEntry> entries = unmarshall(stream);
-      return new Bucket(entries, keyEquivalence);
+      return new Bucket(entries);
    }
 
 }

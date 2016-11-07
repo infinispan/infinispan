@@ -13,10 +13,10 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.batch.AutoBatchSupport;
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -65,8 +65,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    // internal helper, reduces lots of casts.
    @SuppressWarnings("unchecked")
    protected AtomicHashMap<K, V> toMap(Object object) {
-      Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
-      return (AtomicHashMap<K, V>) map;
+      return (AtomicHashMap<K, V>) object;
    }
 
    protected AtomicHashMap<K, V> getDeltaMapForRead() {

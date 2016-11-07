@@ -27,6 +27,7 @@ import org.infinispan.commons.util.AbstractMap;
  * @author Galder Zamarreño
  * @since 5.3
  * @see java.util.HashMap
+ * @deprecated
  */
 public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 

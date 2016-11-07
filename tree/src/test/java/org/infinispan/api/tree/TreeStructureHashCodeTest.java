@@ -34,7 +34,7 @@ public class TreeStructureHashCodeTest {
    }
 
    private void doTest(List<Fqn> fqns) {
-      StripedLockContainer container = new StripedLockContainer(512, AnyEquivalence.getInstance());
+      StripedLockContainer container = new StripedLockContainer(512);
       container.inject(AbstractInfinispanTest.TIME_SERVICE);
       Map<InfinispanLock, Integer> distribution = new HashMap<>();
       for (Fqn f : fqns) {

@@ -1,6 +1,5 @@
 package org.infinispan.cache.impl;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,7 +25,10 @@ import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.DistinctFunction;
+import org.infinispan.compat.ConverterKeyMapper;
+import org.infinispan.compat.ConverterEntryMapper;
 import org.infinispan.compat.TypeConverter;
+import org.infinispan.compat.ConverterValueMapper;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -35,12 +37,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.compat.BaseTypeConverterInterceptor;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
-import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.util.function.RemovableFunction;
 
 /**
  * Advanced cache that converts key/value passed in to the new type before passing to the underlying cache.  Results
@@ -448,101 +444,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       super.removeExpired(boxKey(key), boxValue(value), lifespan);
    }
 
-   static class TypeConverterFilter<K, V> implements CacheEventFilter<K, V>, Serializable {
-      private final CacheEventFilter<? super K, ? super V> filter;
-      private transient TypeConverter typeConverter;
-
-      @Inject
-      public void inject(ComponentRegistry registry, TypeConverter typeConverter) {
-         registry.wireDependencies(filter);
-         this.typeConverter = typeConverter;
-      }
-
-      public TypeConverterFilter(CacheEventFilter<? super K, ? super V> filter) {
-         this.filter = filter;
-      }
-
-      @Override
-      public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
-         K unboxedKey = (K) typeConverter.unboxKey(key);
-         V unboxedOldValue = (V) typeConverter.unboxValue(oldValue);
-         V unboxedValue = (V) typeConverter.unboxValue(newValue);
-         return filter.accept(unboxedKey, unboxedOldValue, oldMetadata, unboxedValue, newMetadata, eventType);
-      }
-   }
-
-   static class TypeConverterConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable {
-      private final CacheEventConverter<? super K, ? super V, C> converter;
-      private transient TypeConverter typeConverter;
-
-      @Inject
-      public void inject(ComponentRegistry registry, TypeConverter typeConverter) {
-         registry.wireDependencies(converter);
-         this.typeConverter = typeConverter;
-      }
-
-      public TypeConverterConverter(CacheEventConverter<? super K, ? super V, C> converter) {
-         this.converter = converter;
-      }
-
-      @Override
-      public C convert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
-         K unboxedKey = (K) typeConverter.unboxKey(key);
-         V unboxedOldValue = (V) typeConverter.unboxValue(oldValue);
-         V unboxedValue = (V) typeConverter.unboxValue(newValue);
-         return converter.convert(unboxedKey, unboxedOldValue, oldMetadata, unboxedValue, newMetadata, eventType);
-      }
-   }
-
-   static class TypeConverterFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C> implements Serializable {
-      private final CacheEventFilterConverter<? super K, ? super V, C> filterConverter;
-      private transient TypeConverter typeConverter;
-
-      @Inject
-      public void inject(ComponentRegistry registry, TypeConverter typeConverter) {
-         registry.wireDependencies(filterConverter);
-         this.typeConverter = typeConverter;
-      }
-
-      public TypeConverterFilterConverter(CacheEventFilterConverter<? super K, ? super V, C> filterConverter) {
-         this.filterConverter = filterConverter;
-      }
-
-      @Override
-      public C filterAndConvert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
-         K unboxedKey = (K) typeConverter.unboxKey(key);
-         V unboxedOldValue = (V) typeConverter.unboxValue(oldValue);
-         V unboxedValue = (V) typeConverter.unboxValue(newValue);
-         return filterConverter.filterAndConvert(unboxedKey, unboxedOldValue, oldMetadata, unboxedValue, newMetadata,
-               eventType);
-      }
-   }
-
-   final EntryMapper entryMapper = new EntryMapper();
-
-   static class EntryMapper<K, V> implements RemovableFunction<CacheEntry<K, V>, CacheEntry<K, V>>, Serializable {
-      private transient InternalEntryFactory entryFactory;
-      private transient TypeConverter converter;
-
-      @Inject
-      public void injectFactory(InternalEntryFactory factory, TypeConverter converter) {
-         this.entryFactory = factory;
-         this.converter = converter;
-      }
-
-      @Override
-      public CacheEntry<K, V> apply(CacheEntry<K, V> e) {
-         K key = e.getKey();
-         Object newKey = converter.unboxKey(key);
-         V value = e.getValue();
-         Object newValue = converter.unboxValue(value);
-         if (key != newKey || value != newValue) {
-            return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata().version(), e.getCreated(),
-                  e.getLifespan(), e.getLastUsed(), e.getMaxIdle());
-         }
-         return e;
-      }
-   }
+   final ConverterEntryMapper entryMapper = new ConverterEntryMapper();
 
    private <E extends Entry<K, V>> CacheSet<E> cast(CacheSet set) {
       return (CacheSet<E>) set;
@@ -637,21 +539,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       return new TypeConverterEntrySet(this, super.cacheEntrySet());
    }
 
-   static final KeyMapper keyMapper = new KeyMapper();
-
-   static class KeyMapper<K> implements RemovableFunction<K, K>, Serializable {
-      private transient TypeConverter converter;
-
-      @Inject
-      public void injectFactory(TypeConverter converter) {
-         this.converter = converter;
-      }
-
-      @Override
-      public K apply(K k) {
-         return (K) converter.unboxKey(k);
-      }
-   }
+   final ConverterKeyMapper keyMapper = new ConverterKeyMapper();
 
    class TypeConverterKeySet extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
       private final CacheSet<K> actualCollection;
@@ -698,21 +586,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       return new TypeConverterKeySet(this, super.keySet());
    }
 
-   static final ValueMapper valueMapper = new ValueMapper();
-
-   static class ValueMapper<V> implements RemovableFunction<V, V>, Serializable {
-      private transient TypeConverter converter;
-
-      @Inject
-      public void injectFactory(TypeConverter converter) {
-         this.converter = converter;
-      }
-
-      @Override
-      public V apply(V k) {
-         return (V) converter.unboxValue(k);
-      }
-   }
+   final ConverterValueMapper valueMapper = new ConverterValueMapper();
 
    class TypeConverterValuesCollection extends AbstractCloseableIteratorCollection<V, K, V> implements CacheCollection<V> {
       private final CacheCollection<V> actualCollection;

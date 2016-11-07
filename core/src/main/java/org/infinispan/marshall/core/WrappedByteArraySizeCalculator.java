@@ -2,7 +2,7 @@ package org.infinispan.marshall.core;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
-import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
+import org.infinispan.commons.util.EntrySizeCalculator;
 
 /**
  * Size calculator that supports a {@link WrappedByteArray} by adding its size and the underlying byte[].

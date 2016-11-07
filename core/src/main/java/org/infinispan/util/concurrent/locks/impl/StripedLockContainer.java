@@ -23,8 +23,8 @@ public class StripedLockContainer implements LockContainer {
    private final InfinispanLock[] sharedLocks;
    private final StripedHashFunction<Object> hashFunction;
 
-   public StripedLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
-      this.hashFunction = new StripedHashFunction<>(keyEquivalence, concurrencyLevel);
+   public StripedLockContainer(int concurrencyLevel) {
+      this.hashFunction = new StripedHashFunction<>(concurrencyLevel);
       sharedLocks = new InfinispanLock[hashFunction.getNumSegments()];
    }
 

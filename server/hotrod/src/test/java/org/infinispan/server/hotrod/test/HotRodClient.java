@@ -34,8 +34,8 @@ import javax.security.sasl.SaslException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.Constants;
@@ -895,15 +895,14 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
    }
 
    private Map<Long, TestResponse> responses = new ConcurrentHashMap<>();
-   private Map<byte[], TestClientListener> clientListeners = new EquivalentConcurrentHashMapV8<>(
-         ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+   private Map<WrappedByteArray, TestClientListener> clientListeners = new ConcurrentHashMap<>();
 
    void addClientListener(TestClientListener listener) {
-      clientListeners.put(listener.getId(), listener);
+      clientListeners.put(new WrappedByteArray(listener.getId()), listener);
    }
 
    void removeClientListener(byte[] listenerId) {
-      clientListeners.remove(listenerId);
+      clientListeners.remove(new WrappedByteArray(listenerId));
    }
 
    @Override
@@ -912,18 +911,18 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
          TestKeyWithVersionEvent e = (TestKeyWithVersionEvent) msg;
          switch (e.getOperation()) {
             case CacheEntryCreatedEventResponse:
-               clientListeners.get(e.listenerId).onCreated(e);
+               clientListeners.get(new WrappedByteArray(e.listenerId)).onCreated(e);
                break;
             case CacheEntryModifiedEventResponse:
-               clientListeners.get(e.listenerId).onModified(e);
+               clientListeners.get(new WrappedByteArray(e.listenerId)).onModified(e);
                break;
          }
       } else if (msg instanceof TestKeyEvent) {
          TestKeyEvent e = (TestKeyEvent) msg;
-         clientListeners.get(e.listenerId).onRemoved(e);
+         clientListeners.get(new WrappedByteArray(e.listenerId)).onRemoved(e);
       } else if (msg instanceof TestCustomEvent) {
          TestCustomEvent e = (TestCustomEvent) msg;
-         clientListeners.get(e.listenerId).onCustom(e);
+         clientListeners.get(new WrappedByteArray(e.listenerId)).onCustom(e);
       } else if (msg instanceof TestResponse) {
          TestResponse resp = (TestResponse) msg;
          log.tracef("Put %s in responses", resp);

@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
-import org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper;
+import org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
 
@@ -23,7 +23,7 @@ import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
 @ConfigurationFor(RestStore.class)
 @SerializedWith(RestStoreConfigurationSerializer.class)
 public class RestStoreConfiguration extends AbstractStoreConfiguration {
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", MarshalledValueOrPrimitiveMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
+   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", WrappedByteArrayOrPrimitiveMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
    static final AttributeDefinition<String> METADATA_HELPER = AttributeDefinition.builder("metadataHelper", EmbeddedMetadataHelper.class.getName()).immutable().build();
    static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", 80).immutable().autoPersist(false).build();

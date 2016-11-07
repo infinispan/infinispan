@@ -3,6 +3,8 @@ package org.infinispan.persistence.jdbc.stringbased;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -63,12 +65,6 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
    @Override
    public String getDatasourceLocation() {
       return "java:/StringStoreWithManagedConnectionTest/DS";
-   }
-
-   @Override
-   @Test(expectedExceptions = UnsupportedKeyTypeException.class)
-   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
-      super.testLoadAndStoreMarshalledValues();
    }
 
    @Override

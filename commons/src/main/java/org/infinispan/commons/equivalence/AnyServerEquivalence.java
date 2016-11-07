@@ -7,6 +7,7 @@ import java.util.Arrays;
  *
  * @author Tristan Tarrant
  * @since 5.3
+ * @deprecated
  */
 public class AnyServerEquivalence implements Equivalence<Object> {
 

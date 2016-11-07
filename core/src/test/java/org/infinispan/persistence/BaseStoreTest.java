@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +17,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -25,7 +28,6 @@ import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
@@ -507,12 +509,12 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertNull(cl.load("k1"));
    }
 
-   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
+   public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       assertIsEmpty();
 
-      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), getMarshaller());
-      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), getMarshaller());
-      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), getMarshaller());
+      WrappedBytes key = new WrappedByteArray(getMarshaller().objectToByteBuffer(new Pojo().role("key")));
+      WrappedBytes key2 = new WrappedByteArray(getMarshaller().objectToByteBuffer(new Pojo().role("key2")));
+      WrappedBytes value = new WrappedByteArray(getMarshaller().objectToByteBuffer(new Pojo().role("value")));
 
       assertFalse(cl.contains(key));
       cl.write(new MarshalledEntryImpl<Object, Object>(key, value, null, getMarshaller()));

@@ -55,17 +55,17 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    /**
     * Specify whether keys are stored as binary or not.
     * @param storeKeysAsBinary if true, keys are stored as binary.  If false, keys are stored as object references.
+    * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
    public StoreAsBinaryConfigurationBuilder storeKeysAsBinary(boolean storeKeysAsBinary) {
-      attributes.attribute(STORE_KEYS_AS_BINARY).set(storeKeysAsBinary);
       return this;
    }
    /**
     * Specify whether values are stored as binary or not.
     * @param storeValuesAsBinary if true, values are stored as binary.  If false, values are stored as object references.
+    * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
    public StoreAsBinaryConfigurationBuilder storeValuesAsBinary(boolean storeValuesAsBinary) {
-      attributes.attribute(STORE_VALUES_AS_BINARY).set(storeValuesAsBinary);
       return this;
    }
 

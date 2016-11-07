@@ -95,7 +95,7 @@ public class AsyncStoreStressTest {
    // ImmortalCacheEntry{key=key165168, value=ImmortalCacheValue {value=61456}}}
    // (Thread-194:) Expected state updated with key=key165168, value=61456
    // (Thread-200:) Expected state updated with key=key165168, value=60483
-   private LockContainer locks = new PerKeyLockContainer(32, AnyEquivalence.getInstance());
+   private LockContainer locks = new PerKeyLockContainer();
 
    private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws PersistenceException {
       Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = new TreeMap<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>>();

@@ -141,9 +141,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       final Map<Key, FileEntry> entryMap;
       Equivalence<Object> keyEq = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
       if (configuration.maxEntries() > 0)
-         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
-               EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
-               keyEq, AnyEquivalence.<FileEntry>getInstance());
+         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f, true, null, null);
       else
          entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
 

@@ -30,6 +30,7 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -329,6 +330,32 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       return entry;
    }
 
+   /**
+    * Wrapper for CacheEntry(s) that can be used to update the cache when it's value is set.
+    * @param <K> The key type
+    * @param <V> The value type
+    */
+   private static class EntryWrapper<K, V> extends ForwardingCacheEntry<K, V> {
+      private final CacheEntry<K, V> previousEntry;
+      private final CacheEntry<K, V> entry;
+
+      public EntryWrapper(CacheEntry<K, V> previousEntry, CacheEntry<K, V> entry) {
+         this.previousEntry = previousEntry;
+         this.entry = entry;
+      }
+
+      @Override
+      protected CacheEntry<K, V> delegate() {
+         return entry;
+      }
+
+      @Override
+      public V setValue(V value) {
+         previousEntry.setValue(value);
+         return super.setValue(value);
+      }
+   }
+
    public static class TypeConverterIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
       private final CloseableIterator<CacheEntry<K, V>> iterator;
       private final TypeConverter<Object, Object, Object, Object> converter;
@@ -355,7 +382,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       @Override
       public CacheEntry<K, V> next() {
          CacheEntry<K, V> entry = iterator.next();
-         return convert(entry, converter, entryFactory);
+         return new EntryWrapper<>(entry, convert(entry, converter, entryFactory));
       }
 
       @Override

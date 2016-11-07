@@ -131,7 +131,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(ClusterCacheNotifier.class)) {
             return (T) componentRegistry.getComponent(CacheNotifier.class);
          } else if (componentType.equals(CommitManager.class)) {
-            return (T) new CommitManager(configuration.dataContainer().keyEquivalence());
+            return (T) new CommitManager();
          } else if (componentType.equals(XSiteStateTransferManager.class)) {
             return (T) (configuration.sites().allBackups().isEmpty() ? null : new XSiteStateTransferManagerImpl());
          } else if (componentType.equals(XSiteStateConsumer.class)) {

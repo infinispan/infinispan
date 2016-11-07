@@ -11,11 +11,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentHashMap;
-import org.infinispan.commons.equivalence.EquivalentHashSet;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -52,8 +47,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(int initCapacity, int concurrencyLevel) {
-      return new ConcurrentParallelHashMapV8<>(initCapacity, AnyEquivalence.getInstance(),
-            AnyEquivalence.getInstance());
+      return new ConcurrentHashMap<>(initCapacity);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(int initCapacity, float loadFactor, int concurrencyLevel) {
@@ -62,95 +56,62 @@ public class CollectionFactory {
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
          Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentConcurrentHashMapV8<>(keyEq, valueEq);
-      else
-         return makeConcurrentMap();
+      return makeConcurrentMap();
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
          int initCapacity, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentConcurrentHashMapV8<>(initCapacity, keyEq, valueEq);
-      else
-         return makeConcurrentMap(initCapacity);
+      return makeConcurrentMap(initCapacity);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
          int initCapacity, int concurrencyLevel, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentConcurrentHashMapV8<>(initCapacity, concurrencyLevel, keyEq, valueEq);
-      else
-         return makeConcurrentMap(initCapacity, concurrencyLevel);
+      return makeConcurrentMap(initCapacity, concurrencyLevel);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(
          int initCapacity, int concurrencyLevel, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new ConcurrentParallelHashMapV8<>(initCapacity, concurrencyLevel, keyEq, valueEq);
-      else
-         return makeConcurrentParallelMap(initCapacity, concurrencyLevel);
+      return makeConcurrentParallelMap(initCapacity, concurrencyLevel);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
          int initCapacity, float loadFactor, int concurrencyLevel,
          Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentConcurrentHashMapV8<>(
-               initCapacity, loadFactor, concurrencyLevel, keyEq, valueEq);
-      else
-         return makeConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
+      return makeConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeBoundedConcurrentMap(int maxSize) {
-      return new CaffeineConcurrentMap<>(Caffeine.newBuilder().maximumSize(maxSize).build());
+      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(maxSize).build();
+      return cache.asMap();
    }
 
    public static <K, V> Map<K, V> makeMap(
          Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentHashMap<>(keyEq, valueEq);
-      else
-         return new HashMap<>();
+      return new HashMap<>();
    }
 
    public static <K, V> Map<K, V> makeMap(
          int initialCapacity, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentHashMap<>(initialCapacity, keyEq, valueEq);
-      else
-         return new HashMap<>(initialCapacity);
+      return new HashMap<>(initialCapacity);
    }
 
    public static <K, V> Map<K, V> makeMap(
          Map<? extends K, ? extends V> entries, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentHashMap<>(entries, keyEq, valueEq);
-      else
-         return new HashMap<>(entries);
+      return new HashMap<>(entries);
    }
 
    public static <K, V> Map<K, V> makeLinkedMap(int initialCapacity,
-         float loadFactor, EquivalentLinkedHashMap.IterationOrder iterationOrder,
+         float loadFactor, boolean accessOrder,
          Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
-      if (requiresEquivalent(keyEq, valueEq))
-         return new EquivalentLinkedHashMap<>(initialCapacity, loadFactor, iterationOrder, keyEq, valueEq);
-      else
-         return new LinkedHashMap<>(initialCapacity, loadFactor, iterationOrder.toJdkAccessOrder());
+      return new LinkedHashMap<>(initialCapacity, loadFactor, accessOrder);
    }
 
    public static <T> Set<T> makeSet(Equivalence<? super T> entryEq) {
-      if (requiresEquivalent(entryEq))
-         return new EquivalentHashSet<>(entryEq);
-      else
-         return new HashSet<>();
+      return new HashSet<>();
    }
 
    public static <T> Set<T> makeSet(int initialCapacity, Equivalence<? super T> entryEq) {
-      if (requiresEquivalent(entryEq))
-         return new EquivalentHashSet<>(initialCapacity, entryEq);
-      else
-         return new HashSet<>(initialCapacity);
+      return new HashSet<>(initialCapacity);
    }
 
    /**
@@ -164,15 +125,4 @@ public class CollectionFactory {
    public static <T> Set<T> makeSet(T... entries) {
       return new HashSet<>(Arrays.asList(entries));
    }
-
-   private static <K, V> boolean requiresEquivalent(
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
-      AnyEquivalence<Object> instance = AnyEquivalence.getInstance();
-      return keyEq != instance || valueEq != instance;
-   }
-
-   private static <T> boolean requiresEquivalent(Equivalence<T> typeEq) {
-      return typeEq != AnyEquivalence.getInstance();
-   }
-
 }
