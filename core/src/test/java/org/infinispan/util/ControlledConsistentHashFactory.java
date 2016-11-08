@@ -3,11 +3,17 @@ package org.infinispan.util;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -18,6 +24,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 * @author Dan Berindei
 * @since 7.0
 */
+@SerializeWith(ControlledConsistentHashFactory.Ext.class)
 public class ControlledConsistentHashFactory extends BaseControlledConsistentHashFactory {
    private volatile List<int[]> ownerIndexes;
 
@@ -37,6 +44,12 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
    public ControlledConsistentHashFactory(int[] firstSegmentOwners, int[]... otherSegmentOwners) {
       super(1 + (otherSegmentOwners != null ? otherSegmentOwners.length : 0));
       setOwnerIndexes(firstSegmentOwners, otherSegmentOwners);
+   }
+
+   public ControlledConsistentHashFactory(int numSegments, List<int[]> ownerIndexes, List<Address> membersToUse) {
+      super(numSegments);
+      this.ownerIndexes = ownerIndexes;
+      this.membersToUse = membersToUse;
    }
 
    public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
@@ -110,4 +123,24 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
    public void setMembersToUse(List<Address> membersToUse) {
       this.membersToUse = membersToUse;
    }
+
+   public static final class Ext implements Externalizer<ControlledConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, ControlledConsistentHashFactory object) throws IOException {
+         output.writeInt(object.numSegments);
+         MarshallUtil.marshallCollection(object.ownerIndexes, output);
+         MarshallUtil.marshallCollection(object.membersToUse, output);
+      }
+
+      @Override
+      public ControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int numSegments = input.readInt();
+         List<int[]> ownerIndexes = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         List<Address> membersToUse = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         return new ControlledConsistentHashFactory(numSegments, ownerIndexes, membersToUse);
+      }
+
+   }
+
 }

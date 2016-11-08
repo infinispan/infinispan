@@ -1,10 +1,17 @@
 package org.infinispan.util;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
@@ -15,6 +22,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 7.0
  */
+@SerializeWith(ReplicatedControlledConsistentHashFactory.Ext.class)
 public class ReplicatedControlledConsistentHashFactory
       implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
    private volatile List<Address> membersToUse;
@@ -29,6 +37,11 @@ public class ReplicatedControlledConsistentHashFactory
 
    public void setOwnerIndexes(int primaryOwner1, int... otherPrimaryOwners) {
       primaryOwnerIndices = concatOwners(primaryOwner1, otherPrimaryOwners);
+   }
+
+   public ReplicatedControlledConsistentHashFactory(List<Address> membersToUse, int[] primaryOwnerIndices) {
+      this.membersToUse = membersToUse;
+      this.primaryOwnerIndices = primaryOwnerIndices;
    }
 
    @Override
@@ -85,4 +98,22 @@ public class ReplicatedControlledConsistentHashFactory
    public void setMembersToUse(List<Address> membersToUse) {
       this.membersToUse = membersToUse;
    }
+
+   public static final class Ext implements Externalizer<ReplicatedControlledConsistentHashFactory> {
+
+      @Override
+      public void writeObject(ObjectOutput output, ReplicatedControlledConsistentHashFactory object) throws IOException {
+         MarshallUtil.marshallCollection(object.membersToUse, output);
+         output.writeObject(object.primaryOwnerIndices);
+      }
+
+      @Override
+      public ReplicatedControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         List<Address> membersToUse = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         int[] primaryOwnerIndices = (int[]) input.readObject();
+         return new ReplicatedControlledConsistentHashFactory(membersToUse, primaryOwnerIndices);
+      }
+
+   }
+
 }

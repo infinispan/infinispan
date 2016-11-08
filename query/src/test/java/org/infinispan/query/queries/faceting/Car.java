@@ -10,12 +10,13 @@ import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.IntegerBridge;
+import org.infinispan.marshall.core.ExternalPojo;
 
 /**
  * @author Hardy Ferentschik
  */
 @Indexed(index = "car")
-public class Car implements Serializable {
+public class Car implements Serializable, ExternalPojo {
 
    @Field(analyze = Analyze.NO)
    private String color;

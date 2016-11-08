@@ -21,6 +21,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
@@ -328,7 +329,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       assertEquals(list.size(), new HashSet<>(list).size());
    }
 
-   static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable {
+   static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -6110011263261397071L;

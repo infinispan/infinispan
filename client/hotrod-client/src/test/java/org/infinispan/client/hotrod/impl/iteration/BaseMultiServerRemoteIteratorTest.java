@@ -24,6 +24,7 @@ import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.testng.annotations.BeforeMethod;
@@ -163,7 +164,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          return new HexFilterConverter();
       }
 
-      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Integer, Integer, String> implements Serializable {
+      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Integer, Integer, String> implements Serializable, ExternalPojo {
          @Override
          public String filterAndConvert(Integer key, Integer value, Metadata metadata) {
             return Integer.toHexString(value);
@@ -182,7 +183,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       }
 
 
-      static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable {
+      static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable, ExternalPojo {
          private final int length;
 
          public SubstringFilterConverter(Object[] params) {

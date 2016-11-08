@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -147,7 +148,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       }
    }
 
-   enum FailureType {
+   enum FailureType implements ExternalPojo {
       EXCEPTION_FROM_LISTENER, ERROR_FROM_LISTENER,
       EXCEPTION_FROM_INTERCEPTOR, ERROR_FROM_INTERCEPTOR
    }

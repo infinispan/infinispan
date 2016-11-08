@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -38,8 +39,6 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    private static final long SLEEP_TIME = Long.getLong("client.stress.sleep_time", 10); // ms
 
    private static final int NUM_NODES = 2;
-
-   private static final int NUM_OWNERS = 1;
 
    private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
@@ -63,8 +62,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    private ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash().numOwners(NUM_OWNERS);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       //playing with OOM - weird things might happen when JVM will struggle for life
       builder.clustering().remoteTimeout(5, TimeUnit.MINUTES);
       return hotRodCacheConfiguration(builder);
@@ -169,7 +167,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          return new CustomConverter<K, V, C>();
       }
 
-      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable {
+      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable, ExternalPojo {
          @Override
          public C convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
             // all baby godzillas get converted to full grown godzillas

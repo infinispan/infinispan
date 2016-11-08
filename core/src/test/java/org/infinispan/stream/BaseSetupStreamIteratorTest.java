@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -73,7 +74,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
               () -> Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
    }
 
-   protected static class StringTruncator implements Converter<Object, String, String>, Serializable {
+   protected static class StringTruncator implements Converter<Object, String, String>, Serializable, ExternalPojo {
       private final int beginning;
       private final int length;
 

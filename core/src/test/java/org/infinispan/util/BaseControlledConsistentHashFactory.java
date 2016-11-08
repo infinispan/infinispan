@@ -10,6 +10,7 @@ import java.util.Map;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -20,7 +21,7 @@ import org.infinispan.remoting.transport.Address;
  */
 @SuppressWarnings("unchecked")
 public abstract class BaseControlledConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>,
-                                                                    Serializable {
+                                                                    Serializable, ExternalPojo {
    protected final int numSegments;
 
    protected BaseControlledConsistentHashFactory(int numSegments) {

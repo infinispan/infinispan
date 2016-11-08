@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -57,7 +58,7 @@ public class LazyCacheAPITest extends SingleCacheManagerTest {
       assert cache.replace(key, v1, v2);
    }
 
-   public static class CustomPojo implements Serializable {
+   public static class CustomPojo implements Serializable, ExternalPojo {
       static final Log log = LogFactory.getLog(CustomPojo.class);
 
       private String name;

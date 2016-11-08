@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
@@ -584,7 +585,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
@@ -620,7 +621,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class FailOnlyOnceDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable {
+   static class FailOnlyOnceDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable, ExternalPojo {
       /** The serialVersionUID **/
       private static final long serialVersionUID = 5375461422884389555L;
       private static boolean throwException = true;
@@ -642,7 +643,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable {
+   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;

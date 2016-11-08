@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -544,7 +545,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
-            Serializable {
+            Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 623845442163221832L;
@@ -572,7 +573,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
@@ -583,7 +584,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class SleepingSimpleCallable implements Callable<Integer>, Serializable {
+   static class SleepingSimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
@@ -596,7 +597,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class SimpleCallableWithField implements Callable<Integer>, Serializable {
+   static class SimpleCallableWithField implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -6262148927734766558L;
@@ -608,7 +609,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable {
+   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8682463816319507893L;

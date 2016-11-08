@@ -11,6 +11,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 
 /**
@@ -18,7 +19,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Account;
  * @since 7.0
  */
 @Indexed
-public class AccountHS implements Account, Serializable {
+public class AccountHS implements Account, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

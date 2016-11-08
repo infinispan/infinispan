@@ -12,6 +12,7 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 /**
@@ -19,7 +20,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
  * @since 7.0
  */
 @Indexed
-public class TransactionHS implements Transaction, Serializable {
+public class TransactionHS implements Transaction, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

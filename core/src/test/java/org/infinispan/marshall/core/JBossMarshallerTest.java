@@ -87,11 +87,15 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assertEquals(3456, extTable.getExternalizerId(new IdViaBothObj()));
+         assertEquals(3456, findExternalizerId(new IdViaBothObj(), cm));
       } finally {
          cm.stop();
       }
+   }
+
+   private int findExternalizerId(Object obj, EmbeddedCacheManager cm) {
+      GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
+      return ((AdvancedExternalizer<?>) marshaller.findExternalizerFor(obj)).getId();
    }
 
    public void testForeignExternalizerMultiClassTypesViaSameExternalizer() {
@@ -100,10 +104,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assert 767 == extTable.getExternalizerId(new IdViaConfigObj());
-         assert 767 == extTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 767 == extTable.getExternalizerId(new IdViaBothObj());
+         assert 767 == findExternalizerId(new IdViaConfigObj(), cm);
+         assert 767 == findExternalizerId(new IdViaAnnotationObj(), cm);
+         assert 767 == findExternalizerId(new IdViaBothObj(), cm);
       } finally {
          cm.stop();
       }
@@ -115,10 +118,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assert 868 == extTable.getExternalizerId(new IdViaConfigObj());
-         assert 868 == extTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 868 == extTable.getExternalizerId(new IdViaBothObj());
+         assert 868 == findExternalizerId(new IdViaConfigObj(), cm);
+         assert 868 == findExternalizerId(new IdViaAnnotationObj(), cm);
+         assert 868 == findExternalizerId(new IdViaBothObj(), cm);
       } finally {
          cm.stop();
       }
@@ -144,12 +146,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    private void withExpectedInternalFailure(final AdvancedExternalizer<?> ext, String message) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       try {
-         cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         extTable.addInternalExternalizer(ext);
-         extTable.start();
+         GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+         globalBuilder.serialization().addAdvancedExternalizer(ext).addAdvancedExternalizer(ext);
          assert false : message;
       } catch (CacheConfigurationException ce) {
          log.trace("Expected exception", ce);

@@ -13,6 +13,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.marshall.core.ExternalPojo;
 
 /**
  * @author Navin Surtani
@@ -22,7 +23,7 @@ import org.hibernate.search.annotations.Store;
       @FullTextFilterDef(name = "personFilter", impl = PersonBlurbFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS),
       @FullTextFilterDef(name = "personAgeFilter", impl = PersonAgeFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS)
 })
-public class Person implements Serializable {
+public class Person implements Serializable, ExternalPojo {
    @Field(store = Store.YES)
    private String name;
 

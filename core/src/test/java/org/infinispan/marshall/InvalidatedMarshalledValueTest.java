@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -58,7 +59,7 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       assertSerializationCounts(3, 0);
    }
 
-   public static class InvalidatedPojo implements Externalizable {
+   public static class InvalidatedPojo implements Externalizable, ExternalPojo {
       final Log log = LogFactory.getLog(InvalidatedPojo.class);
 
       static int invalidSerializationCount, invalidDeserializationCount;
