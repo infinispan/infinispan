@@ -99,9 +99,6 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
          if (keyStoreFileName != null && keyStorePassword == null) {
             throw log.missingKeyStorePassword(keyStoreFileName);
          }
-         if (trustStoreFileName == null) {
-            throw log.noSSLTrustManagerConfiguration();
-         }
          if (trustStoreFileName != null && trustStorePassword == null) {
             throw log.missingTrustStorePassword(trustStoreFileName);
          }
