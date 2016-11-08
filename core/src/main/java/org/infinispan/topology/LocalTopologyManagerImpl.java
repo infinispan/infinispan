@@ -130,15 +130,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       // For Total Order caches, we must not move the topology updates to another thread
       ExecutorService topologyUpdatesExecutor = joinInfo.isTotalOrder() ? withinThreadExecutor : asyncTransportExecutor;
       LocalCacheStatus cacheStatus = new LocalCacheStatus(cacheName, joinInfo, stm, phm, topologyUpdatesExecutor);
+
+      // Pretend the join is using up a thread from the topology updates executor.
+      // This ensures that the initial topology and the GET_CACHE_LISTENERS request will happen on this thread,
+      // and other topology updates are only handled after we complete joinFuture.
+      CompletableFuture<Void> joinFuture = new CompletableFuture<>();
+      cacheStatus.getTopologyUpdatesExecutor().executeAsync(() -> joinFuture);
+
       runningCaches.put(cacheName, cacheStatus);
 
       long timeout = joinInfo.getTimeout();
       long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
-      // Pretend the join is using up a thread from the topology updates executor.
-      // This ensures that the initial topology and the GET_CACHE_LISTENERS request will happen on this thread,
-      // and other topology updates are only handled after we call backgroundTaskFinished(null)
-      CompletableFuture<Void> joinFuture = new CompletableFuture<>();
-      cacheStatus.getTopologyUpdatesExecutor().executeAsync(() -> joinFuture);
       try {
          while (true) {
             int viewId = transport.getViewId();
