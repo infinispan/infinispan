@@ -77,9 +77,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "SSL Enabled but no KeyStore specified", id = 5014)
    CacheConfigurationException noSSLKeyManagerConfiguration();
 
-   @Message(value = "SSL Enabled but no TrustStore specified", id = 5015)
-   CacheConfigurationException noSSLTrustManagerConfiguration();
-
    @Message(value = "A password is required to open the KeyStore '%s'", id = 5016)
    CacheConfigurationException missingKeyStorePassword(String keyStore);
 

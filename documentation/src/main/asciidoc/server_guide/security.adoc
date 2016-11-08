@@ -129,7 +129,6 @@ clientBuilder
     .addServer()
         .host("127.0.0.1")
         .port(11222)
-    .socketTimeout(1200000)
     .security()
         .authentication()
             .enable()
@@ -247,7 +246,6 @@ clientBuilder
     .addServer()
         .host("127.0.0.1")
         .port(11222)
-    .socketTimeout(1200000)
     .security()
         .authentication()
             .enable()
@@ -282,14 +280,14 @@ Both Hot Rod and REST protocols support encryption using SSL/TLS with optional T
 When using SNI support there might be multiple Security Realms configured.
 ====
 
-Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the endpoint subsystem to require encryption. Optionally add SNI configuration:
+Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the endpoint subsystem to require encryption.
+Optionally add SNI configuration:
 
 .Hot Rod connector SSL configuration
 
 [source,xml]
 ----
 <hotrod-connector socket-binding="hotrod" cache-container="local">
-    <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
     <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false">
         <sni host-name="domain1" security-realm="Domain1ApplicationRealm" />
         <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
@@ -303,7 +301,9 @@ Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the e
 </rest-connector>
 ----
 
-In order to connect to the server using Hot Rod protocol, the client needs a trust store containing the public key of the server(s) you are going to connect to:
+In order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
+of the server(s) you are going to connect to, unless the key was signed by a Certification Authority (CA) trusted by
+the JRE.
 
 [source,java]
 ----
@@ -311,16 +311,60 @@ ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
 clientBuilder
     .addServer()
         .host("127.0.0.1")
-        .port(hotrodServer.getPort())
-        .socketTimeout(3000)
+        .port(11222)
      .security()
         .ssl()
-           .enabled(sslClient)
+           .enabled(true)
            .sniHostName("domain1")
-           .trustStoreFileName("truststore.jks")
+           .trustStoreFileName("truststore_client.jks")
            .trustStorePassword("secret".toCharArray());
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 ----
 
-Additionally, you might also want to enable client certificate authentication (and therefore also allow the use of the EXTERNAL SASL mech to authenticate clients).
+Additionally, you might also want to enable client certificate authentication (and optionally also allow the use of the
+EXTERNAL SASL mech to authenticate and authorize clients).
+To enable this you will need the security realm on the server to be able to trust incoming client certificates by adding
+a trust store:
 
+[source,xml]
+----
+<security-realm name="ApplicationRealm">
+   <authentication>
+      <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
+   </authentication>
+   <server-identities>
+       <ssl>
+           <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
+       </ssl>
+   </server-identities>
+</security-realm>
+----
+
+And then tell the connector to require a client certificate:
+
+[source,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="true" />
+</hotrod-connector>
+----
+
+The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore
+which trusts the server certificate.
+
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+     .security()
+        .ssl()
+           .enabled(true)
+           .trustStoreFileName("truststore_client.jks")
+           .trustStorePassword("secret".toCharArray())
+           .keyStoreFileName("keystore_client.jks")
+           .keyStorePassword("secret".toCharArray());
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+----
