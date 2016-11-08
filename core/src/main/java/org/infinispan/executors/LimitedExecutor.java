@@ -21,8 +21,11 @@ import org.jboss.logging.NDC;
  * Executes tasks in the given executor, but never has more than {@code maxConcurrentTasks} tasks running at the same
  * time.
  *
- * A task can finish running without allowing another task to run in its stead, with {@link #executeAsync(Supplier)}.
- * A new task will only start after the {@code CompletableFuture} returned by the task has completed.
+ * <p>A task can finish running without allowing another task to run in its stead, with {@link #executeAsync(Supplier)}.
+ * A new task will only start after the {@code CompletableFuture} returned by the task has completed.</p>
+ *
+ * <p><em>Blocking mode.</em> If the executor is a {@link WithinThreadExecutor}, tasks will run in the thread that
+ * submitted them. If there are no available permits, the caller thread will block until a permit becomes available.</p>
  *
  * @author Dan Berindei
  * @since 9.0
@@ -76,6 +79,7 @@ public class LimitedExecutor implements Executor {
             log.debug("Exception in blocking task", e);
          } finally {
             addPermit();
+            tryExecute();
          }
          return;
       }
