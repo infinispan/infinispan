@@ -1,8 +1,5 @@
 package org.infinispan.rest;
 
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -31,13 +28,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.CacheControl;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -115,7 +112,7 @@ public class IntegrationTest extends RestServerTestBase {
       call(insert);
 
       assertEquals("", insert.getResponseBodyAsString().trim());
-      assertEquals(HttpServletResponse.SC_OK, insert.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, insert.getStatusCode());
 
       GetMethod get = new GetMethod(fullPathKey);
       call(get);
@@ -129,17 +126,17 @@ public class IntegrationTest extends RestServerTestBase {
       call(remove);
       call(get);
 
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, get.getStatusCode());
 
       call(insert);
       call(get);
       assertEquals(initialXML, get.getResponseBodyAsString());
 
       DeleteMethod removeAll = new DeleteMethod(fullPath);
-      assertEquals(HttpServletResponse.SC_OK, call(removeAll).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(removeAll).getStatusCode());
 
       call(get);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, get.getStatusCode());
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
       ObjectOutputStream oo = new ObjectOutputStream(bout);
@@ -166,14 +163,14 @@ public class IntegrationTest extends RestServerTestBase {
 
    public void testEmptyGet() throws Exception {
       assertEquals(
-            HttpServletResponse.SC_NOT_FOUND,
+            HttpStatus.SC_NOT_FOUND,
             call(new GetMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode()
       );
    }
 
    public void testDeleteNonExistent() throws Exception {
       assertEquals(
-            HttpServletResponse.SC_NOT_FOUND,
+            HttpStatus.SC_NOT_FOUND,
             call(new DeleteMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode()
       );
    }
@@ -232,7 +229,7 @@ public class IntegrationTest extends RestServerTestBase {
       GetMethod get = new GetMethod(fullPath);
       get.addRequestHeader("Accept", variant);
       HttpMethodBase coll = call(get);
-      assertEquals(HttpServletResponse.SC_OK, coll.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, coll.getStatusCode());
       assertEquals(variant, coll.getResponseHeader("Content-Type").getValue());
       return coll.getResponseBodyAsString();
    }
@@ -244,7 +241,7 @@ public class IntegrationTest extends RestServerTestBase {
       call(post);
 
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertNotNull(get.getResponseHeader("ETag").getValue());
       assertNotNull(get.getResponseHeader("Last-Modified").getValue());
       assertEquals("application/text", get.getResponseHeader("Content-Type").getValue());
@@ -258,7 +255,7 @@ public class IntegrationTest extends RestServerTestBase {
       call(post);
 
       HttpMethodBase get = call(new HeadMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertNotNull(get.getResponseHeader("ETag").getValue());
       assertNotNull(get.getResponseHeader("Last-Modified").getValue());
       assertEquals("application/text", get.getResponseHeader("Content-Type").getValue());
@@ -273,7 +270,7 @@ public class IntegrationTest extends RestServerTestBase {
       call(post);
 
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertNotNull(get.getResponseHeader("ETag").getValue());
       String lastMod = get.getResponseHeader("Last-Modified").getValue();
       assertNotNull(lastMod);
@@ -284,7 +281,7 @@ public class IntegrationTest extends RestServerTestBase {
       GetMethod getAgain = new GetMethod(fullPathKey);
       getAgain.addRequestHeader("If-Unmodified-Since", lastMod);
       get = call(getAgain);
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertNotNull(get.getResponseHeader("ETag").getValue());
       assertNotNull(get.getResponseHeader("Last-Modified").getValue());
       assertEquals("application/text", get.getResponseHeader("Content-Type").getValue());
@@ -298,13 +295,13 @@ public class IntegrationTest extends RestServerTestBase {
       call(post);
 
       //Should get a conflict as its a DUPE post
-      assertEquals(HttpServletResponse.SC_CONFLICT, call(post).getStatusCode());
+      assertEquals(HttpStatus.SC_CONFLICT, call(post).getStatusCode());
 
       PutMethod put = new PutMethod(fullPathKey);
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
 
       //Should be all ok as its a put
-      assertEquals(HttpServletResponse.SC_OK, call(put).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(put).getStatusCode());
    }
 
    public void testPutDataWithTimeToLive(Method m) throws Exception {
@@ -341,7 +338,7 @@ public class IntegrationTest extends RestServerTestBase {
 
       TestingUtil.sleepThread((maxWaitTime + 1) * 1000);
       call(get);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, get.getStatusCode());
    }
 
    public void testPutDataWithIfMatch(Method m) throws Exception {
@@ -353,20 +350,20 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String etag = get.getResponseHeader("ETag").getValue();
 
       // Put again using the If-Match with the ETag we got back from the get
       PutMethod reput = new PutMethod(fullPathKey);
       reput.setRequestHeader("If-Match", etag);
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_OK, call(reput).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(reput).getStatusCode());
 
       // Try to put again, but with a different ETag
       PutMethod reputAgain = new PutMethod(fullPathKey);
       reputAgain.setRequestHeader("If-Match", "x");
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(reputAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(reputAgain).getStatusCode());
    }
 
    public void testPutDataWithIfNoneMatch(Method m) throws Exception {
@@ -378,20 +375,20 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String etag = get.getResponseHeader("ETag").getValue();
 
       // Put again using the If-Match with the ETag we got back from the get
       PutMethod reput = new PutMethod(fullPathKey);
       reput.setRequestHeader("If-None-Match", "x");
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_OK, call(reput).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(reput).getStatusCode());
 
       // Try to put again, but with a different ETag
       PutMethod reputAgain = new PutMethod(fullPathKey);
       reputAgain.setRequestHeader("If-None-Match", etag);
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(reputAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(reputAgain).getStatusCode());
    }
 
    public void testPutDataWithIfModifiedSince(Method m) throws Exception {
@@ -403,21 +400,21 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String lastMod = get.getResponseHeader("Last-Modified").getValue();
 
       // Put again using the If-Modified-Since with the lastMod we got back from the get
       PutMethod reput = new PutMethod(fullPathKey);
       reput.setRequestHeader("If-Modified-Since", lastMod);
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, call(reput).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_MODIFIED, call(reput).getStatusCode());
 
       // Try to put again, but with an older last modification date
       PutMethod reputAgain = new PutMethod(fullPathKey);
       String dateMinus = addDay(lastMod, -1);
       reputAgain.setRequestHeader("If-Modified-Since", dateMinus);
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_OK, call(reputAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(reputAgain).getStatusCode());
    }
 
    public void testPutDataWithIfUnModifiedSince(Method m) throws Exception {
@@ -429,7 +426,7 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String lastMod = get.getResponseHeader("Last-Modified").getValue();
 
       // Put again using the If-Unmodified-Since with a date earlier than the one we got back from the GET
@@ -437,13 +434,13 @@ public class IntegrationTest extends RestServerTestBase {
       String dateMinus = addDay(lastMod, -1);
       reput.setRequestHeader("If-Unmodified-Since", dateMinus);
       reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(reput).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(reput).getStatusCode());
 
       // Try to put again, but using the date returned by the GET
       PutMethod reputAgain = new PutMethod(fullPathKey);
       reputAgain.setRequestHeader("If-Unmodified-Since", lastMod);
       reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
-      assertEquals(HttpServletResponse.SC_OK, call(reputAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(reputAgain).getStatusCode());
    }
 
    public void testDeleteDataWithIfMatch(Method m) throws Exception {
@@ -455,18 +452,18 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String etag = get.getResponseHeader("ETag").getValue();
 
       // Attempt to delete with a wrong ETag
       DeleteMethod delete = new DeleteMethod(fullPathKey);
       delete.setRequestHeader("If-Match", "x");
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
 
       // Try to delete again, but with the proper ETag
       DeleteMethod deleteAgain = new DeleteMethod(fullPathKey);
       deleteAgain.setRequestHeader("If-Match", etag);
-      assertEquals(HttpServletResponse.SC_OK, call(deleteAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(deleteAgain).getStatusCode());
    }
 
    public void testDeleteDataWithIfNoneMatch(Method m) throws Exception {
@@ -478,18 +475,18 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String etag = get.getResponseHeader("ETag").getValue();
 
       // Attempt to delete with the ETag
       DeleteMethod delete = new DeleteMethod(fullPathKey);
       delete.setRequestHeader("If-None-Match", etag);
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
 
       // Try to delete again, but with a non-matching ETag
       DeleteMethod deleteAgain = new DeleteMethod(fullPathKey);
       deleteAgain.setRequestHeader("If-None-Match", "x");
-      assertEquals(HttpServletResponse.SC_OK, call(deleteAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(deleteAgain).getStatusCode());
    }
 
    public void testDeleteDataWithIfModifiedSince(Method m) throws Exception {
@@ -501,19 +498,19 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String lastMod = get.getResponseHeader("Last-Modified").getValue();
 
       // Attempt to delete using the If-Modified-Since header with the lastMod we got back from the get
       DeleteMethod delete = new DeleteMethod(fullPathKey);
       delete.setRequestHeader("If-Modified-Since", lastMod);
-      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, call(delete).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_MODIFIED, call(delete).getStatusCode());
 
       // Try to delete again, but with an older last modification date
       DeleteMethod deleteAgain = new DeleteMethod(fullPathKey);
       String dateMinus = addDay(lastMod, -1);
       deleteAgain.setRequestHeader("If-Modified-Since", dateMinus);
-      assertEquals(HttpServletResponse.SC_OK, call(deleteAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(deleteAgain).getStatusCode());
    }
 
    public void testDeleteDataWithIfUnmodifiedSince(Method m) throws Exception {
@@ -525,19 +522,19 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Now get it to retrieve some attributes
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       String lastMod = get.getResponseHeader("Last-Modified").getValue();
 
       // Attempt to delete using the If-Unmodified-Since header with a date earlier than the one we got back from the GET
       DeleteMethod delete = new DeleteMethod(fullPathKey);
       String dateMinus = addDay(lastMod, -1);
       delete.setRequestHeader("If-Unmodified-Since", dateMinus);
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
+      assertEquals(HttpStatus.SC_PRECONDITION_FAILED, call(delete).getStatusCode());
 
       // Try to delete again, but with an older last modification date
       DeleteMethod deleteAgain = new DeleteMethod(fullPathKey);
       deleteAgain.setRequestHeader("If-Unmodified-Since", lastMod);
-      assertEquals(HttpServletResponse.SC_OK, call(deleteAgain).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(deleteAgain).getStatusCode());
    }
 
    public void testDeleteCachePreconditionUnimplemented(Method m) throws Exception {
@@ -572,10 +569,10 @@ public class IntegrationTest extends RestServerTestBase {
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
       call(put);
 
-      assertEquals(HttpServletResponse.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
 
       call(new DeleteMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
    }
 
    public void testWipeCacheBucket(Method m) throws Exception {
@@ -588,9 +585,9 @@ public class IntegrationTest extends RestServerTestBase {
       put_.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
       call(put_);
 
-      assertEquals(HttpServletResponse.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
       call(new DeleteMethod(fullPath));
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
    }
 
    public void testAsyncAddRemove(Method m) throws Exception {
@@ -601,13 +598,13 @@ public class IntegrationTest extends RestServerTestBase {
       call(put);
 
       Thread.sleep(50);
-      assertEquals(HttpServletResponse.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(new HeadMethod(fullPathKey)).getStatusCode());
 
       DeleteMethod del = new DeleteMethod(fullPathKey);
       del.setRequestHeader("performAsync", "true");
       call(del);
       Thread.sleep(50);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode());
    }
 
    public void testShouldCopeWithSerializable(Method m) throws Exception {
@@ -624,7 +621,7 @@ public class IntegrationTest extends RestServerTestBase {
       GetMethod get = new GetMethod(fullPathKey);
       get.setRequestHeader("Accept", "application/x-java-serialized-object");
       call(get);
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       ObjectInputStream in = new ObjectInputStream(get.getResponseBodyAsStream());
       MySer res = (MySer) in.readObject();
       assertNotNull(res);
@@ -667,15 +664,15 @@ public class IntegrationTest extends RestServerTestBase {
       String fullPathKey = HOST + "/rest/nonexistent/" + m.getName();
       GetMethod get = new GetMethod(fullPathKey);
       call(get);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, get.getStatusCode());
 
       HttpMethodBase head = call(new HeadMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, head.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, head.getStatusCode());
 
       PostMethod put = new PostMethod(fullPathKey);
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"));
       call(put);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, put.getStatusCode());
    }
 
    public void testByteArrayAsSerializedObjects(Method m) throws Exception {
@@ -704,7 +701,7 @@ public class IntegrationTest extends RestServerTestBase {
       String datePlus = addDay(dateLast, 1);
       assertNotNull(get(m, Optional.of(dateLast)).getResponseBodyAsString());
       assertNotNull(get(m, Optional.of(datePlus)).getResponseBodyAsString());
-      result = get(m, Optional.of(dateMinus), Optional.empty(), HttpServletResponse.SC_PRECONDITION_FAILED);
+      result = get(m, Optional.of(dateMinus), Optional.empty(), HttpStatus.SC_PRECONDITION_FAILED);
    }
 
    public void testETagChanges(Method m) throws Exception {
@@ -738,7 +735,7 @@ public class IntegrationTest extends RestServerTestBase {
             put.setRequestHeader("Content-Type", "application/text");
             put.setRequestEntity(new StringRequestEntity("data2", null, null));
             newClient.executeMethod(put);
-            assertEquals(HttpServletResponse.SC_OK, put.getStatusCode());
+            assertEquals(HttpStatus.SC_OK, put.getStatusCode());
 
             // 5. v2 applied, let v3 finish
             v2FinishLatch.countDown();
@@ -752,7 +749,7 @@ public class IntegrationTest extends RestServerTestBase {
          put.setRequestHeader("Content-Type", "application/text");
          put.setRequestEntity(new StringRequestEntity("data3", null, null));
          call(put);
-         assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED,
+         assertEquals(HttpStatus.SC_PRECONDITION_FAILED,
                put.getStatusCode());
 
          // Wait for replace to happen
@@ -822,7 +819,7 @@ public class IntegrationTest extends RestServerTestBase {
 
       // Make sure that in the next 20 secs data is removed
       waitNotFound(startTime, lifespan, fullPathKey);
-      assertEquals(SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
 
       startTime = System.currentTimeMillis();
       lifespan = 0;
@@ -837,7 +834,7 @@ public class IntegrationTest extends RestServerTestBase {
       String response = get.getResponseBodyAsString();
       assertEquals("data3", response);
       Thread.sleep(2000);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
 
       fullPathKey = "%s-4".format(fullPathKey);
       post = new PostMethod(fullPathKey);
@@ -847,7 +844,7 @@ public class IntegrationTest extends RestServerTestBase {
       call(post);
       // Sleep way beyond the default in the config
       Thread.sleep(2500);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode());
    }
 
    public void testCacheControlResponseHeader(Method m) throws Exception {
@@ -879,7 +876,7 @@ public class IntegrationTest extends RestServerTestBase {
       GetMethod getLongMinFresh = new GetMethod(fullPathKey);
       getLongMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=20");
       HttpMethodBase getResp = call(getLongMinFresh);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, getResp.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, getResp.getStatusCode());
 
       GetMethod getShortMinFresh = new GetMethod(fullPathKey);
       getShortMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=2");
@@ -906,7 +903,7 @@ public class IntegrationTest extends RestServerTestBase {
       HeadMethod headLongMinFresh = new HeadMethod(fullPathKey);
       headLongMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=20");
       HttpMethodBase headResp = call(headLongMinFresh);
-      assertEquals(HttpServletResponse.SC_NOT_FOUND, headResp.getStatusCode());
+      assertEquals(HttpStatus.SC_NOT_FOUND, headResp.getStatusCode());
 
       HeadMethod headShortMinFresh = new HeadMethod(fullPathKey);
       headShortMinFresh.addRequestHeader("Cache-Control", "no-transform, min-fresh=2");
@@ -925,14 +922,14 @@ public class IntegrationTest extends RestServerTestBase {
       byte[] data = new byte[]{42, 42, 42};
 
       put.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"));
-      assertEquals(HttpServletResponse.SC_OK, call(put).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(put).getStatusCode());
 
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
 
       PutMethod reput = new PutMethod(fullPathKey);
       reput.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"));
-      assertEquals(HttpServletResponse.SC_OK, call(reput).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(reput).getStatusCode());
    }
 
    public void testDeleteSerializedObject(Method m) throws Exception {
@@ -941,31 +938,31 @@ public class IntegrationTest extends RestServerTestBase {
       byte[] data = new byte[]{42, 42, 42};
 
       put.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"));
-      assertEquals(HttpServletResponse.SC_OK, call(put).getStatusCode());
+      assertEquals(HttpStatus.SC_OK, call(put).getStatusCode());
 
       HttpMethodBase get = call(new GetMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
 
       HttpMethodBase delete = call(new DeleteMethod(fullPathKey));
-      assertEquals(HttpServletResponse.SC_OK, delete.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, delete.getStatusCode());
    }
 
    public void testDisableCache(Method m) throws Exception {
       Callable<HttpMethodBase> doGet = () -> call(new GetMethod(fullPathKey(m)));
 
       put(m);
-      assertEquals(SC_OK, doGet.call().getStatusCode());
+      assertEquals(HttpStatus.SC_OK, doGet.call().getStatusCode());
 
       ignoreCache(cacheName);
-      assertEquals(SC_INTERNAL_SERVER_ERROR, doGet.call().getStatusCode());
+      assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, doGet.call().getStatusCode());
 
       enableCache(cacheName);
-      assertEquals(SC_OK, doGet.call().getStatusCode());
+      assertEquals(HttpStatus.SC_OK, doGet.call().getStatusCode());
    }
 
    private void waitNotFound(Long startTime, int lifespan, String fullPathKey) throws Exception {
       if (System.currentTimeMillis() < startTime + lifespan + 20000) {
-         if (SC_NOT_FOUND != (call(new GetMethod(fullPathKey)).getStatusCode())) {
+         if (HttpStatus.SC_NOT_FOUND != (call(new GetMethod(fullPathKey)).getStatusCode())) {
             Thread.sleep(100);
             waitNotFound(startTime, lifespan, fullPathKey); // Good ol' tail recursion :);
          }
@@ -993,7 +990,7 @@ public class IntegrationTest extends RestServerTestBase {
       }
       put.setRequestEntity(reqEntity);
       call(put);
-      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, put.getStatusCode());
       return put;
    }
 
@@ -1002,11 +999,11 @@ public class IntegrationTest extends RestServerTestBase {
    }
 
    private HttpMethodBase get(Method m, Optional<String> unmodSince) throws Exception {
-      return get(m, unmodSince, Optional.empty(), HttpServletResponse.SC_OK);
+      return get(m, unmodSince, Optional.empty(), HttpStatus.SC_OK);
    }
 
    private HttpMethodBase get(Method m, Optional<String> unmodSince, Optional<String> acceptType) throws Exception {
-      return get(m, unmodSince, acceptType, HttpServletResponse.SC_OK);
+      return get(m, unmodSince, acceptType, HttpStatus.SC_OK);
    }
 
    private HttpMethodBase get(Method m, Optional<String> unmodSince, Optional<String> acceptType, int expCode) throws Exception {

@@ -16,8 +16,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
-
+import org.apache.http.HttpStatus;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.junit.After;
 import org.junit.Before;
@@ -45,7 +44,7 @@ public abstract class AbstractRESTAsyncIT {
             RESTHelper.addServer(getServers().get(1).getRESTEndpoint().getInetAddress().getHostName(), getServers().get(1).getRESTEndpoint().getContextPath());
         }
         delete(fullPathKey(KEY_A));
-        head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     @After
@@ -68,7 +67,7 @@ public abstract class AbstractRESTAsyncIT {
 
         long t1 = System.currentTimeMillis();
         for (int i = 0; i < NUM_OPERATIONS; i++) {
-            put(fullPathKey, initialXML, "application/octet-stream", HttpServletResponse.SC_OK, "performAsync", "false");
+            put(fullPathKey, initialXML, "application/octet-stream", HttpStatus.SC_OK, "performAsync", "false");
         }
         long putSyncTime = System.currentTimeMillis() - t1;
 
@@ -76,12 +75,12 @@ public abstract class AbstractRESTAsyncIT {
 
         t1 = System.currentTimeMillis();
         for (int i = 0; i < NUM_OPERATIONS; i++) {
-            put(fullPathKey, initialXML, "application/octet-stream", HttpServletResponse.SC_OK, "performAsync", "true");
+            put(fullPathKey, initialXML, "application/octet-stream", HttpStatus.SC_OK, "performAsync", "true");
         }
         long putAsyncTime = System.currentTimeMillis() - t1;
 
         assertTrue("PUT : async- " + putAsyncTime + ", sync- " + putSyncTime, putAsyncTime < putSyncTime);
-        get(fullPathKey, initialXML, HttpServletResponse.SC_OK, true, "performAsync", "true");
+        get(fullPathKey, initialXML, HttpStatus.SC_OK, true, "performAsync", "true");
     }
 
     @Test
@@ -95,11 +94,11 @@ public abstract class AbstractRESTAsyncIT {
         }
 
         for (int i = 0; i < NUM_OPERATIONS; i++) {
-            put(fullPathKey(String.valueOf(i)), bytes, "application/octet-stream", HttpServletResponse.SC_OK, "performAsync", "false");
+            put(fullPathKey(String.valueOf(i)), bytes, "application/octet-stream", HttpStatus.SC_OK, "performAsync", "false");
         }
 
         for (int i = 0; i < NUM_OPERATIONS; i++) {
-            delete(fullPathKey(String.valueOf(i)), HttpServletResponse.SC_OK, "performAsync", "true");
+            delete(fullPathKey(String.valueOf(i)), HttpStatus.SC_OK, "performAsync", "true");
         }
 
         for (int i = 0; i < NUM_OPERATIONS; i++) {
@@ -108,20 +107,20 @@ public abstract class AbstractRESTAsyncIT {
             eventually(new Condition() {
                 @Override
                 public boolean isSatisfied() throws Exception {
-                    return getWithoutAssert(fullPathKey(String.valueOf(iter)), null, HttpServletResponse.SC_NOT_FOUND, true, "performAsync", "true");
+                    return getWithoutAssert(fullPathKey(String.valueOf(iter)), null, HttpStatus.SC_NOT_FOUND, true, "performAsync", "true");
                 }
             }, 5000, 10);
         }
 
         put(fullPathKey(KEY_A), KEY_A, "application/octet-stream");
         put(fullPathKey(KEY_B), KEY_B, "application/octet-stream");
-        delete(fullPathKey(null), HttpServletResponse.SC_OK, "performAsync", "true");
+        delete(fullPathKey(null), HttpStatus.SC_OK, "performAsync", "true");
 
         eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
-                return getWithoutAssert(fullPathKey(KEY_A), null, HttpServletResponse.SC_NOT_FOUND, true) &&
-                       getWithoutAssert(fullPathKey(KEY_B), null, HttpServletResponse.SC_NOT_FOUND, true);
+                return getWithoutAssert(fullPathKey(KEY_A), null, HttpStatus.SC_NOT_FOUND, true) &&
+                       getWithoutAssert(fullPathKey(KEY_B), null, HttpStatus.SC_NOT_FOUND, true);
             }
         }, 5000, 10);
     }

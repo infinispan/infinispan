@@ -3,9 +3,8 @@ package org.infinispan.rest;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -75,15 +74,15 @@ public class TwoServerTest extends RestServerTestBase {
       PutMethod put = new PutMethod(PATH1 + "a");
       put.setRequestEntity(new StringRequestEntity("data", "application/text", null));
       call(put);
-      assertEquals(put.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
       put.releaseConnection();
       GetMethod get = new GetMethod(PATH1 + "a");
       call(get);
-      assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
       get.releaseConnection();
       get = new GetMethod(PATH2 + "a");
       call(get);
-      assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
       assertEquals("data", get.getResponseBodyAsString());
       get.releaseConnection();
    }
@@ -92,16 +91,16 @@ public class TwoServerTest extends RestServerTestBase {
       PutMethod put = new PutMethod(PATH1 + "testReplace");
       put.setRequestEntity(new StringRequestEntity("data", "application/text", null));
       call(put);
-      assertEquals(put.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
       put.releaseConnection();
       put = new PutMethod(PATH1 + "testReplace");
       put.setRequestEntity(new StringRequestEntity("data2", "application/text", null));
       call(put);
-      assertEquals(put.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
       put.releaseConnection();
       GetMethod get = new GetMethod(PATH2 + "testReplace");
       call(get);
-      assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
       assertEquals("data2", get.getResponseBodyAsString());
       get.releaseConnection();
    }
@@ -110,11 +109,11 @@ public class TwoServerTest extends RestServerTestBase {
       PutMethod put = new PutMethod(PATH1 + "testExtendedHeaders");
       put.setRequestEntity(new StringRequestEntity("data", "application/text", null));
       call(put);
-      assertEquals(put.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
       put.releaseConnection();
       GetMethod get = new GetMethod(PATH2 + "testExtendedHeaders?extended");
       call(get);
-      assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
+      assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
       Header po = get.getResponseHeader("Cluster-Primary-Owner");
       assertNotNull(po);
       Address primaryLocation = getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).getAdvancedCache().getDistributionManager().getPrimaryLocation("testExtendedHeaders");
@@ -135,14 +134,14 @@ public class TwoServerTest extends RestServerTestBase {
       String key3Path = EXPIRY_PATH1 + "k3";
       String key4Path = EXPIRY_PATH1 + "k4";
       // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
-      post(key1Path, "v1", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
+      post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
             "timeToLiveSeconds", "3", "maxIdleTimeSeconds", "3");
       // no value means never expire
-      post(key2Path, "v2", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text");
+      post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
       // 0 value means use default
-      post(key3Path, "v3", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
+      post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
             "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
-      post(key4Path, "v4", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
+      post(key4Path, "v4", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
             "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
       TestingUtil.sleepThread(1000);
@@ -152,14 +151,14 @@ public class TwoServerTest extends RestServerTestBase {
       TestingUtil.sleepThread(1100);
       // k3 and k4 expired
       get(key1Path, "v1");
-      head(key3Path, HttpServletResponse.SC_NOT_FOUND);
-      head(key4Path, HttpServletResponse.SC_NOT_FOUND);
+      head(key3Path, HttpStatus.SC_NOT_FOUND);
+      head(key4Path, HttpStatus.SC_NOT_FOUND);
       TestingUtil.sleepThread(1000);
       // k1 expired
-      head(key1Path, HttpServletResponse.SC_NOT_FOUND);
+      head(key1Path, HttpStatus.SC_NOT_FOUND);
       // k2 should not be expired because without timeToLive/maxIdle parameters,
       // the entries live forever. To use default values, 0 must be passed in.
-      head(key2Path, HttpServletResponse.SC_OK);
+      head(key2Path, HttpStatus.SC_OK);
    }
 
    private void post(String uri, String data, String contentType, int expectedCode, Object... headers) throws Exception {
