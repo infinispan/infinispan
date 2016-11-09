@@ -23,6 +23,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
@@ -50,6 +51,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService asyncTransportExecutor;
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
+   private ScheduledExecutorService txCleanupExecutor;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -96,6 +98,14 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) asyncReplicationExecutor;
+         } else if (componentName.equals(TX_CLEANUP_EXECUTOR)) {
+            synchronized (this) {
+               if (txCleanupExecutor == null) {
+                  txCleanupExecutor = buildAndConfigureScheduledExecutorService(new DefaultScheduledExecutorFactory(),
+                        null, componentName, nodeName);
+               }
+            }
+            return (T) txCleanupExecutor;
          } else {
             throw new ConfigurationException("Unknown named executor " + componentName);
          }
@@ -112,6 +122,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
       if (evictionExecutor != null) evictionExecutor.shutdownNow();
+      if (txCleanupExecutor != null) txCleanupExecutor.shutdownNow();
    }
 
    private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p,

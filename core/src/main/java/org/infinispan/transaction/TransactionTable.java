@@ -23,7 +23,23 @@
 
 package org.infinispan.transaction;
 
-import net.jcip.annotations.GuardedBy;
+import static org.infinispan.util.Util.currentMillisFromNanotime;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
@@ -33,6 +49,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -56,18 +74,7 @@ import org.infinispan.util.concurrent.ConcurrentMapFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static org.infinispan.util.Util.currentMillisFromNanotime;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -114,7 +121,8 @@ public class TransactionTable {
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
                           TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache) {
+                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
+                          @ComponentName(KnownComponentNames.TX_CLEANUP_EXECUTOR) ScheduledExecutorService executorService) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -126,6 +134,7 @@ public class TransactionTable {
       this.commandsFactory = commandsFactory;
       this.clusteringLogic = clusteringDependentLogic;
       this.cacheName = cache.getName();
+      this.executorService = executorService;
    }
 
    @Start(priority = 9) // Start before cache loader manager
@@ -143,38 +152,21 @@ public class TransactionTable {
          notifier.addListener(this);
          clustered = true;
          completedTransactionsInfo = ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+
+         // Periodically run a task to cleanup the transaction table of completed transactions.
+         long interval = configuration.transaction().reaperWakeUpInterval();
+         executorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+               cleanupCompletedTransactions();
+            }
+         }, interval, interval, TimeUnit.MILLISECONDS);
       }
-      
-      // Periodically run a task to cleanup the transaction table from completed transactions.
-      ThreadFactory tf = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
-            Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
-            th.setDaemon(true);
-            return th;
-         }
-      };
-
-      executorService = Executors.newSingleThreadScheduledExecutor(tf);
-
-      long interval = configuration.transaction().reaperWakeUpInterval();
-      executorService.scheduleAtFixedRate(new Runnable() {
-         @Override
-         public void run() {
-            cleanupCompletedTransactions();
-         }
-      }, interval, interval, TimeUnit.MILLISECONDS);
-
    }
 
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
-      
-      if (executorService != null)
-         executorService.shutdownNow();
-      
       if (clustered) {
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped
@@ -564,53 +556,53 @@ public class TransactionTable {
         return gtx.getId() <= completedTransactionsPerNode.lastPrunedTxId;
     }
 
-   public void cleanupCompletedTransactions() {
-        if (completedTransactionsInfo != null && !completedTransactionsInfo.isEmpty()) {
-            try {
-                log.tracef("About to cleanup completed transaction. Initial size is %d", completedTransactionsInfo.size());
-                long beginning = System.nanoTime();
-                long minCompleteTimestamp = System.nanoTime()
-                        - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
-                int removedEntries = 0;
+   private void cleanupCompletedTransactions() {
+      if (completedTransactionsInfo == null || completedTransactionsInfo.isEmpty()) {
+         return;
+      }
+      try {
+         log.trace("About to cleanup completed transaction.");
+         long beginning = System.nanoTime();
+         long minCompleteTimestamp = System.nanoTime()
+               - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
+         int removedEntries = 0;
 
-                // this iterator is weekly consistent and will never throw ConcurrentModificationException
-                Iterator<Map.Entry<Address, CompletedTransactionsPerNode>> nodeIterator = completedTransactionsInfo.entrySet()
-                        .iterator();
+         // this iterator is weekly consistent and will never throw ConcurrentModificationException
+         Iterator<CompletedTransactionsPerNode> nodeIterator = completedTransactionsInfo.values()
+               .iterator();
 
-                while (nodeIterator.hasNext()) {
-                    CompletedTransactionsPerNode nodeInfo = nodeIterator.next().getValue();
-                    // Prune nodes that are no longer members first
-                    if (nodeInfo.completedTransactions.isEmpty() && !rpcManager.getMembers().contains(nodeInfo.address)) {
-                        nodeIterator.remove();
-                    }
+         while (nodeIterator.hasNext()) {
+            CompletedTransactionsPerNode nodeInfo = nodeIterator.next();
+            // Prune nodes that are no longer members first
+            if (nodeInfo.completedTransactions.isEmpty() && !rpcManager.getMembers().contains(nodeInfo.address)) {
+               nodeIterator.remove();
+            }
 
-                    // Now prune the individual transactions
-                    Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = nodeInfo.completedTransactions.entrySet()
-                            .iterator();
-                    while (txIterator.hasNext()) {
-                        Map.Entry<GlobalTransaction, Long> e = txIterator.next();
-                        long completedTime = e.getValue();
-                        if (completedTime < minCompleteTimestamp) {
-                            // Need to update lastPrunedTxId *before* removing the tx from the map
-                            // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
-                            long txId = e.getKey().getId();
-                            if (txId > nodeInfo.lastPrunedTxId) {
-                                nodeInfo.lastPrunedTxId = txId;
-                            }
+            // Now prune the individual transactions
+            Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = nodeInfo.completedTransactions.entrySet()
+                  .iterator();
+            while (txIterator.hasNext()) {
+               Map.Entry<GlobalTransaction, Long> e = txIterator.next();
+               long completedTime = e.getValue();
+               if (completedTime < minCompleteTimestamp) {
+                  // Need to update lastPrunedTxId *before* removing the tx from the map
+                  // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
+                  long txId = e.getKey().getId();
+                  if (txId > nodeInfo.lastPrunedTxId) {
+                     nodeInfo.lastPrunedTxId = txId;
+                  }
 
-                            txIterator.remove();
-                            removedEntries++;
-                        }
-                    }
-                }
-            long duration = System.nanoTime() - beginning;
-
-            log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " +
-                  "current number of completed transactions is %d", removedEntries, TimeUnit.NANOSECONDS.toMillis(duration),
-                  completedTransactionsInfo.size());
-         } catch (Exception e) {
-            log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
+                  txIterator.remove();
+                  removedEntries++;
+               }
+            }
          }
+         long duration = System.nanoTime() - beginning;
+
+         log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis.",
+               removedEntries, TimeUnit.NANOSECONDS.toMillis(duration));
+      } catch (Exception e) {
+         log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
       }
    }
 
@@ -646,12 +638,12 @@ public class TransactionTable {
       }
    }
 
-    public static class CompletedTransactionsPerNode {
+    private static class CompletedTransactionsPerNode {
         final Address address;
         final ConcurrentMap<GlobalTransaction, Long> completedTransactions;
         volatile long lastPrunedTxId;
 
-        public CompletedTransactionsPerNode(Address address) {
+        private CompletedTransactionsPerNode(Address address) {
             this.address = address;
             completedTransactions = ConcurrentMapFactory.makeConcurrentMap();
         }
