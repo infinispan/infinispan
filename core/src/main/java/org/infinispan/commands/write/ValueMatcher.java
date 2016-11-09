@@ -1,17 +1,8 @@
 package org.infinispan.commands.write;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.marshall.core.Ids;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -169,30 +160,4 @@ public enum ValueMatcher {
       return CACHED_VALUES[ordinal];
    }
 
-   public static class Externalizer extends AbstractExternalizer<ValueMatcher> {
-
-      @Override
-      public Integer getId() {
-         return Ids.VALUE_MATCHER;
-      }
-
-      @Override
-      public Set<Class<? extends ValueMatcher>> getTypeClasses() {
-         Set<Class<? extends ValueMatcher>> classes = new HashSet<>(CACHED_VALUES.length);
-         for (ValueMatcher valueMatcher : CACHED_VALUES) {
-            classes.add(valueMatcher.getClass());
-         }
-         return classes;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ValueMatcher valueMatcher) throws IOException {
-         MarshallUtil.marshallEnum(valueMatcher, output);
-      }
-
-      @Override
-      public ValueMatcher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      }
-   }
 }
