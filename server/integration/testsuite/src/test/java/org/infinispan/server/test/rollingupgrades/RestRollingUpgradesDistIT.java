@@ -5,8 +5,8 @@ import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
 
 import javax.management.ObjectName;
-import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.HttpStatus;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
@@ -134,10 +134,10 @@ public class RestRollingUpgradesDistIT {
 
             // is RemoteCacheStore really disconnected?
             // source node entries should NOT be accessible from target node now
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnected", 0), HttpServletResponse.SC_NOT_FOUND);
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), HttpServletResponse.SC_NOT_FOUND);
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnectedx", 0), HttpServletResponse.SC_NOT_FOUND);
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET), HttpServletResponse.SC_NOT_FOUND);
+            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
+            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
+            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnectedx", 0), HttpStatus.SC_NOT_FOUND);
+            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
 
             // all entries migrated?
             get(fullPathKey(2, DEFAULT_CACHE_NAME, "key1", 0), "data");

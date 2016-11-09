@@ -14,8 +14,7 @@ import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
-
+import org.apache.http.HttpStatus;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.junit.After;
 import org.junit.Before;
@@ -49,9 +48,9 @@ public abstract class AbstractRESTClusteredIT {
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
 
-        head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_C), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
     }
 
     @After
@@ -79,7 +78,7 @@ public abstract class AbstractRESTClusteredIT {
         post(fullPathKey(0, KEY_A), "data", "text/plain");
         get(fullPathKey(1, KEY_A), "data");
         delete(fullPathKey(0, KEY_A));
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -89,18 +88,18 @@ public abstract class AbstractRESTClusteredIT {
         head(fullPathKey(0, KEY_A));
         head(fullPathKey(0, KEY_B));
         delete(fullPathKey(0, null));
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(1, KEY_B), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_B), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     public void testReplicationTTL() throws Exception {
-        post(fullPathKey(0, KEY_A), "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
         head(fullPathKey(1, KEY_A));
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 }
