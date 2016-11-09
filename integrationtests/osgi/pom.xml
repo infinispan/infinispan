@@ -125,11 +125,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.rocksdb</groupId>
-         <artifactId>rocksdbjni</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
          <scope>test</scope>
