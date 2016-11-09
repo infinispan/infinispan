@@ -512,10 +512,10 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="completedTxTimeout" type="xs:long">
+          <xs:attribute name="completedTxTimeout" type="xs:long" default="60000">
             <xs:annotation>
               <xs:documentation>
-                The duration (millis) in which to keep information about the completion of a transaction. Defaults to 15000.
+                The duration (millis) in which to keep information about the completion of a transaction. Defaults to 60000.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

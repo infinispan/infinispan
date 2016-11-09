@@ -51,7 +51,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
    private long reaperWakeUpInterval = 1000;
-   private long completedTxTimeout = 15000;
+   private long completedTxTimeout = 60000;
 
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
@@ -241,7 +241,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 3000.
+    * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 60000.
     */
    public TransactionConfigurationBuilder completedTxTimeout(long timeout) {
       this.completedTxTimeout = timeout;
