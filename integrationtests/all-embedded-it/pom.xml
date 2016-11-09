@@ -41,11 +41,6 @@
            <scope>provided</scope>
        </dependency>
        <dependency>
-           <groupId>org.rocksdb</groupId>
-           <artifactId>rocksdbjni</artifactId>
-           <scope>provided</scope>
-       </dependency>
-       <dependency>
            <groupId>com.mchange</groupId>
            <artifactId>c3p0</artifactId>
            <scope>provided</scope>
