@@ -1,8 +1,8 @@
 package org.infinispan.server.test.rollingupgrades;
 
 import javax.management.ObjectName;
-import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.HttpStatus;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
@@ -92,7 +92,7 @@ public class RestRollingUpgradesIT {
             post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
 
             //Source node entries should NOT be accessible from target node
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpServletResponse.SC_NOT_FOUND);
+            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
 
             //All remaining entries migrated?
             for (int i = 0; i < 50; i++) {

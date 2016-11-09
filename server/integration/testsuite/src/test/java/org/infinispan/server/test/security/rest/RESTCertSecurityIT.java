@@ -12,9 +12,9 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -81,49 +81,49 @@ public class RESTCertSecurityIT {
     @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-cert-wr.xml")})
     public void testSecuredWriteOperations() throws Exception {
         //correct alias for the certificate
-        put(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
+        put(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
         //test wrong authorization, 1. wrong alias for the certificate
-        put(securedClient(test2Alias), keyAddress(KEY_B), HttpServletResponse.SC_FORBIDDEN);
+        put(securedClient(test2Alias), keyAddress(KEY_B), HttpStatus.SC_FORBIDDEN);
         //2. access over 8080
-        put(securedClient(testAlias), keyAddressUnsecured(KEY_B), HttpServletResponse.SC_UNAUTHORIZED);
-        post(securedClient(testAlias), keyAddress(KEY_C), HttpServletResponse.SC_OK);
-        post(securedClient(test2Alias), keyAddress(KEY_D), HttpServletResponse.SC_FORBIDDEN);
+        put(securedClient(testAlias), keyAddressUnsecured(KEY_B), HttpStatus.SC_UNAUTHORIZED);
+        post(securedClient(testAlias), keyAddress(KEY_C), HttpStatus.SC_OK);
+        post(securedClient(test2Alias), keyAddress(KEY_D), HttpStatus.SC_FORBIDDEN);
         //get is not secured, should be working over 8080
-        HttpResponse resp = get(securedClient(test2Alias), keyAddressUnsecured(KEY_A), HttpServletResponse.SC_OK);
+        HttpResponse resp = get(securedClient(test2Alias), keyAddressUnsecured(KEY_A), HttpStatus.SC_OK);
         String content = new BufferedReader(new InputStreamReader(resp.getEntity().getContent())).readLine();
         assertEquals("data", content);
-        head(securedClient(test2Alias), keyAddressUnsecured(KEY_A), HttpServletResponse.SC_OK);
-        delete(securedClient(test2Alias), keyAddress(KEY_A), HttpServletResponse.SC_FORBIDDEN);
-        delete(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
-        delete(securedClient(testAlias), keyAddress(KEY_C), HttpServletResponse.SC_OK);
+        head(securedClient(test2Alias), keyAddressUnsecured(KEY_A), HttpStatus.SC_OK);
+        delete(securedClient(test2Alias), keyAddress(KEY_A), HttpStatus.SC_FORBIDDEN);
+        delete(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
+        delete(securedClient(testAlias), keyAddress(KEY_C), HttpStatus.SC_OK);
     }
 
     @Test
     @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-cert-rw.xml")})
     public void testSecuredReadWriteOperations() throws Exception {
         //correct alias for the certificate
-        put(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
+        put(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
         //test wrong authorization, 1. wrong alias for the certificate
-        put(securedClient(test2Alias), keyAddress(KEY_B), HttpServletResponse.SC_FORBIDDEN);
+        put(securedClient(test2Alias), keyAddress(KEY_B), HttpStatus.SC_FORBIDDEN);
         //2. access over 8080
-        put(securedClient(testAlias), keyAddressUnsecured(KEY_B), HttpServletResponse.SC_UNAUTHORIZED);
-        post(securedClient(testAlias), keyAddress(KEY_C), HttpServletResponse.SC_OK);
-        post(securedClient(test2Alias), keyAddress(KEY_D), HttpServletResponse.SC_FORBIDDEN);
+        put(securedClient(testAlias), keyAddressUnsecured(KEY_B), HttpStatus.SC_UNAUTHORIZED);
+        post(securedClient(testAlias), keyAddress(KEY_C), HttpStatus.SC_OK);
+        post(securedClient(test2Alias), keyAddress(KEY_D), HttpStatus.SC_FORBIDDEN);
         //get is secured too
-        HttpResponse resp = get(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
+        HttpResponse resp = get(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
         String content = new BufferedReader(new InputStreamReader(resp.getEntity().getContent())).readLine();
         assertEquals("data", content);
         //test wrong authorization, 1. wrong alias for the certificate
-        get(securedClient(test2Alias), keyAddress(KEY_A), HttpServletResponse.SC_FORBIDDEN);
+        get(securedClient(test2Alias), keyAddress(KEY_A), HttpStatus.SC_FORBIDDEN);
         //2. access over 8080
-        get(securedClient(testAlias), keyAddressUnsecured(KEY_A), HttpServletResponse.SC_UNAUTHORIZED);
-        head(securedClient(test2Alias), keyAddress(KEY_A), HttpServletResponse.SC_FORBIDDEN);
+        get(securedClient(testAlias), keyAddressUnsecured(KEY_A), HttpStatus.SC_UNAUTHORIZED);
+        head(securedClient(test2Alias), keyAddress(KEY_A), HttpStatus.SC_FORBIDDEN);
         //access over 8080
-        head(securedClient(testAlias), keyAddressUnsecured(KEY_A), HttpServletResponse.SC_UNAUTHORIZED);
-        head(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
-        delete(securedClient(test2Alias), keyAddress(KEY_A), HttpServletResponse.SC_FORBIDDEN);
-        delete(securedClient(testAlias), keyAddress(KEY_A), HttpServletResponse.SC_OK);
-        delete(securedClient(testAlias), keyAddress(KEY_C), HttpServletResponse.SC_OK);
+        head(securedClient(testAlias), keyAddressUnsecured(KEY_A), HttpStatus.SC_UNAUTHORIZED);
+        head(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
+        delete(securedClient(test2Alias), keyAddress(KEY_A), HttpStatus.SC_FORBIDDEN);
+        delete(securedClient(testAlias), keyAddress(KEY_A), HttpStatus.SC_OK);
+        delete(securedClient(testAlias), keyAddress(KEY_C), HttpStatus.SC_OK);
     }
 
     private String keyAddress(String key) {

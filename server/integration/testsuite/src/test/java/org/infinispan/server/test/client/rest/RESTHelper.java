@@ -1,6 +1,7 @@
 package org.infinispan.server.test.client.rest;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -17,7 +18,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -72,11 +72,11 @@ public class RESTHelper {
     }
 
     public static HttpResponse head(URI uri) throws Exception {
-        return head(uri, HttpServletResponse.SC_OK);
+        return head(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse headWithoutClose(URI uri) throws Exception {
-        return head(uri, HttpServletResponse.SC_OK);
+        return head(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse head(URI uri, int expectedCode) throws Exception {
@@ -113,19 +113,19 @@ public class RESTHelper {
     }
 
     public static HttpResponse get(URI uri) throws Exception {
-        return get(uri, HttpServletResponse.SC_OK);
+        return get(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse getWithoutClose(URI uri) throws Exception {
-        return getWithoutClose(uri, HttpServletResponse.SC_OK);
+        return getWithoutClose(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse get(URI uri, String expectedResponseBody) throws Exception {
-        return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, true);
+        return get(uri, expectedResponseBody, HttpStatus.SC_OK, true);
     }
 
     public static HttpResponse getWithoutClose(URI uri, String expectedResponseBody) throws Exception {
-        return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, false);
+        return get(uri, expectedResponseBody, HttpStatus.SC_OK, false);
     }
 
     public static HttpResponse get(URI uri, int expectedCode) throws Exception {
@@ -182,9 +182,9 @@ public class RESTHelper {
         }
         return true;
     }
-    
+
     public static HttpResponse put(URI uri, Object data, String contentType) throws Exception {
-        return put(uri, data, contentType, HttpServletResponse.SC_OK);
+        return put(uri, data, contentType, HttpStatus.SC_OK);
     }
 
     public static HttpResponse put(URI uri, Object data, String contentType, int expectedCode) throws Exception {
@@ -226,7 +226,7 @@ public class RESTHelper {
     }
 
     public static HttpResponse post(URI uri, Object data, String contentType) throws Exception {
-        return post(uri, data, contentType, HttpServletResponse.SC_OK);
+        return post(uri, data, contentType, HttpStatus.SC_OK);
     }
 
     public static HttpResponse post(URI uri, Object data, String contentType, int expectedCode) throws Exception {

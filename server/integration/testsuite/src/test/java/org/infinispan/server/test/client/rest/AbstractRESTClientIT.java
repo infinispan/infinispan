@@ -1,12 +1,12 @@
 package org.infinispan.server.test.client.rest;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -54,10 +54,10 @@ public abstract class AbstractRESTClientIT {
         delete(fullPathKey(KEY_C));
         delete(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A));
 
-        head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_C), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     @After
@@ -81,13 +81,13 @@ public abstract class AbstractRESTClientIT {
         assertEquals("application/octet-stream", get.getHeaders("Content-Type")[0].getValue());
 
         delete(fullPathKey);
-        get(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        get(fullPathKey, HttpStatus.SC_NOT_FOUND);
 
         put(fullPathKey, initialXML, "application/octet-stream");
         get(fullPathKey, initialXML);
 
         delete(fullPathKey(null));
-        get(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        get(fullPathKey, HttpStatus.SC_NOT_FOUND);
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ObjectOutputStream oo = new ObjectOutputStream(bout);
@@ -106,7 +106,7 @@ public abstract class AbstractRESTClientIT {
 
     @Test
     public void testEmptyGet() throws Exception {
-        get(fullPathKey("nodata"), HttpServletResponse.SC_NOT_FOUND);
+        get(fullPathKey("nodata"), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -151,7 +151,7 @@ public abstract class AbstractRESTClientIT {
 
         post(fullPathKey, "data", "application/text");
         // second post, returns 409
-        post(fullPathKey, "data", "application/text", HttpServletResponse.SC_CONFLICT);
+        post(fullPathKey, "data", "application/text", HttpStatus.SC_CONFLICT);
         // Should be all ok as its a put
         put(fullPathKey, "data", "application/text");
     }
@@ -160,21 +160,21 @@ public abstract class AbstractRESTClientIT {
     public void testPutDataWithTimeToLive() throws Exception {
         URI fullPathKey = fullPathKey(KEY_A);
 
-        post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
 
         get(fullPathKey, "data");
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     public void testPutDataWithMaxIdleTime() throws Exception {
         URI fullPathKey = fullPathKey(KEY_A);
 
-        post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "maxIdleTimeSeconds", "2");
 
@@ -189,14 +189,14 @@ public abstract class AbstractRESTClientIT {
         // idle for 2 seconds
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     public void testPutDataTTLMaxIdleCombo1() throws Exception {
         URI fullPathKey = fullPathKey(KEY_A);
 
-        post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "10", "maxIdleTimeSeconds", "2");
 
@@ -211,21 +211,21 @@ public abstract class AbstractRESTClientIT {
         // idle for 2 seconds
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     public void testPutDataTTLMaxIdleCombo2() throws Exception {
         URI fullPathKey = fullPathKey(KEY_A);
 
-        post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2", "maxIdleTimeSeconds", "10");
 
         get(fullPathKey, "data");
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -234,7 +234,7 @@ public abstract class AbstractRESTClientIT {
         post(fullPathKey, "data", "application/text");
         head(fullPathKey);
         delete(fullPathKey);
-        head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -244,8 +244,8 @@ public abstract class AbstractRESTClientIT {
         head(fullPathKey(KEY_A));
         head(fullPathKey(KEY_B));
         delete(fullPathKey(null));
-        head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -258,7 +258,7 @@ public abstract class AbstractRESTClientIT {
         oo.flush();
         byte[] byteData = bout.toByteArray();
         put(fullPathKey, byteData, "application/x-java-serialized-object");
-        HttpResponse resp = get(fullPathKey, null, HttpServletResponse.SC_OK, false, "Accept", "application/x-java-serialized-object");
+        HttpResponse resp = get(fullPathKey, null, HttpStatus.SC_OK, false, "Accept", "application/x-java-serialized-object");
         ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         TestSerializable ts = (TestSerializable) oin.readObject();
         EntityUtils.consume(resp.getEntity());
@@ -275,7 +275,7 @@ public abstract class AbstractRESTClientIT {
         oo.flush();
         byte[] byteData = bout.toByteArray();
         put(fullPathKey, byteData, "application/x-java-serialized-object");
-        HttpResponse resp = get(fullPathKey, null, HttpServletResponse.SC_OK, false, "Accept", "application/x-java-serialized-object");
+        HttpResponse resp = get(fullPathKey, null, HttpStatus.SC_OK, false, "Accept", "application/x-java-serialized-object");
         ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         Integer i2 = (Integer) oin.readObject();
         EntityUtils.consume(resp.getEntity());
@@ -300,9 +300,9 @@ public abstract class AbstractRESTClientIT {
         //show that "application/text" works for delete
         URI fullPathKey1 = fullPathKey("j");
         put(fullPathKey1, "data1", "application/text");
-        head(fullPathKey1, HttpServletResponse.SC_OK);
+        head(fullPathKey1, HttpStatus.SC_OK);
         delete(fullPathKey1);
-        head(fullPathKey1, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey1, HttpStatus.SC_NOT_FOUND);
 
         URI fullPathKey2 = fullPathKey("k");
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -312,9 +312,9 @@ public abstract class AbstractRESTClientIT {
         oo.flush();
         byte[] byteData = bout.toByteArray();
         put(fullPathKey2, byteData, "application/x-java-serialized-object");
-        head(fullPathKey2, HttpServletResponse.SC_OK);
+        head(fullPathKey2, HttpStatus.SC_OK);
         delete(fullPathKey2);
-        head(fullPathKey2, HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey2, HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -326,15 +326,15 @@ public abstract class AbstractRESTClientIT {
         String dateMinus = addDay(dateLast, -1);
         String datePlus = addDay(dateLast, 1);
 
-        get(fullPathKey, "data", HttpServletResponse.SC_OK, true,
+        get(fullPathKey, "data", HttpStatus.SC_OK, true,
                 // resource has been modified since
                 "If-Modified-Since", dateMinus);
 
-        get(fullPathKey, null, HttpServletResponse.SC_NOT_MODIFIED, true,
+        get(fullPathKey, null, HttpStatus.SC_NOT_MODIFIED, true,
                 // exact same date as stored one
                 "If-Modified-Since", dateLast);
 
-        get(fullPathKey, null, HttpServletResponse.SC_NOT_MODIFIED, true,
+        get(fullPathKey, null, HttpStatus.SC_NOT_MODIFIED, true,
                 // resource hasn't been modified since
                 "If-Modified-Since", datePlus);
     }
@@ -349,11 +349,11 @@ public abstract class AbstractRESTClientIT {
         String dateMinus = addDay(dateLast, -1);
         String datePlus = addDay(dateLast, 1);
 
-        get(fullPathKey, "data", HttpServletResponse.SC_OK, true, "If-Unmodified-Since", dateLast);
+        get(fullPathKey, "data", HttpStatus.SC_OK, true, "If-Unmodified-Since", dateLast);
 
-        get(fullPathKey, "data", HttpServletResponse.SC_OK, true, "If-Unmodified-Since", datePlus);
+        get(fullPathKey, "data", HttpStatus.SC_OK, true, "If-Unmodified-Since", datePlus);
 
-        get(fullPathKey, null, HttpServletResponse.SC_PRECONDITION_FAILED, true, "If-Unmodified-Since", dateMinus);
+        get(fullPathKey, null, HttpStatus.SC_PRECONDITION_FAILED, true, "If-Unmodified-Since", dateMinus);
     }
 
     @Test
@@ -363,9 +363,9 @@ public abstract class AbstractRESTClientIT {
         HttpResponse resp = get(fullPathKey);
         String eTag = resp.getHeaders("ETag")[0].getValue();
 
-        get(fullPathKey, null, HttpServletResponse.SC_NOT_MODIFIED, true, "If-None-Match", eTag);
+        get(fullPathKey, null, HttpStatus.SC_NOT_MODIFIED, true, "If-None-Match", eTag);
 
-        get(fullPathKey, "data", HttpServletResponse.SC_OK, true, "If-None-Match", eTag + "garbage");
+        get(fullPathKey, "data", HttpStatus.SC_OK, true, "If-None-Match", eTag + "garbage");
     }
 
     @Test
@@ -376,19 +376,19 @@ public abstract class AbstractRESTClientIT {
 
         String eTag = resp.getHeaders("ETag")[0].getValue();
         // test GET with If-Match behaviour
-        get(fullPathKey, "data", HttpServletResponse.SC_OK, true, "If-Match", eTag);
+        get(fullPathKey, "data", HttpStatus.SC_OK, true, "If-Match", eTag);
 
-        get(fullPathKey, null, HttpServletResponse.SC_PRECONDITION_FAILED, true, "If-Match", eTag + "garbage");
+        get(fullPathKey, null, HttpStatus.SC_PRECONDITION_FAILED, true, "If-Match", eTag + "garbage");
 
         // test HEAD with If-Match behaviour
-        head(fullPathKey, HttpServletResponse.SC_OK, new String[][]{{"If-Match", eTag}});
-        head(fullPathKey, HttpServletResponse.SC_PRECONDITION_FAILED, new String[][]{{"If-Match", eTag + "garbage"}});
+        head(fullPathKey, HttpStatus.SC_OK, new String[][]{{"If-Match", eTag}});
+        head(fullPathKey, HttpStatus.SC_PRECONDITION_FAILED, new String[][]{{"If-Match", eTag + "garbage"}});
     }
 
     @Test
     public void testNonExistentCache() throws Exception {
-        head(fullPathKey("nonexistentcache", "nodata"), HttpServletResponse.SC_NOT_FOUND);
-        get(fullPathKey("nonexistentcache", "nodata"), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey("nonexistentcache", "nodata"), HttpStatus.SC_NOT_FOUND);
+        get(fullPathKey("nonexistentcache", "nodata"), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -404,7 +404,7 @@ public abstract class AbstractRESTClientIT {
         byte[] serializedData = bout.toByteArray();
         put(fullPathKey(0, KEY_Z), serializedData, "application/x-java-serialized-object");
 
-        HttpResponse resp = get(fullPathKey(0, KEY_Z), null, HttpServletResponse.SC_OK, false, "Accept",
+        HttpResponse resp = get(fullPathKey(0, KEY_Z), null, HttpStatus.SC_OK, false, "Accept",
                 "application/x-java-serialized-object");
         ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         byte[] dataBack = (byte[]) oin.readObject();
