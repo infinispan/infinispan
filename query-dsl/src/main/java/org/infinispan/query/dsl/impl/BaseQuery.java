@@ -44,7 +44,23 @@ public abstract class BaseQuery implements Query {
       return queryFactory;
    }
 
+   /**
+    * Returns the query string.
+    *
+    * @return the query string
+    * @deprecated To be removed in Infinispan 10.0. Use {@link #getQueryString()} instead.
+    */
+   @Deprecated
    public String getJPAQuery() {
+      return jpaQuery;
+   }
+
+   /**
+    * Returns the query string.
+    *
+    * @return the query string
+    */
+   public String getQueryString() {
       return jpaQuery;
    }
 
