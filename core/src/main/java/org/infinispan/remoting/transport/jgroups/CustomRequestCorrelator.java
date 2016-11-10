@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import java.util.concurrent.Executor;
 
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.jgroups.Address;
 import org.jgroups.View;
 import org.jgroups.blocks.Request;
@@ -34,12 +35,17 @@ class CustomRequestCorrelator extends RequestCorrelator {
    protected void handleResponse(Request req, Address sender, byte[] buf, int offset, int length,
                                  boolean is_exception) {
       Object retval;
-      try {
-         retval = ispnMarshaller.objectFromByteBuffer(buf, offset, length);
-      } catch (Exception e) {
-         log.error(Util.getMessage("FailedUnmarshallingBufferIntoReturnValue"), e);
-         retval = e;
-         is_exception = true;
+      if (length == 0) {
+         // Empty buffer signals the ForkChannel with this name is not running on the remote node
+         retval = CacheNotFoundResponse.INSTANCE;
+      } else {
+         try {
+            retval = ispnMarshaller.objectFromByteBuffer(buf, offset, length);
+         } catch (Exception e) {
+            log.error(Util.getMessage("FailedUnmarshallingBufferIntoReturnValue"), e);
+            retval = e;
+            is_exception = true;
+         }
       }
       req.receiveResponse(retval, sender, is_exception);
    }
