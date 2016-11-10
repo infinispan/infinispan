@@ -4,20 +4,15 @@ import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -44,6 +39,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
 
+   public static final byte[] FORK_NOT_FOUND_BUFFER = new byte[0];
+
    @Override
    protected void createCacheManagers() throws Throwable {
       // The test method will create the cache managers
@@ -57,7 +54,6 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
    @Test(timeOut = 30000, dataProvider = "startOrder")
    public void testConcurrentStart(int eagerManager, int lazyManager) throws Exception {
       TestResourceTracker.testThreadStarted(this);
-      byte[] cacheNotFoundResponseBytes = getCacheNotFoundResponseBytes();
 
       ConfigurationBuilder replCfg = new ConfigurationBuilder();
       replCfg.clustering().cacheMode(CacheMode.REPL_SYNC).stateTransfer().timeout(30, TimeUnit.SECONDS);
@@ -70,8 +66,8 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       JChannel ch2 = createChannel(name2, 1);
 
       // Create the cache managers, but do not start them yet
-      EmbeddedCacheManager cm1 = createCacheManager(replCfg, name1, ch1, cacheNotFoundResponseBytes);
-      EmbeddedCacheManager cm2 = createCacheManager(replCfg, name2, ch2, cacheNotFoundResponseBytes);
+      EmbeddedCacheManager cm1 = createCacheManager(replCfg, name1, ch1);
+      EmbeddedCacheManager cm2 = createCacheManager(replCfg, name2, ch2);
 
       try {
          log.debugf("Cache managers created. Starting the caches");
@@ -94,26 +90,8 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       }
    }
 
-   private byte[] getCacheNotFoundResponseBytes() throws Exception {
-      // The server modifies the RpcDispatcher so it can send a byte[0] instead of a serialized object,
-      // but in a test it's easy to produce the correct payload.
-      DefaultCacheManager manager = new DefaultCacheManager(true);
-      try {
-         Method getOrCreateComponent = ReflectionUtil
-               .findMethod(GlobalComponentRegistry.class, "getOrCreateComponent",
-                     new Class[]{Class.class});
-         getOrCreateComponent.setAccessible(true);
-         GlobalComponentRegistry gcr = manager.getGlobalComponentRegistry();
-         StreamingMarshaller marshaller = (StreamingMarshaller) getOrCreateComponent
-               .invoke(gcr, StreamingMarshaller.class);
-         return marshaller.objectToByteBuffer(CacheNotFoundResponse.INSTANCE);
-      } finally {
-         manager.stop();
-      }
-   }
-
    private EmbeddedCacheManager createCacheManager(ConfigurationBuilder cacheCfg, String name,
-                                                   JChannel channel, final byte[] cacheNotFoundResponseBytes) throws
+                                                   JChannel channel) throws
          Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().nodeName(channel.getName());
@@ -144,7 +122,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
                response.putHeader(FORK.ID, message.getHeader(FORK.ID));
                response.putHeader(id,
                      new RequestCorrelator.Header(RequestCorrelator.Header.RSP, header.req_id, id));
-               response.setBuffer(cacheNotFoundResponseBytes);
+               response.setBuffer(FORK_NOT_FOUND_BUFFER);
 
                fork.down(response);
             }
