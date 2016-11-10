@@ -42,7 +42,7 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(cacheMode, true);
       cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(500);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "testcache", cfg);
       waitForClusterToForm("testcache");
    }

@@ -31,7 +31,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(500);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
       c1 = caches.get(0);
       c2 = caches.get(1);

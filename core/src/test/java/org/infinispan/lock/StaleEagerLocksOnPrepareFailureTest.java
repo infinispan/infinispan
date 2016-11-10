@@ -11,6 +11,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -32,7 +33,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
             .recovery()
                .disable()
          .locking()
-            .lockAcquisitionTimeout(100);
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);

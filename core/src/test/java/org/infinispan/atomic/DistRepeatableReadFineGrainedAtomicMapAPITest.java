@@ -2,6 +2,7 @@ package org.infinispan.atomic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -24,7 +25,7 @@ public class DistRepeatableReadFineGrainedAtomicMapAPITest extends RepeatableRea
             .syncCommitPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .locking().lockAcquisitionTimeout(2000l);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       c.clustering().hash().numOwners(1);
       createClusteredCaches(2, "atomic", c);
    }

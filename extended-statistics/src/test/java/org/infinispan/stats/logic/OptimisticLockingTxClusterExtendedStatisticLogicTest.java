@@ -138,7 +138,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
          builder.clustering().hash().numSegments(1)
                .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
-               .lockAcquisitionTimeout(1000);
+               .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
          builder.transaction().recovery().disable();
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
          builder.deadlockDetection().enable();

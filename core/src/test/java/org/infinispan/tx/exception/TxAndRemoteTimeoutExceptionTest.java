@@ -48,7 +48,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = getDefaultConfig();
       defaultConfig.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
-            .locking().lockAcquisitionTimeout(500)
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .useLockStriping(false);
       addClusterEnabledCacheManager(defaultConfig);
       addClusterEnabledCacheManager(defaultConfig);

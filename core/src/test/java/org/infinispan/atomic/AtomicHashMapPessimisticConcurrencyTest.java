@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ValueFuture;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -42,7 +43,7 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      builder.locking().lockAcquisitionTimeout(1000);
+      builder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       builder.invocationBatching().enable();
       builder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(lockingMode);
 

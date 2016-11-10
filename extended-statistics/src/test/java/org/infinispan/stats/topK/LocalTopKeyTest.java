@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.AbstractTopKeyTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -139,7 +140,8 @@ public class LocalTopKeyTest extends AbstractTopKeyTest {
             .interceptor(new CacheUsageInterceptor());
       builder.versioning().enabled(true).scheme(VersioningScheme.SIMPLE);
       builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true).lockAcquisitionTimeout(100);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
+             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       addClusterEnabledCacheManager(builder);
    }
 }

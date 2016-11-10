@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -36,7 +37,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000l);
+      dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();

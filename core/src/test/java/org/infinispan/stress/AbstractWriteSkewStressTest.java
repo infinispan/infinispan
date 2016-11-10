@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -47,7 +48,7 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
             .scheme(VersioningScheme.SIMPLE)
             .locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(100)
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .writeSkewCheck(true)
             .transaction()
             .lockingMode(LockingMode.OPTIMISTIC)

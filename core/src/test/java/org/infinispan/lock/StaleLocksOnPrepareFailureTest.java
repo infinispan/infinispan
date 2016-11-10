@@ -9,6 +9,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -22,7 +23,8 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cfg.clustering().hash().numOwners(NUM_CACHES).locking().lockAcquisitionTimeout(100);
+      cfg.clustering().hash().numOwners(NUM_CACHES)
+         .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       for (int i = 0; i < NUM_CACHES; i++) {
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
          registerCacheManager(cm);

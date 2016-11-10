@@ -37,7 +37,8 @@ public class DummyTxTest extends SingleCacheManagerTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().invocationBatching().enable()
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
+            .writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
 
       cm.defineConfiguration("test", cb.build());
       cache = cm.getCache("test");

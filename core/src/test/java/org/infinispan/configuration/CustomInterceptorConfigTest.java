@@ -61,7 +61,6 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
 
    public void testCustomInterceptorsProgramatically() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.locking().lockAcquisitionTimeout(1010);
       cfg.customInterceptors().addInterceptor().interceptor(new DummyInterceptor()).position(Position.FIRST);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(cfg)) {
@@ -76,7 +75,6 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
 
    public void testCustomInterceptorsProgramaticallyWithOverride() {
       final ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.locking().lockAcquisitionTimeout(1010);
       cfg.customInterceptors().addInterceptor().interceptor(new DummyInterceptor()).position(Position.FIRST);
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override

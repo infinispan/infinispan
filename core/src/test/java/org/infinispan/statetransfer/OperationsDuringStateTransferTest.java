@@ -81,7 +81,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
       cacheConfigBuilder.clustering().hash().numSegments(10)
             .l1().disable()
-            .locking().lockAcquisitionTimeout(1000l);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
       addClusterEnabledCacheManager(cacheConfigBuilder);

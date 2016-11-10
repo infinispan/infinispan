@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -20,7 +21,7 @@ public class StaleLocksTransactionTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       cfg
-         .locking().lockAcquisitionTimeout(100)
+         .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
          .transaction().lockingMode(LockingMode.PESSIMISTIC);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);

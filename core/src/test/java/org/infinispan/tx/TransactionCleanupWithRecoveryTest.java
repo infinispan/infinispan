@@ -26,7 +26,7 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
             .locking()
             .concurrencyLevel(10000)
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(100L)
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .useLockStriping(false)
             .writeSkewCheck(false)
             .transaction()
