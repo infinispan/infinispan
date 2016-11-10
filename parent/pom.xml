@@ -146,6 +146,7 @@
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.11</version.junit>
+      <version.latency.utils>2.0.2</version.latency.utils>
       <version.assertj>3.4.1</version.assertj>
       <version.log4j>2.5</version.log4j>
       <version.lucene>5.5.2</version.lucene>
@@ -1012,6 +1013,11 @@
             <groupId>net.oauth.core</groupId>
             <artifactId>oauth</artifactId>
             <version>${version.oauth.core}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.latencyutils</groupId>
+            <artifactId>LatencyUtils</artifactId>
+            <version>${version.latency.utils}</version>
          </dependency>
          <dependency>
             <groupId>org.elasticsearch</groupId>

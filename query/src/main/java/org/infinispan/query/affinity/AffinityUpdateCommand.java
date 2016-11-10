@@ -1,6 +1,7 @@
 package org.infinispan.query.affinity;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -8,8 +9,10 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.indexmanager.AbstractUpdateCommand;
+import org.infinispan.query.indexmanager.LuceneWorkConverter;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -43,14 +46,18 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
       List<LuceneWork> luceneWorks = searchFactory.getWorkSerializer().toLuceneWorks(serializedModel);
-      List<LuceneWork> workToApply = transformKeysToStrings(luceneWorks);
+      KeyTransformationHandler handler = queryInterceptor.getKeyTransformationHandler();
+      List<LuceneWork> workToApply = LuceneWorkConverter.transformKeysToString(luceneWorks, handler);
 
-      for (LuceneWork luceneWork : luceneWorks) {
-         IndexManager im = getIndexManagerForWrites(luceneWork);
+      for (LuceneWork luceneWork : workToApply) {
+         List<IndexManager> indexManagers = getIndexManagerForModifications(luceneWork);
          try {
-            if (log.isDebugEnabled())
-               log.debugf("Performing remote affinity work %s command on index %s", workToApply, im.getIndexName());
-            im.performOperations(Collections.singletonList(luceneWork), null);
+            for (IndexManager im : indexManagers) {
+               if (log.isDebugEnabled())
+                  log.debugf("Performing remote affinity work %s command on index %s", workToApply, im.getIndexName());
+               AffinityIndexManager affinityIndexManager = (AffinityIndexManager) im;
+               affinityIndexManager.performOperations(Collections.singletonList(luceneWork), null, false, false);
+            }
          } catch (Exception e) {
             return CompletableFuture.completedFuture(new ExceptionResponse(e));
          }
@@ -59,13 +66,18 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
       return CompletableFuture.completedFuture(SuccessfulResponse.create(Boolean.TRUE));
    }
 
-   private IndexManager getIndexManagerForWrites(LuceneWork luceneWork) {
+   private List<IndexManager> getIndexManagerForModifications(LuceneWork luceneWork) {
       Class<?> entityClass = luceneWork.getEntityClass();
       Serializable id = luceneWork.getId();
-      String idInString = luceneWork.getIdInString();
-      Document document = luceneWork.getDocument();
-      return searchFactory.getIndexBinding(entityClass).getSelectionStrategy()
-              .getIndexManagerForAddition(entityClass, id, idInString, document);
+      if (id != null) {
+         String idInString = luceneWork.getIdInString();
+         Document document = luceneWork.getDocument();
+         return Arrays.asList(searchFactory.getIndexBinding(entityClass).getSelectionStrategy()
+               .getIndexManagerForAddition(entityClass, id, idInString, document));
+      } else {
+         return Arrays.asList(searchFactory.getIndexBinding(entityClass)
+               .getSelectionStrategy().getIndexManagersForDeletion(entityClass, null, null));
+      }
    }
 
    @Override
@@ -77,4 +89,5 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    public boolean isReturnValueExpected() {
       return true;
    }
+
 }
