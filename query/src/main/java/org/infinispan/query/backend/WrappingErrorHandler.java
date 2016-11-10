@@ -5,7 +5,6 @@ import org.hibernate.search.exception.ErrorHandler;
 
 /**
  * Wraps another Hibernate Search {@link ErrorHandler} allowing extra processing of the backend error.
- *
  * @since 9.0
  */
 public abstract class WrappingErrorHandler implements ErrorHandler {
@@ -18,19 +17,18 @@ public abstract class WrappingErrorHandler implements ErrorHandler {
 
    @Override
    public void handle(ErrorContext context) {
-      errorOccurred(context);
-      errorHandler.handle(context);
+      boolean handled = errorOccurred(context);
+      if (!handled) {
+         errorHandler.handle(context);
+      }
    }
 
    @Override
    public void handleException(String errorMsg, Throwable exception) {
-      exceptionOccurred(errorMsg, exception);
       errorHandler.handleException(errorMsg, exception);
    }
 
-   protected abstract void errorOccurred(ErrorContext context);
-
-   protected abstract void exceptionOccurred(String errorMsg, Throwable exception);
+   protected abstract boolean errorOccurred(ErrorContext context);
 
    public ErrorHandler unwrap() {
       return errorHandler;

@@ -3,11 +3,8 @@ package org.infinispan.query.indexmanager;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -17,7 +14,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -101,25 +97,11 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
       return indexName;
    }
 
-   protected List<LuceneWork> transformKeysToStrings(final List<LuceneWork> luceneWorks) {
-      ArrayList<LuceneWork> transformedWorks = new ArrayList<>(luceneWorks.size());
-      for (LuceneWork lw : luceneWorks) {
-         transformedWorks.add(transformKeyToStrings(lw));
-      }
-      return transformedWorks;
-   }
-
-   protected LuceneWork transformKeyToStrings(final LuceneWork luceneWork) {
-      final KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
-      return luceneWork.acceptIndexWorkVisitor(LuceneWorkTransformationVisitor.INSTANCE, keyTransformationHandler);
-   }
-
-
    protected void setSerializedWorkList(byte[] serializedModel) {
       this.serializedModel = serializedModel;
    }
 
-   protected void setIndexName(String indexName) {
+   public void setIndexName(String indexName) {
       this.indexName = indexName;
    }
 }

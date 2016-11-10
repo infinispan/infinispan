@@ -21,6 +21,11 @@ import org.testng.annotations.Test;
 public class AffinityRpcTest extends BaseAffinityTest {
 
    @Override
+   protected void createCacheManagers() throws Throwable {
+      createClusteredCaches(3, getDefaultCacheConfigBuilder());
+   }
+
+   @Override
    protected int getNumOwners() {
       return 1;
    }
