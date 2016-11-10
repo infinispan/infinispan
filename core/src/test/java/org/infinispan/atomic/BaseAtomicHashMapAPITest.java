@@ -53,7 +53,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(2000l);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "atomic", configurationBuilder);
    }
 

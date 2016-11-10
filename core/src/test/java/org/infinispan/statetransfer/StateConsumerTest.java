@@ -57,6 +57,7 @@ import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -102,7 +103,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             .clustering().cacheMode(CacheMode.DIST_SYNC)
             .clustering().stateTransfer().timeout(10000)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
+            .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
 
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       GlobalConfiguration globalConfiguration = gcb.build();

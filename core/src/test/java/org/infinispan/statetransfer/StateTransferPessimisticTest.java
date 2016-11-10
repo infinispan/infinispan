@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -37,8 +38,8 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true);
-      dccc.clustering().hash().numOwners(1).l1().disable().locking().lockAcquisitionTimeout(1000l);
-      dccc.clustering().stateTransfer().fetchInMemoryState(true);
+      dccc.clustering().hash().numOwners(1).l1().disable();
+      dccc.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createCluster(dccc, 2);
       waitForClusterToForm();
    }

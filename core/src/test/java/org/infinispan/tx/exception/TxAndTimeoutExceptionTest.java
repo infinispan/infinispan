@@ -37,7 +37,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
       config
          .transaction().lockingMode(LockingMode.PESSIMISTIC)
-         .locking().useLockStriping(false).lockAcquisitionTimeout(1000);
+         .locking().useLockStriping(false).lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       cache = cm.getCache();
       return cm;

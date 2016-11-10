@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -45,7 +46,7 @@ public class ClearTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, transactional, transactional);
       builder.clustering().hash().numSegments(3)
          .stateTransfer().fetchInMemoryState(true)
-         .locking().lockAcquisitionTimeout(1000l);
+         .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
 
       if (transactional) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)

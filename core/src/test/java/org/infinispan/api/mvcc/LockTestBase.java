@@ -52,7 +52,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       defaultCfg
          .locking()
             .isolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED)
-            .lockAcquisitionTimeout(200)
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .transaction()
                .transactionManagerLookup(new DummyTransactionManagerLookup());
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);

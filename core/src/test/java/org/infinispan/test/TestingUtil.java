@@ -116,6 +116,16 @@ public class TestingUtil {
    public static final String JGROUPS_CONFIG = "<jgroups>\n" +
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
+   private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
+
+   /**
+    * Should be used by tests for a timeout when they need to wait for that timeout to expire.
+    *
+    * <p>Can be changed with the {@code org.infinispan.test.shortTimeoutMillis} system property.</p>
+    */
+   public static long shortTimeoutMillis() {
+      return SHORT_TIMEOUT_MILLIS;
+   }
 
    public enum InfinispanStartTag {
       START_40(4, 0),

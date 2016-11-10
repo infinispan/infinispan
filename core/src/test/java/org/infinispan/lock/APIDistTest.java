@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -40,7 +41,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       cfg
          .transaction().lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(true).syncRollbackPhase(true)
          .clustering().l1().disable().hash().numOwners(1)
-         .locking().lockAcquisitionTimeout(100);
+         .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       return cfg;
    }
 

@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -38,7 +39,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true)
-            .locking().lockAcquisitionTimeout(1000l)
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .clustering().hash().numOwners(1).numSegments(3)
             .l1().disable()
             .stateTransfer().fetchInMemoryState(true);

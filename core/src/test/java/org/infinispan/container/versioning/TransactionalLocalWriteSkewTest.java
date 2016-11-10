@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -32,7 +33,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
             .transactionManagerLookup(new DummyTransactionManagerLookup())
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC).syncCommitPhase(true)
-            .locking().lockAcquisitionTimeout(50)
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .writeSkewCheck(true)
             .versioning().enable().scheme(VersioningScheme.SIMPLE);

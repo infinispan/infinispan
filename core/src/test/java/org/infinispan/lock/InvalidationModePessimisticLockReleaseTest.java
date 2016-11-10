@@ -27,7 +27,7 @@ public class InvalidationModePessimisticLockReleaseTest extends MultipleCacheMan
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true, true);
       builder.transaction().useSynchronization(false)
             .lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(1000)
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .useLockStriping(false);
 
       createCluster(builder, 2);
