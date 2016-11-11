@@ -14,7 +14,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -79,27 +78,19 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
          assertEquals("The key must end with \".proto\" : some.xml", e.getMessage());
       }
 
-      try {
-         cache0.put("test.proto", "package x");
-         fail();
-      } catch (CacheException e) {
-         assertEquals("Failed to parse proto file : test.proto", e.getMessage());
-      }
+      cache0.put("test.proto", "package x");
+      assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-      try {
-         Map<String, String> map = new HashMap<>();
-         map.put("a.proto", "package a");
-         map.put("b.proto", "package b;");
-         cache0.putAll(map);
-         fail();
-      } catch (CacheException e) {
-         // todo [anistor] the error message is very ugly here ..
-         assertTrue(e.getCause() instanceof DescriptorParserException);
-         assertTrue(e.getMessage().contains("Syntax error in a.proto"));
-      }
+      Map<String, String> map = new HashMap<>();
+      map.put("a.proto", "package a");
+      map.put("b.proto", "package b;");
+      cache0.putAll(map);
+      assertEquals("a.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertEquals("a.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-      assertTrue(cache0.isEmpty());
-      assertTrue(cache1.isEmpty());
+      assertEquals(6, cache0.size());
+      assertEquals(6, cache1.size());
 
       assertNoTransactionsAndLocks();
    }
@@ -118,19 +109,15 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals(value, cache0.get("test.proto"));
       assertEquals(value, cache1.get("test.proto"));
 
-      try {
-         cache0.replace("test.proto", "package XYX");
-         fail();
-      } catch (CacheException e) {
-         // todo [anistor] the error message is very ugly here ..
-         assertTrue(e.getCause() instanceof DescriptorParserException);
-         assertTrue(e.getMessage().contains("Failed to parse proto file : test.proto"));
-      }
+      String newValue = "package XYX";
+      cache0.replace("test.proto", newValue);
+      assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-      assertEquals(1, cache0.size());
-      assertEquals(1, cache1.size());
-      assertEquals(value, cache0.get("test.proto"));
-      assertEquals(value, cache1.get("test.proto"));
+      assertEquals(3, cache0.size());
+      assertEquals(3, cache1.size());
+      assertEquals(newValue, cache0.get("test.proto"));
+      assertEquals(newValue, cache1.get("test.proto"));
 
       assertNoTransactionsAndLocks();
    }
