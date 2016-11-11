@@ -170,7 +170,7 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.isIndex();
+      return fieldMapping != null && fieldMapping.index();
    }
 
    public boolean isFieldAnalyzed(String fieldName) {
@@ -178,7 +178,7 @@ public final class IndexingMetadata {
          return false;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.isAnalyze();
+      return fieldMapping != null && fieldMapping.analyze();
    }
 
    public boolean isFieldStored(String fieldName) {
@@ -186,7 +186,7 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.isStore();
+      return fieldMapping != null && fieldMapping.store();
    }
 
    public FieldMapping getFieldMapping(String name) {

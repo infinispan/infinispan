@@ -57,7 +57,7 @@ final class IndexingTagHandler implements TagHandler {
       if (fieldName != null) {
          IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldName) : null;
-         if (indexingMetadata == null || fieldMapping != null && fieldMapping.isIndex()) {
+         if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
             //TODO [anistor] should we still store if isStore==true but isIndexed==false?
             addFieldToDocument(fieldName, type, tagValue, fieldMapping);
          }
@@ -77,9 +77,9 @@ final class IndexingTagHandler implements TagHandler {
             luceneOptions = NOT_STORED_NOT_ANALYZED;
          }
       } else {
-         luceneOptions = fieldMapping.getLuceneOptions();
+         luceneOptions = fieldMapping.luceneOptions();
          if (value == null) {
-            if (fieldMapping.isAnalyze()) {
+            if (fieldMapping.analyze()) {
                // a missing or null field will not get indexed as the 'null token' if it is analyzed
                return;
             }
@@ -159,7 +159,7 @@ final class IndexingTagHandler implements TagHandler {
                   || fd.hasDefaultValue() ? fd.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fd.getName()) : null;
-            if (indexingMetadata == null || fieldMapping != null && fieldMapping.isIndex()) {
+            if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
                addFieldToDocument(fd.getName(), fd.getType(), defaultValue, fieldMapping);
             }
          }

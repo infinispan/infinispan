@@ -57,31 +57,31 @@ public final class FieldMapping {
       return name;
    }
 
-   public boolean isIndex() {
+   public boolean index() {
       return index;
    }
 
-   public float getBoost() {
+   public float boost() {
       return boost;
    }
 
-   public boolean isAnalyze() {
+   public boolean analyze() {
       return analyze;
    }
 
-   public boolean isStore() {
+   public boolean store() {
       return store;
    }
 
-   public String getAnalyzer() {
+   public String analyzer() {
       return analyzer;
    }
 
-   public String getIndexNullAs() {
+   public String indexNullAs() {
       return indexNullAs;
    }
 
-   public LuceneOptions getLuceneOptions() {
+   public LuceneOptions luceneOptions() {
       return luceneOptions;
    }
 
