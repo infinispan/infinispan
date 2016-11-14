@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod.test;
 
 import java.util.Optional;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 
 /**
@@ -13,7 +13,7 @@ public class TestGetWithVersionResponse extends TestGetResponse {
    public final long dataVersion;
 
    protected TestGetWithVersionResponse(byte version, long messageId, String cacheName, short clientIntel,
-                                        OperationResponse operation, OperationStatus status, int topologyId,
+                                        HotRodOperation operation, OperationStatus status, int topologyId,
                                         AbstractTestTopologyAwareResponse topologyResponse, Optional<byte[]> data, long dataVersion) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse, data);
       this.dataVersion = dataVersion;

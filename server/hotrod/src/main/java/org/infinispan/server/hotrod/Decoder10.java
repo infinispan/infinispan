@@ -16,7 +16,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.server.core.ServerConstants;
@@ -44,58 +43,8 @@ public class Decoder10 implements VersionedDecoder {
       if (header.op == null) {
          Optional<Byte> maybeByte = readMaybeByte(buffer);
          if (!maybeByte.flatMap(streamOp -> readMaybeString(buffer).map(cacheName -> {
-            switch (streamOp) {
-               case 0x01:
-                  header.op = HotRodOperation.PutRequest;
-                  break;
-               case 0x03:
-                  header.op = HotRodOperation.GetRequest;
-                  break;
-               case 0x05:
-                  header.op = HotRodOperation.PutIfAbsentRequest;
-                  break;
-               case 0x07:
-                  header.op = HotRodOperation.ReplaceRequest;
-                  break;
-               case 0x09:
-                  header.op = HotRodOperation.ReplaceIfUnmodifiedRequest;
-                  break;
-               case 0x0B:
-                  header.op = HotRodOperation.RemoveRequest;
-                  break;
-               case 0x0D:
-                  header.op = HotRodOperation.RemoveIfUnmodifiedRequest;
-                  break;
-               case 0x0F:
-                  header.op = HotRodOperation.ContainsKeyRequest;
-                  break;
-               case 0x11:
-                  header.op = HotRodOperation.GetWithVersionRequest;
-                  break;
-               case 0x13:
-                  header.op = HotRodOperation.ClearRequest;
-                  break;
-               case 0x15:
-                  header.op = HotRodOperation.StatsRequest;
-                  break;
-               case 0x17:
-                  header.op = HotRodOperation.PingRequest;
-                  break;
-               case 0x19:
-                  header.op = HotRodOperation.BulkGetRequest;
-                  break;
-               case 0x1B:
-                  header.op = HotRodOperation.GetWithMetadataRequest;
-                  break;
-               case 0x1D:
-                  header.op = HotRodOperation.BulkGetKeysRequest;
-                  break;
-               case 0x1F:
-                  header.op = HotRodOperation.QueryRequest;
-                  break;
-            }
+            header.op = HotRodOperation.fromRequestOpCode(streamOp);
             if (isTrace) log.tracef("Operation code: %d has been matched to %s", streamOp, header.op);
-
             header.cacheName = cacheName;
             buffer.markReaderIndex();
             return streamOp;
@@ -123,12 +72,12 @@ public class Decoder10 implements VersionedDecoder {
    @Override
    public CacheDecodeContext.RequestParameters readParameters(HotRodHeader header, ByteBuf buffer) {
       switch (header.op) {
-         case RemoveIfUnmodifiedRequest:
+         case REMOVE_IF_UNMODIFIED:
             return readMaybeLong(buffer).map(l -> new CacheDecodeContext.RequestParameters(-1,
                   new CacheDecodeContext.ExpirationParam(-1, TimeUnitValue.SECONDS),
                   new CacheDecodeContext.ExpirationParam(-1, TimeUnitValue.SECONDS), l)
             ).orElse(null);
-         case ReplaceIfUnmodifiedRequest:
+         case REPLACE_IF_UNMODIFIED:
             return readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan)).flatMap(lifespan ->
                   readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle)).flatMap(maxIdle ->
                         readMaybeLong(buffer).flatMap(version -> readMaybeVInt(buffer).map(valueLength ->
@@ -168,45 +117,45 @@ public class Decoder10 implements VersionedDecoder {
 
    @Override
    public Response createSuccessResponse(HotRodHeader header, byte[] prev) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.Success, prev);
+      return createResponse(header, OperationStatus.Success, prev);
    }
 
    @Override
    public Response createNotExecutedResponse(HotRodHeader header, byte[] prev) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.OperationNotExecuted, prev);
+      return createResponse(header, OperationStatus.OperationNotExecuted, prev);
    }
 
    @Override
    public Response createNotExistResponse(HotRodHeader header) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.KeyDoesNotExist, null);
+      return createResponse(header, OperationStatus.KeyDoesNotExist, null);
    }
 
-   private Response createResponse(HotRodHeader h, OperationResponse op, OperationStatus st, byte[] prev) {
+   private Response createResponse(HotRodHeader h, OperationStatus st, byte[] prev) {
       if (hasFlag(h, ProtocolFlag.ForceReturnPreviousValue))
          return new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-               h.clientIntel, op, st, h.topologyId, Optional.ofNullable(prev));
+               h.clientIntel, h.op, st, h.topologyId, Optional.ofNullable(prev));
       else
-         return new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId);
+         return new EmptyResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.op, st, h.topologyId);
    }
 
    @Override
    public Response createGetResponse(HotRodHeader h, CacheEntry<byte[], byte[]> entry) {
       HotRodOperation op = h.op;
-      if (entry != null && op == HotRodOperation.GetRequest)
+      if (entry != null && op == HotRodOperation.GET)
          return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetResponse, OperationStatus.Success, h.topologyId,
+               op, OperationStatus.Success, h.topologyId,
                entry.getValue());
-      else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
+      else if (entry != null && op == HotRodOperation.GET_WITH_VERSION) {
          long version = ((NumericVersion) entry.getMetadata().version()).getVersion();
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, OperationResponse.GetWithVersionResponse, OperationStatus.Success, h.topologyId,
+               h.clientIntel, op, OperationStatus.Success, h.topologyId,
                entry.getValue(), version);
-      } else if (op == HotRodOperation.GetRequest)
+      } else if (op == HotRodOperation.GET)
          return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null);
+               op, OperationStatus.KeyDoesNotExist, h.topologyId, null);
       else
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, OperationResponse.GetWithVersionResponse, OperationStatus.KeyDoesNotExist,
+               h.clientIntel, op, OperationStatus.KeyDoesNotExist,
                h.topologyId, null, 0);
    }
 
@@ -218,8 +167,8 @@ public class Decoder10 implements VersionedDecoder {
    @Override
    public void customReadKey(HotRodHeader h, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out) {
       switch (h.op) {
-         case BulkGetRequest:
-         case BulkGetKeysRequest:
+         case BULK_GET:
+         case BULK_GET_KEYS:
             Optional<Integer> number = readMaybeVInt(buffer);
             number.ifPresent(n -> {
                hrCtx.operationDecodeContext = n;
@@ -227,7 +176,7 @@ public class Decoder10 implements VersionedDecoder {
                out.add(hrCtx);
             });
             break;
-         case QueryRequest:
+         case QUERY:
             Optional<byte[]> bytes = readMaybeRangedBytes(buffer);
             bytes.ifPresent(b -> {
                hrCtx.operationDecodeContext = b;
@@ -235,24 +184,6 @@ public class Decoder10 implements VersionedDecoder {
                out.add(hrCtx);
             });
             break;
-      }
-   }
-
-   GetWithMetadataResponse getKeyMetadata(HotRodHeader h, byte[] k, AdvancedCache<byte[], byte[]> cache) {
-      CacheEntry<byte[], byte[]> ce = cache.getAdvancedCache().getCacheEntry(k);
-      if (ce != null) {
-         InternalCacheEntry<byte[], byte[]> ice = (InternalCacheEntry<byte[], byte[]>) ce;
-         NumericVersion entryVersion = (NumericVersion) ice.getMetadata().version();
-         byte[] v = ce.getValue();
-         int lifespan = ice.getLifespan() < 0 ? -1 : (int) (ice.getLifespan() / 1000);
-         int maxIdle = ice.getMaxIdle() < 0 ? -1 : (int) (ice.getMaxIdle() / 1000);
-         return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, OperationResponse.GetWithMetadataResponse, OperationStatus.Success, h.topologyId,
-               v, entryVersion.getVersion(), ice.getCreated(), lifespan, ice.getLastUsed(), maxIdle);
-      } else {
-         return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, h.topologyId,
-               null, 0, -1, -1, -1, -1);
       }
    }
 
@@ -298,8 +229,8 @@ public class Decoder10 implements VersionedDecoder {
    public AdvancedCache<byte[], byte[]> getOptimizedCache(HotRodHeader h, AdvancedCache<byte[], byte[]> c, Configuration cacheCfg) {
       if (!hasFlag(h, ProtocolFlag.ForceReturnPreviousValue)) {
          switch (h.op) {
-            case PutRequest:
-            case PutIfAbsentRequest:
+            case PUT:
+            case PUT_IF_ABSENT:
                return c.withFlags(Flag.IGNORE_RETURN_VALUES);
          }
       }

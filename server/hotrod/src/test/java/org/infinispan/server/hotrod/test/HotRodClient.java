@@ -39,7 +39,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.Constants;
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.ProtocolFlag;
 import org.infinispan.server.hotrod.Response;
@@ -576,7 +576,7 @@ class Decoder extends ReplayingDecoder<Void> {
       log.trace("Decode response from server");
       buf.readUnsignedByte(); // magic byte
       long id = ExtendedByteBuf.readUnsignedLong(buf);
-      OperationResponse opCode = OperationResponse.fromCode((byte) buf.readUnsignedByte());
+      HotRodOperation opCode = HotRodOperation.fromResponseOpCode((byte) buf.readUnsignedByte());
       OperationStatus status = OperationStatus.fromCode((byte) buf.readUnsignedByte());
       short topologyChangeMarker = buf.readUnsignedByte();
       Op op = client.idToOp.get(id);
@@ -608,7 +608,7 @@ class Decoder extends ReplayingDecoder<Void> {
 
       Response resp;
       switch (opCode) {
-         case StatsResponse:
+         case STATS:
             int size = readUnsignedInt(buf);
             Map<String, String> stats = new HashMap<>();
             for (int i = 0; i < size; ++i) {
@@ -617,12 +617,12 @@ class Decoder extends ReplayingDecoder<Void> {
             resp = new TestStatsResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, stats);
             break;
-         case PutResponse:
-         case PutIfAbsentResponse:
-         case ReplaceResponse:
-         case ReplaceIfUnmodifiedResponse:
-         case RemoveResponse:
-         case RemoveIfUnmodifiedResponse:
+         case PUT:
+         case PUT_IF_ABSENT:
+         case REPLACE:
+         case REPLACE_IF_UNMODIFIED:
+         case REMOVE:
+         case REMOVE_IF_UNMODIFIED:
             boolean checkPrevious;
             if (op.version >= 10 && op.version <= 13) {
                checkPrevious = (op.flags & ProtocolFlag.ForceReturnPreviousValue.getValue()) == 1;
@@ -646,15 +646,15 @@ class Decoder extends ReplayingDecoder<Void> {
                      opCode, status, op.topologyId, topologyChangeResponse);
             }
             break;
-         case ContainsKeyResponse:
-         case ClearResponse:
-         case PingResponse:
-         case AddClientListenerResponse:
-         case RemoveClientListenerResponse:
+         case CONTAINS_KEY:
+         case CLEAR:
+         case PING:
+         case ADD_CLIENT_LISTENER:
+         case REMOVE_CLIENT_LISTENER:
             resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode,
                   status, op.topologyId, topologyChangeResponse);
             break;
-         case GetWithVersionResponse:
+         case GET_WITH_VERSION:
             if (status == Success) {
                long version = buf.readLong();
                Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
@@ -665,7 +665,7 @@ class Decoder extends ReplayingDecoder<Void> {
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, Optional.empty(), 0);
             }
             break;
-         case GetWithMetadataResponse:
+         case GET_WITH_METADATA:
             if (status == Success) {
                long created = -1;
                int lifespan = -1;
@@ -691,7 +691,7 @@ class Decoder extends ReplayingDecoder<Void> {
                      -1, -1, -1, -1);
             }
             break;
-         case GetResponse:
+         case GET:
             if (status == Success) {
                Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
                resp = new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
@@ -701,7 +701,7 @@ class Decoder extends ReplayingDecoder<Void> {
                      opCode, status, op.topologyId, topologyChangeResponse, Optional.empty());
             }
             break;
-         case BulkGetResponse:
+         case BULK_GET:
             byte done = buf.readByte();
             Map<byte[], byte[]> bulkBuffer = new HashMap<>();
             while (done == 1) {
@@ -711,7 +711,7 @@ class Decoder extends ReplayingDecoder<Void> {
             resp = new TestBulkGetResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, bulkBuffer);
             break;
-         case BulkGetKeysResponse:
+         case BULK_GET_KEYS:
             done = buf.readByte();
             Set<byte[]> bulkKeys = new HashSet<>();
             while (done == 1) {
@@ -721,12 +721,12 @@ class Decoder extends ReplayingDecoder<Void> {
             resp = new TestBulkGetKeysResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, bulkKeys);
             break;
-         case QueryResponse:
+         case QUERY:
             byte[] result = ExtendedByteBuf.readRangedBytes(buf);
             resp = new TestQueryResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, result);
             break;
-         case AuthMechListResponse:
+         case AUTH_MECH_LIST:
             size = readUnsignedInt(buf);
             Set<String> mechs = new HashSet<>();
             for (int i = 0; i < size; ++i) {
@@ -735,16 +735,16 @@ class Decoder extends ReplayingDecoder<Void> {
             resp = new TestAuthMechListResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, mechs);
             break;
-         case AuthResponse: {
+         case AUTH: {
             boolean complete = buf.readBoolean();
             byte[] challenge = ExtendedByteBuf.readRangedBytes(buf);
             resp = new TestAuthResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, complete, challenge);
             break;
          }
-         case CacheEntryCreatedEventResponse:
-         case CacheEntryModifiedEventResponse:
-         case CacheEntryRemovedEventResponse:
+         case CACHE_ENTRY_CREATED_EVENT:
+         case CACHE_ENTRY_MODIFIED_EVENT:
+         case CACHE_ENTRY_REMOVED_EVENT:
             byte[] listenerId = ExtendedByteBuf.readRangedBytes(buf);
             byte isCustom = buf.readByte();
             boolean isRetried = buf.readByte() == 1;
@@ -754,7 +754,7 @@ class Decoder extends ReplayingDecoder<Void> {
                      isRetried, eventData);
             } else {
                byte[] key = ExtendedByteBuf.readRangedBytes(buf);
-               if (opCode == OperationResponse.CacheEntryRemovedEventResponse) {
+               if (opCode == HotRodOperation.CACHE_ENTRY_REMOVED_EVENT) {
                   resp = new TestKeyEvent(client.protocolVersion, id, client.defaultCacheName, listenerId, isRetried, key);
                } else {
                   long dataVersion = buf.readLong();
@@ -763,12 +763,12 @@ class Decoder extends ReplayingDecoder<Void> {
                }
             }
             break;
-         case SizeResponse:
+         case SIZE:
             long lsize = ExtendedByteBuf.readUnsignedLong(buf);
             resp = new TestSizeResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, lsize);
             break;
-         case ErrorResponse:
+         case ERROR:
             if (op == null)
                resp = new TestErrorResponse((byte) 10, id, "", (short) 0, status, 0,
                      topologyChangeResponse, readString(buf));
@@ -911,10 +911,10 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
       if (msg instanceof TestKeyWithVersionEvent) {
          TestKeyWithVersionEvent e = (TestKeyWithVersionEvent) msg;
          switch (e.getOperation()) {
-            case CacheEntryCreatedEventResponse:
+            case CACHE_ENTRY_CREATED_EVENT:
                clientListeners.get(new WrappedByteArray(e.listenerId)).onCreated(e);
                break;
-            case CacheEntryModifiedEventResponse:
+            case CACHE_ENTRY_MODIFIED_EVENT:
                clientListeners.get(new WrappedByteArray(e.listenerId)).onModified(e);
                break;
          }

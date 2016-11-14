@@ -4,7 +4,7 @@ import static org.infinispan.server.hotrod.OperationStatus.Success;
 
 import java.util.Set;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 
 /**
  * @author wburns
@@ -15,7 +15,7 @@ public class TestAuthMechListResponse extends TestResponse {
 
    protected TestAuthMechListResponse(byte version, long messageId, String cacheName, short clientIntel,
                                       int topologyId, AbstractTestTopologyAwareResponse topologyResponse, Set<String> mechs) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.AuthMechListResponse, Success, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.AUTH_MECH_LIST, Success, topologyId, topologyResponse);
       this.mechs = mechs;
    }
 }

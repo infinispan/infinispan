@@ -67,12 +67,12 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
          HotRodHeader hrh = cdc.header;
          HotRodOperation op = hrh.op;
          switch (op) {
-            case AuthMechListRequest:
+            case AUTH_MECH_LIST:
                writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version, hrh.messageId, hrh.cacheName,
                      hrh.clientIntel, authenticationConfig.allowedMechs(), hrh.topologyId));
                break;
-            // AuthRequest never requires authentication
-            case AuthRequest:
+            // AUTH never requires authentication
+            case AUTH:
                if (!serverConfig.authentication().enabled()) {
                   cdc.decoder.createErrorResponse(hrh, log.invalidOperation());
                } else {

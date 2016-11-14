@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod.test;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 
 /**
@@ -12,7 +12,7 @@ public class TestErrorResponse extends TestResponse {
 
    protected TestErrorResponse(byte version, long messageId, String cacheName, short clientIntel,
                                OperationStatus status, int topologyId, AbstractTestTopologyAwareResponse topologyResponse, String msg) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.ErrorResponse, status, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.ERROR, status, topologyId, topologyResponse);
       this.msg = msg;
    }
 }
