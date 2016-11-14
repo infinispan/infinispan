@@ -34,7 +34,7 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
             .persistence()
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(createContext(builder.build()));
       return stringBasedCacheStore;

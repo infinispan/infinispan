@@ -104,11 +104,11 @@ public class UnitTestDatabaseManager {
       builder.dialect(dt);
    }
 
-   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
+   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table) {
       table
-         .tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
+         .tableNamePrefix("ISPN_STRING")
          .idColumnName("ID_COLUMN")
-         .idColumnType(binary ? "INT" : "VARCHAR(255)")
+         .idColumnType("VARCHAR(255)")
          .dataColumnName("DATA_COLUMN")
          .dataColumnType("BLOB")
          .timestampColumnName("TIMESTAMP_COLUMN")

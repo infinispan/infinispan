@@ -13,8 +13,6 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][]{
-            {"configs/binary.xml"},
-            {"configs/mixed.xml"},
             {"configs/string-based.xml"}
       };
    }
@@ -30,15 +28,6 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
          JdbcStringBasedStoreConfiguration before = (JdbcStringBasedStoreConfiguration) beforeStore;
          JdbcStringBasedStoreConfiguration after = (JdbcStringBasedStoreConfiguration) afterStore;
          compareAttributeSets("Configuration " + name + " table", before.table().attributes(), after.table().attributes());
-      } else if (beforeStore instanceof JdbcBinaryStoreConfiguration) {
-         JdbcBinaryStoreConfiguration before = (JdbcBinaryStoreConfiguration) beforeStore;
-         JdbcBinaryStoreConfiguration after = (JdbcBinaryStoreConfiguration) afterStore;
-         compareAttributeSets("Configuration " + name + " table", before.table().attributes(), after.table().attributes());
-      } else if (beforeStore instanceof JdbcMixedStoreConfiguration) {
-         JdbcMixedStoreConfiguration before = (JdbcMixedStoreConfiguration) beforeStore;
-         JdbcMixedStoreConfiguration after = (JdbcMixedStoreConfiguration) afterStore;
-         compareAttributeSets("Configuration " + name + " string table", before.stringTable().attributes(), after.stringTable().attributes());
-         compareAttributeSets("Configuration " + name + " binary table", before.binaryTable().attributes(), after.binaryTable().attributes());
       }
       super.compareStoreConfiguration(name, beforeStore, afterStore);
    }

@@ -14,7 +14,7 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
       JdbcStringBasedStoreConfigurationBuilder store = persistence
          .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
          .preload(preload);
-      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(store.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
       return persistence;
    }

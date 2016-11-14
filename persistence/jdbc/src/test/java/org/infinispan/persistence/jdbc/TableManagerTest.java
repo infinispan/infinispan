@@ -42,7 +42,7 @@ public class TableManagerTest {
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.setDialect(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       ConnectionFactoryConfiguration factoryConfiguration = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
 
       if (factoryConfiguration instanceof SimpleConnectionFactoryConfiguration) {
@@ -75,7 +75,7 @@ public class TableManagerTest {
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       PooledConnectionFactory connectionFactory = new PooledConnectionFactory();
       ConnectionFactoryConfiguration config = UnitTestDatabaseManager
             .configureUniqueConnectionFactory(storeBuilder).create();

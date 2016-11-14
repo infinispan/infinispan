@@ -3,36 +3,46 @@ package org.infinispan.persistence.jdbc.stringbased;
 import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import javax.transaction.Transaction;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -70,29 +80,43 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper
  */
 @ConfiguredBy(JdbcStringBasedStoreConfiguration.class)
-public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
+public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, TransactionalCacheWriter<K,V> {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private final Map<Transaction, Connection> transactionConnectionMap = new ConcurrentHashMap<>();
    private JdbcStringBasedStoreConfiguration configuration;
-   private Key2StringMapper key2StringMapper;
-   private GlobalConfiguration globalConfiguration;
 
-   public JdbcStringBasedStore() {
-      super(log);
-   }
+   private GlobalConfiguration globalConfiguration;
+   private Key2StringMapper key2StringMapper;
+   private String cacheName;
+   private ConnectionFactory connectionFactory;
+   private MarshalledEntryFactory marshalledEntryFactory;
+   private StreamingMarshaller marshaller;
+   private TableManager tableManager;
+   private TimeService timeService;
+   private boolean isDistributedCache;
 
    @Override
    public void init(InitializationContext ctx) {
-      super.init(ctx);
-      configuration = ctx.getConfiguration();
-      globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
+      this.configuration = ctx.getConfiguration();
+      this.cacheName = ctx.getCache().getName();
+      this.globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
+      this.marshalledEntryFactory = ctx.getMarshalledEntryFactory();
+      this.marshaller = ctx.getMarshaller();
+      this.timeService = ctx.getTimeService();
+      this.isDistributedCache = ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
    @Override
    public void start() {
-      super.start();
+      if (configuration.manageConnectionFactory()) {
+         ConnectionFactory factory = ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
+         factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
+         initializeConnectionFactory(factory);
+      }
+
       try {
          Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
                                               globalConfiguration.classLoader()).newInstance();
@@ -108,9 +132,50 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
       if (configuration.preload()) {
          enforceTwoWayMapper("preload");
       }
-      if (isDistributed()) {
+      if (isDistributedCache) {
          enforceTwoWayMapper("distribution/rehashing");
       }
+   }
+
+   @Override
+   public void stop() {
+      Throwable cause = null;
+      try {
+         tableManager.stop();
+         tableManager = null;
+      } catch (Throwable t) {
+         cause = t.getCause();
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+
+      try {
+         if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
+            log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+            connectionFactory.stop();
+         }
+      } catch (Throwable t) {
+         if (cause == null) {
+            cause = t;
+         } else {
+            t.addSuppressed(cause);
+         }
+         log.debug("Exception while stopping", t);
+      }
+      if (cause != null) {
+         throw new PersistenceException("Exceptions occurred while stopping store", cause);
+      }
+   }
+
+   void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
+      this.connectionFactory = connectionFactory;
+      tableManager = getTableManager();
+      tableManager.setCacheName(cacheName);
+      tableManager.start();
+   }
+
+   public ConnectionFactory getConnectionFactory() {
+      return connectionFactory;
    }
 
    @Override
@@ -205,7 +270,7 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
             KeyValuePair<ByteBuffer, ByteBuffer> icv = unmarshall(inputStream);
-            storedValue = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, icv.getKey(), icv.getValue());
+            storedValue = marshalledEntryFactory.newMarshalledEntry(key, icv.getKey(), icv.getValue());
          }
       } catch (SQLException e) {
          log.sqlFailureReadingKey(key, lockingKey, e);
@@ -218,10 +283,31 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
          connectionFactory.releaseConnection(conn);
       }
       if (storedValue != null && storedValue.getMetadata() != null &&
-            storedValue.getMetadata().isExpired(ctx.getTimeService().wallClockTime())) {
+            storedValue.getMetadata().isExpired(timeService.wallClockTime())) {
          return null;
       }
       return storedValue;
+   }
+
+   @Override
+   public void clear() {
+      Connection conn = null;
+      Statement statement = null;
+      try {
+         String sql = tableManager.getDeleteAllRowsSql();
+         conn = connectionFactory.getConnection();
+         statement = conn.createStatement();
+         int result = statement.executeUpdate(sql);
+         if (log.isTraceEnabled()) {
+            log.tracef("Successfully removed %d rows.", result);
+         }
+      } catch (SQLException ex) {
+         log.failedClearingJdbcCacheStore(ex);
+         throw new PersistenceException("Failed clearing cache store", ex);
+      } finally {
+         JdbcUtil.safeClose(statement);
+         connectionFactory.releaseConnection(conn);
+      }
    }
 
    @Override
@@ -256,7 +342,7 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
          String sql = tableManager.getSelectOnlyExpiredRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setLong(1, ctx.getTimeService().wallClockTime());
+         ps.setLong(1, timeService.wallClockTime());
          rs = ps.executeQuery();
 
          try (PreparedStatement batchDelete = conn.prepareStatement(tableManager.getDeleteRowSql())) {
@@ -312,7 +398,7 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-         ps.setLong(1, ctx.getTimeService().wallClockTime());
+         ps.setLong(1, timeService.wallClockTime());
          ps.setFetchSize(tableManager.getFetchSize());
          rs = ps.executeQuery();
 
@@ -331,10 +417,10 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
                   MarshalledEntry entry;
                   if (fetchValue || fetchMetadata) {
                      KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
-                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(
+                     entry = marshalledEntryFactory.newMarshalledEntry(
                            key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
                   } else {
-                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null);
+                     entry = marshalledEntryFactory.newMarshalledEntry(key, (Object) null, null);
                   }
                   task.processEntry(entry, taskContext);
                }
@@ -395,6 +481,49 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
    }
 
    @Override
+   public void commit(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.commit();
+      } catch (SQLException e) {
+         log.sqlFailureTxCommit(e);
+         throw new PersistenceException(String.format("Error during commit of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   @Override
+   public void rollback(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.rollback();
+      } catch (SQLException e) {
+         log.sqlFailureTxRollback(e);
+         throw new PersistenceException(String.format("Error during rollback of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   private Connection getTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.get(tx);
+      if (connection == null) {
+         connection = connectionFactory.getConnection();
+         transactionConnectionMap.put(tx, connection);
+      }
+      return connection;
+   }
+
+   private void destroyTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.remove(tx);
+      if (connection != null)
+         connectionFactory.releaseConnection(connection);
+   }
+
+   @Override
    public int size() {
       Connection conn = null;
       PreparedStatement ps = null;
@@ -430,10 +559,6 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
       return key2StringMapper.getStringMapping(key);
    }
 
-   public boolean supportsKey(Class<?> keyType) {
-      return key2StringMapper.isSupportedType(keyType);
-   }
-
    public TableManager getTableManager() {
       if (tableManager == null)
          tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
@@ -447,7 +572,25 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
       }
    }
 
-   public boolean isDistributed() {
-      return ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
+   private ByteBuffer marshall(Object obj) throws PersistenceException, InterruptedException {
+      try {
+         return marshaller.objectToBuffer(obj);
+      } catch (IOException e) {
+         log.errorMarshallingObject(e, obj);
+         throw new PersistenceException("I/O failure while marshalling object: " + obj, e);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private <T> T unmarshall(InputStream inputStream) throws PersistenceException {
+      try {
+         return (T) marshaller.objectFromInputStream(inputStream);
+      } catch (IOException e) {
+         log.ioErrorUnmarshalling(e);
+         throw new PersistenceException("I/O error while unmarshalling from stream", e);
+      } catch (ClassNotFoundException e) {
+         log.unexpectedClassNotFoundException(e);
+         throw new PersistenceException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
+      }
    }
 }

@@ -79,16 +79,6 @@
                </string-keyed-jdbc-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-jdbc-binary-keyed" mode="SYNC" owners="2" start="EAGER">
-               <binary-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="true" purge="false" shared="false" passivation="false">
-                  <binary-keyed-table prefix="ISPN">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </binary-keyed-table>
-               </binary-keyed-jdbc-store>
-            </distributed-cache-configuration>
-
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
@@ -178,21 +168,16 @@
             <global-state />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <memory>
-                  <object size="1000"/>
-               </memory>
-               <mixed-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="true" purge="false">
-                  <binary-keyed-table prefix="ISPN_MIX_BKT" create-on-start="true" drop-on-exit="false">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </binary-keyed-table>
-                  <string-keyed-table prefix="ISPN_MIX_STR" create-on-start="true" drop-on-exit="false">
+                <memory>
+                    <object size="1000"/>
+                </memory>
+               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="true" purge="false">
+                  <string-keyed-table prefix="ISPN_STR" create-on-start="true" drop-on-exit="false">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />
                   </string-keyed-table>
-               </mixed-keyed-jdbc-store>
+               </string-keyed-jdbc-store>
             </distributed-cache>
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
@@ -212,13 +197,13 @@
 
             <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />
-               <binary-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
-                  <binary-keyed-table prefix="ISPN_NC_BK">
+               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
+                  <string-keyed-table prefix="ISPN_NC_SK">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />
-                  </binary-keyed-table>
-               </binary-keyed-jdbc-store>
+                  </string-keyed-table>
+               </string-keyed-jdbc-store>
             </distributed-cache>
          </cache-container>
       </replacement>

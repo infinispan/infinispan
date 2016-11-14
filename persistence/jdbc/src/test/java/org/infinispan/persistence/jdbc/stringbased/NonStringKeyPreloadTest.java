@@ -129,7 +129,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
                .fetchPersistentState(true)
                .preload(preload)
                .key2StringMapper(mapperName);
-      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(store.table());
       if (wrap) {
          ConnectionFactoryConfigurationBuilder<?> tmp = UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class));
          store.connectionFactory(new SharedConnectionFactoryConfigurationBuilder(store)).read((PooledConnectionFactoryConfiguration)tmp.create());

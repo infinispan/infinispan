@@ -21,7 +21,6 @@ public enum Element {
    DATA_SOURCE("data-source"),
    SIMPLE_CONNECTION("simple-connection"),
 
-   BINARY_KEYED_TABLE("binary-keyed-table"),
    STRING_KEYED_TABLE("string-keyed-table"),
 
    DATA_COLUMN("data-column"),

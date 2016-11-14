@@ -102,26 +102,8 @@
             </datasources>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:infinispan:1.3" default-cache-container="clustered">
-            <cache-container name="clustered" default-cache="default">
+            <cache-container name="clustered" default-cache="stringCache">
                 <transport executor="infinispan-transport" lock-timeout="60000"/>
-                <distributed-cache name="default" mode="SYNC" virtual-nodes="1" owners="2" remote-timeout="30000" start="EAGER">
-                    <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
-                    <transaction mode="NONE"/>
-                    <eviction strategy="LRU" max-entries="1000"/>
-                    <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="false" preload="true" purge="false">
-                        <property name="databaseType">H2</property>
-                        <binary-keyed-table prefix="JDG_MIX_BKT">
-                            <id-column name="id" type="VARCHAR"/>
-                            <data-column name="datum" type="BINARY"/>
-                            <timestamp-column name="version" type="BIGINT"/>
-                        </binary-keyed-table>
-                        <string-keyed-table prefix="JDG_MIX_STR">
-                            <id-column name="id" type="VARCHAR"/>
-                            <data-column name="datum" type="BINARY"/>
-                            <timestamp-column name="version" type="BIGINT"/>
-                        </string-keyed-table>
-                    </mixed-keyed-jdbc-store>
-                </distributed-cache>
                 <distributed-cache name="stringCache" mode="SYNC" virtual-nodes="1" owners="2" remote-timeout="30000" start="EAGER">
                     <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
                     <transaction mode="NONE"/>
@@ -135,17 +117,6 @@
                         </string-keyed-table>
                         <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
                     </string-keyed-jdbc-store>
-                </distributed-cache>
-                <distributed-cache name="binaryCache" mode="SYNC" start="EAGER">
-                    <expiration lifespan="2000" max-idle="1000"/>
-                    <binary-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="false" preload="true" purge="false" shared="false">
-                        <property name="databaseType">H2</property>
-                        <binary-keyed-table prefix="JDG_NC_BK">
-                            <id-column name="id" type="VARCHAR"/>
-                            <data-column name="datum" type="BINARY"/>
-                            <timestamp-column name="version" type="BIGINT"/>
-                        </binary-keyed-table>
-                    </binary-keyed-jdbc-store>
                 </distributed-cache>
             </cache-container>
         </subsystem>

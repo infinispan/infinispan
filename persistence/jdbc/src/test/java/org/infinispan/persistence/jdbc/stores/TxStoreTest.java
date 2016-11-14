@@ -58,7 +58,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       UnitTestDatabaseManager.setDialect(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
 
       cacheManager = TestCacheManagerFactory.createCacheManager(cc);
       cache = cacheManager.getCache("Test");
