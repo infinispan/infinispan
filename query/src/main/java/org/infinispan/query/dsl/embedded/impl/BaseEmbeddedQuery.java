@@ -1,11 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.impl.BaseQuery;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,6 +7,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * Base class for embedded-mode query implementations. Subclasses need to implement {@link #getIterator()} and {@link
@@ -62,16 +62,13 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
    private List<Object> listInternal() {
       List<Object> results;
 
-      CloseableIterator<ObjectFilter.FilterResult> iterator = getIterator();
-      if (!iterator.hasNext()) {
-         return Collections.emptyList();
-      }
-
-      Comparator<Comparable[]> comparator = getComparator();
-      if (comparator == null) {
-         // collect unsorted results and get the requested page if any was specified
-         try {
-            if (iterator.hasNext()) {
+      try (CloseableIterator<ObjectFilter.FilterResult> iterator = getIterator()) {
+         if (!iterator.hasNext()) {
+            results = Collections.emptyList();
+         } else {
+            Comparator<Comparable[]> comparator = getComparator();
+            if (comparator == null) {
+               // collect unsorted results and get the requested page if any was specified
                results = new ArrayList<>(INITIAL_CAPACITY);
                while (iterator.hasNext()) {
                   ObjectFilter.FilterResult entry = iterator.next();
@@ -81,47 +78,31 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
                   }
                }
             } else {
-               results = Collections.emptyList();
-            }
-         } finally {
-            try {
-               iterator.close();
-            } catch (Exception e) {
-               // exception ignored
-            }
-         }
-      } else {
-         // collect and sort results, in reverse order for now
-         PriorityQueue<ObjectFilter.FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
-         try {
-            while (iterator.hasNext()) {
-               ObjectFilter.FilterResult entry = iterator.next();
-               resultSize++;
-               filterResults.add(entry);
-               if (maxResults != -1 && filterResults.size() > startOffset + maxResults) {
-                  // remove the head, which is actually the highest result
-                  filterResults.remove();
+               // collect and sort results, in reverse order for now
+               PriorityQueue<ObjectFilter.FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
+               while (iterator.hasNext()) {
+                  ObjectFilter.FilterResult entry = iterator.next();
+                  resultSize++;
+                  filterResults.add(entry);
+                  if (maxResults != -1 && filterResults.size() > startOffset + maxResults) {
+                     // remove the head, which is actually the highest result
+                     filterResults.remove();
+                  }
+               }
+
+               // collect and reverse
+               if (filterResults.size() > startOffset) {
+                  Object[] res = new Object[filterResults.size() - startOffset];
+                  int i = filterResults.size();
+                  while (i-- > startOffset) {
+                     ObjectFilter.FilterResult r = filterResults.remove();
+                     res[i - startOffset] = projection != null ? r.getProjection() : r.getInstance();
+                  }
+                  results = Arrays.asList(res);
+               } else {
+                  results = Collections.emptyList();
                }
             }
-         } finally {
-            try {
-               iterator.close();
-            } catch (Exception e) {
-               // exception ignored
-            }
-         }
-
-         // collect and reverse
-         if (filterResults.size() > startOffset) {
-            Object[] res = new Object[filterResults.size() - startOffset];
-            int i = filterResults.size();
-            while (i-- > startOffset) {
-               ObjectFilter.FilterResult r = filterResults.remove();
-               res[i - startOffset] = projection != null ? r.getProjection() : r.getInstance();
-            }
-            results = Arrays.asList(res);
-         } else {
-            results = Collections.emptyList();
          }
       }
 
