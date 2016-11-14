@@ -42,7 +42,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
    final static String CACHE_NAME = "memcachedCache";
 
-   CompatibilityCacheFactory<String, Object> cacheFactory;
+   protected CompatibilityCacheFactory<String, Object> cacheFactory;
 
    @BeforeClass
    protected void setup() throws Exception {
