@@ -8,7 +8,6 @@ import java.util.Arrays;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration;
-import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -25,10 +24,6 @@ public class TableManagerFactory {
    private static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
    public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
-      return getManager(connectionFactory, config.table(), config);
-   }
-
-   public static TableManager getManager(ConnectionFactory connectionFactory, JdbcBinaryStoreConfiguration config) {
       return getManager(connectionFactory, config.table(), config);
    }
 

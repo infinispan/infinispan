@@ -48,7 +48,7 @@ public class JdbcStringBasedStoreManagedFactoryFunctionalTest extends JdbcString
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .preload(preload);
       store.dataSource().jndiUrl("osgi:service/javax.sql.DataSource");
-      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(store.table());
       UnitTestDatabaseManager.setDialect(store);
       return persistence;
    }

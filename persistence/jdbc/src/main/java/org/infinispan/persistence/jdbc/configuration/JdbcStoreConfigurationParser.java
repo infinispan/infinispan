@@ -1,10 +1,12 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.persistence.jdbc.configuration.Element.MIXED_KEYED_JDBC_STORE;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -61,13 +63,10 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
             parseStringKeyedJdbcStore(reader, builder.persistence());
             break;
          }
-         case BINARY_KEYED_JDBC_STORE: {
-            parseBinaryKeyedJdbcStore(reader, builder.persistence());
-            break;
-         }
+         case BINARY_KEYED_JDBC_STORE:
          case MIXED_KEYED_JDBC_STORE: {
-            parseMixedKeyedJdbcStore(reader, builder.persistence());
-            break;
+            throw new CacheConfigurationException("Binary and Mixed Keyed JDBC stores were removed in 9.0. " +
+                  "Please use JdbcStringBasedStore instead");
          }
          default: {
             throw ParseUtils.unexpectedElement(reader);
@@ -107,72 +106,25 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
                parseTable(reader, builder.table());
                break;
             }
+            case CONNECTION_POOL: {
+               parseConnectionPoolAttributes(reader, builder.connectionPool());
+               break;
+            }
+            case DATA_SOURCE: {
+               parseDataSourceAttributes(reader, builder.dataSource());
+               break;
+            }
+            case SIMPLE_CONNECTION: {
+               parseSimpleConnectionAttributes(reader, builder.simpleConnection());
+               break;
+            }
             default: {
-               parseCommonJdbcStoreElements(reader, element, builder);
+               Parser.parseStoreElement(reader, builder);
                break;
             }
          }
       }
       persistenceBuilder.addStore(builder);
-   }
-
-   private void parseBinaryKeyedJdbcStore(XMLExtendedStreamReader reader, PersistenceConfigurationBuilder persistenceBuilder)
-         throws XMLStreamException {
-      JdbcBinaryStoreConfigurationBuilder builder = new JdbcBinaryStoreConfigurationBuilder(
-            persistenceBuilder);
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case DIALECT:
-               builder.dialect(DatabaseType.valueOf(value));
-               break;
-            case DB_MAJOR_VERSION:
-               builder.dbMajorVersion(Integer.parseInt(value));
-               break;
-            case DB_MINOR_VERSION:
-               builder.dbMinorVersion(Integer.parseInt(value));
-               break;
-            default:
-               Parser.parseStoreAttribute(reader, i, builder);
-               break;
-         }
-      }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case BINARY_KEYED_TABLE: {
-               parseTable(reader, builder.table());
-               break;
-            }
-            default: {
-               parseCommonJdbcStoreElements(reader, element, builder);
-               break;
-            }
-         }
-      }
-      persistenceBuilder.addStore(builder);
-   }
-
-   private void parseCommonJdbcStoreElements(XMLExtendedStreamReader reader, Element element, AbstractJdbcStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
-      switch (element) {
-         case CONNECTION_POOL: {
-            parseConnectionPoolAttributes(reader, builder.connectionPool());
-            break;
-         }
-         case DATA_SOURCE: {
-            parseDataSourceAttributes(reader, builder.dataSource());
-            break;
-         }
-         case SIMPLE_CONNECTION: {
-            parseSimpleConnectionAttributes(reader, builder.simpleConnection());
-            break;
-         }
-         default: {
-            Parser.parseStoreElement(reader, builder);
-            break;
-         }
-      }
    }
 
    private void parseDataSourceAttributes(XMLExtendedStreamReader reader,
@@ -246,50 +198,6 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
-   }
-
-   private void parseMixedKeyedJdbcStore(XMLExtendedStreamReader reader, PersistenceConfigurationBuilder persistenceBuilder)
-         throws XMLStreamException {
-      JdbcMixedStoreConfigurationBuilder builder = new JdbcMixedStoreConfigurationBuilder(persistenceBuilder);
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case KEY_TO_STRING_MAPPER:
-               builder.key2StringMapper(value);
-               break;
-            case DIALECT:
-               builder.dialect(DatabaseType.valueOf(value));
-               break;
-            case DB_MAJOR_VERSION:
-               builder.dbMajorVersion(Integer.parseInt(value));
-               break;
-            case DB_MINOR_VERSION:
-               builder.dbMinorVersion(Integer.parseInt(value));
-               break;
-            default:
-               Parser.parseStoreAttribute(reader, i, builder);
-               break;
-         }
-      }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case STRING_KEYED_TABLE: {
-               parseTable(reader, builder.stringTable());
-               break;
-            }
-            case BINARY_KEYED_TABLE: {
-               parseTable(reader, builder.binaryTable());
-               break;
-            }
-            default: {
-               parseCommonJdbcStoreElements(reader, element, builder);
-               break;
-            }
-         }
-      }
-      persistenceBuilder.addStore(builder);
    }
 
    private void parseTable(XMLExtendedStreamReader reader, TableManipulationConfigurationBuilder<?, ?> builder)

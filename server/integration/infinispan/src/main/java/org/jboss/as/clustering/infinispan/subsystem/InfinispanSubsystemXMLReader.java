@@ -23,6 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
+import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
@@ -967,14 +968,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 this.parseStringKeyedJDBCStore(reader, cache, operations);
                 break;
             }
-            case BINARY_KEYED_JDBC_STORE: {
-                this.parseBinaryKeyedJDBCStore(reader, cache, operations);
-                break;
-            }
-            case MIXED_KEYED_JDBC_STORE: {
-                this.parseMixedKeyedJDBCStore(reader, cache, operations);
-                break;
-            }
             case REMOTE_STORE: {
                 this.parseRemoteStore(reader, cache, operations);
                 break;
@@ -1825,82 +1818,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 default: {
                     this.parseStoreProperty(reader, store, additionalConfigurationOperations);
                 }
-            }
-        }
-
-        operations.put(storeAddress, store);
-        operations.putAll(additionalConfigurationOperations);
-    }
-
-    private void parseBinaryKeyedJDBCStore(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
-
-        ModelNode store = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
-        String name = ModelKeys.BINARY_KEYED_JDBC_STORE_NAME;
-
-        Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-        name = parseCommonJDBCAttributes(name, store, reader);
-
-        if (!store.hasDefined(ModelKeys.DATASOURCE)) {
-            throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.DATASOURCE));
-        }
-
-        PathAddress storeAddress = setOperationAddress(store, PathAddress.pathAddress(cache.get(OP_ADDR)), BinaryKeyedJDBCStoreConfigurationResource.PATH, name);
-
-        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-            Element element = Element.forName(reader.getLocalName());
-            switch (element) {
-                case BINARY_KEYED_TABLE: {
-                    this.parseJDBCStoreTable(reader, store.get(ModelKeys.BINARY_KEYED_TABLE).setEmptyObject());
-                    break;
-                }
-                case WRITE_BEHIND: {
-                    parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
-                    break;
-                }
-                default: {
-                    this.parseStoreProperty(reader, store, additionalConfigurationOperations);
-                }
-            }
-        }
-
-        operations.put(storeAddress, store);
-        operations.putAll(additionalConfigurationOperations);
-    }
-    private void parseMixedKeyedJDBCStore(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
-
-        ModelNode store = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
-        String name = ModelKeys.MIXED_KEYED_JDBC_STORE_NAME;
-
-        Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-        name = parseCommonJDBCAttributes(name, store, reader);
-
-        if (!store.hasDefined(ModelKeys.DATASOURCE)) {
-            throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.DATASOURCE));
-        }
-
-        PathAddress storeAddress = setOperationAddress(store, PathAddress.pathAddress(cache.get(OP_ADDR)), MixedKeyedJDBCStoreConfigurationResource.PATH, name);
-
-        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-            Element element = Element.forName(reader.getLocalName());
-            switch (element) {
-                case STRING_KEYED_TABLE: {
-                    this.parseJDBCStoreTable(reader, store.get(ModelKeys.STRING_KEYED_TABLE).setEmptyObject());
-                    break;
-                }
-                case BINARY_KEYED_TABLE: {
-                    this.parseJDBCStoreTable(reader, store.get(ModelKeys.BINARY_KEYED_TABLE).setEmptyObject());
-                    break;
-                }
-                case WRITE_BEHIND: {
-                    parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
-                    break;
-                }
-                case PROPERTY: {
-                    parseStoreProperty(reader, store, additionalConfigurationOperations);
-                    break;
-                }
-                default:
-                    throw ParseUtils.unexpectedElement(reader);
             }
         }
 

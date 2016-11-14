@@ -58,7 +58,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = createJdbcConfig(builder);
 
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
       marshaller = new TestObjectStreamMarshaller();

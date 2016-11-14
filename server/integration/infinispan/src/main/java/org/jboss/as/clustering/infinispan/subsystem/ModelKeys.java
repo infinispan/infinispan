@@ -50,8 +50,6 @@ public class ModelKeys {
     static final String BATCH_SIZE = "batch-size";
     static final String BATCHING = "batching";
     static final String BINARY_NAME = "BINARY";
-    static final String BINARY_KEYED_TABLE = "binary-keyed-table";
-    static final String BINARY_KEYED_TABLE_NAME = "BINARY_KEYED_TABLE";
     static final String BLOCK_SIZE = "block-size";
     static final String BUCKET_TABLE = "bucket-table";
     static final String BUFFER_SIZE = "buffer-size";
@@ -138,10 +136,6 @@ public class ModelKeys {
     static final String STRING_KEYED_JDBC_STORE_NAME = "STRING_KEYED_JDBC_STORE";
     static final String STRING_KEYED_TABLE = "string-keyed-table";
     static final String STRING_KEYED_TABLE_NAME = "STRING_KEYED_TABLE";
-    static final String BINARY_KEYED_JDBC_STORE = "binary-keyed-jdbc-store";
-    static final String BINARY_KEYED_JDBC_STORE_NAME = "BINARY_KEYED_JDBC_STORE";
-    static final String MIXED_KEYED_JDBC_STORE = "mixed-keyed-jdbc-store";
-    static final String MIXED_KEYED_JDBC_STORE_NAME = "MIXED_KEYED_JDBC_STORE";
     static final String JNDI_NAME = "jndi-name";
     static final String L1_LIFESPAN = "l1-lifespan";
     static final String LEVELDB_STORE = "leveldb-store";

@@ -474,39 +474,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             }
         }
 
-        if (cache.get(ModelKeys.BINARY_KEYED_JDBC_STORE).isDefined()) {
-            for (Property binaryKeyedJDBCStoreEntry : cache.get(ModelKeys.BINARY_KEYED_JDBC_STORE).asPropertyList()) {
-                ModelNode store = binaryKeyedJDBCStoreEntry.getValue();
-                writer.writeStartElement(Element.BINARY_KEYED_JDBC_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(binaryKeyedJDBCStoreEntry.getName());
-                BinaryKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeJdbcStoreAttributes(writer, store);
-                this.writeStoreWriteBehind(writer, store);
-                this.writeStoreProperties(writer, store);
-                this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
-                writer.writeEndElement();
-            }
-        }
-
-        if (cache.get(ModelKeys.MIXED_KEYED_JDBC_STORE).isDefined()) {
-            for (Property mixedKeyedJDBCStoreEntry : cache.get(ModelKeys.MIXED_KEYED_JDBC_STORE).asPropertyList()) {
-                ModelNode store = mixedKeyedJDBCStoreEntry.getValue();
-                writer.writeStartElement(Element.MIXED_KEYED_JDBC_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(mixedKeyedJDBCStoreEntry.getName());
-                MixedKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeJdbcStoreAttributes(writer, store);
-                this.writeStoreWriteBehind(writer, store);
-                this.writeStoreProperties(writer, store);
-                this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
-                this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
-                writer.writeEndElement();
-            }
-        }
-
         if (cache.get(ModelKeys.ROCKSDB_STORE).isDefined()) {
             for (Property rocksDbStoreEntry : cache.get(ModelKeys.ROCKSDB_STORE).asPropertyList()) {
                 ModelNode store = rocksDbStoreEntry.getValue();

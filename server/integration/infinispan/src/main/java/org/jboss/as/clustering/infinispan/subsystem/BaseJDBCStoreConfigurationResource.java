@@ -89,8 +89,6 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setXmlName(Attribute.PREFIX.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-//                   .setDefaultValue(new ModelNode().set("ispn_bucket"))
-//                   .setDefaultValue(new ModelNode().set("ispn_entry"))
                     .build();
     static final SimpleAttributeDefinition CREATE_ON_START =
             new SimpleAttributeDefinitionBuilder(ModelKeys.CREATE_ON_START, ModelType.BOOLEAN, true)
@@ -157,17 +155,6 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
             setAllowNull(true).
             setSuffix("table").
             build();
-
-    static final ObjectTypeAttributeDefinition BINARY_KEYED_TABLE = ObjectTypeAttributeDefinition.
-            Builder.of(ModelKeys.BINARY_KEYED_TABLE, PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN).
-            setAllowNull(true).
-            setSuffix("table").
-            build();
-
-    static final AttributeDefinition[] COMMON_JDBC_STORE_TABLE_ATTRIBUTES = {PREFIX, BATCH_SIZE, FETCH_SIZE, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN, CREATE_ON_START, DROP_ON_EXIT};
-    static final AttributeDefinition[] COMMON_BASE_JDBC_STORE_ATTRIBUTES = {DATA_SOURCE, DIALECT, BATCH_SIZE, FETCH_SIZE, PREFIX,
-    COLUMN_NAME, COLUMN_TYPE, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN, ENTRY_TABLE, BUCKET_TABLE, STRING_KEYED_TABLE, BINARY_KEYED_TABLE, CREATE_ON_START, DROP_ON_EXIT};
-
 
     public BaseJDBCStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent, AttributeDefinition[] attributes) {
         super(path, resourceKey, parent, Util.arrayConcat(COMMON_JDBC_STORE_ATTRIBUTES, attributes));

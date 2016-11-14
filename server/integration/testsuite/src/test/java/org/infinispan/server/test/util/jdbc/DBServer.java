@@ -26,7 +26,7 @@ public class DBServer {
         return new DBServer();
     }
 
-    public DBServer() {}
+    private DBServer() {}
 
     public DBServer(String bucketTableName, String stringTableName, String idColumnName, String dataColumnName) {
         this.connectionUrl = System.getProperty("connection.url");
@@ -74,7 +74,7 @@ public class DBServer {
         private final String deleteAllRowsSql;
         private final String dropTableSql;
 
-        public TableManipulation(String driverClass, String connectionUrl, String username, String password, String tableName,
+        TableManipulation(String driverClass, String connectionUrl, String username, String password, String tableName,
                                  String idColumnName, String dataColumnName) {
             this.idColumnName = idColumnName;
             this.dataColumnName = dataColumnName;
@@ -121,17 +121,14 @@ public class DBServer {
             ps.setString(1, key);
             Object toReturn = null;
             try {
-                toReturn = withAwait(new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                        ResultSet rs;
-                        rs = ps.executeQuery();
-                        Object result = null;
-                        if (rs.next()) {
-                            result = rs.getObject(dataColumnName); //start from 1, not 0
-                        }
-                        return result;
+                toReturn = withAwait(() -> {
+                    ResultSet rs;
+                    rs = ps.executeQuery();
+                    Object result = null;
+                    if (rs.next()) {
+                        result = rs.getObject(dataColumnName); //start from 1, not 0
                     }
+                    return result;
                 });
             } finally {
                 factory.releaseConnection(connection);
@@ -148,51 +145,6 @@ public class DBServer {
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
                     result = rs.getObject(dataColumnName); //start from 1, not 0
-                }
-            } finally {
-                factory.releaseConnection(connection);
-            }
-            return result;
-        }
-
-        /*
-        * For JdbcBinaryCacheStore entries are stored to a database row according to their hash value. Entries
-        * with same hash value will be stored into same row (=bucket).
-        */
-        public Object getBucketByKey(Object key) throws Exception {
-            int keyHash = Objects.hashCode(key) & 0xfffffc00; //computation taken from BucketBasedCacheStore
-            Connection connection = factory.getConnection();
-            final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
-            Object result = null;
-            ps.setString(1, String.valueOf(keyHash));
-            try {
-                ResultSet rs;
-                rs = ps.executeQuery();
-                if (rs.next()) {
-                    result = rs.getObject(dataColumnName);
-                }
-            } finally {
-                factory.releaseConnection(connection);
-            }
-            return result;
-        }
-
-        public Object getBucketByKeyAwait(Object key) throws Exception {
-            int keyHash = ByteArrayEquivalence.INSTANCE.hashCode(key) & 0xfffffc00; //computation taken from BucketBasedCacheStore
-            Connection connection = factory.getConnection();
-            final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
-            Object result = null;
-            ps.setString(1, String.valueOf(keyHash));
-            try {
-                ResultSet rs;
-                rs = withAwait(new Callable<ResultSet>() {
-                    @Override
-                    public ResultSet call() throws Exception {
-                        return ps.executeQuery();
-                    }
-                });
-                if (rs.next()) {
-                    result = rs.getObject(dataColumnName);
                 }
             } finally {
                 factory.releaseConnection(connection);
@@ -241,7 +193,7 @@ public class DBServer {
             }
         }
 
-        public List<String> getTableNames() throws Exception {
+        private List<String> getTableNames() throws Exception {
             List<String> tables = new ArrayList<String>();
             Connection connection = factory.getConnection();
             try {
@@ -271,33 +223,6 @@ public class DBServer {
         public boolean exists() throws Exception {
             List<String> tables = getTableNames();
             return tables.contains(tableName.substring(1, tableName.length() - 1));
-        }
-
-        public void waitForTableCreation() {
-            Object result = withAwait(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    List<String> tables = getTableNames();
-                    if (connectionUrl.contains("mysql")) {
-                        return tables.contains(tableName.substring(1, tableName.length() - 1).toLowerCase()) ? true : null;
-                    } else {
-                        return tables.contains(tableName.substring(1, tableName.length() - 1)) ? true : null;
-                    }
-                }
-            });
-            if (result == null) throw new RuntimeException("Table " + tableName + " was not created in " + TIMEOUT + " ms");
-        }
-
-        public String getDBName() throws Exception {
-            Connection connection = factory.getConnection();
-            try {
-                String dbProduct = connection.getMetaData().getDatabaseProductName();
-                String result = "DB Product: " + dbProduct;
-                result += ", Driver Name:" + connection.getMetaData().getDriverName();
-                return result;
-            } finally {
-                factory.releaseConnection(connection);
-            }
         }
 
         public String getConnectionUrl() {

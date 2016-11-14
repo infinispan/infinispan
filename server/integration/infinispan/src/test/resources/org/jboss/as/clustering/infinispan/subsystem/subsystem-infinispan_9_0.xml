@@ -150,30 +150,6 @@
                     <timestamp-column name="version" type="BIGINT"/>
                 </string-keyed-table>
             </string-keyed-jdbc-store>
-            <binary-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/datasources/JdbcDS"
-                                     dialect="MYSQL" db-major-version="5" db-minor-version="7"
-                                     passivation="false" preload="true" purge="false" shared="false">
-                <binary-keyed-table prefix="ISPN_NC_BK">
-                    <id-column name="id" type="VARCHAR"/>
-                    <data-column name="datum" type="BINARY"/>
-                    <timestamp-column name="version" type="BIGINT"/>
-                </binary-keyed-table>
-            </binary-keyed-jdbc-store>
-            <mixed-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/jdbc/store"
-                                    dialect="MYSQL" db-major-version="5" db-minor-version="7"
-                                    passivation="false" preload="true" purge="false" shared="true" singleton="false">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-                <binary-keyed-table prefix="ispn_entry" batch-size="100" fetch-size="100">
-                    <id-column name="id" type="VARCHAR"/>
-                    <data-column name="datum" type="BINARY"/>
-                    <timestamp-column name="version" type="BIGINT"/>
-                </binary-keyed-table>
-                <string-keyed-table prefix="ispn_bucket" batch-size="100" fetch-size="100">
-                    <id-column name="id" type="VARCHAR"/>
-                    <data-column name="datum" type="BINARY"/>
-                    <timestamp-column name="version" type="BIGINT"/>
-                </string-keyed-table>
-            </mixed-keyed-jdbc-store>
             <indexing index="LOCAL" />
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
             <partition-handling enabled="true"/>

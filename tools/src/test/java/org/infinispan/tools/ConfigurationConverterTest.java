@@ -29,8 +29,6 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
-import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -814,76 +812,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("org.h2.Driver", simpleConnectionFactoryConfiguration.driverClass());
       assertTrue(jdbcStringBasedStoreConfiguration.singletonStore().enabled());
       assertEquals("testValue", jdbcStringBasedStoreConfiguration.properties().getProperty("testName"));
-
-      //----------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("jdbcBinary");
-      assertFalse(config.clustering().cacheMode().isClustered());
-      assertFalse(config.persistence().usingAsyncStore());
-      assertFalse(config.persistence().passivation());
-      assertTrue(config.persistence().usingStores());
-      assertEquals(1, config.persistence().stores().size());
-      assertTrue(config.persistence().stores().get(0) instanceof JdbcBinaryStoreConfiguration);
-
-      JdbcBinaryStoreConfiguration jdbcBinaryStoreConfiguration = (JdbcBinaryStoreConfiguration) config.persistence().stores().get(0);
-      assertFalse(jdbcBinaryStoreConfiguration.fetchPersistentState());
-      assertFalse(jdbcBinaryStoreConfiguration.ignoreModifications());
-      assertFalse(jdbcBinaryStoreConfiguration.purgeOnStartup());
-      assertTrue(jdbcBinaryStoreConfiguration.table().dropOnExit());
-      assertTrue(jdbcBinaryStoreConfiguration.table().createOnStart());
-      assertEquals("ISPN_BINARY_TABLE", jdbcBinaryStoreConfiguration.table().tableNamePrefix());
-      assertEquals("ID_COLUMN", jdbcBinaryStoreConfiguration.table().idColumnName());
-      assertEquals("BINARY", jdbcBinaryStoreConfiguration.table().idColumnType());
-      assertEquals("DATA_COLUMN", jdbcBinaryStoreConfiguration.table().dataColumnName());
-      assertEquals("BINARY", jdbcBinaryStoreConfiguration.table().dataColumnType());
-      assertEquals("TIMESTAMP_COLUMN", jdbcBinaryStoreConfiguration.table().timestampColumnName());
-      assertEquals("BIGINT", jdbcBinaryStoreConfiguration.table().timestampColumnType());
-
-      connectionPool = (PooledConnectionFactoryConfiguration) jdbcBinaryStoreConfiguration.connectionFactory();
-      assertEquals("jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1", connectionPool.connectionUrl());
-      assertEquals("sa", connectionPool.username());
-      assertEquals(null, connectionPool.password());
-      assertEquals("org.h2.Driver", connectionPool.driverClass());
-
-      //----------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("jdbcMixed");
-      assertFalse(config.clustering().cacheMode().isClustered());
-      assertFalse(config.persistence().usingAsyncStore());
-      assertFalse(config.persistence().passivation());
-      assertTrue(config.persistence().usingStores());
-      assertEquals(1, config.persistence().stores().size());
-      assertTrue(config.persistence().stores().get(0) instanceof JdbcMixedStoreConfiguration);
-
-      JdbcMixedStoreConfiguration jdbcMixedStoreConfiguration = (JdbcMixedStoreConfiguration) config.persistence().stores().get(0);
-      assertFalse(jdbcMixedStoreConfiguration.fetchPersistentState());
-      assertFalse(jdbcMixedStoreConfiguration.ignoreModifications());
-      assertFalse(jdbcMixedStoreConfiguration.purgeOnStartup());
-      assertEquals("org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper", jdbcStringBasedStoreConfiguration.key2StringMapper());
-
-      assertFalse(jdbcMixedStoreConfiguration.stringTable().dropOnExit());
-      assertTrue(jdbcMixedStoreConfiguration.stringTable().createOnStart());
-      assertEquals("ISPN_STRING_TABLE", jdbcMixedStoreConfiguration.stringTable().tableNamePrefix());
-      assertEquals("ID_COLUMN", jdbcMixedStoreConfiguration.stringTable().idColumnName());
-      assertEquals("VARCHAR(255)", jdbcMixedStoreConfiguration.stringTable().idColumnType());
-      assertEquals("DATA_COLUMN", jdbcMixedStoreConfiguration.stringTable().dataColumnName());
-      assertEquals("BINARY", jdbcMixedStoreConfiguration.stringTable().dataColumnType());
-      assertEquals("TIMESTAMP_COLUMN", jdbcMixedStoreConfiguration.stringTable().timestampColumnName());
-      assertEquals("BIGINT", jdbcMixedStoreConfiguration.stringTable().timestampColumnType());
-
-      assertTrue(jdbcMixedStoreConfiguration.binaryTable().dropOnExit());
-      assertFalse(jdbcMixedStoreConfiguration.binaryTable().createOnStart());
-      assertEquals("ISPN_BINARY_TABLE", jdbcMixedStoreConfiguration.binaryTable().tableNamePrefix());
-      assertEquals("ID_COLUMN", jdbcMixedStoreConfiguration.binaryTable().idColumnName());
-      assertEquals("BINARY", jdbcMixedStoreConfiguration.binaryTable().idColumnType());
-      assertEquals("DATA_COLUMN", jdbcMixedStoreConfiguration.binaryTable().dataColumnName());
-      assertEquals("BINARY", jdbcMixedStoreConfiguration.binaryTable().dataColumnType());
-      assertEquals("TIMESTAMP_COLUMN", jdbcMixedStoreConfiguration.binaryTable().timestampColumnName());
-      assertEquals("BIGINT", jdbcMixedStoreConfiguration.binaryTable().timestampColumnType());
-
-      connectionPool = (PooledConnectionFactoryConfiguration) jdbcMixedStoreConfiguration.connectionFactory();
-      assertEquals("jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1", connectionPool.connectionUrl());
-      assertEquals("sa", connectionPool.username());
-      assertEquals("sa", connectionPool.password());
-      assertEquals("org.h2.Driver", connectionPool.driverClass());
 
       //----------------------------------------------------------------------------------------------
       config = cm.getCacheConfiguration("withRemoteStore");
