@@ -45,21 +45,21 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
    private void realChannelRead(ChannelHandlerContext ctx, Object msg, CacheDecodeContext cdc) throws Exception {
       HotRodHeader h = cdc.header;
       switch (h.op) {
-         case ContainsKeyRequest:
+         case CONTAINS_KEY:
             writeResponse(cdc, ctx.channel(), cdc.containsKey());
             break;
-         case GetRequest:
-         case GetWithVersionRequest:
+         case GET:
+         case GET_WITH_VERSION:
             writeResponse(cdc, ctx.channel(), cdc.get());
             break;
-         case GetWithMetadataRequest:
+         case GET_WITH_METADATA:
             writeResponse(cdc, ctx.channel(), cdc.getKeyMetadata());
             break;
-         case PingRequest:
-            writeResponse(cdc, ctx.channel(), new Response(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, OperationResponse.PingResponse, OperationStatus.Success, h.topologyId));
+         case PING:
+            writeResponse(cdc, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, HotRodOperation.PING, OperationStatus.Success, h.topologyId));
             break;
-         case StatsRequest:
+         case STATS:
             writeResponse(cdc, ctx.channel(), cdc.decoder.createStatsResponse(cdc, transport));
             break;
          default:

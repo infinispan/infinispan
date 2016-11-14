@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod.logging;
 import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.server.hotrod.ErrorResponse;
 import org.infinispan.server.hotrod.HotRodOperation;
-import org.infinispan.server.hotrod.OperationResponse;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -46,7 +45,7 @@ public class LoggingContextHandler extends ChannelDuplexHandler {
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
       if (msg instanceof ErrorResponse) {
          ErrorResponse errorResponse = (ErrorResponse) msg;
-         ctx.channel().attr(OPERATION_KEY).set(OperationResponse.fromResponse(errorResponse.getOperation()));
+         ctx.channel().attr(OPERATION_KEY).set(errorResponse.getOperation());
          ctx.channel().attr(CACHE_NAME_KEY).set(errorResponse.getCacheName());
          ctx.channel().attr(EXCEPTION_MESSAGE_KEY).set(errorResponse.getMsg());
       }

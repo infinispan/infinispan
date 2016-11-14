@@ -21,7 +21,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
 
    def testPut(m: Method) {
       val commandInterceptor = init()
-      //PutRequest
+      //PUT
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.put(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
@@ -32,7 +32,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testReplace(m: Method) {
-      //ReplaceRequest
+      //REPLACE
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.replace(k(m), 0, 0, v(m), 0), OperationStatus.OperationNotExecuted)
@@ -45,7 +45,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testPutIfAbsent(m: Method) {
-      //PutIfAbsentRequest
+      //PUT_IF_ABSENT
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), 0), OperationStatus.Success)
@@ -57,7 +57,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testReplaceIfUnmodified(m: Method) {
-      //ReplaceIfUnmodifiedRequest
+      //REPLACE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
@@ -69,7 +69,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testGet(m: Method) {
-      //GetRequest
+      //GET
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.get(k(m), 0), OperationStatus.KeyDoesNotExist)
@@ -81,7 +81,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testGetWithVersion(m: Method) {
-      //GetWithVersionRequest
+      //GET_WITH_VERSION
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.getWithVersion(k(m), 0), OperationStatus.KeyDoesNotExist)
@@ -94,7 +94,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testGetWithMetadata(m: Method) {
-      //GetWithMetadataRequest
+      //GET_WITH_METADATA
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.getWithMetadata(k(m), 0), OperationStatus.KeyDoesNotExist)
@@ -106,7 +106,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testRemove(m: Method) {
-      //RemoveRequest
+      //REMOVE
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.remove(k(m), 0), OperationStatus.KeyDoesNotExist)
@@ -118,7 +118,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testRemoveIfUnmodified(m: Method) {
-      //RemoveIfUnmodifiedRequest
+      //REMOVE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
@@ -130,7 +130,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    def testContainsKey(m: Method) {
-      //ContainsKeyRequest
+      //CONTAINS_KEY
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.containsKey(k(m), 0), OperationStatus.KeyDoesNotExist)

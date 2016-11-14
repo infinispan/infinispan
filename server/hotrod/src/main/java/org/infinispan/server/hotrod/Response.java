@@ -16,16 +16,16 @@ import org.infinispan.server.hotrod.iteration.IterableIterationResult;
  * @author Galder Zamarreño
  * @since 4.1
  */
-public class Response {
+public abstract class Response {
    protected final byte version;
    protected final long messageId;
    protected final String cacheName;
    protected final short clientIntel;
-   protected final OperationResponse operation;
+   protected final HotRodOperation operation;
    protected final OperationStatus status;
    protected final int topologyId;
 
-   protected Response(byte version, long messageId, String cacheName, short clientIntel, OperationResponse operation, OperationStatus status, int topologyId) {
+   protected Response(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation, OperationStatus status, int topologyId) {
       this.version = version;
       this.messageId = messageId;
       this.cacheName = cacheName;
@@ -51,7 +51,7 @@ public class Response {
       return clientIntel;
    }
 
-   public OperationResponse getOperation() {
+   public HotRodOperation getOperation() {
       return operation;
    }
 
@@ -80,7 +80,7 @@ public class Response {
 class ResponseWithPrevious extends Response {
    protected final Optional<byte[]> previous;
 
-   ResponseWithPrevious(byte version, long messageId, String cacheName, short clientIntel, OperationResponse operation,
+   ResponseWithPrevious(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
                         OperationStatus status, int topologyId, Optional<byte[]> previous) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
       this.previous = previous;
@@ -104,7 +104,7 @@ class ResponseWithPrevious extends Response {
 class GetResponse extends Response {
    protected final byte[] data;
 
-   GetResponse(byte version, long messageId, String cacheName, short clientIntel, OperationResponse operation,
+   GetResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
                OperationStatus status, int topologyId, byte[] data) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
       this.data = data;
@@ -131,7 +131,7 @@ class BulkGetResponse extends Response {
 
    BulkGetResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId, int count,
                    CacheSet<Map.Entry<byte[], byte[]>> entries) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.BulkGetResponse, OperationStatus.Success, topologyId);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.BULK_GET, OperationStatus.Success, topologyId);
       this.count = count;
       this.entries = entries;
    }
@@ -158,7 +158,7 @@ class BulkGetKeysResponse extends Response {
 
    BulkGetKeysResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId, int scope,
                        Iterator<byte[]> iterator) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.BulkGetKeysResponse, OperationStatus.Success,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.BULK_GET_KEYS, OperationStatus.Success,
             topologyId);
       this.scope = scope;
       this.iterator = iterator;
@@ -184,7 +184,7 @@ class GetAllResponse extends Response {
 
    GetAllResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId,
                   Map<byte[], byte[]> entries) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.GetAllResponse, OperationStatus.Success, topologyId);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.GET_ALL, OperationStatus.Success, topologyId);
       this.entries = entries;
    }
 
@@ -210,7 +210,7 @@ class IterationStartResponse extends Response {
 
    IterationStartResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId,
                           String iterationId) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.IterationStartResponse, OperationStatus.Success, topologyId);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.ITERATION_START, OperationStatus.Success, topologyId);
       this.iterationId = iterationId;
    }
 
@@ -234,7 +234,7 @@ class IterationNextResponse extends Response {
 
    IterationNextResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId,
                          IterableIterationResult iterationResult) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.IterationNextResponse,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.ITERATION_NEXT,
             iterationResult.getStatusCode(), topologyId);
       this.iterationResult = iterationResult;
    }
@@ -253,17 +253,14 @@ class IterationNextResponse extends Response {
    }
 }
 
-class IterationEndResponse extends Response {
-
-   IterationEndResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId,
-                        boolean removed) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.IterationEndResponse,
-            removed ? OperationStatus.Success : OperationStatus.InvalidIteration, topologyId);
+class EmptyResponse extends Response {
+   protected EmptyResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation, OperationStatus status, int topologyId) {
+      super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
    }
 
    @Override
    public String toString() {
-      return "IterationEndResponse{" +
+      return "EmptyResponse{" +
             "version=" + version +
             ", messageId=" + messageId +
             ", cacheName='" + cacheName + '\'' +
@@ -278,7 +275,7 @@ class IterationEndResponse extends Response {
 class GetWithVersionResponse extends GetResponse {
    protected final long dataVersion;
 
-   GetWithVersionResponse(byte version, long messageId, String cacheName, short clientIntel, OperationResponse operation,
+   GetWithVersionResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
                           OperationStatus status, int topologyId, byte[] data, long dataVersion) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId, data);
       this.dataVersion = dataVersion;
@@ -307,7 +304,7 @@ class GetWithMetadataResponse extends GetResponse {
    protected final long lastUsed;
    protected final int maxIdle;
 
-   GetWithMetadataResponse(byte version, long messageId, String cacheName, short clientIntel, OperationResponse operation,
+   GetWithMetadataResponse(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation,
                            OperationStatus status, int topologyId, byte[] data, long dataVersion, long created, int lifespan,
                            long lastUsed, int maxIdle) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId, data);
@@ -343,7 +340,7 @@ class StatsResponse extends Response {
 
    StatsResponse(byte version, long messageId, String cacheName, short clientIntel, Map<String, String> stats,
                  int topologyId) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.StatsResponse, OperationStatus.Success, topologyId);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.STATS, OperationStatus.Success, topologyId);
       this.stats = stats;
    }
 
@@ -366,7 +363,7 @@ class QueryResponse extends Response {
    final byte[] result;
 
    QueryResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId, byte[] result) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.QueryResponse, OperationStatus.Success, topologyId);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.QUERY, OperationStatus.Success, topologyId);
       this.result = result;
    }
 
@@ -390,7 +387,7 @@ class AuthMechListResponse extends Response {
 
    AuthMechListResponse(byte version, long messageId, String cacheName, short clientIntel, Set<String> mechs,
                         int topologyId) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.AuthMechListResponse, OperationStatus.Success,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.AUTH_MECH_LIST, OperationStatus.Success,
             topologyId);
       this.mechs = mechs;
    }
@@ -415,7 +412,7 @@ class AuthResponse extends Response {
 
    AuthResponse(byte version, long messageId, String cacheName, short clientIntel, byte[] challenge,
                 int topologyId) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.AuthResponse, OperationStatus.Success,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.AUTH, OperationStatus.Success,
             topologyId);
       this.challenge = challenge;
    }
@@ -439,7 +436,7 @@ class SizeResponse extends Response {
    final long size;
 
    SizeResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId, long size) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.SizeResponse, OperationStatus.Success,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.SIZE, OperationStatus.Success,
             topologyId);
       this.size = size;
    }
@@ -463,7 +460,7 @@ class ExecResponse extends Response {
    final byte[] result;
 
    ExecResponse(byte version, long messageId, String cacheName, short clientIntel, int topologyId, byte[] result) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.ExecResponse, OperationStatus.Success,
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.EXEC, OperationStatus.Success,
             topologyId);
       this.result = result;
    }

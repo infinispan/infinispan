@@ -393,7 +393,7 @@ class ClientListenerRegistry {
                switch (event.getType()) {
                   case CACHE_ENTRY_CREATED:
                   case CACHE_ENTRY_MODIFIED:
-                     KeyValuePair<OperationResponse, Boolean> responseType = getEventResponseType(event);
+                     KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
                      return keyWithVersionEvent(key, dataVersion, responseType.getKey(), responseType.getValue());
                   case CACHE_ENTRY_REMOVED:
                   case CACHE_ENTRY_EXPIRED:
@@ -403,7 +403,7 @@ class ClientListenerRegistry {
                      throw log.unexpectedEvent(event);
                }
             case CUSTOM_PLAIN:
-               KeyValuePair<OperationResponse, Boolean> responseType = getEventResponseType(event);
+               KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
                return new Events.CustomEvent(version, id, responseType.getKey(), listenerId, responseType.getValue(), value);
             case CUSTOM_RAW:
                responseType = getEventResponseType(event);
@@ -413,25 +413,25 @@ class ClientListenerRegistry {
          }
       }
 
-      private KeyValuePair<OperationResponse, Boolean> getEventResponseType(CacheEntryEvent event) {
+      private KeyValuePair<HotRodOperation, Boolean> getEventResponseType(CacheEntryEvent event) {
          switch (event.getType()) {
             case CACHE_ENTRY_CREATED:
-               return new KeyValuePair<>(OperationResponse.CacheEntryCreatedEventResponse,
+               return new KeyValuePair<>(HotRodOperation.CACHE_ENTRY_CREATED_EVENT,
                      ((CacheEntryCreatedEvent) event).isCommandRetried());
             case CACHE_ENTRY_MODIFIED:
-               return new KeyValuePair<>(OperationResponse.CacheEntryModifiedEventResponse,
+               return new KeyValuePair<>(HotRodOperation.CACHE_ENTRY_MODIFIED_EVENT,
                      ((CacheEntryModifiedEvent) event).isCommandRetried());
             case CACHE_ENTRY_REMOVED:
-               return new KeyValuePair<>(OperationResponse.CacheEntryRemovedEventResponse,
+               return new KeyValuePair<>(HotRodOperation.CACHE_ENTRY_REMOVED_EVENT,
                      ((CacheEntryRemovedEvent) event).isCommandRetried());
             case CACHE_ENTRY_EXPIRED:
-               return new KeyValuePair<>(OperationResponse.CacheEntryExpiredEventResponse, false);
+               return new KeyValuePair<>(HotRodOperation.CACHE_ENTRY_EXPIRED_EVENT, false);
             default:
                throw log.unexpectedEvent(event);
          }
       }
 
-      private Events.KeyWithVersionEvent keyWithVersionEvent(byte[] key, long dataVersion, OperationResponse op, boolean isRetried) {
+      private Events.KeyWithVersionEvent keyWithVersionEvent(byte[] key, long dataVersion, HotRodOperation op, boolean isRetried) {
          return new Events.KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion);
       }
 

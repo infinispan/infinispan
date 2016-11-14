@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 
 /**
  * @author wburns
@@ -14,7 +14,7 @@ public class TestAuthResponse extends TestResponse {
 
    protected TestAuthResponse(byte version, long messageId, String cacheName, short clientIntel,
                               int topologyId, AbstractTestTopologyAwareResponse topologyResponse, boolean complete, byte[] challenge) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.AuthResponse, Success, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.AUTH, Success, topologyId, topologyResponse);
       this.complete = complete;
       this.challenge = challenge;
    }

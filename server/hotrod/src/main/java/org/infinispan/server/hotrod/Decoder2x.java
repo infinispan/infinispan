@@ -72,91 +72,10 @@ class Decoder2x implements VersionedDecoder {
             buffer.readBytes(bytes);
             header.cacheName = new String(bytes, CharsetUtil.UTF_8);
          }
-         switch (streamOp) {
-            case 0x01:
-               header.op = HotRodOperation.PutRequest;
-               break;
-            case 0x03:
-               header.op = HotRodOperation.GetRequest;
-               break;
-            case 0x05:
-               header.op = HotRodOperation.PutIfAbsentRequest;
-               break;
-            case 0x07:
-               header.op = HotRodOperation.ReplaceRequest;
-               break;
-            case 0x09:
-               header.op = HotRodOperation.ReplaceIfUnmodifiedRequest;
-               break;
-            case 0x0B:
-               header.op = HotRodOperation.RemoveRequest;
-               break;
-            case 0x0D:
-               header.op = HotRodOperation.RemoveIfUnmodifiedRequest;
-               break;
-            case 0x0F:
-               header.op = HotRodOperation.ContainsKeyRequest;
-               break;
-            case 0x11:
-               header.op = HotRodOperation.GetWithVersionRequest;
-               break;
-            case 0x13:
-               header.op = HotRodOperation.ClearRequest;
-               break;
-            case 0x15:
-               header.op = HotRodOperation.StatsRequest;
-               break;
-            case 0x17:
-               header.op = HotRodOperation.PingRequest;
-               break;
-            case 0x19:
-               header.op = HotRodOperation.BulkGetRequest;
-               break;
-            case 0x1B:
-               header.op = HotRodOperation.GetWithMetadataRequest;
-               break;
-            case 0x1D:
-               header.op = HotRodOperation.BulkGetKeysRequest;
-               break;
-            case 0x1F:
-               header.op = HotRodOperation.QueryRequest;
-               break;
-            case 0x21:
-               header.op = HotRodOperation.AuthMechListRequest;
-               break;
-            case 0x23:
-               header.op = HotRodOperation.AuthRequest;
-               break;
-            case 0x25:
-               header.op = HotRodOperation.AddClientListenerRequest;
-               break;
-            case 0x27:
-               header.op = HotRodOperation.RemoveClientListenerRequest;
-               break;
-            case 0x29:
-               header.op = HotRodOperation.SizeRequest;
-               break;
-            case 0x2B:
-               header.op = HotRodOperation.ExecRequest;
-               break;
-            case 0x2D:
-               header.op = HotRodOperation.PutAllRequest;
-               break;
-            case 0x2F:
-               header.op = HotRodOperation.GetAllRequest;
-               break;
-            case 0x31:
-               header.op = HotRodOperation.IterationStartRequest;
-               break;
-            case 0x33:
-               header.op = HotRodOperation.IterationNextRequest;
-               break;
-            case 0x35:
-               header.op = HotRodOperation.IterationEndRequest;
-               break;
-            default:
-               throw new HotRodUnknownOperationException(
-                     "Unknown operation: " + streamOp, version, messageId);
+
+         header.op = HotRodOperation.fromRequestOpCode(streamOp);
+         if (header.op == null) {
+            throw new HotRodUnknownOperationException("Unknown operation: " + streamOp, version, messageId);
          }
          buffer.markReaderIndex();
       }
@@ -183,11 +102,11 @@ class Decoder2x implements VersionedDecoder {
    @Override
    public CacheDecodeContext.RequestParameters readParameters(HotRodHeader header, ByteBuf buffer) {
       switch (header.op) {
-         case RemoveIfUnmodifiedRequest:
+         case REMOVE_IF_UNMODIFIED:
             return readParameters(buffer, header, false, false, true);
-         case ReplaceIfUnmodifiedRequest:
+         case REPLACE_IF_UNMODIFIED:
             return readParameters(buffer, header, true, true, true);
-         case GetAllRequest:
+         case GET_ALL:
             return readParameters(buffer, header, false, true, false);
          default:
             return readParameters(buffer, header, true, true, false);
@@ -280,54 +199,54 @@ class Decoder2x implements VersionedDecoder {
 
    @Override
    public Response createSuccessResponse(HotRodHeader header, byte[] prev) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.Success, prev);
+      return createResponse(header, OperationStatus.Success, prev);
    }
 
    @Override
    public Response createNotExecutedResponse(HotRodHeader header, byte[] prev) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.OperationNotExecuted, prev);
+      return createResponse(header, OperationStatus.OperationNotExecuted, prev);
    }
 
    @Override
    public Response createNotExistResponse(HotRodHeader header) {
-      return createResponse(header, OperationResponse.toResponse(header.op), OperationStatus.KeyDoesNotExist, null);
+      return createResponse(header, OperationStatus.KeyDoesNotExist, null);
    }
 
-   private Response createResponse(HotRodHeader h, OperationResponse op, OperationStatus st, byte[] prev) {
+   private Response createResponse(HotRodHeader h, OperationStatus st, byte[] prev) {
       if (hasFlag(h, ProtocolFlag.ForceReturnPreviousValue)) {
          switch (st) {
             case Success:
                switch (h.op) {
-                  case PutRequest:
-                  case ReplaceRequest:
-                  case RemoveIfUnmodifiedRequest:
-                  case RemoveRequest:
-                  case ReplaceIfUnmodifiedRequest:
+                  case PUT:
+                  case REPLACE:
+                  case REMOVE_IF_UNMODIFIED:
+                  case REMOVE:
+                  case REPLACE_IF_UNMODIFIED:
                      return new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-                           h.clientIntel, op, OperationStatus.SuccessWithPrevious, h.topologyId, Optional.ofNullable(prev));
+                           h.clientIntel, h.op, OperationStatus.SuccessWithPrevious, h.topologyId, Optional.ofNullable(prev));
                }
                break;
             case OperationNotExecuted:
                switch (h.op) {
-                  case PutIfAbsentRequest:
-                  case ReplaceIfUnmodifiedRequest:
-                  case RemoveIfUnmodifiedRequest:
+                  case PUT_IF_ABSENT:
+                  case REPLACE_IF_UNMODIFIED:
+                  case REMOVE_IF_UNMODIFIED:
                      return new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-                           h.clientIntel, op, OperationStatus.NotExecutedWithPrevious, h.topologyId, Optional.ofNullable(prev));
+                           h.clientIntel, h.op, OperationStatus.NotExecutedWithPrevious, h.topologyId, Optional.ofNullable(prev));
                }
                break;
          }
       }
-      return new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId);
+      return new EmptyResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.op, st, h.topologyId);
    }
 
    @Override
    public Response createGetResponse(HotRodHeader h, CacheEntry<byte[], byte[]> entry) {
       HotRodOperation op = h.op;
-      if (entry != null && op == HotRodOperation.GetRequest)
-         return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, OperationResponse.GetResponse,
+      if (entry != null && op == HotRodOperation.GET)
+         return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.op,
                OperationStatus.Success, h.topologyId, entry.getValue());
-      else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
+      else if (entry != null && op == HotRodOperation.GET_WITH_VERSION) {
          long version;
          NumericVersion numericVersion = (NumericVersion) entry.getMetadata().version();
          if (numericVersion != null) {
@@ -336,21 +255,21 @@ class Decoder2x implements VersionedDecoder {
             version = 0;
          }
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetWithVersionResponse, OperationStatus.Success, h.topologyId, entry.getValue(),
+               h.op, OperationStatus.Success, h.topologyId, entry.getValue(),
                version);
-      } else if (op == HotRodOperation.GetRequest)
+      } else if (op == HotRodOperation.GET)
          return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null);
+               h.op, OperationStatus.KeyDoesNotExist, h.topologyId, null);
       else
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, OperationResponse.GetWithVersionResponse, OperationStatus.KeyDoesNotExist,
+               h.clientIntel, h.op, OperationStatus.KeyDoesNotExist,
                h.topologyId, null, 0);
    }
 
    @Override
    public void customReadHeader(HotRodHeader header, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out) {
       switch (header.op) {
-         case AuthRequest:
+         case AUTH:
             ExtendedByteBuf.readMaybeString(buffer).flatMap(mech ->
                   ExtendedByteBuf.readMaybeRangedBytes(buffer).map(clientResponse -> {
                      hrCtx.operationDecodeContext = new KeyValuePair<>(mech, clientResponse);
@@ -359,7 +278,7 @@ class Decoder2x implements VersionedDecoder {
                      return null;
                   }));
             break;
-         case ExecRequest:
+         case EXEC:
             ExecRequestContext execCtx = (ExecRequestContext) hrCtx.operationDecodeContext;
             // first time read
             if (execCtx == null) {
@@ -409,22 +328,22 @@ class Decoder2x implements VersionedDecoder {
    @Override
    public void customReadKey(HotRodHeader header, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out) {
       switch (header.op) {
-         case BulkGetRequest:
-         case BulkGetKeysRequest:
+         case BULK_GET:
+         case BULK_GET_KEYS:
             ExtendedByteBuf.readMaybeVInt(buffer).ifPresent(number -> {
                hrCtx.operationDecodeContext = number;
                buffer.markReaderIndex();
                out.add(hrCtx);
             });
             break;
-         case QueryRequest:
+         case QUERY:
             ExtendedByteBuf.readMaybeRangedBytes(buffer).ifPresent(query -> {
                hrCtx.operationDecodeContext = query;
                buffer.markReaderIndex();
                out.add(hrCtx);
             });
             break;
-         case AddClientListenerRequest:
+         case ADD_CLIENT_LISTENER:
             ClientListenerRequestContext requestCtx;
             if (hrCtx.operationDecodeContext == null) {
                Optional<ClientListenerRequestContext> optional = ExtendedByteBuf.readMaybeRangedBytes(buffer).flatMap(listenerId ->
@@ -476,14 +395,14 @@ class Decoder2x implements VersionedDecoder {
                return;
             }
             break;
-         case RemoveClientListenerRequest:
+         case REMOVE_CLIENT_LISTENER:
             ExtendedByteBuf.readMaybeRangedBytes(buffer).ifPresent(listenerId -> {
                hrCtx.operationDecodeContext = listenerId;
                buffer.markReaderIndex();
                out.add(hrCtx);
             });
             break;
-         case IterationStartRequest:
+         case ITERATION_START:
             ExtendedByteBuf.readMaybeOptRangedBytes(buffer).flatMap(segments ->
                   ExtendedByteBuf.readMaybeOptString(buffer).map(name -> {
                      Optional<KeyValuePair<String, List<byte[]>>> factory;
@@ -525,8 +444,8 @@ class Decoder2x implements VersionedDecoder {
                      out.add(hrCtx);
                      return null;
                   }));
-         case IterationNextRequest:
-         case IterationEndRequest:
+         case ITERATION_NEXT:
+         case ITERATION_END:
             ExtendedByteBuf.readMaybeString(buffer).ifPresent(iterationId -> {
                hrCtx.operationDecodeContext = iterationId;
                buffer.markReaderIndex();
@@ -568,27 +487,10 @@ class Decoder2x implements VersionedDecoder {
       }).orElse(Optional.empty());
    }
 
-   GetWithMetadataResponse getKeyMetadata(HotRodHeader h, byte[] k, AdvancedCache<byte[], byte[]> cache) {
-      CacheEntry<byte[], byte[]> ce = cache.getCacheEntry(k);
-      if (ce != null) {
-         NumericVersion entryVersion = (NumericVersion) ce.getMetadata().version();
-         byte[] v = ce.getValue();
-         int lifespan = ce.getLifespan() < 0 ? -1 : (int) (ce.getLifespan() / 1000);
-         int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) (ce.getMaxIdle() / 1000);
-         return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetWithMetadataResponse, OperationStatus.Success, h.topologyId, v,
-               entryVersion.getVersion(), ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
-      } else {
-         return new GetWithMetadataResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, h.topologyId, null,
-               0, -1, -1, -1, -1);
-      }
-   }
-
    @Override
    public void customReadValue(HotRodHeader header, ByteBuf buffer, CacheDecodeContext hrCtx, List<Object> out) {
       switch (header.op) {
-         case PutAllRequest:
+         case PUT_ALL:
             int maxLength = hrCtx.params.valueLength;
             Map<byte[], byte[]> map;
             if (hrCtx.operationDecodeContext == null) {
@@ -613,7 +515,7 @@ class Decoder2x implements VersionedDecoder {
                out.add(hrCtx);
             }
             break;
-         case GetAllRequest:
+         case GET_ALL:
             maxLength = hrCtx.params.valueLength;
             Set<byte[]> set;
             if (hrCtx.operationDecodeContext == null) {

@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod.test;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.Response;
 
@@ -12,7 +12,7 @@ public class TestResponse extends Response {
    public final AbstractTestTopologyAwareResponse topologyResponse;
 
    protected TestResponse(byte version, long messageId, String cacheName, short clientIntel,
-                          OperationResponse operation, OperationStatus status, int topologyId,
+                          HotRodOperation operation, OperationStatus status, int topologyId,
                           AbstractTestTopologyAwareResponse topologyResponse) {
       super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
       this.topologyResponse = topologyResponse;

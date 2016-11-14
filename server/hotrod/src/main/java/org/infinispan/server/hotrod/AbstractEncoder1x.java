@@ -48,7 +48,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
       AbstractTopologyResponse topologyResp = getTopologyResponse(r, addressCache, server);
       buf.writeByte(Constants.MAGIC_RES);
       ExtendedByteBuf.writeUnsignedLong(r.messageId, buf);
-      buf.writeByte(r.operation.getCode());
+      buf.writeByte(r.operation.getResponseOpCode());
       buf.writeByte(r.status.getCode());
       if (topologyResp != null) {
          if (topologyResp instanceof TopologyAwareResponse) {

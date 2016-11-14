@@ -23,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Invokes operations against the cache based on the state kept during decoding process
  */
-public class CacheDecodeContext {
+public final class CacheDecodeContext {
    static final long MillisecondsIn30days = 60 * 60 * 24 * 30 * 1000l;
    static final Log log = LogFactory.getLog(CacheDecodeContext.class, Log.class);
    static final boolean isTrace = log.isTraceEnabled();
@@ -159,11 +159,11 @@ public class CacheDecodeContext {
          int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
          long version = entryVersion != null ? entryVersion.getVersion() : 0;
          return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-               OperationResponse.GetWithMetadataResponse, OperationStatus.Success, header.topologyId, v, version,
+               header.op, OperationStatus.Success, header.topologyId, v, version,
                ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
       } else {
          return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-               OperationResponse.GetWithMetadataResponse, OperationStatus.KeyDoesNotExist, header.topologyId, null,
+               header.op, OperationStatus.KeyDoesNotExist, header.topologyId, null,
                -1, -1, -1, -1, -1);
       }
    }

@@ -13,12 +13,12 @@ class Events {
    abstract static class Event {
       protected final byte version;
       protected final long messageId;
-      protected final OperationResponse op;
+      protected final HotRodOperation op;
       protected final byte[] listenerId;
       protected final boolean isRetried;
       protected final byte marker;
 
-      protected Event(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried, byte marker) {
+      protected Event(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried, byte marker) {
          this.version = version;
          this.messageId = messageId;
          this.op = op;
@@ -38,7 +38,7 @@ class Events {
    static class KeyEvent extends Event {
       protected final byte[] key;
 
-      protected KeyEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
+      protected KeyEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
                          byte[] key) {
          super(version, messageId, op, listenerId, isRetried, (byte) 0);
          this.key = key;
@@ -67,7 +67,7 @@ class Events {
       protected final byte[] key;
       protected final long dataVersion;
 
-      protected KeyWithVersionEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
+      protected KeyWithVersionEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
                                     byte[] key, long dataVersion) {
          super(version, messageId, op, listenerId, isRetried, (byte) 0);
          this.key = key;
@@ -98,7 +98,7 @@ class Events {
    static class CustomEvent extends Event {
       protected final byte[] eventData;
 
-      protected CustomEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
+      protected CustomEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
                             byte[] eventData) {
          super(version, messageId, op, listenerId, isRetried, (byte) 1);
          this.eventData = eventData;
@@ -126,7 +126,7 @@ class Events {
    static class CustomRawEvent extends Event {
       protected final byte[] eventData;
 
-      protected CustomRawEvent(byte version, long messageId, OperationResponse op, byte[] listenerId, boolean isRetried,
+      protected CustomRawEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
                                byte[] eventData) {
          super(version, messageId, op, listenerId, isRetried, (byte) 2);
          this.eventData = eventData;

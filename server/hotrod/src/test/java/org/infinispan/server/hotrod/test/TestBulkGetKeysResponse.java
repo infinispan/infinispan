@@ -4,7 +4,7 @@ import static org.infinispan.server.hotrod.OperationStatus.Success;
 
 import java.util.Set;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 
 /**
  * @author wburns
@@ -15,7 +15,7 @@ public class TestBulkGetKeysResponse extends TestResponse {
 
    protected TestBulkGetKeysResponse(byte version, long messageId, String cacheName, short clientIntel,
                                      int topologyId, AbstractTestTopologyAwareResponse topologyResponse, Set<byte[]> bulkData) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.BulkGetResponse, Success, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.BULK_GET, Success, topologyId, topologyResponse);
       this.bulkData = bulkData;
    }
 }

@@ -4,7 +4,7 @@ import static org.infinispan.server.hotrod.OperationStatus.Success;
 
 import java.util.Map;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 
 /**
  * @author wburns
@@ -15,7 +15,7 @@ public class TestStatsResponse extends TestResponse {
 
    protected TestStatsResponse(byte version, long messageId, String cacheName, short clientIntel,
                                int topologyId, AbstractTestTopologyAwareResponse topologyResponse, Map<String, String> stats) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.StatsResponse, Success, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.STATS, Success, topologyId, topologyResponse);
       this.stats = stats;
    }
 }

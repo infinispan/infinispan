@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 
-import org.infinispan.server.hotrod.OperationResponse;
+import org.infinispan.server.hotrod.HotRodOperation;
 
 /**
  * @author wburns
@@ -13,7 +13,7 @@ public class TestQueryResponse extends TestResponse {
 
    protected TestQueryResponse(byte version, long messageId, String cacheName, short clientIntel,
                                int topologyId, AbstractTestTopologyAwareResponse topologyResponse, byte[] result) {
-      super(version, messageId, cacheName, clientIntel, OperationResponse.QueryResponse, Success, topologyId, topologyResponse);
+      super(version, messageId, cacheName, clientIntel, HotRodOperation.QUERY, Success, topologyId, topologyResponse);
       this.result = result;
    }
 }
