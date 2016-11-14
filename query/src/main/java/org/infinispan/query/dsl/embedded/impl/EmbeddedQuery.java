@@ -58,7 +58,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
       CacheStream<CacheEntry<?, ObjectFilter.FilterResult>> stream = (CacheStream<CacheEntry<?, ObjectFilter.FilterResult>>) CacheFilters.filterAndConvert(cache.cacheEntrySet().stream(), createFilter());
-      return Closeables.iterator(stream.map(e -> e.getValue()));
+      return Closeables.iterator(stream.map(CacheEntry::getValue));
    }
 
    @Override
