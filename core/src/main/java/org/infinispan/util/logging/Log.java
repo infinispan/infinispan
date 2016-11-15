@@ -1452,4 +1452,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while handling view %s", id = 421)
    void viewHandlingError(int viewId, @Cause Throwable t);
+
+   @Message(value = "Cache with name %s is defined more than once!", id = 422)
+   CacheConfigurationException duplicateCacheName(String name);
 }
