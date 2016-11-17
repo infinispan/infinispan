@@ -108,10 +108,10 @@ public class HotRodClient {
 
    Map<Long, Op> idToOp = new ConcurrentHashMap<>();
    SaslClient saslClient = null;
+   private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
 
    private Channel initializeChannel() {
-      EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
       Bootstrap bootstrap = new Bootstrap();
       bootstrap.group(eventLoopGroup);
       bootstrap.handler(new NettyInitializers(new ClientChannelInitializer(this, rspTimeoutSeconds, sslEngine, protocolVersion)));
@@ -127,6 +127,7 @@ public class HotRodClient {
    }
 
    public ChannelFuture stop() {
+      eventLoopGroup.shutdownGracefully();
       return ch.disconnect();
    }
 
