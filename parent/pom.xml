@@ -98,6 +98,7 @@
 
       <version.ant>1.9.4</version.ant>
       <version.antlr>3.4</version.antlr>
+      <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.apache.ds>2.0.0-M20</version.apache.ds>
       <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
@@ -1052,7 +1053,7 @@
             <plugin>
                <groupId>org.antlr</groupId>
                <artifactId>antlr3-maven-plugin</artifactId>
-               <version>${version.antlr}</version>
+               <version>${version.maven.antlr3}</version>
                <executions>
                  <execution>
                      <goals>
@@ -1141,7 +1142,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-shade-plugin</artifactId>
-               <version>2.3</version>
+               <version>2.4.3</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
