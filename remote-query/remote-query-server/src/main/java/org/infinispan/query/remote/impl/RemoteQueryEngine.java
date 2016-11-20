@@ -31,7 +31,7 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 final class RemoteQueryEngine extends BaseRemoteQueryEngine {
 
    RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      super(cache, isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeProvider());
+      super(cache, isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeAndAnalyzerProvider());
    }
 
    @Override
@@ -69,7 +69,7 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
    }
 
    @Override
-   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, org.apache.lucene.search.Query luceneQuery) {
+   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery) {
       CustomTypeMetadata customTypeMetadata = new CustomTypeMetadata() {
          @Override
          public Class<?> getEntityType() {

@@ -77,7 +77,7 @@ public class QueryEngine<TypeMetadata> {
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
-   protected final LuceneQueryMaker.FieldBridgeProvider<TypeMetadata> fieldBridgeProvider;
+   protected final LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider;
 
    /**
     * Optional cache for query objects.
@@ -96,7 +96,7 @@ public class QueryEngine<TypeMetadata> {
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeProvider<TypeMetadata> fieldBridgeProvider) {
+   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
       this.cache = cache;
       this.isIndexed = isIndexed;
       this.matcherImplClass = matcherImplClass;
@@ -104,10 +104,10 @@ public class QueryEngine<TypeMetadata> {
       this.authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
-      if (fieldBridgeProvider == null && propertyHelper instanceof HibernateSearchPropertyHelper) {
-         this.fieldBridgeProvider = (LuceneQueryMaker.FieldBridgeProvider<TypeMetadata>) (((HibernateSearchPropertyHelper) propertyHelper).getDefaultFieldBridgeProvider());
+      if (fieldBridgeAndAnalyzerProvider == null && propertyHelper instanceof HibernateSearchPropertyHelper) {
+         this.fieldBridgeAndAnalyzerProvider = (LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata>) (((HibernateSearchPropertyHelper) propertyHelper).getDefaultFieldBridgeProvider());
       } else {
-         this.fieldBridgeProvider = fieldBridgeProvider;
+         this.fieldBridgeAndAnalyzerProvider = fieldBridgeAndAnalyzerProvider;
       }
    }
 
@@ -729,7 +729,7 @@ public class QueryEngine<TypeMetadata> {
    }
 
    private LuceneQueryParsingResult<TypeMetadata> transformToLuceneQueryParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      return new LuceneQueryMaker<>(getSearchFactory(), fieldBridgeProvider)
+      return new LuceneQueryMaker<>(getSearchFactory(), fieldBridgeAndAnalyzerProvider)
             .transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
    }
 

@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.DateTools;
+import org.hibernate.search.analyzer.impl.LuceneAnalyzerReference;
+import org.hibernate.search.analyzer.spi.AnalyzerReference;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.TwoWayStringBridge;
@@ -25,10 +28,12 @@ import org.hibernate.search.engine.metadata.impl.PropertyMetadata;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
@@ -128,7 +133,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(DateTools.stringToDate(value));
             return calendar;
-         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge || bridge instanceof ElasticsearchDateBridge ) {
+         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge || bridge instanceof ElasticsearchDateBridge) {
             return DateTools.stringToDate(value);
          } else {
             return value;
@@ -204,16 +209,40 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       }
    }
 
-   public LuceneQueryMaker.FieldBridgeProvider<Class<?>> getDefaultFieldBridgeProvider() {
-      return (entityType, propertyPath) -> {
-         EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
-         if (indexBinding != null) {
-            DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
-            if (fieldMetadata != null) {
-               return fieldMetadata.getFieldBridge();
+   public LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<Class<?>> getDefaultFieldBridgeProvider() {
+      return new LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<Class<?>>() {
+
+         @Override
+         public FieldBridge getFieldBridge(Class<?> entityType, String[] propertyPath) {
+            EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+            if (indexBinding != null) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
+               if (fieldMetadata != null) {
+                  return fieldMetadata.getFieldBridge();
+               }
             }
+            return null;
          }
-         return null;
+
+         @Override
+         public Analyzer getAnalyzer(SearchIntegrator searchIntegrator, Class<?> entityType, String[] propertyPath) {
+            EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+            if (indexBinding != null) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
+               if (fieldMetadata != null) {
+                  AnalyzerReference analyzerReference = fieldMetadata.getAnalyzerReference();
+                  if (analyzerReference.is(LuceneAnalyzerReference.class)) {
+                     return analyzerReference.unwrap(LuceneAnalyzerReference.class).getAnalyzer();
+                  }
+               }
+            }
+            return null;
+         }
+
+         @Override
+         public void overrideAnalyzers(IckleParsingResult<Class<?>> parsingResult, EntityContext entityContext) {
+            // Hibernate Search populates the EntityContext; there's nothing more we need to do here.
+         }
       };
    }
 

@@ -23,8 +23,8 @@ class BaseRemoteQueryEngine extends QueryEngine<Descriptor> {
 
    private final EmbeddedQueryFactory queryFactory = new EmbeddedQueryFactory(this);
 
-   protected BaseRemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeProvider<Descriptor> fieldBridgeProvider) {
-      super(cache, isIndexed, matcherImplClass, fieldBridgeProvider);
+   protected BaseRemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<Descriptor> fieldBridgeAndAnalyzerProvider) {
+      super(cache, isIndexed, matcherImplClass, fieldBridgeAndAnalyzerProvider);
       serializationContext = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
    }
 

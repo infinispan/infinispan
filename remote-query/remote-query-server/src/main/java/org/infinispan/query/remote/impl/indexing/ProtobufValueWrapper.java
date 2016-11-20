@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
@@ -25,6 +26,9 @@ public final class ProtobufValueWrapper {
 
    private int hashCode = 0;
 
+   // The Descriptor of the message (if it's a Message and not a primitive value). Transient field!
+   private Descriptor messageDescriptor;
+
    public ProtobufValueWrapper(byte[] binary) {
       if (binary == null) {
          throw new IllegalArgumentException("argument cannot be null");
@@ -34,6 +38,14 @@ public final class ProtobufValueWrapper {
 
    public byte[] getBinary() {
       return binary;
+   }
+
+   public Descriptor getMessageDescriptor() {
+      return messageDescriptor;
+   }
+
+   public void setMessageDescriptor(Descriptor messageDescriptor) {
+      this.messageDescriptor = messageDescriptor;
    }
 
    @Override
