@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.DateBridge;
 import org.hibernate.search.annotations.EncodingType;
 import org.hibernate.search.annotations.Field;
@@ -19,6 +20,7 @@ import org.infinispan.all.embeddedquery.testdomain.Transaction;
  * @since 7.0
  */
 @Indexed
+@Analyzer(definition = "standard")
 public class TransactionHS implements Transaction, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
@@ -32,6 +34,10 @@ public class TransactionHS implements Transaction, Serializable {
    @Field
    @SortableField
    private String longDescription;
+
+   @Field
+   @Analyzer(definition = "ngram")
+   private String notes;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int accountId;
@@ -78,6 +84,14 @@ public class TransactionHS implements Transaction, Serializable {
    @Override
    public void setDescription(String description) {
       this.description = description;
+   }
+
+   public String getNotes() {
+      return notes;
+   }
+
+   public void setNotes(String notes) {
+      this.notes = notes;
    }
 
    @Override
@@ -146,6 +160,7 @@ public class TransactionHS implements Transaction, Serializable {
       if (description != null ? !description.equals(other.description) : other.description != null) return false;
       if (longDescription != null ? !longDescription.equals(other.longDescription) : other.longDescription != null)
          return false;
+      if (notes != null ? !notes.equals(other.notes) : other.notes != null) return false;
 
       return true;
    }
@@ -155,6 +170,7 @@ public class TransactionHS implements Transaction, Serializable {
       int result = id;
       result = 31 * result + (description != null ? description.hashCode() : 0);
       result = 31 * result + (longDescription != null ? longDescription.hashCode() : 0);
+      result = 31 * result + (notes != null ? notes.hashCode() : 0);
       result = 31 * result + accountId;
       result = 31 * result + (date != null ? date.hashCode() : 0);
       long temp = Double.doubleToLongBits(amount);
@@ -170,6 +186,7 @@ public class TransactionHS implements Transaction, Serializable {
             "id=" + id +
             ", description='" + description + '\'' +
             ", longDescription='" + longDescription + '\'' +
+            ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
             ", date=" + date +
             ", amount=" + amount +

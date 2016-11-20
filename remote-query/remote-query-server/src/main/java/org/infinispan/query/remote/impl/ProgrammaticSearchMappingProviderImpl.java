@@ -15,12 +15,14 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public final class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearchMappingProvider {
 
    @Override
    public void defineMappings(Cache cache, SearchMapping searchMapping) {
       searchMapping.entity(ProtobufValueWrapper.class)
             .indexed()
+            .analyzerDiscriminator(ProtobufValueWrapperAnalyzerDiscriminator.class)
             .classBridgeInstance(new ProtobufValueWrapperFieldBridge(cache))
             .norms(Norms.NO)
             .analyze(Analyze.NO)

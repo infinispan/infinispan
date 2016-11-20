@@ -26,4 +26,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Querying is not enabled on cache %s", id = 28004)
    CacheException queryingNotEnabled(String cacheName);
+
+   @Message(value = "Field %s from type %s is not analyzed", id = 28005)
+   IllegalArgumentException fieldIsNotAnalyzed(String fieldName, String fullyQualifiedTypeName);
 }

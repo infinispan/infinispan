@@ -39,14 +39,13 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
    @Override
    public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
       if (!(value instanceof ProtobufValueWrapper)) {
-         throw new IllegalArgumentException("This FieldBridge can only be applied to a ProtobufValueWrapper");
+         throw new IllegalArgumentException("This FieldBridge can only be applied to a " + ProtobufValueWrapper.class.getName());
       }
       ProtobufValueWrapper valueWrapper = (ProtobufValueWrapper) value;
-
-      decodeAndIndex(valueWrapper.getBinary(), document, luceneOptions);
+      decodeAndIndex(valueWrapper, document, luceneOptions);
    }
 
-   private void decodeAndIndex(byte[] bytes, Document document, LuceneOptions luceneOptions) {
+   private void decodeAndIndex(ProtobufValueWrapper valueWrapper, Document document, LuceneOptions luceneOptions) {
       if (serializationContext == null) {
          serializationContext = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
       }
@@ -55,7 +54,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
       }
 
       try {
-         ProtobufParser.INSTANCE.parse(new WrappedMessageTagHandler(document, luceneOptions, serializationContext), wrapperDescriptor, bytes);
+         ProtobufParser.INSTANCE.parse(new WrappedMessageTagHandler(valueWrapper, document, luceneOptions, serializationContext), wrapperDescriptor, valueWrapper.getBinary());
       } catch (IOException e) {
          throw new CacheException(e);
       }

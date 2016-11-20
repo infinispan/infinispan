@@ -2,7 +2,6 @@ package org.infinispan.query.remote.impl.indexing;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.NumericDocValuesField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
@@ -14,7 +13,6 @@ import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
@@ -46,7 +44,7 @@ final class IndexingTagHandler implements TagHandler {
 
    private MessageContext<? extends MessageContext> messageContext;
 
-   public IndexingTagHandler(Descriptor messageDescriptor, Document document) {
+   IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
       this.messageContext = new MessageContext<>(null, null, messageDescriptor);
    }
@@ -67,12 +65,13 @@ final class IndexingTagHandler implements TagHandler {
          FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
          if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
             //TODO [anistor] should we still store if isStore==true but isIndexed==false?
-            addFieldToDocument(fieldDescriptor.getName(), fieldDescriptor.getType(), tagValue, fieldMapping);
+            addFieldToDocument(fieldDescriptor, tagValue, fieldMapping);
          }
       }
    }
 
-   private void addFieldToDocument(String fieldName, Type type, Object value, FieldMapping fieldMapping) {
+   private void addFieldToDocument(FieldDescriptor fieldDescriptor, Object value, FieldMapping fieldMapping) {
+      Type type = fieldDescriptor.getType();
       LuceneOptions luceneOptions;
       boolean isSortable = false;
       if (fieldMapping == null) {
@@ -92,66 +91,21 @@ final class IndexingTagHandler implements TagHandler {
          luceneOptions = fieldMapping.luceneOptions();
          isSortable = fieldMapping.sortable();
          if (value == null) {
-            if (fieldMapping.analyze() || fieldMapping.indexNullAs().equals(IndexingMetadata.DO_NOT_INDEX_NULL)) {
+            if (fieldMapping.indexNullAs() == null || fieldMapping.analyze()) {
                // a missing or null field will never get indexed as the 'null token' if it is analyzed
                return;
             }
-            switch (type) {
-               case STRING:
-                  value = fieldMapping.indexNullAs();
-                  break;
-               case DOUBLE:
-                  value = Double.parseDouble(fieldMapping.indexNullAs());
-                  break;
-               case FLOAT:
-                  value = Float.parseFloat(fieldMapping.indexNullAs());
-                  break;
-               case INT64:
-               case UINT64:
-               case FIXED64:
-               case SFIXED64:
-               case SINT64:
-                  value = Long.parseLong(fieldMapping.indexNullAs());
-                  break;
-               case INT32:
-               case FIXED32:
-               case UINT32:
-               case SFIXED32:
-               case SINT32:
-                  value = Integer.parseInt(fieldMapping.indexNullAs());
-                  break;
-               case ENUM:
-                  FieldDescriptor fd = messageContext.getMessageDescriptor().findFieldByName(fieldName);
-                  EnumValueDescriptor enumVal = fd.getEnumType().findValueByName(fieldMapping.indexNullAs());
-                  if (enumVal == null) {
-                     throw new IllegalArgumentException("Enum value not found :" + fieldMapping.indexNullAs());
-                  }
-                  value = enumVal.getNumber();
-                  break;
-               case BOOL:
-                  value = Boolean.valueOf(fieldMapping.indexNullAs());
-                  break;
-            }
+            value = fieldMapping.indexNullAs();
          }
       }
 
       // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
       // different entity types to have different field types or different indexing options in the same index.
       String fullFieldName = messageContext.getFullFieldName();
-      fullFieldName = fullFieldName != null ? fullFieldName + "." + fieldName : fieldName;
+      fullFieldName = fullFieldName != null ? fullFieldName + "." + fieldDescriptor.getName() : fieldDescriptor.getName();
       switch (type) {
          case DOUBLE:
-            if (isSortable) {
-               document.add(new NumericDocValuesField(fieldName, Double.doubleToRawLongBits(((Number) value).doubleValue())));
-            }
-            luceneOptions.addNumericFieldToDocument(fullFieldName, value, document);
-            break;
          case FLOAT:
-            if (isSortable) {
-               document.add(new NumericDocValuesField(fieldName, Float.floatToRawIntBits(((Number) value).floatValue())));
-            }
-            luceneOptions.addNumericFieldToDocument(fullFieldName, value, document);
-            break;
          case INT64:
          case UINT64:
          case INT32:
@@ -164,17 +118,9 @@ final class IndexingTagHandler implements TagHandler {
          case SINT64:
          case ENUM:
             if (isSortable) {
-               //TODO [anistor] Hibernate Search should also provide luceneOptions.addNumericDocValuesFieldToDocument(fullFieldName, ((Number) value).longValue(), document);
-               document.add(new NumericDocValuesField(fieldName, ((Number) value).longValue()));
+               luceneOptions.addNumericDocValuesFieldToDocument(fullFieldName, (Number) value, document);
             }
             luceneOptions.addNumericFieldToDocument(fullFieldName, value, document);
-            break;
-         case BOOL:
-            String indexedBoolean = value.toString();
-            if (isSortable) {
-               luceneOptions.addSortedDocValuesFieldToDocument(fullFieldName, indexedBoolean, document);
-            }
-            luceneOptions.addFieldToDocument(fullFieldName, indexedBoolean, document);
             break;
          default:
             String indexedString = String.valueOf(value);
@@ -216,14 +162,14 @@ final class IndexingTagHandler implements TagHandler {
     * Lucene cannot index nulls.
     */
    private void indexMissingFields() {
-      for (FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
-         if (!messageContext.isFieldMarked(fd.getNumber())) {
-            Object defaultValue = fd.getJavaType() == JavaType.MESSAGE
-                  || fd.hasDefaultValue() ? fd.getDefaultValue() : null;
+      for (FieldDescriptor fieldDescriptor : messageContext.getMessageDescriptor().getFields()) {
+         if (!messageContext.isFieldMarked(fieldDescriptor.getNumber())) {
+            Object defaultValue = fieldDescriptor.getJavaType() == JavaType.MESSAGE
+                  || fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-            FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fd.getName()) : null;
+            FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
             if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
-               addFieldToDocument(fd.getName(), fd.getType(), defaultValue, fieldMapping);
+               addFieldToDocument(fieldDescriptor, defaultValue, fieldMapping);
             }
          }
       }

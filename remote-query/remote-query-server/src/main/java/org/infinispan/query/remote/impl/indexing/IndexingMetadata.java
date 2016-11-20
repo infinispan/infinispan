@@ -174,7 +174,7 @@ public final class IndexingMetadata {
       this.fields = fields;
       this.sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
             .filter(FieldMapping::sortable)
-            .map(FieldMapping::getName)
+            .map(FieldMapping::name)
             .collect(Collectors.toSet());
    }
 
@@ -182,9 +182,13 @@ public final class IndexingMetadata {
       return isIndexed;
    }
 
-   // TODO [anistor] The index name is not used yet!
-   public String getIndexName() {
+   // TODO [anistor] The index name is ignored for now because all types get indexed in the same index of ProtobufValueWrapper
+   public String indexName() {
       return indexName;
+   }
+
+   public String analyzer() {
+      return analyzer;
    }
 
    public boolean isFieldIndexed(String fieldName) {
