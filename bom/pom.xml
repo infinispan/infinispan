@@ -430,11 +430,13 @@
             <artifactId>protostream</artifactId>
             <version>${version.protostream}</version>
          </dependency>
+
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>sample-domain-definition</artifactId>
             <version>${version.protostream}</version>
          </dependency>
+
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>sample-domain-implementation</artifactId>
