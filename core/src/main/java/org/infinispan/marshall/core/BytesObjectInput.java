@@ -68,7 +68,8 @@ final class BytesObjectInput implements ObjectInput {
       } else {
          int idx = Math.min(bytes.length, pos);
          long skip = idx + n;
-         pos = (int) (skip + offset);
+         // Calculate max to avoid skipping before offset
+         pos = (int) Math.max(skip, offset);
          return skip;
       }
    }

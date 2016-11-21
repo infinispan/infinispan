@@ -53,6 +53,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
@@ -63,6 +64,7 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -120,9 +122,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setUp() {
       // Use a clustered cache manager to be able to test global marshaller interaction too
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalAndInternal.Externalizer());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
       marshaller = extractGlobalMarshaller(cm);
    }
 
@@ -572,6 +576,23 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertByteArrayEquality(bytes);
    }
 
+   public void testExternalAndInternalWithOffset() throws Exception {
+      PojoWithExternalAndInternal obj = new PojoWithExternalAndInternal(new Human().age(23), "value");
+
+      byte[] bytes = marshaller.objectToByteBuffer(obj);
+      bytes = prependBytes(new byte[]{1, 2, 3}, bytes);
+
+      Object readObj = marshaller.objectFromByteBuffer(bytes, 3, bytes.length);
+      assertEquals(obj, readObj);
+   }
+
+   byte[] prependBytes(byte[] bytes, byte[] src) {
+      byte[] res = new byte[bytes.length + src.length];
+      System.arraycopy(bytes, 0, res, 0, bytes.length);
+      System.arraycopy(src, 0, res, bytes.length, src.length);
+      return res;
+   }
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       log.debugf("Payload size for object=%s : %s", writeObj, bytes.length);
@@ -700,6 +721,21 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return this;
       }
 
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Human human = (Human) o;
+
+         return age == human.age;
+
+      }
+
+      @Override
+      public int hashCode() {
+         return age;
+      }
    }
 
    static class HumanComparator implements Comparator<Human>, Serializable {
@@ -711,6 +747,61 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return 1;
       }
 
+   }
+
+   static class PojoWithExternalAndInternal {
+      final Human human;
+      final String value;
+
+      PojoWithExternalAndInternal(Human human, String value) {
+         this.human = human;
+         this.value = value;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         PojoWithExternalAndInternal that = (PojoWithExternalAndInternal) o;
+
+         if (!human.equals(that.human)) return false;
+         return value.equals(that.value);
+
+      }
+
+      @Override
+      public int hashCode() {
+         int result = human.hashCode();
+         result = 31 * result + value.hashCode();
+         return result;
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<PojoWithExternalAndInternal> {
+
+         @Override
+         public void writeObject(ObjectOutput out, PojoWithExternalAndInternal obj) throws IOException {
+            out.writeObject(obj.human);
+            out.writeObject(obj.value);
+         }
+
+         @Override
+         public PojoWithExternalAndInternal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            Human human = (Human) input.readObject();
+            String value = (String) input.readObject();
+            return new PojoWithExternalAndInternal(human, value);
+         }
+
+         @Override
+         public Set<Class<? extends PojoWithExternalAndInternal>> getTypeClasses() {
+            return Collections.singleton(PojoWithExternalAndInternal.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 999;
+         }
+      }
    }
 
 }
