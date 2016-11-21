@@ -9,16 +9,19 @@ package org.infinispan.query.api.continuous;
 public interface ContinuousQueryListener<K, V> {
 
    /**
-    * Receives notification that a cache entry has joined the matching set.
+    * Receives notification that a cache entry has joined the matching set. This is invoked initially when receiving the
+    * existing entries then match the query and later whenever a previously non-matching entry is updated and starts to
+    * match.
     *
     * @param key   the key of the joining entry
-    * @param value the joining entry or the Object[] projection if specified
+    * @param value the joining entry or the Object[] projection if a projection was specified
     */
    default void resultJoining(K key, V value) {
    }
 
    /**
-    * Receives notification that a cache entry from the matching set was updated and continues to match the query.
+    * Receives notification that a cache entry from the matching set was updated and continues to match the query. The
+    * modified attributes are not necessarily part of the query.
     *
     * @param key   the key of the joining entry
     * @param value the joining entry or the Object[] projection if specified
@@ -27,7 +30,7 @@ public interface ContinuousQueryListener<K, V> {
    }
 
    /**
-    * Receives notification that a cache entry has left the matching set.
+    * Receives notification that a cache entry has left the matching set. This can happen due to an update or removal.
     *
     * @param key the key of the leaving entry
     */
