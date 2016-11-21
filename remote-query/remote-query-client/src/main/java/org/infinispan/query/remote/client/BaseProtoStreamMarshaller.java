@@ -9,6 +9,9 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 
 /**
+ * Provides the starting point for implementing a {@link org.infinispan.commons.marshall.Marshaller} that uses Protobuf
+ * encoding. Subclasses must implement just a single {@link #getSerializationContext} lookup method.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
@@ -17,6 +20,11 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
    protected BaseProtoStreamMarshaller() {
    }
 
+   /**
+    * Subclasses must implement this method in order to provide a way to lookup the {@link SerializationContext}
+    *
+    * @return the SerializationContext instance to use
+    */
    protected abstract SerializationContext getSerializationContext();
 
    @Override
@@ -26,12 +34,20 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      // Protostream can handle all of these type as well
-      if (o instanceof String || o instanceof Long || o instanceof Integer || o instanceof Double || o instanceof Float
-            || o instanceof Boolean || o instanceof byte[]) {    //todo [anistor] java.util.Date ?
-         return true;
-      }
-      return getSerializationContext().canMarshall(o.getClass());
+      // Protostream can handle all of these type as well even if we do not
+      // have a per-type marshaller defined in our SerializationContext
+      return o instanceof String ||
+            o instanceof Long ||
+            o instanceof Integer ||
+            o instanceof Double ||
+            o instanceof Float ||
+            o instanceof Boolean ||
+            o instanceof byte[] ||
+//            o instanceof Byte ||
+//            o instanceof Short ||
+//            o instanceof Character ||
+//            o instanceof java.util.Date ||   //todo [anistor] No support for Byte, Short, Character, java.util.Date at the moment
+            getSerializationContext().canMarshall(o.getClass());
    }
 
    @Override
