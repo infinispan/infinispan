@@ -192,7 +192,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
+            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
             assertTrue(cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence);
          }
       });
@@ -210,8 +210,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getDefaultCacheConfiguration();
-            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
-            assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
+            assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
+            assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
          }
       });
    }

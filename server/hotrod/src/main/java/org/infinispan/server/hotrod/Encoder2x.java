@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheStream;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -282,17 +282,22 @@ class Encoder2x implements VersionedEncoder {
          BulkGetResponse bgr = (BulkGetResponse) r;
          if (isTrace) log.trace("About to respond to bulk get request");
          if (bgr.status == OperationStatus.Success) {
-            CacheStream<Map.Entry<byte[], byte[]>> stream = bgr.entries.stream();
-            if (bgr.count != 0) {
-               if (isTrace) log.tracef("About to write (max) %d messages to the client", bgr.count);
-               stream = stream.limit(bgr.count);
+            try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = bgr.entries.iterator()) {
+               int max = Integer.MAX_VALUE;
+               if (bgr.count != 0) {
+                  if (isTrace) log.tracef("About to write (max) %d messages to the client", bgr.count);
+                  max = bgr.count;
+               }
+               int count = 0;
+               while (iterator.hasNext() && count < max) {
+                  Map.Entry<byte[], byte[]> entry = iterator.next();
+                  buf.writeByte(1); // Not done
+                  ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
+                  ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+                  count++;
+               }
+               buf.writeByte(0); // Done
             }
-            stream.iterator().forEachRemaining(entry -> {
-               buf.writeByte(1); // Not done
-               ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
-               ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
-            });
-            buf.writeByte(0); // Done
          }
       } else if (r instanceof BulkGetKeysResponse) {
          BulkGetKeysResponse bgkr = (BulkGetKeysResponse) r;

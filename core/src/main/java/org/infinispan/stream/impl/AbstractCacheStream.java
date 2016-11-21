@@ -471,7 +471,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
                consumer.accept(valueFunction.apply(e));
             });
             if (lastCompleted[0] != null) {
-               listenerNotifier.addSegmentsForObject(lastCompleted[0], segmentsCompleted);
+               listenerNotifier.addSegmentsForObject(valueFunction.apply(lastCompleted[0]), segmentsCompleted);
             }
             return segmentsCompleted;
          }

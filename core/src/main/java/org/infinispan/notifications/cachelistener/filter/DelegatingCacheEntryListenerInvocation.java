@@ -5,13 +5,14 @@ import java.util.UUID;
 
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
+import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 
 /**
  * A wrapper around a {@link CacheEntryListenerInvocation} that keeps a reference to the {@link
  * FilterIndexingServiceProvider} instance that handles this invocation. All methods are delegated to the wrapped
- * invocation except {@link CacheEntryListenerInvocation#invoke(CacheEntryEvent, boolean)} and {@link
+ * invocation except {@link CacheEntryListenerInvocation#invoke(EventWrapper, boolean)} and {@link
  * CacheEntryListenerInvocation#invoke(Object)}. FilterIndexingServiceProvider implementors must extends this class and
  * implement its abstract {@link #unregister} method.
  *
@@ -43,11 +44,11 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    }
 
    @Override
-   public void invoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+   public void invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner) {
    }
 
    @Override
-   public void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter) {
+   public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter) {
       invocation.invokeNoChecks(event, skipQueue, skipConverter);
    }
 

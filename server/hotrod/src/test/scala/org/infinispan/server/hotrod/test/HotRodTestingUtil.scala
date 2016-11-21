@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import io.netty.channel.{Channel, ChannelFuture, ChannelInitializer}
 import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
+import org.infinispan.commons.hash.MurmurHash3
 import org.infinispan.commons.logging.LogFactory
+import org.infinispan.commons.marshall.WrappedByteArray
 import org.infinispan.commons.util.Util
 import org.infinispan.configuration.cache.ConfigurationBuilder
 import org.infinispan.manager.EmbeddedCacheManager
@@ -408,14 +410,14 @@ object HotRodTestingUtil {
 
    private def assertHotRodEquals(cm: EmbeddedCacheManager, cache: Cache,
            key: Bytes, expectedValue: Bytes): InternalCacheEntry = {
-      val entry = cache.getAdvancedCache.getDataContainer.get(key)
+      val entry = cache.getAdvancedCache.getDataContainer.get(new WrappedByteArray(key))
       // Assert based on passed parameters
       if (expectedValue == null) {
          assertNull(entry)
       } else {
          val value =
             if (entry == null) cache.get(key)
-            else entry.getValue
+            else entry.getValue.asInstanceOf[WrappedByteArray].getBytes
 
          assertEquals(expectedValue, value)
       }

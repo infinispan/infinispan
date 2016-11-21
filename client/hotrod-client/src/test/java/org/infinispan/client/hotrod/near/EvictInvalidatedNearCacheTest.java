@@ -37,7 +37,6 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
       assertClient.get(2, "v1").expectNearGetValue(2, "v1");
       assertClient.get(3, "v1").expectNearGetValue(3, "v1");
-      assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
    }
 
 

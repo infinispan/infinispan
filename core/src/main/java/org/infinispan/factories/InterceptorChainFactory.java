@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -17,7 +16,6 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
@@ -34,6 +32,7 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteredActivationInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CompatibilityInterceptor;
 import org.infinispan.interceptors.impl.DeadlockDetectingInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -118,6 +117,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       componentRegistry.registerComponent(interceptorChain, AsyncInterceptorChain.class);
       componentRegistry.registerComponent(new InterceptorChain(interceptorChain), InterceptorChain.class);
 
+      boolean useMarshalledValues = isUsingMarshalledValues(configuration);
+
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       CacheMode cacheMode = configuration.clustering().cacheMode();
@@ -135,12 +136,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       if (compatibility.enabled()) {
-         Marshaller compatibilityMarshaller = compatibility.marshaller();
-         if (compatibilityMarshaller != null) {
-            componentRegistry.wireDependencies(compatibilityMarshaller);
-         }
          interceptorChain.appendInterceptor(createInterceptor(
-               new TypeConverterInterceptor(compatibilityMarshaller), TypeConverterInterceptor.class), false);
+               new CompatibilityInterceptor(), CompatibilityInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
@@ -184,7 +181,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (transactionMode.isTransactional())
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
-      if (isUsingMarshalledValues(configuration)) {
+
+      if (useMarshalledValues) {
          AsyncInterceptor interceptor =
                createInterceptor(new MarshalledValueInterceptor(), MarshalledValueInterceptor.class);
 

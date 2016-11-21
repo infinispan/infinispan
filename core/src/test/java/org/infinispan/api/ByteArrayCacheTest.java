@@ -41,23 +41,6 @@ public class ByteArrayCacheTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   public void testByteArrayReplaceFailWithoutEquivalence() {
-      final Integer key = 1;
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
-         @Override
-         public void call() {
-            Cache<Integer, byte[]> cache = cm.getCache();
-            final byte[] value = {1, 2, 3};
-            cache.put(key, value);
-            // Use a different instance deliberately
-            final byte[] oldValue = {1, 2, 3};
-            final byte[] newValue = {4, 5, 6};
-            assertFalse(cache.replace(key, oldValue, newValue));
-         }
-      });
-   }
-
    public void testByteArrayValueOnlyReplace() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
@@ -79,31 +62,13 @@ public class ByteArrayCacheTest extends SingleCacheManagerTest {
    }
 
    public void testByteArrayGet() {
-      byteArrayGet(this.<byte[], byte[]>cache(), true);
-   }
-
-   public void testByteArrayGetFail() {
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
-         @Override
-         public void call() {
-            byteArrayGet(cm.<byte[], byte[]>getCache(), false);
-         }
-      });
-   }
-
-   protected void byteArrayGet(
-         Map<byte[], byte[]> map, boolean expectFound) {
+      Map<byte[], byte[]> map = cache();
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
       map.put(key, value);
       byte[] lookupKey = {1, 2, 3}; // on purpose, different instance required
-      if (expectFound)
-         assertTrue(String.format("Expected key=%s to return value=%s",
-               Util.toStr(lookupKey), Util.toStr(value)),
-               Arrays.equals(value, map.get(lookupKey)));
-      else
-         assertNull(map.get(lookupKey));
+      assertTrue(String.format("Expected key=%s to return value=%s",
+            Util.toStr(lookupKey), Util.toStr(value)),
+            Arrays.equals(value, map.get(lookupKey)));
    }
-
 }

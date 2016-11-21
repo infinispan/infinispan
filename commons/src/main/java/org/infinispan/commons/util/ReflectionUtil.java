@@ -212,6 +212,9 @@ public class ReflectionUtil {
    }
 
    public static Method findSetterForField(Class<?> c, String fieldName) {
+      if (c == Object.class) {
+         return null;
+      }
       for (Method m : c.getDeclaredMethods()) {
          String name = m.getName();
          String s = null;
@@ -223,7 +226,8 @@ public class ReflectionUtil {
             return m;
          }
       }
-      return null;
+      // Try parent class until we run out
+      return findSetterForField(c.getSuperclass(), fieldName);
    }
 
    public static String extractFieldName(String setterOrGetter) {

@@ -206,8 +206,10 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.dataContainer().dataContainer() instanceof CustomDataContainer);
 
+      // Equivalence is ignored
       assertTrue(config.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
-      assertTrue(config.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
+      // Equivalence is ignored
+      assertTrue(config.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
    }
 
    private void assertDefaultConfigApplied(EmbeddedCacheManager cm) {
