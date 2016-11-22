@@ -101,9 +101,9 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
          String pattern = jmxDomain + ":" + groupName + ",*";
          try {
-            Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
+            Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);
             for (ObjectName name : names) {
-               mBeanServer.unregisterMBean(name);
+               JmxUtil.unregisterMBean(name, mBeanServer);
             }
          } catch (MBeanRegistrationException e) {
             log.unableToUnregisterMBeanWithPattern(pattern, e);
@@ -112,6 +112,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          } catch (MalformedObjectNameException e) {
             String message = "Malformed pattern " + pattern;
             throw new CacheException(message, e);
+         } catch (Exception e) {
+            throw new CacheException(e);
          }
       }
    }

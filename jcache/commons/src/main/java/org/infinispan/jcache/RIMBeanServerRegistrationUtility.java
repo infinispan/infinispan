@@ -59,11 +59,11 @@ public final class RIMBeanServerRegistrationUtility {
       try {
          if (objectNameType.equals(ObjectNameType.CONFIGURATION)) {
             if (!isRegistered(cache, objectNameType)) {
-               mBeanServer.registerMBean(cache.getCacheMXBean(), registeredObjectName);
+               SecurityActions.registerMBean(cache.getCacheMXBean(), registeredObjectName, mBeanServer);
             }
          } else if (objectNameType.equals(ObjectNameType.STATISTICS)) {
             if (!isRegistered(cache, objectNameType)) {
-               mBeanServer.registerMBean(cache.getCacheStatisticsMXBean(), registeredObjectName);
+               SecurityActions.registerMBean(cache.getCacheStatisticsMXBean(), registeredObjectName, mBeanServer);
             }
          }
       } catch (Exception e) {
@@ -83,7 +83,7 @@ public final class RIMBeanServerRegistrationUtility {
       MBeanServer mBeanServer = cache.getMBeanServer();
 
       ObjectName objectName = calculateObjectName(cache, objectNameType);
-      registeredObjectNames = mBeanServer.queryNames(objectName, null);
+      registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
 
       return !registeredObjectNames.isEmpty();
    }
@@ -100,12 +100,12 @@ public final class RIMBeanServerRegistrationUtility {
       MBeanServer mBeanServer = cache.getMBeanServer();
 
       ObjectName objectName = calculateObjectName(cache, objectNameType);
-      registeredObjectNames = mBeanServer.queryNames(objectName, null);
+      registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
 
       //should just be one
       for (ObjectName registeredObjectName : registeredObjectNames) {
          try {
-            mBeanServer.unregisterMBean(registeredObjectName);
+            SecurityActions.unregisterMBean(registeredObjectName, mBeanServer);
          } catch (Exception e) {
             throw new CacheException("Error unregistering object instance "
                   + registeredObjectName + " . Error was " + e.getMessage(), e);
