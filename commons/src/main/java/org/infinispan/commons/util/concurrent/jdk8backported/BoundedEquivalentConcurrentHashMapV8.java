@@ -3772,7 +3772,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      TreeNode<K,V> r = t.root;
                      TreeNode<K,V> p = (r == null) ? null :
                            r.findTreeNode(h, key, null);
-                     V prevVal = p.val;
+                     V prevVal = (p == null) ? null : p.val;
                      prevVal = prevVal == NULL_VALUE ? null : prevVal;
                      val = (p == null) ? value :
                            remappingFunction.apply(prevVal, value);
