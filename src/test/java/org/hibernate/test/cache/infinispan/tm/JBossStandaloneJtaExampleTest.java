@@ -119,7 +119,11 @@ import org.jnp.server.NamingServer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+<<<<<<< HEAD
 >>>>>>> HHH-7197 reimport imports
+=======
+import static org.junit.Assert.assertTrue;
+>>>>>>> HHH-11267 Fix JBossStandaloneJtaExampleTest
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -174,10 +178,12 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				session.getTransaction().begin();
+				assertTrue(session.getTransaction().isActive());
 				item = new Item("anItem", "An item owned by someone");
 				session.persist(item);
-				session.getTransaction().commit();
+				// IMO the flush should not be necessary, but session.close() does not flush
+				// and the item is not persisted.
+				session.flush();
 				session.close();
 			} catch(Exception e) {
 				ut.setRollbackOnly();
@@ -193,7 +199,7 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				session.getTransaction().begin();
+				assertTrue(session.getTransaction().isActive());
 				Item found = (Item) session.load(Item.class, item.getId());
 				Statistics stats = session.getSessionFactory().getStatistics();
 				log.info(stats.toString());
@@ -201,7 +207,9 @@ public class JBossStandaloneJtaExampleTest {
 				assertEquals(0, stats.getSecondLevelCacheMissCount());
 				assertEquals(1, stats.getSecondLevelCacheHitCount());
 				session.delete(found);
-				session.getTransaction().commit();
+				// IMO the flush should not be necessary, but session.close() does not flush
+				// and the item is not deleted.
+				session.flush();
 				session.close();
 			} catch(Exception e) {
 				ut.setRollbackOnly();
@@ -217,9 +225,8 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				session.getTransaction().begin();
+				assertTrue(session.getTransaction().isActive());
 				assertNull(session.get(Item.class, item.getId()));
-				session.getTransaction().commit();
 				session.close();
 			} catch(Exception e) {
 				ut.setRollbackOnly();
