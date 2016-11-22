@@ -65,7 +65,7 @@ public class JmxUtil {
    public static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (!mBeanServer.isRegistered(objectName)) {
          try {
-            mBeanServer.registerMBean(mbean, objectName);
+            SecurityActions.registerMBean(mbean, objectName, mBeanServer);
             log.tracef("Registered %s under %s", mbean, objectName);
          } catch (InstanceAlreadyExistsException e) {
             //this might happen if multiple instances are trying to concurrently register same objectName
@@ -85,7 +85,7 @@ public class JmxUtil {
     */
    public static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (mBeanServer.isRegistered(objectName)) {
-         mBeanServer.unregisterMBean(objectName);
+         SecurityActions.unregisterMBean(objectName, mBeanServer);
          log.tracef("Unregistered %s", objectName);
       }
    }
@@ -105,7 +105,7 @@ public class JmxUtil {
             ObjectName name = mbean.getObjectName();
             if (trace)
                log.trace("Unregistering mbean with name: " + name);
-            mBeanServer.unregisterMBean(name);
+            SecurityActions.unregisterMBean(name, mBeanServer);
          }
 
          return mbeans.size();
@@ -123,7 +123,7 @@ public class JmxUtil {
          done = true;
          try {
             ObjectName targetName = new ObjectName(finalName + ':' + groupName + ",*");
-            if (mBeanServer.queryNames(targetName, null).size() > 0) {
+            if (SecurityActions.queryNames(targetName, null, mBeanServer).size() > 0) {
                finalName = jmxDomain + index++;
                done = false;
             }
