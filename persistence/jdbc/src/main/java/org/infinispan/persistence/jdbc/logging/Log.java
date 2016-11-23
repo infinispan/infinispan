@@ -11,7 +11,6 @@ import javax.naming.NamingException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -70,14 +69,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error while creating table; used DDL statement: '%s'", id = 8011)
    void errorCreatingTable(String sql, @Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure while inserting bucket: %s", id = 8012)
-   void sqlFailureInsertingBucket(Bucket bucket, @Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure while updating bucket: %s", id = 8013)
-   void sqlFailureUpdatingBucket(Bucket bucket, @Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Sql failure while loading key: %s", id = 8014)
