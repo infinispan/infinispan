@@ -1,73 +1,119 @@
-=== LevelDB Cache Store
-The Infinispan Community
+=== JDBC String based Cache Store
+A cache store which relies on the provided JDBC driver to load/store values in the underlying database.
 
-==== Introduction
-link:http://leveldb.org/[LevelDB] is a fast key-value filesystem-based storage from Google.
-The LevelDB cache store can use both the native implementation (via a JNI bridge) or a link:https://github.com/dain/leveldb[Java re-implementation].
+Each key in the cache is stored in its own row in the database. In order to store each key in its own row, this store relies
+on a (pluggable) bijection that maps the each key to a String object. The bijection is defined by the Key2StringMapper interface.
+Infinispans ships a default implementation (smartly named DefaultTwoWayKey2StringMapper) that knows how to handle primitive types.
 
-===== Sample Usage
-LevelDB cache store requires 2 filesystem directories to be configured - each directory for a LevelDB database.
-One location is used to store non-expired data, while the second location is used to store expired keys pending purge.
+==== Connection management (pooling)
+In order to obtain a connection to the database the JDBC cache store relies on a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory]
+implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource()
+or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder class or declaratively using one of the
+`<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements.
+
+Infinispan ships with three ConnectionFactory implementations:
+
+
+*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory]
+is a factory based on link:https://github.com/brettwooldridge/HikariCP[HikariCP]. Additional properties for HikariCP can
+be provided by a properties file, either via placing a `hikari.properties` file on the classpath or by specifying the
+path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
+xml config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
+file on the class path and Connection pool characteristics which are explicitly set in PooledConnectionFactoryConfiguration
+always override the values loaded from a properties file.
+
+Refer to the official link:https://github.com/brettwooldridge/HikariCP[documentation] for details of all configuration properties.
+
+
+*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[ManagedConnectionFactory]
+is a connection factory that can be used within managed environments, such as application servers. It knows how to look
+into the JNDI tree at a certain location (configurable) and delegate connection management to the DataSource.
+Refer to javadoc link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[javadoc]
+for details on how this can be configured.
+
+
+*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/SimpleConnectionFactory.html[SimpleConnectionFactory]
+is a factory implementation that will create database connection on a per invocation basis. Not recommended in production.
+
+The `PooledConnectionFactory` is generally recommended for stand-alone deployments (i.e. not running within AS or servlet container).
+`ManagedConnectionFactory` can be used when running in a managed environment where a `DataSource` is present, so that
+connection pooling is performed within the `DataSource`.
+
+==== Sample configurations
+
+Below is a sample configuration for the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
+For detailed description of all the parameters used refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
+
+[source,xml]
+----
+<persistence>
+   <string-keyed-jdbc-store fetch-state="false" read-only="false" purge="false">
+      <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
+      <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </string-keyed-table>
+   </string-keyed-jdbc-store>
+</persistence>
+
+----
 
 [source,java]
 ----
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-				.addStore(LevelDBStoreConfigurationBuilder.class)
-				.build();
-EmbeddedCacheManager cacheManager = new DefaultCacheManager(cacheConfig);
 
-Cache<String, User> usersCache = cacheManager.getCache("usersCache");
-usersCache.put("raytsang", new User(...));
-
-----
-
-==== Configuration
-===== Sample Programatic Configuration
-
-[source,java]
-----
-
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-				.addStore(LevelDBStoreConfigurationBuilder.class)
-				.location("/tmp/leveldb/data")
-				.expiredLocation("/tmp/leveldb/expired")
-				.build();
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+      .fetchPersistentState(false)
+      .ignoreModifications(false)
+      .purgeOnStartup(false)
+      .table()
+         .dropOnExit(true)
+         .createOnStart(true)
+         .tableNamePrefix("ISPN_STRING_TABLE")
+         .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
+         .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
+         .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
+      .connectionPool()
+         .connectionUrl("jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1")
+         .username("sa")
+         .driverClass("org.h2.Driver");
 
 ----
 
-[options="header"]
-|===============
-|Parameter|Description
-|location|Directory to use for LevelDB to store primary cache store data.  Directory will be auto-created if it does not exit.
-|expiredLocation| Directory to use for LevelDB to store expiring data pending to be purged permanently.  Directory will be auto-created if it does not exit.
-| expiryQueueSize |Size of the in-memory queue to hold expiring entries before it gets flushed into expired LevelDB store
-|clearThreshold| There are two methods to clear all entries in LevelDB.  One method is to iterate through all entries and remove each entry individually.  The other method is to delete the database and re-init.  For smaller databases, deleting individual entries is faster than the latter method.  This configuration sets the max number of entries allowed before using the latter method
-| compressionType |Configuration for LevelDB for data compression, see CompressionType enum for options
-| blockSize | Configuration for LevelDB - see link:https://github.com/google/leveldb/blob/master/README.md[documentation] for performance tuning
-| cacheSize | Configuration for LevelDB - see link:https://github.com/google/leveldb/blob/master/README.md[documentation] for performance tuning
+Finally, below is an example of a JDBC cache store with a managed connection factory, which is chosen implicitly by specifying a datasource JNDI location:
 
-|===============
-
-
-===== Sample XML Configuration
-
-.infinispan.xml
 [source,xml]
 ----
 
-<local-cache name="vehicleCache">
-   <persistence>
-      <leveldb-store path="/tmp/leveldb/data">
-         <expiration path="/tmp/leveldb/expired"/>
-      </leveldb-store>
-   </persistence>
-</local-cache>
+<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0" fetch-state="false" read-only="false" purge="false">
+   <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
+   <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+      <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+      <data-column name="DATA_COLUMN" type="BINARY" />
+      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+   </string-keyed-table>
+</string-keyed-jdbc-store>
 
 ----
 
-==== Additional References
+[source,java]
+----
 
-Refer to the link:https://github.com/infinispan/infinispan/blob/master/persistence/leveldb/src/test/java/org/infinispan/persistence/leveldb/config/ConfigurationTest.java[test case] for code samples in action.
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+      .fetchPersistentState(false).ignoreModifications(false).purgeOnStartup(false)
+      .table()
+         .dropOnExit(true)
+         .createOnStart(true)
+         .tableNamePrefix("ISPN_STRING_TABLE")
+         .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
+         .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
+         .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
+      .dataSource()
+         .jndiUrl("java:/StringStoreWithManagedConnectionTest/DS");
 
-Refer to link:https://github.com/infinispan/infinispan/tree/master/persistence/leveldb/src/test/resources/config/[test configurations] for configuration samples.
+----
 
+.Apache Derby users
+NOTE: If you're connecting to an Apache Derby database, make sure you set dataColumnType to BLOB: `<data-column name="DATA_COLUMN" type="BLOB"/>`
