@@ -52,7 +52,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       sessionRepository.save(sessionToBeDeleted);
       sessionRepository.delete(sessionToBeDeleted.getId());
 
-      TimeUnit.SECONDS.sleep(1);
+      sleepOneSecond();
       callEviction();
 
       //then
@@ -63,6 +63,11 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 1, 2, TimeUnit.SECONDS);
       //FIXME: This doesn't work for remote... why? https://issues.jboss.org/browse/ISPN-7040
 //      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 2, 10, TimeUnit.SECONDS);
+   }
+
+   private void sleepOneSecond() {
+      long oneSecondSleep = System.currentTimeMillis() + 1000;
+      eventually(() -> System.currentTimeMillis() > oneSecondSleep);
    }
 
    @Test
