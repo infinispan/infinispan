@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.session.util.EventsWaiter;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.session.MapSession;
@@ -18,7 +19,7 @@ import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.testng.annotations.Test;
 
-public abstract class InfinispanApplicationPublishedBridgeTCK {
+public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractInfinispanTest {
 
    protected SpringCache springCache;
 
