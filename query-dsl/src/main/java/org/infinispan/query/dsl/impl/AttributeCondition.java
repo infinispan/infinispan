@@ -5,7 +5,7 @@ import java.util.Collection;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.RangeConditionContext;
+import org.infinispan.query.dsl.RangeConditionContextQueryBuilder;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContext {
+class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContextQueryBuilder {
 
    private static final Log log = Logger.getMessageLogger(Log.class, AttributeCondition.class.getName());
 
