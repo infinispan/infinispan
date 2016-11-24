@@ -124,6 +124,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       // Use a clustered cache manager to be able to test global marshaller interaction too
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalAndInternal.Externalizer());
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalizer.Externalizer());
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithMultiExternalizer.Externalizer());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
@@ -464,6 +466,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public static class PojoWhichFailsOnUnmarshalling extends Pojo {
       private static final long serialVersionUID = -5109779096242560884L;
 
+      public PojoWhichFailsOnUnmarshalling() {
+         super(0, false);
+      }
+
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          throw new IOException("Injected failue!");
@@ -570,6 +576,43 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertEquals(obj, readObj);
    }
 
+   public void testArrays() throws Exception {
+      marshallAndAssertArrayEquality(new Object[] { });
+      marshallAndAssertArrayEquality(new String[] { null, "foo" });
+      marshallAndAssertArrayEquality(new String[] { "foo", "bar" });
+      marshallAndAssertArrayEquality(new Object[] { 1.2, 3.4 });
+      marshallAndAssertArrayEquality(new Pojo[] { });
+      marshallAndAssertArrayEquality(new Pojo[] { null });
+      marshallAndAssertArrayEquality(new Pojo[] { null, null });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(1, false), new Pojo(2, true) });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(3, false), null });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(4, false), new PojoExtended(5, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(6, false), new Pojo(7, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(8, false), new PojoExtended(9, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(10, false), new PojoWithExternalizer(11, false) });
+      marshallAndAssertArrayEquality(new PojoWithExternalizer[] {
+         new PojoWithExternalizer(12, true), new PojoWithExternalizer(13, false) });
+      marshallAndAssertArrayEquality(new I[] { new PojoWithExternalizer(14, false), new PojoWithExternalizer(15, true)});
+      marshallAndAssertArrayEquality(new PojoWithMultiExternalizer[] {
+            new PojoWithMultiExternalizer(16, true), new PojoWithMultiExternalizer(17, false) });
+      marshallAndAssertArrayEquality(new I[] { new PojoWithMultiExternalizer(18, false), new PojoWithExternalizer(19, true)});
+      marshallAndAssertArrayEquality(new I[] { new PojoWithMultiExternalizer(20, false), new PojoWithMultiExternalizer(21, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoWithMultiExternalizer(22, false), new PojoWithMultiExternalizer(23, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoWithExternalizer(24, false), new PojoWithExternalizer(25, true)});
+   }
+
+   public void testLongArrays() throws Exception {
+      for (int length : new int[] { 0xFF, 0x100, 0x101, 0x102, 0x100FF, 0x10100, 0x10101, 0x10102 }) {
+         String[] array = new String[length];
+         // test null
+         marshallAndAssertArrayEquality(array);
+
+         // test filled
+         Arrays.fill(array, "a");
+         marshallAndAssertArrayEquality(array);
+      }
+   }
+
    byte[] prependBytes(byte[] bytes, byte[] src) {
       byte[] res = new byte[bytes.length + src.length];
       System.arraycopy(bytes, 0, res, 0, bytes.length);
@@ -594,11 +637,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    protected void marshallAndAssertArrayEquality(Object[] writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
-      log.debugf("Payload size for object=%s : %s", Arrays.toString(writeObj), bytes.length);
+      log.debugf("Payload size for %s[]=%s : %s", writeObj.getClass().getComponentType().getName(), Arrays.toString(writeObj), bytes.length);
       Object[] readObj = (Object[]) marshaller.objectFromByteBuffer(bytes);
       assertArrayEquals("Writen[" + Arrays.toString(writeObj) + "] and read["
             + Arrays.toString(readObj) + "] objects should be the same",
-            readObj, writeObj);
+            writeObj, readObj);
    }
 
    protected void marshallAndAssertByteArrayEquality(byte[] writeObj) throws Exception {
@@ -607,14 +650,24 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] readObj = (byte[]) marshaller.objectFromByteBuffer(bytes);
       assertArrayEquals("Writen[" + Util.toHexString(writeObj)+ "] and read["
             + Util.toHexString(readObj)+ "] objects should be the same",
-            readObj, writeObj);
+            writeObj, readObj);
    }
 
-   public static class Pojo implements Externalizable, ExternalPojo {
+   public interface I {
+   }
+
+   public static class Pojo implements I, Externalizable, ExternalPojo {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
       private static final long serialVersionUID = 9032309454840083326L;
+
+      public Pojo() {}
+
+      public Pojo(int i, boolean b) {
+         this.i = i;
+         this.b = b;
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -657,6 +710,75 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          i = in.readInt();
          b = in.readBoolean();
          deserializationCount++;
+      }
+   }
+
+   public static class PojoExtended extends Pojo {
+      public PojoExtended() {}
+
+      public PojoExtended(int i, boolean b) {
+         super(i, b);
+      }
+   }
+
+   public static class PojoWithExternalizer extends Pojo {
+
+      public PojoWithExternalizer(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<PojoWithExternalizer> {
+         @Override
+         public Set<Class<? extends PojoWithExternalizer>> getTypeClasses() {
+            return Util.asSet(PojoWithExternalizer.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 1234;
+         }
+
+         @Override
+         public void writeObject(ObjectOutput output, PojoWithExternalizer object) throws IOException {
+            output.writeInt(object.i);
+            output.writeBoolean(object.b);
+         }
+
+         @Override
+         public PojoWithExternalizer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoWithExternalizer(input.readInt(), input.readBoolean());
+         }
+      }
+   }
+
+   public static class PojoWithMultiExternalizer extends Pojo {
+
+      public PojoWithMultiExternalizer(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<Object> {
+         @Override
+         public Set<Class<?>> getTypeClasses() {
+            return Util.asSet(PojoWithMultiExternalizer.class, Thread.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 4321;
+         }
+
+         @Override
+         public void writeObject(ObjectOutput output, Object o) throws IOException {
+            PojoWithMultiExternalizer pojo = (PojoWithMultiExternalizer) o;
+            output.writeInt(pojo.i);
+            output.writeBoolean(pojo.b);
+         }
+
+         @Override
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoWithMultiExternalizer(input.readInt(), input.readBoolean());
+         }
       }
    }
 

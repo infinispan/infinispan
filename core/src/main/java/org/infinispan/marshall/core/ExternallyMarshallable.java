@@ -8,13 +8,26 @@ final class ExternallyMarshallable {
       // Static class
    }
 
-   static boolean isAllowed(Object obj) {
-      String pkg = obj.getClass().getPackage().getName();
+   public static boolean isAllowed(Object obj) {
+      Class<?> clazz = obj.getClass();
+      return isAllowed(clazz);
+   }
+
+   public static boolean isAllowed(Class<?> clazz) {
+      Package pkg = clazz.getPackage();
+      if (pkg == null) {
+         if (clazz.isArray()) {
+            return false;
+         } else {
+            throw new IllegalStateException("No package info for " + clazz + ", runtime-generated class?");
+         }
+      }
+      String pkgName = pkg.getName();
       boolean isBlackList =
-            obj instanceof Serializable
-            && isMarshallablePackage(pkg)
-            && !(obj instanceof ExternalPojo)
-            && !isWhiteList(obj.getClass().getName());
+            Serializable.class.isAssignableFrom(clazz)
+            && isMarshallablePackage(pkgName)
+            && !ExternalPojo.class.isAssignableFrom(clazz)
+            && !isWhiteList(clazz.getName());
       return !isBlackList;
    }
 
