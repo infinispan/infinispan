@@ -13,7 +13,7 @@ public interface FilterConditionBeginContext {
 
    FilterConditionEndContext having(Expression expression);
 
-   <T extends FilterConditionContext & QueryBuilder> T not();
+   FilterConditionContextQueryBuilder not();
 
-   <T extends FilterConditionContext & QueryBuilder> T not(FilterConditionContext fcc);
+   FilterConditionContextQueryBuilder not(FilterConditionContext fcc);
 }

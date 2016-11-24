@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.impl;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
+import org.infinispan.query.dsl.FilterConditionContextQueryBuilder;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -15,7 +16,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-abstract class BaseCondition implements FilterConditionContext, QueryBuilder, Visitable {
+abstract class BaseCondition implements FilterConditionContextQueryBuilder, Visitable {
 
    private static final Log log = Logger.getMessageLogger(Log.class, BaseCondition.class.getName());
 
@@ -77,7 +78,7 @@ abstract class BaseCondition implements FilterConditionContext, QueryBuilder, Vi
    }
 
    @Override
-   public FilterConditionContext and(FilterConditionContext rightCondition) {
+   public FilterConditionContextQueryBuilder and(FilterConditionContext rightCondition) {
       combine(true, rightCondition);
       return this;
    }
@@ -182,12 +183,12 @@ abstract class BaseCondition implements FilterConditionContext, QueryBuilder, Vi
    }
 
    @Override
-   public <T extends FilterConditionContext & QueryBuilder> T not() {
+   public FilterConditionContextQueryBuilder not() {
       return getQueryBuilder().not();
    }
 
    @Override
-   public <T extends FilterConditionContext & QueryBuilder> T not(FilterConditionContext fcc) {
+   public FilterConditionContextQueryBuilder not(FilterConditionContext fcc) {
       return getQueryBuilder().not(fcc);
    }
 
