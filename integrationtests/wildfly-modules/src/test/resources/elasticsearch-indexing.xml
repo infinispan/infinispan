@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+    <jgroups>
+        <stack-file name="tcpStack" path="default-configs/default-jgroups-tcp.xml"/>
+    </jgroups>
+
+    <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+        <transport stack="tcpStack" cluster="Infinispan-Query-Cluster"/>
+        <jmx duplicate-domains="true"/>
+        <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
+            <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false"/>
+            <state-transfer timeout="480000" enabled="true"/>
+            <eviction max-entries="-1" strategy="NONE"/>
+            <expiration max-idle="-1"/>
+            <indexing index="LOCAL">
+                <property name="default.indexmanager">elasticsearch</property>
+                <property name="default.elasticsearch.refresh_after_write">true</property>
+            </indexing>
+        </distributed-cache>
+    </cache-container>
+
+</infinispan>
