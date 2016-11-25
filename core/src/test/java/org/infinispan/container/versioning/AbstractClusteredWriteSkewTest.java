@@ -308,7 +308,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
             MagicKey tempKey = keys[j];
             if (tempKey == null) {
                tempKey = new MagicKey("other-key-" + j, primaryOwner);
-               keys[i] = tempKey;
+               keys[j] = tempKey;
             }
             primaryOwner.put(tempKey, "value");
          }

@@ -56,8 +56,15 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
             prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
          }
       }
-      if (trace) {
-         log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, toStr(key));
+      // ISPN-7170: With total-order protocol, a command may skip loading the entry from persistence layer, and keep
+      // the entry would have non-existing version. Then TotalOrderVersionedEntryWrappingInterceptor would
+      // increase the version and store the entry during commit phase, potentially overwriting newer version.
+      // Therefore we use the compulsory load during this check (in prepare phase) and update the entry version.
+      if (prevVersion.compareTo(metadata.version()) != InequalVersionComparisonResult.EQUAL) {
+         if (trace) {
+            log.tracef("Updating version in metadata %s -> %s", metadata.version(), prevVersion);
+         }
+         metadata = metadata.builder().version(prevVersion).build();
       }
 
       //in this case, the transaction read some value and the data container has a value stored.
