@@ -127,7 +127,6 @@
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javasist>3.20.0-GA</version.hibernate_dep.javasist>
       <version.hikaricp>2.4.6</version.hikaricp>
-      <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
       <version.jackson>1.9.13</version.jackson>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
@@ -655,11 +654,6 @@
             <groupId>net.spy</groupId>
             <artifactId>spymemcached</artifactId>
             <version>${version.spymemcached}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${version.httpclient}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.narayana.jta</groupId>
