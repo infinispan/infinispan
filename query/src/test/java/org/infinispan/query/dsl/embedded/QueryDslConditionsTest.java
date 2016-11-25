@@ -14,6 +14,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,6 +72,10 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       createClusteredCaches(1, cfg);
    }
 
+   protected boolean testNullCollections() {
+      return true;
+   }
+
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
       // create the test objects
@@ -112,6 +117,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
+      if(!testNullCollections()) {
+         user3.setAddresses(new ArrayList<>());
+      }
 
       Account account1 = getModelFactory().makeAccount();
       account1.setId(1);
@@ -873,15 +881,17 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIsNull3() throws Exception {
-      QueryFactory qf = getQueryFactory();
+      if(testNullCollections()) {
+         QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("addresses").isNull()
-            .build();
+         Query q = qf.from(getModelFactory().getUserImplClass())
+               .having("addresses").isNull()
+               .build();
 
-      List<User> list = q.list();
-      assertEquals(1, list.size());
-      assertEquals(3, list.get(0).getId());
+         List<User> list = q.list();
+         assertEquals(1, list.size());
+         assertEquals(3, list.get(0).getId());
+      }
    }
 
    public void testIsNullNumericWithProjection1() throws Exception {

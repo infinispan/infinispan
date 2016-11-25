@@ -5,12 +5,17 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.testng.annotations.Test;
 
 /**
@@ -37,6 +42,13 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       return cache2;
    }
 
+   protected Map<String, String> getIndexConfig() {
+      Map<String, String> configs = new HashMap<>();
+      configs.put("default.indexmanager", InfinispanIndexManager.class.getName());
+      configs.put("lucene_version", "LUCENE_CURRENT");
+      return configs;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
@@ -45,16 +57,15 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       createClusteredCaches(2, defaultConfiguration);
 
       ConfigurationBuilder cfg = initialCacheConfiguration();
-      cfg.clustering()
+      IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
             .index(Index.LOCAL)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addIndexedEntity(getModelFactory().getTransactionImplClass());
 
+      getIndexConfig().forEach(indexingConfigurationBuilder::addProperty);
 
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());
       manager(1).defineConfiguration(TEST_CACHE_NAME, cfg.build());
