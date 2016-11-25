@@ -20,6 +20,8 @@ public interface FilterSubscription {
     */
    FilterCallback getCallback();
 
+   boolean isDeltaFilter();
+
    /**
     * The array of '.' separated path names of the projected fields if any, or {@code null} otherwise.
     */

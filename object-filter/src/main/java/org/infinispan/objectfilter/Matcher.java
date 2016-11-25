@@ -29,6 +29,12 @@ public interface Matcher {
 
    FilterSubscription registerFilter(String queryString, FilterCallback callback, Object... eventType);
 
+   FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
+
+   FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
+
+   FilterSubscription registerFilter(String queryString, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
+
    void unregisterFilter(FilterSubscription filterSubscription);
 
    /**

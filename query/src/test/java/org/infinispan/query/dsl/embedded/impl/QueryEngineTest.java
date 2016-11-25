@@ -348,7 +348,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBuildLuceneQuery() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.matcher.getPropertyHelper());
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.propertyHelper);
       CacheQuery<UserHS> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
       List<?> list = q.list();
       assertEquals(3, list.size());
@@ -356,7 +356,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.matcher.getPropertyHelper());
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.propertyHelper);
       CacheQuery<?> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 
@@ -485,7 +485,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    public void testFullTextKeyword() {
       FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.Book b " +
-            "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.matcher.getPropertyHelper());
+            "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.propertyHelper);
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();

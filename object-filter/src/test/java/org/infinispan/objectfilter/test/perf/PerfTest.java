@@ -52,7 +52,7 @@ public class PerfTest {
 
       int[] matchCount = new int[1];
       for (int k = 0; k < NUM_FILTERS; k++) {
-         matcher.registerFilter(query, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+         matcher.registerFilter(query, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
       }
 
       long stime = System.nanoTime();

@@ -20,7 +20,6 @@ public interface FilterCallback {
    /**
     * Receives notification that an instance matches the filter.
     *
-    * @param isDelta        indicates if the match is a delta match
     * @param userContext    the optional user context object passed to {@link Matcher#match}
     * @param eventType      the optional event type discriminator object passed to {@link Matcher#match}
     * @param instance       the object being matched
@@ -28,5 +27,5 @@ public interface FilterCallback {
     * @param sortProjection the projection of fields used for sorting, if sorting was requested or {@code null}
     *                       otherwise
     */
-   void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection);
+   void onFilterResult(Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection);
 }

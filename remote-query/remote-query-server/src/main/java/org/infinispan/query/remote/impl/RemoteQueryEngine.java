@@ -9,7 +9,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -20,15 +19,12 @@ import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.query.remote.impl.logging.Log;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
 final class RemoteQueryEngine extends QueryEngine<Descriptor> {
-
-   private static final Log log = LogFactory.getLog(RemoteQueryEngine.class, Log.class);
 
    private final boolean isCompatMode;
 
@@ -91,7 +87,7 @@ final class RemoteQueryEngine extends QueryEngine<Descriptor> {
    @Override
    protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
       return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(queryString, namedParameters) :
-            new JPAFilterAndConverter(queryString, namedParameters, matcher.getClass());
+            super.createFilter(queryString, namedParameters);
    }
 
    @Override
