@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,12 +26,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
  */
-@Test (groups = "xsite")
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    List<TestSite> sites = new ArrayList<TestSite>();
@@ -49,12 +48,20 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    @AfterMethod(alwaysRun = true) // run even if the test failed
    protected void clearContent() throws Throwable {
       if (cleanupAfterTest()) {
-         for (TestSite ts : sites) {
-            TestingUtil.clearContent(ts.cacheManagers);
-         }
+         clearSites();
       } else {
          killSites();
       }
+   }
+
+   private void clearSites() {
+      for (TestSite ts : sites) {
+         clearSite(ts);
+      }
+   }
+
+   protected void clearSite(TestSite ts) {
+      TestingUtil.clearContent(ts.cacheManagers);
    }
 
    @AfterClass(alwaysRun = true) // run even if the test failed
@@ -66,10 +73,14 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    private void killSites() {
       for (TestSite ts : sites) {
-         TestingUtil.killCacheManagers(ts.cacheManagers);
+         killSite(ts);
       }
       sites.clear();
       siteName2index.clear();
+   }
+
+   protected void killSite(TestSite ts) {
+      ts.cacheManagers.forEach(Lifecycle::stop);
    }
 
    protected abstract void createSites();

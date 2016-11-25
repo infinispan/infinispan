@@ -5,9 +5,7 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.testng.annotations.Test;
 
-@Test (groups = "xsite")
 public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;

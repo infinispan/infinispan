@@ -160,8 +160,9 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    }
 
    private static BackupReceiver createBackupReceiver(Cache<Object,Object> cache) {
-      return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
-            new ClusteredCacheBackupReceiver(cache) :
-            new LocalCacheBackupReceiver(cache);
+      Cache<Object, Object> receiverCache = SecurityActions.getUnwrappedCache(cache);
+      return receiverCache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
+            new ClusteredCacheBackupReceiver(receiverCache) :
+            new LocalCacheBackupReceiver(receiverCache);
    }
 }

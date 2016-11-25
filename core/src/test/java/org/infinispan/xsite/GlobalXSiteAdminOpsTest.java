@@ -15,7 +15,6 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
@@ -37,9 +36,7 @@ import org.testng.annotations.Test;
 @Test(groups = "xsite", testName = "xsite.GlobalXSiteAdminOpsTest")
 public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
-   protected static void defineInSite(TestSite site, String cacheName, Configuration configuration) {
-      site.cacheManagers().forEach(cacheManager -> cacheManager.defineConfiguration(cacheName, configuration));
-   }
+
 
    protected static ConfigurationBuilder newConfiguration() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
