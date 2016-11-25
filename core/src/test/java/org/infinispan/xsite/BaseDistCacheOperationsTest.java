@@ -1,7 +1,6 @@
 package org.infinispan.xsite;
 
 import org.infinispan.distribution.MagicKey;
-import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -9,7 +8,6 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
 public abstract class BaseDistCacheOperationsTest extends BaseCacheOperationsTest {
 
    public void testPutWithLocality() {

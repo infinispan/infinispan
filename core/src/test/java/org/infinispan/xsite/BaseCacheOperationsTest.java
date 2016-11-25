@@ -13,7 +13,6 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test(groups = "xsite")
 public abstract class BaseCacheOperationsTest extends AbstractTwoSitesTest {
 
    @Test

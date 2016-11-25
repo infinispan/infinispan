@@ -37,7 +37,7 @@ import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandl
  * @author Pedro Ruivo
  * @since 7.1
  */
-@Test(groups = "functional", testName = "xsite.statetransfer.failures.RetryMechanismTest")
+@Test(groups = "xsite", testName = "xsite.statetransfer.failures.RetryMechanismTest")
 public class RetryMechanismTest extends AbstractTopologyChangeTest {
 
    private static final String VALUE = "value";
