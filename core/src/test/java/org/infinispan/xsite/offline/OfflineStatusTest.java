@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite, functional", testName = "xsite.offline.OfflineStatusTest")
+@Test (groups = "xsite", testName = "xsite.offline.OfflineStatusTest")
 public class OfflineStatusTest extends AbstractInfinispanTest {
 
    public void timeBasedTakeOffline() {
