@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.objectfilter.FilterSubscription;
@@ -58,8 +57,8 @@ public class RowMatcherTest {
    protected boolean match(String queryString, Object obj) throws Exception {
       Matcher matcher = createMatcher();
 
-      int[] matchCount = new int[1];
-      matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+      int[] matchCount = {0};
+      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, obj);
       return matchCount[0] == 1;
@@ -68,8 +67,8 @@ public class RowMatcherTest {
    protected boolean match(Query query, Object obj) throws Exception {
       Matcher matcher = createMatcher();
 
-      int[] matchCount = new int[1];
-      matcher.registerFilter(query, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+      int[] matchCount = {0};
+      matcher.registerFilter(query, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, obj);
       return matchCount[0] == 1;
@@ -196,12 +195,12 @@ public class RowMatcherTest {
    public void testFilterInterference() throws Exception {
       Matcher matcher = createMatcher();
 
-      int[] matchCount = new int[2];
+      int[] matchCount = {0, 0};
       String queryString1 = "from Row p where p.name = 'John'";
-      matcher.registerFilter(queryString1, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+      matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       String queryString2 = "from Row p where p.age = 40";
-      matcher.registerFilter(queryString2, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[1]++);
+      matcher.registerFilter(queryString2, (userContext, eventType, instance, projection, sortProjection) -> matchCount[1]++);
 
       matcher.match(null, null, createPerson1());
 
@@ -217,14 +216,14 @@ public class RowMatcherTest {
       List<Comparable[]> sortProjections = new ArrayList<>();
 
       String queryString1 = "from Row p where p.age > 18 order by p.name, p.surname";
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString1, (isDelta, userContext, eventType, instance, projection, sortProjection) -> sortProjections.add(sortProjection));
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> sortProjections.add(sortProjection));
 
       matcher.match(null, null, createPerson1());
       matcher.match(null, null, createPerson2());
 
       assertEquals(2, sortProjections.size());
 
-      Collections.sort(sortProjections, filterSubscription.getComparator());
+      sortProjections.sort(filterSubscription.getComparator());
 
       assertEquals("Cat", sortProjections.get(0)[0]);
       assertEquals("Woman", sortProjections.get(0)[1]);
@@ -246,8 +245,8 @@ public class RowMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      int[] matchCount = new int[1];
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+      int[] matchCount = {0};
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
 
@@ -319,8 +318,8 @@ public class RowMatcherTest {
       Query q = queryFactory.from(Person.class)
             .having("name").eq("John").build();
 
-      boolean b[] = new boolean[1];
-      FilterSubscription filterSubscription = matcher.registerFilter(q, (isDelta, userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
+      boolean b[] = {false};
+      FilterSubscription filterSubscription = matcher.registerFilter(q, (userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
 
@@ -356,7 +355,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       int matchCount[] = new int[1];
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, person);
 
@@ -492,7 +491,7 @@ public class RowMatcherTest {
 
       List<Object[]> result = new ArrayList<>();
 
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(2, filterSubscription.getProjection().length);
@@ -517,7 +516,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       List<Object[]> result = new ArrayList<>();
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(3, filterSubscription.getProjection().length);
@@ -549,7 +548,7 @@ public class RowMatcherTest {
 
       Matcher matcher = createMatcher();
 
-      matcher.registerFilter(queryString, (isDelta, userContext, eventType, instance, projection, sortProjection) -> {
+      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> {
       });
    }
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.BaseMatcher;
@@ -72,7 +73,11 @@ public class QueryEngine<TypeMetadata> {
     */
    protected final boolean isIndexed;
 
-   protected final BaseMatcher<TypeMetadata, ?, ?> matcher;
+   protected final Matcher matcher;
+
+   protected final Class<? extends Matcher> matcherImplClass;
+
+   protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
    /**
     * Optional cache for query objects.
@@ -95,12 +100,14 @@ public class QueryEngine<TypeMetadata> {
       this(cache, isIndexed, ReflectionMatcher.class);
    }
 
-   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends BaseMatcher> matcherImplClass) {
+   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
       this.cache = cache;
       this.isIndexed = isIndexed;
+      this.matcherImplClass = matcherImplClass;
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
       this.authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
+      propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
    }
 
    private SearchManager getSearchManager() {
@@ -158,7 +165,6 @@ public class QueryEngine<TypeMetadata> {
 
       LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<>();
 
-      final ObjectPropertyHelper<TypeMetadata> propertyHelper = matcher.getPropertyHelper();
       if (parsingResult.getGroupBy() != null) {
          for (PropertyPath<?> p : parsingResult.getGroupBy()) {
             if (p instanceof AggregationPropertyPath) {
@@ -404,8 +410,6 @@ public class QueryEngine<TypeMetadata> {
                                                         LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns) {
       // these types of aggregations can only be computed in memory
 
-      final ObjectPropertyHelper<TypeMetadata> propertyHelper = matcher.getPropertyHelper();
-
       StringBuilder firstPhaseQuery = new StringBuilder();
       firstPhaseQuery.append("FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(QueryStringCreator.DEFAULT_ALIAS);
       if (parsingResult.getWhereClause() != null) {
@@ -499,8 +503,6 @@ public class QueryEngine<TypeMetadata> {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
 
-      final ObjectPropertyHelper<TypeMetadata> propertyHelper = matcher.getPropertyHelper();
-
       boolean isFullTextQuery;
       if (parsingResult.getWhereClause() != null) {
          isFullTextQuery = parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE);
@@ -538,7 +540,7 @@ public class QueryEngine<TypeMetadata> {
          return new EmbeddedQuery(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
-      IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = matcher.getPropertyHelper().getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
+      IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
 
       boolean allProjectionsAreStored = true;
       LinkedHashMap<PropertyPath, List<Integer>> projectionsMap = null;
@@ -678,16 +680,16 @@ public class QueryEngine<TypeMetadata> {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, FilterParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = IckleParser.parse(queryString, matcher.getPropertyHelper());
+            parsingResult = IckleParser.parse(queryString, propertyHelper);
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = IckleParser.parse(queryString, matcher.getPropertyHelper());
+         parsingResult = IckleParser.parse(queryString, propertyHelper);
       }
       return parsingResult;
    }
 
-   private ObjectFilter getObjectFilter(BaseMatcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
+   private ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
       ObjectFilter objectFilter;
       if (queryCache != null) {
          KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<>(queryString, new KeyValuePair<>(matcher.getClass(), acc));
@@ -714,7 +716,7 @@ public class QueryEngine<TypeMetadata> {
    }
 
    protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
-      return new JPAFilterAndConverter(queryString, namedParameters, ReflectionMatcher.class);
+      return new JPAFilterAndConverter(queryString, namedParameters, matcherImplClass);
    }
 
    /**
@@ -780,7 +782,7 @@ public class QueryEngine<TypeMetadata> {
    }
 
    protected LuceneQueryMaker<TypeMetadata> createLuceneQueryMaker() {
-      LuceneQueryMaker.FieldBridgeProvider<Class<?>> fieldBridgeProvider = ((HibernateSearchPropertyHelper) matcher.getPropertyHelper())::getDefaultFieldBridge;
+      LuceneQueryMaker.FieldBridgeProvider<Class<?>> fieldBridgeProvider = ((HibernateSearchPropertyHelper) propertyHelper)::getDefaultFieldBridge;
       return new LuceneQueryMaker(getSearchFactory(), fieldBridgeProvider);
    }
 }

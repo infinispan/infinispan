@@ -33,7 +33,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterImpl.class.getName());
 
-   private static final FilterCallback emptyCallback = (isDelta, userContext, eventType, instance, projection, sortProjection) -> {
+   private static final FilterCallback emptyCallback = (userContext, eventType, instance, projection, sortProjection) -> {
       // do nothing
    };
 
@@ -141,7 +141,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       root = predicateIndex.getRoot();
 
       filterSubscription = new FilterSubscriptionImpl<>(parsingResult.getQueryString(), namedParameters, false, metadataAdapter, beTree,
-            emptyCallback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, null);
+            emptyCallback, false, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, null);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = 0;

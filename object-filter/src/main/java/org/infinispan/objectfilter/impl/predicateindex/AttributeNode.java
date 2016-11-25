@@ -165,7 +165,7 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
 
    public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
       if (predicates == null) {
-         predicates = new Predicates(filterSubscription.isUseIntervals() && metadataAdapter.isComparableProperty(metadata));
+         predicates = new Predicates(filterSubscription.useIntervals() && metadataAdapter.isComparableProperty(metadata));
       }
       return predicates.addPredicateSubscription(predicateNode, filterSubscription);
    }

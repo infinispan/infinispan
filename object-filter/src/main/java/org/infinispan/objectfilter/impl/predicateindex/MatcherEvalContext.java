@@ -103,11 +103,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       if (isSingleFilter()) {
          return;
       }
-      Counter counter = suspendedPredicateSubscriptionCounts.get(predicate);
-      if (counter == null) {
-         counter = new Counter();
-         suspendedPredicateSubscriptionCounts.put(predicate, counter);
-      }
+      Counter counter = suspendedPredicateSubscriptionCounts.computeIfAbsent(predicate, k -> new Counter());
       counter.value++;
    }
 
@@ -147,14 +143,14 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
             }
          }
          if (filterEvalContext.isMatching()) {
-            s.getCallback().onFilterResult(false, userContext, eventType, instance, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+            s.getCallback().onFilterResult(userContext, eventType, instance, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
       }
    }
 
    public void notifyDeltaSubscribers(MatcherEvalContext other, Object joiningEvent, Object updateEvent, Object leavingEvent) {
       if (isSingleFilter()) {
-         return;
+         throw new AssertionError("Single filters contexts do not support delta matching.");
       }
 
       for (int i = 0; i < filterContexts.length; i++) {
@@ -181,11 +177,11 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
          boolean after = filterEvalContext2 != null && filterEvalContext2.isMatching();
 
          if (!before && after) {
-            s.getCallback().onFilterResult(true, userContext, joiningEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
+            s.getCallback().onFilterResult(userContext, joiningEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
          } else if (before && !after) {
-            s.getCallback().onFilterResult(true, userContext, leavingEvent, instance, filterEvalContext1.getProjection(), filterEvalContext1.getSortProjection());
+            s.getCallback().onFilterResult(userContext, leavingEvent, instance, filterEvalContext1.getProjection(), filterEvalContext1.getSortProjection());
          } else if (before && after) {
-            s.getCallback().onFilterResult(true, userContext, updateEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
+            s.getCallback().onFilterResult(userContext, updateEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
          }
       }
    }
@@ -193,6 +189,6 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    protected abstract void processAttributes(AttributeNode<AttributeMetadata, AttributeId> node, Object instance);
 
    private static final class Counter {
-      int value;
+      int value = 0;
    }
 }

@@ -54,7 +54,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       return filterSubscriptions;
    }
 
-   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projection, Class<?>[] projectionTypes, SortField[] sortFields, FilterCallback callback, Object[] eventTypes) {
+   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projection, Class<?>[] projectionTypes, SortField[] sortFields, FilterCallback callback, boolean isDeltaFilter, Object[] eventTypes) {
       if (eventTypes != null) {
          if (eventTypes.length == 0) {
             eventTypes = null;
@@ -97,7 +97,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       BooleanExpr normalizedQuery = booleanFilterNormalizer.normalize(query);
       BETree beTree = treeMaker.make(normalizedQuery, namedParameters);
 
-      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, isDeltaFilter, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = filterSubscriptions.size();

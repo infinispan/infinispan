@@ -87,7 +87,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       final Matcher matcher = getMatcher(indexedFilter);
       final String queryString = getQueryString(indexedFilter);
       final Map<String, Object> namedParameters = getNamedParameters(indexedFilter);
-      final boolean isDelta = isDelta(indexedFilter);
+      final boolean isDeltaFilter = isDelta(indexedFilter);
 
       addFilteringInvocationForMatcher(matcher);
       Event.Type[] eventTypes = new Event.Type[listeners.keySet().size()];
@@ -95,8 +95,8 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       for (Class<? extends Annotation> annotation : listeners.keySet()) {
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
       }
-      Callback<K, V> callback = new Callback<>(isDelta, matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
-      callback.subscription = matcher.registerFilter(queryString, namedParameters, callback, eventTypes);
+      Callback<K, V> callback = new Callback<>(matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
+      callback.subscription = matcher.registerFilter(queryString, namedParameters, callback, isDeltaFilter, eventTypes);
    }
 
    /**
@@ -155,12 +155,10 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       private final DelegatingCacheEntryListenerInvocation<K, V>[] evicted_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] expired_invocations;
 
-      private final boolean isDelta;
       private final Matcher matcher;
       protected volatile FilterSubscription subscription;
 
-      Callback(boolean isDelta, Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
-         this.isDelta = isDelta;
+      Callback(Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
          this.matcher = matcher;
          this.isClustered = isClustered;
          this.isPrimaryOnly = isPrimaryOnly;
@@ -199,10 +197,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       }
 
       @Override
-      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         if (this.isDelta != isDelta) {
-            return;
-         }
+      public void onFilterResult(Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
          CacheEntryEvent<K, V> event = (CacheEntryEvent<K, V>) userContext;
          if (event.isPre() && isClustered || isPrimaryOnly && !clusteringDependentLogic.localNodeIsPrimaryOwner(event.getKey())) {
             return;
@@ -267,7 +262,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
       protected Callback<K, V> callback;
 
-      public DelegatingCacheEntryListenerInvocationImpl(CacheEntryListenerInvocation<K, V> invocation) {
+      DelegatingCacheEntryListenerInvocationImpl(CacheEntryListenerInvocation<K, V> invocation) {
          super(invocation);
       }
 
