@@ -109,7 +109,6 @@
          <version>${version.caffeine}</version>
       </dependency>
 
-
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-modules</artifactId>

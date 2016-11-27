@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import java.util.Map;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
@@ -40,8 +41,12 @@ public class JPAFilterIndexingServiceProvider extends BaseJPAFilterIndexingServi
    }
 
    protected void matchEvent(CacheEntryEvent event, Matcher matcher) {
-      if (event.getValue() != null) {
-         matcher.match(event, event.getType(), event.getValue());
+      Object instance = event.getValue();
+      if (instance != null) {
+         if (instance.getClass() == WrappedByteArray.class) {
+            instance = ((WrappedByteArray) instance).getBytes();
+         }
+         matcher.match(event, event.getType(), instance);
       }
    }
 

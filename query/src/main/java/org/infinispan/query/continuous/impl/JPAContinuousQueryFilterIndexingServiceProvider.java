@@ -2,6 +2,7 @@ package org.infinispan.query.continuous.impl;
 
 import java.util.Map;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -73,6 +74,12 @@ public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilt
       }
 
       if (oldValue != null || newValue != null) {
+         if (oldValue != null && oldValue.getClass() == WrappedByteArray.class) {
+            oldValue = ((WrappedByteArray) oldValue).getBytes();
+         }
+         if (newValue != null && newValue.getClass() == WrappedByteArray.class) {
+            newValue = ((WrappedByteArray) newValue).getBytes();
+         }
          matcher.matchDelta(event, event.getType(), oldValue, newValue, joiningEvent, updatedEvent, leavingEvent);
       }
    }
