@@ -1,8 +1,9 @@
 package org.infinispan.persistence.keymappers;
 
+import java.util.Base64;
+
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.Base64;
 
 /**
  * This class is an implementation for {@link TwoWayKey2StringMapper} that supports both primitives
@@ -14,11 +15,9 @@ import org.infinispan.commons.util.Base64;
  */
 public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMapper implements MarshallingTwoWayKey2StringMapper {
 
-   private StreamingMarshaller externalizer;
-
    @Override
    public void setMarshaller(StreamingMarshaller marshaller) {
-      externalizer = marshaller;
+      //TODO The marshaler is not used so we could maybe implement TwoWayKey2StringMapper instead of MarshallingTwoWayKey2StringMapper
    }
 
    @Override
@@ -63,17 +62,10 @@ public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMa
     * @throws Exception
     */
    private String serializeObj(WrappedByteArray mv) throws Exception {
-//      if(externalizer==null)
-//         throw new IllegalStateException("Cannot serialize object: undefined marshaller");
-//      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//      ObjectOutputStream oos = new ObjectOutputStream(baos);
-//      externalizer.writeObject(oos, mv.getBytes());
-//      oos.close();
-      return Base64.encodeBytes(mv.getBytes());
+      return Base64.getEncoder().encodeToString(mv.getBytes());
    }
 
    /**
-    *
     * Use MarshalledValue.Externalizer to deserialize.
     *
     * @param key
@@ -81,13 +73,7 @@ public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMa
     * @throws Exception
     */
    private WrappedByteArray deserializeObj(String key) throws Exception {
-      if(externalizer==null)
-         throw new IllegalStateException("Cannot deserialize object: undefined marshaller");
-      byte[] data = Base64.decode(key);
-//      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-//      MarshalledValue mv = externalizer.readObject(ois);
-//      ois.close();
-//      return mv;
+      byte[] data = Base64.getDecoder().decode(key);
       return new WrappedByteArray(data);
    }
 

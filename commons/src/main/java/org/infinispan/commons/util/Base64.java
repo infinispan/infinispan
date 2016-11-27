@@ -3,6 +3,7 @@ package org.infinispan.commons.util;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
+// TODO Remove this class in Infinispan 10
 /**
  * Encodes and decodes to and from Base64 notation. <p/> <p> Change Log: </p>
  * <ul> <li>v2.1 - Cleaned up javadoc comments and unused variables and
@@ -37,7 +38,10 @@ import org.infinispan.commons.logging.LogFactory;
  * @author Robert Harder
  * @author rob@iharder.net
  * @since 4.2
+ * @deprecated Not currently used internally by Infinispan; will be removed in ver. 10. Other users are advised to
+ * replace it with {@link java.util.Base64}.
  */
+@Deprecated
 public class Base64 {
 
    private static final Log log = LogFactory.getLog(Base64.class);

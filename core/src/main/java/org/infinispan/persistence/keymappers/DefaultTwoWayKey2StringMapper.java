@@ -1,7 +1,7 @@
 package org.infinispan.persistence.keymappers;
 
-import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.commons.util.Base64;
+import java.util.Base64;
+
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -49,9 +49,9 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
       } else if (key.getClass().equals(Boolean.class)) {
          identifier = BOOLEAN_IDENTIFIER;
       } else if (key.getClass().equals(WrappedByteArray.class)) {
-         return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes(((WrappedByteArray)key).getBytes()));
+         return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString(((WrappedByteArray)key).getBytes()));
       } else if (key.getClass().equals(byte[].class)) {
-         return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.encodeBytes((byte[])key));
+         return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString((byte[]) key));
       } else {
          throw new IllegalArgumentException("Unsupported key type: " + key.getClass().getName());
       }
@@ -80,10 +80,10 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
             case BOOLEAN_IDENTIFIER:
                return Boolean.parseBoolean(value);
             case BYTEARRAYKEY_IDENTIFIER:
-               byte[] bytes = Base64.decode(value);
+               byte[] bytes = Base64.getDecoder().decode(value);
                return new WrappedByteArray(bytes);
             case NATIVE_BYTEARRAYKEY_IDENTIFIER:
-               return Base64.decode(value);
+               return Base64.getDecoder().decode(value);
             default:
                throw new IllegalArgumentException("Unsupported type code: " + type);
          }
@@ -101,7 +101,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
       return String.valueOf(NON_STRING_PREFIX) + String.valueOf(identifier) + s;
    }
 
-   static boolean isPrimitive(Class<?> key) {
-      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class || key == Double.class || key == Float.class || key == Boolean.class || key == byte[].class;
+   private static boolean isPrimitive(Class<?> key) {
+      return key == String.class || key == Short.class || key == Byte.class || key == Long.class || key == Integer.class
+            || key == Double.class || key == Float.class || key == Boolean.class || key == byte[].class;
    }
 }

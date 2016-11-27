@@ -3,10 +3,10 @@ package org.infinispan.persistence.jpa.impl;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.persistence.Embeddable;
 
-import org.infinispan.commons.util.Base64;
 import org.infinispan.persistence.jpa.JpaStoreException;
 
 /**
@@ -56,7 +56,7 @@ public class MetadataEntityKey implements Serializable {
       try {
          MessageDigest digest = MessageDigest.getInstance(DIGEST_ALG);
          byte[] sha = digest.digest(keyBytes);
-         keyBytesSha = Base64.encodeBytes(sha);
+         keyBytesSha = Base64.getEncoder().encodeToString(sha);
       } catch(NoSuchAlgorithmException e) {
          throw new JpaStoreException("Failed to create SHA hash of metadata key", e);
       }
