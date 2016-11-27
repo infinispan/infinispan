@@ -11,7 +11,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Base64;
-import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;

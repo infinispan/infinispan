@@ -41,7 +41,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethods(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<Method>();
+      List<Method> annotated = new LinkedList<>();
       inspectRecursively(c, annotated, annotationType);
       return annotated;
    }
@@ -55,7 +55,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethodsShallow(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<Method>();
+      List<Method> annotated = new LinkedList<>();
       for (Method m : c.getDeclaredMethods()) {
          if (m.isAnnotationPresent(annotationType))
             annotated.add(m);
@@ -74,7 +74,7 @@ public class ReflectionUtil {
    }
 
    public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Field> fields = new ArrayList<Field>(4);
+      List<Field> fields = new ArrayList<>(4);
       // Class could be null in the case of an interface
       for (;c != null && !c.equals(Object.class); c = c.getSuperclass()) {
          getAnnotatedFieldHelper(fields, c, annotationType);

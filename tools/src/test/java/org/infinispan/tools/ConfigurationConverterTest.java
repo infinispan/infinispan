@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.infinispan.Version;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.TypedProperties;
@@ -37,7 +36,6 @@ import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryCon
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.rest.configuration.RestStoreConfiguration;
