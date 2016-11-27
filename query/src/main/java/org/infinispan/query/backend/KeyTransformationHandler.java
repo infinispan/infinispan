@@ -3,9 +3,9 @@ package org.infinispan.query.backend;
 import java.util.Map;
 import java.util.UUID;
 
+import java.util.Base64;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.Base64;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.Transformable;
@@ -74,7 +74,7 @@ public class KeyTransformationHandler {
             return UUID.fromString(s.substring(2));
          case 'A':
             // This is an array of bytes encoded as a Base64 string
-            return Base64.decode(s.substring(2));   //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
+            return Base64.getDecoder().decode(s.substring(2));   //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
          case 'T':
             // this is a custom transformable.
             int indexOfSecondDelimiter = s.indexOf(":", 2);
@@ -123,7 +123,7 @@ public class KeyTransformationHandler {
          // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
 
          if (key instanceof byte[])
-            return "A:" + Base64.encodeBytes((byte[])key);  //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
+            return "A:" + Base64.getEncoder().encodeToString((byte[]) key);  //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
          if (key instanceof String)
             prefix = 'S';
          else if (key instanceof Integer)

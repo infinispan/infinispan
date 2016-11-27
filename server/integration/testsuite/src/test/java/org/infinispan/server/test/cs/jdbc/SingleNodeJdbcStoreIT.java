@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -20,7 +21,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.Base64;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.ITestUtils;
@@ -424,7 +424,7 @@ public class SingleNodeJdbcStoreIT {
         // 2. encode it with base64 (that's what DefaultTwoWayKey2StringMapper does)
         // 3. prefix it with 8 (again, done by DefaultTwoWayKey2StringMapper to mark the key as wrapped byte array type)
         // 4. prefix it with UTF-16 BOM (that is what DefaultTwoWayKey2StringMapper does for non string values)
-        return '\uFEFF' + "8" + Base64.encodeBytes(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
+        return '\uFEFF' + "8" + Base64.getEncoder().encodeToString(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans mbeans) {

@@ -2,10 +2,10 @@ package org.infinispan.query.backend;
 
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
+import java.util.Base64;
 import java.util.UUID;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.Base64;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.CustomKey2;
@@ -74,7 +74,7 @@ public class KeyTransformationHandlerTest {
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
       s = keyTransformationHandler.keyToString(arr);
-      assert s.equals("A:"+ Base64.encodeBytes((arr)));
+      assert s.equals("A:"+ Base64.getEncoder().encodeToString(arr));
    }
 
    public void testStringToKeyWithStringAndPrimitives() {
@@ -120,7 +120,7 @@ public class KeyTransformationHandlerTest {
       assert key.equals(randomUUID);
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
-      key = keyTransformationHandler.stringToKey("A:" + Base64.encodeBytes((arr)), contextClassLoader);
+      key = keyTransformationHandler.stringToKey("A:" + Base64.getEncoder().encodeToString(arr), contextClassLoader);
       assertArrayEquals(arr, (byte[]) key);
    }
 
