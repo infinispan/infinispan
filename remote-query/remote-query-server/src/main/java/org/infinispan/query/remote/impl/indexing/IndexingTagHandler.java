@@ -50,16 +50,16 @@ final class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
+   public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
       messageContext.markField(fieldNumber);
 
       // Unknown fields are not indexed.
-      if (fieldName != null) {
+      if (fieldDescriptor != null) {
          IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldName) : null;
+         FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
          if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
             //TODO [anistor] should we still store if isStore==true but isIndexed==false?
-            addFieldToDocument(fieldName, type, tagValue, fieldMapping);
+            addFieldToDocument(fieldDescriptor.getName(), fieldDescriptor.getType(), tagValue, fieldMapping);
          }
       }
    }
@@ -123,13 +123,13 @@ final class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       messageContext.markField(fieldNumber);
-      pushContext(fieldName, messageDescriptor);
+      pushContext(fieldDescriptor.getName(), fieldDescriptor.getMessageType());
    }
 
    @Override
-   public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       popContext();
    }
 

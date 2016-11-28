@@ -107,6 +107,11 @@ final class DelegatingSerializationContext implements SerializationContext {
    }
 
    @Override
+   public GenericDescriptor getDescriptorByName(String fullName) {
+      return delegate.getDescriptorByName(fullName);
+   }
+
+   @Override
    public Integer getTypeIdByName(String descriptorFullName) {
       return delegate.getTypeIdByName(descriptorFullName);
    }
