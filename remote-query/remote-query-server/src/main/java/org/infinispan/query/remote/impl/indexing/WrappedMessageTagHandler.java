@@ -10,8 +10,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
  * @author anistor@redhat.com
@@ -39,7 +38,7 @@ final class WrappedMessageTagHandler implements TagHandler {
    }
 
    @Override
-   public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object value) {
+   public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object value) {
       switch (fieldNumber) {
          case WrappedMessage.WRAPPED_BOOL:
             stringValue = value != null ? value.toString() : null;
@@ -69,7 +68,7 @@ final class WrappedMessageTagHandler implements TagHandler {
             String typeName = serCtx.getTypeNameById((Integer) value);
             messageDescriptor = serCtx.getMessageDescriptor(typeName);
             break;
-         case WrappedMessage.WRAPPED_MESSAGE_BYTES:
+         case WrappedMessage.WRAPPED_MESSAGE:
             bytes = (byte[]) value;
             break;
          default:
@@ -78,12 +77,12 @@ final class WrappedMessageTagHandler implements TagHandler {
    }
 
    @Override
-   public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       throw new IllegalStateException("No nested message is expected");
    }
 
    @Override
-   public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       throw new IllegalStateException("No nested message is expected");
    }
 
