@@ -46,6 +46,26 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
+   protected boolean timestampIndexExists(Connection conn) throws PersistenceException {
+      ResultSet rs = null;
+      try {
+         DatabaseMetaData meta = conn.getMetaData();
+         rs = meta.getIndexInfo(null, null, getTableName().toString(), false, false);
+         String indexName = getIndexName(false);
+         while (rs.next()) {
+            if (indexName.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
+               return true;
+            }
+         }
+      } catch (SQLException e) {
+         throw new PersistenceException(e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+      }
+      return false;
+   }
+
+   @Override
    public String getIndexName(boolean withIdentifier) {
       int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - INDEX_PREFIX.length() - 1;
       if (withIdentifier) {
