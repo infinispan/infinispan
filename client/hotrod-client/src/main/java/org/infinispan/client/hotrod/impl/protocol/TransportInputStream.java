@@ -110,7 +110,6 @@ class TransportInputStream extends InputStream implements VersionedMetadata {
          n += nread;
          if (n >= len)
             return n;
-         return 0;
       }
    }
 
