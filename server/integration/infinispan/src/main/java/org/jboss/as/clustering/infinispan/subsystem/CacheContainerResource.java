@@ -43,6 +43,7 @@ import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -313,14 +314,16 @@ public class CacheContainerResource extends SimpleResourceDefinition {
          .build();
 
 
-   private final ResolvePathHandler resolvePathHandler;
+    private final ResolvePathHandler resolvePathHandler;
+    private final PathManager pathManager;
     private final boolean runtimeRegistration;
-    public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+    public CacheContainerResource(final ResolvePathHandler resolvePathHandler, PathManager pathManager, boolean runtimeRegistration) {
         super(CONTAINER_PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER),
                 new CacheContainerAddHandler(),
                 new CacheContainerRemoveHandler());
         this.resolvePathHandler = resolvePathHandler;
+        this.pathManager = pathManager;
         this.runtimeRegistration = runtimeRegistration;
     }
 
@@ -372,6 +375,8 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         super.registerChildren(resourceRegistration);
 
         // child resources
+        resourceRegistration.registerSubModel(new HealthResource(pathManager));
+
         resourceRegistration.registerSubModel(new TransportResource());
         resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
         resourceRegistration.registerSubModel(new GlobalStateResource());
