@@ -6,6 +6,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -106,6 +107,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public ClusterExecutor executor() {
       return cm.executor();
+   }
+
+   @Override
+   public Health getHealth() {
+      return cm.getHealth();
    }
 
    @Override

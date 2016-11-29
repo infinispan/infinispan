@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
 import org.infinispan.server.commons.naming.JndiNameFactory;
@@ -48,6 +49,7 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.server.ServerEnvironment;
@@ -72,6 +74,15 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
     protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
         // Because we use child resources in a read-only manner to configure the cache container, replace the local model with the full model
         installRuntimeServices(context, operation, Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS)));
+    }
+
+    @Override
+    protected Resource createResource(OperationContext context) {
+        //HEALTH is a synthetic resource - we don't have it in XML but we would like to include it in the runtime
+        Resource resource = super.createResource(context);
+        PathAddress healthAddress = context.getCurrentAddress().append(ModelKeys.HEALTH, ModelKeys.HEALTH_NAME);
+        context.addStep(Util.createAddOperation(healthAddress), new ReloadRequiredAddStepHandler(), OperationContext.Stage.MODEL);
+        return resource;
     }
 
     static void installRuntimeServices(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
