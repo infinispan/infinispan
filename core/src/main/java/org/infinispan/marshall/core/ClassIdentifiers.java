@@ -1,24 +1,21 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.HopscotchHashMap;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
 
-public class ClassIdentifiers implements InternalClassIds {
-   private final static ClassIdentifiers INSTANCE = new ClassIdentifiers();
-
+class ClassIdentifiers implements ClassIds {
    // the hashmap is not changed after static ctor, therefore concurrent access is safe
-   private final Map<Class<?>, Integer> classToId = new HashMap<>();
+   private final Map<Class<?>, Integer> classToId = new HopscotchHashMap<>(MAX_ID);
    private final Class<?>[] internalIdToClass;
    // for external ids we'll probably use Map<Integer, Class<?>> instead of array
 
    public static ClassIdentifiers load(GlobalConfiguration globalConfiguration) {
-      // When we add external class identifiers we'll have to provide actual instance initialized from configuration
-      return INSTANCE;
+      return new ClassIdentifiers();
    }
 
    private ClassIdentifiers() {
