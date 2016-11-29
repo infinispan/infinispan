@@ -20,6 +20,9 @@ class OracleTableManager extends AbstractTableManager {
 
    private static final Log LOG = LogFactory.getLog(OracleTableManager.class, Log.class);
 
+   private static final int MAX_INDEX_IDENTIFIER_SIZE = 30;
+   private static final String INDEX_PREFIX = "IDX";
+
    OracleTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
       super(connectionFactory, config, metaData, LOG);
    }
@@ -40,5 +43,20 @@ class OracleTableManager extends AbstractTableManager {
       } finally {
          JdbcUtil.safeClose(rs);
       }
+   }
+
+   @Override
+   public String getIndexName(boolean withIdentifier) {
+      int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - INDEX_PREFIX.length() - 1;
+      if (withIdentifier) {
+         maxNameSize -= 2;
+      }
+      String tableName =  getTableName().toString().replace(identifierQuoteString, "");
+      String truncatedName = tableName.length() > maxNameSize ? tableName.substring(0, maxNameSize) : tableName;
+      String indexName = INDEX_PREFIX + "_" + truncatedName;
+      if (withIdentifier) {
+         return identifierQuoteString + indexName + identifierQuoteString;
+      }
+      return indexName;
    }
 }
