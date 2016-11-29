@@ -57,6 +57,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
@@ -599,6 +600,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertArrayEquality(new I[] { new PojoWithMultiExternalizer(20, false), new PojoWithMultiExternalizer(21, true)});
       marshallAndAssertArrayEquality(new Object[] { new PojoWithMultiExternalizer(22, false), new PojoWithMultiExternalizer(23, true)});
       marshallAndAssertArrayEquality(new Object[] { new PojoWithExternalizer(24, false), new PojoWithExternalizer(25, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoAnnotated(26, false), "foo"});
+      marshallAndAssertArrayEquality(new Object[] { new PojoAnnotated(27, false), new PojoAnnotated(28, true)});
+      marshallAndAssertArrayEquality(new PojoAnnotated[] { new PojoAnnotated(27, false), new PojoAnnotated(28, true)});
+      marshallAndAssertArrayEquality(new PojoAnnotated[] { null, null });
    }
 
    public void testLongArrays() throws Exception {
@@ -710,6 +715,26 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          i = in.readInt();
          b = in.readBoolean();
          deserializationCount++;
+      }
+   }
+
+   @SerializeWith(PojoAnnotated.Externalizer.class)
+   public static class PojoAnnotated extends Pojo {
+      public PojoAnnotated(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<PojoAnnotated> {
+         @Override
+         public void writeObject(ObjectOutput output, PojoAnnotated object) throws IOException {
+            output.writeInt(object.i);
+            output.writeBoolean(object.b);
+         }
+
+         @Override
+         public PojoAnnotated readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoAnnotated(input.readInt(), input.readBoolean());
+         }
       }
    }
 

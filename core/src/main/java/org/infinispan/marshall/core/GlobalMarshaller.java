@@ -156,6 +156,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       reverseInternalExts.clear();
       externalExts.clear();
       reverseExternalExts.clear();
+      classIdentifiers = null;
       stopDefaultExternalMarshaller();
    }
 
@@ -476,10 +477,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
          int classId;
          if ((classId = classIdentifiers.getId(componentType)) != -1) {
             out.writeByte(flags | ID_CLASS);
-            if (classId < InternalClassIds.MAX_ID) {
+            if (classId < ClassIds.MAX_ID) {
                out.writeByte(classId);
             } else {
-               out.writeByte(InternalClassIds.MAX_ID);
+               out.writeByte(ClassIds.MAX_ID);
                out.writeInt(classId);
             }
          } else {
@@ -582,10 +583,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
       if (!hasSingleClass) {
          if (classId < 0) {
             out.writeObject(componentType);
-         } else if (classId < InternalClassIds.MAX_ID){
+         } else if (classId < ClassIds.MAX_ID){
             out.writeByte(classId);
          } else {
-            out.writeByte(InternalClassIds.MAX_ID);
+            out.writeByte(ClassIds.MAX_ID);
             out.writeInt(classId);
          }
       }
@@ -731,7 +732,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
             break;
          case ID_CLASS:
             int classId = in.readByte();
-            if (classId < InternalClassIds.MAX_ID) {
+            if (classId < ClassIds.MAX_ID) {
                componentType = classIdentifiers.getClass(classId);
             } else {
                componentType = classIdentifiers.getClass(in.readInt());

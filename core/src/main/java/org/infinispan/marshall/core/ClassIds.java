@@ -6,7 +6,7 @@ package org.infinispan.marshall.core;
  *
  * This identifiers don't clash with {@link org.infinispan.commons.marshall.Ids} and therefore it can use the same range.
  */
-public interface InternalClassIds {
+interface ClassIds {
    /* 0-15 Java classes */
    int OBJECT = 0;
    int STRING = 1;
