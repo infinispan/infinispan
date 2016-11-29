@@ -34,7 +34,7 @@ class OracleTableManager extends AbstractTableManager {
       try {
          DatabaseMetaData metaData = connection.getMetaData();
          String schemaPattern = tableName.getSchema() == null ? metaData.getUserName() : tableName.getSchema();
-         rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[] {"TABLE"});
+         rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[]{"TABLE"});
          return rs.next();
       } catch (SQLException e) {
          if (LOG.isTraceEnabled())
@@ -71,12 +71,24 @@ class OracleTableManager extends AbstractTableManager {
       if (withIdentifier) {
          maxNameSize -= 2;
       }
-      String tableName =  getTableName().toString().replace(identifierQuoteString, "");
+      String tableName = getTableName().toString().replace(identifierQuoteString, "");
       String truncatedName = tableName.length() > maxNameSize ? tableName.substring(0, maxNameSize) : tableName;
       String indexName = INDEX_PREFIX + "_" + truncatedName;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
       }
       return indexName;
+   }
+
+   @Override
+   public String getUpsertRowSql() {
+      if (upsertRowSql == null) {
+         upsertRowSql = String.format("MERGE INTO %1$s t " +
+                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%4$s = tmp.%4$s) " +
+                     "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
+                     "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s)",
+               this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+      }
+      return upsertRowSql;
    }
 }
