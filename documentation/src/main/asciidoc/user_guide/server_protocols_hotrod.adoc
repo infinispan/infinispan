@@ -1322,7 +1322,7 @@ a key and the schema itself as the value.
 Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Console or the
 _ProtobufMetadataManager_ MBean via JMX.
 Be aware that, when security is enabled, access to the schema cache via the remote protocols requires
-that the user belongs to the _'___schema_manager role'_
+that the user belongs to the pass:['___schema_manager'] role.
 NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries are going to be indexed.
 Future versions will allow you to select which fields to index (see link:https://issues.jboss.org/browse/ISPN-3718[ISPN-3718]).
 
