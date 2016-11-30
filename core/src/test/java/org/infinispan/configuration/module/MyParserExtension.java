@@ -10,6 +10,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
@@ -26,6 +27,9 @@ public class MyParserExtension implements ConfigurationParser {
 
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      if (holder.getScope() != ParserScope.CACHE && holder.getScope() != ParserScope.CACHE_TEMPLATE) {
+         throw new IllegalStateException("WRONG SCOPE");
+      }
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
 
       Element element = Element.forName(reader.getLocalName());

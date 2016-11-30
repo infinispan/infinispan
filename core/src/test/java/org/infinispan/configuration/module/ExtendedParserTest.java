@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -25,8 +26,8 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "configuration.module.ExtendedParserTest")
 public class ExtendedParserTest extends AbstractInfinispanTest {
 
-   public void testExtendedParser() throws IOException {
-      String config = InfinispanStartTag.LATEST +
+   public void testExtendedParserModulesElement() throws IOException {
+      String config = InfinispanStartTag.START_82 +
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +
             "     <modules>\n" +
@@ -38,10 +39,19 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
       assertCacheConfiguration(config);
    }
 
+   public void testExtendedParserBareExtension() throws IOException {
+      String config = InfinispanStartTag.LATEST +
+            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
+            "   <local-cache name=\"extra-module\">\n" +
+            "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
+      assertCacheConfiguration(config);
+   }
+
    private void assertCacheConfiguration(String config) throws IOException {
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+      ConfigurationBuilderHolder holder = parseToHolder(config);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(holder)) {
 
@@ -52,5 +62,23 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
 
       });
 
+   }
+
+   private ConfigurationBuilderHolder parseToHolder(String config) {
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      return parserRegistry.parse(is);
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: WRONG SCOPE")
+   public void testExtendedParserWrongScope() throws IOException {
+      String config = InfinispanStartTag.LATEST +
+            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
+            "   <local-cache name=\"extra-module\">\n" +
+            "   </local-cache>\n" +
+            "   <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
+      parseToHolder(config);
    }
 }

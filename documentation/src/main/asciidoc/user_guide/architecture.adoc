@@ -1,4 +1,4 @@
-== Architectural Overview
+== Architectural Overview [[arch:overview]]
 
 This section contains a high level overview of Infinispan's internal
 architecture.  This document is geared towards people with an interest in
@@ -29,7 +29,7 @@ EmbeddedCacheManagers create either clustered or standalone Caches that reside
 in the same JVM.  RemoteCacheManagers, on the other hand, create RemoteCaches
 that connect to a remote cache tier via the Hot Rod protocol.
 
-=== Commands
+=== Commands [[arch:commands]]
 
 Internally, each and every cache operation is encapsulated by a command.  These
 command objects represent the type of operation being performed, and also hold

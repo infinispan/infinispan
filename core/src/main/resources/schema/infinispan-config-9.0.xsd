@@ -196,7 +196,7 @@
           <xs:documentation>Defines the global state persistence configuration. If this element is not present, global state persistence will be disabled.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:choice maxOccurs="unbounded">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element name="local-cache" type="tns:local-cache">
           <xs:annotation>
             <xs:documentation>Defines a LOCAL mode cache.</xs:documentation>
@@ -237,6 +237,7 @@
             <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
           </xs:annotation>
         </xs:element>
+        <xs:any namespace="##other"/>
       </xs:choice>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string">
@@ -656,18 +657,6 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="modules" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            This element contains configuration options for additional modules which affect cache configuration
-          </xs:documentation>
-        </xs:annotation>
-        <xs:complexType>
-          <xs:sequence minOccurs="0" maxOccurs="unbounded">
-            <xs:any namespace="##other"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
       <xs:element name="indexing" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -718,6 +707,7 @@
           <xs:documentation>Configures cache-level security.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="name" type="xs:ID" use="required">
       <xs:annotation>
