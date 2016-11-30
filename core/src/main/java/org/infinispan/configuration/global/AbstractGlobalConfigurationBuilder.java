@@ -1,5 +1,9 @@
 package org.infinispan.configuration.global;
 
+import java.util.List;
+
+import org.infinispan.commons.configuration.Builder;
+
 abstract class AbstractGlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
    private final GlobalConfigurationBuilder globalConfig;
@@ -27,7 +31,6 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    public GlobalStateConfigurationBuilder globalState() {
       globalConfig.globalState().enable();
       return globalConfig.globalState();
-
    }
 
    @Override
@@ -84,6 +87,16 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    @Override
    public SiteConfigurationBuilder site() {
       return globalConfig.site();
+   }
+
+   @Override
+   public List<Builder<?>> modules() {
+      return globalConfig.modules();
+   }
+
+   @Override
+   public GlobalConfigurationBuilder defaultCacheName(String defaultCacheName) {
+      return globalConfig.defaultCacheName(defaultCacheName);
    }
 
    @Override

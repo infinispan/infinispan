@@ -180,7 +180,6 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager createClusteredCacheManager(boolean start, ConfigurationBuilderHolder holder, boolean keepJmxDomainName) {
       TransportFlags flags = new TransportFlags();
       amendGlobalConfiguration(holder.getGlobalConfigurationBuilder(), flags);
-      amendJTA(holder.getDefaultConfigurationBuilder());
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values())
          amendJTA(builder);
 

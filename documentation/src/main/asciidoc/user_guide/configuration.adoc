@@ -20,6 +20,7 @@ Shared resources like thread pools, serialization/marshalling settings, transpor
 Cache configuration is specific to the actual caching domain itself: it specifies eviction, locking, transaction, clustering, persistence etc.
 You can specify as many named cache configurations as you need. One of these caches can be indicated as the `default` cache,
 which is the cache returned by the `CacheManager.getCache()` API, whereas other named caches are retrieved via the `CacheManager.getCache(String name)` API.
+
 Whenever they are specified, named caches inherit settings from the default cache while additional behavior can be specified or overridden.
 Infinispan also provides a very flexible inheritance mechanism, where you can define a hierarchy of configuration templates,
 allowing multiple caches to share the same settings, or overriding specific parameters as necessary.
@@ -40,7 +41,7 @@ The configuration file listed below provides sensible defaults and is perfectly 
 
 ----
 
-However, that would only give you the most basic, local mode, non-clustered cache.
+However, that would only give you the most basic, local mode, non-clustered cache manager with no caches.
 Non-basic configurations are very likely to use customized global and default cache elements.
 
 Declarative configuration is the most common approach to configuring Infinispan cache instances.

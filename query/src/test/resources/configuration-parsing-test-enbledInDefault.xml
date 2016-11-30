@@ -6,23 +6,24 @@
 
    <cache-container default-cache="default" statistics="true">
       <jmx duplicate-domains="true" />
-      <local-cache name="default">
+      <local-cache-configuration name="base">
          <indexing index="ALL">
             <property name="hibernate.search.default.directory_provider">someDefault</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>
-      </local-cache>
-      <local-cache name="simple" />
-      <local-cache name="not-searchable">
+      </local-cache-configuration>
+      <local-cache name="default" configuration="base"/>
+      <local-cache name="simple" configuration="base"/>
+      <local-cache name="not-searchable" configuration="base">
          <indexing index="NONE"/>
       </local-cache>
-      <local-cache name="memory-searchable">
+      <local-cache name="memory-searchable" configuration="base">
          <indexing index="ALL">
             <property name="hibernate.search.default.directory_provider">ram</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>
-      <local-cache name="disk-searchable">
+      <local-cache name="disk-searchable" configuration="base">
          <indexing index="LOCAL">
             <property name="hibernate.search.default.directory_provider">filesystem</property>
             <property name="hibernate.search.cats.exclusive_index_use">true</property>

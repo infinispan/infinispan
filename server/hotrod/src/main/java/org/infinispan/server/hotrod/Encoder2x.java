@@ -50,8 +50,9 @@ class Encoder2x implements VersionedEncoder {
    public void writeHeader(Response r, ByteBuf buf, Cache<Address, ServerAddress> addressCache, HotRodServer server) {
       // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
       // If that happens, we pretend the cache is LOCAL and we skip the topology update
-      ComponentRegistry cr = server.getCacheRegistry(r.cacheName);
-      Configuration configuration = server.getCacheConfiguration(r.cacheName);
+      String cacheName = r.cacheName.isEmpty() ? server.getConfiguration().defaultCacheName() : r.cacheName;
+      ComponentRegistry cr = server.getCacheRegistry(cacheName);
+      Configuration configuration = server.getCacheConfiguration(cacheName);
       CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
 
       CacheTopology cacheTopology = cacheMode.isClustered() ? cr.getStateTransferManager().getCacheTopology() : null;
@@ -61,7 +62,7 @@ class Encoder2x implements VersionedEncoder {
       buf.writeByte(Constants.MAGIC_RES);
       ExtendedByteBuf.writeUnsignedLong(r.messageId, buf);
       buf.writeByte(r.operation.getResponseOpCode());
-      writeStatus(r, buf, server);
+      writeStatus(r, buf, server, configuration);
       if (newTopology.isPresent()) {
          AbstractTopologyResponse topology = newTopology.get();
          if (topology instanceof TopologyAwareResponse) {
@@ -79,12 +80,10 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private void writeStatus(Response r, ByteBuf buf, HotRodServer server) {
+   private void writeStatus(Response r, ByteBuf buf, HotRodServer server, Configuration cfg) {
       if (server == null || Constants.isVersionPre24(r.version))
          buf.writeByte(r.status.getCode());
       else {
-         Configuration cfg = r.cacheName.isEmpty() ? server.getCacheManager().getDefaultCacheConfiguration() :
-               server.getCacheManager().getCacheConfiguration(r.cacheName);
          OperationStatus st = OperationStatus.withCompatibility(r.status, cfg.compatibility().enabled());
          buf.writeByte(st.getCode());
       }

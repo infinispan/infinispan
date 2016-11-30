@@ -137,6 +137,11 @@ public class Parser60 implements ConfigurationParser {
       if (builder == null) {
          builder = holder.newConfigurationBuilder(name);
       }
+      // Apply old default inheritance semantics
+      ConfigurationBuilder defaultBuilder = holder.getNamedConfigurationBuilders().get(CacheContainer.DEFAULT_CACHE_NAME);
+      if (defaultBuilder != null) {
+         builder.read(defaultBuilder.build());
+      }
       parseCache(reader, holder);
 
    }

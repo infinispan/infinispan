@@ -1,9 +1,9 @@
 package org.infinispan.manager;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.ByteArrayInputStream;
@@ -50,29 +50,29 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       assertEquals(1000, c.getCacheConfiguration().locking().lockAcquisitionTimeout());
       assertFalse(c.getCacheConfiguration().transaction().transactionMode().isTransactional());
       assertEquals(TransactionMode.NON_TRANSACTIONAL, c.getCacheConfiguration().transaction().transactionMode());
-      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
+      assertNotNull("This should not be null, since a shared transport should be present", TestingUtil.extractComponent(c, Transport.class));
 
       // test the "transactional" cache
       c = cm.getCache("transactional");
-      assert c.getCacheConfiguration().transaction().transactionMode().isTransactional();
-      assert c.getCacheConfiguration().locking().concurrencyLevel() == 100;
-      assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1000;
-      assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
+      assertTrue(c.getCacheConfiguration().transaction().transactionMode().isTransactional());
+      assertEquals(32, c.getCacheConfiguration().locking().concurrencyLevel());
+      assertEquals(10000, c.getCacheConfiguration().locking().lockAcquisitionTimeout());
+      assertNotNull(TestingUtil.extractComponent(c, TransactionManager.class));
+      assertNotNull("This should not be null, since a shared transport should be present", TestingUtil.extractComponent(c, Transport.class));
 
       // test the "replicated" cache
       c = cm.getCache("syncRepl");
-      assert c.getCacheConfiguration().locking().concurrencyLevel() == 100;
-      assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1000;
+      assertEquals(32, c.getCacheConfiguration().locking().concurrencyLevel());
+      assertEquals(10000, c.getCacheConfiguration().locking().lockAcquisitionTimeout());
       assertEquals(TransactionMode.NON_TRANSACTIONAL, c.getCacheConfiguration().transaction().transactionMode());
-      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
+      assertNotNull("This should not be null, since a shared transport should be present", TestingUtil.extractComponent(c, Transport.class));
 
       // test the "txSyncRepl" cache
       c = cm.getCache("txSyncRepl");
-      assert c.getCacheConfiguration().locking().concurrencyLevel() == 100;
-      assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1000;
-      assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
+      assertEquals(32, c.getCacheConfiguration().locking().concurrencyLevel());
+      assertEquals(10000, c.getCacheConfiguration().locking().lockAcquisitionTimeout());
+      assertNotNull(TestingUtil.extractComponent(c, TransactionManager.class));
+      assertNotNull("This should not be null, since a shared transport should be present", TestingUtil.extractComponent(c, Transport.class));
    }
 
    public void testNamedCacheXMLClashingNames() {

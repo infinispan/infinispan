@@ -43,7 +43,11 @@ public class AbstractEmbeddedCacheManagerFactory {
             configurationBuilderHolder.getGlobalConfigurationBuilder().read(gcb.build());
          }
          if (builder != null) {
-            configurationBuilderHolder.getDefaultConfigurationBuilder().read(builder.build());
+            ConfigurationBuilder dcb = configurationBuilderHolder.getDefaultConfigurationBuilder();
+            if (dcb != null)
+               dcb.read(builder.build());
+            else
+               throw logger.noDefaultCache();
          }
 
          return new DefaultCacheManager(configurationBuilderHolder, true);

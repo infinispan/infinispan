@@ -1487,4 +1487,21 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to validate all properties of %s's configuration as the @Store attribute is missing", id = 431)
    void warnStoreAnnotationMissing(String name);
+
+   @Message(value = "Missing configuration for default cache '%s' declared on container", id = 432)
+   CacheConfigurationException missingDefaultCacheDeclaration(String defaultCache);
+
+   @Message(value = "A default cache has been requested, but no cache has been set as default for this container", id = 433)
+   CacheConfigurationException noDefaultCache();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Direct usage of the ___defaultcache name to retrieve the default cache is deprecated", id = 434)
+   void deprecatedDefaultCache();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
+   void defaultCacheConfigurationWithoutName();
+
+   @Message(value = "Cache '%s' has been requested, but no cache configuration exists with that name and no default cache has been set for this container", id = 436)
+   CacheConfigurationException noSuchCacheConfiguration(String name);
 }

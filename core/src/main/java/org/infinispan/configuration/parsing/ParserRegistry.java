@@ -112,6 +112,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
          parse(is, holder);
+         holder.validate();
          return holder;
       } catch (CacheConfigurationException e) {
          throw e;
