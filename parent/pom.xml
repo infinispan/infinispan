@@ -166,7 +166,7 @@
       <version.solder>3.1.0.Final</version.solder>
       <version.spring-session>1.2.2.RELEASE</version.spring-session>
       <version.spring-boot>1.4.0.RELEASE</version.spring-boot>
-      <version.spring4>4.1.0.RELEASE</version.spring4>
+      <version.spring4>4.3.4.RELEASE</version.spring4>
       <version.spymemcached>2.12.1</version.spymemcached>
       <version.testng>6.8.8</version.testng>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>

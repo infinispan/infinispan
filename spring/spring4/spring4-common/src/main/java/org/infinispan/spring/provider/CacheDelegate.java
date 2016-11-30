@@ -1,5 +1,6 @@
 package org.infinispan.spring.provider;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.cache.Cache;
@@ -14,6 +15,16 @@ import org.springframework.util.Assert;
  * @author Sebastian Laskawiec
  */
 class CacheDelegate implements Cache {
+
+   //Implemented as a static holder class for backwards compatibility.
+   //Imagine a situation where a client has new integration module and old Spring version. In that case
+   //this exception does not exist. However we can bypass this by using separate class file (which is loaded
+   //by the JVM when needed...)
+   private static class ValueRetrievalExceptionResolver {
+      static RuntimeException throwValueRetrievalException(Object key, Callable<?> loader, Throwable ex) {
+         return new ValueRetrievalException(key, loader, ex);
+      }
+   }
 
    private final org.infinispan.commons.api.BasicCache<Object, Object> nativeCache;
 
@@ -56,6 +67,17 @@ class CacheDelegate implements Cache {
          throw new IllegalStateException("Cached value is not of required type [" + type.getName() + "]: " + value);
       }
       return (T) value;
+   }
+
+   @Override
+   public <T> T get(Object key, Callable<T> valueLoader) {
+      return (T) nativeCache.computeIfAbsent(key, keyToBeInserted -> {
+         try {
+            return valueLoader.call();
+         } catch (Exception e) {
+            throw ValueRetrievalExceptionResolver.throwValueRetrievalException(key, valueLoader, e);
+         }
+      });
    }
 
    /**

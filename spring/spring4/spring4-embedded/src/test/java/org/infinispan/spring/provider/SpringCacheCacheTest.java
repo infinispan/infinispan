@@ -115,7 +115,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = NullPointerException.class)
    public void testThrowingNullPointerExceptionOnNullGetWithClass() throws Exception {
       //when
-      cache.get(null, null);
+      cache.get(null, (Class<?>) null);
    }
 
    @Test
@@ -124,7 +124,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       this.cache.put("test", "test");
 
       //when
-      Object value = cache.get("test", null);
+      Object value = cache.get("test", (Class<?>) null);
 
       //then
       assertTrue(value instanceof String);
@@ -193,6 +193,37 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       this.cache.clear();
       assertNull(this.cache.get("vlaicu"));
       assertNull(this.cache.get("enescu"));
+   }
+
+   @Test
+   public void testValueLoaderWithNoPreviousValue() {
+      //given
+      cache.get("test", () -> "test");
+
+      //when
+      Cache.ValueWrapper valueFromCache = cache.get("test");
+
+      //then
+      assertEquals("test", valueFromCache.get());
+   }
+
+   @Test
+   public void testValueLoaderWithPreviousValue() {
+      //given
+      cache.put("test", "test");
+      cache.get("test", () -> "This should not be updated");
+
+      //when
+      Cache.ValueWrapper valueFromCache = cache.get("test");
+
+      //then
+      assertEquals("test", valueFromCache.get());
+   }
+
+   @Test(expectedExceptions = Cache.ValueRetrievalException.class)
+   public void testValueLoaderWithExceptionWhenLoading() {
+      //when//then
+      cache.get("test", () -> {throw new IllegalStateException();});
    }
 
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
