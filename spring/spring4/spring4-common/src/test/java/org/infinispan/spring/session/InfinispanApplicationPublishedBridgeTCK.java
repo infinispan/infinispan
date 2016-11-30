@@ -12,6 +12,7 @@ import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.session.util.EventsWaiter;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.session.MapSession;
 import org.springframework.session.events.SessionCreatedEvent;
 import org.springframework.session.events.SessionDeletedEvent;
@@ -86,6 +87,11 @@ public abstract class InfinispanApplicationPublishedBridgeTCK {
       @Override
       public void publishEvent(ApplicationEvent event) {
          events.add(event);
+      }
+
+      @Override
+      public void publishEvent(Object event) {
+         publishEvent(new PayloadApplicationEvent<>(this, event));
       }
 
       public Stream<ApplicationEvent> getEvents() {
