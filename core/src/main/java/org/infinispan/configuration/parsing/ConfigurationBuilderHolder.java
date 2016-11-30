@@ -3,6 +3,7 @@ package org.infinispan.configuration.parsing;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -16,6 +17,8 @@ public class ConfigurationBuilderHolder {
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
    private String defaultCacheName;
+   private final Stack<ParserScope> scope;
+
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -28,6 +31,8 @@ public class ConfigurationBuilderHolder {
       this.currentConfigurationBuilder = defaultConfigurationBuilder;
       this.parserContexts = new HashMap<Class<? extends ConfigurationParser>, ParserContext>();
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      scope = new Stack<>();
+      scope.push(ParserScope.GLOBAL);
    }
 
    public GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
@@ -55,6 +60,18 @@ public class ConfigurationBuilderHolder {
 
    public ConfigurationBuilder getCurrentConfigurationBuilder() {
       return currentConfigurationBuilder;
+   }
+
+   void pushScope(ParserScope scope) {
+      this.scope.push(scope);
+   }
+
+   void popScope() {
+      this.scope.pop();
+   }
+
+   public ParserScope getScope() {
+      return scope.peek();
    }
 
    @SuppressWarnings("unchecked")

@@ -139,9 +139,12 @@ public class TestingUtil {
       START_70(7, 0),
       START_71(7, 1),
       START_72(7, 2),
-      START_80(8, 0);
+      START_80(8, 0),
+      START_81(8, 1),
+      START_82(8, 2),
+      START_90(9, 0);
 
-      public static final InfinispanStartTag LATEST = START_80;
+      public static final InfinispanStartTag LATEST = START_90;
       private final String tag;
       private final String majorMinor;
 

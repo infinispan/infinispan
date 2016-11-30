@@ -481,6 +481,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      holder.pushScope(ParserScope.CACHE_CONTAINER);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -603,7 +604,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case MODULES: {
-               parseModules(reader, holder);
+               if (reader.getSchema().since(9, 0)) {
+                  throw ParseUtils.unexpectedElement(reader);
+               } else {
+                  parseModules(reader, holder);
+               }
                break;
             }
             case JMX: {
@@ -623,10 +628,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             default: {
-               throw ParseUtils.unexpectedElement(reader);
+               reader.handleAny(holder);
             }
          }
       }
+      holder.popScope();
    }
 
    private void parseGlobalSecurity(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1150,6 +1156,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseLocalCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
+      holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
@@ -1164,6 +1171,7 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          this.parseCacheElement(reader, element, holder);
       }
+      holder.popScope();
    }
 
    private void parseCacheAttribute(XMLExtendedStreamReader reader,
@@ -1470,7 +1478,11 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case MODULES: {
-            parseModules(reader, holder);
+            if (reader.getSchema().since(9, 0)) {
+               throw ParseUtils.unexpectedElement(reader);
+            } else {
+               parseModules(reader, holder);
+            }
             break;
          }
          case DATA_CONTAINER: {
@@ -1792,6 +1804,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseInvalidationCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
+      holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
@@ -1819,6 +1832,7 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
+      holder.popScope();
    }
 
    private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader,
@@ -1857,6 +1871,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseReplicatedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
+      holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
@@ -1896,6 +1911,7 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
+      holder.popScope();
    }
 
    private void parseStateTransfer(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
@@ -1928,6 +1944,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseDistributedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
+      holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
@@ -1992,6 +2009,7 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
+      holder.popScope();
    }
 
    private void parseGroups(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {

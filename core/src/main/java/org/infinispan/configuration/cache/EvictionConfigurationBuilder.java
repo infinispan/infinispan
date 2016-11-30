@@ -108,7 +108,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       if (!strategy.isEnabled()) {
          if (size > 0) {
             strategy(EvictionStrategy.LIRS);
-            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
+            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", size, strategy);
          } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL) {
             log.passivationWithoutEviction();
          }
