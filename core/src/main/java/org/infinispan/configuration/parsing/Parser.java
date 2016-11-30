@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -105,7 +106,7 @@ import org.kohsuke.MetaInfServices;
 })
 public class Parser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(Parser.class);
+   static final Log log = LogFactory.getLog(Parser.class);
 
    private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<String, DefaultThreadFactory>();
    private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
@@ -484,11 +485,15 @@ public class Parser implements ConfigurationParser {
 
    private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       holder.pushScope(ParserScope.CACHE_CONTAINER);
+      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      if (!reader.getSchema().since(9, 0)) {
+         builder.defaultCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+
          switch (attribute) {
             case NAME: {
                builder.globalJmxStatistics().cacheManagerName(value);
@@ -499,7 +504,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case DEFAULT_CACHE: {
-               holder.setDefaultCacheName(value);
+               builder.defaultCacheName(value);
                break;
             }
             case JNDI_NAME: {
@@ -562,6 +567,7 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
+
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {

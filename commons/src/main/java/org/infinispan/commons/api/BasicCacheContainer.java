@@ -14,12 +14,14 @@ package org.infinispan.commons.api;
  * @since 4.0
  */
 public interface BasicCacheContainer extends Lifecycle {
+   @Deprecated
    String DEFAULT_CACHE_NAME = "___defaultcache";
 
    /**
     * Retrieves the default cache associated with this cache container.
     * <p/>
-    * As such, this method is always guaranteed to return the default cache.
+    * As such, this method is always guaranteed to return the default cache, unless one has not been supplied to the
+    * cache container.
     * <p />
     * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
     * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness

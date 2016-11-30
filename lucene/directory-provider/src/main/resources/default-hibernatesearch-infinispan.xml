@@ -15,7 +15,7 @@
         <stack-file name="default-jgroups-udp" path="default-configs/default-jgroups-udp.xml"/>
     </jgroups>
 
-    <cache-container name="HibernateSearch" default-cache="default" statistics="false" shutdown-hook="DONT_REGISTER">
+    <cache-container name="HibernateSearch" statistics="false" shutdown-hook="DONT_REGISTER">
 
         <transport stack="default-jgroups-udp"/>
 

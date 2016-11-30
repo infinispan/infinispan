@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -165,6 +166,16 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          Configuration config = cb.build();
          assert config.invocationBatching().enabled();
          assert cm.defineConfiguration("test2", config).invocationBatching().enabled();
+      } finally {
+         cm.stop();
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000436:.*")
+   public void testMissingDefaultConfiguration() {
+      EmbeddedCacheManager cm = new DefaultCacheManager();
+      try {
+         cm.getCache("someCache");
       } finally {
          cm.stop();
       }

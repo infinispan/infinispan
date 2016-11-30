@@ -11,14 +11,11 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 public class ConfigurationBuilderHolder {
 
    private final GlobalConfigurationBuilder globalConfigurationBuilder;
-   private final ConfigurationBuilder defaultConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
-   private String defaultCacheName;
    private final Stack<ParserScope> scope;
-
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -26,11 +23,9 @@ public class ConfigurationBuilderHolder {
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
       this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      this.defaultConfigurationBuilder = new ConfigurationBuilder();
-      this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
-      this.currentConfigurationBuilder = defaultConfigurationBuilder;
-      this.parserContexts = new HashMap<Class<? extends ConfigurationParser>, ParserContext>();
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      this.namedConfigurationBuilders = new HashMap<>();
+      this.parserContexts = new HashMap<>();
+      this.classLoader = new WeakReference<>(classLoader);
       scope = new Stack<>();
       scope.push(ParserScope.GLOBAL);
    }
@@ -41,17 +36,9 @@ public class ConfigurationBuilderHolder {
 
    public ConfigurationBuilder newConfigurationBuilder(String name) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      //no need to validate default config again
-      //https://issues.jboss.org/browse/ISPN-1938
-      builder.read(getDefaultConfigurationBuilder().build(false));
       namedConfigurationBuilders.put(name, builder);
       currentConfigurationBuilder = builder;
       return builder;
-   }
-
-   public ConfigurationBuilder getDefaultConfigurationBuilder() {
-      ConfigurationBuilder builder = namedConfigurationBuilders.get(defaultCacheName);
-      return builder == null ? defaultConfigurationBuilder : builder;
    }
 
    public Map<String, ConfigurationBuilder> getNamedConfigurationBuilders() {
@@ -60,6 +47,14 @@ public class ConfigurationBuilderHolder {
 
    public ConfigurationBuilder getCurrentConfigurationBuilder() {
       return currentConfigurationBuilder;
+   }
+
+   public ConfigurationBuilder getDefaultConfigurationBuilder() {
+      if (globalConfigurationBuilder.defaultCacheName().isPresent()) {
+         return namedConfigurationBuilders.get(globalConfigurationBuilder.defaultCacheName().get());
+      } else {
+         return null;
+      }
    }
 
    void pushScope(ParserScope scope) {
@@ -91,7 +86,10 @@ public class ConfigurationBuilderHolder {
       return parserContexts;
    }
 
-   public void setDefaultCacheName(String defaultCacheName) {
-      this.defaultCacheName = defaultCacheName;
+   public void validate() {
+      globalConfigurationBuilder.defaultCacheName().ifPresent(name -> {
+         if (!namedConfigurationBuilders.containsKey(name))
+            throw Parser.log.missingDefaultCacheDeclaration(name);
+      });
    }
 }

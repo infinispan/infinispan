@@ -8,6 +8,13 @@ The Infinispan community
 This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
+
+=== Default Cache changes
+Up to Infinispan 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
+Additionally, the default cache configuration affected all other cache configurations, acting as some kind of base template.
+Since 9.0, the default cache only exists if it has been explicitly configured. Additionally, even if it has been specified,
+it will never act as base template for other caches.
+
 === New Cloud module for library mode
 In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
 
@@ -251,7 +258,7 @@ builder.transaction().useSynchronization(false).recovery().enabled(false)
 
 === Cache Loader and Store configuration
 
-Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation. 
+Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation.
 
 === Virtual Nodes and Segments
 
@@ -260,13 +267,13 @@ The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has bee
 ==  Upgrading from 5.0 to 5.1
 === API
 
-The cache and cache manager hierarchies have changed slightly in 5.1 with the introduction of 
+The cache and cache manager hierarchies have changed slightly in 5.1 with the introduction of
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
-and 
+and
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]
-, which are parent classes of existing 
+, which are parent classes of existing
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Cache`]
-and 
+and
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
 classes respectively. What's important is that Hot Rod clients must now code
 against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
@@ -321,7 +328,7 @@ Eviction's `maxEntries` is used as guide for the entire cache, but eviction happ
 
 === Transactions
 
-* A cache marked as `TRANSACTIONAL` cannot be accessed outside of a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior. 
+* A cache marked as `TRANSACTIONAL` cannot be accessed outside of a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior.
 
 * In 5.0, commit and rollback phases were asynchronous by default. Starting with 5.1, these are now synchronous by default, to provide the guarantees required by a single lock-owner model.
 

@@ -67,7 +67,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Helper method that allows for quick registration of an {@link org.infinispan.marshall.AdvancedExternalizer}
+    * Helper method that allows for quick registration of an {@link AdvancedExternalizer}
     * implementation alongside its corresponding identifier. Remember that the identifier needs to a be positive number,
     * including 0, and cannot clash with other identifiers in the system.
     *
@@ -86,7 +86,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Helper method that allows for quick registration of an {@link org.infinispan.marshall.AdvancedExternalizer}
+    * Helper method that allows for quick registration of an {@link AdvancedExternalizer}
     * implementation alongside its corresponding identifier. Remember that the identifier needs to a be positive number,
     * including 0, and cannot clash with other identifiers in the system.
     *
@@ -104,7 +104,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Helper method that allows for quick registration of {@link org.infinispan.marshall.AdvancedExternalizer}
+    * Helper method that allows for quick registration of {@link AdvancedExternalizer}
     * implementations.
     *
     * @param advancedExternalizers

@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -30,7 +29,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected static final String[] neededCacheNames = new String[] {
-      BasicCacheContainer.DEFAULT_CACHE_NAME,
+      "default",
       "LuceneIndexesMetadata",
       "LuceneIndexesData",
       "LuceneIndexesLocking",

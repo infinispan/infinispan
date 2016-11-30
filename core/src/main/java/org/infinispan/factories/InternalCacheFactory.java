@@ -102,7 +102,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       if (marshaller != null) {
          componentRegistry.wireDependencies(marshaller);
       }
-      componentRegistry.registerComponent(converter, TypeConverter.class);
       return cache;
    }
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -29,7 +30,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final GlobalStateConfigurationBuilder globalState;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SiteConfigurationBuilder site;
-
+   private Optional<String> defaultCacheName;
 
    public GlobalConfigurationBuilder() {
       // In OSGi contexts the TCCL should not be used. Use the infinispan-core bundle as default instead.
@@ -50,6 +51,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.defaultCacheName = Optional.empty();
    }
 
    /**
@@ -91,10 +93,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return transport;
    }
 
-   /**
-    * This method allows configuration of the global, or cache manager level,
-    * jmx statistics.
-    */
+
    @Override
    public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
       return globalJmxStatistics;
@@ -105,9 +104,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return serialization;
    }
 
-   /**
-    * @deprecated this returns the thread pool returned from {@link GlobalConfigurationBuilder#expirationThreadPool}
-    */
    @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder evictionThreadPool() {
@@ -124,9 +120,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return listenerThreadPool;
    }
 
-   /**
-    * @deprecated Since 9.0, no longer used.
-    */
    @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
@@ -158,6 +151,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return shutdown;
    }
 
+   @Override
    public List<Builder<?>> modules() {
       return modules;
    }
@@ -186,6 +180,16 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public GlobalStateConfigurationBuilder globalState() {
       return globalState;
+   }
+
+   @Override
+   public GlobalConfigurationBuilder defaultCacheName(String defaultCacheName) {
+      this.defaultCacheName = Optional.of(defaultCacheName);
+      return this;
+   }
+
+   public Optional<String> defaultCacheName() {
+      return defaultCacheName;
    }
 
    @SuppressWarnings("unchecked")
@@ -243,11 +247,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             globalState.create(),
             modulesConfig,
             site.create(),
+            defaultCacheName,
             cl.get());
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
       this.cl = new WeakReference<ClassLoader>(template.classLoader());
+      this.defaultCacheName = template.defaultCacheName();
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
@@ -330,6 +336,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          return false;
       if (!globalState.equals(that.globalState))
          return false;
+      if (!defaultCacheName.equals(that.defaultCacheName))
+         return false;
 
       return !transport.equals(that.transport);
    }
@@ -350,6 +358,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (site.hashCode());
       result = 31 * result + (security.hashCode());
       result = 31 * result + (globalState.hashCode());
+      result = 31 * result + (modules.hashCode());
+      result = 31 * result + (defaultCacheName.hashCode());
       return result;
    }
 

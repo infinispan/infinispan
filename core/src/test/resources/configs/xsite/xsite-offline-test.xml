@@ -10,22 +10,23 @@
 
    <cache-container default-cache="default">
       <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
-      <local-cache name="default">
+      <local-cache-configuration name="base">
          <backups>
             <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true">
                <take-offline after-failures="123" min-wait="5673"/>
             </backup>
          </backups>
          <backup-for remote-cache="someCache" remote-site="SFO"/>
-      </local-cache>
-      <local-cache name="inheritor"/>
-      <local-cache name="noTakeOffline">
+      </local-cache-configuration>
+      <local-cache name="default" configuration="base"/>
+      <local-cache name="inheritor" configuration="base"/>
+      <local-cache name="noTakeOffline" configuration="base">
          <backups>
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12003" enabled="true" />
          </backups>
          <backup-for/>
       </local-cache>
-      <local-cache name="takeOfflineDifferentConfig">
+      <local-cache name="takeOfflineDifferentConfig" configuration="base">
          <backups>
             <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true">
                <take-offline after-failures="321" min-wait="3765"/>
