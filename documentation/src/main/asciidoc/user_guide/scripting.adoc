@@ -11,7 +11,7 @@ If the name of the script contains a filename extension, e.g. +myscript.js+, the
 will be used to execute it.
 Alternatively the script engine can be selected using script metadata (see below).
 Be aware that, when security is enabled, access to the script cache via the remote protocols requires
-that the user belongs to the _'___script_manager role'_.
+that the user belongs to the pass:['___script_manager'] role.
 
 ==== Script metadata
 Script metadata is additional information about the script that the user can provide to the server to affect how a
