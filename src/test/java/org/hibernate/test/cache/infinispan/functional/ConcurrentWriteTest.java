@@ -18,6 +18,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -69,7 +70,13 @@ import org.infinispan.util.logging.LogFactory;
 =======
 import org.hibernate.test.cache.infinispan.functional.entities.Contact;
 import org.hibernate.test.cache.infinispan.functional.entities.Customer;
+<<<<<<< HEAD
 >>>>>>> HHH-10030 Add read-write cache concurrency strategy to Infinispan 2LC
+=======
+import org.hibernate.test.cache.infinispan.util.TestInfinispanRegionFactory;
+import org.hibernate.test.cache.infinispan.util.TestTimeService;
+import org.junit.Ignore;
+>>>>>>> HHH-11344 Testsuite speed-up
 import org.junit.Test;
 
 <<<<<<< HEAD
@@ -99,6 +106,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	private static final int THINK_TIME_MILLIS = 10;
 	private static final long LAUNCH_INTERVAL_MILLIS = 10;
 	private static final Random random = new Random();
+	private static final TestTimeService TIME_SERVICE = new TestTimeService();
 
 	/**
 	 * kill switch used to stop all users when one fails
@@ -202,6 +210,12 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 
 	@Override
+	protected void addSettings(Map settings) {
+		super.addSettings(settings);
+		settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+	}
+
+	@Override
 	protected void cleanupTest() throws Exception {
 		try {
 			super.cleanupTest();
@@ -221,14 +235,14 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 		// setup
 		sessionFactory().getStatistics().clear();
 		// wait a while to make sure that timestamp comparison works after invalidateRegion
-		Thread.sleep(1);
+		TIME_SERVICE.advance(1);
 
 		Customer customer = createCustomer( 0 );
 		final Integer customerId = customer.getId();
 		getCustomerIDs().add( customerId );
 
 		// wait a while to make sure that timestamp comparison works after collection remove (during insert)
-		Thread.sleep(1);
+		TIME_SERVICE.advance(1);
 
 		assertNull( "contact exists despite not being added", getFirstContact( customerId ) );
 
@@ -265,6 +279,8 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 
 	}
 
+	// Ignoring the test as it's more of a stress-test: this should be enabled manually
+	@Ignore
 	@Test
 	public void testManyUsers() throws Throwable {
 		try {
@@ -284,7 +300,6 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 				futures.add( future );
 				Thread.sleep( LAUNCH_INTERVAL_MILLIS ); // rampup
 			}
-//         barrier.await(); // wait for all threads to be ready
 			barrier.await( 2, TimeUnit.MINUTES ); // wait for all threads to finish
 			log.info( "All threads finished, let's shutdown the executor and check whether any exceptions were reported" );
 			for ( Future<Void> future : futures ) {
@@ -602,7 +617,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 					thinkRandomTime();
 					++completedIterations;
 					if ( trace ) {
-						log.tracef( "Iteration completed {0}", completedIterations );
+						log.tracef( "Iteration completed %d", completedIterations );
 					}
 				}
 			}
