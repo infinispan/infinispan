@@ -361,7 +361,7 @@
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
-                        <Dependencies>org.hibernate</Dependencies>
+                        <Dependencies>org.hibernate optional</Dependencies>
                      </instructions>
                   </configuration>
                </execution>
