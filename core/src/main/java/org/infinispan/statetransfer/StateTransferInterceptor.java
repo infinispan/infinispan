@@ -245,7 +245,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       int retryTopologyId = -1;
       WriteCommand writeCommand = (WriteCommand) rCommand;
-      if (t instanceof OutdatedTopologyException) {
+      if (t instanceof OutdatedTopologyException || t instanceof AllOwnersLostException) {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
       } else if (t != null) {
@@ -303,7 +303,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
       }
-      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException) && !(ce instanceof AllOwnersLostException))
          throw t;
 
       // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the

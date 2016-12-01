@@ -10,10 +10,10 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -124,14 +124,8 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(2));
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache0.getRpcManager().getMembers().size() == 3 &&
-                  cache1.getRpcManager().getMembers().size() == 3 &&
-                  cache2.getRpcManager().getMembers().size() == 3;
-         }
-      });
+      Stream.of(cache0, cache1, cache2).forEach(cache ->
+            eventuallyEquals(3, () -> cache.getRpcManager().getMembers().size()));
 
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
       assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
@@ -159,13 +153,8 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       // Allow the topology update to proceed on cache0
       final int postJoinTopologyId = duringJoinTopologyId + 1;
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            CacheTopology cacheTopology = cache0.getComponentRegistry().getStateTransferManager().getCacheTopology();
-            return cacheTopology.getTopologyId() == postJoinTopologyId;
-         }
-      });
+      eventuallyEquals(postJoinTopologyId,
+            () -> cache0.getComponentRegistry().getStateTransferManager().getCacheTopology().getTopologyId());
 
       // Allow the command to proceed
       log.tracef("Unblocking the write command on node " + address(1));

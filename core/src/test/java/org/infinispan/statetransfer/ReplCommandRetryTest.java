@@ -80,7 +80,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
       final Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 4, c1, c2);
 
       Future<Object> f = fork(() -> {
          log.tracef("Initiating a put command on %s", c1);
@@ -95,7 +95,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
 
       // Unblock the replicated command on c2.
       log.tracef("Triggering retry 1");
@@ -113,7 +113,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
       Cache<Object, Object> c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 12, c1, c2, c3, c4);
 
       // Unblock the command with the new topology id on c3.
       log.tracef("Triggering retry 2");
@@ -170,7 +170,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, true));
       final Cache<String, String> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 4, c1, c2);
 
       Future<Object> f = fork(() -> {
          // The LockControlCommand wouldn't be replicated if we initiated the transaction on the primary owner (c1)
@@ -186,7 +186,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
 
       // Unblock the replicated command on c1.
       // c1 will return an UnsureResponse, and c2 will retry (1)
@@ -201,7 +201,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 12, c1, c2, c3, c4);
 
       // Unblock the replicated command on c1
       di1.unblock(2);

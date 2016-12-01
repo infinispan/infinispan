@@ -26,11 +26,11 @@ public interface Messages {
    @Message(value = "Node %s left the cluster", id = 100001)
    String nodeLeft(Address leaver);
 
-   @Message(value = "Started local rebalance", id = 100002)
-   String rebalanceStarted();
+   @Message(value = "Started rebalance with topology id %d", id = 100002)
+   String rebalanceStarted(int topologyId);
 
-   @Message(value = "Finished local rebalance phase", id = 100003)
-   String rebalancePhaseConfirmed();
+   @Message(value = "Node %s finished rebalance phase with topology id %d", id = 100003)
+   String rebalancePhaseConfirmed(Address node, int topologyId);
 
    @Message(value = "Lost data because of graceful leaver %s", id = 312)
    String lostDataBecauseOfGracefulLeaver(Address leaver);

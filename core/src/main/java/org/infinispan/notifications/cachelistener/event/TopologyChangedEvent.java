@@ -13,13 +13,31 @@ public interface TopologyChangedEvent<K, V> extends Event<K, V> {
 
    /**
     * @return retrieves the consistent hash at the start of a topology change
+    *
+    * @deprecated since 9.0 use {@link #getReadConsistentHashAtStart()} or {@link #getWriteConsistentHashAtStart()}
     */
-   ConsistentHash getConsistentHashAtStart();
+   @Deprecated
+   default ConsistentHash getConsistentHashAtStart() {
+      return getReadConsistentHashAtStart();
+   }
+
+   ConsistentHash getReadConsistentHashAtStart();
+
+   ConsistentHash getWriteConsistentHashAtStart();
 
    /**
     * @return retrieves the consistent hash at the end of a topology change
+    *
+    * @deprecated since 9.0 use {@link #getReadConsistentHashAtEnd()} or {@link #getWriteConsistentHashAtEnd()}
     */
-   ConsistentHash getConsistentHashAtEnd();
+   @Deprecated
+   default ConsistentHash getConsistentHashAtEnd() {
+      return getWriteConsistentHashAtEnd();
+   }
+
+   ConsistentHash getReadConsistentHashAtEnd();
+
+   ConsistentHash getWriteConsistentHashAtEnd();
 
    int getNewTopologyId();
 }

@@ -16,6 +16,7 @@ public class InvocationMatcherBuilder {
    private final String methodName;
    private Matcher instanceMatcher;
    private List<Matcher> argumentMatchers;
+   private int matchCount = -1;
 
    public InvocationMatcherBuilder(String methodName) {
       this.methodName = methodName;
@@ -24,7 +25,7 @@ public class InvocationMatcherBuilder {
    public InvocationMatcher build() {
       Matcher[] matchersArray = argumentMatchers != null ?
             argumentMatchers.toArray(new Matcher[argumentMatchers.size()]) : null;
-      return new DefaultInvocationMatcher(methodName, instanceMatcher, matchersArray);
+      return new DefaultInvocationMatcher(methodName, instanceMatcher, matchCount, matchersArray);
    }
 
    public InvocationMatcherBuilder withParam(int index, Object expected) {
@@ -40,6 +41,11 @@ public class InvocationMatcherBuilder {
          argumentMatchers.add(null);
       }
       argumentMatchers.set(index, matcher);
+      return this;
+   }
+
+   public InvocationMatcherBuilder matchCount(int matchCount) {
+      this.matchCount = matchCount;
       return this;
    }
 

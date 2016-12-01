@@ -38,14 +38,14 @@ public class LocalizedCacheTopology extends CacheTopology {
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
       ConsistentHash ch = new ReplicatedConsistentHash(MurmurHash3.getInstance(), members, new int[]{0});
-      CacheTopology cacheTopology = new CacheTopology(0, 0, ch, null, members, null);
+      CacheTopology cacheTopology = new CacheTopology(0, 0, ch, null, Phase.NO_REBALANCE, members, null);
       return new LocalizedCacheTopology(cacheMode, cacheTopology, key -> 0, localAddress);
    }
 
    public LocalizedCacheTopology(CacheMode cacheMode, CacheTopology cacheTopology, KeyPartitioner keyPartitioner,
                                  Address localAddress) {
       super(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.getCurrentCH(),
-            cacheTopology.getPendingCH(), cacheTopology.getUnionCH(), cacheTopology.getActualMembers(),
+            cacheTopology.getPendingCH(), cacheTopology.getUnionCH(), cacheTopology.getPhase(), cacheTopology.getActualMembers(),
             cacheTopology.getMembersPersistentUUIDs());
 
       ConsistentHash readCH = getReadConsistentHash();
