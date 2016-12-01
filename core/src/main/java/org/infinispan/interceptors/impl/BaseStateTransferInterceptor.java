@@ -26,6 +26,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -212,7 +213,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          // a broadcast to all nodes then can end with suspect exception, but we won't get any new topology.
          // An example of this situation is when a node sends leave - topology can be installed before the new view.
          // To prevent suspect exceptions use SYNCHRONOUS_IGNORE_LEAVERS response mode.
-         if (cacheTopology != null && currentTopologyId == cmd.getTopologyId() && !cacheTopology.getActualMembers().contains(((SuspectException) ce).getSuspect())) {
+         if (currentTopologyId == cmd.getTopologyId() && !cacheTopology.getActualMembers().contains(((SuspectException) ce).getSuspect())) {
             // TODO: provide a test case
             throw new IllegalStateException("Command was not sent with SYNCHRONOUS_IGNORE_LEAVERS?");
          }
@@ -220,16 +221,23 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          if (trace)
             getLog().tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId, cmd);
+      } else if (ce instanceof AllOwnersLostException) {
+         if (trace)
+            getLog().tracef("All owners for command %s have been lost.", cmd);
+         return null;
       } else {
          throw t;
       }
-      // We increment the topology to wait for the next topology.
-      // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-      int newTopologyId = getNewTopologyId(ce, currentTopologyId, cmd);
-      cmd.setTopologyId(newTopologyId);
-      ((FlagAffectedCommand)rCommand).addFlags(FlagBitSets.COMMAND_RETRY);
-      CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
-      return retryWhenDone(topologyFuture, newTopologyId, rCtx, rCommand, handleReadCommandReturn);
+      // We can get OTE even if current topology information is sufficient:
+      // 1. A has topology in phase READ_ALL_WRITE_ALL, sends message to both old owner B and new C
+      // 2. C has old topology with READ_OLD_WRITE_ALL, so it responds with UnsureResponse
+      // 3. C updates topology to READ_ALL_WRITE_ALL, B updates to READ_NEW_WRITE_ALL
+      // 4. B receives the read, but it already can't read: responds with UnsureResponse
+      // 5. A receives two unsure responses and throws OTE
+      // However, now we are sure that we can immediately retry the request, because C must have updated its topology
+      cmd.setTopologyId(currentTopologyId);
+      ((FlagAffectedCommand) cmd).addFlags(FlagBitSets.COMMAND_RETRY);
+      return invokeNextAndHandle(rCtx, rCommand, handleReadCommandReturn);
    }
 
    protected int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {

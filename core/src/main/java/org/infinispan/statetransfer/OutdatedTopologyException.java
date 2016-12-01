@@ -15,9 +15,18 @@ import org.infinispan.commons.CacheException;
 public class OutdatedTopologyException extends CacheException {
    public final int requestedTopologyId;
 
+   /**
+    * A cached instance of {@link OutdatedTopologyException}.
+    * <p>
+    * This exception has not stack trace information and it should be used internally to notify a topology change while
+    * handle a command.
+    * <p>
+    * It avoids the cost associated to create and collect the stack when it isn't needed.
+    *
+    * @return a cached instance of {@link OutdatedTopologyException}.
+    */
    @SuppressWarnings("ThrowableInstanceNeverThrown")
-   private static final OutdatedTopologyException CACHED = new OutdatedTopologyException();
-
+   public static final OutdatedTopologyException INSTANCE = new OutdatedTopologyException();
 
    private OutdatedTopologyException() {
       super("Topology changed while handling command", null, false, false);
@@ -36,19 +45,5 @@ public class OutdatedTopologyException extends CacheException {
    public OutdatedTopologyException(int requestedTopologyId) {
       super(null, null, false, false);
       this.requestedTopologyId = requestedTopologyId;
-   }
-
-   /**
-    * A cached instance of {@link OutdatedTopologyException}.
-    * <p>
-    * This exception has not stack trace information and it should be used internally to notify a topology change while
-    * handle a command.
-    * <p>
-    * It avoids the cost associated to create and collect the stack when it isn't needed.
-    *
-    * @return a cached instance of {@link OutdatedTopologyException}.
-    */
-   public static OutdatedTopologyException getCachedInstance() {
-      return CACHED;
    }
 }

@@ -329,15 +329,14 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(primaryOwnerCache);
 
       // Block the rebalance confirmation on cache0
-      blockRebalanceConfirmation(primaryOwnerCache.getCacheManager(), checkPoint);
+      int rebalanceTopologyId = preJoinTopologyId + 2;
+      blockRebalanceConfirmation(primaryOwnerCache.getCacheManager(), checkPoint, rebalanceTopologyId);
 
       assertEquals(primaryOwnerCache.getCacheManager().getCoordinator(), primaryOwnerCache.getCacheManager().getAddress());
 
       // Remove the leaver
       log.trace("Stopping the cache");
       backupOwnerCache.getCacheManager().stop();
-
-      int rebalanceTopologyId = preJoinTopologyId + 2;
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(new Condition() {
@@ -503,7 +502,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       return controlledRpcManager;
    }
 
-   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint)
+   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
@@ -514,9 +513,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
             Object[] arguments = invocation.getArguments();
             Address source = (Address) arguments[1];
             int topologyId = (Integer) arguments[2];
-            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
-
+            if (topologyId == rebalanceTopologyId) {
+               checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+               checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            }
             return forwardedAnswer.answer(invocation);
          }
       }).when(mockManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),

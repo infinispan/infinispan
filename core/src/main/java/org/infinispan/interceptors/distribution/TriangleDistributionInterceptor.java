@@ -436,8 +436,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private void checkTopologyId(int topologyId, Collector<?> collector) {
       int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
       if (currentTopologyId != topologyId && topologyId != -1) {
-         collector.primaryException(OutdatedTopologyException.getCachedInstance());
-         throw OutdatedTopologyException.getCachedInstance();
+         collector.primaryException(OutdatedTopologyException.INSTANCE);
+         throw OutdatedTopologyException.INSTANCE;
       }
    }
 
