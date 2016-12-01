@@ -62,22 +62,17 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         Object returnValue = invokeNextInterceptor(ctx, command);
-         if (returnValue == null) {
-            Object key = command.getKey();
-            if (needsRemoteGet(ctx, command)) {
-               returnValue = remoteGet(ctx, key, command);
-            }
-            if (returnValue == null) {
-               returnValue = localGet(ctx, key, false, command);
-            }
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      if (returnValue == null) {
+         Object key = command.getKey();
+         if (needsRemoteGet(ctx, command)) {
+            returnValue = remoteGet(ctx, key, command);
          }
-         return returnValue;
-      } catch (SuspectException e) {
-         // retry
-         return visitGetKeyValueCommand(ctx, command);
+         if (returnValue == null) {
+            returnValue = localGet(ctx, key, false, command);
+         }
       }
+      return returnValue;
    }
 
    @Override

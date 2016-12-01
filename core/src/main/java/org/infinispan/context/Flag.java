@@ -228,6 +228,13 @@ public enum Flag {
     */
    GUARANTEED_DELIVERY,
 
+   /**
+    * If a write operation encounters a retry due to a topology change this flag should be used to tell the new owner
+    * that such a thing happened.  This flag was created purely for internal Infinispan usage, and should not be
+    * used by clients calling into Infinispan.
+    */
+   COMMAND_RETRY
+
    ;
 
    /**

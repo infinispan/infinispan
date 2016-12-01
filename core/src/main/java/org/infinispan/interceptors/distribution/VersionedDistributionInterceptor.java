@@ -19,20 +19,21 @@
 
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
+import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
 
 import java.util.Collection;
 import java.util.Map;
 
-import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
-import static org.infinispan.transaction.WriteSkewHelper.setVersionsSeenOnPrepareCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
@@ -55,7 +56,9 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
       // Perform the RPC
       try {
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, true, true);
+         long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, replTimeout);
+         checkTxCommandResponses(resps, command);
 
          // Now store newly generated versions from lock owners for use during the commit phase.
          CacheTransaction ct = ctx.getCacheTransaction();

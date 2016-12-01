@@ -31,6 +31,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -60,6 +61,7 @@ import java.util.Set;
 public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxConcurrentDistributionInterceptor.class);
+   private static boolean trace = log.isTraceEnabled();
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
@@ -126,6 +128,13 @@ public class NonTxConcurrentDistributionInterceptor extends NonTxDistributionInt
                // If the primary owner throws an OutdatedTopologyException, it must be because the command succeeded there
                command.setIgnorePreviousValue(true);
             }
+            throw e;
+         } catch (SuspectException e) {
+            // If the primary owner became suspected, we don't know if it was able to replicate it's data properly
+            // to all backup owners and notify all listeners, thus we need to retry with new matcher in case if
+            // it had updated the backup owners
+            if (trace) log.trace("Primary owner suspected - retrying and ignoring the previous value");
+            command.setIgnorePreviousValue(true);
             throw e;
          }
 

@@ -111,7 +111,9 @@ public class DummyTransaction implements Transaction {
          notifyAfterCompletion(Status.STATUS_ROLLEDBACK);
       } catch (Throwable t) {
          log.errorRollingBack(t);
-         throw new IllegalStateException(t);
+         SystemException systemException = new SystemException("Unable to rollback transaction");
+         systemException.initCause(t);
+         throw systemException;
       }
       // Disassociate tx from thread.
       tm_.setTransaction(null);

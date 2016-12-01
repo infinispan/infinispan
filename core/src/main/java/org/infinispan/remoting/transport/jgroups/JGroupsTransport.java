@@ -75,7 +75,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -320,6 +319,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
+      initRPCDispatcher();
+   }
+
+   protected void initRPCDispatcher() {
       dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, inboundInvocationHandler, gcr, backupReceiverRepository);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
@@ -362,7 +365,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                         + " property specifies value " + cfg + " that could not be read!",
                         new FileNotFoundException(cfg));
             }
-            try {                              
+            try {
                channel = new JChannel(conf);
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
@@ -475,10 +478,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       Address self = getAddress();
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
-         if (ignoreLeavers) { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
-            recipients = new HashSet<Address>(recipients);
-            recipients.retainAll(getMembers());
-         } else { // SYNCHRONOUS
+         if (!ignoreLeavers) { // SYNCHRONOUS
             throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
          }
       }
@@ -498,7 +498,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout, recipients != null,
                                                    usePriorityQueue, toJGroupsFilter(responseFilter),
                                                    asyncMarshalling, ignoreLeavers);
-      } else {         
+      } else {
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
             boolean skipRpc = false;
@@ -533,7 +533,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          } else {
             responses = Collections.singletonMap(fromJGroupsAddress(singleJGAddress), singleResponse);
          }
-      } else {      
+      } else {
          Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
          boolean noValidResponses = true;

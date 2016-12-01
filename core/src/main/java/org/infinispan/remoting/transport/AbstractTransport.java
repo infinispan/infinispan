@@ -25,6 +25,7 @@ package org.infinispan.remoting.transport;
 import org.infinispan.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -90,6 +91,7 @@ public abstract class AbstractTransport implements Transport {
             log.tracef("Target node %s left during remote call, ignoring", sender);
             // Don't throw a TimeoutException in invokeRemotely if the only target left the cluster
             invalidResponse = false;
+            responseListToAddTo.put(sender, CacheNotFoundResponse.INSTANCE);
          }
       } else {
          // if we have a response filter then we may not have waited for some nodes!

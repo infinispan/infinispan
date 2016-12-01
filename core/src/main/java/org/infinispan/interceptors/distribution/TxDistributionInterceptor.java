@@ -19,6 +19,13 @@
 
 package org.infinispan.interceptors.distribution;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -27,6 +34,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -41,19 +49,18 @@ import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.UnsureResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Handles the distribution of the transactional caches.
@@ -189,20 +196,29 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
-         ArrayList<Object> keyToCheckOwners = new ArrayList<Object>(command.getKeys().size());
-         for (Object key : command.getKeys()) {
-            if (key instanceof DeltaCompositeKey) {
-               keyToCheckOwners.add(((DeltaCompositeKey) key).getDeltaAwareValueKey());
-            } else {
-               keyToCheckOwners.add(key);
-            }
-         }
-         final Collection<Address> affectedNodes = dm.getAffectedNodes(keyToCheckOwners);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
+         final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash()
+               .getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
-         rpcManager.invokeRemotely(affectedNodes, command, true, true);
+         long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command,
+                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                                                                        replTimeout);
+         checkTxCommandResponses(responseMap, command);
       }
       return invokeNextInterceptor(ctx, command);
+   }
+
+   public ArrayList<Object> filterDeltaCompositeKeys(Collection<Object> keys) {
+      ArrayList<Object> keyToCheckOwners = new ArrayList<Object>(keys.size());
+      for (Object key : keys) {
+         if (key instanceof DeltaCompositeKey) {
+            keyToCheckOwners.add(((DeltaCompositeKey) key).getDeltaAwareValueKey());
+         } else {
+            keyToCheckOwners.add(key);
+         }
+      }
+      return keyToCheckOwners;
    }
 
    // ---- TX boundary commands
@@ -212,7 +228,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Future<?> f = flushL1Caches(ctx);
          sendCommitCommand(ctx, command);
          blockOnL1FutureIfNeeded(f);
-
       } else if (isL1CacheEnabled && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
          // We fall into this block if we are a remote node, happen to be the primary data owner and have locked keys.
          // it is still our responsibility to invalidate L1 caches in the cluster.
@@ -244,8 +259,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
          Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() : dm.getAffectedNodes(ctx.getAffectedKeys());
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
-
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash()
+               .getMembers() : recipients);
       } else if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
          // We fall into this block if we are a remote node, happen to be the primary data owner and have locked keys.
          // it is still our responsibility to invalidate L1 caches in the cluster.
@@ -257,7 +272,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
-         rpcManager.invokeRemotely(recipients, command, sync);
+         ResponseMode responseMode;
+         if (sync) {
+            responseMode = ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
+         } else {
+            responseMode = ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
+         }
+         long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, responseMode, replTimeout);
+         checkTxCommandResponses(responseMap, command);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
@@ -266,7 +289,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.invokeRemotely(getCommitNodes(ctx), command, cacheConfiguration.transaction().syncRollbackPhase(), true);
+         boolean syncRollback = cacheConfiguration.transaction().syncRollbackPhase();
+         ResponseMode responseMode = syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
+         long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+         Collection<Address> recipients = getCommitNodes(ctx);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, responseMode, replTimeout);
+         checkTxCommandResponses(responseMap, command);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -282,7 +310,30 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
       Collection<Address> recipients = getCommitNodes(ctx);
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+      ResponseMode responseMode = syncCommitPhase ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
+      long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, responseMode, replTimeout);
+      checkTxCommandResponses(responseMap, command);
+   }
+
+   protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command) {
+      for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
+         Address recipient = e.getKey();
+         Response response = e.getValue();
+         if (response instanceof CacheNotFoundResponse) {
+            // No need to retry if the missing node wasn't a member when the command started.
+            if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId()
+                  && !rpcManager.getMembers().contains(recipient)) {
+               log.tracef("Ignoring response from node not targeted %s", recipient);
+            } else {
+               log.tracef("Cache not running on node %s, or the node is missing", recipient);
+               throw new OutdatedTopologyException("Cache not running on node " + recipient);
+            }
+         } else if (response instanceof UnsureResponse) {
+            log.tracef("Node %s has a newer topology id", recipient);
+            throw new OutdatedTopologyException("Cache not running on node " + recipient);
+         }
+      }
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {

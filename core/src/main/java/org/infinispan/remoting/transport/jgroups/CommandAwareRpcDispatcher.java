@@ -30,12 +30,13 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.statetransfer.StateRequestCommand;
-import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -369,6 +370,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                } catch (ExecutionException e) {
                   if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
                      log.tracef(formatString("Ignoring node %s that left during the remote call", target));
+                     retval.addRsp(target, CacheNotFoundResponse.INSTANCE);
                   } else {
                      throw e;
                   }
@@ -489,17 +491,20 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-               exception = e;
-               if (e.getCause() instanceof org.jgroups.TimeoutException)
+               Throwable cause = e.getCause();
+               if (cause instanceof org.jgroups.SuspectedException) {
+                  // Do not set the exception field, RpcException should be thrown if there is no other valid response
+                  return;
+               } else if (cause instanceof org.jgroups.TimeoutException) {
                   exception = new TimeoutException("Timeout!", e);
-               else if (e.getCause() instanceof Exception)
-                  exception = (Exception) e.getCause();
-               else
-                  exception = new CacheException("Caught a throwable", e.getCause());
+               } else if (cause instanceof Exception) {
+                  exception = (Exception) cause;
+               } else {
+                  exception = new CacheException("Caught a throwable", cause);
+               }
 
                if (log.isDebugEnabled())
-                  log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
-               log.trace("Exception caught: ", exception);
+                  log.debugf("Caught exception from sender %s: %s", sender, exception);
             } finally {
                expectedResponses--;
                if (expectedResponses == 0 || done) {

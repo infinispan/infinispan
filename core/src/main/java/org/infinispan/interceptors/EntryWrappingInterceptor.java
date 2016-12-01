@@ -21,6 +21,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -316,14 +317,20 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                   int commandTopologyId = command.getTopologyId();
                   int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
                   // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-                  if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-                     if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-                           commandTopologyId, currentTopologyId);
-                     if (command instanceof WriteCommand) {
+                  if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                     // If we were the originator of a data command which we didn't own the key at the time means it
+                     // was already committed, so there is no need to throw the OutdatedTopologyException
+                     // This will happen if we submit a command to the primary owner and it responds and then a topology
+                     // change happens before we get here
+                     if (!ctx.isOriginLocal() || !(command instanceof DataCommand) ||
+                               ctx.hasLockedKey(((DataCommand)command).getKey())) {
+                        if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                              commandTopologyId, currentTopologyId);
+                        // This shouldn't be necessary, as we'll have a fresh command instance when retrying
                         writeCommand.setIgnorePreviousValue(true);
+                        throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                              commandTopologyId + ", got " + currentTopologyId);
                      }
-                     throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                           commandTopologyId + ", got " + currentTopologyId);
                   }
                }
             }
