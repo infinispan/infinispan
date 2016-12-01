@@ -114,7 +114,7 @@ rebalance_start
       //it waits until all nodes has replied. then, we change the topology ID and let it collect the responses.
       nodeARpcManager.waitForCommandToBlock();
       nodeAController.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-      awaitForTopology(currentTopologyId + 2, cache(0));
+      awaitForTopology(currentTopologyId + 4, cache(0));
 
       nodeARpcManager.stopBlocking();
       assertNull("Wrong put() return value.", tx.get());
@@ -125,9 +125,9 @@ rebalance_start
 
       nodeC.joinerFuture.get();
 
-      awaitForTopology(currentTopologyId + 2, cache(0));
-      awaitForTopology(currentTopologyId + 2, cache(1));
-      awaitForTopology(currentTopologyId + 2, cache(2));
+      awaitForTopology(currentTopologyId + 4, cache(0));
+      awaitForTopology(currentTopologyId + 4, cache(1));
+      awaitForTopology(currentTopologyId + 4, cache(2));
 
       assertKeyVersionInDataContainer(key, cache(1), cache(2));
       cache(0).put(key, "v2");

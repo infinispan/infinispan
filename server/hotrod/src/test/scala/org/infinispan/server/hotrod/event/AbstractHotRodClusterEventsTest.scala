@@ -154,7 +154,7 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
             }
          } finally {
             stopClusteredServer(newServer)
-            TestingUtil.waitForRehashToComplete(
+            TestingUtil.waitForStateTransferToComplete(
                cache(0, cacheName), cache(1, cacheName), cache(2, cacheName))
          }
 

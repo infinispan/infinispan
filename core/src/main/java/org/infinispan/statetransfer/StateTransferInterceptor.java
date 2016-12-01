@@ -190,14 +190,11 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    private <C extends VisitableCommand & TopologyAffectedCommand & FlagAffectedCommand> Object handleReadCommand(InvocationContext ctx, C command) throws Throwable {
-      return isLocalOnly(command) ? invokeNext(ctx, command) :
-            updateAndInvokeNextRead(ctx, command);
-   }
-
-   private <C extends VisitableCommand & TopologyAffectedCommand> Object updateAndInvokeNextRead(InvocationContext ctx, C command)
-         throws InterruptedException {
+      if (isLocalOnly(command)) {
+         return invokeNext(ctx, command);
+      }
       updateTopologyId(command);
-      return invokeNextAndHandle(ctx, command,handleReadCommandReturn);
+      return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
    private Object handleReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)
@@ -228,16 +225,23 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (trace)
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId, cmd);
+      } else if (ce instanceof AllOwnersLostException) {
+         if (trace)
+            log.tracef("All owners for command %s have been lost.", cmd);
+         return null;
       } else {
          throw t;
       }
-      // We increment the topology to wait for the next topology.
-      // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-      int newTopologyId = getNewTopologyId(ce, currentTopologyId, cmd);
-      cmd.setTopologyId(newTopologyId);
-      ((FlagAffectedCommand)rCommand).addFlags(FlagBitSets.COMMAND_RETRY);
-      CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
-      return retryWhenDone(topologyFuture, newTopologyId, rCtx, rCommand, handleReadCommandReturn);
+      // We can get OTE even if current topology information is sufficient:
+      // 1. A has topology in phase READ_ALL_WRITE_ALL, sends message to both old owner B and new C
+      // 2. C has old topology with READ_OLD_WRITE_ALL, so it responds with UnsureResponse
+      // 3. C updates topology to READ_ALL_WRITE_ALL, B updates to READ_NEW_WRITE_ALL
+      // 4. B receives the read, but it already can't read: responds with UnsureResponse
+      // 5. A receives two unsure responses and throws OTE
+      // However, now we are sure that we can immediately retry the request, because C must have updated its topology
+      cmd.setTopologyId(currentTopologyId);
+      ((FlagAffectedCommand) cmd).addFlags(FlagBitSets.COMMAND_RETRY);
+      return invokeNextAndHandle(rCtx, rCommand, handleReadCommandReturn);
    }
 
    @Override
@@ -357,7 +361,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       int retryTopologyId = -1;
       WriteCommand writeCommand = (WriteCommand) rCommand;
-      if (t instanceof OutdatedTopologyException) {
+      if (t instanceof OutdatedTopologyException || t instanceof AllOwnersLostException) {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
       } else if (t != null) {
@@ -416,7 +420,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
       }
-      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException) && !(ce instanceof AllOwnersLostException))
          throw t;
 
       // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the

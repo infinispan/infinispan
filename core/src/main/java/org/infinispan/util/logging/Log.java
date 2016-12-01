@@ -730,8 +730,8 @@ public interface Log extends BasicLogger {
    void failedLoadingKeysFromCacheStore(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
-   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+   @Message(value = "Error during topology change for cache %s on node %s, topology id = %d", id = 195)
+   void topologyChangeError(String cacheName, Address node, int topologyId, @Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)
@@ -1158,8 +1158,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri);
 
    @LogMessage(level = DEBUG)
-   @Message(value = "Finished local rebalance for cache %s on node %s, topology id = %d", id = 328)
-   void rebalanceCompleted(String cacheName, Address node, int topologyId);
+   @Message(value = "Finished topology change for cache %s on node %s, topology id = %d", id = 328)
+   void topologyChangeCompleted(String cacheName, Address node, int topologyId);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
@@ -1516,4 +1516,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Received new x-site view: %s", id = 439)
    void receivedXSiteClusterView(Set<String> view);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failure during leaver transactions cleanup", id = 440)
+   void transactionCleanupError(@Cause Throwable e);
 }

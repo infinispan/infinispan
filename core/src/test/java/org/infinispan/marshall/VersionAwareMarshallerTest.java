@@ -86,6 +86,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -212,6 +213,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testImmutableResponseMarshalling() throws Exception {
       marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);
+      marshallAndAssertEquality(UnsureResponse.INSTANCE);
    }
 
    public void testReplicableCommandsMarshalling() throws Exception {

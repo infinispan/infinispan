@@ -50,7 +50,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
          newCacheManager.defineConfiguration(cacheName, createCacheConfig.build())
          newCacheManager.getCache(cacheName)
          TestingUtil.blockUntilViewsReceived(50000, true, manager(0), manager(1), manager(2))
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName), cache(2, cacheName))
+         TestingUtil.waitForStateTransferToComplete(cache(0, cacheName), cache(1, cacheName), cache(2, cacheName))
          val joinTopologyId = currentServerTopologyId
 
          // The clients receive a new topology (because the rebalance increased the topology id by 2)
@@ -80,7 +80,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
          ServerTestingUtil.killServer(server2)
          TestingUtil.killCacheManagers(servers.last.getCacheManager)
          TestingUtil.blockUntilViewsReceived(50000, false, manager(0), manager(2))
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(2, cacheName))
+         TestingUtil.waitForStateTransferToComplete(cache(0, cacheName), cache(2, cacheName))
          leaveTopologyId = Some(currentServerTopologyId)
 
          resp = client1.put(key1, 0, 0, v(m, "v3-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, joinTopologyId - 1)
@@ -90,7 +90,7 @@ class HotRod11StorageOnlyNodesTest extends HotRodMultiNodeTest {
       } finally {
          TestingUtil.killCacheManagers(newCacheManager)
          TestingUtil.blockUntilViewsReceived(50000, false, manager(0))
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName))
+         TestingUtil.waitForStateTransferToComplete(cache(0, cacheName))
       }
 
       val storageOnlyLeaveTopologyId = currentServerTopologyId

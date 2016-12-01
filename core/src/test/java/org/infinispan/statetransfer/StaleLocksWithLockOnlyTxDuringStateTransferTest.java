@@ -71,7 +71,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       int initialTopologyId = stm0.getCacheTopology().getTopologyId();
       int rebalanceTopologyId = initialTopologyId + 1;
-      final int finalTopologyId = rebalanceTopologyId + 1;
+      final int finalTopologyId = rebalanceTopologyId + 3;
 
       // Block state request commands on cache0 until the lock command has been sent to cache1
       advanceOnComponentMethod(sequencer, cache0, StateProvider.class,
@@ -107,7 +107,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       // Let the rebalance finish
       sequencer.advance("tx:after_commit");
 
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForStateTransferToComplete(caches(CACHE_NAME));
       assertEquals(finalTopologyId, stm0.getCacheTopology().getTopologyId());
 
       // Check for stale locks

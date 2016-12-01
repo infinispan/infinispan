@@ -63,7 +63,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
       staggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE).responseFilter(new ResponseFilter() {
          @Override
          public boolean isAcceptable(Response response, Address sender) {
-            return response.isValid() || response instanceof ExceptionResponse;
+            return response.isSuccessful() || response instanceof ExceptionResponse;
          }
 
          @Override

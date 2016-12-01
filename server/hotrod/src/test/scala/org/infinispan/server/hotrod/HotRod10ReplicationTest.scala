@@ -116,7 +116,7 @@ class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       } finally {
          stopClusteredServer(newServer)
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
+         TestingUtil.waitForStateTransferToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount + 1)
@@ -141,7 +141,7 @@ class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
          stopClusteredServer(crashingServer)
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
+         TestingUtil.waitForStateTransferToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount + 3)

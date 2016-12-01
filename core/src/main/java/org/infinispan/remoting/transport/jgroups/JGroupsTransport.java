@@ -668,6 +668,20 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                }
             }
 
+            // This happens when we send message to members that just left the view;
+            // in that case we should not throw TimeoutException but rather just return no responses
+            if (recipients != null && rsps.size() < recipients.size()) {
+               for(Address dest : recipients) {
+                  if (!dest.equals(getAddress())) {
+                     responseMap.putIfAbsent(dest, CacheNotFoundResponse.INSTANCE);
+                     hasResponses = true;
+                     if (ignoreLeavers) {
+                        hasValidResponses = true;
+                     }
+                  }
+               }
+            }
+
             if (!hasValidResponses) {
                // PartitionHandlingInterceptor relies on receiving a RpcException if there are only invalid responses
                // But we still need to throw a TimeoutException if there are no responses at all.
@@ -676,15 +690,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                } else {
                   throw new TimeoutException("Timed out waiting for valid responses!");
                }
-            }
-
-            if (mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS && recipients != null &&
-                  rsps.size() < recipients.size()) {
-               recipients.forEach(dest -> {
-                  if (!dest.equals(getAddress())) {
-                     responseMap.putIfAbsent(dest, CacheNotFoundResponse.INSTANCE);
-                  }
-               });
             }
 
             return responseMap;

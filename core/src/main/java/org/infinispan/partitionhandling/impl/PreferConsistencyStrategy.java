@@ -192,8 +192,10 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
       if (mergedTopology != null) {
+         // There's no pendingCH, therefore the topology is in stable phase
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
-               mergedTopology.getCurrentCH(), null, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+               mergedTopology.getCurrentCH(), null, CacheTopology.Phase.STABLE, actualMembers,
+               persistentUUIDManager.mapAddresses(actualMembers));
       }
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
 

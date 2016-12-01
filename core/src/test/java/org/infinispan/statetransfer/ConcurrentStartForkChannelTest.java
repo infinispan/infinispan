@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStateTransferToComplete;
 
 import java.io.ByteArrayInputStream;
 import java.util.concurrent.Future;
@@ -15,6 +15,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -84,7 +85,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
          Cache<String, String> c1r = c1rFuture.get(10, TimeUnit.SECONDS);
 
          blockUntilViewsReceived(10000, cm1, cm2);
-         waitForRehashToComplete(c1r, c2r);
+         TestingUtil.waitForStateTransferToComplete(c1r, c2r);
       } finally {
          // Stopping the cache managers isn't enough, because it will only close the ForkChannels
          cm1.stop();
