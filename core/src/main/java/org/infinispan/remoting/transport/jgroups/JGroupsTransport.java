@@ -661,23 +661,20 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                }
             }
 
-            if (!hasValidResponses) {
+            if (mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS && jgAddressList != null &&
+                  rsps.size() < jgAddressList.size()) {
+               jgAddressList.forEach(dest -> {
+                  // The local node is never added to jgAddressList, no need to check here
+                  responseMap.putIfAbsent(JGroupsAddressCache.fromJGroupsAddress(dest), CacheNotFoundResponse.INSTANCE);
+               });
+            } else if (mode == ResponseMode.WAIT_FOR_VALID_RESPONSE && !hasValidResponses) {
                // PartitionHandlingInterceptor relies on receiving a RpcException if there are only invalid responses
                // But we still need to throw a TimeoutException if there are no responses at all.
                if (hasResponses) {
-                  throw new RpcException(String.format("Received invalid responses from all of %s", recipients));
+                  throw new RpcException(String.format("Received invalid responses from all of %s", jgAddressList));
                } else {
                   throw new TimeoutException("Timed out waiting for valid responses!");
                }
-            }
-
-            if (mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS && recipients != null &&
-                  rsps.size() < recipients.size()) {
-               recipients.forEach(dest -> {
-                  if (!dest.equals(getAddress())) {
-                     responseMap.putIfAbsent(dest, CacheNotFoundResponse.INSTANCE);
-                  }
-               });
             }
 
             return responseMap;

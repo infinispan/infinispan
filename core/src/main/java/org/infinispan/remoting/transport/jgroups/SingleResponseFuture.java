@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.jgroups.SuspectedException;
 import org.jgroups.util.Rsp;
 
@@ -48,7 +49,7 @@ public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
    @Override
    public Void call() throws Exception {
       // The request timed out
-      complete(new Rsp<>());
+      completeExceptionally(new TimeoutException("Timed out waiting for response"));
       request.cancel(false);
       return null;
    }
