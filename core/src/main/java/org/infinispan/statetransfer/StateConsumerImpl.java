@@ -70,6 +70,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
@@ -102,6 +103,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private Cache cache;
    private StateTransferManager stateTransferManager;
+   private LocalTopologyManager localTopologyManager;
    private String cacheName;
    private Configuration configuration;
    private RpcManager rpcManager;
@@ -190,6 +192,7 @@ public class StateConsumerImpl implements StateConsumer {
    public void init(Cache cache,
                     @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
                     StateTransferManager stateTransferManager,
+                    LocalTopologyManager localTopologyManager,
                     AsyncInterceptorChain interceptorChain,
                     InvocationContextFactory icf,
                     Configuration configuration,
@@ -212,6 +215,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
       this.stateTransferManager = stateTransferManager;
+      this.localTopologyManager = localTopologyManager;
       this.interceptorChain = interceptorChain;
       this.icf = icf;
       this.configuration = configuration;
@@ -401,24 +405,21 @@ public class StateConsumerImpl implements StateConsumer {
          int rebalanceTopologyId = stateTransferTopologyId.get();
          if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
                (Object)rebalanceTopologyId, startRebalance, cacheTopology.getPendingCH());
-         if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
-            // there was a rebalance in progress
-            if (!startRebalance && cacheTopology.getPendingCH() == null) {
-               // we have received a topology update without a pending CH, signalling the end of the rebalance
-               boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
-               if (changed) {
-                  stopApplyingState();
+         if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS && !startRebalance) {
+            // we have received a topology update without a pending CH, signalling the end of the rebalance
+            boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
+            if (changed) {
+               stopApplyingState();
 
-                  // if the coordinator changed, we might get two concurrent topology updates,
-                  // but we only want to notify the @DataRehashed listeners once
-                  cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(), previousWriteCh,
-                        cacheTopology.getTopologyId(), false);
-                  if (trace) {
-                     log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
-                  }
-                  if (isTotalOrder) {
-                     totalOrderManager.notifyStateTransferEnd();
-                  }
+               // if the coordinator changed, we might get two concurrent topology updates,
+               // but we only want to notify the @DataRehashed listeners once
+               cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getPendingCH(), previousWriteCh,
+                     cacheTopology.getTopologyId(), false);
+               if (trace) {
+                  log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
+               }
+               if (isTotalOrder) {
+                  totalOrderManager.notifyStateTransferEnd();
                }
             }
          }
@@ -436,11 +437,24 @@ public class StateConsumerImpl implements StateConsumer {
          // Remove the transactions whose originators have left the cache.
          // Need to do it now, after we have applied any transactions from other nodes,
          // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
-         if (transactionTable != null) {
-            transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
+         try {
+            if (transactionTable != null) {
+               transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
+            }
+         } catch (Exception e) {
+            // Do not fail state transfer when the cleanup fails. See ISPN-7437 for details.
+            log.transactionCleanupError(e);
          }
 
          commandAckCollector.onMembersChange(newWriteCh.getMembers());
+
+         // The rebalance (READ_OLD_WRITE_ALL) is confirmed through notifyEndOfRebalanceIfNeeded
+         // and STABLE does not have to be confirmed at all
+         switch (cacheTopology.getPhase()) {
+            case READ_ALL_WRITE_ALL:
+            case READ_NEW_WRITE_ALL:
+               localTopologyManager.confirmRebalancePhase(cacheName, cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), null);
+         }
 
          // Any data for segments we do not own should be removed from data container and cache store
          // We need to discard data from all segments we don't own, not just those we previously owned,
@@ -449,7 +463,7 @@ public class StateConsumerImpl implements StateConsumer {
          Set<Integer> removedSegments;
          boolean wasMember =
                previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
-         if (isMember || wasMember) {
+         if ((isMember || wasMember) && cacheTopology.getPhase() == CacheTopology.Phase.STABLE) {
             removedSegments = new HashSet<>(newWriteCh.getNumSegments());
             for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
                removedSegments.add(i);

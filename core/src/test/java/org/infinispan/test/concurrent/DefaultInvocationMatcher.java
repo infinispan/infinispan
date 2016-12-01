@@ -1,5 +1,7 @@
 package org.infinispan.test.concurrent;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.hamcrest.Matcher;
 
 /**
@@ -12,15 +14,18 @@ public class DefaultInvocationMatcher implements InvocationMatcher {
    private final String methodName;
    private final Matcher instanceMatcher;
    private final Matcher[] argumentMatchers;
+   private final int matchCount;
+   private final AtomicInteger matches = new AtomicInteger();
 
    public DefaultInvocationMatcher(String methodName) {
-      this(methodName, null, null);
+      this(methodName, null, -1, null);
    }
 
-   public DefaultInvocationMatcher(String methodName, Matcher instanceMatcher, Matcher... argumentMatchers) {
+   public DefaultInvocationMatcher(String methodName, Matcher instanceMatcher, int matchCount, Matcher... argumentMatchers) {
       this.methodName = methodName;
       this.instanceMatcher = instanceMatcher;
       this.argumentMatchers = argumentMatchers;
+      this.matchCount = matchCount;
    }
 
    @Override
@@ -34,6 +39,9 @@ public class DefaultInvocationMatcher implements InvocationMatcher {
             if (argumentMatchers[i] != null && !argumentMatchers[i].matches(arguments[i]))
                return false;
          }
+      }
+      if (matchCount >= 0 && matches.getAndIncrement() != matchCount) {
+         return false;
       }
       return true;
    }

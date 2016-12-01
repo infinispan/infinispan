@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -36,26 +37,28 @@ public class CacheTopology {
    private final int rebalanceId;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
-   private final transient ConsistentHash unionCH;
+   private final ConsistentHash unionCH;
+   private final Phase phase;
    private List<Address> actualMembers;
    private List<PersistentUUID> persistentUUIDs;
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-         List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
-      this(topologyId, rebalanceId, currentCH, pendingCH, null, actualMembers, persistentUUIDs);
+                        Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
+      this(topologyId, rebalanceId, currentCH, pendingCH, null, phase, actualMembers, persistentUUIDs);
    }
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-         ConsistentHash unionCH, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
+                        ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
-               "contain all the current consistent hash's members");
+               "contain all the current consistent hash's members: currentCH=" + currentCH + ", pendingCH=" + pendingCH);
       }
       this.topologyId = topologyId;
       this.rebalanceId = rebalanceId;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.unionCH = unionCH;
+      this.phase = phase;
       this.actualMembers = actualMembers;
       this.persistentUUIDs = persistentUUIDs;
    }
@@ -123,6 +126,22 @@ public class CacheTopology {
     * Read operations should always go to the "current" owners.
     */
    public ConsistentHash getReadConsistentHash() {
+      switch (phase) {
+         case STABLE:
+            assert pendingCH == null;
+            assert unionCH == null;
+            return currentCH;
+         case READ_OLD_WRITE_ALL:
+            assert pendingCH != null;
+            assert unionCH != null;
+            return currentCH;
+         case READ_ALL_WRITE_ALL:
+            assert pendingCH != null;
+            return unionCH;
+         case READ_NEW_WRITE_ALL:
+            assert unionCH != null;
+            return pendingCH;
+      }
       return currentCH;
    }
 
@@ -175,6 +194,7 @@ public class CacheTopology {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
+            ", phase=" + phase    +
             ", actualMembers=" + actualMembers +
             ", persistentUUIDs=" + persistentUUIDs +
             '}';
@@ -188,6 +208,10 @@ public class CacheTopology {
       }
    }
 
+   public Phase getPhase() {
+      return phase;
+   }
+
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<CacheTopology> {
       @Override
@@ -199,6 +223,7 @@ public class CacheTopology {
          output.writeObject(cacheTopology.unionCH);
          output.writeObject(cacheTopology.actualMembers);
          output.writeObject(cacheTopology.persistentUUIDs);
+         MarshallUtil.marshallEnum(cacheTopology.phase, output);
       }
 
       @Override
@@ -210,7 +235,8 @@ public class CacheTopology {
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
          List<Address> actualMembers = (List<Address>) unmarshaller.readObject();
          List<PersistentUUID> persistentUUIDs = (List<PersistentUUID>) unmarshaller.readObject();
-         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH, actualMembers, persistentUUIDs);
+         Phase phase = MarshallUtil.unmarshallEnum(unmarshaller, Phase::valueOf);
+         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
       }
 
       @Override
@@ -221,6 +247,44 @@ public class CacheTopology {
       @Override
       public Set<Class<? extends CacheTopology>> getTypeClasses() {
          return Collections.<Class<? extends CacheTopology>>singleton(CacheTopology.class);
+      }
+   }
+
+   /**
+    * Phase of the rebalance process. Using four phases guarantees these properties:
+    *
+    * 1. T(x+1).writeCH contains all nodes from Tx.readCH (this is the requirement for ISPN-5021)
+    * 2. Tx.readCH and T(x+1).readCH has non-empty subset of nodes (that will allow no blocking for read commands
+    *    && reading only entries node owns according to readCH)
+    *
+    * Old entries should be wiped out only after coming to the {@link #STABLE} phase.
+    */
+   public enum Phase {
+      /**
+       * Only currentCH should be set, this works as both readCH and writeCH
+       */
+      STABLE,
+      /**
+       * Used during state transfer: readCH == currentCH, writeCH = unionCH
+       */
+      READ_OLD_WRITE_ALL,
+      /**
+       * Used after state transfer completes: readCH == writeCH = unionCH
+       */
+      READ_ALL_WRITE_ALL,
+      /**
+       * Intermediate state that prevents ISPN-5021: readCH == pendingCH, writeCH = unionCH
+       */
+      READ_NEW_WRITE_ALL;
+
+      private static final Phase[] values = Phase.values();
+
+      public static Phase valueOf(int ordinal) {
+         return values[ordinal];
+      }
+
+      public Phase advance() {
+         return values[(ordinal() + 1) % values.length];
       }
    }
 }

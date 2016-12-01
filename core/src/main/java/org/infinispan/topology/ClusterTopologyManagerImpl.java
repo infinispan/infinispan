@@ -250,7 +250,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (throwable != null) {
          // TODO We could try to update the pending CH such that nodes reporting errors are not considered to hold any state
          // For now we are just logging the error and proceeding as if the rebalance was successful everywhere
-         log.rebalanceError(cacheName, node, throwable);
+         log.rebalanceError(cacheName, node, topologyId, throwable);
       }
 
       CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
@@ -258,7 +258,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
 
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
+      if (cacheStatus == null) {
          log.debugf("Ignoring rebalance confirmation from %s " +
                "for cache %s because it doesn't have a cache status entry", node, cacheName);
          return;

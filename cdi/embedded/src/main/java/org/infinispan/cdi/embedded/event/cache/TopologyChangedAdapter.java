@@ -30,13 +30,23 @@ public class TopologyChangedAdapter<K, V> extends AbstractAdapter<TopologyChange
       }
 
       @Override
-      public ConsistentHash getConsistentHashAtStart() {
-         return decoratedEvent.getConsistentHashAtStart();
+      public ConsistentHash getReadConsistentHashAtStart() {
+         return decoratedEvent.getReadConsistentHashAtStart();
       }
 
       @Override
-      public ConsistentHash getConsistentHashAtEnd() {
-         return decoratedEvent.getConsistentHashAtEnd();
+      public ConsistentHash getWriteConsistentHashAtStart() {
+         return decoratedEvent.getWriteConsistentHashAtStart();
+      }
+
+      @Override
+      public ConsistentHash getReadConsistentHashAtEnd() {
+         return decoratedEvent.getReadConsistentHashAtEnd();
+      }
+
+      @Override
+      public ConsistentHash getWriteConsistentHashAtEnd() {
+         return decoratedEvent.getWriteConsistentHashAtEnd();
       }
 
       @Override

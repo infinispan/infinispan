@@ -63,7 +63,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       int initialTopologyId = stm0.getCacheTopology().getTopologyId();
       int rebalanceTopologyId = initialTopologyId + 1;
-      final int finalTopologyId = rebalanceTopologyId + 1;
+      final int finalTopologyId = rebalanceTopologyId + 3;
 
       // Block state request commands on cache0 until the lock command has been sent to cache1
       advanceOnComponentMethod(sequencer, cache0, StateProvider.class,

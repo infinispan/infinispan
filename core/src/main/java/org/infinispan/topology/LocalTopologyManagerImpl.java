@@ -321,8 +321,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers(),
-               persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getPhase(),
+               cacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
          unionTopology.logRoutingTableInformation();
 
          boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
@@ -407,7 +407,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             // The currentCH changed, we need to install a "reset" topology with the new currentCH first
             registerPersistentUUID(newCacheTopology);
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
-                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, newCacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(newCacheTopology.getActualMembers()));
+                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null,
+                  CacheTopology.Phase.STABLE, newCacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(newCacheTopology.getActualMembers()));
             log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
             handler.updateConsistentHash(resetTopology);
          }
@@ -487,16 +488,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
          cacheTopology.logRoutingTableInformation();
-         cacheStatus.setCurrentTopology(cacheTopology);
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
          resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
          ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
                cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
-         CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology
-               .getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
+         CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+               cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
          handler.rebalance(newTopology);
       }
    }

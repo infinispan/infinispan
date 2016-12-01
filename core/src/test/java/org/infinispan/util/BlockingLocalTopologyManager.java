@@ -4,6 +4,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Replaces the LocalTopologyManager and allows it to block the phases of the state transfer:
@@ -18,6 +20,7 @@ import org.infinispan.topology.LocalTopologyManager;
  */
 public class BlockingLocalTopologyManager extends AbstractControlledLocalTopologyManager {
 
+   private final Log log = LogFactory.getLog(BlockingLocalTopologyManager.class);
    private final NotifierLatch blockConfirmRebalance;
    private final NotifierLatch blockConsistentHashUpdate;
    private final NotifierLatch blockRebalanceStart;
@@ -48,6 +51,14 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
       getLatch(type).waitToBlock();
    }
 
+   public void unblockOnce(LatchType type) {
+      getLatch(type).unblockOnce();
+   }
+
+   public void waitToBlockAndUnblockOnce(LatchType type) throws InterruptedException {
+      getLatch(type).waitToBlockAndUnblockOnce();
+   }
+
    public void stopBlockingAll() {
       for (LatchType type : LatchType.values()) {
          getLatch(type).stopBlocking();
@@ -56,17 +67,23 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    @Override
    protected final void beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+      log.debugf("Before consistent hash update %s", cacheTopology);
       getLatch(LatchType.CONSISTENT_HASH_UPDATE).blockIfNeeded();
+      log.debugf("Continue consistent hash update %s", cacheTopology);
    }
 
    @Override
    protected final void beforeHandleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) {
+      log.debugf("Before rebalance %s", cacheTopology);
       getLatch(LatchType.REBALANCE).blockIfNeeded();
+      log.debugf("Continue rebalance %s", cacheTopology);
    }
 
    @Override
    protected final void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
+      log.debugf("Before confirm topology %d", topologyId);
       getLatch(LatchType.CONFIRM_REBALANCE_PHASE).blockIfNeeded();
+      log.debugf("Continue confirm topology %d", topologyId);
    }
 
    private NotifierLatch getLatch(LatchType type) {
