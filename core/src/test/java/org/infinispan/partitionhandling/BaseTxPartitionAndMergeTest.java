@@ -215,11 +215,13 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       public boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order) {
          if (aClass.isAssignableFrom(command.getClass())) {
             notifier.open();
+            log.tracef("Blocking command %s", command);
             try {
                blocker.await(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
+            log.tracef("Unblocked command %s", command);
          }
          return true;
       }

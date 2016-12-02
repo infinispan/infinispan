@@ -59,6 +59,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -296,8 +297,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             } else {
                // If the recipient is still in the actualMembers list, but we got a CacheNotFoundResponse,
                // it means we should receive a new topology soon, and we have to retry with that topology.
-               if (!cacheTopology.getActualMembers().contains(recipient) &&
-                     checkCacheNotFoundResponseInPartitionHandling(command, context, recipients)) {
+               // We still have to register the partial prepare/commit/rollback every time
+               // (by calling checkCacheNotFoundResponseInPartitionHandling).
+               if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients) &&
+                     !cacheTopology.getActualMembers().contains(recipient)) {
                   if (trace) log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager", recipient);
                   return;
                } else {
@@ -310,6 +313,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (trace) log.tracef("Node %s has a newer topology id", recipient);
             //noinspection ThrowableInstanceNeverThrown
             outdatedTopologyException = new OutdatedTopologyException(format("Node %s has a newer topology id", recipient));
+         } else if (response instanceof UnsuccessfulResponse) {
+            // The commit command didn't find the remote transaction.
+            // We can ignore it if the node was only an owner in an older topology.
+            if (cdl.getOwners(context.getAffectedKeys()).contains(recipient)) {
+               throw new IllegalStateException("Remote transaction not found on node " + recipient);
+            }
          }
       }
       if (outdatedTopologyException != null) {

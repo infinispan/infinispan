@@ -3,6 +3,7 @@ package org.infinispan.commands.tx;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -50,7 +51,7 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
          case EXPIRED:
             throw log.remoteTransactionStatusMissing(globalTx);
          default:  // NOT_COMPLETED
-            throw new IllegalStateException("Remote transaction not found: " + globalTx);
+            return UnsuccessfulResponse.INSTANCE;
       }
    }
 

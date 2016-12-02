@@ -249,6 +249,10 @@ public class ClusterExecutorImpl implements ClusterExecutor {
                     ResponseMode.GET_ALL, unit.toMillis(time), DeliverOrder.NONE);
             futures[i] = srf.handle((r, t) -> {
                if (t != null) {
+                  if (t instanceof TimeoutException) {
+                     // We throw it so it is propagated to the parent CompletableFuture
+                     throw ((TimeoutException) t);
+                  }
                   triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, t);
                } else if (r.wasReceived()) {
                   if (r.hasException()) {
@@ -270,8 +274,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
                   triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null,
                           new SuspectException());
                } else {
-                  // We throw it so it is propagated to the parent CompletableFuture
-                  throw new TimeoutException();
+                  throw new IllegalStateException("Response not received and no TimeoutException");
                }
                return null;
             });
@@ -310,7 +313,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
 
    @Override
    public ClusterExecutor filterTargets(Collection<Address> addresses) {
-      return filterTargets(address -> addresses.contains(address));
+      return filterTargets(addresses::contains);
    }
 
    @Override
