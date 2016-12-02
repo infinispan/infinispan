@@ -22,6 +22,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -58,9 +59,16 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
+import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -443,4 +451,33 @@ public class ControlledCommandFactory implements CommandsFactory {
       return actual.buildReadWriteManyEntriesCommand(entries, f, params);
    }
 
+   @Override
+   public BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId) {
+      return actual.buildBackupAckCommand(id, topologyId);
+   }
+
+   @Override
+   public PrimaryAckCommand buildPrimaryAckCommand() {
+      return actual.buildPrimaryAckCommand();
+   }
+
+   @Override
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, Collection<Integer> segments, int topologyId) {
+      return actual.buildBackupMultiKeyAckCommand(id, segments, topologyId);
+   }
+
+   @Override
+   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId) {
+      return actual.buildPrimaryMultiKeyAckCommand(id, topologyId);
+   }
+
+   @Override
+   public ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId) {
+      return actual.buildExceptionAckCommand(id, throwable, topologyId);
+   }
+
+   @Override
+   public BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command) {
+      return actual.buildBackupWriteRcpCommand(command);
+   }
 }

@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 6.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
+@Test(groups = "functional", testName = "distribution.rehash.StateTransferOverwritingValueTest")
 public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest {
    @Override
    public Object[] factory() {

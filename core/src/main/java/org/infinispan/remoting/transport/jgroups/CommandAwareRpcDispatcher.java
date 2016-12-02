@@ -150,9 +150,6 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
             } else {
                executeCommandFromLocalCluster(cmd, req, response);
             }
-         } catch (InterruptedException e) {
-            log.shutdownHandlingCommand(cmd);
-            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")), cmd, req);
          } catch (IllegalLifecycleStateException e) {
             if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
             // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
@@ -168,7 +165,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
    }
 
    private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final Message req,
-         final org.jgroups.blocks.Response response) throws Throwable {
+         final org.jgroups.blocks.Response response) {
       SiteAddress siteAddress = (SiteAddress) req.getSrc();
       ((XSiteReplicateCommand) cmd).setOriginSite(siteAddress.getSite());
       Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req);
@@ -176,7 +173,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
    }
 
    private void executeCommandFromLocalCluster(final ReplicableCommand cmd, final Message req,
-         final org.jgroups.blocks.Response response) throws Throwable {
+         final org.jgroups.blocks.Response response) {
       Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req);
       handler.handleFromCluster(fromJGroupsAddress(req.getSrc()), cmd, reply, decodeDeliverMode(req));
    }
@@ -395,7 +392,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
       return retval;
    }
 
-   private static boolean isRsvpCommand(ReplicableCommand command) {
+   static boolean isRsvpCommand(ReplicableCommand command) {
       return command instanceof FlagAffectedCommand && ((FlagAffectedCommand) command).hasFlag(
             Flag.GUARANTEED_DELIVERY);
    }

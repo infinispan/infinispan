@@ -31,9 +31,9 @@ import org.infinispan.util.logging.Log;
  * @since 7.1
  */
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
-   protected static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
+   private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   protected StateTransferLock stateTransferLock;
+   private StateTransferLock stateTransferLock;
    protected StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
    private CancellationService cancellationService;
@@ -147,6 +147,12 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return new DefaultTopologyRunnable(this, command, reply,
                                          TopologyMode.create(onExecutorService, waitTransactionalData),
                                          commandTopologyId, sync);
+   }
+
+   protected final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
+                                                          final int commandTopologyId, TopologyMode topologyMode,
+                                                          boolean sync) {
+      return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
    }
 
    protected abstract Log getLog();

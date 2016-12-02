@@ -68,6 +68,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -205,7 +206,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icf, configuration, rpcManager, null,
             commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
-            totalOrderManager, remoteCommandsExecutor, new CommitManager());
+            totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector());
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();

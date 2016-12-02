@@ -48,6 +48,26 @@ public interface RpcManager {
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
 
    /**
+    * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.
+    *
+    * @param destination  the destination's {@link Address}.
+    * @param command      the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    */
+   void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder);
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
+    * DeliverOrder}.
+    *
+    * @param destinations the collection of destination's {@link Address}. If {@code null}, it sends to all the members
+    *                     in the cluster.
+    * @param command      the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    */
+   void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder);
+
+   /**
     * @return a reference to the underlying transport.
     */
    Transport getTransport();

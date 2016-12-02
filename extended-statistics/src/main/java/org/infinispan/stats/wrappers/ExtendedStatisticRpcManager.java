@@ -119,6 +119,16 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+      actual.sendTo(destination, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
+      actual.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
       return actual.getRpcOptionsBuilder(responseMode);
    }
@@ -192,7 +202,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
          counterStat = NUM_SYNC_GET;
          recipientSizeStat = NUM_NODES_GET;
          commandSizeStat = CLUSTERED_GET_COMMAND_SIZE;
-         globalTransaction = ((ClusteredGetCommand) command).getGlobalTransaction();
+         globalTransaction = null;
       } else {
          if (trace) {
             log.tracef("Does not update stats for command %s. The command is not needed", command);

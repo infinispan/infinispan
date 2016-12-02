@@ -47,6 +47,18 @@ class TrackingRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+      rpcCollector.addRPC(new RpcDetail(getAddress(), command, cacheName, Collections.singletonList(destination)));
+      delegate.sendTo(destination, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
+      rpcCollector.addRPC(new RpcDetail(getAddress(), command, cacheName, destinations));
+      delegate.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
    public Transport getTransport() {
       return delegate.getTransport();
    }

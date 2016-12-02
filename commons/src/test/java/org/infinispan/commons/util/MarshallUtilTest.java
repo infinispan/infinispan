@@ -31,17 +31,17 @@ public class MarshallUtilTest {
 
    private static void checkIntAndByteArray(int i, int bytesExpected, ObjectInputOutput io) throws IOException {
       io.reset();
-      MarshallUtil.marshallInt(io, i);
+      MarshallUtil.marshallSize(io, i);
       Assert.assertEquals("Error for i=" + i, bytesExpected, io.buffer.size());
-      Assert.assertEquals("Error for i=" + i, i, MarshallUtil.unmarshallInt(io));
+      Assert.assertEquals("Error for i=" + i, i, MarshallUtil.unmarshallSize(io));
       Assert.assertEquals("Error for i=" + i, 0, io.buffer.size());
    }
 
    private static void checkNegativeInt(int i, ObjectInputOutput io) throws IOException {
       io.reset();
-      MarshallUtil.marshallInt(io, i);
+      MarshallUtil.marshallSize(io, i);
       Assert.assertEquals("Error for i=" + i, 1, io.buffer.size());
-      Assert.assertEquals("Error for i=" + i, -1, MarshallUtil.unmarshallInt(io));
+      Assert.assertEquals("Error for i=" + i, -1, MarshallUtil.unmarshallSize(io));
       Assert.assertEquals("Error for i=" + i, 0, io.buffer.size());
    }
 
@@ -80,8 +80,8 @@ public class MarshallUtilTest {
             v = -v;
          }
          io.reset();
-         MarshallUtil.marshallInt(io, v);
-         Assert.assertEquals("Error for v=" + v, v, MarshallUtil.unmarshallInt(io));
+         MarshallUtil.marshallSize(io, v);
+         Assert.assertEquals("Error for v=" + v, v, MarshallUtil.unmarshallSize(io));
       }
    }
 
@@ -98,8 +98,8 @@ public class MarshallUtilTest {
             continue;
          }
          io.reset();
-         MarshallUtil.marshallInt(io, v);
-         Assert.assertEquals("Error for v=" + v, -1, MarshallUtil.unmarshallInt(io));
+         MarshallUtil.marshallSize(io, v);
+         Assert.assertEquals("Error for v=" + v, -1, MarshallUtil.unmarshallSize(io));
       }
    }
 

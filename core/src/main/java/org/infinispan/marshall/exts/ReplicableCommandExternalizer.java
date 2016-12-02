@@ -94,7 +94,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       return replicableCommand;
    }
 
-   protected ReplicableCommand readCommandHeader(ObjectInput input) throws IOException, ClassNotFoundException {
+   private ReplicableCommand readCommandHeader(ObjectInput input) throws IOException {
       byte type = input.readByte();
       short methodId = input.readShort();
       return cmdFactory.fromStream((byte) methodId, type);
