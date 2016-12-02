@@ -34,7 +34,7 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
       try {
          ConfigurationBuilder c = new ConfigurationBuilder();
          c
-            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .clustering().cacheMode(CacheMode.REPL_SYNC)
                .hash().numOwners(3);
 
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(c);

@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -16,7 +15,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -47,18 +46,14 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true, false);
-      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor, NonTxDistributionInterceptor.class);
+      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor, TriangleDistributionInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
-      Future<String> future = fork(new Callable<String>() {
-         @Override
-         public String call() throws Exception {
-            return cache0.put(key, FIRST_VALUE);
-         }
-      });
+      Future<String> future = fork(() -> cache0.put(key, FIRST_VALUE));
 
       // Wait until the primary owner has sent the put command successfully to  backup
       barrier.await(10, TimeUnit.SECONDS);
+      awaitForBackups(cache0);
 
       // Kill the cache now - note this will automatically unblock the fork thread
       TestingUtil.killCacheManagers(cache1.getCacheManager());
@@ -67,14 +62,21 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // Maybe some day this can work properly
       assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
 
-      // We should have received an event that was marked as retried
-      assertEquals(clusterListener.events.size(), 1);
-      CacheEntryEvent<Object, String> event = clusterListener.events.get(0);
-      // Since it was a retry but the backup got the write the event isn't a CREATE!!
-      assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
-      CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>)event;
-      assertTrue(modEvent.isCommandRetried());
-      assertEquals(modEvent.getKey(), key);
-      assertEquals(modEvent.getValue(), FIRST_VALUE);
+      if (TestingUtil.isTriangleAlgorithm(cacheMode, tx)) {
+         //because of the triangle, it is possible to put to be retried twice originating the same event twice.
+         assertTrue(clusterListener.events.size() == 1 || clusterListener.events.size() == 2);
+      } else {
+         // We should have received an event that was marked as retried
+         assertEquals(clusterListener.events.size(), 1);
+      }
+      while (!clusterListener.events.isEmpty()) {
+         CacheEntryEvent<Object, String> event = clusterListener.events.remove(0);
+         // Since it was a retry but the backup got the write the event isn't a CREATE!!
+         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
+         CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>)event;
+         assertTrue(modEvent.isCommandRetried());
+         assertEquals(modEvent.getKey(), key);
+         assertEquals(modEvent.getValue(), FIRST_VALUE);
+      }
    }
 }

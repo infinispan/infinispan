@@ -56,6 +56,7 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -1600,4 +1601,7 @@ public class TestingUtil {
          throw new AssertionError("Leaked threads: " + leakedThreads);
    }
 
+   public static boolean isTriangleAlgorithm(CacheMode cacheMode, boolean transactional) {
+      return cacheMode.isDistributed() && !transactional;
+   }
 }

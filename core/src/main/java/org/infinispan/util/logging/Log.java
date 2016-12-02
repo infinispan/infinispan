@@ -1464,4 +1464,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
    CacheConfigurationException memoryEvictionInvalidStrategyLIRS();
+
+   @Message(value = "Timeout after %s waiting for acks. Missing acks are %s", id = 426)
+   TimeoutException timeoutWaitingForAcks(String timeout, String missingAcks);
+
+   @Message(value = "Timeout after %s waiting for acks", id = 427)
+   TimeoutException timeoutWaitingForAcks(String timeout);
 }

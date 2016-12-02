@@ -37,6 +37,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
       assertOwnershipAndNonOwnership(k1, false);
    }
 
+   @Test(enabled = false, description = "does it make sense to have skip_remote_lookup with conditional commands?")
    public void testCorrectFunctionalityOnConditionalWrite() {
       MagicKey k1 = new MagicKey(c1, c2);
       c1.put(k1, "value");

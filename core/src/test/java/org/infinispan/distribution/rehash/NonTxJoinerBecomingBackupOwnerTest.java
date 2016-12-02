@@ -5,7 +5,6 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnOutboun
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -83,14 +82,11 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       sequencer.logicalThread("remote_get_cache0", "remote_get_cache0");
       sequencer.logicalThread("remote_get_cache1", "remote_get_cache1");
       sequencer.order("write:end", "remote_get_cache0").order("write:end", "remote_get_cache1");
-      sequencer.action("st:cache0_before_send_state", new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            sequencer.advance("write:before_start");
-            // The whole write logical thread happens here
-            sequencer.advance("write:after_end");
-            return null;
-         }
+      sequencer.action("st:cache0_before_send_state", () -> {
+         sequencer.advance("write:before_start");
+         // The whole write logical thread happens here
+         sequencer.advance("write:after_end");
+         return null;
       });
 
       final AdvancedCache<Object, Object> cache0 = advancedCache(0);
@@ -113,14 +109,9 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       final AdvancedCache<Object,Object> cache2 = advancedCache(2);
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache0.getRpcManager().getMembers().size() == 3 &&
-                  cache1.getRpcManager().getMembers().size() == 3 &&
-                  cache2.getRpcManager().getMembers().size() == 3;
-         }
-      });
+      eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
+            cache1.getRpcManager().getMembers().size() == 3 &&
+            cache2.getRpcManager().getMembers().size() == 3);
 
       CommandMatcher writeCommandMatcher = matchCommand(op.getCommandClass()).build();
       // Allow the value to be written on cache1 before "write:cache1_before_return"
@@ -142,12 +133,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
 
       // Put from cache0 with cache0 as primary owner, cache2 will become a backup owner for the retry
       // The put command will be blocked on cache1 and cache2.
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return op.perform(cache0, key);
-         }
-      });
+      Future<Object> future = fork(() -> op.perform(cache0, key));
 
       // Check that the put command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);

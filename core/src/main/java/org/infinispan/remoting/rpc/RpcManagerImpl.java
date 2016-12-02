@@ -149,7 +149,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       });
    }
 
-   protected <T> T rethrowAsCacheException(Throwable throwable) {
+   private <T> T rethrowAsCacheException(Throwable throwable) {
       if (throwable.getCause() != null && throwable instanceof CompletionException) {
          throwable = throwable.getCause();
       }
@@ -231,6 +231,52 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             totalReplicationTime.getAndAdd(timeTaken);
          }
       }
+   }
+
+   private CacheRpcCommand toCacheRpcCommand(ReplicableCommand command) {
+      return command instanceof CacheRpcCommand ?
+            (CacheRpcCommand) command :
+            cf.buildSingleRpcCommand(command);
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+      if (trace) {
+         log.tracef("%s invoking %s to %s ordered by %s", t.getAddress(), command, destination, deliverOrder);
+      }
+
+      // Set the topology id of the command, in case we don't have it yet
+      setTopologyId(command);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      try {
+         t.sendTo(destination, cacheRpc, deliverOrder);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
+      if (trace) {
+         log.tracef("%s invoking %s to list %s ordered by %s", t.getAddress(), command, destinations, deliverOrder);
+      }
+
+      // Set the topology id of the command, in case we don't have it yet
+      setTopologyId(command);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      try {
+         t.sendToMany(destinations, cacheRpc, deliverOrder);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   private void errorReplicating(Exception e) {
+      log.unexpectedErrorReplicating(e);
+      if (statisticsEnabled) replicationFailures.incrementAndGet();
+      rethrowAsCacheException(e);
    }
 
    @Override

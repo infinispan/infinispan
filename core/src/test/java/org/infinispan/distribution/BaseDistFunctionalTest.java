@@ -127,6 +127,10 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
 
    // ----------------- HELPERS ----------------
 
+   protected boolean isTriangle() {
+      return TestingUtil.isTriangleAlgorithm(cacheMode, transactional);
+   }
+
    protected void initAndTest() {
       for (Cache<K, V> c : caches) assert c.isEmpty();
 

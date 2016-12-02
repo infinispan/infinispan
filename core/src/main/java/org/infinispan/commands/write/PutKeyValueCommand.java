@@ -32,11 +32,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public static final byte COMMAND_ID = 8;
 
-   Object value;
-   boolean putIfAbsent;
-   CacheNotifier notifier;
-   boolean successful = true;
-   Metadata metadata;
+   private Object value;
+   private boolean putIfAbsent;
+   private CacheNotifier<Object, Object> notifier;
+   private boolean successful = true;
+   private Metadata metadata;
    private ValueMatcher valueMatcher;
    private Equivalence valueEquivalence;
 
@@ -50,6 +50,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
+      //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
       this.valueEquivalence = valueEquivalence;
@@ -60,6 +61,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    public void init(CacheNotifier notifier, Configuration cfg) {
+      //noinspection unchecked
       this.notifier = notifier;
       this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
@@ -94,7 +96,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          successful = false;
          return null;
       }
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      //noinspection unchecked
+      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
 
       //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
       if (e == null) return null;
@@ -163,9 +166,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
       if (putIfAbsent != that.putIfAbsent) return false;
       if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
+      return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
 
-      return true;
    }
 
    @Override
@@ -220,7 +222,22 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
    }
 
-   private Object performPut(MVCCEntry e, InvocationContext ctx) {
+   @Override
+   public void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
+      command.setWrite(commandInvocationId, key, value, metadata, getFlagsBitSet(), getTopologyId());
+   }
+
+   @Override
+   public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      if (isConditional() || isReturnValueExpected()) {
+         command.initWithReturnValue(successful, localReturnValue);
+      } else {
+         command.initWithoutReturnValue(successful);
+      }
+   }
+
+   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;
 

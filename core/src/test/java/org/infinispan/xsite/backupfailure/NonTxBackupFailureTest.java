@@ -36,7 +36,9 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
       }
-      assertEquals("v", cache("LON", 1).get("k"));
+      //in triangle, if an exception is received, the originator doesn't wait for the ack from backup
+      //it is possible to check the value before the backup handles the BackupWriteRcpCommand.
+      eventuallyEquals("v", () -> cache("LON", 1).get("k"));
       assertTrue(failureInterceptor.putFailed);
       assertNull(backup("LON").get("k"));
    }
@@ -55,8 +57,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkNonFailOnBackupFailure();
       }
 
-      assertNull(cache("LON", 0).get("k"));
-      assertNull(cache("LON", 1).get("k"));
+      eventuallyEquals(null, () -> cache("LON", 0).get("k"));
+      eventuallyEquals(null, () -> cache("LON", 1).get("k"));
 
       assertTrue(failureInterceptor.removeFailed);
       assertEquals("v", backup("LON").get("k"));
@@ -76,8 +78,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkNonFailOnBackupFailure();
       }
 
-      assertEquals("v2", cache("LON", 0).get("k"));
-      assertEquals("v2", cache("LON", 1).get("k"));
+      eventuallyEquals("v2", () -> cache("LON", 0).get("k"));
+      eventuallyEquals("v2", () -> cache("LON", 1).get("k"));
       //the ReplaceCommand is transformed in a PutKeyValueCommand when it succeeds in the originator site!
       assertTrue(failureInterceptor.putFailed);
       assertEquals("v", backup("LON").get("k"));
@@ -97,9 +99,13 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkNonFailOnBackupFailure();
       }
 
-      assertNull(cache("LON", 0).get("k1"));
-      assertNull(cache("LON", 0).get("k2"));
-      assertNull(cache("LON", 1).get("k3"));
+      eventuallyEquals(null, () -> cache("LON", 0).get("k1"));
+      eventuallyEquals(null, () -> cache("LON", 0).get("k2"));
+      eventuallyEquals(null, () -> cache("LON", 0).get("k3"));
+
+      eventuallyEquals(null, () -> cache("LON", 1).get("k1"));
+      eventuallyEquals(null, () -> cache("LON", 1).get("k2"));
+      eventuallyEquals(null, () -> cache("LON", 1).get("k3"));
 
       assertTrue(failureInterceptor.clearFailed);
       assertEquals("v1", backup("LON").get("k1"));
@@ -120,7 +126,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
       }
 
       for (int i = 0; i < 100; i++) {
-         assertEquals("v" + i, cache("LON", i % 2).get("k" + i));
+         final int keyIndex = i;
+         eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
          assertNull(backup("LON").get("k" + i));
       }
    }
