@@ -1422,7 +1422,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot determine a synthetic transaction configuration from mode=%s, xaEnabled=%s, recoveryEnabled=%s, batchingEnabled=%s", id = 412)
    CacheConfigurationException unknownTransactionConfiguration(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled);
 
-   @Message(value = "Unable to instantiate serializer for StoreConfiguration %s", id = 413)
+   @Message(value = "Unable to instantiate serializer for %s", id = 413)
    CacheConfigurationException unableToInstantiateSerializer(Class<?> storeConfigurationClass);
 
    @Message(value = "Global security authorization should be enabled if cache authorization enabled.", id = 414)

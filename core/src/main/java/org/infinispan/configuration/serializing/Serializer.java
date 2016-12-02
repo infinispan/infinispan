@@ -185,6 +185,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writeSerialization(writer, globalConfiguration);
       writeJMX(writer, globalConfiguration);
       writeGlobalState(writer, globalConfiguration);
+      writeExtraConfiguration(writer, globalConfiguration.modules());
       for (Entry<String, Configuration> configuration : holder.getConfigurations().entrySet()) {
          Configuration config = configuration.getValue();
          switch (config.clustering().cacheMode()) {
@@ -206,7 +207,25 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          default:
             break;
          }
+         writeExtraConfiguration(writer, config.modules());
       }
+   }
+
+   private void writeExtraConfiguration(XMLExtendedStreamWriter writer, Map<Class<?>, ?> modules)
+         throws XMLStreamException {
+      for (Entry<Class<?>, ?> entry : modules.entrySet()) {
+         SerializedWith serializedWith = entry.getKey().getAnnotation(SerializedWith.class);
+         if (serializedWith == null) {
+            continue;
+         }
+         try {
+            ConfigurationSerializer<Object> serializer = Util.getInstanceStrict(serializedWith.value());
+            serializer.serialize(writer, entry.getValue());
+         } catch (InstantiationException | IllegalAccessException e) {
+            log.unableToInstantiateSerializer(serializedWith.value());
+         }
+      }
+
    }
 
    private void writeGlobalState(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration)
