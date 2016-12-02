@@ -159,10 +159,13 @@ final class FilterExpressionBuilder<TypeMetadata> {
       push(ConstantBooleanExpr.forBoolean(booleanConstant));
    }
 
+   /**
+    * Delays construction until {@link #get} is called.
+    */
    abstract static class LazyBooleanExpr {
 
       /**
-       * Whether this expression can have sub-expressions or not.
+       * Indicates whether this expression can have sub-expressions or not.
        */
       public boolean isParent() {
          return true;
@@ -183,7 +186,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       public abstract BooleanExpr get();
    }
 
-   private static class LazyLeafBooleanExpr extends LazyBooleanExpr {
+   private static final class LazyLeafBooleanExpr extends LazyBooleanExpr {
 
       private final BooleanExpr booleanExpr;
 
@@ -207,7 +210,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyAndExpr extends LazyBooleanExpr {
+   private static final class LazyAndExpr extends LazyBooleanExpr {
 
       private final List<LazyBooleanExpr> children = new ArrayList<>(3);
 
@@ -237,7 +240,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyOrExpr extends LazyBooleanExpr {
+   private static final class LazyOrExpr extends LazyBooleanExpr {
 
       private final List<LazyBooleanExpr> children = new ArrayList<>(3);
 
@@ -267,7 +270,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyNegationExpr extends LazyBooleanExpr {
+   private static final class LazyNegationExpr extends LazyBooleanExpr {
 
       private LazyBooleanExpr child;
 
@@ -289,7 +292,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyFTBoostExpr extends LazyBooleanExpr {
+   private static final class LazyFTBoostExpr extends LazyBooleanExpr {
 
       private LazyBooleanExpr child;
 
@@ -317,7 +320,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyFTOccurExpr extends LazyBooleanExpr {
+   private static final class LazyFTOccurExpr extends LazyBooleanExpr {
 
       private LazyBooleanExpr child;
 
@@ -345,7 +348,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
       }
    }
 
-   private static class LazyRootBooleanExpr extends LazyBooleanExpr {
+   private static final class LazyRootBooleanExpr extends LazyBooleanExpr {
 
       private LazyBooleanExpr child;
 
