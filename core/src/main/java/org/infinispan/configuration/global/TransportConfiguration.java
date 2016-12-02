@@ -23,9 +23,9 @@ public class TransportConfiguration {
          .immutable().build();
    public static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
          "distributedSyncTimeout", TimeUnit.MINUTES.toMillis(4)).build();
-   static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
+   public static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
          .immutable().build();
-   static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
+   public static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
            "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
          .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();

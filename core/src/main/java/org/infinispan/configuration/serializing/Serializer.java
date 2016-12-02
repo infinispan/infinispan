@@ -47,6 +47,7 @@ import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
@@ -184,6 +185,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writeTransport(writer, globalConfiguration);
       writeSerialization(writer, globalConfiguration);
       writeJMX(writer, globalConfiguration);
+      writeGlobalState(writer, globalConfiguration);
       for (Entry<String, Configuration> configuration : holder.getConfigurations().entrySet()) {
          Configuration config = configuration.getValue();
          switch (config.clustering().cacheMode()) {
@@ -205,6 +207,25 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          default:
             break;
          }
+      }
+   }
+
+   private void writeGlobalState(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration)
+         throws XMLStreamException {
+      GlobalStateConfiguration configuration = globalConfiguration.globalState();
+      if (configuration.enabled()) {
+         writer.writeStartElement(Element.GLOBAL_STATE);
+         if (configuration.attributes().attribute(GlobalStateConfiguration.PERSISTENT_LOCATION).isModified()) {
+            writer.writeStartElement(Element.PERSISTENT_LOCATION);
+            writer.writeAttribute(Attribute.PATH, configuration.persistentLocation());
+            writer.writeEndElement();
+         }
+         if (configuration.attributes().attribute(GlobalStateConfiguration.TEMPORARY_LOCATION).isModified()) {
+            writer.writeStartElement(Element.TEMPORARY_LOCATION);
+            writer.writeAttribute(Attribute.PATH, configuration.temporaryLocation());
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
       }
    }
 
@@ -275,6 +296,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          if (transport.transportThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.EXECUTOR, "transport-pool");
          }
+         attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
+         attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
+         attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_TIMEOUT, Attribute.INITIAL_CLUSTER_TIMEOUT);
          writer.writeEndElement();
       }
    }
