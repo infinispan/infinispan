@@ -143,6 +143,8 @@ searchCondition
 
 predicate
    :  fullTextExpression
+   |  TRUE { delegate.predicateConstantBoolean(true); }
+   |  FALSE { delegate.predicateConstantBoolean(false); }
    |  ^( EQUALS rowValueConstructor comparativePredicateValue ) { delegate.predicateEquals( $comparativePredicateValue.text); }
 	|	^( NOT_EQUAL rowValueConstructor comparativePredicateValue ) { delegate.predicateNotEquals( $comparativePredicateValue.text); }
 	|	^( LESS rowValueConstructor comparativePredicateValue ) { delegate.predicateLess( $comparativePredicateValue.text); }
@@ -267,8 +269,8 @@ parameter
 constant
    :  literal
    |  NULL
-   |  TRUE { delegate.predicateConstantBoolean(true); }
-   |  FALSE { delegate.predicateConstantBoolean(false); }
+   |  TRUE
+   |  FALSE
    ;
 
 literal

@@ -483,6 +483,31 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals("test embedded value 2", list.get(1)[0]);
    }
 
+   public void testBooleanComparison() {
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
+            "WHERE isDebit = false", qe.propertyHelper);
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+
+      List<?> list = q.list();
+      assertEquals(1, list.size());
+   }
+
+   public void testConstantBooleanExpression() {
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
+            "WHERE true", qe.propertyHelper);
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+
+      List<?> list = q.list();
+      assertEquals(56, list.size());
+
+      parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
+            "WHERE false", qe.propertyHelper);
+      q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+
+      list = q.list();
+      assertEquals(0, list.size());
+   }
+
    public void testFullTextKeyword() {
       FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.Book b " +
             "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.propertyHelper);
