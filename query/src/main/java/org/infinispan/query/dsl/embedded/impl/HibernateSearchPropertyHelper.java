@@ -10,6 +10,7 @@ import org.apache.lucene.document.DateTools;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.TwoWayStringBridge;
+import org.hibernate.search.bridge.builtin.BooleanBridge;
 import org.hibernate.search.bridge.builtin.NumericEncodingCalendarBridge;
 import org.hibernate.search.bridge.builtin.NumericEncodingDateBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
@@ -100,7 +101,13 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (bridge instanceof NullEncodingTwoWayFieldBridge) {
             return convertToPropertyType(value, ((NullEncodingTwoWayFieldBridge) bridge).unwrap());
          } else if (bridge instanceof TwoWayString2FieldBridgeAdaptor) {
-            return ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap().stringToObject(value);
+            TwoWayStringBridge unwrapped = ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap();
+            if (unwrapped instanceof BooleanBridge) {
+               if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
+                  throw log.getInvalidBooleanLiteralException(value);
+               }
+            }
+            return unwrapped.stringToObject(value);
          } else if (bridge instanceof TwoWayStringBridge) {
             return ((TwoWayStringBridge) bridge).stringToObject(value);
          } else if (bridge instanceof NumericFieldBridge) {

@@ -483,6 +483,16 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals("test embedded value 2", list.get(1)[0]);
    }
 
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028507: Invalid boolean literal '90'")
+   public void testInvalidNotIndexedBooleanComparison() {
+      qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS where isValid = 90", null, -1, -1);
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014037: Invalid boolean literal '90'")
+   public void testInvalidIndexedBooleanComparison() {
+      qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS where isDebit = 90", null, -1, -1);
+   }
+
    public void testBooleanComparison() {
       FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
             "WHERE isDebit = false", qe.propertyHelper);

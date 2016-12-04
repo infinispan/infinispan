@@ -155,4 +155,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Prefix, wildcard or regexp queries cannot be fuzzy: %s", id = 14036)
    ParsingException getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(String s); //todo [anistor] this should be thrown earlier at parsing time
+
+   @Message(value = "Invalid boolean literal '%s'", id = 14037)
+   ParsingException getInvalidBooleanLiteralException(String value);
 }
