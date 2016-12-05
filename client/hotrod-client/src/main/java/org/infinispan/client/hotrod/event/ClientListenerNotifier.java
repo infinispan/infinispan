@@ -166,7 +166,7 @@ public class ClientListenerNotifier {
       return null;
    }
 
-   private Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
+   public Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap =
             new HashMap<Class<? extends Annotation>, List<ClientListenerInvocation>>(4, 0.99f);
 

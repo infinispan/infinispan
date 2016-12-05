@@ -52,6 +52,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_SO_TIMEOUT = 60000;
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final int DEFAULT_MAX_RETRIES = 10;
+   public static final String PROTOCOL_VERSION_26 = "2.6";
    public static final String PROTOCOL_VERSION_25 = "2.5";
    public static final String PROTOCOL_VERSION_24 = "2.4";
    public static final String PROTOCOL_VERSION_23 = "2.3";
@@ -62,7 +63,7 @@ public class ConfigurationProperties {
    public static final String PROTOCOL_VERSION_12 = "1.2";
    public static final String PROTOCOL_VERSION_11 = "1.1";
    public static final String PROTOCOL_VERSION_10 = "1.0";
-   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_25;
+   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_26;
 
    private final TypedProperties props;
 

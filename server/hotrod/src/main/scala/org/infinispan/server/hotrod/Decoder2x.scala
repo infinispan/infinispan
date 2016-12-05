@@ -206,9 +206,14 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
                   case ver if Constants.isVersion2x(ver) => readMaybeByte(buffer).map(b => b == 1)
                   case _ => Some(false)
                }
+               listenerInterests <- h.version match {
+                  case ver if Constants.isVersionPost25(ver) => readMaybeByte(buffer)
+                  case _ => Some(0.toByte)
+               }
             } yield {
                execCtx.converterFactoryInfo = converter
                execCtx.useRawData = useRawData
+               execCtx.listenerInterests = listenerInterests
 
                buffer.markReaderIndex()
                out.add(hrCtx)
@@ -498,4 +503,5 @@ class ClientListenerRequestContext(val listenerId: Bytes, val includeCurrentStat
    var filterFactoryInfo: NamedFactory = _
    var converterFactoryInfo: NamedFactory = _
    var useRawData: Boolean = _
+   var listenerInterests: Byte = 0
 }

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -55,4 +57,6 @@ public interface Codec {
     * Read and unmarshall byte array.
     */
    <T> T readUnmarshallByteArray(Transport transport, short status);
+
+   void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes);
 }
