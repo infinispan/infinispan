@@ -24,11 +24,10 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.Health;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
@@ -144,14 +144,10 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 case LOG_TAIL:
                     File path = new File(pathManager.resolveRelativePathEntry("server.log", ServerEnvironment.SERVER_LOG_DIR));
-                    try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                    try (ReversedLinesFileReader reader = new ReversedLinesFileReader(path, StandardCharsets.UTF_8)) {
                         List<String> results = new LinkedList<>();
-                        for (String line=reader.readLine(); line != null; line=reader.readLine()) {
-                            //add new lines at the end and remove the head if needed
-                            results.add(line);
-                            if(results.size() > NUMBER_OF_LINES) {
-                                results.remove(0);
-                            }
+                        for (int i = 0; i < NUMBER_OF_LINES; ++i) {
+                            results.add(0, reader.readLine());
                         }
                         result.set(toModelNodeCollection(results));
                     } catch (FileNotFoundException e) {
