@@ -17,7 +17,7 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-marshaller-protostuff</artifactId>
-            <version>9.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
