@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:9.0 http://www.infinispan.org/schemas/infinispan-config-9.0.xsd
+   urn:infinispan:config:counters:9.0 infinispan-counters-config-9.0.xsd"
+        xmlns="urn:infinispan:config:9.0">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <global-state>
+            <persistent-location path="${java.io.tmpdir}/counters"/>
+        </global-state>
+        <local-cache name="default">
+            <locking concurrency-level="100" acquire-timeout="1000"/>
+            <counters xmlns="urn:infinispan:config:counters:9.0" num-owners="3" reliability="CONSISTENT">
+                <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
+                <strong-counter name="c2" initial-value="2" storage="VOLATILE">
+                    <lower-bound value="0"/>
+                </strong-counter>
+                <strong-counter name="c3" initial-value="3" storage="PERSISTENT">
+                    <upper-bound value="5"/>
+                </strong-counter>
+                <strong-counter name="c4" initial-value="4" storage="VOLATILE">
+                    <lower-bound value="0"/>
+                    <upper-bound value="10"/>
+                </strong-counter>
+                <weak-counter name="c5" initial-value="5" storage="PERSISTENT" concurrency-level="1"/>
+            </counters>
+        </local-cache>
+    </cache-container>
+
+</infinispan>
