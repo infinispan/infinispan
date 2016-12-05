@@ -640,8 +640,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private AdvancedCache<Object, Object> getCacheForStateInsertion() {
-      List<Flag> flags = new ArrayList<Flag>(Arrays.asList(
-            CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING));
+      List<Flag> flags = new ArrayList<>(Arrays.asList(
+            CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING,
+            SKIP_XSITE_BACKUP));
 
       boolean hasShared = false;
       for (CacheWriter w : writers) {
