@@ -26,6 +26,7 @@
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
+      <module>counter</module>
       <module>tools</module>
       <module>query</module>
       <module>query-dsl</module>

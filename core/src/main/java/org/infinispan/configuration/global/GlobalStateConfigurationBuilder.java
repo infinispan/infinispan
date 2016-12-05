@@ -43,6 +43,10 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
       return this;
    }
 
+   public boolean enabled() {
+      return attributes.attribute(ENABLED).get();
+   }
+
    /**
     * Defines the filesystem path where persistent state data which needs to survive container restarts
     * should be stored. The data stored at this location is required for graceful

@@ -157,6 +157,7 @@
                <instructions>
                   <Export-Package>
                      !${project.groupId}.commons.*,
+                     !${project.groupId}.counter.*,
                      org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
