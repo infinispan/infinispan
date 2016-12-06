@@ -248,10 +248,6 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
                                                  long timeout) {
       RequestOptions options = new RequestOptions(mode, timeout);
       encodeDeliverMode(options, deliverOrder);
-      //some issues with the new bundler. put back the DONT_BUNDLE flag.
-      if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) {
-         options.setFlags(Message.Flag.DONT_BUNDLE.value());
-      }
       // Only the commands in total order must be received by the originator.
       if (deliverOrder != DeliverOrder.TOTAL) {
          options.setTransientFlags(Message.TransientFlag.DONT_LOOPBACK.value());
