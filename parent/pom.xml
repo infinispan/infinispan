@@ -159,7 +159,7 @@
       <version.org.picketbox>4.0.20.Final</version.org.picketbox>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>3.1.0.Beta1</version.resteasy>
-      <version.shrinkwrapResolver>2.1.0</version.shrinkwrapResolver>
+      <version.shrinkwrapResolver>2.2.4</version.shrinkwrapResolver>
       <version.slf4j>1.7.21</version.slf4j>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.snappy>1.0.5</version.snappy>
@@ -492,6 +492,20 @@
             <version>${version.hibernate.entitymanager}</version>
          </dependency>
          <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-bom</artifactId>
+            <version>${version.shrinkwrapResolver}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <!-- This is a work around for https://issues.jboss.org/browse/SHRINKRES-238 -->
+         <!-- After fixing the issue above, the dependency below can be safely removed -->
+         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-aether-provider</artifactId>
+            <version>3.2.5</version>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-bom</artifactId>
             <version>${version.arquillian}</version>
@@ -519,13 +533,6 @@
             <groupId>org.jboss.sasl</groupId>
             <artifactId>jboss-sasl</artifactId>
             <version>${version.jboss.sasl}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-bom</artifactId>
-            <version>${version.shrinkwrapResolver}</version>
-            <type>pom</type>
-            <scope>import</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>

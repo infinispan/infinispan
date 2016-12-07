@@ -25,20 +25,17 @@ import org.junit.runner.RunWith;
  * @author Sebastian Laskawiec
  */
 @RunWith(Arquillian.class)
-@Ignore
 public class DuplicatedDomainsCdiIT {
-
 
    @Deployment
    public static Archive<?> deployment() {
       WebArchive webArchive = ShrinkWrap
             .create(WebArchive.class, "cdi.war")
-            .addClass(DuplicatedDomainsCdiIT.class)
-            .addAsWebInfResource("beans.xml");
+            .addClass(DuplicatedDomainsCdiIT.class);
 
       PomEquippedResolveStage mavenResolver = Maven.resolver().loadPomFromFile(new File("pom.xml"));
 
-      webArchive.addAsLibraries(mavenResolver.resolve("org.infinispan:infinispan-jcache").withTransitivity().asFile());
+      webArchive.addAsLibraries(mavenResolver.resolve("org.infinispan:infinispan-cdi-embedded").withTransitivity().asFile());
 
       return webArchive;
    }
@@ -55,5 +52,4 @@ public class DuplicatedDomainsCdiIT {
       DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
       cacheManager.stop();
    }
-
 }
