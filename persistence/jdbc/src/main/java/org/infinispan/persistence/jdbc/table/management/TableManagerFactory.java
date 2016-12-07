@@ -52,6 +52,8 @@ public class TableManagerFactory {
             return new SQLiteTableManager(connectionFactory, tableConfig, metaData);
          case SYBASE:
             return new SybaseTableManager(connectionFactory, tableConfig, metaData);
+         case SQL_SERVER:
+            return new SQLServerTableManager(connectionFactory, tableConfig, metaData);
          default:
             return new GenericTableManager(connectionFactory, tableConfig, metaData);
       }

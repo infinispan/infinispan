@@ -143,7 +143,7 @@ public abstract class AbstractTableManager implements TableManager {
 
          while (rs.next()) {
             String indexName = rs.getString("INDEX_NAME");
-            if (indexName.equalsIgnoreCase(getIndexName(false))) {
+            if (indexName != null && indexName.equalsIgnoreCase(getIndexName(false))) {
                return true;
             }
          }
