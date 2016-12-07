@@ -121,7 +121,9 @@ Templates can inherit from previously defined templates, augmenting and/or overr
 
       <local-cache-configuration name="extended-template" configuration="base-template">
          <expiration lifespan="20"/>
-         <eviction max-entries="2000" strategy="LRU"/>
+         <memory>
+            <object size="2000"/>
+         </memory>
       </local-cache-configuration>
 
       <!-- cache definitions -->
@@ -134,7 +136,7 @@ Templates can inherit from previously defined templates, augmenting and/or overr
 
 In the above example, `base-template` defines a local cache with a specific _expiration_ configuration. The `extended-template`
 configuration inherits from `base-template`, overriding just a single parameter of the _expiration_ element (all other
-attributes are inherited) and adds an _eviction_ element. Finally, two caches are defined: `local` which uses the `base-template`
+attributes are inherited) and adds a _memory_ element. Finally, two caches are defined: `local` which uses the `base-template`
 configuration and `local-bounded` which uses the `extended-template` configuration.
 
 WARNING: Be aware that for multi-valued elements (such as `properties`) the inheritance is additive, i.e. the child configuration will be the result of merging the properties from the parent and its own.
@@ -280,8 +282,9 @@ Or you can configure <<_eviction, eviction and expiration settings>>:
 [source,java]
 ----
 Configuration config = new ConfigurationBuilder()
-           .eviction()
-             .maxEntries(20000).strategy(EvictionStrategy.LIRS).expiration()
+           .memory()
+             .size(20000)
+          .expiration()
              .wakeUpInterval(5000L)
              .maxIdle(120000L)
            .build();

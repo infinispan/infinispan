@@ -1,10 +1,14 @@
 [[eviction_anchor]]
-==  Eviction
+==  Eviction and Data Container
 
 Infinispan supports eviction of entries, such that you do not run out of memory.
 Eviction is typically used in conjunction with a cache store, so that entries are
 not permanently lost when evicted, since eviction only removes entries from
 memory and not from cache stores or the rest of the cluster.
+
+Infinispan supports storing data in a few different formats.  Data can be
+stored as the object iself, binary as a byte[], and off-heap which stores the
+byte[] in native memory.
 
 TIP:  Passivation is also a popular option when using eviction, so that only a
 single copy of an entry is maintained - either in memory or in a cache store,
@@ -12,7 +16,7 @@ but not both. The main benefit of using passivation over a regular cache store
 is that updates to entries which exist in memory are cheaper since the update
 doesn't need to be made to the cache store as well.
 
-IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each
+IMPORTANT: Eviction occurs on a _local_ basis, and is not cluster-wide.  Each
 node runs an eviction thread to analyse the contents of its in-memory container
 and decide what to evict. Eviction does not take into account the amount of free
 memory in the JVM as threshold to  starts evicting entries. You have to set `size`
@@ -23,29 +27,19 @@ attribute will probably take some tuning in each use case.
 === Enabling Eviction
 
 Eviction is configured by adding the
-link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<eviction />`]
+link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<memory />`]
 element to your `<*-cache />` configuration sections or using
-link:{javadocroot}/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html[EvictionConfigurationBuilder]
+link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[MemoryConfigurationBuilder]
 API programmatic approach.
 
 All cache entry are evicted by piggybacking on user threads that are hitting the cache.
 
-==== Eviction strategies
+==== Eviction strategy
 
-.`NONE`
-This eviction strategy effectively disables the eviction thread. This is the default configuration.
-
-.`UNORDERED`
-UNORDERED eviction strategy is a legacy eviction strategy that has been deprecated. If UNORDERED strategy is specified LRU eviction algorithm will be used.
-
-.`LRU`
-If LRU eviction is used cache entries are selected for eviction using a well known least-recently-used pattern.
-
-.`LIRS`
-LRU eviction algorithm, although simple and easy to understand, under performs in cases of weak access locality (one time access entries are not timely replaced, entries to be accessed soonest are unfortunately replaced, and so on). Recently, a new eviction algorithm - LIRS has gathered a lot of attention because it addresses weak access locality shortcomings of LRU yet it retains LRU's simplicity. Eviction in LIRS algorithm relies on history information of cache entries accesses using so called Inter-Reference Recency (a.k.a IRR) and the Recency. The IRR of a cache entry A refers to number of other distinct entries accessed between the last two consecutive accesses to cache entry A, while recency refers to the number of other entries accessed from last reference to A up to current time point. If we relied only on cache recency we would essentially have LRU functionality. However, in addition to recency LIRS tracks elements that are in low IRR and high IRR, aptly named LIR and HIR cache entry blocks respectively. LIRS eviction algorithm essentially keeps entries with a low IRR in the cache as much as possible while evicting high IRR entries if eviction is required. If recency of a LIR cache entry increases to a certain point and entry  in HIR gets accessed at a smaller recency than that of the LIR entry, the LIR/HIR statuses of the two blocks are switched. Entries in HIR may be evicted regardless of its recency, even if element was recently accessed.
-
-.`MANUAL`
-This eviction strategy is identical to NONE, in that it disables automatic eviction altogether, but signals the intention that the user wants to evict entries manually. The effect is to disable misleading warning validation messages.
+Eviction is handled by link:https://github.com/ben-manes/caffeine[Caffeine] utilizing
+the TinyLFU algorithm with an additional admission window.  This was chosen as
+provides high hit rate while also requiring low memory overhead.  This provides a
+better hit ratio than LRU while also requiring less memory than LIRS.
 
 ==== Eviction types
 
@@ -61,27 +55,44 @@ the configured `size`.  This type only works with primitive wrapper, String
 and byte[] types, thus if custom types are desired you must enable
 storeAsBinary.  Also MEMORY based eviction only works with LRU policy.
 
+==== Storage type
+
+Infinispan allows the user to configure in what form their data is stored.  Each
+form supports the same features of Infinispan, however eviction can be limited
+for some forms.  There are currently three storage formats that Infinispan
+provides, they are:
+
+.`OBJECT`
+Stores the keys and values as objects in the Java heap  Only `COUNT` eviction
+type is supported.
+
+.`BINARY`
+Stores the keys and values as a byte[] in the Java heap.  This will use the configured
+marshaller for the cache if there is one.  Both `COUNT` and
+`MEMORY` eviction types are supported.
+
+.`OFF-HEAP`
+Stores the keys and values in native memory outside of the
+Java heap as bytes.  The configured marshaller will be used if the cache has one.
+Both `COUNT` and `MEMORY` eviction types are supported.
+
 ==== More defaults
 
-By default when no `<eviction />` element is specified, no eviction takes place.
+By default when no `<memory />` element is specified, no eviction takes place and
+`OBJECT` storage type is used.
 
-In case there is an eviction element, this table describes behaviour of eviction
+In case there is an memory element, this table describes the behaviour of eviction
 based on information provided in the xml configuration ("-" in Supplied size or
 Supplied strategy column means that the attribute wasn't supplied)
 
 [options="header"]
 |===============
-|Supplied size|Supplied strategy|Example|Eviction behaviour
-|-|-| `<eviction />` |no eviction
-|&gt; 0|-| `<eviction size="100" />` |the strategy defaults to LIRS and eviction takes place
-|&gt; 0|NONE| `<eviction size="100" strategy="NONE" />` | the strategy defaults to LIRS and eviction takes place
-|&gt; 0| != NONE | `<eviction size="100" strategy="LRU" />` |eviction takes place with defined strategy
-|0|-| `<eviction size="0" />` | no eviction
-|0| NONE | `<eviction size="0" strategy="NONE" />` | no eviction
-|0| != NONE | `<eviction size="0" strategy="LRU" />` | ConfigurationException
-|&lt; 0|-| `<eviction size="-1" />` | no eviction
-|&lt; 0| NONE | `<eviction size="-1" strategy="NONE" />` | no eviction
-|&lt; 0| != NONE | `<eviction size="-1" strategy="LRU" />` |ConfigurationException
+|Supplied size|Example|Eviction behaviour
+|-| `<memory />` |no eviction as an object
+|&gt; 0| `<memory> <object size="100" /> </memory>` |eviction takes place and stored as objects
+|&gt; 0| `<memory> <off-heap size="100" /> </memory>` |eviction takes place and stored in off-heap
+|0| `<memory> <object size="0" /> </memory>` | no eviction
+|&lt; 0| `<memory> <object size="-1" /> </memory>` | no eviction
 
 |===============
 
@@ -123,12 +134,12 @@ in cache. Either you set maximum _lifespan_ of the entry - time it is allowed to
 stay in the cache or _maximum idle time_ , time it's allowed to be untouched
 (no operation performed with given key).
 
-===  Eviction Examples
+===  Expiration details
 
 .  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
 .  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry.
+.  While maxIdle is replicated, expiration due to maxIdle is not cluster wide, only lifespan.  As such it is not recommended to use maxIdle in a clustered cache.
 .  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation.
-.  Four eviction strategies are shipped, link:{javadocroot}/org/infinispan/eviction/EvictionStrategy.html#NONE[EvictionStrategy.NONE] , link:{javadocroot}/org/infinispan/eviction/EvictionStrategy.html#LRU[EvictionStrategy.LRU] , link:{javadocroot}/org/infinispan/eviction/EvictionStrategy.html#UNORDERED[EvictionStrategy.UNORDERED] , and link:{javadocroot}/org/infinispan/eviction/EvictionStrategy.html#LIRS[EvictionStrategy.LIRS] .
 
 ==== Configuration
 
@@ -136,7 +147,9 @@ Eviction may be configured using the Configuration bean or the XML file.  Evicti
 
 [source,xml]
 ----
-<eviction strategy="LRU" size="2000"/>
+<memory>
+   <object size="2000"/>
+</memory>
 <expiration lifespan="1000" max-idle="500" interval="1000" />
 
 ----
@@ -145,8 +158,9 @@ Programmatically, the same would be defined using:
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU)
-               .size(2000).expiration().wakeUpInterval(5000l).lifespan(1000l).maxIdle(500l)
+Configuration c = new ConfigurationBuilder()
+               .memory().size(2000)
+               .expiration().wakeUpInterval(5000l).lifespan(1000l).maxIdle(500l)
                .build();
 
 ----
@@ -161,27 +175,25 @@ required to use `storeAsBinary` when memory based eviction is used.
 [source,xml]
 ----
 <!-- Enable memory based eviction with 1 GB/>
-<eviction strategy="LRU" size="1000000000" type="MEMORY"/>
-<store-as-binary enabled="true"/>
+<memory>
+   <binary size="1000000000" eviction="MEMORY"/>
+</memory>
 ----
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU)
-               .type(EvictionType.MEMORY)
+Configuration c = new ConfigurationBuilder()
+               .memory()
+               .storageType(StorageType.BINARY)
+               .evictionType(EvictionType.MEMORY)
                .size(1_000_000_000)
-               .storeAsBinary().enable()
                .build();
 ----
 
 ==== Default values
 
-Eviction is disabled by default.  If enabled (using an empty `<eviction />` element), certain default values are used:
+Eviction is disabled by default. Default values are used:
 
-
-* strategy: EvictionStrategy.NONE is assumed, if a strategy is not specified..
-* wakeupInterval: 60000 is used if not specified.
-* If you wish to disable the eviction thread, set wakeupInterval to -1.
 * size: -1 is used if not specified, which means unlimited entries.
 * 0 means no entries, and the eviction thread will strive to keep the cache empty.
 
