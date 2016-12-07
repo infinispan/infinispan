@@ -44,6 +44,7 @@ import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.security.Security;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -54,6 +55,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -681,15 +685,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (!enlistedAlready.contains(listener.getTarget())) {
             // If clustered means it is local - so use our address
             if (listener.isClustered()) {
+               Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
                callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
                                                                   cache.getCacheManager().getAddress(), listener.getFilter(),
-                                                                  listener.getConverter(), listener.isSync()));
+                                                                  listener.getConverter(), listener.isSync(),
+                     filterAnnotations));
                enlistedAlready.add(listener.getTarget());
             }
             else if (listener.getTarget() instanceof RemoteClusterListener) {
                RemoteClusterListener lcl = (RemoteClusterListener)listener.getTarget();
+               Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
                callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
-                                                                  listener.getConverter(), listener.isSync()));
+                                                                  listener.getConverter(), listener.isSync(),
+                     filterAnnotations));
                enlistedAlready.add(listener.getTarget());
             }
          }
@@ -764,6 +772,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                .setConverter(converter)
                .setIdentifier(generatedId)
                .setClassLoader(classLoader);
+
+         if (l.clustered()) {
+            builder.setFilterAnnotations(findListenerCallbacks(listener));
+         }
+
          foundMethods = validateAndAddListenerInvocations(listener, builder);
       }
 
@@ -786,7 +799,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
                              members, generatedId);
                }
-               Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter, l.sync());
+               Callable callable = new ClusterListenerReplicateCallable(
+                     generatedId, ourAddress, filter, converter, l.sync(),
+                     findListenerCallbacks(listener));
                for (Address member : members) {
                   if (!member.equals(ourAddress)) {
                      decs.submit(member, callable);
@@ -940,6 +955,81 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       addListener(listener, filter, converter, null);
    }
 
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter,
+         CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      // TODO: Sort out code dup with validateAndAddListenerInvocations
+      final Listener l = testListenerClassValidity(listener.getClass());
+      final UUID generatedId = UUID.randomUUID();
+      final CacheMode cacheMode = config.clustering().cacheMode();
+
+      boolean foundMethods = false;
+
+      CacheInvocationBuilder builder = new CacheInvocationBuilder();
+      builder
+            .setFilterAnnotations(filterAnnotations)
+            .setIncludeCurrentState(l.includeCurrentState())
+            .setClustered(l.clustered())
+            .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+            .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+            .setFilter(filter)
+            .setConverter(converter)
+            .setIdentifier(generatedId)
+            .setClassLoader(null)
+            .setTarget(listener)
+            .setSubject(Security.getSubject())
+            .setSync(l.sync())
+            ;
+
+      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
+      // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
+      for (Method m : listener.getClass().getMethods()) {
+         // Skip bridge methods as we don't want to count them as well.
+         if (!m.isSynthetic() || !m.isBridge()) {
+            // loop through all valid method annotations
+            for (Map.Entry<Class<? extends Annotation>, Class<?>> annotationEntry : allowedListeners.entrySet()) {
+               final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
+               if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
+                  final Class<?> eventClass = annotationEntry.getValue();
+                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
+
+                  if (System.getSecurityManager() == null) {
+                     m.setAccessible(true);
+                  } else {
+                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        m.setAccessible(true);
+                        return null;
+                     });
+                  }
+
+                  builder.setMethod(m);
+                  builder.setAnnotation(annotationClass);
+                  CacheEntryListenerInvocation invocation = builder.build();
+                  if (trace)
+                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+
+                  getListenerCollectionForAnnotation(annotationClass).add(invocation);
+                  foundMethods = true;
+               }
+            }
+         }
+      }
+
+      if (!foundMethods)
+         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
+   }
+
+   public boolean canApply(Set<Class<? extends Annotation>> filterAnnotations, Class<? extends Annotation> annotationClass) {
+      // Annotations such ViewChange or TransactionCompleted should be applied regardless
+      return (annotationClass != CacheEntryCreated.class
+            && annotationClass != CacheEntryModified.class
+            && annotationClass != CacheEntryRemoved.class
+            && annotationClass != CacheEntryExpired.class)
+            || (filterAnnotations.contains(annotationClass));
+   }
+
    protected class CacheInvocationBuilder extends AbstractInvocationBuilder {
       CacheEventFilter<? super K, ? super V> filter;
       CacheEventConverter<? super K, ? super V, ?> converter;
@@ -948,6 +1038,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       boolean includeCurrentState;
       UUID identifier;
       Listener.Observation observation;
+      Set<Class<? extends Annotation>> filterAnnotations;
 
       public CacheEventFilter<? super K, ? super V> getFilter() {
          return filter;
@@ -1012,6 +1103,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          return this;
       }
 
+      public CacheInvocationBuilder setFilterAnnotations(Set<Class<? extends Annotation>> filterAnnotations) {
+         this.filterAnnotations = filterAnnotations;
+         return this;
+      }
+
       @Override
       public CacheEntryListenerInvocation<K, V> build() {
          ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, classLoader,
@@ -1039,7 +1135,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   }
                }
                returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, annotation,
-                                                                   onlyPrimary, identifier, sync, observation);
+                                                                   onlyPrimary, identifier, sync, observation, filterAnnotations);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
 //               QueueingSegmentListener handler = segmentHandler.get(identifier);
@@ -1053,13 +1149,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 //               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, annotation,
 //                                                                onlyPrimary, identifier, sync);
                returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation,
-                                                                  onlyPrimary, clustered, identifier, sync, observation);
+                                                                  onlyPrimary, clustered, identifier, sync, observation, filterAnnotations);
             }
          } else {
             // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
             // off
             returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation, onlyPrimary,
-                                                               clustered, identifier, sync, observation);
+                                                               clustered, identifier, sync, observation, filterAnnotations);
          }
          return returnValue;
       }
@@ -1113,8 +1209,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                CacheEventFilter<? super K, ? super V> filter,
                                                CacheEventConverter<? super K, ? super V, ?> converter,
                                                Class<? extends Annotation> annotation, boolean onlyPrimary,
-                                               UUID identifier, boolean sync, Listener.Observation observation) {
-         super(invocation, filter, converter, annotation, onlyPrimary, false, identifier, sync, observation);
+                                               UUID identifier, boolean sync, Listener.Observation observation,
+                                               Set<Class<? extends Annotation>> filterAnnotations) {
+         super(invocation, filter, converter, annotation, onlyPrimary, false, identifier, sync, observation, filterAnnotations);
          this.handler = handler;
       }
 
@@ -1138,8 +1235,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                          CacheEventFilter<? super K, ? super V> filter,
                                          CacheEventConverter<? super K, ? super V, ?> converter,
                                          Class<? extends Annotation> annotation, boolean onlyPrimary,
-                                         UUID identifier, boolean sync, Listener.Observation observation) {
-         super(invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation);
+                                         UUID identifier, boolean sync, Listener.Observation observation,
+                                         Set<Class<? extends Annotation>> filterAnnotations) {
+         super(invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation, filterAnnotations);
          this.handler = handler;
       }
 
@@ -1169,6 +1267,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected final boolean sync;
       protected final boolean filterAndConvert;
       protected final Listener.Observation observation;
+      protected final Set<Class<? extends Annotation>> filterAnnotations;
 
 
       protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
@@ -1176,7 +1275,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                  CacheEventConverter<? super K, ? super V, ?> converter,
                                                  Class<? extends Annotation> annotation, boolean onlyPrimary,
                                                  boolean clustered, UUID identifier, boolean sync,
-                                                 Listener.Observation observation)  {
+                                                 Listener.Observation observation,
+                                                 Set<Class<? extends Annotation>> filterAnnotations)  {
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
@@ -1187,6 +1287,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          this.annotation = annotation;
          this.sync = sync;
          this.observation = observation;
+         this.filterAnnotations = filterAnnotations;
       }
 
       @Override
@@ -1296,6 +1397,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       @Override
       public CacheEventFilter<? super K, ? super V> getFilter() {
          return filter;
+      }
+
+      @Override
+      public Set<Class<? extends Annotation>> getFilterAnnotations() {
+         return filterAnnotations;
       }
 
       @Override
