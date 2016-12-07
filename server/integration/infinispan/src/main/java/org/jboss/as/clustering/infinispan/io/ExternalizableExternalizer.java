@@ -25,9 +25,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.reflect.ReflectiveCreator;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 /**
  * Externalizer for Externalizable objects.
@@ -35,8 +35,6 @@ import org.jboss.marshalling.reflect.ReflectiveCreator;
  */
 public class ExternalizableExternalizer<T extends Externalizable> extends AbstractSimpleExternalizer<T> {
     private static final long serialVersionUID = -5938201796254055389L;
-
-    private static final Creator creator = new ReflectiveCreator();
 
     public ExternalizableExternalizer(Class<T> targetClass) {
         super(targetClass);
@@ -49,8 +47,13 @@ public class ExternalizableExternalizer<T extends Externalizable> extends Abstra
 
     @Override
     public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-        T object = creator.create(this.getTargetClass());
-        object.readExternal(input);
-        return object;
+        PrivilegedExceptionAction<T> action = () -> this.getTargetClass().newInstance();
+        try {
+            T object = AccessController.doPrivileged(action);
+            object.readExternal(input);
+            return object;
+        } catch (PrivilegedActionException e) {
+            throw new IOException(e.getCause());
+        }
     }
 }
