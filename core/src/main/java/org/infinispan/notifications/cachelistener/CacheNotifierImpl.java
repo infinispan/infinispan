@@ -956,79 +956,250 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public <C> void addFilteredListener(Object listener,
-         CacheEventFilter<? super K, ? super V> filter,
+   public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
          CacheEventConverter<? super K, ? super V, C> converter,
          Set<Class<? extends Annotation>> filterAnnotations) {
-      // TODO: Sort out code dup with validateAndAddListenerInvocations
       final Listener l = testListenerClassValidity(listener.getClass());
       final UUID generatedId = UUID.randomUUID();
       final CacheMode cacheMode = config.clustering().cacheMode();
 
+      FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
+      if (filter instanceof IndexedFilter) {
+         IndexedFilter indexedFilter = (IndexedFilter) filter;
+         indexingProvider = findIndexingServiceProvider(indexedFilter);
+         if (indexingProvider != null) {
+            DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
+            builder
+                  .setFilterAnnotations(filterAnnotations)
+                  .setIncludeCurrentState(l.includeCurrentState())
+                  .setClustered(l.clustered())
+                  .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+                  .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+                  .setFilter(filter)
+                  .setConverter(converter)
+                  .setIdentifier(generatedId)
+                  .setClassLoader(null);
+            foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
+            builder.registerListenerInvocations();
+         }
+      }
+      if (indexingProvider == null) {
+         CacheInvocationBuilder builder = new CacheInvocationBuilder();
+         builder
+               .setFilterAnnotations(filterAnnotations)
+               .setIncludeCurrentState(l.includeCurrentState())
+               .setClustered(l.clustered())
+               .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+               .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+               .setFilter(filter)
+               .setConverter(converter)
+               .setIdentifier(generatedId)
+               .setClassLoader(null);
 
-      CacheInvocationBuilder builder = new CacheInvocationBuilder();
-      builder
-            .setFilterAnnotations(filterAnnotations)
-            .setIncludeCurrentState(l.includeCurrentState())
-            .setClustered(l.clustered())
-            .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
-            .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
-            .setFilter(filter)
-            .setConverter(converter)
-            .setIdentifier(generatedId)
-            .setClassLoader(null)
-            .setTarget(listener)
-            .setSubject(Security.getSubject())
-            .setSync(l.sync())
-            ;
+         if (l.clustered()) {
+            builder.setFilterAnnotations(findListenerCallbacks(listener));
+         }
 
-      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
-      // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
-      for (Method m : listener.getClass().getMethods()) {
-         // Skip bridge methods as we don't want to count them as well.
-         if (!m.isSynthetic() || !m.isBridge()) {
-            // loop through all valid method annotations
-            for (Map.Entry<Class<? extends Annotation>, Class<?>> annotationEntry : allowedListeners.entrySet()) {
-               final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
-               if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
-                  final Class<?> eventClass = annotationEntry.getValue();
-                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
+         foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
+      }
 
-                  if (System.getSecurityManager() == null) {
-                     m.setAccessible(true);
-                  } else {
-                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                        m.setAccessible(true);
-                        return null;
-                     });
+      if (foundMethods && l.clustered()) {
+         if (l.observation() == Listener.Observation.PRE) {
+            throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
+         } else if (cacheMode.isInvalidation()) {
+            throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
+         } else if (cacheMode.isDistributed()) {
+            clusterListenerIDs.put(listener, generatedId);
+            EmbeddedCacheManager manager = cache.getCacheManager();
+            Address ourAddress = manager.getAddress();
+
+            List<Address> members = manager.getMembers();
+            // If we are the only member don't even worry about sending listeners
+            if (members != null && members.size() > 1) {
+               DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
+
+               if (trace) {
+                  log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
+                        members, generatedId);
+               }
+               Callable callable = new ClusterListenerReplicateCallable(
+                     generatedId, ourAddress, filter, converter, l.sync(),
+                     findListenerCallbacks(listener));
+               for (Address member : members) {
+                  if (!member.equals(ourAddress)) {
+                     decs.submit(member, callable);
                   }
+               }
 
-                  builder.setMethod(m);
-                  builder.setAnnotation(annotationClass);
-                  CacheEntryListenerInvocation invocation = builder.build();
-                  if (trace)
-                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+               for (int i = 0; i < members.size() - 1; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     Throwable cause = e.getCause();
+                     // If we got a SuspectException it means the remote node hasn't started this cache yet.
+                     // Just ignore, when it joins it will retrieve the listener
+                     if (!(cause instanceof SuspectException)) {
+                        throw new CacheListenerException(cause);
+                     }
+                  }
+               }
 
-                  getListenerCollectionForAnnotation(annotationClass).add(invocation);
-                  foundMethods = true;
+               int extraCount = 0;
+               // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
+               // before the other nodes got the new listener
+               List<Address> membersAfter = manager.getMembers();
+               for (Address member : membersAfter) {
+                  if (!members.contains(member) && !member.equals(ourAddress)) {
+                     if (trace) {
+                        log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
+                              member, generatedId);
+                     }
+                     extraCount++;
+                     decs.submit(member, callable);
+                  }
+               }
+
+               for (int i = 0; i < extraCount; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     throw new CacheListenerException(e);
+                  }
                }
             }
          }
       }
 
-      if (!foundMethods)
-         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
+      // If we have a segment listener handler, it means we have to do initial state
+      QueueingSegmentListener handler = segmentHandler.remove(generatedId);
+      if (handler != null) {
+         if (trace) {
+            log.tracef("Listener %s requests initial state for cache", generatedId);
+         }
+
+         try (CacheStream<CacheEntry<K, V>> entryStream = cache.getAdvancedCache().cacheEntrySet().stream()) {
+            Stream<CacheEntry<K, V>> usedStream = entryStream.segmentCompletionListener(handler);
+
+            if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+               // Hacky cast to prevent other casts
+               usedStream = CacheFilters.filterAndConvert(usedStream,
+                     new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K, V, V>) filter));
+            } else {
+               usedStream = filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(
+                     new CacheEventFilterAsKeyValueFilter<>(filter)));
+               usedStream = converter == null ? usedStream : usedStream.map(CacheFilters.function(
+                     new CacheEventConverterAsConverter(converter)));
+            }
+
+            Iterator<CacheEntry<K, V>> iterator = usedStream.iterator();
+            while (iterator.hasNext()) {
+               CacheEntry<K, V> entry = iterator.next();
+               // Mark the key as processed and see if we had a concurrent update
+               Object value = handler.markKeyAsProcessing(entry.getKey());
+               if (value == BaseQueueingSegmentListener.REMOVED) {
+                  // Don't process this value if we had a concurrent remove
+                  continue;
+               }
+               raiseEventForInitialTransfer(generatedId, entry, l.clustered());
+
+               handler.notifiedKey(entry.getKey());
+            }
+         }
+
+         Set<CacheEntry> entries = handler.findCreatedEntries();
+
+         for (CacheEntry entry : entries) {
+            raiseEventForInitialTransfer(generatedId, entry, l.clustered());
+         }
+
+         if (trace) {
+            log.tracef("Listener %s initial state for cache completed", generatedId);
+         }
+
+         handler.transferComplete();
+      }
    }
 
-   public boolean canApply(Set<Class<? extends Annotation>> filterAnnotations, Class<? extends Annotation> annotationClass) {
-      // Annotations such ViewChange or TransactionCompleted should be applied regardless
-      return (annotationClass != CacheEntryCreated.class
-            && annotationClass != CacheEntryModified.class
-            && annotationClass != CacheEntryRemoved.class
-            && annotationClass != CacheEntryExpired.class)
-            || (filterAnnotations.contains(annotationClass));
-   }
+
+//   @Override
+//   public <C> void addFilteredListener(Object listener,
+//         CacheEventFilter<? super K, ? super V> filter,
+//         CacheEventConverter<? super K, ? super V, C> converter,
+//         Set<Class<? extends Annotation>> filterAnnotations) {
+//      // TODO: Sort out code dup with validateAndAddListenerInvocations
+//      final Listener l = testListenerClassValidity(listener.getClass());
+//      final UUID generatedId = UUID.randomUUID();
+//      final CacheMode cacheMode = config.clustering().cacheMode();
+//
+//      boolean foundMethods = false;
+//
+//      CacheInvocationBuilder builder = new CacheInvocationBuilder();
+//      builder
+//            .setFilterAnnotations(filterAnnotations)
+//            .setIncludeCurrentState(l.includeCurrentState())
+//            .setClustered(l.clustered())
+//            .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+//            .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+//            .setFilter(filter)
+//            .setConverter(converter)
+//            .setIdentifier(generatedId)
+//            .setClassLoader(null)
+//            .setTarget(listener)
+//            .setSubject(Security.getSubject())
+//            .setSync(l.sync())
+//            ;
+//
+//      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
+//      // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
+//      for (Method m : listener.getClass().getMethods()) {
+//         // Skip bridge methods as we don't want to count them as well.
+//         if (!m.isSynthetic() || !m.isBridge()) {
+//            // loop through all valid method annotations
+//            for (Map.Entry<Class<? extends Annotation>, Class<?>> annotationEntry : allowedListeners.entrySet()) {
+//               final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
+//               if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
+//                  final Class<?> eventClass = annotationEntry.getValue();
+//                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
+//
+//                  if (System.getSecurityManager() == null) {
+//                     m.setAccessible(true);
+//                  } else {
+//                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+//                        m.setAccessible(true);
+//                        return null;
+//                     });
+//                  }
+//
+//                  builder.setMethod(m);
+//                  builder.setAnnotation(annotationClass);
+//                  CacheEntryListenerInvocation invocation = builder.build();
+//                  if (trace)
+//                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+//
+//                  getListenerCollectionForAnnotation(annotationClass).add(invocation);
+//                  foundMethods = true;
+//               }
+//            }
+//         }
+//      }
+//
+//      if (!foundMethods)
+//         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
+//   }
+
+//   public boolean canApply(Set<Class<? extends Annotation>> filterAnnotations, Class<? extends Annotation> annotationClass) {
+//      // Annotations such ViewChange or TransactionCompleted should be applied regardless
+//      return (annotationClass != CacheEntryCreated.class
+//            && annotationClass != CacheEntryModified.class
+//            && annotationClass != CacheEntryRemoved.class
+//            && annotationClass != CacheEntryExpired.class)
+//            || (filterAnnotations.contains(annotationClass));
+//   }
 
    protected class CacheInvocationBuilder extends AbstractInvocationBuilder {
       CacheEventFilter<? super K, ? super V> filter;

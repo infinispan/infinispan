@@ -105,6 +105,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
                                                                              cacheManagerNotifier, eventManager, sync);
                   cacheNotifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+//                  cacheNotifier.addListener(listener, filter, converter);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
                   if (!cacheManager.getMembers().contains(origin)) {
