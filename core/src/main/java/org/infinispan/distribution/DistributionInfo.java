@@ -52,6 +52,6 @@ public class DistributionInfo {
    }
 
    public Collection<Address> backups() {
-      return owners.subList(0, owners.size());
+      return owners.subList(1, owners.size());
    }
 }
