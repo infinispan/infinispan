@@ -149,7 +149,6 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   @Test(enabled = false, description = "ISPN-7301")
    public void testFullTextTermRightOperandAnalyzed() throws Exception {
       QueryFactory qf = getQueryFactory();
 
