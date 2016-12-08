@@ -220,13 +220,13 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
             // just a single term
             if (fullTextTermExpr.getFuzzySlop() != null) {
                // fuzzy query
-               return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword()
+               return applyFieldBridge(true, propertyValueExpr.getPropertyPath(), queryBuilder.keyword()
                      .fuzzy().withEditDistanceUpTo(fullTextTermExpr.getFuzzySlop())
                      .onField(propertyValueExpr.getPropertyPath().asStringPath()))
                      .matching(text).createQuery();
             }
             // term query
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(true, propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .matching(text).createQuery();
          }
       } else {
@@ -241,7 +241,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          }
 
          // wildcard query
-         return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword().wildcard().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+         return applyFieldBridge(true, propertyValueExpr.getPropertyPath(), queryBuilder.keyword().wildcard().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                .matching(text).createQuery();
       }
    }
@@ -262,7 +262,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       if (fullTextRangeExpr.getLower() == null && fullTextRangeExpr.getUpper() == null) {
          return new TermRangeQuery(propertyValueExpr.getPropertyPath().asStringPath(), null, null, fullTextRangeExpr.isIncludeLower(), fullTextRangeExpr.isIncludeUpper());
       }
-      RangeMatchingContext rangeMatchingContext = applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()));
+      RangeMatchingContext rangeMatchingContext = applyFieldBridge(true, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()));
       RangeTerminationExcludable t = null;
       if (fullTextRangeExpr.getLower() != null) {
          t = rangeMatchingContext.above(fullTextRangeExpr.getLower());
@@ -273,7 +273,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       if (fullTextRangeExpr.getUpper() != null) {
          t = rangeMatchingContext.below(fullTextRangeExpr.getUpper());
          if (!fullTextRangeExpr.isIncludeUpper()) {
-            t.excludeLimit().createQuery();
+            t.excludeLimit();
          }
       }
       return t.createQuery();
@@ -315,7 +315,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    @Override
    public Query visit(IsNullExpr isNullExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
-      return applyFieldBridge(propertyValueExpr.getPropertyPath(),
+      return applyFieldBridge(false, propertyValueExpr.getPropertyPath(),
             queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath())).matching(null).createQuery();
    }
 
@@ -326,23 +326,23 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       Comparable value = constantValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
       switch (comparisonExpr.getComparisonType()) {
          case NOT_EQUAL:
-            Query q = applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            Query q = applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .matching(value).createQuery();
             return queryBuilder.bool().must(q).not().createQuery();
          case EQUAL:
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.keyword().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .matching(value).createQuery();
          case LESS:
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .below(value).excludeLimit().createQuery();
          case LESS_OR_EQUAL:
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .below(value).createQuery();
          case GREATER:
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .above(value).excludeLimit().createQuery();
          case GREATER_OR_EQUAL:
-            return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+            return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
                   .above(value).createQuery();
          default:
             throw new IllegalStateException("Unexpected comparison type: " + comparisonExpr.getComparisonType());
@@ -356,7 +356,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       ConstantValueExpr toValueExpr = (ConstantValueExpr) betweenExpr.getToChild();
       Comparable fromValue = fromValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
       Comparable toValue = toValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
-      return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+      return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.range().onField(propertyValueExpr.getPropertyPath().asStringPath()))
             .from(fromValue).to(toValue).createQuery();
    }
 
@@ -389,7 +389,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
             }
          }
       }
-      return applyFieldBridge(propertyValueExpr.getPropertyPath(), queryBuilder.keyword().wildcard().onField(propertyValueExpr.getPropertyPath().asStringPath()))
+      return applyFieldBridge(false, propertyValueExpr.getPropertyPath(), queryBuilder.keyword().wildcard().onField(propertyValueExpr.getPropertyPath().asStringPath()))
             .matching(lucenePattern.toString()).createQuery();
    }
 
@@ -414,12 +414,14 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       throw new IllegalStateException("This node type should not be visited");
    }
 
-   private <F extends FieldCustomization> F applyFieldBridge(PropertyPath<?> propertyPath, F f) {
+   private <F extends FieldCustomization> F applyFieldBridge(boolean isAnalyzed, PropertyPath<?> propertyPath, F field) {
       FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, propertyPath.asArrayPath());
       if (fieldBridge != null) {
-         ((FieldBridgeCustomization) f).withFieldBridge(fieldBridge);
-         f.ignoreAnalyzer();
+         ((FieldBridgeCustomization) field).withFieldBridge(fieldBridge);
       }
-      return f;
+      if (!isAnalyzed) {
+         field.ignoreAnalyzer();
+      }
+      return field;
    }
 }

@@ -105,12 +105,12 @@ public class LuceneTransformationTest {
    @Test
    public void testFullTextRange() {
       assertGeneratedLuceneQuery(
-            "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['A' 'Z']",
-            "text:[A TO Z]");
+            "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['AAA' 'ZZZ']",
+            "text:[aaa TO zzz]");
 
       assertGeneratedLuceneQuery(
-            "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['A' to 'Z']",
-            "text:[A TO Z]");
+            "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['AAA' to 'ZZZ']",
+            "text:[aaa TO zzz]");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : [* to 'eeee']",
