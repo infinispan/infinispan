@@ -1,12 +1,8 @@
 package org.infinispan.interceptors;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -19,19 +15,15 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -62,11 +54,9 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private CommandsFactory commandsFactory;
    private CommandAckCollector commandAckCollector;
    private DistributionManager distributionManager;
-   private ScheduledExecutorService timeoutExecutor;
    private StateTransferManager stateTransferManager;
 
    private Address localAddress;
-   private long timeoutNanoseconds;
 
    private static Collection<Integer> calculateSegments(Collection<?> keys, ConsistentHash ch) {
       return keys.stream().map(ch::getSegment).collect(Collectors.toSet());
@@ -74,22 +64,17 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    @Inject
    public void inject(RpcManager rpcManager, CommandsFactory commandsFactory, CommandAckCollector commandAckCollector,
-         DistributionManager distributionManager,
-         @ComponentName(value = KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-         StateTransferManager stateTransferManager) {
+         DistributionManager distributionManager, StateTransferManager stateTransferManager) {
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.commandAckCollector = commandAckCollector;
       this.distributionManager = distributionManager;
-      this.timeoutExecutor = timeoutExecutor;
       this.stateTransferManager = stateTransferManager;
    }
 
    @Start
    public void start() {
       localAddress = rpcManager.getAddress();
-      RpcOptions options = rpcManager.getDefaultRpcOptions(true);
-      timeoutNanoseconds = options.timeUnit().toNanos(options.timeout());
    }
 
    @Override
@@ -158,7 +143,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
                   OutdatedTopologyException.getCachedInstance());
             throw OutdatedTopologyException.getCachedInstance();
          }
-         DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), cacheTopology.getWriteConsistentHash(), localAddress);
+         DistributionInfo distributionInfo = new DistributionInfo(command.getKey(),
+               cacheTopology.getWriteConsistentHash(), localAddress);
          switch (distributionInfo.ownership()) {
             case BACKUP:
                return invokeNext(ctx, command).compose(this::onRemoteBackupOwner);
@@ -213,20 +199,12 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private BasicInvocationStage waitCollectorAsync(BasicInvocationStage stage, CommandInvocationId id) {
       //waiting for acknowledges based on default rpc timeout.
-      CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFuture(id, true);
+      CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFutureToWait(id);
       if (collectorFuture == null) {
          //no collector, return immediately.
          return stage;
       }
-      //the interceptor waits forever. schedule a timeout.
-      timeoutExecutor
-            .schedule(() -> timeoutCompletableFuture(collectorFuture), timeoutNanoseconds, TimeUnit.NANOSECONDS);
       return returnWithAsync(collectorFuture);
-   }
-
-   private void timeoutCompletableFuture(CompletableFuture<?> future) {
-      future.completeExceptionally(
-            log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoseconds, TimeUnit.NANOSECONDS)));
    }
 
    private void sendPrimaryAck(DataWriteCommand command, Object returnValue) {

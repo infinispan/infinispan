@@ -1,6 +1,11 @@
 package org.infinispan.util.concurrent;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
@@ -16,6 +21,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An acknowledge collector for Triangle algorithm used in non-transactional caches for write operations.
@@ -37,9 +45,19 @@ public class CommandAckCollector {
    private static final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentHashMap<CommandInvocationId, Collector<?>> collectorMap;
+   private ScheduledExecutorService timeoutExecutor;
+   private long timeoutNanoSeconds;
 
    public CommandAckCollector() {
       collectorMap = new ConcurrentHashMap<>();
+   }
+
+   @Inject
+   public void inject(
+         @ComponentName(value = KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
+         Configuration configuration) {
+      this.timeoutExecutor = timeoutExecutor;
+      this.timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
    }
 
    /**
@@ -173,31 +191,42 @@ public class CommandAckCollector {
 
    /**
     * Returns the {@link CompletableFuture} associated tot the collector.
-    * <p>
-    * If the collector can be cleanup after the {@link CompletableFuture} is completed, {@code cleanupAfterCompleted}
-    * must be set to {@code true}.
     *
-    * @param id                    the {@link CommandInvocationId}.
-    * @param cleanupAfterCompleted if {@code true}, the collector is removed when the {@link CompletableFuture} is
-    *                              completed.
-    * @param <T>                   the type of the return value.
+    * @param <T> the type of the return value.
+    * @param id  the {@link CommandInvocationId}.
     * @return the collector's {@link CompletableFuture}.
     */
-   public <T> CompletableFuture<T> getCollectorCompletableFuture(CommandInvocationId id,
-         boolean cleanupAfterCompleted) {
+   public <T> CompletableFuture<T> getCollectorCompletableFuture(CommandInvocationId id) {
       //noinspection unchecked
       Collector<T> collector = (Collector<T>) collectorMap.get(id);
-      if (collector != null) {
-         if (trace) {
-            log.tracef("[Collector#%s] Waiting for acks asynchronously.", id);
-         }
-         CompletableFuture<T> future = collector.getFuture();
-         if (cleanupAfterCompleted) {
-            return future.whenComplete((t, throwable) -> collectorMap.remove(id));
-         }
+      return collector == null ? null : collector.getFuture();
+   }
+
+   /**
+    * Returns the {@link CompletableFuture} associated tot the collector.
+    * <p>
+    * The collector is cleanup after the {@link CompletableFuture} is completed and it register a timeout task.
+    *
+    * @param <T> the type of the return value.
+    * @param id  the {@link CommandInvocationId}.
+    * @return the collector's {@link CompletableFuture}.
+    */
+   public <T> CompletableFuture<T> getCollectorCompletableFutureToWait(CommandInvocationId id) {
+      //noinspection unchecked
+      Collector<T> collector = (Collector<T>) collectorMap.get(id);
+      if (collector == null) {
+         return null;
+      }
+      if (trace) {
+         log.tracef("[Collector#%s] Waiting for acks asynchronously.", id);
+      }
+      CompletableFuture<T> future = collector.getFuture();
+      if (future.isDone()) {
+         collectorMap.remove(id);
          return future;
       }
-      return null;
+      ScheduledFuture<?> timeoutFuture = addTimeoutCheck(future);
+      return future.whenComplete((t, throwable) -> cleanup(timeoutFuture, id));
    }
 
    /**
@@ -239,6 +268,22 @@ public class CommandAckCollector {
          log.tracef("[Collector#%s] Dispose collector.", id);
       }
       collectorMap.remove(id);
+   }
+
+   private void cleanup(ScheduledFuture<?> timeoutFuture, CommandInvocationId id) {
+      timeoutFuture.cancel(false);
+      collectorMap.remove(id);
+   }
+
+   private ScheduledFuture<?> addTimeoutCheck(CompletableFuture<?> future) {
+      return timeoutExecutor.schedule(
+            () -> future.completeExceptionally(createTimeoutException()),
+            timeoutNanoSeconds,
+            TimeUnit.NANOSECONDS);
+   }
+
+   private TimeoutException createTimeoutException() {
+      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS));
    }
 
    private interface Collector<T> {
@@ -373,11 +418,11 @@ public class CommandAckCollector {
 
    private static class MultiKeyCollector implements Collector<Map<Object, Object>> {
       private final CommandInvocationId id;
-      private Map<Object, Object> returnValue;
       private final Collection<Address> primary;
       private final Map<Address, Collection<Integer>> backups;
       private final CompletableFuture<Map<Object, Object>> future;
       private final int topologyId;
+      private Map<Object, Object> returnValue;
 
       MultiKeyCollector(CommandInvocationId id, Collection<Address> primary, Map<Address, Collection<Integer>> backups,
             int topologyId) {
