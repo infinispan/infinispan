@@ -149,6 +149,16 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
+   @Test(enabled = false, description = "ISPN-7301")
+   public void testFullTextTermRightOperandAnalyzed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'RENT'");
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+   }
+
    public void testFullTextTermBoost() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -198,6 +208,16 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(56, list.size());
    }
 
+   @Test(enabled = false, description = "ISPN-7300")
+   public void testFullTextTermDoesntOccur() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : (-'really')");
+
+      List<Transaction> list = q.list();
+      assertEquals(6, list.size());
+   }
+
    public void testFullTextRange() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -243,6 +263,35 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
+   public void testFullTextFuzzyDefaultEdits() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      // default number of edits should be 2
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ertn'~");
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+
+      q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunayr'~");
+
+      list = q.list();
+      assertEquals(0, list.size());
+   }
+
+   public void testFullTextFuzzySpecifiedEdits() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+
+      q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunary'~1");
+
+      list = q.list();
+      assertEquals(0, list.size());
+   }
+
    public void testFullTextRegexp() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -257,6 +306,24 @@ public class QueryStringTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
+
+      q.list();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*property is analyzed.*")
+   public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription = 'Birthday present'");
+
+      q.list();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*unless the property is indexed and analyzed.*")
+   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where description:'rent'");
 
       q.list();
    }

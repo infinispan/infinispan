@@ -119,6 +119,20 @@ public class RemoteQueryStringTest extends QueryStringTest {
       super.testFullTextRegexpFuzzyNotAllowed();
    }
 
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*property is analyzed.*")
+   @Override
+   public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
+      // exception is wrapped in HotRodClientException
+      super.testExactMatchOnAnalyzedFieldNotAllowed();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*unless the property is indexed and analyzed.*")
+   @Override
+   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
+      // exception is wrapped in HotRodClientException
+      super.testFullTextTermOnNonAnalyzedFieldNotAllowed();
+   }
+
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
