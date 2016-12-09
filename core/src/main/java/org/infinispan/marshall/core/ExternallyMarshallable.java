@@ -72,6 +72,7 @@ final class ExternallyMarshallable {
             || className.startsWith("org.infinispan.server.test") // test
             || className.startsWith("org.infinispan.it") // test
             || className.startsWith("org.infinispan.all") // test
+            || className.contains("org.jboss.as.quickstarts.datagrid") // quickstarts testing
             ;
    }
 
