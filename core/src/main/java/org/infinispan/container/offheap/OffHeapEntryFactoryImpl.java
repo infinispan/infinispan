@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -14,20 +15,20 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
 
-import sun.misc.Unsafe;
-
 /**
  * Factory that can create CacheEntry instances from off-heap memory.
+ *
  * @author wburns
  * @since 9.0
  */
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
-   private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
+   private static final UnsafeWrapper UNSAFE = UnsafeWrapper.INSTANCE;
 
    private Marshaller marshaller;
    private OffHeapMemoryAllocator allocator;
    private TimeService timeService;
    private InternalEntryFactory internalEntryFactory;
+   private boolean evictionEnabled;
 
    // If custom than we just store the metadata as is (no other bits should be used)
    private static final byte CUSTOM = 1;
@@ -41,23 +42,27 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    private static final int BYTE_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
 
+   /**
+    * HEADER is composed of hashCode (int), keyLength (int), metadataLength (int), valueLength (int), type (byte)
+    */
    private static final int HEADER_LENGTH = 4 + 4 + 4 + 4 + 1;
 
    @Inject
    public void inject(Marshaller marshaller, OffHeapMemoryAllocator allocator, TimeService timeService,
-         InternalEntryFactory internalEntryFactory) {
+         InternalEntryFactory internalEntryFactory, Configuration configuration) {
       this.marshaller = marshaller;
       this.allocator = allocator;
       this.timeService = timeService;
       this.internalEntryFactory = internalEntryFactory;
+      this.evictionEnabled = configuration.memory().size() > 0;
    }
 
    /**
     * Create an entry off-heap.  The first 8 bytes will always be 0, reserved for a future reference to another entry
-    * @param key
-    * @param value
-    * @param metadata
-    * @return
+    * @param key the key to use
+    * @param value the value to use
+    * @param metadata the metadata to use
+    * @return the address of the entry created off heap
     */
    @Override
    public long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
@@ -119,7 +124,18 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int metadataSize = metadataBytes.length;
       long totalSize = 8 + HEADER_LENGTH + keySize + metadataSize + valueSize;
 
-      long memoryAddress = allocator.allocate(totalSize);
+      long memoryAddress;
+      long memoryOffset;
+
+      // Eviction requires an additional memory pointer at the beginning that points to
+      // its linked node
+      if (evictionEnabled) {
+         memoryAddress = allocator.allocate(totalSize + 8);
+         memoryOffset = memoryAddress + 8;
+      } else {
+         memoryAddress = allocator.allocate(totalSize);
+         memoryOffset =  memoryAddress;
+      }
 
       int offset = 0;
       byte[] header = new byte[HEADER_LENGTH];
@@ -134,10 +150,9 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       offset += 4;
       header[offset++] = type;
 
-      long memoryOffset = memoryAddress;
 
       // Write the empty linked address pointer first
-      UNSAFE.putLong(memoryAddress, 0);
+      UNSAFE.putLong(memoryOffset, 0);
       memoryOffset += 8;
 
       UNSAFE.copyMemory(header, BYTE_ARRAY_BASE_OFFSET, null, memoryOffset, HEADER_LENGTH);
@@ -157,17 +172,42 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    @Override
    public long determineSize(long address) {
-      long offset = 8 + HEADER_LENGTH + address;
-      return 8 + HEADER_LENGTH + UNSAFE.getInt(offset) + UNSAFE.getInt(offset + 8) + UNSAFE.getInt(offset + 8);
+      int beginningOffset = evictionEnabled ? 16 : 8;
+      byte[] header = readHeader(beginningOffset + address);
+
+      int keyLength = Bits.getInt(header, 4);
+      int metadataLength = Bits.getInt(header, 8);
+      int valueLength = Bits.getInt(header, 12);
+
+      return beginningOffset + HEADER_LENGTH + keyLength + metadataLength + valueLength;
+   }
+
+   @Override
+   public long getNextLinkedPointerAddress(long address) {
+      return UNSAFE.getLong(evictionEnabled ? address + 8 : address);
+   }
+
+   @Override
+   public void updateNextLinkedPointerAddress(long address, long value) {
+      UNSAFE.putLong(evictionEnabled ? address + 8 : address, value);
+   }
+
+   @Override
+   public int getHashCodeForAddress(long address) {
+      // 8 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
+      byte[] header = readHeader(evictionEnabled ? address + 16 : address + 8);
+      return Bits.getInt(header, 0);
    }
 
    /**
-    * Assumes the addres doesn't contain the linked pointer at the beginning
-    * @param address
-    * @return
+    * Assumes the address doesn't contain the linked pointer at the beginning
+    * @param address the address to read the entry from
+    * @return the entry at the memory location
     */
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address) {
+      address += (evictionEnabled ? 16 : 8);
       byte[] header = readHeader(address);
 
       int offset = 0;
@@ -253,6 +293,17 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
    }
 
+   @Override
+   public WrappedBytes getKey(long address) {
+      address += (evictionEnabled ? 16 : 8);
+      byte[] header = readHeader(address);
+      int keyLength = Bits.getInt(header, 4);
+      byte[] keyBytes = new byte[keyLength];
+
+      UNSAFE.copyMemory(null, address + HEADER_LENGTH, keyBytes, BYTE_ARRAY_BASE_OFFSET, keyBytes.length);
+      return new WrappedByteArray(keyBytes);
+   }
+
    private byte[] readHeader(long address) {
       byte[] header = new byte[HEADER_LENGTH];
       UNSAFE.copyMemory(null, address, header, BYTE_ARRAY_BASE_OFFSET, header.length);
@@ -261,12 +312,13 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    /**
     * Assumes the address points to the entry excluding the pointer reference at the beginning
-    * @param address
-    * @param wrappedBytes
-    * @return
+    * @param address the address of an entry to read
+    * @param wrappedBytes the key to check if it equals
+    * @return whether the key and address are equal
     */
    @Override
    public boolean equalsKey(long address, WrappedBytes wrappedBytes) {
+      address += evictionEnabled ? 16 : 8;
       byte[] header = readHeader(address);
       int hashCode = wrappedBytes.hashCode();
       if (hashCode != Bits.getInt(header, 0)) {

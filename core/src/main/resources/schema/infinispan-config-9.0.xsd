@@ -1134,7 +1134,7 @@
           in bytes can be stored.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="eviction">
+    <xs:attribute name="eviction" type="tns:eviction-type">
       <xs:annotation>
         <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
         the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
@@ -1150,7 +1150,7 @@
           in bytes can be stored.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="eviction">
+    <xs:attribute name="eviction" type="tns:eviction-type">
       <xs:annotation>
         <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
           the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>

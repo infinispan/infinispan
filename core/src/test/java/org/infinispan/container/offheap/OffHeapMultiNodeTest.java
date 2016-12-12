@@ -59,7 +59,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
 
       assertNull(map.put(key, value));
 
-      for (int i = 0; i < 100; ++i) {
+      for (int i = 0; i < 50; ++i) {
          map.put(randomBytes(KEY_SIZE), value);
       }
 

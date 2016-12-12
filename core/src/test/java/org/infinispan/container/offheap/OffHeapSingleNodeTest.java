@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.StorageType;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -93,5 +94,14 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
       barrier.await(10, TimeUnit.SECONDS);
       future.get(10, TimeUnit.SECONDS);
       assertEquals(value, putFuture.get(10, TimeUnit.SECONDS));
+   }
+
+   public void testLotsOfWrites() {
+      Cache<String, String> cache = cache(0);
+
+      for (int i = 0; i < 100000; ++i) {
+         cache.put("key" + i, "value" + i);
+      }
+
    }
 }

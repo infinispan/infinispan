@@ -8,6 +8,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.StorageType;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
+import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapDataContainer;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -46,15 +47,11 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
          DataContainer dataContainer;
          if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
-            if (configuration.eviction().type() == EvictionType.MEMORY) {
-               // TODO: need to bound container
-               dataContainer = new OffHeapDataContainer(configuration.memory().addressCount());
-            } else {
-               dataContainer = new OffHeapDataContainer(configuration.memory().addressCount());
-            }
+            dataContainer = new BoundedOffHeapDataContainer(configuration.memory().addressCount(), thresholdSize,
+                  configuration.memory().evictionType());
          } else {
             dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
-                  configuration.eviction().type());
+                  configuration.memory().evictionType());
          }
          configuration.eviction().attributes().attribute(EvictionConfiguration.SIZE).addListener((newSize, old) ->
                configuration.memory().size(newSize.get()));

@@ -209,6 +209,7 @@ public class Configuration {
             ", unsafe=" + unsafeConfiguration +
             ", sites=" + sitesConfiguration +
             ", compatibility=" + compatibilityConfiguration +
+            ", memory=" + memoryConfiguration +
             '}';
    }
 
