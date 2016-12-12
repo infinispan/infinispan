@@ -282,7 +282,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
          Object result = super.visitLockControlCommand(ctx, command);
-         if (!((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;

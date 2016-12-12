@@ -260,7 +260,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
          Object result = super.visitLockControlCommand(ctx, command);
-         if (!((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;
@@ -269,7 +269,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          Object result = super.visitPrepareCommand(ctx, command);
-         if (!((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;
@@ -278,7 +278,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          Object result = super.visitCommitCommand(ctx, command);
-         if (!((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;

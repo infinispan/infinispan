@@ -28,7 +28,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -205,11 +204,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             } else {
                keyToCheckOwners.add(key);
             }
-         }final Collection<Address> affectedNodes = dm.getAffectedNodes(keyToCheckOwners);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes );
+         }
+         final Collection<Address> affectedNodes = dm.getAffectedNodes(keyToCheckOwners);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
-         rpcManager.invokeRemotely(affectedNodes, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, replTimeout);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command,
+                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                                                                        replTimeout);
+         checkTxCommandResponses(responseMap, command);
       }
       return invokeNextInterceptor(ctx, command);
    }
