@@ -625,7 +625,7 @@ class Decoder2x implements VersionedDecoder {
                OperationStatus.OperationTimedOut, h.topologyId, t.toString());
       } else if (t instanceof CacheException) {
          // JGroups and remote exceptions (inside RemoteException) can come wrapped up
-         Throwable cause = t.getCause();
+         Throwable cause = t.getCause() == null ? t : t.getCause();
          if (cause instanceof SuspectedException) {
             return createNodeSuspectedErrorResponse(h, cause);
          } else if (cause instanceof IllegalLifecycleStateException) {
