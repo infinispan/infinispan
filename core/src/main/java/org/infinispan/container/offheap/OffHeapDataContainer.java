@@ -34,24 +34,25 @@ import org.infinispan.util.logging.LogFactory;
 import sun.misc.Unsafe;
 
 /**
+ * Data Container implementation that stores entries in native memory (off-heap).
  * @author wburns
  * @since 9.0
  */
 public class OffHeapDataContainer implements DataContainer<WrappedBytes, WrappedBytes> {
-   private static final Log log = LogFactory.getLog(OffHeapDataContainer.class);
-   private static final boolean trace = log.isTraceEnabled();
-   private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
+   protected final Log log = LogFactory.getLog(getClass());
+   protected final boolean trace = log.isTraceEnabled();
+   protected static final UnsafeWrapper UNSAFE = UnsafeWrapper.INSTANCE;
 
-   private final AtomicLong size = new AtomicLong();
-   private final int lockCount;
-   private final int memoryAddressCount;
-   private final StripedLock locks;
-   private final MemoryAddressHash memoryLookup;
-   private OffHeapMemoryAllocator allocator;
-   private OffHeapEntryFactory offHeapEntryFactory;
-   private InternalEntryFactory internalEntryFactory;
-   private TimeService timeService;
-   private PassivationManager passivator;
+   protected final AtomicLong size = new AtomicLong();
+   protected final int lockCount;
+   protected final int memoryAddressCount;
+   protected final StripedLock locks;
+   protected final MemoryAddressHash memoryLookup;
+   protected OffHeapMemoryAllocator allocator;
+   protected OffHeapEntryFactory offHeapEntryFactory;
+   protected InternalEntryFactory internalEntryFactory;
+   protected TimeService timeService;
+   protected PassivationManager passivator;
    // Variable to make sure memory locations aren't read after being deallocated
    // This variable should always be read first after acquiring either the read or write lock
    private boolean dellocated = false;
@@ -117,7 +118,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       throw new IllegalArgumentException("Require WrappedByteArray: got " + obj.getClass());
    }
 
-   private void checkDeallocation() {
+   protected void checkDeallocation() {
       if (dellocated) {
          throw new IllegalStateException("Container was already shut down!");
       }
@@ -134,22 +135,25 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             return null;
          }
 
-         WrappedBytes wrappedKey = toWrapper(k);
-         while (address != 0) {
-            long nextAddress = UNSAFE.getLong(address);
-            long realAddress = address + 8;
-
-            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(realAddress);
-            if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
-               return ice;
-            } else {
-               address = nextAddress;
-            }
-         }
-         return null;
+         return performGet(address, k);
       } finally {
          lock.unlock();
       }
+   }
+
+   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k) {
+      WrappedBytes wrappedKey = toWrapper(k);
+      while (address != 0) {
+         long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
+         if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
+            entryRetrieved(address);
+            return ice;
+         } else {
+            address = nextAddress;
+         }
+      }
+      return null;
    }
 
    @Override
@@ -164,61 +168,103 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       try {
          checkDeallocation();
          long newAddress = offHeapEntryFactory.create(key, value, metadata);
-
-         long address = memoryLookup.getMemoryAddress(key);
-         boolean shouldCreate = false;
-         // Have to start new linked node list
-         if (address == 0) {
-            memoryLookup.putMemoryAddress(key, newAddress);
-         } else {
-            // Whether the key was found or not - short circuit equality checks
-            boolean foundKey = false;
-            // Holds the previous linked list address
-            long prevAddress = 0;
-            // Keep looping until we get the tail end - we always append the put to the end
-            while (address != 0) {
-               long nextAddress = UNSAFE.getLong(address);
-               long realAddress = address + 8;
-               if (!foundKey) {
-                  if (offHeapEntryFactory.equalsKey(realAddress, key)) {
-                     allocator.deallocate(address);
-                     foundKey = true;
-                     // If this is true it means this was the first node in the linked list
-                     if (prevAddress == 0) {
-                        if (nextAddress == 0) {
-                           // This branch is the case where our key is the only one in the linked list
-                           shouldCreate = true;
-                        } else {
-                           // This branch is the case where our key is the first with another after
-                           memoryLookup.putMemoryAddress(key, nextAddress);
-                        }
-                     } else {
-                        // This branch means our node was not the first, so we have to update the address before ours
-                        // to the one we previously referenced
-                        UNSAFE.putLong(prevAddress, nextAddress);
-                        // We purposely don't update prevAddress, because we have to keep it as the current pointer
-                        // since we removed ours
-                        address = nextAddress;
-                        continue;
-                     }
-                  }
-               }
-               prevAddress = address;
-               address = nextAddress;
-            }
-            if (!foundKey) {
-               size.incrementAndGet();
-            }
-            if (shouldCreate) {
-               memoryLookup.putMemoryAddress(key, newAddress);
-            } else {
-               // Now prevAddress should be the last link so we fix our link
-               UNSAFE.putLong(prevAddress, newAddress);
-            }
-         }
+         performPut(newAddress, key);
       } finally {
          lock.unlock();
       }
+   }
+
+   /**
+    * Performs the actual put operation putting the new address into the memory lookups.  The write lock for the given
+    * key <b>must</b> be held before calling this method.
+    * @param newAddress the address of the new entry
+    * @param key the key of the entry
+    */
+   protected void performPut(long newAddress, WrappedBytes key) {
+      long address = memoryLookup.getMemoryAddress(key);
+      boolean shouldCreate = false;
+      // Have to start new linked node list
+      if (address == 0) {
+         memoryLookup.putMemoryAddress(key, newAddress);
+         entryCreated(newAddress);
+         size.incrementAndGet();
+      } else {
+         // Whether the key was found or not - short circuit equality checks
+         boolean foundKey = false;
+         // Holds the previous linked list address
+         long prevAddress = 0;
+         // Keep looping until we get the tail end - we always append the put to the end
+         while (address != 0) {
+            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            if (!foundKey) {
+               if (offHeapEntryFactory.equalsKey(address, key)) {
+                  entryReplaced(newAddress, address);
+                  allocator.deallocate(address);
+                  foundKey = true;
+                  // If this is true it means this was the first node in the linked list
+                  if (prevAddress == 0) {
+                     if (nextAddress == 0) {
+                        // This branch is the case where our key is the only one in the linked list
+                        shouldCreate = true;
+                     } else {
+                        // This branch is the case where our key is the first with another after
+                        memoryLookup.putMemoryAddress(key, nextAddress);
+                     }
+                  } else {
+                     // This branch means our node was not the first, so we have to update the address before ours
+                     // to the one we previously referenced
+                     UNSAFE.putLong(prevAddress, nextAddress);
+                     // We purposely don't update prevAddress, because we have to keep it as the current pointer
+                     // since we removed ours
+                     address = nextAddress;
+                     continue;
+                  }
+               }
+            }
+            prevAddress = address;
+            address = nextAddress;
+         }
+         // If we didn't find the key previous, it means we are a new entry
+         if (!foundKey) {
+            entryCreated(newAddress);
+            size.incrementAndGet();
+         }
+         if (shouldCreate) {
+            memoryLookup.putMemoryAddress(key, newAddress);
+         } else {
+            // Now prevAddress should be the last link so we fix our link
+            offHeapEntryFactory.updateNextLinkedPointerAddress(prevAddress, newAddress);
+         }
+      }
+   }
+
+   /**
+    * Invoked when an entry is about to be created.  The new address is fully addressable,
+    * The write lock will already be acquired for the given * segment the key mapped to.
+    * @param newAddress the address just created that will be the new entry
+    */
+   protected void entryCreated(long newAddress) {
+
+   }
+
+   /**
+    * Invoked when an entry is about to be replaced with a new one.  The old and new address are both addressable,
+    * however oldAddress may be freed after this method returns.  The write lock will already be acquired for the given
+    * segment the key mapped to.
+    * @param newAddress the address just created that will be the new entry
+    * @param oldAddress the old address for this entry that will be soon removed
+    */
+   protected void entryReplaced(long newAddress, long oldAddress) {
+
+   }
+
+   /**
+    * Invoked when an entry is about to be removed.  You can read values from this but after this method is completed
+    * this memory address may be freed. The write lock will already be acquired for the given segment the key mapped to.
+    * @param removedAddress the address about to be removed
+    */
+   protected void entryRemoved(long removedAddress) {
+
    }
 
    @Override
@@ -234,9 +280,8 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          WrappedByteArray wba = toWrapper(k);
 
          while (address != 0) {
-            long nextAddress = UNSAFE.getLong(address);
-            long realAddress = address + 8;
-            if (offHeapEntryFactory.equalsKey(realAddress, wba)) {
+            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            if (offHeapEntryFactory.equalsKey(address, wba)) {
                return true;
             }
             address = nextAddress;
@@ -245,6 +290,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       } finally {
          lock.unlock();
       }
+   }
+
+   /**
+    * Invoked when an entry is successfully retrieved.  The read lock will already
+    * be acquired for the given segment the key mapped to.
+    * @param entryAddress
+    */
+   protected void entryRetrieved(long entryAddress) {
+
    }
 
    @Override
@@ -257,32 +311,41 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          if (address == 0) {
             return null;
          }
-         WrappedByteArray wba = toWrapper(key);
-         long prevAddress = 0;
-
-         while (address != 0) {
-            long nextAddress = UNSAFE.getLong(address);
-            long realAddress = address + 8;
-
-            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(realAddress);
-            if (ice.getKey().equals(wba)) {
-               // Free the node
-               allocator.deallocate(address);
-               if (prevAddress != 0) {
-                  UNSAFE.putLong(prevAddress, nextAddress);
-               } else {
-                  memoryLookup.putMemoryAddress(key, nextAddress);
-               }
-               size.decrementAndGet();
-               return ice;
-            }
-            prevAddress = address;
-            address = nextAddress;
-         }
-         return null;
+         return performRemove(address, key);
       } finally {
          lock.unlock();
       }
+   }
+
+   /**
+    * Performs the actual remove operation removing the new address from the memory lookups.  The write lock for the given
+    * key <b>must</b> be held before calling this method.
+    * @param address the address of the entry to remove
+    * @param key the key of the entry
+    */
+   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performRemove(long address, Object key) {
+      WrappedByteArray wba = toWrapper(key);
+      long prevAddress = 0;
+
+      while (address != 0) {
+         long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
+         if (ice.getKey().equals(wba)) {
+            entryRemoved(address);
+            // Free the node
+            allocator.deallocate(address);
+            if (prevAddress != 0) {
+               UNSAFE.putLong(prevAddress, nextAddress);
+            } else {
+               memoryLookup.putMemoryAddress(key, nextAddress);
+            }
+            size.decrementAndGet();
+            return ice;
+         }
+         prevAddress = address;
+         address = nextAddress;
+      }
+      return null;
    }
 
    @Override
@@ -309,16 +372,26 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       locks.lockAll();
       try {
          checkDeallocation();
-         memoryLookup.toStreamRemoved().forEach(address -> {
-            while (address != 0) {
-               long nextAddress = UNSAFE.getLong(address);
-               allocator.deallocate(address);
-               address = nextAddress;
-            }
-         });
-         size.set(0);
+         performClear();
       } finally {
          locks.unlockAll();
+      }
+   }
+
+   protected void performClear() {
+      if (trace) {
+         log.trace("Clearing off heap data");
+      }
+      memoryLookup.toStreamRemoved().forEach(address -> {
+         while (address != 0) {
+            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            allocator.deallocate(address);
+            address = nextAddress;
+         }
+      });
+      size.set(0);
+      if (trace) {
+         log.trace("Cleared off heap data");
       }
    }
 
@@ -439,8 +512,8 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          InternalCacheEntry<WrappedBytes, WrappedBytes> prev = get(key);
          InternalCacheEntry<WrappedBytes, WrappedBytes> result = action.compute(key, prev, internalEntryFactory);
          if (result != null) {
-            // Could be more efficient
-            put(result.getKey(), result.getValue(), result.getMetadata());
+            long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
+            performPut(newAddress, key);
          } else {
             remove(key);
          }
@@ -459,9 +532,8 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             for (int j = i; j < memoryAddressCount; j += lockCount) {
                long address = memoryLookup.getMemoryAddressOffset(j);
                while (address != 0) {
-                  long nextAddress = UNSAFE.getLong(address);
-                  long realAddress = address + 8;
-                  InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(realAddress);
+                  long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+                  InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
                   consumer.accept(ice);
                   address = nextAddress;
                }
@@ -514,9 +586,8 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
                         while (address != 0) {
                            long nextAddress;
                            do {
-                              nextAddress = UNSAFE.getLong(address);
-                              long realAddress = address + 8;
-                              builder.accept(offHeapEntryFactory.fromMemory(realAddress));
+                              nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+                              builder.accept(offHeapEntryFactory.fromMemory(address));
                            } while ((address = nextAddress) != 0);
                         }
                         return builder.build();
