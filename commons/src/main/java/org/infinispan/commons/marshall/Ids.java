@@ -170,4 +170,5 @@ public interface Ids {
    int CONVERTER_VALUE_MAPPER = 112;
    int CONVERTER_ENTRY_MAPPER = 113;
 
+   int TRIANGLE_ACK_EXTERNALIZER = 114;
 }
