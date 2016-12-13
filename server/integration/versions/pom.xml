@@ -64,7 +64,24 @@
       <version.lucene>5.5.2</version.lucene>
       <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
       <version.jboss.aesh>0.62</version.jboss.aesh>
+
+      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
+      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
+      <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
    </properties>
+
+   <distributionManagement>
+      <repository>
+         <id>${jboss.releases.repo.id}</id>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
+      <snapshotRepository>
+         <id>${jboss.snapshots.repo.id}</id>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
 
    <dependencyManagement>
       <dependencies>
@@ -767,6 +784,29 @@
          <properties>
             <skipTests>true</skipTests>
          </properties>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.sonatype.plugins</groupId>
+                     <artifactId>nexus-staging-maven-plugin</artifactId>
+                     <version>1.6.7</version>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+            <plugins>
+               <plugin>
+                  <groupId>org.sonatype.plugins</groupId>
+                  <artifactId>nexus-staging-maven-plugin</artifactId>
+                  <extensions>true</extensions>
+                  <configuration>
+                     <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
+                     <serverId>${jboss.releases.repo.id}</serverId>
+                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 
