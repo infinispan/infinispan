@@ -11,6 +11,7 @@ import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
+import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -355,6 +356,13 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public Set<Object> getListeners() {
       return cache.getListeners();
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      cache.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    @Override

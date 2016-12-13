@@ -18,11 +18,13 @@ import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
 
+import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,6 +48,11 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public <T> T readUnmarshallByteArray(Transport transport, short status) {
       return CodecUtils.readUnmarshallByteArray(transport, status);
+   }
+
+   @Override
+   public void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes) {
+      // No-op
    }
 
    @Override

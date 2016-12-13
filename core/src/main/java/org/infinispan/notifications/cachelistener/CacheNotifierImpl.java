@@ -681,15 +681,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (!enlistedAlready.contains(listener.getTarget())) {
             // If clustered means it is local - so use our address
             if (listener.isClustered()) {
+               Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
                callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
                                                                   cache.getCacheManager().getAddress(), listener.getFilter(),
-                                                                  listener.getConverter(), listener.isSync()));
+                                                                  listener.getConverter(), listener.isSync(),
+                                                                  filterAnnotations));
                enlistedAlready.add(listener.getTarget());
             }
             else if (listener.getTarget() instanceof RemoteClusterListener) {
                RemoteClusterListener lcl = (RemoteClusterListener)listener.getTarget();
+               Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
                callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
-                                                                  listener.getConverter(), listener.isSync()));
+                                                                  listener.getConverter(), listener.isSync(),
+                                                                  filterAnnotations));
                enlistedAlready.add(listener.getTarget());
             }
          }
@@ -764,6 +768,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                .setConverter(converter)
                .setIdentifier(generatedId)
                .setClassLoader(classLoader);
+
+         if (l.clustered()) {
+            builder.setFilterAnnotations(findListenerCallbacks(listener));
+         }
+
          foundMethods = validateAndAddListenerInvocations(listener, builder);
       }
 
@@ -786,7 +795,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
                              members, generatedId);
                }
-               Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter, l.sync());
+               Callable callable = new ClusterListenerReplicateCallable(
+                     generatedId, ourAddress, filter, converter, l.sync(),
+                     findListenerCallbacks(listener));
                for (Address member : members) {
                   if (!member.equals(ourAddress)) {
                      decs.submit(member, callable);
@@ -940,6 +951,175 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       addListener(listener, filter, converter, null);
    }
 
+   @Override
+   public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      final Listener l = testListenerClassValidity(listener.getClass());
+      final UUID generatedId = UUID.randomUUID();
+      final CacheMode cacheMode = config.clustering().cacheMode();
+
+      FilterIndexingServiceProvider indexingProvider = null;
+      boolean foundMethods = false;
+      if (filter instanceof IndexedFilter) {
+         IndexedFilter indexedFilter = (IndexedFilter) filter;
+         indexingProvider = findIndexingServiceProvider(indexedFilter);
+         if (indexingProvider != null) {
+            DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
+            builder
+                  .setFilterAnnotations(filterAnnotations)
+                  .setIncludeCurrentState(l.includeCurrentState())
+                  .setClustered(l.clustered())
+                  .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+                  .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+                  .setFilter(filter)
+                  .setConverter(converter)
+                  .setIdentifier(generatedId)
+                  .setClassLoader(null);
+            foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
+            builder.registerListenerInvocations();
+         }
+      }
+      if (indexingProvider == null) {
+         CacheInvocationBuilder builder = new CacheInvocationBuilder();
+         builder
+               .setFilterAnnotations(filterAnnotations)
+               .setIncludeCurrentState(l.includeCurrentState())
+               .setClustered(l.clustered())
+               .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+               .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+               .setFilter(filter)
+               .setConverter(converter)
+               .setIdentifier(generatedId)
+               .setClassLoader(null);
+
+         if (l.clustered()) {
+            builder.setFilterAnnotations(findListenerCallbacks(listener));
+         }
+
+         foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
+      }
+
+      if (foundMethods && l.clustered()) {
+         if (l.observation() == Listener.Observation.PRE) {
+            throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
+         } else if (cacheMode.isInvalidation()) {
+            throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
+         } else if (cacheMode.isDistributed()) {
+            clusterListenerIDs.put(listener, generatedId);
+            EmbeddedCacheManager manager = cache.getCacheManager();
+            Address ourAddress = manager.getAddress();
+
+            List<Address> members = manager.getMembers();
+            // If we are the only member don't even worry about sending listeners
+            if (members != null && members.size() > 1) {
+               DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
+
+               if (trace) {
+                  log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
+                        members, generatedId);
+               }
+               Callable callable = new ClusterListenerReplicateCallable(
+                     generatedId, ourAddress, filter, converter, l.sync(),
+                     filterAnnotations);
+               for (Address member : members) {
+                  if (!member.equals(ourAddress)) {
+                     decs.submit(member, callable);
+                  }
+               }
+
+               for (int i = 0; i < members.size() - 1; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     Throwable cause = e.getCause();
+                     // If we got a SuspectException it means the remote node hasn't started this cache yet.
+                     // Just ignore, when it joins it will retrieve the listener
+                     if (!(cause instanceof SuspectException)) {
+                        throw new CacheListenerException(cause);
+                     }
+                  }
+               }
+
+               int extraCount = 0;
+               // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
+               // before the other nodes got the new listener
+               List<Address> membersAfter = manager.getMembers();
+               for (Address member : membersAfter) {
+                  if (!members.contains(member) && !member.equals(ourAddress)) {
+                     if (trace) {
+                        log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
+                              member, generatedId);
+                     }
+                     extraCount++;
+                     decs.submit(member, callable);
+                  }
+               }
+
+               for (int i = 0; i < extraCount; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     throw new CacheListenerException(e);
+                  }
+               }
+            }
+         }
+      }
+
+      // If we have a segment listener handler, it means we have to do initial state
+      QueueingSegmentListener handler = segmentHandler.remove(generatedId);
+      if (handler != null) {
+         if (trace) {
+            log.tracef("Listener %s requests initial state for cache", generatedId);
+         }
+
+         try (CacheStream<CacheEntry<K, V>> entryStream = cache.getAdvancedCache().cacheEntrySet().stream()) {
+            Stream<CacheEntry<K, V>> usedStream = entryStream.segmentCompletionListener(handler);
+
+            if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+               // Hacky cast to prevent other casts
+               usedStream = CacheFilters.filterAndConvert(usedStream,
+                     new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K, V, V>) filter));
+            } else {
+               usedStream = filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(
+                     new CacheEventFilterAsKeyValueFilter<>(filter)));
+               usedStream = converter == null ? usedStream : usedStream.map(CacheFilters.function(
+                     new CacheEventConverterAsConverter(converter)));
+            }
+
+            Iterator<CacheEntry<K, V>> iterator = usedStream.iterator();
+            while (iterator.hasNext()) {
+               CacheEntry<K, V> entry = iterator.next();
+               // Mark the key as processed and see if we had a concurrent update
+               Object value = handler.markKeyAsProcessing(entry.getKey());
+               if (value == BaseQueueingSegmentListener.REMOVED) {
+                  // Don't process this value if we had a concurrent remove
+                  continue;
+               }
+               raiseEventForInitialTransfer(generatedId, entry, l.clustered());
+
+               handler.notifiedKey(entry.getKey());
+            }
+         }
+
+         Set<CacheEntry> entries = handler.findCreatedEntries();
+
+         for (CacheEntry entry : entries) {
+            raiseEventForInitialTransfer(generatedId, entry, l.clustered());
+         }
+
+         if (trace) {
+            log.tracef("Listener %s initial state for cache completed", generatedId);
+         }
+
+         handler.transferComplete();
+      }
+   }
+
    protected class CacheInvocationBuilder extends AbstractInvocationBuilder {
       CacheEventFilter<? super K, ? super V> filter;
       CacheEventConverter<? super K, ? super V, ?> converter;
@@ -948,6 +1128,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       boolean includeCurrentState;
       UUID identifier;
       Listener.Observation observation;
+      Set<Class<? extends Annotation>> filterAnnotations;
 
       public CacheEventFilter<? super K, ? super V> getFilter() {
          return filter;
@@ -1012,6 +1193,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          return this;
       }
 
+      public CacheInvocationBuilder setFilterAnnotations(Set<Class<? extends Annotation>> filterAnnotations) {
+         this.filterAnnotations = filterAnnotations;
+         return this;
+      }
+
       @Override
       public CacheEntryListenerInvocation<K, V> build() {
          ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, classLoader,
@@ -1039,7 +1225,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   }
                }
                returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, annotation,
-                                                                   onlyPrimary, identifier, sync, observation);
+                                                                   onlyPrimary, identifier, sync, observation, filterAnnotations);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
 //               QueueingSegmentListener handler = segmentHandler.get(identifier);
@@ -1053,13 +1239,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 //               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, annotation,
 //                                                                onlyPrimary, identifier, sync);
                returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation,
-                                                                  onlyPrimary, clustered, identifier, sync, observation);
+                                                                  onlyPrimary, clustered, identifier, sync, observation, filterAnnotations);
             }
          } else {
             // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
             // off
             returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation, onlyPrimary,
-                                                               clustered, identifier, sync, observation);
+                                                               clustered, identifier, sync, observation, filterAnnotations);
          }
          return returnValue;
       }
@@ -1113,8 +1299,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                CacheEventFilter<? super K, ? super V> filter,
                                                CacheEventConverter<? super K, ? super V, ?> converter,
                                                Class<? extends Annotation> annotation, boolean onlyPrimary,
-                                               UUID identifier, boolean sync, Listener.Observation observation) {
-         super(invocation, filter, converter, annotation, onlyPrimary, false, identifier, sync, observation);
+                                               UUID identifier, boolean sync, Listener.Observation observation,
+                                               Set<Class<? extends Annotation>> filterAnnotations) {
+         super(invocation, filter, converter, annotation, onlyPrimary, false, identifier, sync, observation, filterAnnotations);
          this.handler = handler;
       }
 
@@ -1138,8 +1325,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                          CacheEventFilter<? super K, ? super V> filter,
                                          CacheEventConverter<? super K, ? super V, ?> converter,
                                          Class<? extends Annotation> annotation, boolean onlyPrimary,
-                                         UUID identifier, boolean sync, Listener.Observation observation) {
-         super(invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation);
+                                         UUID identifier, boolean sync, Listener.Observation observation,
+                                         Set<Class<? extends Annotation>> filterAnnotations) {
+         super(invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation, filterAnnotations);
          this.handler = handler;
       }
 
@@ -1169,6 +1357,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected final boolean sync;
       protected final boolean filterAndConvert;
       protected final Listener.Observation observation;
+      protected final Set<Class<? extends Annotation>> filterAnnotations;
 
 
       protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
@@ -1176,7 +1365,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                  CacheEventConverter<? super K, ? super V, ?> converter,
                                                  Class<? extends Annotation> annotation, boolean onlyPrimary,
                                                  boolean clustered, UUID identifier, boolean sync,
-                                                 Listener.Observation observation)  {
+                                                 Listener.Observation observation,
+                                                 Set<Class<? extends Annotation>> filterAnnotations)  {
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
@@ -1187,6 +1377,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          this.annotation = annotation;
          this.sync = sync;
          this.observation = observation;
+         this.filterAnnotations = filterAnnotations;
       }
 
       @Override
@@ -1296,6 +1487,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       @Override
       public CacheEventFilter<? super K, ? super V> getFilter() {
          return filter;
+      }
+
+      @Override
+      public Set<Class<? extends Annotation>> getFilterAnnotations() {
+         return filterAnnotations;
       }
 
       @Override

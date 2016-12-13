@@ -93,6 +93,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -735,6 +736,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Set<Object> getListeners() {
       return notifier.getListeners();
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    private InvocationContext getInvocationContextForWrite(ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRead) {
