@@ -894,6 +894,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return cacheNotifier.getListeners();
    }
 
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      cacheNotifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+      if (!hasListeners && canFire(listener)) {
+         hasListeners = true;
+      }
+   }
+
    private boolean canFire(Object listener) {
       for (Method m : listener.getClass().getMethods()) {
          for (Class<? extends Annotation> annotation : FIRED_EVENTS) {

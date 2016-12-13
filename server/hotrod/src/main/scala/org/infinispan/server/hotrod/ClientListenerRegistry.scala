@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
+import java.lang.annotation.Annotation
 import java.lang.reflect.Constructor
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicLong
@@ -83,7 +84,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def addClientListener(decoder: AbstractVersionedDecoder, ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
-           includeState: Boolean, namedFactories: NamedFactories, useRawData: Boolean): Unit = {
+           includeState: Boolean, namedFactories: NamedFactories, useRawData: Boolean, listenerInterests: Int): Unit = {
       val eventType = ClientEventType.apply(namedFactories._2.isDefined, useRawData, h.version)
       val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, eventType)
       val binaryFilterParams = namedFactories._1.map(_._2).getOrElse(List.empty)
@@ -107,8 +108,9 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
       if (includeState) {
          // If state included, do it async
-         val cf = CompletableFuture.runAsync(() =>
-            cache.addListener(clientEventSender, filter.orNull, converter.orNull), addListenerExecutor)
+         val cf = CompletableFuture.runAsync(
+            () => addCacheListener(clientEventSender, listenerInterests, cache, filter.orNull, converter.orNull),
+            addListenerExecutor)
 
          cf.whenComplete((t: Void, cause: Throwable) => {
             val resp = cause match {
@@ -120,9 +122,29 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
             ()
          })
       } else {
-         cache.addListener(clientEventSender, filter.orNull, converter.orNull)
+         addCacheListener(clientEventSender, listenerInterests, cache, filter.orNull, converter.orNull)
          ch.writeAndFlush(decoder.createSuccessResponse(h, null), ch.voidPromise)
       }
+   }
+
+   def addCacheListener(listener: AnyRef, listenerInterests: Int, cache: Cache,
+     filter: CacheEventFilter[Bytes, Bytes], converter: CacheEventConverter[Bytes, Bytes, Bytes]): Unit = {
+      var filterAnnotations = listenerInterests match {
+         case 0x00 =>
+            Set[Class[_ <: Annotation]](classOf[CacheEntryCreated], classOf[CacheEntryModified], classOf[CacheEntryRemoved], classOf[CacheEntryExpired])
+         case _ =>
+            var filterAnnotations = collection.mutable.Set[Class[_ <: Annotation]]()
+            if ((listenerInterests & 0x01) == 0x01)
+               filterAnnotations += classOf[CacheEntryCreated]
+            if ((listenerInterests & 0x02) == 0x02)
+               filterAnnotations += classOf[CacheEntryModified]
+            if ((listenerInterests & 0x04) == 0x04)
+               filterAnnotations += classOf[CacheEntryRemoved]
+            if ((listenerInterests & 0x08) == 0x08)
+               filterAnnotations += classOf[CacheEntryExpired]
+            filterAnnotations
+      }
+      cache.addFilteredListener(listener, filter, converter, filterAnnotations)
    }
 
    def getFilter(name: String, compatEnabled: Boolean, useRawData: Boolean, binaryParams: List[Bytes]): CacheEventFilter[Bytes, Bytes] = {

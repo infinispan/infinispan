@@ -670,4 +670,10 @@ public class SecureCacheTestDriver {
    public void testRemoveExpired_Object_Object_Long(SecureCache<String, String> cache) {
       cache.getAdvancedCache().removeExpired("a", "a", null);
    }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddFilteredListener_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
+      cache.addFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
+   }
+
 }
