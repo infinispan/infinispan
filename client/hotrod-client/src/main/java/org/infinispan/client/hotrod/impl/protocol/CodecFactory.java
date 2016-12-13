@@ -13,6 +13,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_23;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_24;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_25;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_26;
 
 /**
  * Code factory.
@@ -33,6 +34,7 @@ public class CodecFactory {
    private static final Codec CODEC_23 = new Codec23();
    private static final Codec CODEC_24 = new Codec24();
    private static final Codec CODEC_25 = new Codec25();
+   private static final Codec CODEC_26 = new Codec26();
 
    static {
       codecMap = new HashMap<String, Codec>();
@@ -46,6 +48,7 @@ public class CodecFactory {
       codecMap.put(PROTOCOL_VERSION_23, CODEC_23);
       codecMap.put(PROTOCOL_VERSION_24, CODEC_24);
       codecMap.put(PROTOCOL_VERSION_25, CODEC_25);
+      codecMap.put(PROTOCOL_VERSION_26, CODEC_26);
    }
 
    public static boolean isVersionDefined(String version) {

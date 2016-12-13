@@ -41,6 +41,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
@@ -101,12 +102,12 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
    }
 
-   @AfterMethod
-   public void resetTimeServices() {
-      ts0.advance(-ts0.wallClockTime());
-      ts1.advance(-ts1.wallClockTime());
-      ts2.advance(-ts2.wallClockTime());
-   }
+//   @AfterMethod
+//   public void resetTimeServices() {
+//      ts0.advance(-ts0.wallClockTime());
+//      ts1.advance(-ts1.wallClockTime());
+//      ts2.advance(-ts2.wallClockTime());
+//   }
 
    @Listener(clustered = true)
    protected class ClusterListener {
@@ -329,7 +330,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
                checkPoint.awaitStrict("post_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
             }
          }
-      }).when(mockNotifier).addListener(anyObject(), any(CacheEventFilter.class), any(CacheEventConverter.class));
+      }).when(mockNotifier).addFilteredListener(anyObject(), any(CacheEventFilter.class), any(CacheEventConverter.class), any(Set.class));
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 

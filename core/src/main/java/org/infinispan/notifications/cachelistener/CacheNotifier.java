@@ -10,11 +10,15 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Public interface with all allowed notifications.
@@ -110,4 +114,14 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
     * @param typeConverter the converter instance; can be {@code null}
     */
    void setTypeConverter(TypeConverter typeConverter);
+
+   /**
+    * Add a listener limiting cache entry specific callbacks only to those
+    * annotations that are present in the annotation filter collection.
+    */
+   <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter,
+         CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations);
+
 }

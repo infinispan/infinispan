@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -336,6 +337,11 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
       @Override
       public <C> CacheEventConverter<? super K, ? super V, C> getConverter() {
+         return null;
+      }
+
+      @Override
+      public Set<Class<? extends Annotation>> getFilterAnnotations() {
          return null;
       }
    }

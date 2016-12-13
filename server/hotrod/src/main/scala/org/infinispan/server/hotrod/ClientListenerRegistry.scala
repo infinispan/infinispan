@@ -83,9 +83,9 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def addClientListener(decoder: AbstractVersionedDecoder, ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
-           includeState: Boolean, namedFactories: NamedFactories, useRawData: Boolean): Unit = {
+           includeState: Boolean, namedFactories: NamedFactories, useRawData: Boolean, listenerInterests: Byte): Unit = {
       val eventType = ClientEventType.apply(namedFactories._2.isDefined, useRawData, h.version)
-      val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, eventType)
+      val clientEventSender = ClientEventSenders.createClientSender(includeState, ch, h.version, cache, listenerId, eventType, listenerInterests)
       val binaryFilterParams = namedFactories._1.map(_._2).getOrElse(List.empty)
       val binaryConverterParams = namedFactories._2.map(_._2).getOrElse(List.empty)
       val compatEnabled = cache.getCacheConfiguration.compatibility().enabled()
@@ -198,179 +198,179 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       // Make sure we write any event in main event loop
       channel.eventLoop().execute(new Runnable {
          override def run(): Unit = eventSenders.values().collectFirst {
-            case s: BaseClientEventSender => if (s.hasChannel(channel)) s.writeEventsIfPossible()
+            case s: ClientEventSenders.BaseClientEventSender => if (s.hasChannel(channel)) s.writeEventsIfPossible()
          }
       })
    }
 
-   // Do not make sync=false, instead move cache operation causing
-   // listener calls out of the Netty event loop thread
-   @Listener(clustered = true, includeCurrentState = true)
-   private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
-           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
+//   // Do not make sync=false, instead move cache operation causing
+//   // listener calls out of the Netty event loop thread
+//   @Listener(clustered = true, includeCurrentState = true)
+//   private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
+//           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
+//
+//   @Listener(clustered = true, includeCurrentState = false)
+//   private class StatelessClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
+//           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
+//
+//   private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType) {
+//      val eventQueue = new LinkedBlockingQueue[AnyRef](100)
+//
+//      def hasChannel(channel: Channel): Boolean = ch == channel
+//
+//      def writeEventsIfPossible(): Unit = {
+//         var written = false
+//         while(!eventQueue.isEmpty && ch.isWritable) {
+//            val event = eventQueue.poll()
+//            if (isTrace) tracef("Write event: %s to channel %s", event, ch)
+//            ch.write(event, ch.voidPromise)
+//            written = true
+//         }
+//         if (written) {
+//            ch.flush()
+//         }
+//      }
+//
+//      @CacheEntryCreated
+//      @CacheEntryModified
+//      @CacheEntryRemoved
+//      @CacheEntryExpired
+//      def onCacheEvent(event: CacheEntryEvent[Bytes, Bytes]) {
+//         if (isSendEvent(event)) {
+//            sendEvent(event.getKey, event.getValue, Option(event.getMetadata)
+//              .map(_.version().asInstanceOf[NumericVersion].getVersion)
+//              .getOrElse(null.asInstanceOf[Long]), event)
+//
+//         }
+//      }
+//
+//      def isSendEvent(event: CacheEntryEvent[_, _]): Boolean = {
+//         if (isChannelDisconnected()) {
+//            log.debug("Channel disconnected, remove event sender listener")
+//            event.getCache.removeListener(this)
+//            false
+//         } else {
+//            event.getType match {
+//               case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED => !event.isPre
+//               case Type.CACHE_ENTRY_REMOVED =>
+//                  val removedEvent = event.asInstanceOf[CacheEntryRemovedEvent[_, _]]
+//                  !event.isPre && removedEvent.getOldValue != null
+//               case Type.CACHE_ENTRY_EXPIRED =>
+//                  true;
+//               case _ =>
+//                  throw unexpectedEvent(event)
+//            }
+//         }
+//      }
+//
+//      def isChannelDisconnected(): Boolean = !ch.isOpen
+//
+//      def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
+//         val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
+//         if (isTrace)
+//            log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size())
+//
+//         val waitingForFlush = !ch.isWritable
+//         eventQueue.put(remoteEvent)
+//
+//         if (!waitingForFlush) {
+//            // Make sure we write any event in main event loop
+//            ch.eventLoop().submit(() => writeEventsIfPossible())
+//         }
+//      }
+//
+//      private def createRemoteEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]): AnyRef = {
+//         messageId.incrementAndGet() // increment message id
+//         // Embedded listener event implementation implements all interfaces,
+//         // so can't pattern match on the event instance itself. Instead, pattern
+//         // match on the type and the cast down to the expected event instance type
+//         targetEventType match {
+//            case Plain =>
+//               event.getType match {
+//                  case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED =>
+//                     val (op, isRetried) = getEventResponseType(event)
+//                     keyWithVersionEvent(key, dataVersion, op, isRetried)
+//                  case Type.CACHE_ENTRY_REMOVED | Type.CACHE_ENTRY_EXPIRED =>
+//                     val (op, isRetried) = getEventResponseType(event)
+//                     KeyEvent(version, messageId.get(), op, listenerId, isRetried, key)
+//                  case _ =>
+//                     throw unexpectedEvent(event)
+//               }
+//            case CustomPlain =>
+//               val (op, isRetried) = getEventResponseType(event)
+//               CustomEvent(version, messageId.get(), op, listenerId, isRetried, value)
+//            case CustomRaw =>
+//               val (op, isRetried) = getEventResponseType(event)
+//               CustomRawEvent(version, messageId.get(), op, listenerId, isRetried, value)
+//         }
+//      }
+//
+//      private def getEventResponseType(event: CacheEntryEvent[_, _]): (OperationResponse, Boolean) = {
+//         event.getType match {
+//            case Type.CACHE_ENTRY_CREATED =>
+//               (CacheEntryCreatedEventResponse, event.asInstanceOf[CacheEntryCreatedEvent[_, _]].isCommandRetried)
+//            case Type.CACHE_ENTRY_MODIFIED =>
+//               (CacheEntryModifiedEventResponse, event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried)
+//            case Type.CACHE_ENTRY_REMOVED =>
+//               (CacheEntryRemovedEventResponse, event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried)
+//            case Type.CACHE_ENTRY_EXPIRED =>
+//               (CacheEntryExpiredEventResponse, false)
+//            case _ => throw unexpectedEvent(event)
+//         }
+//      }
+//
+//      private def keyWithVersionEvent(key: Bytes, dataVersion: Long, op: OperationResponse, isRetried: Boolean): KeyWithVersionEvent = {
+//         KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion)
+//      }
+//
+//   }
 
-   @Listener(clustered = true, includeCurrentState = false)
-   private class StatelessClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
-           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
+//   object ClientEventSender {
+//      def apply(includeState: Boolean, ch: Channel, version: Byte,
+//              cache: Cache, listenerId: Bytes, eventType: ClientEventType): AnyRef = {
+//         val compatibility = cache.getCacheConfiguration.compatibility()
+//         (includeState, compatibility.enabled()) match {
+//            case (false, false) =>
+//               new StatelessClientEventSender(ch, listenerId, version, eventType)
+//            case (true, false) =>
+//               new StatefulClientEventSender(ch, listenerId, version, eventType)
+//            case (false, true) =>
+//               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
+//               new StatelessCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
+//            case (true, true) =>
+//               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
+//               new StatefulCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
+//         }
+//      }
+//   }
 
-   private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType) {
-      val eventQueue = new LinkedBlockingQueue[AnyRef](100)
-
-      def hasChannel(channel: Channel): Boolean = ch == channel
-
-      def writeEventsIfPossible(): Unit = {
-         var written = false
-         while(!eventQueue.isEmpty && ch.isWritable) {
-            val event = eventQueue.poll()
-            if (isTrace) tracef("Write event: %s to channel %s", event, ch)
-            ch.write(event, ch.voidPromise)
-            written = true
-         }
-         if (written) {
-            ch.flush()
-         }
-      }
-
-      @CacheEntryCreated
-      @CacheEntryModified
-      @CacheEntryRemoved
-      @CacheEntryExpired
-      def onCacheEvent(event: CacheEntryEvent[Bytes, Bytes]) {
-         if (isSendEvent(event)) {
-            sendEvent(event.getKey, event.getValue, Option(event.getMetadata)
-              .map(_.version().asInstanceOf[NumericVersion].getVersion)
-              .getOrElse(null.asInstanceOf[Long]), event)
-
-         }
-      }
-
-      def isSendEvent(event: CacheEntryEvent[_, _]): Boolean = {
-         if (isChannelDisconnected()) {
-            log.debug("Channel disconnected, remove event sender listener")
-            event.getCache.removeListener(this)
-            false
-         } else {
-            event.getType match {
-               case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED => !event.isPre
-               case Type.CACHE_ENTRY_REMOVED =>
-                  val removedEvent = event.asInstanceOf[CacheEntryRemovedEvent[_, _]]
-                  !event.isPre && removedEvent.getOldValue != null
-               case Type.CACHE_ENTRY_EXPIRED =>
-                  true;
-               case _ =>
-                  throw unexpectedEvent(event)
-            }
-         }
-      }
-
-      def isChannelDisconnected(): Boolean = !ch.isOpen
-
-      def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
-         val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
-         if (isTrace)
-            log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size())
-
-         val waitingForFlush = !ch.isWritable
-         eventQueue.put(remoteEvent)
-
-         if (!waitingForFlush) {
-            // Make sure we write any event in main event loop
-            ch.eventLoop().submit(() => writeEventsIfPossible())
-         }
-      }
-
-      private def createRemoteEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]): AnyRef = {
-         messageId.incrementAndGet() // increment message id
-         // Embedded listener event implementation implements all interfaces,
-         // so can't pattern match on the event instance itself. Instead, pattern
-         // match on the type and the cast down to the expected event instance type
-         targetEventType match {
-            case Plain =>
-               event.getType match {
-                  case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED =>
-                     val (op, isRetried) = getEventResponseType(event)
-                     keyWithVersionEvent(key, dataVersion, op, isRetried)
-                  case Type.CACHE_ENTRY_REMOVED | Type.CACHE_ENTRY_EXPIRED =>
-                     val (op, isRetried) = getEventResponseType(event)
-                     KeyEvent(version, messageId.get(), op, listenerId, isRetried, key)
-                  case _ =>
-                     throw unexpectedEvent(event)
-               }
-            case CustomPlain =>
-               val (op, isRetried) = getEventResponseType(event)
-               CustomEvent(version, messageId.get(), op, listenerId, isRetried, value)
-            case CustomRaw =>
-               val (op, isRetried) = getEventResponseType(event)
-               CustomRawEvent(version, messageId.get(), op, listenerId, isRetried, value)
-         }
-      }
-
-      private def getEventResponseType(event: CacheEntryEvent[_, _]): (OperationResponse, Boolean) = {
-         event.getType match {
-            case Type.CACHE_ENTRY_CREATED =>
-               (CacheEntryCreatedEventResponse, event.asInstanceOf[CacheEntryCreatedEvent[_, _]].isCommandRetried)
-            case Type.CACHE_ENTRY_MODIFIED =>
-               (CacheEntryModifiedEventResponse, event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried)
-            case Type.CACHE_ENTRY_REMOVED =>
-               (CacheEntryRemovedEventResponse, event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried)
-            case Type.CACHE_ENTRY_EXPIRED =>
-               (CacheEntryExpiredEventResponse, false)
-            case _ => throw unexpectedEvent(event)
-         }
-      }
-
-      private def keyWithVersionEvent(key: Bytes, dataVersion: Long, op: OperationResponse, isRetried: Boolean): KeyWithVersionEvent = {
-         KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion)
-      }
-
-   }
-
-   object ClientEventSender {
-      def apply(includeState: Boolean, ch: Channel, version: Byte,
-              cache: Cache, listenerId: Bytes, eventType: ClientEventType): AnyRef = {
-         val compatibility = cache.getCacheConfiguration.compatibility()
-         (includeState, compatibility.enabled()) match {
-            case (false, false) =>
-               new StatelessClientEventSender(ch, listenerId, version, eventType)
-            case (true, false) =>
-               new StatefulClientEventSender(ch, listenerId, version, eventType)
-            case (false, true) =>
-               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
-               new StatelessCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
-            case (true, true) =>
-               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
-               new StatefulCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
-         }
-      }
-   }
-
-   @Listener(clustered = true, includeCurrentState = true)
-   private class StatefulCompatibilityClientEventSender(
-           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
-      extends BaseCompatibilityClientEventSender(delegate, converter)
-
-   @Listener(clustered = true, includeCurrentState = false)
-   private class StatelessCompatibilityClientEventSender(
-           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
-           extends BaseCompatibilityClientEventSender(delegate, converter)
-
-   private abstract class BaseCompatibilityClientEventSender(
-           delegate: BaseClientEventSender, converter: HotRodTypeConverter) {
-      @CacheEntryCreated
-      @CacheEntryModified
-      @CacheEntryRemoved
-      @CacheEntryExpired
-      def onCacheEvent(event: CacheEntryEvent[AnyRef, AnyRef]) {
-         val key = converter.unboxKey(event.getKey)
-         val value = converter.unboxValue(event.getValue)
-         if (delegate.isSendEvent(event)) {
-            // In compatibility mode, version could be null if stored via embedded
-            val version = event.getMetadata.version()
-            val dataVersion = if (version == null) 0 else version.asInstanceOf[NumericVersion].getVersion
-            delegate.sendEvent(key.asInstanceOf[Array[Byte]], value.asInstanceOf[Array[Byte]], dataVersion, event)
-         }
-      }
-   }
+//   @Listener(clustered = true, includeCurrentState = true)
+//   private class StatefulCompatibilityClientEventSender(
+//           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
+//      extends BaseCompatibilityClientEventSender(delegate, converter)
+//
+//   @Listener(clustered = true, includeCurrentState = false)
+//   private class StatelessCompatibilityClientEventSender(
+//           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
+//           extends BaseCompatibilityClientEventSender(delegate, converter)
+//
+//   private abstract class BaseCompatibilityClientEventSender(
+//           delegate: BaseClientEventSender, converter: HotRodTypeConverter) {
+//      @CacheEntryCreated
+//      @CacheEntryModified
+//      @CacheEntryRemoved
+//      @CacheEntryExpired
+//      def onCacheEvent(event: CacheEntryEvent[AnyRef, AnyRef]) {
+//         val key = converter.unboxKey(event.getKey)
+//         val value = converter.unboxValue(event.getValue)
+//         if (delegate.isSendEvent(event)) {
+//            // In compatibility mode, version could be null if stored via embedded
+//            val version = event.getMetadata.version()
+//            val dataVersion = if (version == null) 0 else version.asInstanceOf[NumericVersion].getVersion
+//            delegate.sendEvent(key.asInstanceOf[Array[Byte]], value.asInstanceOf[Array[Byte]], dataVersion, event)
+//         }
+//      }
+//   }
 
    private class UnmarshallFilterFactory(filterFactory: CacheEventFilterFactory, marshaller: Marshaller)
            extends CacheEventFilterFactory {

@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import java.lang.annotation.Annotation;
+import java.util.Set;
 import java.util.UUID;
 
 import org.infinispan.notifications.Listener;
@@ -34,4 +35,6 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
    CacheEventFilter<? super K, ? super V> getFilter();
 
    <C> CacheEventConverter<? super K, ? super V, C> getConverter();
+
+   Set<Class<? extends Annotation>> getFilterAnnotations();
 }
