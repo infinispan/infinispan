@@ -155,23 +155,18 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    @Override
    public Query visit(FullTextOccurExpr fullTextOccurExpr) {
       Query child = fullTextOccurExpr.getChild().acceptVisitor(this);
-      return new BooleanQuery.Builder()
-            .add(child, convertOccur(fullTextOccurExpr))  //TODO [anistor] the parent should 'absorb' this sub-expression to avoid the superfluous single-child BooleanQuery
-            .build();
-   }
-
-   private BooleanClause.Occur convertOccur(FullTextOccurExpr fullTextOccurExpr) {
+      //TODO [anistor] the parent should 'absorb' this sub-expression to avoid the superfluous single-child BooleanQuery
       switch (fullTextOccurExpr.getOccur()) {
          case SHOULD:
-            return BooleanClause.Occur.SHOULD;
+            return queryBuilder.bool().should(child).createQuery();
          case MUST:
-            return BooleanClause.Occur.MUST;
+            return queryBuilder.bool().must(child).createQuery();
          case MUST_NOT:
-            return BooleanClause.Occur.MUST_NOT;
+            return queryBuilder.bool().must(child).not().createQuery();
          case FILTER:
-            return BooleanClause.Occur.FILTER;
+            return new BooleanQuery.Builder().add(child, BooleanClause.Occur.FILTER).build();
       }
-      throw new IllegalArgumentException("Unknown boolean occur value: " + fullTextOccurExpr.getOccur());
+      throw new IllegalArgumentException("Unknown boolean occur clause: " + fullTextOccurExpr.getOccur());
    }
 
    @Override
