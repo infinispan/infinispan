@@ -87,6 +87,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       HeaderParams params = writeHeader(transport, ADD_CLIENT_LISTENER_REQUEST);
       transport.writeArray(listenerId);
       codec.writeClientListenerParams(transport, clientListener, filterFactoryParams, converterFactoryParams);
+      codec.writeClientListenerInterests(transport, listenerNotifier.findMethods(this.listener).keySet());
       transport.flush();
 
       listenerNotifier.addClientListener(this);

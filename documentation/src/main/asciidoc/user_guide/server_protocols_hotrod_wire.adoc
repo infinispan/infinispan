@@ -1945,6 +1945,74 @@ Response (0x3A):
 | Header | variable | Response header
 |==============================================================================
 
+On top of these additions, this Hot Rod protocol version improves remote listener registration by adding a byte that indicates at a global level, which type of events the client is interested in.
+For example, a client can indicate that only created events, or only expiration and removal events...etc.
+More fine grained event interests, e.g. per key, can be defined using the key/value filter parameter.
+
+So, the new add listener request looks like this:
+
+.Add client listener for remote events
+
+Request (0x25):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Listener ID   | byte array   | Listener identifier
+| Include state | byte         | When this byte is set to `1`, cached state is
+sent back to remote clients when either adding a cache listener for the first
+time, or when the node where a remote listener is registered changes in a clustered
+environment. When enabled, state is sent back as cache entry created events to
+the clients. If set to `0`, no state is sent back to the client when adding a listener,
+nor it gets state when the node where the listener is registered changes.
+| Key/value filter factory name | string | Optional name of the key/value filter
+factory to be used with this listener. The factory is used to create key/value
+filter instances which allow events to be filtered directly in the Hot Rod
+server, avoiding sending events that the client is not interested in. If no
+factory is to be used, the length of the string is `0`.
+| Key/value filter factory parameter count | byte | The key/value filter
+factory, when creating a filter instance, can take an arbitrary number of
+parameters, enabling the factory to be used to create different filter
+instances dynamically. This count field indicates how many parameters will be
+passed to the factory. If no factory name was provided, this field is not
+present in the request.
+| Key/value filter factory parameter 1 | byte array | First key/value filter
+factory parameter
+| Key/value filter factory parameter 2 | byte array | Second key/value filter
+factory parameter
+| ... | |
+| Converter factory name | string | Optional name of the converter
+factory to be used with this listener. The factory is used to transform the
+contents of the events sent to clients. By default, when no converter is in use,
+events are well defined, according to the type of event generated. However,
+there might be situations where users want to add extra information to the event,
+or they want to reduce the size of the events. In these cases, a converter can
+be used to transform the event contents. The given converter factory name
+produces converter instances to do this job. If no factory is to be used, the
+length of the string is `0`.
+| Converter factory parameter count | byte | The converter
+factory, when creating a converter instance, can take an arbitrary number of
+parameters, enabling the factory to be used to create different converter
+instances dynamically. This count field indicates how many parameters will be
+passed to the factory. If no factory name was provided, this field is not
+present in the request.
+| Converter factory parameter 1 | byte array | First converter factory parameter
+| Converter factory parameter 2 | byte array | Second converter factory parameter
+| ... | |
+| Listener even type interests  | vInt       |  A variable length number representing listener event type interests.
+Each event type is represented by a bit.
+Each flags is represented by a bit.
+Note that since this field is sent as variable length, the most significant bit in a byte is used to determine whether more bytes need to be read, hence this bit does not represent any flag.
+Using this model allows for flags to be combined in a short space.
+Here are the current values for each flag: +
++0x01+ = cache entry created events
++0x02+ = cache entry modified events
++0x04+ = cache entry removed events
++0x08+ = cache entry expired events
+|==============================================================================
+
+
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where

@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.Util.hexDump;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashSet;
@@ -177,6 +178,10 @@ public class Codec10 implements Codec {
    @Override
    public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
       throw new UnsupportedOperationException();
+   }
+
+   public void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes) {
+      // No-op
    }
 
    protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {

@@ -1,5 +1,6 @@
 package org.infinispan.security.impl;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,14 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public void addListener(Object listener) {
       authzManager.checkPermission(AuthorizationPermission.LISTEN);
       delegate.addListener(listener);
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      authzManager.checkPermission(AuthorizationPermission.LISTEN);
+      delegate.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    @Override

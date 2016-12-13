@@ -670,4 +670,10 @@ public class SecureCacheTestDriver {
       cache.shutdown();
       cache.start();
    }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddFilteredListener_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
+      cache.addFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
+   }
+
 }

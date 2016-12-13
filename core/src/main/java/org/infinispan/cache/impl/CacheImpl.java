@@ -9,6 +9,7 @@ import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -707,6 +708,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Set<Object> getListeners() {
       return notifier.getListeners();
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    private InvocationContext getInvocationContextForWrite(int keyCount, boolean isPutForExternalRead) {

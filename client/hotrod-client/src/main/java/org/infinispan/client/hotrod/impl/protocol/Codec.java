@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.VersionedMetadata;
@@ -11,7 +13,6 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
-import org.jboss.marshalling.Version;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -69,4 +70,7 @@ public interface Codec {
     * Writes a stream of data
     */
    OutputStream writeAsStream(Transport transport, Runnable afterClose);
+
+   void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes);
+
 }

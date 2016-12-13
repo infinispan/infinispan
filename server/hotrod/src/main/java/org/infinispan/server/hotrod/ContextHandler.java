@@ -153,7 +153,7 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             ClientListenerRequestContext clientContext = (ClientListenerRequestContext) msg.operationDecodeContext;
             server.getClientListenerRegistry().addClientListener(msg.decoder, ctx.channel(), h, clientContext.getListenerId(),
                   msg.cache, clientContext.isIncludeCurrentState(), new KeyValuePair<>(clientContext.getFilterFactoryInfo(),
-                        clientContext.getConverterFactoryInfo()), clientContext.isUseRawData());
+                        clientContext.getConverterFactoryInfo()), clientContext.isUseRawData(), clientContext.getListenerInterests());
             break;
          case REMOVE_CLIENT_LISTENER:
             byte[] listenerId = (byte[]) msg.operationDecodeContext;

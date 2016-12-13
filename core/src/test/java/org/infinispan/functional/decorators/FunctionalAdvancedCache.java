@@ -7,6 +7,7 @@ import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMeta
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -643,6 +644,13 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public Set<Object> getListeners() {
       return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      // TODO: Customise this generated block
    }
 
    public static <T> T await(CompletableFuture<T> cf) {
