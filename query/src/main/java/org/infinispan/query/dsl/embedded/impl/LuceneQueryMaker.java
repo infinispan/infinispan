@@ -11,6 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
@@ -115,6 +116,22 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          isAnalyzerRemote = true;
       }
       Query query = makeQuery(parsingResult.getWhereClause());
+
+      // an all negative top level boolean query is not allowed; needs a bit of rewriting
+      if (query instanceof BooleanQuery) {
+         BooleanQuery booleanQuery = (BooleanQuery) query;
+         boolean allClausesAreMustNot = booleanQuery.clauses().stream().allMatch(c -> c.getOccur() == BooleanClause.Occur.MUST_NOT);
+         if (allClausesAreMustNot) {
+            //It is illegal to have only must-not queries, in this case we need to add a positive clause to match everything else.
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            for (BooleanClause clause : booleanQuery.clauses()) {
+               builder.add(clause.getQuery(), BooleanClause.Occur.MUST_NOT);
+            }
+            builder.add(new MatchAllDocsQuery(), BooleanClause.Occur.FILTER);
+            query = builder.build();
+         }
+      }
+
       Sort sort = makeSort(parsingResult.getSortFields());
       return new LuceneQueryParsingResult<>(query, parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(), parsingResult.getProjections(), sort);
    }
@@ -178,7 +195,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          case FILTER:
             return BooleanClause.Occur.FILTER;
       }
-      throw new IllegalArgumentException("Unknown boolean occur value: " + fullTextOccurExpr.getOccur());
+      throw new IllegalArgumentException("Unknown boolean occur clause: " + fullTextOccurExpr.getOccur());
    }
 
    @Override
@@ -308,19 +325,32 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
 
    @Override
    public Query visit(AndExpr andExpr) {
-      BooleanJunction<BooleanJunction> booleanJunction = queryBuilder.bool();
+      BooleanQuery.Builder builder = new BooleanQuery.Builder();
       for (BooleanExpr c : andExpr.getChildren()) {
-         if (c instanceof NotExpr) {
+         boolean isNegative = c instanceof NotExpr;
+         if (isNegative) {
             // minor optimization: unwrap negated predicates and add child directly to this predicate
-            BooleanExpr child = ((NotExpr) c).getChild();
-            Query transformedChild = child.acceptVisitor(this);
-            booleanJunction.must(transformedChild).not();
+            c = ((NotExpr) c).getChild();
+         }
+         Query transformedChild = c.acceptVisitor(this);
+         if (transformedChild instanceof BooleanQuery) {
+            // child absorption
+            BooleanQuery booleanQuery = (BooleanQuery) transformedChild;
+            if (booleanQuery.clauses().size() == 1) {
+               BooleanClause clause = booleanQuery.clauses().get(0);
+               BooleanClause.Occur occur = clause.getOccur();
+               if (isNegative) {
+                  occur = occur == BooleanClause.Occur.MUST_NOT ? BooleanClause.Occur.MUST : BooleanClause.Occur.MUST_NOT;
+               }
+               builder.add(clause.getQuery(), occur);
+            } else {
+               builder.add(transformedChild, isNegative ? BooleanClause.Occur.MUST_NOT : BooleanClause.Occur.MUST);
+            }
          } else {
-            Query transformedChild = c.acceptVisitor(this);
-            booleanJunction.must(transformedChild);
+            builder.add(transformedChild, isNegative ? BooleanClause.Occur.MUST_NOT : BooleanClause.Occur.MUST);
          }
       }
-      return booleanJunction.createQuery();
+      return builder.build();
    }
 
    @Override

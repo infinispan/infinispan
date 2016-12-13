@@ -249,7 +249,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("select t.accountId, max(t.amount), max(t.description) from " + getModelFactory().getTransactionTypeName()
-            + " t where t.longDescription : (+'beer' -'food') group by t.accountId");
+            + " t where t.longDescription : (+'beer' && -'food') group by t.accountId");
 
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -276,7 +276,6 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(56, list.size());
    }
 
-   @Test(enabled = false, description = "ISPN-7300")
    public void testFullTextTermDoesntOccur() throws Exception {
       QueryFactory qf = getQueryFactory();
 

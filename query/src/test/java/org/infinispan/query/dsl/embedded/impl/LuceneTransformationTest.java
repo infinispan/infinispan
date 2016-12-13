@@ -148,7 +148,7 @@ public class LuceneTransformationTest {
    public void testFullTextFieldOccur() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : (-'foo') ",
-            "-text:foo");
+            "-text:foo #*:*");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : (-'foo' +'bar')",
