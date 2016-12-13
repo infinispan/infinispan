@@ -23,6 +23,7 @@ public interface HotRodConstants {
    byte VERSION_23 = 23;
    byte VERSION_24 = 24;
    byte VERSION_25 = 25;
+   byte VERSION_26 = 26;
 
    //requests
    byte PUT_REQUEST = 0x01;

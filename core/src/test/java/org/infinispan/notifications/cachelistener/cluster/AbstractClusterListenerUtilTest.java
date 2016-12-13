@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -320,7 +321,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("post_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
          }
-      }).when(mockNotifier).addListener(anyObject(), any(CacheEventFilter.class), any(CacheEventConverter.class));
+      }).when(mockNotifier).addFilteredListener(anyObject(), any(CacheEventFilter.class), any(CacheEventConverter.class), any(Set.class));
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 

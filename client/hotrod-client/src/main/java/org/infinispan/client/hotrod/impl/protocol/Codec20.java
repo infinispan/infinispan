@@ -5,11 +5,13 @@ import static org.infinispan.commons.util.Util.printArray;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -60,6 +62,10 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
       return new TransportOutputStream(transport, afterClose);
+   }
+
+   public void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes) {
+      // No-op
    }
 
    @Override

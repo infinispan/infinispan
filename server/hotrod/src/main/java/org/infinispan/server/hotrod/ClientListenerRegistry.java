@@ -3,9 +3,12 @@ package org.infinispan.server.hotrod;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -123,7 +126,7 @@ class ClientListenerRegistry {
    void addClientListener(VersionedDecoder decoder, Channel ch, HotRodHeader h, byte[] listenerId,
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
                           KeyValuePair<Optional<KeyValuePair<String, List<byte[]>>>, Optional<KeyValuePair<String, List<byte[]>>>> namedFactories,
-                          boolean useRawData) {
+                          boolean useRawData, int listenerInterests) {
       ClientEventType eventType = ClientEventType.createType(namedFactories.getValue().isPresent(), useRawData, h.version);
       Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType);
       List<byte[]> binaryFilterParams = namedFactories.getKey().map(KeyValuePair::getValue).orElse(Collections.emptyList());
@@ -160,7 +163,7 @@ class ClientListenerRegistry {
       if (includeState) {
          // If state included, do it async
          CompletableFuture<Void> cf = CompletableFuture.runAsync(() ->
-               cache.addListener(clientEventSender, kvp.getKey(), kvp.getValue()), addListenerExecutor);
+               addCacheListener(cache, clientEventSender, kvp, listenerInterests), addListenerExecutor);
 
          cf.whenComplete((t, cause) -> {
             Response resp;
@@ -176,9 +179,32 @@ class ClientListenerRegistry {
             ch.writeAndFlush(resp);
          });
       } else {
-         cache.addListener(clientEventSender, kvp.getKey(), kvp.getValue());
+         addCacheListener(cache, clientEventSender, kvp, listenerInterests);
          ch.writeAndFlush(decoder.createSuccessResponse(h, null));
       }
+   }
+
+   private void addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
+         KeyValuePair<CacheEventFilter<byte[], byte[]>, CacheEventConverter<byte[], byte[], byte[]>> kvp,
+         int listenerInterests) {
+      Set<Class<? extends Annotation>> filterAnnotations;
+      if (listenerInterests == 0x00) {
+         filterAnnotations = new HashSet<>(Arrays.asList(
+               CacheEntryCreated.class, CacheEntryModified.class,
+               CacheEntryRemoved.class, CacheEntryExpired.class));
+      } else {
+         filterAnnotations = new HashSet<>();
+         if ((listenerInterests & 0x01) == 0x01)
+            filterAnnotations.add(CacheEntryCreated.class);
+         if ((listenerInterests & 0x02) == 0x02)
+            filterAnnotations.add(CacheEntryModified.class);
+         if ((listenerInterests & 0x04) == 0x04)
+            filterAnnotations.add(CacheEntryRemoved.class);
+         if ((listenerInterests & 0x08) == 0x08)
+            filterAnnotations.add(CacheEntryExpired.class);
+      }
+
+      cache.addFilteredListener(clientEventSender, kvp.getKey(), kvp.getValue(), filterAnnotations);
    }
 
    CacheEventFilter<byte[], byte[]> getFilter(String name, Boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {

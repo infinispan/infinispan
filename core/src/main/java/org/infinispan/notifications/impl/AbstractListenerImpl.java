@@ -28,9 +28,14 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Functionality common to both {@link org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl} and
@@ -41,6 +46,9 @@ import org.infinispan.util.logging.Log;
  * @author William Burns
  */
 public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
+
+   private static final Log log = LogFactory.getLog(AbstractListenerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected final Map<Class<? extends Annotation>, List<L>> listenersMap = new HashMap<>(16, 0.99f);
 
@@ -207,6 +215,10 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
+
+                  if (trace)
+                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+
                   getListenerCollectionForAnnotation(annotationClass).add(invocation);
                   foundMethods = true;
                }
@@ -217,6 +229,93 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       if (!foundMethods)
          getLog().noAnnotateMethodsFoundInListener(listener.getClass());
       return foundMethods;
+   }
+
+   protected boolean validateAndAddFilterListenerInvocations(Object listener,
+         AbstractInvocationBuilder builder, Set<Class<? extends Annotation>> filterAnnotations) {
+      Listener l = testListenerClassValidity(listener.getClass());
+      boolean foundMethods = false;
+      builder.setTarget(listener);
+      builder.setSubject(Security.getSubject());
+      builder.setSync(l.sync());
+      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
+      // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
+      for (Method m : listener.getClass().getMethods()) {
+         // Skip bridge methods as we don't want to count them as well.
+         if (!m.isSynthetic() || !m.isBridge()) {
+            // loop through all valid method annotations
+            for (Map.Entry<Class<? extends Annotation>, Class<?>> annotationEntry : allowedListeners.entrySet()) {
+               final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
+               if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
+                  final Class<?> eventClass = annotationEntry.getValue();
+                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
+
+                  if (System.getSecurityManager() == null) {
+                     m.setAccessible(true);
+                  } else {
+                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        m.setAccessible(true);
+                        return null;
+                     });
+                  }
+
+                  builder.setMethod(m);
+                  builder.setAnnotation(annotationClass);
+                  L invocation = builder.build();
+                  if (trace)
+                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+
+                  getListenerCollectionForAnnotation(annotationClass).add(invocation);
+                  foundMethods = true;
+               }
+            }
+         }
+      }
+
+      if (!foundMethods)
+         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
+      return foundMethods;
+   }
+
+   public boolean canApply(Set<Class<? extends Annotation>> filterAnnotations, Class<? extends Annotation> annotationClass) {
+      // Annotations such ViewChange or TransactionCompleted should be applied regardless
+      return (annotationClass != CacheEntryCreated.class
+            && annotationClass != CacheEntryModified.class
+            && annotationClass != CacheEntryRemoved.class
+            && annotationClass != CacheEntryExpired.class)
+            || (filterAnnotations.contains(annotationClass));
+   }
+
+   protected Set<Class<? extends Annotation>> findListenerCallbacks(Object listener) {
+      // TODO: Partly duplicates validateAndAddListenerInvocations
+      Set<Class<? extends Annotation>> listenerInterests = new HashSet<>();
+      Listener l = testListenerClassValidity(listener.getClass());
+      Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
+      for (Method m : listener.getClass().getMethods()) {
+         // Skip bridge methods as we don't want to count them as well.
+         if (!m.isSynthetic() || !m.isBridge()) {
+            // loop through all valid method annotations
+            for (Map.Entry<Class<? extends Annotation>, Class<?>> annotationEntry : allowedListeners.entrySet()) {
+               final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
+               if (m.isAnnotationPresent(annotationClass)) {
+                  final Class<?> eventClass = annotationEntry.getValue();
+                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
+
+                  if (System.getSecurityManager() == null) {
+                     m.setAccessible(true);
+                  } else {
+                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        m.setAccessible(true);
+                        return null;
+                     });
+                  }
+
+                  listenerInterests.add(annotationClass);
+               }
+            }
+         }
+      }
+      return listenerInterests;
    }
 
    /**

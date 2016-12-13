@@ -23,6 +23,7 @@ public class Constants {
    static final public byte VERSION_23 = 23;
    static final public byte VERSION_24 = 24;
    static final public byte VERSION_25 = 25;
+   static final public byte VERSION_26 = 26;
    static final public byte DEFAULT_CONSISTENT_HASH_VERSION_1x = 2;
    static final public byte DEFAULT_CONSISTENT_HASH_VERSION = 3;
 
@@ -56,7 +57,7 @@ public class Constants {
    }
 
    static final public boolean isVersion2x(byte v) {
-      return v >= VERSION_20 && v <= VERSION_25;
+      return v >= VERSION_20 && v <= VERSION_26;
    }
 
    static final public boolean isVersionKnown(byte v) {
@@ -81,10 +82,15 @@ public class Constants {
     * Is version previous post, and not including, 2.0?
     */
    static public boolean isVersionPost20(byte v) {
-      return v >= VERSION_21 && v <= VERSION_25;
+      return v >= VERSION_21 && v <= VERSION_26;
    }
 
    static public boolean isVersionPost24(byte v) {
       return v > VERSION_24;
    }
+
+   static public boolean isVersionPost25(byte v) {
+      return v > VERSION_25;
+   }
+
 }

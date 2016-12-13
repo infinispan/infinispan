@@ -180,7 +180,7 @@ public class ClientListenerNotifier {
       return null;
    }
 
-   private Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
+   public Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap = new HashMap<>(4, 0.99f);
 
       for (Method m : listener.getClass().getMethods()) {

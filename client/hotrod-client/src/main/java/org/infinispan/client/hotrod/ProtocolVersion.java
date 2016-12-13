@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  */
 public enum ProtocolVersion {
 
+   PROTOCOL_VERSION_26(2, 6),
    PROTOCOL_VERSION_25(2, 5),
    PROTOCOL_VERSION_24(2, 4),
    PROTOCOL_VERSION_23(2, 3),

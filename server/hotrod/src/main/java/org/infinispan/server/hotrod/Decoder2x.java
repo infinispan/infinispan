@@ -405,12 +405,20 @@ class Decoder2x implements VersionedDecoder {
                requestCtx.setUseRawData(useRawData);
 
                buffer.markReaderIndex();
-               out.add(hrCtx);
 
                return requestCtx;
             }).isPresent()) {
                return;
             }
+            if (Constants.isVersionPost25(header.version)) {
+               int listenerInterests = ExtendedByteBufJava.readMaybeVInt(buffer);
+               if (listenerInterests == Integer.MIN_VALUE)
+                  return;
+
+               requestCtx.setListenerInterests(listenerInterests);
+               buffer.markReaderIndex();
+            }
+            out.add(hrCtx);
             break;
          case REMOVE_CLIENT_LISTENER:
             ExtendedByteBuf.readMaybeRangedBytes(buffer).ifPresent(listenerId -> {
@@ -727,6 +735,7 @@ class ClientListenerRequestContext {
    private Optional<KeyValuePair<String, List<byte[]>>> filterFactoryInfo;
    private Optional<KeyValuePair<String, List<byte[]>>> converterFactoryInfo;
    private boolean useRawData;
+   private int listenerInterests;
 
    ClientListenerRequestContext(byte[] listenerId, boolean includeCurrentState) {
       this.listenerId = listenerId;
@@ -763,6 +772,14 @@ class ClientListenerRequestContext {
 
    public void setUseRawData(boolean useRawData) {
       this.useRawData = useRawData;
+   }
+
+   public int getListenerInterests() {
+      return listenerInterests;
+   }
+
+   public void setListenerInterests(int listenerInterests) {
+      this.listenerInterests = listenerInterests;
    }
 }
 
