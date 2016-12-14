@@ -1,7 +1,10 @@
 package org.infinispan.integrationtests.spring.boot.session.remote;
 
+import java.util.UUID;
+
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.AbstractSpringSessionTCK;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -23,10 +26,13 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
 
    @BeforeClass
    public static void beforeclass() {
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalConfigurationBuilder.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
+
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
       cacheConfiguration.dataContainer().keyEquivalence(new AnyServerEquivalence());
 
-      serverCache = new DefaultCacheManager();
+      serverCache = new DefaultCacheManager(globalConfigurationBuilder.build());
       serverCache.defineConfiguration("sessions", cacheConfiguration.build());
 
       HotRodServerConfigurationBuilder hotRodServerConfigurationBuilder = new HotRodServerConfigurationBuilder();
