@@ -2,6 +2,7 @@ package org.infinispan.query.impl.massindex;
 
 import static java.util.Arrays.stream;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -44,6 +45,11 @@ public class ExtendedBatchBackend implements BatchBackend {
    @Override
    public void enqueueAsyncWork(LuceneWork work) throws InterruptedException {
       defaultBatchBackend.enqueueAsyncWork(work);
+   }
+
+   @Override
+   public void awaitAsyncProcessingCompletion() {
+      defaultBatchBackend.awaitAsyncProcessingCompletion();
    }
 
    @Override

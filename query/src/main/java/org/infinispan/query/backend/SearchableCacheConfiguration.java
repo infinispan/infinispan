@@ -20,9 +20,7 @@ import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
 import org.hibernate.search.engine.spi.SearchMappingHelper;
 import org.hibernate.search.exception.ErrorHandler;
-import org.hibernate.search.exception.impl.LogErrorHandler;
-import org.hibernate.search.util.StringHelper;
-import org.hibernate.search.util.impl.ClassLoaderHelper;
+import org.hibernate.search.spi.ErrorHandlerFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -53,6 +51,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final SearchMapping searchMapping;
    private final Map<Class<? extends Service>, Object> providedServices;
    private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
+   private boolean hasAffinity;
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
@@ -67,6 +66,11 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       for (Class<?> c : classArray) {
          String classname = c.getName();
          classes.put(classname, c);
+      }
+
+      if (hasAffinity) {
+         ErrorHandler configuredErrorHandler = ErrorHandlerFactory.createErrorHandler(this);
+         this.properties.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(configuredErrorHandler));
       }
 
       //deal with programmatic mapping:
@@ -143,7 +147,6 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
    private Properties augment(Properties origin) {
       Properties target = new Properties();
-      boolean hasAffinity = false;
       for (Entry<Object, Object> entry : origin.entrySet()) {
          Object key = entry.getKey();
          if (key instanceof String && !key.toString().startsWith(HSEARCH_PREFIX)) {
@@ -155,42 +158,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
             hasAffinity = true;
          }
       }
-      configureErrorHandler(target, hasAffinity);
       return target;
-   }
-
-   private void configureErrorHandler(Properties target, boolean hasAffinity) {
-      if (hasAffinity) {
-         Object errorHandler = target.get(Environment.ERROR_HANDLER);
-         if (errorHandler == null) {
-            target.put(Environment.ERROR_HANDLER, new AffinityErrorHandler());
-         } else {
-            target.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(createErrorHandler(errorHandler)));
-         }
-      }
-   }
-
-   private ErrorHandler createErrorHandler(Object configuredErrorHandler) {
-      if (configuredErrorHandler instanceof String) {
-         return createErrorHandlerFromString((String) configuredErrorHandler, getClassLoaderService());
-      } else if (configuredErrorHandler instanceof ErrorHandler) {
-         return (ErrorHandler) configuredErrorHandler;
-      } else {
-         throw log.unsupportedErrorHandlerConfigurationValueType(configuredErrorHandler.getClass());
-      }
-   }
-
-   private ErrorHandler createErrorHandlerFromString(String errorHandlerClassName, ClassLoaderService classLoaderService) {
-      if (StringHelper.isEmpty(errorHandlerClassName) || ErrorHandler.LOG.equals(errorHandlerClassName.trim())) {
-         return new LogErrorHandler();
-      } else {
-         Class<?> errorHandlerClass = classLoaderService.classForName(errorHandlerClassName);
-         return ClassLoaderHelper.instanceFromClass(
-                 ErrorHandler.class,
-                 errorHandlerClass,
-                 "Error Handler"
-         );
-      }
    }
 
    @Override

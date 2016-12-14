@@ -18,6 +18,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermRangeQuery;
 import org.hibernate.search.analyzer.impl.LuceneAnalyzerReference;
+import org.hibernate.search.analyzer.spi.AnalyzerReference;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
@@ -78,6 +79,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    private QueryBuilder queryBuilder;
    private TypeMetadata entityType;
    private Analyzer entityAnalyzer;
+   private boolean isAnalyzerRemote;
 
    @FunctionalInterface
    public interface FieldBridgeProvider<TypeMetadata> {
@@ -106,7 +108,12 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       this.namedParameters = namedParameters;
       queryBuilder = queryContextBuilder.forEntity(targetedType).get();
       entityType = parsingResult.getTargetEntityMetadata();
-      entityAnalyzer = ((ExtendedSearchIntegrator) searchFactory).getAnalyzerReference(targetedType).unwrap(LuceneAnalyzerReference.class).getAnalyzer();
+      AnalyzerReference analyzerReference = ((ExtendedSearchIntegrator) searchFactory).getAnalyzerReference(targetedType);
+      if(analyzerReference.is(LuceneAnalyzerReference.class)) {
+         entityAnalyzer = analyzerReference.unwrap(LuceneAnalyzerReference.class).getAnalyzer();
+      } else {
+         isAnalyzerRemote = true;
+      }
       Query query = makeQuery(parsingResult.getWhereClause());
       Sort sort = makeSort(parsingResult.getSortFields());
       return new LuceneQueryParsingResult<>(query, parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(), parsingResult.getProjections(), sort);
@@ -127,7 +134,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          SortField.Type sortType = SortField.Type.STRING;
          FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, sf.getPath().asArrayPath());
          if (fieldBridge instanceof NullEncodingTwoWayFieldBridge) {
-            fieldBridge = ((NullEncodingTwoWayFieldBridge) fieldBridge).unwrap();
+            fieldBridge = ((NullEncodingTwoWayFieldBridge) fieldBridge).unwrap(FieldBridge.class);
          }
          // Determine sort type based on FieldBridgeType. SortField.BYTE and SortField.SHORT are not covered yet!
          if (fieldBridge instanceof NumericFieldBridge) {
@@ -181,23 +188,27 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    }
 
    private boolean isMultiTermText(String fieldName, String text) {
-      int terms = 0;
-      try (TokenStream stream = entityAnalyzer.tokenStream(fieldName, new StringReader(text))) {
-         CharTermAttribute attribute = stream.addAttribute(CharTermAttribute.class);
-         stream.reset();
-         while (stream.incrementToken()) {
-            if (attribute.length() > 0) {
-               if (++terms > 1) {
-                  return true;
+      if(!isAnalyzerRemote) {
+         int terms = 0;
+         try (TokenStream stream = entityAnalyzer.tokenStream(fieldName, new StringReader(text))) {
+            CharTermAttribute attribute = stream.addAttribute(CharTermAttribute.class);
+            stream.reset();
+            while (stream.incrementToken()) {
+               if (attribute.length() > 0) {
+                  if (++terms > 1) {
+                     return true;
+                  }
                }
             }
+            stream.end();
+         } catch (IOException e) {
+            // Highly unlikely when reading from a StreamReader.
+            log.error(e);
          }
-         stream.end();
-      } catch (IOException e) {
-         // Highly unlikely when reading from a StreamReader.
-         log.error(e);
+         return terms > 1;
+      } else {
+         return text.contains(" ");
       }
-      return terms > 1;
    }
 
    @Override

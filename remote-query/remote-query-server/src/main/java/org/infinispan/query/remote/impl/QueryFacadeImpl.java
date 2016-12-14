@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.engine.impl.nullencoding.KeywordBasedNullCodec;
-import org.hibernate.search.engine.impl.nullencoding.NullMarkerCodec;
+import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
+import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
+import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
@@ -40,7 +41,7 @@ public final class QueryFacadeImpl implements QueryFacade {
     */
    public static final String NULL_TOKEN = "_null_";
 
-   public static final NullMarkerCodec NULL_TOKEN_CODEC = new KeywordBasedNullCodec(NULL_TOKEN);
+   public static final NullMarkerCodec NULL_TOKEN_CODEC = new LuceneStringNullMarkerCodec(new ToStringNullMarker(NULL_TOKEN));
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {

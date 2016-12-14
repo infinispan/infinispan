@@ -100,9 +100,9 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private Object convertToPropertyType(String value, FieldBridge bridge) {
       try {
          if (bridge instanceof NullEncodingTwoWayFieldBridge) {
-            return convertToPropertyType(value, ((NullEncodingTwoWayFieldBridge) bridge).unwrap());
+            return convertToPropertyType(value, ((NullEncodingTwoWayFieldBridge) bridge).unwrap(FieldBridge.class));
          } else if (bridge instanceof TwoWayString2FieldBridgeAdaptor) {
-            TwoWayStringBridge unwrapped = ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap();
+            TwoWayStringBridge unwrapped = ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap(TwoWayStringBridge.class);
             if (unwrapped instanceof BooleanBridge) {
                if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
                   throw log.getInvalidBooleanLiteralException(value);
