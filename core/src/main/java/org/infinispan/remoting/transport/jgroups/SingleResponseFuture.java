@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport.jgroups;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 import org.infinispan.remoting.responses.Response;
 import org.jgroups.SuspectedException;
@@ -13,13 +14,13 @@ import org.jgroups.util.Rsp;
  * @since 8.0
  */
 public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
-      implements Callable<Void> {
+      implements BiConsumer<Response, Throwable>, Callable<Void> {
    private final CompletableFuture<Response> request;
    private volatile Future<?> timeoutFuture = null;
 
    SingleResponseFuture(CompletableFuture<Response> request) {
       this.request = request;
-      request.whenComplete(this::requestDone);
+      request.whenComplete(this);
    }
 
    private void requestDone(Response response, Throwable throwable) {
@@ -50,5 +51,10 @@ public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
       complete(new Rsp<>());
       request.cancel(false);
       return null;
+   }
+
+   @Override
+   public void accept(Response response, Throwable throwable) {
+      requestDone(response, throwable);
    }
 }

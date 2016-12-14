@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.session.util.EventsWaiter;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.PayloadApplicationEvent;
@@ -19,7 +20,7 @@ import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.testng.annotations.Test;
 
-public abstract class InfinispanApplicationPublishedBridgeTCK {
+public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractInfinispanTest {
 
    protected SpringCache springCache;
 
@@ -52,7 +53,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK {
       sessionRepository.save(sessionToBeDeleted);
       sessionRepository.delete(sessionToBeDeleted.getId());
 
-      TimeUnit.SECONDS.sleep(1);
+      sleepOneSecond();
       callEviction();
 
       //then
@@ -63,6 +64,11 @@ public abstract class InfinispanApplicationPublishedBridgeTCK {
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 1, 2, TimeUnit.SECONDS);
       //FIXME: This doesn't work for remote... why? https://issues.jboss.org/browse/ISPN-7040
 //      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 2, 10, TimeUnit.SECONDS);
+   }
+
+   private void sleepOneSecond() {
+      long oneSecondSleep = System.currentTimeMillis() + 1000;
+      eventually(() -> System.currentTimeMillis() > oneSecondSleep);
    }
 
    @Test

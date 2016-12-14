@@ -107,7 +107,6 @@
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
-      <version.caffeine>2.3.4</version.caffeine>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.4</version.commons.compress>
       <version.commons.codec>1.4</version.commons.codec>

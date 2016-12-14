@@ -41,7 +41,10 @@ public class RspListFuture extends CompletableFuture<Responses>
 
    @Override
    public void accept(RspList<Response> rsps, Throwable throwable) {
-      // The response is done
+      requestDone(rsps, throwable);
+   }
+
+   private void requestDone(RspList<Response> rsps, Throwable throwable) {
       if (throwable == null) {
          complete(new Responses(rsps));
       } else {

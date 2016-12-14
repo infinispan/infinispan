@@ -1,9 +1,8 @@
 package org.infinispan.spring.session;
 
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.provider.SpringCache;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -17,9 +16,7 @@ public class EmbeddedApplicationPublishedBridgeTest extends InfinispanApplicatio
 
    @BeforeClass
    public void beforeClass() {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfigurationBuilder.globalJmxStatistics().cacheManagerName("InfinispanEmbeddedSessionRepositoryTest");
-      embeddedCacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());
+      embeddedCacheManager = TestCacheManagerFactory.createCacheManager();
    }
 
    @AfterMethod

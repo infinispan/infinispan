@@ -307,7 +307,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private BasicInvocationStage removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
-         CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(command.getCommandInvocationId(), false);
+         CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(command.getCommandInvocationId());
          VisitableCommand removeFromL1Command = removeFromL1Command(ctx, command.getKey());
          if (pendingAcks == null) {
             return invokeNext(ctx, removeFromL1Command).thenApply((rCtx, rCommand, rv) -> returnValue);

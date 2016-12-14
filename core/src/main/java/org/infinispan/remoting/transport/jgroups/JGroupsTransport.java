@@ -760,7 +760,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } else if (jgrpAddrList.size() == 1) {
          dispatcher.sendMessage(jgrpAddrList.get(0), buffer, options);
       } else {
-         dispatcher.castMessage(jgrpAddrList, buffer, options);
+         dispatcher.castMessage(jgrpAddrList, buffer, options.anycasting(true).useAnycastAddresses(false));
       }
    }
 
@@ -777,7 +777,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          AnycastAddress anycastAddress = new AnycastAddress();
          dispatcher.sendMessage(anycastAddress, buffer, options);
       } else {
-         dispatcher.castMessage(null, buffer, options);
+         dispatcher.castMessage(null, buffer, options.anycasting(false));
       }
    }
 

@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
-   private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
+   private static final Log log = LogFactory.getLog(L1LastChanceInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private L1Manager l1Manager;

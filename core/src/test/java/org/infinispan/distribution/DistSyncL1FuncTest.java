@@ -72,7 +72,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
          List<CommandInvocationId> pendingIds = collector.getPendingCommands();
          assertEquals(1, pendingIds.size());
-         CompletableFuture<?> cFuture = collector.getCollectorCompletableFuture(pendingIds.get(0), false);
+         CompletableFuture<?> cFuture = collector.getCollectorCompletableFuture(pendingIds.get(0));
          cFuture.get(30, TimeUnit.SECONDS);
 
          // Stop blocking new commands as we check that a put returns the correct previous value

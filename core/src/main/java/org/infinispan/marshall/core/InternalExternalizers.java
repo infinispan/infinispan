@@ -70,6 +70,7 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.MetaParamExternalizers;
 import org.infinispan.marshall.exts.OptionalExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -239,6 +240,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new VersionedResults.Externalizer(), exts);
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
+      addInternalExternalizer(new TriangleAckExternalizer(cmdFactory), exts);
 
       return exts;
    }

@@ -189,7 +189,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          return invokeNext(context, command);
       }
       final CacheTopology topology = checkTopologyId(command);
-      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(), rpcManager.getAddress());
+      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(),
+            rpcManager.getAddress());
 
       switch (distributionInfo.ownership()) {
          case PRIMARY:
@@ -236,11 +237,13 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             Collection<Address> backupOwners = distributionInfo.backups();
             if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
                commandAckCollector.create(id, rv, distributionInfo.owners(), dwCommand.getTopologyId());
+               //check the topology after registering the collector.
+               //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+               checkTopologyId(dwCommand);
             }
             if (trace) {
                log.tracef("Command %s send to backup owner %s.", dwCommand.getCommandInvocationId(), backupOwners);
             }
-
             // we must send the message only after the collector is registered in the map
             rpcManager.sendToMany(backupOwners, commandsFactory.buildBackupWriteRcpCommand(dwCommand),
                   DeliverOrder.PER_SENDER);
@@ -249,7 +252,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
-                                                     DistributionInfo distributionInfo) {
+         DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&

@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationComposeSuccessHandler;
 import org.infinispan.interceptors.InvocationExceptionHandler;
@@ -29,8 +30,7 @@ public class ReturnValueStage extends AbstractInvocationStage {
    @Override
    public InvocationStage compose(InvocationComposeHandler composeHandler) {
       try {
-         AbstractInvocationStage stage = (AbstractInvocationStage) composeHandler.apply(this, ctx, command,
-               returnValue, null);
+         BasicInvocationStage stage = composeHandler.apply(this, ctx, command, returnValue, null);
          return stage.toInvocationStage(ctx, command);
       } catch (Throwable t) {
          return new ExceptionStage(ctx, command, t);

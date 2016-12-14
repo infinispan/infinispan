@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
@@ -96,6 +97,10 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
       } else if (index >= defaultNumberOfSites()) {
          throw new IllegalArgumentException("Site index must be less than the number of sites configured.");
       }
+   }
+
+   protected static void defineInSite(TestSite site, String cacheName, Configuration configuration) {
+      site.cacheManagers().forEach(cacheManager -> cacheManager.defineConfiguration(cacheName, configuration));
    }
 
 }
