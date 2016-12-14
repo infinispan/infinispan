@@ -735,7 +735,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
          //activations
          ActivationManager aManager = remoteCache.getComponentRegistry().getComponent(ActivationManager.class);
-         if (pManager != null) {
+         if (aManager != null) {
             map.put(ACTIVATIONS, aManager.getActivationCount());
          } else {
             map.put(ACTIVATIONS, 0);
