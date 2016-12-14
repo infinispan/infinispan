@@ -702,12 +702,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteManyCommand<>(keys, f, params);
+      return new ReadWriteManyCommand<>(keys, f, params, generateUUID());
    }
 
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteManyEntriesCommand<>(entries, f, params);
+      return new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID());
    }
 
    @Override
@@ -724,13 +724,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyManyCommand<>(keys, f, params);
+      return new WriteOnlyManyCommand<>(keys, f, params, generateUUID());
    }
 
    @Override
    public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
          Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyManyEntriesCommand<>(entries, f, params);
+      return new WriteOnlyManyEntriesCommand<>(entries, f, params, generateUUID());
    }
 
    @Override

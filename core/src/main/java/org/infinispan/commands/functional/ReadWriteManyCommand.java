@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -21,7 +22,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
-public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand {
+public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand<K, V> {
 
    public static final byte COMMAND_ID = 52;
 
@@ -31,16 +32,19 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    private int topologyId = -1;
    boolean isForwarded = false;
 
-   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
+   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.keys = keys;
       this.f = f;
       this.params = params;
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
+      this.commandInvocationId = command.commandInvocationId;
       this.keys = command.keys;
       this.f = command.f;
       this.params = command.params;
+      this.flags = command.flags;
    }
 
    public ReadWriteManyCommand() {
@@ -62,18 +66,24 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = CommandInvocationId.readFrom(input);
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    public boolean isForwarded() {
@@ -129,33 +139,17 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @Override
-   public boolean isSuccessful() {
-      return true;
-   }
-
-   @Override
-   public boolean isConditional() {
-      return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
    public Collection<?> getAffectedKeys() {
       return keys;
    }
 
    @Override
    public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
    }
 
    @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
+      return false;
    }
 
    @Override
@@ -171,5 +165,16 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       sb.append(", isForwarded=").append(isForwarded);
       sb.append('}');
       return sb.toString();
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) keys;
+   }
+
+   @Override
+   public Mutation toMutation(K key) {
+      return new Mutations.ReadWrite<>(f);
    }
 }

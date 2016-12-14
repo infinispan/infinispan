@@ -20,7 +20,7 @@ import org.infinispan.functional.impl.Params;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
-public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
+public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
    public static final byte COMMAND_ID = 50;
 
@@ -34,6 +34,11 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    public ReadWriteKeyCommand() {
       // No-op, for marshalling
+   }
+
+   public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
+      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
+      this.f = other.f;
    }
 
    @Override
@@ -98,4 +103,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       return LoadType.OWNER;
    }
 
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.ReadWrite<>(f);
+   }
 }

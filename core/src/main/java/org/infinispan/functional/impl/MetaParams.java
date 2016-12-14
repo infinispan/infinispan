@@ -56,6 +56,7 @@ import net.jcip.annotations.NotThreadSafe;
 @Experimental
 public final class MetaParams {
 
+   private static final MetaParam<?>[] EMPTY_ARRAY = {};
    private MetaParam<?>[] metas;
 
    private MetaParams(MetaParam<?>[] metas) {
@@ -68,6 +69,10 @@ public final class MetaParams {
 
    public int size() {
       return metas.length;
+   }
+
+   public MetaParams copy() {
+      return new MetaParams(Arrays.copyOf(metas, metas.length));
    }
 
    public <T> Optional<T> find(Class<T> type) {
@@ -153,7 +158,7 @@ public final class MetaParams {
    }
 
    static MetaParams empty() {
-      return new MetaParams(new MetaParam[]{});
+      return new MetaParams(EMPTY_ARRAY);
    }
 
    private static MetaParam[] filterDuplicates(MetaParam... metas) {
@@ -162,6 +167,18 @@ public final class MetaParams {
          all.put(meta.getClass(), meta);
 
       return all.values().toArray(new MetaParam[all.size()]);
+   }
+
+   void merge(MetaParams other) {
+      Map<Class<?>, MetaParam<?>> all = new HashMap<>();
+      // Add other's metadata first, because we don't want to override those already present
+      for (MetaParam meta : other.metas)
+         all.put(meta.getClass(), meta);
+      for (MetaParam meta : metas)
+         all.put(meta.getClass(), meta);
+
+
+      metas = all.values().toArray(new MetaParam[all.size()]);
    }
 
    public static final class Externalizer extends AbstractExternalizer<MetaParams> {

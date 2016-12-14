@@ -166,14 +166,55 @@ public class MarshallUtil {
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
    public static <E> void marshallCollection(Collection<E> collection, ObjectOutput out) throws IOException {
+      marshallCollection(collection, out, ObjectOutput::writeObject);
+   }
+
+
+   /**
+    * Marshall a {@link Collection}.
+    * <p>
+    * This method supports {@code null} {@code collection}.
+    *
+    * @param collection {@link Collection} to marshal.
+    * @param out        {@link ObjectOutput} to write.
+    * @param writer     {@link ElementWriter} that writes single element to the output.
+    * @param <E>        Collection's element type.
+    * @throws IOException If any of the usual Input/Output related exceptions occur.
+    */
+   public static <E> void marshallCollection(Collection<E> collection, ObjectOutput out, ElementWriter<E> writer) throws IOException {
       final int size = collection == null ? NULL_VALUE : collection.size();
       marshallSize(out, size);
       if (size <= 0) {
          return;
       }
       for (E e : collection) {
-         out.writeObject(e);
+         writer.writeTo(out, e);
       }
+   }
+
+   /**
+    * Unmarshal a {@link Collection}.
+    *
+    * @param in      {@link ObjectInput} to read.
+    * @param builder {@link CollectionBuilder} builds the concrete {@link Collection} based on size.
+    * @param reader {@link ElementReader} reads one element from the input.
+    * @param <E>     Collection's element type.
+    * @param <T>     {@link Collection} implementation.
+    * @return The concrete {@link Collection} implementation.
+    * @throws IOException            If any of the usual Input/Output related exceptions occur.
+    * @throws ClassNotFoundException If the class of a serialized object cannot be found.
+    */
+   public static <E, T extends Collection<E>> T unmarshallCollection(ObjectInput in, CollectionBuilder<E, T> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException {
+      final int size = unmarshallSize(in);
+      if (size == NULL_VALUE) {
+         return null;
+      }
+      T collection = Objects.requireNonNull(builder, "CollectionBuilder must be non-null").build(size);
+      for (int i = 0; i < size; ++i) {
+         //noinspection unchecked
+         collection.add(reader.readFrom(in));
+      }
+      return collection;
    }
 
    /**
@@ -188,16 +229,7 @@ public class MarshallUtil {
     * @throws ClassNotFoundException If the class of a serialized object cannot be found.
     */
    public static <E, T extends Collection<E>> T unmarshallCollection(ObjectInput in, CollectionBuilder<E, T> builder) throws IOException, ClassNotFoundException {
-      final int size = unmarshallSize(in);
-      if (size == NULL_VALUE) {
-         return null;
-      }
-      T collection = Objects.requireNonNull(builder, "CollectionBuilder must be non-null").build(size);
-      for (int i = 0; i < size; ++i) {
-         //noinspection unchecked
-         collection.add((E) in.readObject());
-      }
-      return collection;
+      return unmarshallCollection(in, builder, input -> (E) input.readObject());
    }
 
    /**
@@ -423,5 +455,13 @@ public class MarshallUtil {
 
    public interface EnumBuilder<E extends Enum<E>> {
       E build(int ordinal);
+   }
+
+   public interface ElementReader<E> {
+      E readFrom(ObjectInput input) throws ClassNotFoundException, IOException;
+   }
+
+   public interface ElementWriter<E> {
+      void writeTo(ObjectOutput output, E element) throws IOException;
    }
 }

@@ -6,13 +6,13 @@ import java.util.Collection;
 
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
@@ -121,15 +121,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
-   }
-
-   @Override
    protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       // Regardless of whether is conditional so that
       // write skews can be detected in both cases.
       markKeyAsRead(ctx, command, command.isConditional());
+      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+   }
+
+   @Override
+   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
+                                                                Collection<K> keys, boolean forwarded) throws Throwable {
+      // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
       return invokeNext(ctx, command).handle(unlockAllReturnHandler);
    }
 

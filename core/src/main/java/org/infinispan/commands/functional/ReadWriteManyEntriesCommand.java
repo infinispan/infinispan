@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
-public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteManyCommand {
+public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteManyCommand<K, V> {
 
    public static final byte COMMAND_ID = 53;
 
@@ -31,7 +31,8 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    private int topologyId = -1;
    boolean isForwarded = false;
 
-   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
+   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.entries = entries;
       this.f = f;
       this.params = params;
@@ -41,9 +42,11 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    }
 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
+      this.commandInvocationId = command.commandInvocationId;
       this.entries = command.entries;
       this.f = command.f;
       this.params = command.params;
+      this.flags = command.flags;
    }
 
    public Map<? extends K, ? extends V> getEntries() {
@@ -66,18 +69,24 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = CommandInvocationId.readFrom(input);
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    public boolean isForwarded() {
@@ -115,10 +124,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
       List<R> returns = new ArrayList<>(entries.size());
       entries.forEach((k, v) -> {
          CacheEntry<K, V> entry = ctx.lookupEntry(k);
@@ -147,21 +152,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       return entries.keySet();
    }
 
-   @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
-   }
-
    public LoadType loadType() {
       return LoadType.OWNER;
    }
@@ -174,5 +164,16 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       sb.append(", isForwarded=").append(isForwarded);
       sb.append('}');
       return sb.toString();
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) entries.keySet();
+   }
+
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.ReadWriteWithValue(entries.get(key), f);
    }
 }

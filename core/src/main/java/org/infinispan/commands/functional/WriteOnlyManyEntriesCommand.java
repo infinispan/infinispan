@@ -7,13 +7,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
 
 public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -22,16 +22,19 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.entries = entries;
       this.f = f;
       this.params = params;
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
+      this.commandInvocationId = command.commandInvocationId;
       this.entries = command.entries;
       this.f = command.f;
       this.params = command.params;
+      this.flags = command.flags;
    }
 
    public WriteOnlyManyEntriesCommand() {
@@ -57,18 +60,24 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = CommandInvocationId.readFrom(input);
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    @Override
@@ -82,18 +91,12 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
          }
          f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
       }
-
       return null;
    }
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
+      return false;
    }
 
    @Override
@@ -102,18 +105,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitWriteOnlyManyEntriesCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
    }
 
    @Override
@@ -134,5 +127,16 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       sb.append(", isForwarded=").append(isForwarded);
       sb.append('}');
       return sb.toString();
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) entries.keySet();
+   }
+
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.WriteWithValue<>(entries.get(key), f);
    }
 }

@@ -2,6 +2,7 @@ package org.infinispan.functional;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -18,6 +19,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    boolean isSync = true;
    boolean persistence = true;
    boolean passivation = false;
+   boolean writeSkewCheck = false;
 
    FunctionalMapImpl<Integer, String> fmapL1;
    FunctionalMapImpl<Integer, String> fmapL2;
@@ -48,6 +50,21 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void configureCache(ConfigurationBuilder builder) {
+      if (transactional != null) {
+         builder.transaction().transactionMode(transactionMode());
+         if (lockingMode != null) {
+            builder.transaction().lockingMode(lockingMode);
+         }
+         if (writeSkewCheck) {
+            builder.locking().writeSkewCheck(true);
+            builder.versioning().enable();
+            builder.versioning().scheme(VersioningScheme.SIMPLE);
+         }
+      }
+      if (isolationLevel != null) {
+         builder.locking().isolationLevel(isolationLevel);
+      }
+
       if (persistence) {
          builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
          builder.persistence().passivation(passivation);
@@ -61,6 +78,11 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    protected AbstractFunctionalTest passivation(boolean enabled) {
       passivation = enabled;
+      return this;
+   }
+
+   protected AbstractFunctionalTest writeSkewCheck(boolean enabled) {
+      writeSkewCheck = enabled;
       return this;
    }
 

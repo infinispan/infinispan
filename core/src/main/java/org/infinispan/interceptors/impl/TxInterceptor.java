@@ -19,6 +19,16 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -379,7 +389,60 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
    }
 
-   private BasicInvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
+   @Override
+   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      enlistIfNeeded(ctx);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      enlistIfNeeded(ctx);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   private BasicInvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command)
+         throws Throwable {
       if (shouldEnlist(ctx)) {
          LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
          boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();

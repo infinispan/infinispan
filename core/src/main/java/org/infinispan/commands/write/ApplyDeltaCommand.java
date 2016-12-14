@@ -59,6 +59,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       if (contextEntry instanceof DeltaAwareCacheEntry) {
          DeltaAwareCacheEntry deltaAwareCacheEntry = (DeltaAwareCacheEntry) contextEntry;
          deltaAwareCacheEntry.appendDelta(delta);
+      } else {
+         throw new IllegalStateException();
       }
       return null;
    }

@@ -1,10 +1,12 @@
 package org.infinispan.interceptors.locking;
 
+import java.util.Collection;
+
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.logging.Log;
@@ -47,13 +49,13 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       assertNonTransactional(ctx);
-      if (command.isForwarded() || hasSkipLocking(command)) {
+      if (forwarded || hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
       try {
-         lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
+         lockAllAndRecord(ctx, keys.stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
       } catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
