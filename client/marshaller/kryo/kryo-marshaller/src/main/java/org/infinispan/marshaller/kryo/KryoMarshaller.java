@@ -1,6 +1,7 @@
 package org.infinispan.marshaller.kryo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -49,11 +50,6 @@ public class KryoMarshaller extends AbstractMarshaller {
 
    @Override
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) {
-      if (obj instanceof byte[]) {
-         byte[] bytes = (byte[]) obj;
-         return new ByteBufferImpl(bytes, 0, bytes.length);
-      }
-
       try (Output output = new Output(new ExposedByteArrayOutputStream(estimatedSize), estimatedSize)) {
          kryo.writeClassAndObject(output, obj);
          byte[] bytes = output.toBytes();

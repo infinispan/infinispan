@@ -1,5 +1,7 @@
 package org.infinispan.marshaller.test;
 
+import static org.testng.Assert.assertEquals;
+
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -90,5 +92,14 @@ public abstract class AbstractMarshallingTest extends AbstractInfinispanTest {
       assert unmarshalledObj.getList().size() == listSize;
       for (int i = 0; i < listSize; i++)
          assert unmarshalledObj.getList().get(i) == i;
+   }
+
+   @Test
+   protected void testSerializingByteArrays() throws Exception {
+      byte[] bytes = new byte[10];
+      IntStream.range(0, 10).forEach(i -> bytes[i] = (byte) i);
+      byte[] marshalledBytes = marshaller.objectToBuffer(bytes).getBuf();
+      byte[] unmarsalledBytes = (byte[]) marshaller.objectFromByteBuffer(marshalledBytes);
+      IntStream.range(0, 10).forEach(i -> assertEquals(unmarsalledBytes[i], i));
    }
 }
