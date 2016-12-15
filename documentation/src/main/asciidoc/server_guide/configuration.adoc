@@ -545,27 +545,7 @@ Add the kryo marshaller dependency to your pom:
 ----
 
 To register custom Kryo serializer in your own code, you must register the custom serializer with Kryo before any
-marshalling begins. This can be achieved via the helper method `KryoMarshaller::registerSerializer(..)` which registers
-the custom schema with the underlying Kryo object used for marshalling.  If more complex registration, or manipulation of
-the underlying Kryo instances is required, you can access the Kryo instance via `KryoMarshaller::getKryo()`.
-
-For example, when registering a schema on the HotRod client the following steps are required:
-
-[source,java]
-----
-ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.addServer()
-            .host("127.0.0.1")
-            .port(11222)
-            .socketTimeout(1200000)
-      .marshaller(KryoMarshaller.class);
-
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
-      KryoMarshaller marshaller = remoteCacheManager.getMarshaller();
-      marshaller.registerSerializer(ExampleObject.class, new ExampleObjectSerializer());
-----
-
-Alternatively, you can implement a service provider for the `SerializerRegistryService.java` interface, placing all serializer registrations
+marshalling begins. This can be achieved by implementing a service provider for the `SerializerRegistryService.java` interface, placing all serializer registrations
 in the `register(Kryo)` method; where serializers should be registered with the supplied `Kryo` object using the Kryo api.
 e.g. `kryo.register(ExampleObject.class, new ExampleObjectSerializer())`.  Implementations of this interface are loaded
 via Java's ServiceLoader api, therefore the full path of the implementing class(es) should be provided in a
