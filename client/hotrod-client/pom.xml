@@ -13,6 +13,11 @@
    <name>Infinispan Hot Rod Client</name>
    <description>Infinispan Hot Rod Client</description>
 
+   <properties>
+      <infinispan.test.parallel.threads>5</infinispan.test.parallel.threads>
+   </properties>
+
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
