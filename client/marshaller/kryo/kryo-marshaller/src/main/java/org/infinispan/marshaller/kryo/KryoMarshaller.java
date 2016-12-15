@@ -1,7 +1,6 @@
 package org.infinispan.marshaller.kryo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -11,9 +10,10 @@ import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.pool.KryoFactory;
+import com.esotericsoftware.kryo.pool.KryoPool;
 
 /**
  * @author Ryan Emerson
@@ -27,34 +27,35 @@ public class KryoMarshaller extends AbstractMarshaller {
             .forEach(serializerServices::add);
    }
 
-   private final Kryo kryo = new Kryo();
+   private final KryoPool pool;
 
    public KryoMarshaller() {
-      serializerServices.forEach(service -> service.register(kryo));
-   }
-
-   public Kryo getKryo() {
-      return kryo;
-   }
-
-   public void registerSerializer(Class type, Serializer serializer) {
-      kryo.register(type, serializer);
+      KryoFactory factory = () -> {
+         Kryo kryo = new Kryo();
+         serializerServices.forEach(service -> service.register(kryo));
+         return kryo;
+      };
+      this.pool = new KryoPool.Builder(factory).softReferences().build();
    }
 
    @Override
    public Object objectFromByteBuffer(byte[] bytes, int offset, int length) {
-      try (Input input = new Input(bytes, offset, length)) {
-         return kryo.readClassAndObject(input);
-      }
+      return pool.run((kryo) -> {
+         try (Input input = new Input(bytes, offset, length)) {
+            return kryo.readClassAndObject(input);
+         }
+      });
    }
 
    @Override
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) {
-      try (Output output = new Output(new ExposedByteArrayOutputStream(estimatedSize), estimatedSize)) {
-         kryo.writeClassAndObject(output, obj);
-         byte[] bytes = output.toBytes();
-         return new ByteBufferImpl(bytes, 0, bytes.length);
-      }
+      return pool.run((kryo) -> {
+         try (Output output = new Output(new ExposedByteArrayOutputStream(estimatedSize), estimatedSize)) {
+            kryo.writeClassAndObject(output, obj);
+            byte[] bytes = output.toBytes();
+            return new ByteBufferImpl(bytes, 0, bytes.length);
+         }
+      });
    }
 
    @Override
