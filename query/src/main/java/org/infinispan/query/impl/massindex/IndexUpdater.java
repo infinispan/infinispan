@@ -50,6 +50,10 @@ public class IndexUpdater {
       defaultBatchBackend.purge(Collections.singleton(entityType));
    }
 
+   public void waitForAsyncCompletion() {
+      defaultBatchBackend.awaitAsyncProcessingCompletion();
+   }
+
    public void updateIndex(Object key, Object value) {
       if (value != null) {
          if (!Thread.currentThread().isInterrupted()) {

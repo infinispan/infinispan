@@ -62,6 +62,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    protected void postIndex() {
+      indexUpdater.waitForAsyncCompletion();
       if (flush) indexUpdater.flush(entity);
    }
 
