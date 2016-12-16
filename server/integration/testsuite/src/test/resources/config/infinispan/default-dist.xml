@@ -53,6 +53,10 @@
                     name="namedCache"
                     start="EAGER"
                     mode="SYNC" />
+                <distributed-cache
+                    name="streamingTestCache"
+                    start="EAGER"
+                    mode="SYNC" />
             </cache-container>
             <cache-container name="security"/>
         </subsystem>
