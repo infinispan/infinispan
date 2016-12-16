@@ -52,6 +52,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -87,9 +88,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
    private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper();
 
+   private boolean syncRollbackPhase;
+
    @Inject
    public void inject(PartitionHandlingManager partitionHandlingManager) {
       this.partitionHandlingManager = partitionHandlingManager;
+   }
+
+   @Start
+   public void start() {
+      syncRollbackPhase = cacheConfiguration.transaction().syncRollbackPhase();
    }
 
    @Override
@@ -464,11 +472,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private RpcOptions createCommitRpcOptions() {
-      return createRpcOptionsFor2ndPhase(cacheConfiguration.transaction().syncCommitPhase());
+      return createRpcOptionsFor2ndPhase(isSyncCommitPhase());
    }
 
    private RpcOptions createRollbackRpcOptions() {
-      return createRpcOptionsFor2ndPhase(cacheConfiguration.transaction().syncRollbackPhase());
+      return createRpcOptionsFor2ndPhase(syncRollbackPhase);
    }
 
    private RpcOptions createRpcOptionsFor2ndPhase(boolean sync) {
@@ -480,7 +488,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected RpcOptions createPrepareRpcOptions() {
-      return cacheConfiguration.clustering().cacheMode().isSynchronous() ?
+      return defaultSynchronous ?
               rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build() :
               rpcManager.getDefaultRpcOptions(false);
    }

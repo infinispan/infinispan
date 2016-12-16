@@ -98,7 +98,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      if (key != null && this.key != null && keyEquivalence.equals(key, this.key))
+      if (keyEquivalence.equals(key, this.key))
          return cacheEntry;
 
       return null;

@@ -44,6 +44,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Start
    public void start() {
+      super.start();
       needToMarkReads = cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
             cacheConfiguration.locking().writeSkewCheck() &&
             cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
@@ -90,12 +91,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    protected BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
 
-      if (ctx.isInTxScope())
-         return invokeNext(ctx, command);
-
-      //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
-      //locks need to be released in this situation as they might have been acquired from L1.
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override

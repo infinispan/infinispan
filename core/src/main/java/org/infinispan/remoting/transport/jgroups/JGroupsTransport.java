@@ -506,9 +506,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public Address getAddress() {
-      if (address == null && channel != null) {
-         address = fromJGroupsAddress(channel.getAddress());
-      }
       return address;
    }
 
@@ -979,9 +976,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             log.debugf("Joined: %s, Left: %s", joined, left);
          }
 
+         // The first view is installed before returning from JChannel.connect
+         // So we need to set the local address here
+         if (address == null) {
+            address = fromJGroupsAddress(channel.getAddress());
+         }
          // Now that we have a view, figure out if we are the isCoordinator
          coordinator = fromJGroupsAddress(newView.getCreator());
-         isCoordinator = coordinator != null && coordinator.equals(getAddress());
+         isCoordinator = coordinator != null && coordinator.equals(address);
 
          // Wake up any threads that are waiting to know about who the isCoordinator is
          // do it before the notifications, so if a listener throws an exception we can still start

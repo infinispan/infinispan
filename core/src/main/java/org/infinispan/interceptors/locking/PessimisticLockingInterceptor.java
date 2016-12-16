@@ -90,11 +90,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                   }
 
                   acquireLocalLock(rCtx, command);
-
-                  // TODO This was probably needed at some time for L1 writes, but not now
-                  if (!rCtx.isInTxScope()) {
-                     lockManager.unlockAll(rCtx);
-                  }
                });
       } catch (Throwable t) {
          rethrowAndReleaseLocksIfNeeded(ctx, t);
