@@ -133,7 +133,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
-      // Store as binary marshalls keys/values eagerly now, so avoid extra serialization
       if (hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 

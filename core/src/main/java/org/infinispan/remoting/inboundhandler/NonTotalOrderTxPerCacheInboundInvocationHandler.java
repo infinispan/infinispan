@@ -42,6 +42,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private PendingLockManager pendingLockManager;
    private Configuration configuration;
    private boolean pessimisticLocking;
+   private long lockAcquisitionTimeout;
 
    public NonTotalOrderTxPerCacheInboundInvocationHandler() {
       checkTopologyAction = new CheckTopologyAction(this);
@@ -55,6 +56,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       this.configuration = configuration;
       this.pendingLockManager = pendingLockManager;
       this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      this.lockAcquisitionTimeout = configuration.locking().lockAcquisitionTimeout();
    }
 
    @Override
@@ -131,7 +133,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       if (keys.isEmpty()) {
          return null;
       }
-      final long timeoutMillis = command.hasZeroLockAcquisition() ? 0 : configuration.locking().lockAcquisitionTimeout();
+      final long timeoutMillis = command.hasZeroLockAcquisition() ? 0 : lockAcquisitionTimeout;
 
       DefaultReadyAction action = new DefaultReadyAction(new ActionState(command, topologyId, timeoutMillis),
                                                          checkTopologyAction,

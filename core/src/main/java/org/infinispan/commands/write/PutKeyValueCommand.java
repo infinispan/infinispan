@@ -12,9 +12,7 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -38,14 +36,13 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private boolean successful = true;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
-   private Equivalence valueEquivalence;
 
    public PutKeyValueCommand() {
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
                              CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                             Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+                             CommandInvocationId commandInvocationId) {
       super(key, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
@@ -53,17 +50,15 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
-      this.valueEquivalence = valueEquivalence;
 
       if (value instanceof DeltaAware) {
          addFlag(Flag.DELTA_WRITE);
       }
    }
 
-   public void init(CacheNotifier notifier, Configuration cfg) {
+   public void init(CacheNotifier notifier) {
       //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
 
    public Object getValue() {
@@ -105,7 +100,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
 
       Object prevValue = e.getValue();
-      if (!valueMatcher.matches(prevValue, null, value, valueEquivalence)) {
+      if (!valueMatcher.matches(prevValue, null, value)) {
          successful = false;
          return prevValue;
       }

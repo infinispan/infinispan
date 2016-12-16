@@ -36,5 +36,9 @@ public class LockUtil {
       }
    }
 
-
+   public static boolean isLockOwner(Object key, ClusteringDependentLogic clusteringDependentLogic) {
+      Object keyToCheck =
+            key instanceof DeltaCompositeKey ? ((DeltaCompositeKey) key).getDeltaAwareValueKey() : key;
+      return clusteringDependentLogic.localNodeIsPrimaryOwner(keyToCheck);
+   }
 }

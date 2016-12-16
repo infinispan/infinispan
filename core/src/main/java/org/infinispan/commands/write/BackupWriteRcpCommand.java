@@ -97,17 +97,17 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
       DataWriteCommand command;
       switch (operation) {
          case REMOVE:
-            command = new RemoveCommand(key, null, cacheNotifier, flags, null, commandInvocationId);
+            command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId);
             break;
          case REMOVE_EXPIRED:
-            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, null, commandInvocationId);
+            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId);
             break;
          case WRITE:
-            command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags, null,
-                  commandInvocationId);
+            command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags,
+                                             commandInvocationId);
             break;
          case REPLACE:
-            command = new ReplaceCommand(key, null, value, cacheNotifier, metadata, flags, null, commandInvocationId);
+            command = new ReplaceCommand(key, null, value, cacheNotifier, metadata, flags, commandInvocationId);
             break;
          default:
             throw new IllegalStateException();

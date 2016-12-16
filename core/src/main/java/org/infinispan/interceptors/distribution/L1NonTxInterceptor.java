@@ -60,7 +60,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    protected EntryFactory entryFactory;
    protected CommandsFactory commandsFactory;
    protected DataContainer dataContainer;
-   protected Configuration config;
    protected StateTransferLock stateTransferLock;
    private CommandAckCollector commandAckCollector;
 
@@ -100,7 +99,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       this.cdl = cdl;
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
-      this.config = config;
       this.stateTransferLock = stateTransferLock;
       this.commandsFactory = commandsFactory;
       this.commandAckCollector = commandAckCollector;
@@ -108,8 +106,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Start
    public void start() {
-      l1Lifespan = config.clustering().l1().lifespan();
-      replicationTimeout = config.clustering().remoteTimeout();
+      l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
+      replicationTimeout = cacheConfiguration.clustering().remoteTimeout();
    }
 
    @Override

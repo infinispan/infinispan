@@ -111,14 +111,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private static final EnumSet<Flag> EVICT_FLAGS =
          EnumSet.of(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL);
+   private boolean transactional;
+   private boolean totalOrder;
 
    private final InvocationSuccessHandler dataReadReturnHandler = (rCtx, rCommand, rv) -> {
       AbstractDataCommand dataCommand = (AbstractDataCommand) rCommand;
 
-      // TODO needed because entries might be added in L1?
-      if (!rCtx.isInTxScope()) {
-         commitContextEntries(rCtx, dataCommand, null);
-      } else if (useRepeatableRead) {
+      if (rCtx.isInTxScope() && useRepeatableRead) {
          // The entry must be in the context
          CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
          cacheEntry.setSkipLookup(true);
@@ -128,7 +127,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
 
       // Entry visit notifications used to happen in the CallInterceptor
-      // We do it after (maybe) committing the entries, to avoid adding another try/finally block
+      // We do it at the end to avoid adding another try/finally block around the notifications
       if (rv != null && !(rv instanceof Response)) {
          Object value = dataCommand instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
          notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
@@ -170,6 +169,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
+      transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
@@ -813,9 +814,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * @return true if the modification should be committed, false otherwise
     */
    protected boolean shouldCommitDuringPrepare(PrepareCommand command, TxInvocationContext ctx) {
-      boolean isTotalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
-      return isTotalOrder ? command.isOnePhaseCommit() && (!ctx.isOriginLocal() || !command.hasModifications()) :
-            command.isOnePhaseCommit();
+      return totalOrder ?
+             command.isOnePhaseCommit() && (!ctx.isOriginLocal() || !command.hasModifications()) :
+             command.isOnePhaseCommit();
    }
 
    protected final void wrapEntriesForPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

@@ -176,7 +176,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          if (response instanceof SuccessfulResponse) {
             globalRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
          } else {
-            log.errorReadingRebalancingStatus(coordinator, new CacheException(response.toString()));
+            log.errorReadingRebalancingStatus(coordinator, new CacheException(Objects.toString(response)));
          }
       }
    }

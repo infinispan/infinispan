@@ -34,6 +34,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
@@ -68,10 +69,18 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private StateTransferManager stateTransferManager;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
+   private boolean syncCommitPhase;
+   private boolean defaultSynchronous;
 
    @Inject
    public void init(StateTransferManager stateTransferManager) {
       this.stateTransferManager = stateTransferManager;
+   }
+
+   @Start
+   public void start() {
+      syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
+      defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
    }
 
    @Override
@@ -308,9 +317,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private boolean isTxCommandAsync(TransactionBoundaryCommand command) {
       boolean async = false;
       if (command instanceof CommitCommand || command instanceof RollbackCommand) {
-         async = !cacheConfiguration.transaction().syncCommitPhase();
+         async = !syncCommitPhase;
       } else if (command instanceof PrepareCommand) {
-         async = !cacheConfiguration.clustering().cacheMode().isSynchronous();
+         async = !defaultSynchronous;
       }
       return async;
    }

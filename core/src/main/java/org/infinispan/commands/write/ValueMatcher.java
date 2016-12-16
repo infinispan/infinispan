@@ -1,7 +1,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -22,7 +22,7 @@ public enum ValueMatcher {
     */
    MATCH_ALWAYS() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return true;
       }
 
@@ -43,8 +43,8 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(existingValue, expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return equal(existingValue, expectedValue);
       }
 
       @Override
@@ -63,9 +63,9 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED_OR_NEW() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(existingValue, expectedValue, valueEquivalence) ||
-               equal(existingValue, newValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return equal(existingValue, expectedValue) ||
+               equal(existingValue, newValue);
       }
 
       @Override
@@ -81,8 +81,8 @@ public enum ValueMatcher {
 
    MATCH_EXPECTED_OR_NULL() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return newValue == null || equal(existingValue, expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return newValue == null || equal(existingValue, expectedValue);
       }
 
       @Override
@@ -100,7 +100,7 @@ public enum ValueMatcher {
     */
    MATCH_NON_NULL() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return existingValue != null;
       }
 
@@ -120,7 +120,7 @@ public enum ValueMatcher {
     */
    MATCH_NEVER() {
       @Override
-      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return false;
       }
 
@@ -135,17 +135,14 @@ public enum ValueMatcher {
       }
    },;
 
-   public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue,
-                                   Equivalence valueEquivalence);
+   public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue);
 
    public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();
 
-   protected boolean equal(Object a, Object b, Equivalence valueEquivalence) {
-      // Compare by identity first to catch the case where both are null
-      if (a == b) return true;
-      return valueEquivalence != null ? valueEquivalence.equals(a, b) : (a != null && a.equals(b));
+   protected boolean equal(Object a, Object b) {
+      return AnyEquivalence.getInstance().equals(a, b);
    }
 
    private static final ValueMatcher[] CACHED_VALUES = values();

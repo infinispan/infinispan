@@ -12,7 +12,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -119,7 +118,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
       CacheEntry<K, V> copy = e.clone();
       R ret = f.apply(value, EntryViews.readWrite(copy, prevValue, prevMetadata));
-      if (valueMatcher.matches(oldPrevValue, prevValue, copy.getValue(), AnyEquivalence.getInstance())) {
+      if (valueMatcher.matches(oldPrevValue, prevValue, copy.getValue())) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
          e.setValue(copy.getValue());
          e.setMetadata(copy.getMetadata());

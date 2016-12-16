@@ -42,6 +42,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected RpcManager rpcManager;
 
    protected boolean defaultSynchronous;
+   private boolean syncCommitPhase;
    protected RpcOptions staggeredOptions;
    protected RpcOptions defaultSyncOptions;
    protected RpcOptions defaultAsyncOptions;
@@ -56,6 +57,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
+      syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
       // This is a simplified state-less version of ClusteredGetResponseValidityFilter
       staggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE).responseFilter(new ResponseFilter() {
          @Override
@@ -184,7 +186,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    }
 
    protected final boolean isSyncCommitPhase() {
-      return cacheConfiguration.transaction().syncCommitPhase();
+      return syncCommitPhase;
    }
 
    protected final TimeoutValidationResponseFilter getSelfDeliverFilter() {

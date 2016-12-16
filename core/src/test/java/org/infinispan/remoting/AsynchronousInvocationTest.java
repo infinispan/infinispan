@@ -20,7 +20,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -110,10 +109,10 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       //populate commands
       blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName);
-      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, null);
+      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, AnyEquivalence.STRING);
+      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
    }

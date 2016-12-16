@@ -29,9 +29,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    protected final BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       assertNonTransactional(ctx);
-      // TODO Check if the return handler is really needed
-      //possibly needed because of L1 locks being acquired
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override
@@ -43,9 +41,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       assertNonTransactional(ctx);
-      // TODO Check if the return handler is really needed
-      //possibly needed because of L1 locks being acquired
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override

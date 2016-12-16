@@ -229,7 +229,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    protected final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
-      boolean shouldLock = LockUtil.getLockOwnership(key, cdl) == Ownership.PRIMARY;
+      boolean shouldLock = LockUtil.isLockOwner(key, cdl);
       if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
    }

@@ -61,8 +61,8 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cacheName, EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK),
-         cache.getCacheConfiguration().dataContainer().keyEquivalence());
+            key, cacheName, EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK)
+      );
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);
       if (responses.isEmpty()) return null;

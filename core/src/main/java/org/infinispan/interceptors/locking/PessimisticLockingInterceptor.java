@@ -17,7 +17,6 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.Ownership;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
@@ -90,11 +89,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                   }
 
                   acquireLocalLock(rCtx, command);
-
-                  // TODO This was probably needed at some time for L1 writes, but not now
-                  if (!rCtx.isInTxScope()) {
-                     lockManager.unlockAll(rCtx);
-                  }
                });
       } catch (Throwable t) {
          rethrowAndReleaseLocksIfNeeded(ctx, t);
@@ -384,7 +378,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private boolean isLockOwner(Collection<?> keys) {
       for (Object key : keys) {
-         if (LockUtil.getLockOwnership(key, cdl) != Ownership.PRIMARY) {
+         if (!LockUtil.isLockOwner(key, cdl)) {
             return false;
          }
       }
@@ -392,7 +386,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private boolean isLockOwner(Object key) {
-      return LockUtil.getLockOwnership(key, cdl) == Ownership.PRIMARY;
+      return LockUtil.isLockOwner(key, cdl);
    }
 
    private boolean isStateTransferInProgress() {
