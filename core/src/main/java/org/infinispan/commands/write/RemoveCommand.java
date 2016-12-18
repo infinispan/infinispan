@@ -9,9 +9,7 @@ import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -35,7 +33,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    private boolean nonExistent = false;
 
    protected ValueMatcher valueMatcher;
-   protected Equivalence valueEquivalence;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -43,20 +40,18 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet, Equivalence valueEquivalence,
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet,
                         CommandInvocationId commandInvocationId) {
       super(key, flagsBitSet, commandInvocationId);
       this.value = value;
       //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = valueEquivalence;
       this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
    }
 
-   public void init(CacheNotifier notifier, Configuration configuration) {
+   public void init(CacheNotifier notifier) {
       //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
    }
 
    public RemoveCommand() {
@@ -78,7 +73,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       Object prevValue = e.getValue();
       if (prevValue == null) {
          nonExistent = true;
-         if (valueMatcher.matches(null, value, null, valueEquivalence)) {
+         if (valueMatcher.matches(null, value, null)) {
             e.setChanged(true);
             e.setRemoved(true);
             e.setCreated(false);
@@ -94,7 +89,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          }
       }
 
-      if (!valueMatcher.matches(prevValue, value, null, valueEquivalence)) {
+      if (!valueMatcher.matches(prevValue, value, null)) {
          successful = false;
          return false;
       }

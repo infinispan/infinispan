@@ -38,7 +38,7 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    @Override
    public boolean equals(T obj, Object otherObj) {
-      return obj != null && obj.equals(otherObj);
+      return obj != null ? obj.equals(otherObj) : otherObj == null;
    }
 
    @Override

@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -40,9 +39,9 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    public RemoveExpiredCommand(Object key, Object value, Long lifespan, CacheNotifier notifier,
-                               Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+                               CommandInvocationId commandInvocationId) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, valueEquivalence, commandInvocationId);
+      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
       this.lifespan = lifespan;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
    }
@@ -61,14 +60,14 @@ public class RemoveExpiredCommand extends RemoveCommand {
          // If the provided lifespan is null, that means it is a store removal command, so we can't compare lifespan
          Object prevValue = e.getValue();
          if (lifespan == null) {
-            if (valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
+            if (valueMatcher.matches(prevValue, value, e.getValue())) {
                e.setExpired(true);
                return performRemove(e, prevValue, ctx);
             }
          } else if (e.getMetadata() == null) {
             // If there is no metadata and no value that means it is gone currently or not shown due to expired
             // If we have a value though we should verify it matches the value as well
-            if (value == null || valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
+            if (value == null || valueMatcher.matches(prevValue, value, e.getValue())) {
                e.setExpired(true);
                return performRemove(e, prevValue, ctx);
             }
@@ -76,7 +75,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
             // If the entries lifespan is not positive that means it can't expire so don't even try to remove it
             // Lastly if there is metadata we have to verify it equals our lifespan and the value match.
             // TODO: add a threshold to verify this wasn't just created with the same value/lifespan just before expiring
-            if (valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
+            if (valueMatcher.matches(prevValue, value, e.getValue())) {
                e.setExpired(true);
                return performRemove(e, prevValue, ctx);
             }

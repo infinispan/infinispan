@@ -131,7 +131,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (modifications == null) {
          throw new IllegalArgumentException("modification list cannot be null");
       }
-      List<WriteCommand> mods = new ArrayList<>();
+      List<WriteCommand> mods = new ArrayList<>(modifications.size());
       for (WriteCommand cmd : modifications) {
          if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
             hasLocalOnlyModifications = true;

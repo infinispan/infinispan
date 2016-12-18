@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.LockUtil;
 
@@ -57,9 +56,9 @@ public abstract class BaseLockingAction implements Action {
       return UPDATER.compareAndSet(this, expectedState, newState);
    }
 
-   private void filterByPrimaryOwner(Collection<?> keys, Collection<Object> toAdd) {
+   private void filterByLockOwner(Collection<?> keys, Collection<Object> toAdd) {
       keys.forEach(key -> {
-         if (LockUtil.getLockOwnership(key, clusteringDependentLogic) == Ownership.PRIMARY) {
+         if (LockUtil.isLockOwner(key, clusteringDependentLogic)) {
             toAdd.add(key);
          }
       });
@@ -70,7 +69,7 @@ public abstract class BaseLockingAction implements Action {
       if (filteredKeys == null) {
          Collection<?> rawKeys = state.getCommand().getKeysToLock();
          filteredKeys = new ArrayList<>(rawKeys.size());
-         filterByPrimaryOwner(rawKeys, filteredKeys);
+         filterByLockOwner(rawKeys, filteredKeys);
          state.updateFilteredKeys(filteredKeys);
       }
       return filteredKeys;

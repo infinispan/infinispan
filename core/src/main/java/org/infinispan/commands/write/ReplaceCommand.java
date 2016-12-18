@@ -9,9 +9,7 @@ import java.io.ObjectOutput;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -34,13 +32,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private boolean successful = true;
 
    private ValueMatcher valueMatcher;
-   private Equivalence valueEquivalence;
 
    public ReplaceCommand() {
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
-                         CacheNotifier notifier, Metadata metadata, long flagsBitSet, Equivalence valueEquivalence,
+                         CacheNotifier notifier, Metadata metadata, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
       super(key, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
@@ -49,13 +46,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.notifier = notifier;
       this.metadata = metadata;
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
-      this.valueEquivalence = valueEquivalence;
    }
 
-   public void init(CacheNotifier notifier, Configuration cfg) {
+   public void init(CacheNotifier notifier) {
       //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
 
    @Override
@@ -79,7 +74,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
       // We need the null check as in non-tx caches we don't always wrap the entry on the origin
       Object prevValue = e.getValue();
-      if (valueMatcher.matches(prevValue, oldValue, newValue, valueEquivalence)) {
+      if (valueMatcher.matches(prevValue, oldValue, newValue)) {
          e.setChanged(true);
          Object old = e.setValue(newValue);
          Metadatas.updateMetadata(e, metadata);

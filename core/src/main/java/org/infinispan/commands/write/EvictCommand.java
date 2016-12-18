@@ -25,7 +25,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    public EvictCommand(Object key, CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId,
                        InternalEntryFactory factory) {
-      super(key, null, notifier, flagsBitSet, null, commandInvocationId);
+      super(key, null, notifier, flagsBitSet, commandInvocationId);
       this.factory = factory;
    }
 

@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
@@ -48,7 +47,6 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    private AsyncInterceptorChain invoker;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-   private Equivalence<? super K> keyEquivalence;
 
    ClusteredGetAllCommand() {
       super(null, EnumUtil.EMPTY_BIT_SET);
@@ -58,23 +56,19 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags,
-                                 GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
+   public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags, GlobalTransaction gtx) {
       super(cacheName, flags);
       this.keys = keys;
       this.gtx = gtx;
-      this.keyEquivalence = keyEquivalence;
    }
 
-   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory,
-         InternalEntryFactory entryFactory, AsyncInterceptorChain interceptorChain,
-         TransactionTable txTable, Equivalence keyEquivalence) {
+   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
+                    AsyncInterceptorChain interceptorChain, TransactionTable txTable) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.txTable = txTable;
       this.entryFactory = entryFactory;
-      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -174,11 +168,6 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
             return false;
       } else if (!gtx.equals(other.gtx))
          return false;
-      if (keyEquivalence == null) {
-         if (other.keyEquivalence != null)
-            return false;
-      } else if (!keyEquivalence.equals(other.keyEquivalence))
-         return false;
       if (keys == null) {
          if (other.keys != null)
             return false;
@@ -192,7 +181,6 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       final int prime = 31;
       int result = 1;
       result = prime * result + ((gtx == null) ? 0 : gtx.hashCode());
-      result = prime * result + ((keyEquivalence == null) ? 0 : keyEquivalence.hashCode());
       result = prime * result + ((keys == null) ? 0 : keys.hashCode());
       return result;
    }

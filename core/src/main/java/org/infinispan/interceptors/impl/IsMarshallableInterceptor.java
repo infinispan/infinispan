@@ -11,8 +11,6 @@ import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -32,7 +30,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    private StreamingMarshaller marshaller;
-   private boolean storeAsBinary;
+   private boolean usingAsyncStore;
 
    @Inject
    protected void injectMarshaller(StreamingMarshaller marshaller) {
@@ -41,9 +39,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    @Start
    protected void start() {
-      storeAsBinary = cacheConfiguration.storeAsBinary().enabled()
-            && (cacheConfiguration.storeAsBinary().storeKeysAsBinary()
-                      || cacheConfiguration.storeAsBinary().storeValuesAsBinary());
+      usingAsyncStore = cacheConfiguration.persistence().usingAsyncStore();
    }
 
    @Override
@@ -79,8 +75,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean isUsingAsyncStore(InvocationContext ctx, FlagAffectedCommand command) {
-      return ctx.isOriginLocal() && !cacheConfiguration.persistence().usingAsyncStore() &&
-            !command.hasFlag(Flag.SKIP_CACHE_STORE);
+      return usingAsyncStore && ctx.isOriginLocal() && !command.hasFlag(Flag.SKIP_CACHE_STORE);
    }
 
    private void checkMarshallable(Object o) throws NotSerializableException {
