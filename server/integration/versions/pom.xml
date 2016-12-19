@@ -63,7 +63,7 @@
       <version.resteasy>3.1.0.Final</version.resteasy>
       <version.lucene>5.5.2</version.lucene>
       <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
-      <version.jboss.aesh>0.62</version.jboss.aesh>
+      <version.jboss.aesh>0.66.13</version.jboss.aesh>
    </properties>
 
    <dependencyManagement>
