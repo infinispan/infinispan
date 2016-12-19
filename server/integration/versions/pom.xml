@@ -59,7 +59,7 @@
       <version.karaf>2.3.3</version.karaf>
       <version.pax.exam>4.1.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
-      <version.resteasy>3.0.11.Final</version.resteasy>
+      <version.resteasy>3.1.0.Final</version.resteasy>
       <version.lucene>5.5.1</version.lucene>
    </properties>
 
