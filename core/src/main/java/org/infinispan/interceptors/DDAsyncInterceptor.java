@@ -46,6 +46,10 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
    @SuppressWarnings("unchecked")
    @Override
    public final BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      // Optimize for cache.get() (GetKeyValueCommand on the originator and GetCacheEntryCommand on remote nodes)
+      if (command instanceof GetKeyValueCommand) {
+         return visitGetKeyValueCommand(ctx, (GetKeyValueCommand) command);
+      }
       return (BasicInvocationStage) command.acceptVisitor(ctx, this);
    }
 
