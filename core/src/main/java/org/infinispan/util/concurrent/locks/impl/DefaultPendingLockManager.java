@@ -177,7 +177,8 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
       pendingLockPromise.registerListenerInCacheTransactions();
       if (!pendingLockPromise.isReady()) {
-         timeoutExecutor.schedule(pendingLockPromise, time, unit);
+         // schedule(Runnable) creates an extra Callable wrapper object
+         timeoutExecutor.schedule((Callable<Void>) pendingLockPromise, time, unit);
       }
       return pendingLockPromise;
    }
@@ -366,7 +367,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
    }
 
-   private class PendingLockPromiseImpl implements PendingLockPromise, Callable<Void> {
+   private class PendingLockPromiseImpl implements PendingLockPromise, Callable<Void>, Runnable {
 
       private final Collection<PendingTransaction> pendingTransactions;
       private final long expectedEndTime;
@@ -412,8 +413,15 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
       @Override
       public Void call() throws Exception {
-         onRelease(); //invoked when the timeout kicks.
+         //invoked when the timeout kicks.
+         onRelease();
          return null;
+      }
+
+      @Override
+      public void run() {
+         //invoked when the timeout kicks.
+         onRelease();
       }
 
       private void onRelease() {
@@ -428,7 +436,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
       private void registerListenerInCacheTransactions() {
          for (PendingTransaction transaction : pendingTransactions) {
-            transaction.keyReleased.thenRun(this::onRelease);
+            transaction.keyReleased.thenRun(this);
          }
       }
 

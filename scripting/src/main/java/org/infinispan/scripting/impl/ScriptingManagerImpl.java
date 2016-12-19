@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -57,6 +58,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private Cache<String, String> scriptCache;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
    private AuthorizationHelper globalAuthzHelper;
+
+   private final Function<String, ScriptEngine> getEngineByName = this::getEngineByName;
+   private final Function<String, ScriptEngine> getEngineByExtension = this::getEngineByExtension;
 
    public ScriptingManagerImpl() {
    }
@@ -221,11 +225,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
    ScriptEngine getEngineForScript(ScriptMetadata metadata) {
       ScriptEngine engine;
       if (metadata.language().isPresent()) {
-         engine = scriptEnginesByLanguage.computeIfAbsent(metadata.language().get(),
-               this::getEngineByName);
+         engine = scriptEnginesByLanguage.computeIfAbsent(metadata.language().get(), getEngineByName);
       } else {
-         engine = scriptEnginesByExtension.computeIfAbsent(metadata.extension(),
-               this::getEngineByExtension);
+         engine = scriptEnginesByExtension.computeIfAbsent(metadata.extension(), getEngineByExtension);
       }
       if (engine == null) {
          throw log.noEngineForScript(metadata.name());

@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -18,9 +19,10 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  */
 public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
-
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   private final InvocationComposeHandler handleLocalPrepareReturn = this::handleLocalPrepareReturn;
 
    @Override
    public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -60,7 +62,8 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
                command.getGlobalTransaction().globalId(), command.getTopologyId());
       }
 
-      return invokeNext(ctx, command).compose(this::handleLocalPrepareReturn);
+      return invokeNext(ctx, command)
+            .compose(handleLocalPrepareReturn);
    }
 
    private BasicInvocationStage handleLocalPrepareReturn(BasicInvocationStage invocation, InvocationContext ctx,
@@ -83,7 +86,8 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       } else {
          logRetry(command);
          prepareCommand.setTopologyId(currentTopologyId());
-         return invokeNext(ctx, command).compose(this::handleLocalPrepareReturn);
+         return invokeNext(ctx, command)
+               .compose(handleLocalPrepareReturn);
       }
    }
 

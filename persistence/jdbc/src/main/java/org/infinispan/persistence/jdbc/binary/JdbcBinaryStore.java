@@ -20,6 +20,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
@@ -72,6 +73,8 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
 
    private StripedLock locks;
    private JdbcBinaryStoreConfiguration configuration;
+
+   private final Function<Object, Integer> getBuckedId = this::getBuckedId;
 
    public JdbcBinaryStore() {
       super(log);
@@ -339,7 +342,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
 
    private Map<Integer, Bucket> getExistingBuckets(Connection connection, BatchModification batchModification) throws SQLException {
       Set<Integer> bucketIds = batchModification.getAffectedKeys().stream()
-            .map(this::getBuckedId)
+            .map(getBuckedId)
             .collect(Collectors.toSet());
 
       String sql = tableManager.getSelectMultipleRowSql(bucketIds.size());

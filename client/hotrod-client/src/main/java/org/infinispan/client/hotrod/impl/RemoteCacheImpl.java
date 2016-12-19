@@ -79,6 +79,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private int estimateValueSize;
    private volatile boolean hasCompatibility;
 
+   private final Runnable clear = this::clear;
+
    public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
       if (trace) {
          log.tracef("Creating remote cache: %s", name);
@@ -305,7 +307,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public CompletableFuture<Void> clearAsync() {
       assertRemoteCacheManagerIsStarted();
-      return CompletableFuture.runAsync(this::clear, executorService);
+      return CompletableFuture.runAsync(clear, executorService);
    }
 
    @Override

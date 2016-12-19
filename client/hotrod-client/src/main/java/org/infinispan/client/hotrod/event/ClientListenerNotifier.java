@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
@@ -61,6 +62,8 @@ public class ClientListenerNotifier {
    private final Codec codec;
    private final Marshaller marshaller;
    private final TransportFactory transportFactory;
+
+   private final Consumer<WrappedByteArray> failoverClientListener = this::failoverClientListener;
 
    protected ClientListenerNotifier(
          ExecutorService executor, Codec codec,
@@ -112,7 +115,7 @@ public class ClientListenerNotifier {
          log.tracef("No event listeners registered in faild servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
-      failoverListenerIds.forEach(this::failoverClientListener);
+      failoverListenerIds.forEach(failoverClientListener);
    }
 
    public void failoverClientListener(byte[] listenerId) {

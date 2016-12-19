@@ -21,6 +21,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -49,8 +50,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    protected StateTransferLock stateTransferLock;
    protected Executor remoteExecutor;
    private GroupManager groupManager;
-   private long transactionDataTimeout;
    private ScheduledExecutorService timeoutExecutor;
+
+   private long transactionDataTimeout;
+
+   private final InvocationComposeHandler handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
@@ -70,7 +74,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       updateTopologyId(command);
 
       if (ctx.isOriginLocal()) {
-         return invokeNext(ctx, command).compose(this::handleLocalGetKeysInGroupReturn);
+         return invokeNext(ctx, command)
+               .compose(handleLocalGetKeysInGroupReturn);
       } else {
          return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
             GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
@@ -108,7 +113,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
          cmd.setTopologyId(newTopologyId);
          CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-         return retryWhenDone(transactionDataFuture, newTopologyId, ctx, command).compose(this::handleLocalGetKeysInGroupReturn);
+         return retryWhenDone(transactionDataFuture, newTopologyId, ctx, command)
+               .compose(this::handleLocalGetKeysInGroupReturn);
       } else {
          return stage;
       }

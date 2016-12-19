@@ -325,6 +325,8 @@ class ClientListenerRegistry {
 
       BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(100);
 
+      private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
+
       protected BaseClientEventSender(Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
          this.ch = ch;
          this.listenerId = listenerId;
@@ -405,7 +407,7 @@ class ClientListenerRegistry {
 
          if (!waitingForFlush) {
             // Make sure we write any event in main event loop
-            ch.eventLoop().submit(this::writeEventsIfPossible);
+            ch.eventLoop().submit(writeEventsIfPossible);
          }
       }
 

@@ -58,6 +58,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private Address localAddress;
 
+   private final InvocationComposeHandler onLocalWriteCommand = this::onLocalWriteCommand;
+   private final InvocationComposeHandler onRemotePrimaryOwner = this::onRemotePrimaryOwner;
+   private final InvocationComposeHandler onRemoteBackupOwner = this::onRemoteBackupOwner;
+
    private static Collection<Integer> calculateSegments(Collection<?> keys, ConsistentHash ch) {
       return keys.stream().map(ch::getSegment).collect(Collectors.toSet());
    }
@@ -135,7 +139,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private BasicInvocationStage handleWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       if (ctx.isOriginLocal()) {
-         return invokeNext(ctx, command).compose(this::onLocalWriteCommand);
+         return invokeNext(ctx, command).compose(onLocalWriteCommand);
       } else {
          CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
          if (command.getTopologyId() != cacheTopology.getTopologyId()) {
@@ -147,9 +151,9 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
                cacheTopology.getWriteConsistentHash(), localAddress);
          switch (distributionInfo.ownership()) {
             case BACKUP:
-               return invokeNext(ctx, command).compose(this::onRemoteBackupOwner);
+               return invokeNext(ctx, command).compose(onRemoteBackupOwner);
             case PRIMARY:
-               return invokeNext(ctx, command).compose(this::onRemotePrimaryOwner);
+               return invokeNext(ctx, command).compose(onRemotePrimaryOwner);
             default:
                throw new IllegalStateException();
          }

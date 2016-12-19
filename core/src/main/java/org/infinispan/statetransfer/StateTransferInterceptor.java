@@ -30,13 +30,13 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -69,9 +69,14 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private StateTransferManager stateTransferManager;
 
-   private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
    private boolean syncCommitPhase;
    private boolean defaultSynchronous;
+
+   private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
+   private final InvocationComposeHandler handleReadCommandReturn = this::handleReadCommandReturn;
+   private final InvocationComposeHandler handleTxReturn = this::handleTxReturn;
+   private final InvocationComposeHandler handleTxWriteReturn = this::handleTxWriteReturn;
+   private final InvocationComposeHandler handleNonTxWriteReturn = this::handleNonTxWriteReturn;
 
    @Inject
    public void init(StateTransferManager stateTransferManager) {
@@ -185,7 +190,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
-      return invokeNext(ctx, command).compose(this::handleReadCommandReturn);
+      return invokeNext(ctx, command)
+            .compose(handleReadCommandReturn);
    }
 
    private BasicInvocationStage handleReadCommandReturn(BasicInvocationStage stage, InvocationContext rCtx,
@@ -226,7 +232,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       cmd.addFlags(FlagBitSets.COMMAND_RETRY);
       CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
       return retryWhenDone(topologyFuture, newTopologyId, rCtx, cmd)
-            .compose(this::handleReadCommandReturn);
+            .compose(handleReadCommandReturn);
    }
 
    @Override
@@ -263,7 +269,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId(command);
 
-      return invokeNext(ctx, command).compose(this::handleTxReturn);
+      return invokeNext(ctx, command)
+            .compose(handleTxReturn);
    }
 
    private Address getOrigin(TxInvocationContext ctx) {
@@ -304,7 +311,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                ((PrepareCommand) txCommand).setRetriedCommand(true);
             }
             CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, txCommand).compose(this::handleTxReturn);
+            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, txCommand)
+                  .compose(handleTxReturn);
          }
       } else {
          if (currentTopology > txCommand.getTopologyId()) {
@@ -343,7 +351,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId(command);
 
-      return invokeNext(ctx, command).compose(this::handleTxWriteReturn);
+      return invokeNext(ctx, command)
+            .compose(handleTxWriteReturn);
    }
 
    private BasicInvocationStage handleTxWriteReturn(BasicInvocationStage stage, InvocationContext rCtx,
@@ -366,7 +375,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             // Only the originator can retry the command
             writeCommand.setTopologyId(retryTopologyId);
             CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, rCtx, writeCommand).compose(this::handleTxWriteReturn);
+            return retryWhenDone(transactionDataFuture, retryTopologyId, rCtx, writeCommand)
+                  .compose(handleTxWriteReturn);
          }
       } else {
          if (currentTopologyId() > writeCommand.getTopologyId()) {
@@ -397,7 +407,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return invokeNext(ctx, command);
       }
 
-      return invokeNext(ctx, command).compose(this::handleNonTxWriteReturn);
+      return invokeNext(ctx, command)
+            .compose(handleNonTxWriteReturn);
    }
 
    private BasicInvocationStage handleNonTxWriteReturn(BasicInvocationStage stage, InvocationContext rCtx,
@@ -427,7 +438,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology
       CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-      return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand).compose(this::handleNonTxWriteReturn);
+      return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand)
+            .compose(handleNonTxWriteReturn);
    }
 
    private int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {

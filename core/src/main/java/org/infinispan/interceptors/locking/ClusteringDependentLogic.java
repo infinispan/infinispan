@@ -463,8 +463,9 @@ public interface ClusteringDependentLogic {
     * This logic is used in replicated mode caches.
     */
    class ReplicationLogic extends InvalidationLogic {
-
       private StateTransferLock stateTransferLock;
+
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
 
       @Inject
       public void init(StateTransferLock stateTransferLock) {
@@ -514,7 +515,7 @@ public interface ClusteringDependentLogic {
                //in total order, all nodes perform the write skew check
                ? key -> true
                //in two phase commit, only the primary owner should perform the write skew check
-               : this::localNodeIsPrimaryOwner;
+               : localNodeIsPrimaryOwner;
       }
    }
 
@@ -522,11 +523,13 @@ public interface ClusteringDependentLogic {
     * This logic is used in distributed mode caches.
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
-
       private DistributionManager dm;
       private Configuration configuration;
       private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
+
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = this::localNodeIsOwner;
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
 
       @Inject
       public void init(DistributionManager dm, Configuration configuration,
@@ -646,9 +649,9 @@ public interface ClusteringDependentLogic {
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
          return totalOrder
                //in total order, all the owners can perform the write skew check.
-               ? this::localNodeIsOwner
+               ? localNodeIsOwner
                //in two phase commit, only the primary owner should perform the write skew check
-               : this::localNodeIsPrimaryOwner;
+               : localNodeIsPrimaryOwner;
       }
    }
 }

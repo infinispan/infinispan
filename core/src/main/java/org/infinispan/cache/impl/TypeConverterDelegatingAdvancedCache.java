@@ -48,6 +48,9 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
    private final TypeConverter converter;
    private InternalEntryFactory entryFactory;
 
+   private final Function<K, K> unboxKey = this::unboxKey;
+   private final Function<V, V> unboxValue = (InjectiveFunction & Function<V, V>) this::unboxValue;
+
    public TypeConverterDelegatingAdvancedCache(AdvancedCache<K, V> cache, TypeConverter converter) {
       super(cache, c -> new TypeConverterDelegatingAdvancedCache<>(c, converter));
       this.converter = converter;
@@ -241,17 +244,19 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
-      return super.putAsync(boxKey(key), boxValue(value)).thenApply(this::unboxValue);
+      return super.putAsync(boxKey(key), boxValue(value)).thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.putAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(this::unboxValue);
+      return super.putAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+                  .thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.putAsync(boxKey(key), boxValue(value), lifespan, unit).thenApply(this::unboxValue);
+      return super.putAsync(boxKey(key), boxValue(value), lifespan, unit)
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -271,17 +276,20 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      return super.putIfAbsentAsync(boxKey(key), boxValue(value)).thenApply(this::unboxValue);
+      return super.putIfAbsentAsync(boxKey(key), boxValue(value))
+                  .thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.putIfAbsentAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(this::unboxValue);
+      return super.putIfAbsentAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+                  .thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.putIfAbsentAsync(boxKey(key), boxValue(value), lifespan, unit).thenApply(this::unboxValue);
+      return super.putIfAbsentAsync(boxKey(key), boxValue(value), lifespan, unit)
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -297,7 +305,8 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
-      return super.removeAsync(boxKey((K) key)).thenApply(this::unboxValue);
+      return super.removeAsync(boxKey((K) key))
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -355,17 +364,20 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
-      return super.replaceAsync(boxKey(key), boxValue(value)).thenApply(this::unboxValue);
+      return super.replaceAsync(boxKey(key), boxValue(value))
+                  .thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.replaceAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(this::unboxValue);
+      return super.replaceAsync(boxKey(key), boxValue(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+                  .thenApply(unboxValue);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.replaceAsync(boxKey(key), boxValue(value), lifespan, unit).thenApply(this::unboxValue);
+      return super.replaceAsync(boxKey(key), boxValue(value), lifespan, unit)
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -381,7 +393,8 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return super.getAsync(boxKey(key)).thenApply(this::unboxValue);
+      return super.getAsync(boxKey(key))
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -417,7 +430,8 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return super.putAsync(boxKey(key), boxValue(value), metadata).thenApply(this::unboxValue);
+      return super.putAsync(boxKey(key), boxValue(value), metadata)
+                  .thenApply(unboxValue);
    }
 
    @Override
@@ -561,13 +575,12 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new CloseableIteratorMapper<>(actualCollection.iterator(), TypeConverterDelegatingAdvancedCache.this::unboxKey);
+         return new CloseableIteratorMapper<>(actualCollection.iterator(), unboxKey);
       }
 
       @Override
       public CloseableSpliterator<K> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (InjectiveFunction & Function<K, K>)
-               TypeConverterDelegatingAdvancedCache.this::unboxKey);
+         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), unboxKey);
       }
 
       @Override
@@ -608,13 +621,12 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
 
       @Override
       public CloseableIterator<V> iterator() {
-         return new CloseableIteratorMapper<>(actualCollection.iterator(), TypeConverterDelegatingAdvancedCache.this::unboxValue);
+         return new CloseableIteratorMapper<>(actualCollection.iterator(), unboxValue);
       }
 
       @Override
       public CloseableSpliterator<V> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), (InjectiveFunction & Function<V, V>)
-               TypeConverterDelegatingAdvancedCache.this::unboxValue);
+         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), unboxValue);
       }
 
       @Override

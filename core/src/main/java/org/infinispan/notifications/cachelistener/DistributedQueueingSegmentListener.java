@@ -4,6 +4,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.infinispan.container.InternalEntryFactory;
@@ -29,6 +30,8 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    protected final InternalEntryFactory entryFactory;
 
    private Stream<Integer> justCompletedSegments = Stream.empty();
+
+   private final Consumer<Integer> completeSegment = this::completeSegment;
 
    public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
       this.entryFactory = entryFactory;
@@ -74,7 +77,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    @Override
    public void transferComplete() {
-      justCompletedSegments.forEach(this::completeSegment);
+      justCompletedSegments.forEach(completeSegment);
       completed.set(true);
       notifiedKeys.clear();
       for (int i = 0; i < queues.length(); ++i) {
@@ -91,7 +94,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    @Override
    public void notifiedKey(K key) {
       // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-      justCompletedSegments.forEach(this::completeSegment);
+      justCompletedSegments.forEach(completeSegment);
       justCompletedSegments = Stream.empty();
    }
 

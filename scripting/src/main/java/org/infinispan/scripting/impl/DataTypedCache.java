@@ -23,8 +23,9 @@ import org.infinispan.util.CacheCollectionMapper;
 import org.infinispan.util.CacheSetMapper;
 
 public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
-
    final DataTypedCacheManager dataTypedCacheManager;
+
+   private final Function<V, V> toDataType = this::toDataType;
 
    public DataTypedCache(DataTypedCacheManager dataTypedCacheManager, Cache<K, V> cache) {
       super(cache.getAdvancedCache());
@@ -183,20 +184,20 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
@@ -220,51 +221,50 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return getDelegate().removeAsync(fromDataType(key))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return getDelegate().removeAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+      return getDelegate().removeAsync(fromDataType(key), fromDataType(value));
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
@@ -289,7 +289,7 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> getAsync(K key) {
       return getDelegate().getAsync(fromDataType(key))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override

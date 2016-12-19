@@ -238,14 +238,14 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager implements 
    }
 
    @SafeVarargs
-   private final <T> List<T> newList(T... elements) {
+   private static final <T> List<T> newList(T... elements) {
       List<T> list = new ArrayList<>(elements.length);
       Collections.addAll(list, elements);
       return list;
    }
 
    private Map<Address, List<LuceneWork>> partitionWorkByAddress(List<LuceneWork> works) {
-      return works.stream().collect(Collectors.toMap(this::getLocation, this::newList, (w1, w2) -> {
+      return works.stream().collect(Collectors.toMap(this::getLocation, AffinityIndexManager::newList, (w1, w2) -> {
          w1.addAll(w2);
          return w1;
       }));
