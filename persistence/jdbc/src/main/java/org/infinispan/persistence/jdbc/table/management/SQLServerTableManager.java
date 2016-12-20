@@ -31,4 +31,20 @@ class SQLServerTableManager extends AbstractTableManager {
       }
       return upsertRowSql;
    }
+
+   @Override
+   public boolean isStringEncodingRequired() {
+      return metaData.getMajorVersion() < 13;
+   }
+
+   @Override
+   public String encodeString(String string) {
+      char[] srcChars = string.toCharArray();
+      if (srcChars.length > 0 && srcChars[0] == '\uFEFF') {
+         char[] chars = new char[srcChars.length - 1];
+         string.getChars(1, string.toCharArray().length, chars, 0);
+         return new String(chars);
+      }
+      return string;
+   }
 }
