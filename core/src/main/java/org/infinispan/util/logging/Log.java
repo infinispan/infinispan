@@ -853,5 +853,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to broadcast invalidation messages", id = 231)
    RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
+
+   @Message(value="Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved", id = 239)
+   IOException externalizerTableStopped(String className);
 }
 

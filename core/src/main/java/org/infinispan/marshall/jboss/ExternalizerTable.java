@@ -172,22 +172,19 @@ public class ExternalizerTable implements ObjectTable {
 
    @Stop(priority = 13) // Stop after global marshaller
    public void stop() {
+      started = false;
       writers.clear();
       readers.clear();
-      started = false;
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
    @Override
    public Writer getObjectWriter(Object o) throws IOException {
       Class<?> clazz = o.getClass();
-      Writer writer = writers.get(clazz);
-      if (writer == null) {
-         if (Thread.currentThread().isInterrupted())
-            throw new IOException(new InterruptedException(String.format(
-                  "Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.",
-                  clazz.getName())));
+      if (!started) {
+          throw log.externalizerTableStopped(clazz.getName());
       }
+      Writer writer = writers.get(clazz);
       return writer;
    }
 
