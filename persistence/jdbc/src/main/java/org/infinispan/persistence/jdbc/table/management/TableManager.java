@@ -54,4 +54,8 @@ public interface TableManager {
    String getSelectExpiredRowsSql();
 
    String getDeleteExpiredRowsSql();
+
+   boolean isStringEncodingRequired();
+
+   String encodeString(String stringToEncode);
 }
