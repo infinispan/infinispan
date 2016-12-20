@@ -302,6 +302,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
+               Exceptions.assertException(TestException.class, t);
                compose.set(true);
                return stage;
             });
@@ -310,6 +311,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+               Exceptions.assertException(TestException.class, t);
                handle.set(true);
             });
          }
@@ -317,6 +319,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
+               Exceptions.assertException(TestException.class, t);
                exceptionally.set(true);
                throw t;
             });
@@ -346,7 +349,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
 
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, testCommand);
       callbacks.post(invokeFuture);
-      Exceptions.expectExecutionException(TestException.class, invokeFuture);
+
       assertTrue(compose.get());
       assertTrue(handle.get());
       assertTrue(exceptionally.get());

@@ -22,7 +22,19 @@ import org.jgroups.annotations.GuardedBy;
  * @author Dan Berindei
  * @since 9.0
  */
-class AsyncResult extends CompletableFuture<Object> implements ComplexResult {
+class AsyncResult extends CompletableFuture<Object> {
+   static AsyncResult makeExceptional(InvocationContext ctx, VisitableCommand command, Throwable throwable) {
+      AsyncResult result = new AsyncResult(ctx, command);
+      result.freezeHandlers();
+      result.completeExceptionally(throwable);
+      return result;
+   }
+
+   /**
+    * Complete this {@code AsyncResult}.
+    *
+    * The deque MUST be already frozen.
+    */
    final InvocationContext ctx;
    final VisitableCommand command;
 

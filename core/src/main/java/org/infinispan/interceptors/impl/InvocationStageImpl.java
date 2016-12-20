@@ -34,10 +34,10 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    }
 
    public static InvocationStageImpl makeExceptional(Throwable throwable) {
-      return new InvocationStageImpl(new ExceptionResult(CompletableFutures.extractException(throwable)));
+      return new InvocationStageImpl(AsyncResult.makeExceptional(null, null, CompletableFutures.extractException(throwable)));
    }
 
-   public static InvocationStageImpl makeSynchronous(Object returnValue, Throwable throwable) {
+   private static InvocationStageImpl makeSynchronous(Object returnValue, Throwable throwable) {
       if (throwable == null) {
          return makeSuccessful(returnValue);
       } else {
@@ -56,66 +56,9 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    }
 
    @Override
-   public InvocationStage compose(InvocationContext ctx, VisitableCommand command, InvocationComposeHandler composeHandler) {
+   public InvocationStage compose(InvocationContext ctx, VisitableCommand command,
+                                  InvocationComposeHandler composeHandler) {
       return doCompose(ctx, command, composeHandler, true);
-   }
-
-   private InvocationStage composeWithComplexResult(InvocationContext ctx, VisitableCommand command,
-                                                    InvocationComposeHandler composeHandler, boolean acceptExceptions) {
-      if (result instanceof AsyncResult) {
-         return composeWithAsyncResult(ctx, command, composeHandler);
-      } else if (acceptExceptions) {
-         return composeWithExceptionResult(ctx, command, composeHandler);
-      } else {
-         return this;
-      }
-   }
-
-   private InvocationStage composeWithAsyncResult(InvocationContext ctx, VisitableCommand command,
-                                                  InvocationComposeHandler composeHandler) {
-      AsyncResult asyncResult = (AsyncResult) this.result;
-      if (asyncResult.addHandler(composeHandler)) {
-         return this;
-      }
-
-      // Deque is frozen
-      return composeAsyncResultWithFrozenQueue(ctx, command, composeHandler, asyncResult);
-   }
-
-   private InvocationStage composeAsyncResultWithFrozenQueue(InvocationContext ctx, VisitableCommand command,
-                                                             InvocationComposeHandler composeHandler,
-                                                             AsyncResult asyncResult) {
-      if (asyncResult.isDone()) {
-         // We can switch to a synchronous result
-         Object rv = null;
-         Throwable throwable = null;
-         try {
-            rv = asyncResult.getNow(null);
-         } catch (Throwable t) {
-            throwable = t;
-         }
-         try {
-            return composeHandler.apply(this, ctx, command, rv, throwable);
-         } catch (Throwable t) {
-            result = new ExceptionResult(t);
-            return this;
-         }
-      } else {
-         // Create a new asynchronous stage with an empty deque, and retry there
-         InvocationStageImpl newStage = makeAsynchronous(ctx, command, asyncResult);
-         return newStage.composeWithAsyncResult(ctx, command, composeHandler);
-      }
-   }
-
-   private InvocationStage composeWithExceptionResult(InvocationContext ctx, VisitableCommand command,
-                                                      InvocationComposeHandler composeHandler) {
-      Throwable throwable = ((ExceptionResult) result).throwable;
-      try {
-         return composeHandler.apply(this, ctx, command, null, throwable);
-      } catch (Throwable t) {
-         result = new ExceptionResult(t);
-         return this;
-      }
    }
 
    @Override
@@ -127,28 +70,60 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    private InvocationStage doCompose(InvocationContext ctx, VisitableCommand command,
                                      InvocationComposeHandler thenComposeHandler, boolean acceptExceptions) {
       try {
-         if (result instanceof ComplexResult) {
-            return composeWithComplexResult(ctx, command, thenComposeHandler, acceptExceptions);
+         if (result instanceof AsyncResult) {
+            return composeWithAsyncResult(ctx, command, thenComposeHandler);
          } else {
             return thenComposeHandler.apply(this, ctx, command, result, null);
          }
       } catch (Throwable t) {
-         this.result = new ExceptionResult(t);
+         this.result = AsyncResult.makeExceptional(ctx, command, t);
          return this;
+      }
+   }
+
+   private InvocationStage composeWithAsyncResult(InvocationContext ctx, VisitableCommand command,
+                                                  InvocationComposeHandler composeHandler) throws Throwable {
+      AsyncResult asyncResult = (AsyncResult) this.result;
+      if (asyncResult.addHandler(composeHandler)) {
+         return this;
+      }
+
+      // Deque is frozen
+      return composeAsyncResultWithFrozenQueue(ctx, command, composeHandler, asyncResult);
+   }
+
+   private InvocationStage composeAsyncResultWithFrozenQueue(InvocationContext ctx, VisitableCommand command,
+                                                             InvocationComposeHandler composeHandler,
+                                                             AsyncResult asyncResult) throws Throwable {
+      if (asyncResult.isDone()) {
+         // We can switch to a synchronous result
+         Object rv = null;
+         Throwable throwable = null;
+         try {
+            rv = asyncResult.getNow(null);
+         } catch (Throwable t) {
+            throwable = CompletableFutures.extractException(t);
+         }
+         // The caller will catch any exception and replace the current stage's result
+         return composeHandler.apply(this, ctx, command, rv, throwable);
+      } else {
+         // Create a new asynchronous stage with an empty deque, and retry there
+         InvocationStageImpl newStage = makeAsynchronous(ctx, command, asyncResult);
+         return newStage.composeWithAsyncResult(ctx, command, composeHandler);
       }
    }
 
    @Override
    public InvocationStage thenAccept(InvocationContext ctx, VisitableCommand command, InvocationSuccessHandler successHandler) {
       try {
-         if (result instanceof ComplexResult) {
-            return composeWithComplexResult(ctx, command, successHandler, false);
+         if (result instanceof AsyncResult) {
+            return composeWithAsyncResult(ctx, command, successHandler);
          } else {
             successHandler.accept(ctx, command, result);
             return this;
          }
-      } catch (Throwable t1) {
-         this.result = new ExceptionResult(t1);
+      } catch (Throwable t) {
+         this.result = AsyncResult.makeExceptional(ctx, command, t);
          return this;
       }
    }
@@ -156,14 +131,14 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    @Override
    public InvocationStage thenApply(InvocationContext ctx, VisitableCommand command, InvocationReturnValueHandler returnValueHandler) {
       try {
-         if (result instanceof ComplexResult) {
-            return composeWithComplexResult(ctx, command, returnValueHandler, false);
+         if (result instanceof AsyncResult) {
+            return composeWithAsyncResult(ctx, command, returnValueHandler);
          } else {
             this.result = returnValueHandler.apply(ctx, command, result);
             return this;
          }
-      } catch (Throwable t1) {
-         this.result = new ExceptionResult(t1);
+      } catch (Throwable t) {
+         this.result = AsyncResult.makeExceptional(ctx, command, t);
          return this;
       }
    }
@@ -171,14 +146,14 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    @Override
    public InvocationStage exceptionally(InvocationContext ctx, VisitableCommand command, InvocationExceptionHandler exceptionHandler) {
       try {
-         if (result instanceof ComplexResult) {
-            return composeWithComplexResult(ctx, command, exceptionHandler, true);
+         if (result instanceof AsyncResult) {
+            return composeWithAsyncResult(ctx, command, exceptionHandler);
          } else {
             // No exception
             return this;
          }
-      } catch (Throwable t1) {
-         this.result = new ExceptionResult(t1);
+      } catch (Throwable t) {
+         this.result = AsyncResult.makeExceptional(ctx, command, t);
          return this;
       }
    }
@@ -187,14 +162,14 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    public InvocationStage handle(InvocationContext ctx, VisitableCommand command,
                                  InvocationFinallyHandler finallyHandler) {
       try {
-         if (result instanceof ComplexResult) {
-            return composeWithComplexResult(ctx, command, finallyHandler, true);
+         if (result instanceof AsyncResult) {
+            return composeWithAsyncResult(ctx, command, finallyHandler);
          } else {
             finallyHandler.accept(ctx, command, result, null);
             return this;
          }
-      } catch (Throwable t1) {
-         this.result = new ExceptionResult(t1);
+      } catch (Throwable t) {
+         this.result = AsyncResult.makeExceptional(ctx, command, t);
          return this;
       }
    }
@@ -203,8 +178,6 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    public CompletableFuture<Object> toCompletableFuture() {
       if (result instanceof AsyncResult) {
          return ((AsyncResult) result);
-      } else if (result instanceof ExceptionResult) {
-         return CompletableFutures.completedExceptionFuture(((ExceptionResult) result).throwable);
       } else {
          return CompletableFuture.completedFuture(result);
       }
@@ -212,16 +185,14 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
 
    @Override
    public Object get() throws Throwable {
-      if (!(result instanceof ComplexResult)) {
+      if (!(result instanceof AsyncResult)) {
          return result;
-      } else if (result instanceof AsyncResult) {
+      } else {
          try {
             return ((AsyncResult) result).get();
          } catch (ExecutionException e) {
             throw e.getCause();
          }
-      } else {
-         throw ((ExceptionResult) result).throwable;
       }
    }
 
