@@ -19,12 +19,6 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
 
-   @Override
-   public Query create(String queryString) {
-      //todo [anistor] some params come from a builder, some from parsing the query string
-      return new RemoteQuery(this, cache, serializationContext, queryString, null, null, -1, -1);
-   }
-
    public RemoteQueryFactory(RemoteCacheImpl cache) {
       serializationContext = ProtoStreamMarshaller.getSerializationContext(cache.getRemoteCacheManager());
 
@@ -40,7 +34,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
    }
 
    @Override
-   public QueryBuilder from(Class entityType) {
+   public Query create(String queryString) {
+      return new RemoteQuery(this, cache, serializationContext, queryString);
+   }
+
+   @Override
+   public QueryBuilder from(Class<?> entityType) {
       String typeName = serializationContext.getMarshaller(entityType).getTypeName();
       return new RemoteQueryBuilder(this, cache, serializationContext, typeName);
    }
@@ -49,7 +48,6 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
    public QueryBuilder from(String entityType) {
       // just check that the type name is valid
       serializationContext.getMarshaller(entityType);
-
       return new RemoteQueryBuilder(this, cache, serializationContext, entityType);
    }
 }

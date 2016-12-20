@@ -15,7 +15,7 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
    private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final QueryEngine queryEngine;
+   private final QueryEngine<?> queryEngine;
 
    EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, QueryEngine queryEngine, String rootType) {
       super(queryFactory, rootType);
@@ -29,6 +29,6 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
       if (trace) {
          log.tracef("Query string : %s", queryString);
       }
-      return new DelegatingQuery(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+      return new DelegatingQuery<>(queryEngine, queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
    }
 }

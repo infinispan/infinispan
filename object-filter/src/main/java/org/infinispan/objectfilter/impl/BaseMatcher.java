@@ -169,7 +169,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getQueryString(), baseQuery.getNamedParameters(), callback, isDeltaFilter, eventType);
+      return registerFilter(baseQuery.getQueryString(), baseQuery.getParameters(), callback, isDeltaFilter, eventType);
    }
 
    @Override

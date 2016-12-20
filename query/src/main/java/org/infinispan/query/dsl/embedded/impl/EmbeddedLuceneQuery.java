@@ -57,6 +57,7 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
    private CacheQuery<Object> createCacheQuery() {
       // query is created first time only
       if (cacheQuery == null) {
+         validateNamedParameters();
          cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
       }
       return cacheQuery;

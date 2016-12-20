@@ -42,7 +42,7 @@ public final class Search {
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return makeFilter(baseQuery.getQueryString(), baseQuery.getNamedParameters());
+      return makeFilter(baseQuery.getQueryString(), baseQuery.getParameters());
    }
 
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {

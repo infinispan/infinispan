@@ -126,35 +126,18 @@ public class QueryEngine<TypeMetadata> {
       return searchFactory;
    }
 
-   public BaseQuery buildQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   protected BaseQuery buildQuery(QueryFactory queryFactory, FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (log.isDebugEnabled()) {
-         log.debugf("Building query '%s' with parameters %s", queryString, namedParameters);
+         log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
       }
-
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
-
-      checkParameters(namedParameters);
-
-      FilterParsingResult<TypeMetadata> parsingResult = parse(queryString);
-      if (parsingResult.hasGroupingOrAggregations()) {
-         return buildQueryWithAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults, parsingResult);
-      }
-      return buildQueryNoAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults, parsingResult);
-   }
-
-   /**
-    * Ensure all parameters have non-null values.
-    */
-   private void checkParameters(Map<String, Object> namedParameters) {
-      if (namedParameters != null) {
-         for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-            if (e.getValue() == null) {
-               throw log.queryParameterNotSet(e.getKey());
-            }
-         }
-      }
+      BaseQuery query = parsingResult.hasGroupingOrAggregations() ?
+            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult) :
+            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult);
+      query.validateNamedParameters();
+      return query;
    }
 
    private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<TypeMetadata> parsingResult) {
@@ -710,10 +693,8 @@ public class QueryEngine<TypeMetadata> {
       }
 
       if (!isIndexed) {
-         throw log.cannotRunLuceneQueriesIfNotIndexed();
+         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
-
-      checkParameters(namedParameters);
 
       LuceneQueryParsingResult luceneParsingResult = transform(filterParsingResult, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());

@@ -75,7 +75,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    }
 
    private List<QueryRequest.NamedParameter> getNamedParameters() {
-      Map<String, Object> namedParameters = remoteQuery.getNamedParameters();
+      Map<String, Object> namedParameters = remoteQuery.getParameters();
       if (namedParameters == null || namedParameters.isEmpty()) {
          return null;
       }

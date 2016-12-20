@@ -11,12 +11,15 @@ import org.apache.lucene.search.TermQuery;
 import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
@@ -30,9 +33,28 @@ final class RemoteQueryEngine extends QueryEngine<Descriptor> {
 
    private final ProtobufFieldBridgeProvider protobufFieldBridgeProvider = new ProtobufFieldBridgeProvider();
 
+   private final SerializationContext serializationContext;
+
+   private final EmbeddedQueryFactory queryFactory = new EmbeddedQueryFactory(this);
+
    public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode) {
       super(cache, isIndexed, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
       this.isCompatMode = isCompatMode;
+      serializationContext = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+   }
+
+   protected SerializationContext getSerializationContext() {
+      return serializationContext;
+   }
+
+   protected BaseQuery makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      BaseQuery query = queryFactory.create(queryString);
+      query.startOffset(startOffset);
+      query.maxResults(maxResults);
+      if (namedParameters != null) {
+         query.setParameters(namedParameters);
+      }
+      return query;
    }
 
    @Override

@@ -32,12 +32,11 @@ final class FilterQueryFactory extends BaseQueryFactory {
 
    @Override
    public Query create(String queryString) {
-      //todo [anistor] some params come from a builder, some from parsing the query string
       return new FilterQuery(this, queryString, null, null, -1, -1);
    }
 
    @Override
-   public QueryBuilder from(Class entityType) {
+   public QueryBuilder from(Class<?> entityType) {
       if (serializationContext != null) {
          serializationContext.getMarshaller(entityType);
       }

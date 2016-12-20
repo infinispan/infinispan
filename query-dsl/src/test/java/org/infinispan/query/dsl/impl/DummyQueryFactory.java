@@ -14,7 +14,7 @@ class DummyQueryFactory extends BaseQueryFactory {
    }
 
    @Override
-   public DummyQueryBuilder from(Class entityType) {
+   public DummyQueryBuilder from(Class<?> entityType) {
       return new DummyQueryBuilder(this, entityType.getName());
    }
 
