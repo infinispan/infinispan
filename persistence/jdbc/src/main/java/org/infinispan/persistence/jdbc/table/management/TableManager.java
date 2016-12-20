@@ -60,4 +60,8 @@ public interface TableManager {
    String getSelectExpiredBucketsSql();
 
    String getSelectOnlyExpiredRowsSql();
+
+   boolean isStringEncodingRequired();
+
+   String encodeString(String stringToEncode);
 }

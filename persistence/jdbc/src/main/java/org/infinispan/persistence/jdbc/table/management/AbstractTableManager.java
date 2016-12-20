@@ -347,4 +347,14 @@ public abstract class AbstractTableManager implements TableManager {
       }
       return upsertRowSql;
    }
+
+   @Override
+   public boolean isStringEncodingRequired() {
+      return false;
+   }
+
+   @Override
+   public String encodeString(String string) {
+      return string;
+   }
 }
