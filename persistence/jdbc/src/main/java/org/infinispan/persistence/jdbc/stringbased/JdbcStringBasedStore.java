@@ -405,7 +405,8 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       if (!key2StringMapper.isSupportedType(key.getClass())) {
          throw new UnsupportedKeyTypeException(key);
       }
-      return key2StringMapper.getStringMapping(key);
+      String keyStr = key2StringMapper.getStringMapping(key);
+      return tableManager.isStringEncodingRequired() ? tableManager.encodeString(keyStr) : keyStr;
    }
 
    public boolean supportsKey(Class<?> keyType) {

@@ -44,6 +44,8 @@ public class TableManagerFactory {
             return new PostgresTableManager(connectionFactory, config, metaData);
          case SYBASE:
             return new SybaseTableManager(connectionFactory, config, metaData);
+         case SQL_SERVER:
+            return new SQLServerTableManager(connectionFactory, config, metaData);
          default:
             return new GenericTableManager(connectionFactory, config, metaData);
       }

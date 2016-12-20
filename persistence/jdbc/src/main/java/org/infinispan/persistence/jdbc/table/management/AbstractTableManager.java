@@ -253,5 +253,13 @@ public abstract class AbstractTableManager implements TableManager {
       return deleteExpiredRowsSql;
    }
 
+   @Override
+   public boolean isStringEncodingRequired() {
+      return false;
+   }
 
+   @Override
+   public String encodeString(String string) {
+      return string;
+   }
 }
