@@ -2,7 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.impl.ReturnValueStage;
+import org.infinispan.interceptors.impl.InvocationStageImpl;
 
 /**
  * Callback interface for {@link InvocationStage#exceptionally(InvocationContext, VisitableCommand, InvocationExceptionHandler)}.
@@ -19,6 +19,7 @@ public interface InvocationExceptionHandler extends InvocationComposeHandler {
                                  Throwable t) throws Throwable {
       if (t == null) return stage;
 
-      return new ReturnValueStage(apply(rCtx, rCommand, t));
+      Object result = apply(rCtx, rCommand, t);
+      return InvocationStageImpl.makeSuccessful(result);
    }
 }

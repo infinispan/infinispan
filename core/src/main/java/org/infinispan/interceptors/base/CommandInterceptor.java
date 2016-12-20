@@ -22,7 +22,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.impl.ReturnValueStage;
+import org.infinispan.interceptors.impl.InvocationStageImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -164,6 +164,6 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
    public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
       Object returnValue = command.acceptVisitor(ctx, this);
-      return new ReturnValueStage(returnValue);
+      return InvocationStageImpl.makeSuccessful(returnValue);
    }
 }

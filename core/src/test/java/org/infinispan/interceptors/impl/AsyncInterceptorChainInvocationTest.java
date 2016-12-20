@@ -459,7 +459,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             InvocationStage stage = invokeNext(ctx, command);
-            stage.thenApply(ctx, command, (rCtx, rCommand, rv) -> rv + " " + f2.join());
+            stage.thenApply(ctx, command, (rCtx, rCommand, rv) -> rv + " " + f2.get(10, SECONDS));
             return stage;
          }
       }, new BaseAsyncInterceptor() {

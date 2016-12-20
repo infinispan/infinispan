@@ -7,11 +7,7 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.impl.BasicAsyncInvocationStage;
-import org.infinispan.interceptors.impl.AsyncInvocationStage;
-import org.infinispan.interceptors.impl.ExceptionStage;
-import org.infinispan.interceptors.impl.ReturnValueStage;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.interceptors.impl.InvocationStageImpl;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -58,7 +54,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             return nextInterceptor.visitCommand(ctx, command);
          }
       } catch (Throwable throwable) {
-         return new ExceptionStage(throwable);
+         return InvocationStageImpl.makeExceptional(throwable);
       }
    }
 
@@ -66,7 +62,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * Return a value directly, skipping the remaining interceptors in the chain.
     */
    public static InvocationStage returnWith(Object returnValue) {
-      return new ReturnValueStage(returnValue);
+      return InvocationStageImpl.makeSuccessful(returnValue);
    }
 
    /**
@@ -82,13 +78,13 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             delay.join();
             stage = invokeNext(ctx, command);
          } catch (Throwable t) {
-            stage = new ExceptionStage(CompletableFutures.extractException(t));
+            stage = InvocationStageImpl.makeExceptional(t);
          }
          return stage;
       }
 
-      return new AsyncInvocationStage(ctx, command, delay)
-            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
+      return InvocationStageImpl.makeAsynchronous(ctx, command, delay)
+                                .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
    }
 
    /**
@@ -103,13 +99,13 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          InvocationStage stage;
          try {
             Object value = valueFuture.join();
-            stage = new ReturnValueStage(value);
+            stage = InvocationStageImpl.makeSuccessful(value);
          } catch (Throwable t) {
-            stage = new ExceptionStage(CompletableFutures.extractException(t));
+            stage = InvocationStageImpl.makeExceptional(t);
          }
          return stage;
       }
 
-      return new BasicAsyncInvocationStage(valueFuture);
+      return InvocationStageImpl.makeAsynchronous(null, null, valueFuture);
    }
 }
