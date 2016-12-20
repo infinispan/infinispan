@@ -226,9 +226,6 @@ public interface Log extends BasicLogger {
    @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
    IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
 
-   @Message(value = "Query parameter '%s' was not set", id = 4060)
-   IllegalStateException queryParameterNotSet(String filterConverterFactoryName);
-
    @LogMessage(level = WARN)
    @Message(value = "Ignoring error when closing iteration '%s'", id = 4061)
    void ignoringErrorDuringIterationClose(String iterationId, @Cause Exception e);

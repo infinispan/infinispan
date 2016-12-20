@@ -2,7 +2,9 @@ package org.infinispan.query.remote.client;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.WrappedMessage;
@@ -51,6 +53,17 @@ public final class QueryRequest {
 
    public void setNamedParameters(List<NamedParameter> namedParameters) {
       this.namedParameters = namedParameters;
+   }
+
+   public Map<String, Object> getNamedParametersMap() {
+      if (namedParameters == null || namedParameters.isEmpty()) {
+         return null;
+      }
+      Map<String, Object> params = new HashMap<>(namedParameters.size());
+      for (NamedParameter p : namedParameters) {
+         params.put(p.getName(), p.getValue());
+      }
+      return params;
    }
 
    static final class Marshaller implements MessageMarshaller<QueryRequest> {

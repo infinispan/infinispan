@@ -2,16 +2,13 @@ package org.infinispan.query.remote.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.hibernate.search.engine.impl.nullencoding.KeywordBasedNullCodec;
 import org.hibernate.search.engine.impl.nullencoding.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.QueryRequest;
@@ -21,7 +18,8 @@ import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
 
 /**
- * A query facade implementation for both Lucene based queries and non-indexed queries.
+ * A query facade implementation for both Lucene based queries and non-indexed in-memory queries.
+ * All work is delegated to {@link RemoteQueryEngine}.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -51,39 +49,28 @@ public final class QueryFacadeImpl implements QueryFacade {
          throw log.queryingNotEnabled(cache.getName());
       }
 
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
       try {
-         QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
+         // decode the query request object
+         QueryRequest request = ProtobufUtil.fromByteArray(queryEngine.getSerializationContext(), query, 0, query.length, QueryRequest.class);
 
          long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
-         Map<String, Object> namedParameters = getNamedParameters(request);
 
-         BaseQuery q = queryEngine.buildQuery(null, request.getQueryString(), namedParameters, startOffset, maxResults);
+         // create the query
+         BaseQuery q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults);
 
+         // execute query and make the response object
          QueryResponse response = makeResponse(q);
-         return ProtobufUtil.toByteArray(serCtx, response);
+         return ProtobufUtil.toByteArray(queryEngine.getSerializationContext(), response);
       } catch (IOException e) {
          throw log.errorExecutingQuery(e);
       }
    }
 
-   private Map<String, Object> getNamedParameters(QueryRequest request) {
-      List<QueryRequest.NamedParameter> namedParameters = request.getNamedParameters();
-      if (namedParameters == null || namedParameters.isEmpty()) {
-         return null;
-      }
-      Map<String, Object> params = new HashMap<>(namedParameters.size());
-      for (QueryRequest.NamedParameter p : namedParameters) {
-         params.put(p.getName(), p.getValue());
-      }
-      return params;
-   }
-
-   private QueryResponse makeResponse(BaseQuery q) {
-      List<?> list = q.list();
+   private QueryResponse makeResponse(BaseQuery query) {
+      List<?> list = query.list();
       int numResults = list.size();
-      String[] projection = q.getProjection();
+      String[] projection = query.getProjection();
       int projSize = projection != null ? projection.length : 0;
       List<WrappedMessage> results = new ArrayList<>(projSize == 0 ? numResults : numResults * projSize);
 
@@ -99,7 +86,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
 
       QueryResponse response = new QueryResponse();
-      response.setTotalResults(q.getResultSize());
+      response.setTotalResults(query.getResultSize());
       response.setNumResults(numResults);
       response.setProjectionSize(projSize);
       response.setResults(results);

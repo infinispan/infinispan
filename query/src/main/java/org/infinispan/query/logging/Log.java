@@ -101,11 +101,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Error executing MassIndexer", id = 14018)
    CacheException errorExecutingMassIndexer(@Cause Throwable cause);
 
-   @Message(value = "Cannot run Lucene queries on a cache that does not have indexing enabled", id = 14019)
-   IllegalStateException cannotRunLuceneQueriesIfNotIndexed();
-
-   @Message(value = "Query parameter '%s' was not set", id = 14020)
-   IllegalStateException queryParameterNotSet(String paramName);
+   @Message(value = "Cannot run Lucene queries on a cache '%s' that does not have indexing enabled", id = 14019)
+   IllegalStateException cannotRunLuceneQueriesIfNotIndexed(String cacheName);
 
    @Message(value = "Queries containing grouping and aggregation functions must use projections.", id = 14021)
    ParsingException groupingAndAggregationQueriesMustUseProjections();

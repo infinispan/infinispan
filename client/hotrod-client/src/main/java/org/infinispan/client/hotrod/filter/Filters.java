@@ -40,6 +40,6 @@ public final class Filters {
 
    public static Object[] makeFactoryParams(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return makeFactoryParams(baseQuery.getQueryString(), baseQuery.getNamedParameters());
+      return makeFactoryParams(baseQuery.getQueryString(), baseQuery.getParameters());
    }
 }

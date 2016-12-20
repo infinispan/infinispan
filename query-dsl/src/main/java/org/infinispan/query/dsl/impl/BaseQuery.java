@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +23,9 @@ public abstract class BaseQuery implements Query {
 
    protected final String queryString;
 
-   protected final Map<String, Object> namedParameters;
+   private final boolean paramsDefined;
+
+   protected Map<String, Object> namedParameters;
 
    protected final String[] projection;
 
@@ -31,8 +34,9 @@ public abstract class BaseQuery implements Query {
    protected int maxResults;
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?
-   protected BaseQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection,
-                       long startOffset, int maxResults) {
+   protected BaseQuery(QueryFactory queryFactory, String queryString,
+                       Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+      this.paramsDefined = true;
       this.queryFactory = queryFactory;
       this.queryString = queryString;
       this.namedParameters = namedParameters;
@@ -41,8 +45,13 @@ public abstract class BaseQuery implements Query {
       this.maxResults = maxResults;
    }
 
-   public QueryFactory getQueryFactory() {
-      return queryFactory;
+   protected BaseQuery(QueryFactory queryFactory, String queryString) {
+      this.paramsDefined = false;
+      this.queryFactory = queryFactory;
+      this.queryString = queryString;
+      this.projection = null;
+      this.startOffset = 0;
+      this.maxResults = -1;
    }
 
    /**
@@ -67,20 +76,25 @@ public abstract class BaseQuery implements Query {
 
    @Override
    public Map<String, Object> getParameters() {
-      return Collections.unmodifiableMap(namedParameters);
+      return namedParameters != null ? Collections.unmodifiableMap(namedParameters) : null;
    }
 
    @Override
    public Query setParameter(String paramName, Object paramValue) {
-      if (namedParameters == null) {
-         throw log.queryDoesNotHaveParameters();
-      }
       if (paramName == null || paramName.isEmpty()) {
          throw log.parameterNameCannotBeNulOrEmpty();
       }
-      if (!namedParameters.containsKey(paramName)) {
-         throw log.parameterNotFound(paramName);
+      if (paramsDefined) {
+         if (namedParameters == null) {
+            throw log.queryDoesNotHaveParameters();
+         }
+         if (!namedParameters.containsKey(paramName)) {
+            throw log.parameterNotFound(paramName);
+         }
+      } else if (namedParameters == null) {
+         namedParameters = new HashMap<>(5);
       }
+
       namedParameters.put(paramName, paramValue);
 
       // reset the query to force a new execution
@@ -94,24 +108,29 @@ public abstract class BaseQuery implements Query {
       if (paramValues == null) {
          throw log.argumentCannotBeNull("paramValues");
       }
-      if (namedParameters == null) {
-         throw log.queryDoesNotHaveParameters();
-      }
-      List<String> unknownParams = null;
-      for (String paramName : paramValues.keySet()) {
-         if (paramName == null || paramName.isEmpty()) {
-            throw log.parameterNameCannotBeNulOrEmpty();
+      if (paramsDefined) {
+         if (namedParameters == null) {
+            throw log.queryDoesNotHaveParameters();
          }
-         if (!namedParameters.containsKey(paramName)) {
-            if (unknownParams == null) {
-               unknownParams = new ArrayList<>();
+         List<String> unknownParams = null;
+         for (String paramName : paramValues.keySet()) {
+            if (paramName == null || paramName.isEmpty()) {
+               throw log.parameterNameCannotBeNulOrEmpty();
             }
-            unknownParams.add(paramName);
+            if (!namedParameters.containsKey(paramName)) {
+               if (unknownParams == null) {
+                  unknownParams = new ArrayList<>();
+               }
+               unknownParams.add(paramName);
+            }
          }
+         if (unknownParams != null) {
+            throw log.parametersNotFound(unknownParams.toString());
+         }
+      } else if (namedParameters == null) {
+         namedParameters = new HashMap<>(5);
       }
-      if (unknownParams != null) {
-         throw log.parametersNotFound(unknownParams.toString());
-      }
+
       namedParameters.putAll(paramValues);
 
       // reset the query to force a new execution
@@ -121,13 +140,22 @@ public abstract class BaseQuery implements Query {
    }
 
    /**
-    * Reset internal state after query parameters are modified. This is needed to ensure the next execution of the query
-    * uses the new parameter values.
+    * Reset internal state after pagination or query parameters are modified. This is needed to ensure the next
+    * execution of the query uses the new values.
     */
    public abstract void resetQuery();
 
-   public Map<String, Object> getNamedParameters() {
-      return namedParameters;
+   /**
+    * Ensure all named parameters have non-null values.
+    */
+   public void validateNamedParameters() {
+      if (namedParameters != null) {
+         for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+            if (e.getValue() == null) {
+               throw log.queryParameterNotSet(e.getKey());
+            }
+         }
+      }
    }
 
    public String[] getProjection() {
@@ -144,13 +172,15 @@ public abstract class BaseQuery implements Query {
 
    @Override
    public Query startOffset(long startOffset) {
-      this.startOffset = (int) startOffset;    //todo [anistor] why????
+      this.startOffset = (int) startOffset;    //todo [anistor] why int?
+      resetQuery();
       return this;
    }
 
    @Override
    public Query maxResults(int maxResults) {
       this.maxResults = maxResults;
+      resetQuery();
       return this;
    }
 }

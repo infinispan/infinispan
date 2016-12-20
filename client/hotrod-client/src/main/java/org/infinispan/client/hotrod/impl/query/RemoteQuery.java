@@ -9,8 +9,6 @@ import java.util.Map;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -24,13 +22,18 @@ import org.infinispan.query.remote.client.QueryResponse;
  */
 public final class RemoteQuery extends BaseQuery {
 
-   private static final Log log = LogFactory.getLog(RemoteQuery.class, Log.class);
-
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
 
-   private List results = null;
+   private List<?> results = null;
    private int totalResults;
+
+   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
+               String queryString) {
+      super(queryFactory, queryString);
+      this.cache = cache;
+      this.serializationContext = serializationContext;
+   }
 
    RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
                String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
@@ -59,7 +62,7 @@ public final class RemoteQuery extends BaseQuery {
 
    private void executeQuery() {
       if (results == null) {
-         checkParameters();
+         validateNamedParameters();
 
          QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
          QueryResponse response = op.execute();
@@ -95,16 +98,6 @@ public final class RemoteQuery extends BaseQuery {
          }
       }
       return unwrappedResults;
-   }
-
-   private void checkParameters() {
-      if (namedParameters != null) {
-         for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-            if (e.getValue() == null) {
-               throw log.queryParameterNotSet(e.getKey());
-            }
-         }
-      }
    }
 
    public SerializationContext getSerializationContext() {

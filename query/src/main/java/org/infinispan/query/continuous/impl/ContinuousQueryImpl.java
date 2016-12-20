@@ -55,7 +55,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    @Override
    public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
       BaseQuery baseQuery = (BaseQuery) query;
-      addContinuousQueryListener(baseQuery.getQueryString(), baseQuery.getNamedParameters(), listener);
+      addContinuousQueryListener(baseQuery.getQueryString(), baseQuery.getParameters(), listener);
    }
 
    @Override

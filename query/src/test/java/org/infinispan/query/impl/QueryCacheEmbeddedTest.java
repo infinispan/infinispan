@@ -62,9 +62,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // obtain the internal query cache
       Cache<?, ?> internalCache = (Cache) TestingUtil.extractField(QueryCache.class, queryCache, "lazyCache");
 
-      // create a query
       String queryString = "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u where u.name = 'John'";
-      Query query = Search.getQueryFactory(cache).create(queryString);
 
       // everything is ready to go
 
@@ -80,7 +78,8 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // test that the query cache does not have it already
       assertEquals(0, internalCache.size());
 
-      // this is the first attempt to execute the query
+      // create and execute a query
+      Query query = Search.getQueryFactory(cache).create(queryString);
       query.list();
 
       // ensure the query cache has it now: one FilterParsingResult and one LuceneQueryParsingResult

@@ -2598,7 +2598,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.setParameter("", "John");
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014020: Query parameter 'param2' was not set")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
    public void testMissingParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2612,7 +2612,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014020: Query parameter 'param2' was not set")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
    public void testMissingParamWithParameterMap() throws Exception {
       QueryFactory qf = getQueryFactory();
 

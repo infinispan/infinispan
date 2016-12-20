@@ -121,6 +121,26 @@ public class QueryStringTest extends AbstractQueryDslTest {
       }
    }
 
+   public void testParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where id = :idParam");
+
+      q.setParameter("idParam", 1);
+
+      List<Transaction> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+
+      q.setParameter("idParam", 2);
+
+      list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).getId());
+   }
+
    @Test(enabled = false)
    public void testParamWithSpacePadding() throws Exception {
       QueryFactory qf = getQueryFactory();
