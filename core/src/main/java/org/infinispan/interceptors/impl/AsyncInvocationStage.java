@@ -52,7 +52,6 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
 
    @Override
    public Object get() throws Throwable {
-      freezeHandlers();
       try {
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
@@ -62,7 +61,6 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
 
    @Override
    public boolean isDone() {
-      freezeHandlers();
       return future.isDone();
    }
 
@@ -72,19 +70,14 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
          return this;
       }
 
-      // Deque is frozen
+      // Deque is frozen, that means we executed the last handler and we can continue synchronously
       InvocationStage stage;
-      if (future.isDone()) {
-         // We can switch to a synchronous stage
-         try {
-            Object rv = ((CompletableFuture<?>) future).getNow(null);
-            stage = new ReturnValueStage(ctx, command, rv);
-         } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
-         }
-      } else {
-         // Give up and create a new asynchronous stage
-         stage = new AsyncInvocationStage(ctx, command, toCompletableFuture());
+      try {
+         // join() instead of getNow() because the future is completed after freezing the deque
+         Object rv = ((CompletableFuture<?>) future).join();
+         stage = new ReturnValueStage(ctx, command, rv);
+      } catch (Throwable t) {
+         stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
       }
       return stage.compose(composeHandler);
    }
@@ -116,14 +109,12 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
 
    @Override
    public CompletableFuture<Object> toCompletableFuture() {
-      freezeHandlers();
       return future;
    }
 
    @Override
    public InvocationStage toInvocationStage(InvocationContext newCtx, VisitableCommand newCommand) {
       if (newCtx != ctx || newCommand != command) {
-         freezeHandlers();
          return new AsyncInvocationStage(newCtx, newCommand, future);
       }
       return this;
@@ -164,7 +155,7 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
             return;
          }
 
-         // Run the handler
+         // Run the handler (catching any exception and turning it into an ExceptionStage)
          currentStage = currentStage.compose(handler);
          if (!currentStage.isDone()) {
             if (currentStage instanceof BasicAsyncInvocationStage) {
@@ -173,8 +164,11 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
                return;
             } else if (currentStage instanceof AsyncInvocationStage) {
                AsyncInvocationStage asyncInvocationStage = (AsyncInvocationStage) currentStage;
-               asyncInvocationStage.whenComplete(this);
-               return;
+               if (asyncInvocationStage.addHandler(this)) {
+                  // Stop invoking handlers now and resume when the other stage is complete.
+                  return;
+               }
+               // Deque is frozen, we can continue with the next iteration
             } else {
                currentStage = new ExceptionStage(ctx, command, new IllegalStateException(
                      "Unsupported asynchronous stage type: " + currentStage));
@@ -197,18 +191,11 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       }
    }
 
-   private void whenComplete(AsyncInvocationStage otherStage) {
-      if (addHandler(otherStage)) return;
-
-      future.whenComplete(otherStage);
-   }
-
    /**
     * An inline implementation of a deque with a fixed size that can be frozen so that no more elements
     * can be added.
     *
-    * The deque is frozen manually, with {@link #freezeHandlers()}, or automatically when the last handler is polled,
-    * or when the deque reaches capacity.
+    * The deque is frozen automatically when the last handler is polled.
     */
    // Capacity must be a power of 2
    private static final int HANDLERS_DEQUE_CAPACITY = 8;
@@ -237,18 +224,43 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
     *
     * @return {@code true} if the handler was added, or {@code false} if the handlers deque is frozen
     */
-   protected boolean addHandler(InvocationComposeHandler composeHandler) {
+   boolean addHandler(InvocationComposeHandler composeHandler) {
       synchronized (this) {
          if (frozen) {
             return false;
          }
+         if (handlers == null) {
+            initDeque();
+         }
          handlers[tail & mask] = composeHandler;
          tail++;
          if (((tail - head) & mask) == 0) {
-            frozen = true;
+            expandDeque();
          }
          return true;
       }
+   }
+
+   @GuardedBy("this")
+   private void initDeque() {
+      handlers = new InvocationComposeHandler[HANDLERS_DEQUE_CAPACITY];
+      mask = HANDLERS_DEQUE_CAPACITY - 1;
+   }
+
+   @GuardedBy("this")
+   private void expandDeque() {
+      InvocationComposeHandler[] oldHandlers = handlers;
+      int oldMask = mask;
+      int oldSize = oldMask + 1;
+
+      int newSize = oldSize * 2;
+      int newMask = newSize - 1;
+      handlers = new InvocationComposeHandler[newSize];
+      mask = (byte) newMask;
+
+      int maskedHead = head & mask;
+      System.arraycopy(oldHandlers, maskedHead, handlers, 0, oldSize - maskedHead);
+      System.arraycopy(oldHandlers, 0, handlers, maskedHead, maskedHead);
    }
 
    /**
