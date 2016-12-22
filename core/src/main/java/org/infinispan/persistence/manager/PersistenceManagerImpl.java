@@ -37,6 +37,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EvictionConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -520,7 +521,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheWriter writer : txWriters) {
-            if (accessMode.canPerform(configMap.get(writer))) {
+            if (accessMode.canPerform(configMap.get(writer)) || configuration.clustering().cacheMode().equals(CacheMode.LOCAL)) {
                TransactionalCacheWriter txWriter = (TransactionalCacheWriter) undelegate(writer);
                txWriter.prepareWithModifications(transaction, batchModification);
             }

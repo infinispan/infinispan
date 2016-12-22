@@ -101,6 +101,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public void validate() {
+      boolean isLocalCache = builder.clustering().create().cacheMode().equals(CacheMode.LOCAL);
       int numFetchPersistentState = 0;
       for (StoreConfigurationBuilder<?, ?> b : stores) {
          b.validate();
@@ -109,7 +110,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
             throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
                                                         + "  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
          }
-         if (!storeConfiguration.shared() && storeConfiguration.transactional()) {
+         if (!storeConfiguration.shared() && storeConfiguration.transactional() && !isLocalCache) {
             throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
                                                         + ". In order for a cache loader to be transactional, it must also be shared.");
          }
