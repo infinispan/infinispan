@@ -7,14 +7,14 @@ import org.infinispan.persistence.jdbc.DatabaseType;
 /**
  * @author Ryan Emerson
  */
-class DbMetaData {
+public class DbMetaData {
    private final DatabaseType type;
    private final int majorVersion;
    private final int minorVersion;
    private final boolean upsertDisabled;
    private final boolean indexingDisabled;
 
-   DbMetaData(DatabaseType type, Integer majorVersion, Integer minorVersion, boolean upsertDisabled, boolean indexingDisabled) {
+   public DbMetaData(DatabaseType type, Integer majorVersion, Integer minorVersion, boolean upsertDisabled, boolean indexingDisabled) {
       Objects.requireNonNull(type);
       this.type = type;
       this.majorVersion = majorVersion == null ? -1 : majorVersion;
@@ -39,7 +39,7 @@ class DbMetaData {
       return upsertDisabled;
    }
 
-   public boolean isIndexingDisabled() {
+   boolean isIndexingDisabled() {
       return indexingDisabled;
    }
 }

@@ -24,15 +24,15 @@ public class TableManagerFactory {
    private static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
    public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
-      return getManager(connectionFactory, config.table(), config);
+      DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
+            config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
+            isPropertyDisabled(config, INDEXING_DISABLED));
+
+      return getManager(metaData, connectionFactory, config.table());
    }
 
-   private static TableManager getManager(ConnectionFactory connectionFactory, TableManipulationConfiguration tableConfig,
-                                          AbstractJdbcStoreConfiguration storeConfig) {
-      DbMetaData metaData = getDbMetaData(connectionFactory, storeConfig.dialect(), storeConfig.dbMajorVersion(),
-                                          storeConfig.dbMajorVersion(), isPropertyDisabled(storeConfig, UPSERT_DISABLED),
-                                          isPropertyDisabled(storeConfig, INDEXING_DISABLED));
-
+   public static TableManager getManager(DbMetaData metaData, ConnectionFactory connectionFactory,
+                                         TableManipulationConfiguration tableConfig) {
       switch (metaData.getType()) {
          case H2:
             return new H2TableManager(connectionFactory, tableConfig, metaData);
