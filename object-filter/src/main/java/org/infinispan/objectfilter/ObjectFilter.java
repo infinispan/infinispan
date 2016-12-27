@@ -33,6 +33,9 @@ public interface ObjectFilter {
 
    Map<String, Object> getParameters();
 
+   /**
+    * Creates a new ObjectFilter based on current one and the given parameters.
+    */
    ObjectFilter withParameters(Map<String, Object> namedParameters);
 
    /**

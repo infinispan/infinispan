@@ -20,7 +20,6 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-import org.infinispan.util.KeyValuePair;
 
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a
@@ -82,17 +81,9 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
    public ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
-         if (queryCache != null) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, matcherImplClass);
-            ObjectFilter objectFilter = queryCache.get(queryCacheKey);
-            if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(queryString);
-               queryCache.put(queryCacheKey, objectFilter);
-            }
-            this.objectFilter = objectFilter;
-         } else {
-            objectFilter = matcher.getObjectFilter(queryString);
-         }
+         objectFilter = queryCache != null
+               ? queryCache.get(queryString, null, matcherImplClass, (qs, accumulators) -> matcher.getObjectFilter(qs))
+               : matcher.getObjectFilter(queryString);
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
