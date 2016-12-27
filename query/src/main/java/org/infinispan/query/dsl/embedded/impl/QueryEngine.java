@@ -51,7 +51,6 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -129,7 +128,7 @@ public class QueryEngine<TypeMetadata> {
 
    public BaseQuery buildQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (log.isDebugEnabled()) {
-         log.debugf("Building query for : %s", queryString);
+         log.debugf("Building query '%s' with parameters %s", queryString, namedParameters);
       }
 
       if (authorizationManager != null) {
@@ -674,38 +673,21 @@ public class QueryEngine<TypeMetadata> {
       return null;
    }
 
-   private FilterParsingResult<TypeMetadata> parse(String queryString) {
-      FilterParsingResult<TypeMetadata> parsingResult;
-      if (queryCache != null) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(queryString, FilterParsingResult.class);
-         parsingResult = queryCache.get(queryCacheKey);
-         if (parsingResult == null) {
-            parsingResult = IckleParser.parse(queryString, propertyHelper);
-            queryCache.put(queryCacheKey, parsingResult);
-         }
-      } else {
-         parsingResult = IckleParser.parse(queryString, propertyHelper);
-      }
-      return parsingResult;
+   protected FilterParsingResult<TypeMetadata> parse(String queryString) {
+      return queryCache != null
+            ? queryCache.get(queryString, null, FilterParsingResult.class, (qs, accumulators) -> IckleParser.parse(qs, propertyHelper))
+            : IckleParser.parse(queryString, propertyHelper);
    }
 
-   private ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
-      ObjectFilter objectFilter;
-      if (queryCache != null) {
-         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<>(queryString, new KeyValuePair<>(matcher.getClass(), acc));
-         objectFilter = queryCache.get(queryCacheKey);
-         if (objectFilter == null) {
-            objectFilter = matcher.getObjectFilter(queryString, acc);
-            queryCache.put(queryCacheKey, objectFilter);
-         }
-      } else {
-         objectFilter = matcher.getObjectFilter(queryString, acc);
-      }
+   private ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {
+      ObjectFilter objectFilter = queryCache != null
+            ? queryCache.get(queryString, accumulators, matcher.getClass(), matcher::getObjectFilter)
+            : matcher.getObjectFilter(queryString, accumulators);
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
 
    protected final JPAFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
-      final JPAFilterAndConverter filter = createFilter(queryString, namedParameters);
+      JPAFilterAndConverter filter = createFilter(queryString, namedParameters);
 
       SecurityActions.doPrivileged(() -> {
          cache.getComponentRegistry().wireDependencies(filter);
@@ -767,18 +749,9 @@ public class QueryEngine<TypeMetadata> {
    }
 
    private LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      LuceneQueryParsingResult<TypeMetadata> luceneParsingResult;
-      if (queryCache != null && parsingResult.getParameterNames().isEmpty()) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(parsingResult.getQueryString(), LuceneQueryParsingResult.class);
-         luceneParsingResult = queryCache.get(queryCacheKey);
-         if (luceneParsingResult == null) {
-            luceneParsingResult = createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
-            queryCache.put(queryCacheKey, luceneParsingResult);
-         }
-      } else {
-         luceneParsingResult = createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
-      }
-      return luceneParsingResult;
+      return queryCache != null && parsingResult.getParameterNames().isEmpty()
+            ? queryCache.get(parsingResult.getQueryString(), null, LuceneQueryParsingResult.class, (queryString, accumulators) -> createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult)))
+            : createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
    }
 
    protected LuceneQueryMaker<TypeMetadata> createLuceneQueryMaker() {
