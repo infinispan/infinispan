@@ -4,13 +4,12 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationComposeSuccessHandler;
 import org.infinispan.interceptors.InvocationExceptionHandler;
 import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.interceptors.InvocationReturnValueHandler;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -20,19 +19,17 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Dan Berindei
  * @since 9.0
  */
-public class ExceptionStage extends AbstractInvocationStage {
+public class ExceptionStage implements InvocationStage {
    Throwable throwable;
 
-   public ExceptionStage(InvocationContext ctx, VisitableCommand command, Throwable throwable) {
-      super(ctx, command);
+   public ExceptionStage(Throwable throwable) {
       this.throwable = throwable;
    }
 
    @Override
-   public InvocationStage compose(InvocationComposeHandler composeHandler) {
+   public InvocationStage compose(InvocationContext ctx, VisitableCommand command, InvocationComposeHandler composeHandler) {
       try {
-         BasicInvocationStage stage = composeHandler.apply(this, ctx, command, null, throwable);
-         return stage.toInvocationStage(ctx, command);
+         return composeHandler.apply(this, ctx, command, null, throwable);
       } catch (Throwable t) {
          if (throwable != t) {
             t.addSuppressed(throwable);
@@ -43,26 +40,26 @@ public class ExceptionStage extends AbstractInvocationStage {
    }
 
    @Override
-   public InvocationStage thenCompose(InvocationComposeSuccessHandler thenComposeHandler) {
-      return compose(thenComposeHandler);
+   public InvocationStage thenCompose(InvocationContext ctx, VisitableCommand command, InvocationComposeSuccessHandler thenComposeHandler) {
+      return compose(ctx, command, thenComposeHandler);
    }
 
    @Override
-   public InvocationStage thenAccept(InvocationSuccessHandler successHandler) {
+   public InvocationStage thenAccept(InvocationContext ctx, VisitableCommand command, InvocationSuccessHandler successHandler) {
       // Skip the success handler
       return this;
    }
 
    @Override
-   public InvocationStage thenApply(InvocationReturnValueHandler returnValueHandler) {
+   public InvocationStage thenApply(InvocationContext ctx, VisitableCommand command, InvocationReturnValueHandler returnValueHandler) {
       return this;
    }
 
    @Override
-   public InvocationStage exceptionally(InvocationExceptionHandler exceptionHandler) {
+   public InvocationStage exceptionally(InvocationContext ctx, VisitableCommand command, InvocationExceptionHandler exceptionHandler) {
       try {
          Object rv = exceptionHandler.apply(ctx, command, throwable);
-         return new ReturnValueStage(ctx, command, rv);
+         return new ReturnValueStage(rv);
       } catch (Throwable t) {
          if (t != throwable) {
             t.addSuppressed(throwable);
@@ -73,7 +70,7 @@ public class ExceptionStage extends AbstractInvocationStage {
    }
 
    @Override
-   public InvocationStage handle(InvocationFinallyHandler finallyHandler) {
+   public InvocationStage handle(InvocationContext ctx, VisitableCommand command, InvocationFinallyHandler finallyHandler) {
       try {
          finallyHandler.accept(ctx, command, null, throwable);
          return this;

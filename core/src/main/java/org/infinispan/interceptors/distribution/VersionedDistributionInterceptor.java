@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -70,8 +71,9 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    @Override
-   protected InvocationStage wrapFunctionalResultOnNonOriginOnReturn(InvocationStage stage, CacheEntry entry) {
-      return stage.thenApply((rCtx, rCommand, rv) -> {
+   protected InvocationStage wrapFunctionalResultOnNonOriginOnReturn(InvocationStage stage, CacheEntry entry,
+                                                                     InvocationContext ctx, VisitableCommand command) {
+      return stage.thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          Metadata metadata = entry.getMetadata();
          EntryVersion version = metadata == null || metadata.version() == null ?
                versionGenerator.nonExistingVersion() : metadata.version();

@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,7 +61,7 @@ public class BlockingInterceptor extends DDAsyncInterceptor {
       if (!blockAfter) {
          blockIfNeeded(ctx, command);
       }
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (blockAfter) {
             blockIfNeeded(rCtx, rCommand);
          }

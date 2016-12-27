@@ -35,7 +35,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -111,24 +111,24 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+   public final InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       return visitDataReadCommand(ctx, command, false);
    }
 
    @Override
-   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public final InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       return visitDataReadCommand(ctx, command, true);
    }
 
-   private BasicInvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command,
-         boolean isEntry) throws Throwable {
+   private InvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command,
+                                                boolean isEntry) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, isEntry, false, true);
    }
 
-   protected BasicInvocationStage performCommandWithL1WriteIfAble(InvocationContext ctx, DataCommand command,
-         boolean isEntry, boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
+   protected InvocationStage performCommandWithL1WriteIfAble(InvocationContext ctx, DataCommand command,
+                                                             boolean isEntry, boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
       if (ctx.isOriginLocal()) {
          Object key = command.getKey();
          // If the command isn't going to return a remote value - just pass it down the interceptor chain
@@ -145,8 +145,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       return invokeNext(ctx, command);
    }
 
-   private BasicInvocationStage performL1Lookup(InvocationContext ctx, VisitableCommand command,
-                                                boolean runInterceptorOnConflict, Object key, boolean isEntry) throws Throwable {
+   private InvocationStage performL1Lookup(InvocationContext ctx, VisitableCommand command,
+                                           boolean runInterceptorOnConflict, Object key, boolean isEntry) throws Throwable {
       // Most times the putIfAbsent will be successful, so not doing a get first
       L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
                                                                 cdl);
@@ -158,7 +158,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       if (presentSync == null) {
          // Note this is the same synchronizer we just created that is registered with the L1Manager
          l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
-         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                l1WriteSync.retrievalEncounteredException(t);
             }
@@ -201,23 +201,23 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command, false);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<Object> keys = command.getMap().keySet();
       Set<Object> toInvalidate = new HashSet<Object>(keys.size());
       for (Object k : keys) {
@@ -232,7 +232,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = command.getAffectedKeys().stream().filter(
             k -> !cdl.localNodeIsOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          PutMapCommand putMapCommand = (PutMapCommand) rCommand;
          processInvalidationResult(putMapCommand, invalidationFuture);
          return MultiSubCommandInvoker.thenForEach(rCtx, subCommands, this, returnWith(rv));
@@ -240,7 +240,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command)
+   public InvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command)
          throws Throwable {
       for (Object key : invalidateL1Command.getKeys()) {
          abortL1UpdateOrWait(key);
@@ -287,8 +287,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private BasicInvocationStage handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command,
-         boolean assumeOriginKeptEntryInL1) {
+   private InvocationStage handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command,
+                                                  boolean assumeOriginKeptEntryInL1) {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          if (trace) {
             log.tracef("local mode forced, suppressing L1 calls.");
@@ -296,21 +296,21 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
       Future<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          processInvalidationResult(dataWriteCommand, l1InvalidationFuture);
          return removeFromLocalL1(rCtx, dataWriteCommand, rv);
       });
    }
 
-   private BasicInvocationStage removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
+   private InvocationStage removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
          CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(command.getCommandInvocationId());
          VisitableCommand removeFromL1Command = removeFromL1Command(ctx, command.getKey());
          if (pendingAcks == null) {
-            return invokeNext(ctx, removeFromL1Command).thenApply((rCtx, rCommand, rv) -> returnValue);
+            return invokeNext(ctx, removeFromL1Command).thenApply(ctx, command, (rCtx, rCommand, rv) -> returnValue);
          } else {
-            return invokeNextAsync(ctx, removeFromL1Command, pendingAcks).thenApply((rCtx, rCommand, rv) -> returnValue);
+            return invokeNextAsync(ctx, removeFromL1Command, pendingAcks).thenApply(ctx, command, (rCtx, rCommand, rv) -> returnValue);
          }
       } else if (trace) {
          log.trace("Allowing entry to commit as local node is owner");

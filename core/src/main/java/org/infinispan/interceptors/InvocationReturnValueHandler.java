@@ -6,7 +6,7 @@ import org.infinispan.interceptors.impl.ExceptionStage;
 import org.infinispan.interceptors.impl.ReturnValueStage;
 
 /**
- * Callback interface for {@link InvocationStage#thenApply(InvocationReturnValueHandler)}.
+ * Callback interface for {@link InvocationStage#thenApply(InvocationContext, VisitableCommand, InvocationReturnValueHandler)}.
  *
  * @author Dan Berindei
  * @since 9.0
@@ -17,15 +17,15 @@ public interface InvocationReturnValueHandler extends InvocationComposeHandler {
          throws Throwable;
 
    @Override
-   default BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-         Throwable t) throws Throwable {
+   default InvocationStage apply(InvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+                                 Throwable t) throws Throwable {
       if (t != null) return stage;
 
       try {
          Object result = apply(rCtx, rCommand, rv);
-         return new ReturnValueStage(rCtx, rCommand, result);
+         return new ReturnValueStage(result);
       } catch (Throwable t1) {
-         return new ExceptionStage(rCtx, rCommand, t1);
+         return new ExceptionStage(t1);
       }
    }
 }

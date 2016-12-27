@@ -26,7 +26,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
@@ -87,7 +87,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final CyclicBarrier barrier = new CyclicBarrier(2);
       cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor() {
          @Override
-         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
+         public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand) {
                if (!ctx.isOriginLocal()) {
@@ -165,7 +165,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       assertTrue(cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
-         public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
+         public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand || command instanceof RemoveCommand) {
                throw new RuntimeException("Barf!");

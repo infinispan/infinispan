@@ -16,8 +16,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -56,7 +56,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+   public final InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
          throws Throwable {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
@@ -74,7 +74,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
          simulateLocking(ctx, command, clusteringDependentLogic);
 
          if (ctx.isOriginLocal()) {
-            return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+            return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
                if (t != null) {
                   rollbackTxOnPrepareException(rCtx, (PrepareCommand) rCommand, t);
                }
@@ -100,7 +100,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
             log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
          }
 
-         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             afterPrepare((TxInvocationContext) rCtx, (PrepareCommand) rCommand, state, t);
          });
       } catch (Throwable t) {
@@ -133,23 +133,23 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false);
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true);
    }
 
    @Override
-   public final BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public final InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       throw new UnsupportedOperationException("Lock interface not supported with total order protocol");
    }
 
-   private BasicInvocationStage visitSecondPhaseCommand(TxInvocationContext context,
-         AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
+   private InvocationStage visitSecondPhaseCommand(TxInvocationContext context,
+                                                   AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
       GlobalTransaction gtx = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s", commit, gtx.globalId(),
@@ -167,9 +167,9 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
          throw t;
       }
 
-      return invokeNext(context, command).handle(
-            (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
-                  (AbstractTransactionBoundaryCommand) rCommand));
+      return invokeNext(context, command)
+            .handle(context, command, (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
+                                                                                          (AbstractTransactionBoundaryCommand) rCommand));
    }
 
    private void finishSecondPhaseCommand(boolean commit, TotalOrderRemoteTransactionState state, InvocationContext ctx,

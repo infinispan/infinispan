@@ -31,7 +31,6 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
@@ -86,7 +85,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!isPutForExternalRead(command)) {
          return handleInvalidate(ctx, command, command.getKey());
       }
@@ -94,18 +93,19 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+   public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          ClearCommand clearCommand = (ClearCommand) rCommand;
          if (!isLocalModeForced(clearCommand)) {
             // just broadcast the clear command - this is simplest!
@@ -120,17 +120,18 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object[] keys = command.getMap() == null ? null : command.getMap().keySet().toArray();
       return handleInvalidate(ctx, command, keys);
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
          // fetch the modifications before the transaction is committed (and thus removed from the txTable)
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
@@ -163,8 +164,9 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          Set<Object> affectedKeys = ctx.getAffectedKeys();
          log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
          CompletableFuture<Map<Address, Response>> remoteInvocation = null;
@@ -189,12 +191,13 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          //unlock will happen async as it is a best effort
          LockControlCommand lockControlCommand = (LockControlCommand) rCommand;
          boolean sync = !lockControlCommand.isUnlock();
@@ -210,7 +213,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       if (ctx.isInTxScope()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (writeCommand.isSuccessful()) {
             if (keys != null && keys.length != 0) {

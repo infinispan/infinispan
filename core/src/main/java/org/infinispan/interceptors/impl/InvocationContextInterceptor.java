@@ -24,9 +24,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationExceptionHandler;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationExceptionHandler;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -82,7 +81,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
 
    @Override
-   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace)
          log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null)
@@ -101,7 +100,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       }
 
       InvocationStage stage = invokeNext(ctx, command);
-      return stage.exceptionally(suppressExceptionsHandler);
+      return stage.exceptionally(ctx, command, suppressExceptionsHandler);
    }
 
    private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th) throws Throwable {

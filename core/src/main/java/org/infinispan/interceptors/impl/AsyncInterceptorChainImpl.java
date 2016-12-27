@@ -24,7 +24,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -230,7 +230,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
+         InvocationStage stage = firstInterceptor.visitCommand(ctx, command);
          return stage.toCompletableFuture();
       } catch (Throwable t) {
          CompletableFuture<Object> cf = new CompletableFuture<>();
@@ -242,7 +242,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
+         InvocationStage stage = firstInterceptor.visitCommand(ctx, command);
          return stage.get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();

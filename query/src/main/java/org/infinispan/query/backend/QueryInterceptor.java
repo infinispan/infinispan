@@ -27,7 +27,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -39,7 +38,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Transformer;
@@ -154,39 +153,39 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
-      return invokeNext(ctx, command).thenAccept(
+      return invokeNext(ctx, command).thenAccept(ctx, command,
             (rCtx, rCommand, rv) -> processPutKeyValueCommand(((PutKeyValueCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       // remove the object out of the cache first.
-      return invokeNext(ctx, command).thenAccept(
+      return invokeNext(ctx, command).thenAccept(ctx, command,
             (rCtx, rCommand, rv) -> processRemoveCommand(((RemoveCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept(ctx, command,
             (rCtx, rCommand, rv) -> processReplaceCommand(((ReplaceCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       command.setFlagsBitSet(EnumUtil.diffBitSets(command.getFlagsBitSet(), FlagBitSets.IGNORE_RETURN_VALUES));
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          Map<Object, Object> previousValues = (Map<Object, Object>) rv;
          processPutMapCommand(((PutMapCommand) rCommand), rCtx, previousValues, null);
       });
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(final InvocationContext ctx, final ClearCommand command)
+   public InvocationStage visitClearCommand(final InvocationContext ctx, final ClearCommand command)
          throws Throwable {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
-      return invokeNext(ctx, command).thenAccept(
+      return invokeNext(ctx, command).thenAccept(ctx, command,
             (rCtx, rCommand, rv) -> processClearCommand(((ClearCommand) rCommand), rCtx, null));
    }
 
@@ -303,7 +302,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * as a transaction sync.
     */
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final WriteCommand[] writeCommands = command.getModifications();
       final Object[] stateBeforePrepare = new Object[writeCommands.length];
 
@@ -323,7 +322,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          }
       }
 
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          if (txInvocationContext.isTransactionValid()) {
             final TransactionContext transactionContext = makeTransactionalEventContext();

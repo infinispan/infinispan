@@ -6,8 +6,13 @@ import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationComposeHandler;
+import org.infinispan.interceptors.InvocationComposeSuccessHandler;
+import org.infinispan.interceptors.InvocationExceptionHandler;
+import org.infinispan.interceptors.InvocationFinallyHandler;
+import org.infinispan.interceptors.InvocationReturnValueHandler;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -19,7 +24,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Dan Berindei
  * @since 9.0
  */
-public class BasicAsyncInvocationStage implements BasicInvocationStage {
+public class BasicAsyncInvocationStage implements InvocationStage {
    private final CompletableFuture<Object> future;
 
    @SuppressWarnings("unchecked")
@@ -47,7 +52,39 @@ public class BasicAsyncInvocationStage implements BasicInvocationStage {
    }
 
    @Override
-   public InvocationStage toInvocationStage(InvocationContext newCtx, VisitableCommand newCommand) {
-      return new AsyncInvocationStage(newCtx, newCommand, future);
+   public InvocationStage compose(InvocationContext ctx, VisitableCommand command,
+                                  InvocationComposeHandler composeHandler) {
+      return new AsyncInvocationStage(ctx, command, future)
+            .compose(ctx, command, composeHandler);
+   }
+
+   @Override
+   public InvocationStage thenCompose(InvocationContext ctx, VisitableCommand command,
+                                      InvocationComposeSuccessHandler thenComposeHandler) {
+      return compose(ctx, command, thenComposeHandler);
+   }
+
+   @Override
+   public InvocationStage thenAccept(InvocationContext ctx, VisitableCommand command,
+                                     InvocationSuccessHandler successHandler) {
+      return compose(ctx, command, successHandler);
+   }
+
+   @Override
+   public InvocationStage thenApply(InvocationContext ctx, VisitableCommand command,
+                                    InvocationReturnValueHandler returnValueHandler) {
+      return compose(ctx, command, returnValueHandler);
+   }
+
+   @Override
+   public InvocationStage exceptionally(InvocationContext ctx, VisitableCommand command,
+                                        InvocationExceptionHandler exceptionHandler) {
+      return compose(ctx, command, exceptionHandler);
+   }
+
+   @Override
+   public InvocationStage handle(InvocationContext ctx, VisitableCommand command,
+                                 InvocationFinallyHandler finallyHandler) {
+      return compose(ctx, command, finallyHandler);
    }
 }

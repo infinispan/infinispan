@@ -82,23 +82,23 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return handleLocalPutMapCommand(ctx, command);
       } else {
@@ -106,8 +106,9 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private BasicInvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+   private InvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
+      return invokeNext(ctx, command)
+            .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
          final PutMapCommand cmd = (PutMapCommand) rCommand;
          if (t != null) {
             sendExceptionAck(cmd.getCommandInvocationId(), cmd.getTopologyId(), t);
@@ -125,8 +126,9 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       });
    }
 
-   private BasicInvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, throwable) -> {
+   private InvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
+      return invokeNext(ctx, command)
+            .compose(ctx, command, (stage, rCtx, rCommand, rv, throwable) -> {
          final PutMapCommand cmd = (PutMapCommand) rCommand;
          if (throwable != null) {
             disposeCollectorOnException(cmd.getCommandInvocationId());
@@ -137,9 +139,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
 
-   private BasicInvocationStage handleWriteCommand(InvocationContext ctx, DataWriteCommand command) {
+   private InvocationStage handleWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       if (ctx.isOriginLocal()) {
-         return invokeNext(ctx, command).compose(onLocalWriteCommand);
+         return invokeNext(ctx, command)
+               .compose(ctx, command, onLocalWriteCommand);
       } else {
          CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
          if (command.getTopologyId() != cacheTopology.getTopologyId()) {
@@ -151,9 +154,11 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
                cacheTopology.getWriteConsistentHash(), localAddress);
          switch (distributionInfo.ownership()) {
             case BACKUP:
-               return invokeNext(ctx, command).compose(onRemoteBackupOwner);
+               return invokeNext(ctx, command)
+                     .compose(ctx, command, onRemoteBackupOwner);
             case PRIMARY:
-               return invokeNext(ctx, command).compose(onRemotePrimaryOwner);
+               return invokeNext(ctx, command)
+                     .compose(ctx, command, onRemotePrimaryOwner);
             default:
                throw new IllegalStateException();
          }
@@ -161,8 +166,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private BasicInvocationStage onRemotePrimaryOwner(BasicInvocationStage stage, InvocationContext rCtx,
-         VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private InvocationStage onRemotePrimaryOwner(InvocationStage stage, InvocationContext rCtx,
+                                                VisitableCommand rCommand, Object rv, Throwable throwable) {
       DataWriteCommand command = (DataWriteCommand) rCommand;
       if (throwable != null) {
          sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(), throwable);
@@ -173,8 +178,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private BasicInvocationStage onRemoteBackupOwner(BasicInvocationStage stage, InvocationContext rCtx,
-         VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private InvocationStage onRemoteBackupOwner(InvocationStage stage, InvocationContext rCtx,
+                                               VisitableCommand rCommand, Object rv, Throwable throwable) {
       DataWriteCommand cmd = (DataWriteCommand) rCommand;
       if (throwable != null) {
          sendExceptionAck(cmd.getCommandInvocationId(), cmd.getTopologyId(), throwable);
@@ -185,8 +190,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private BasicInvocationStage onLocalWriteCommand(BasicInvocationStage stage, InvocationContext rCtx,
-         VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private InvocationStage onLocalWriteCommand(InvocationStage stage, InvocationContext rCtx,
+                                               VisitableCommand rCommand, Object rv, Throwable throwable) {
       final DataWriteCommand cmd = (DataWriteCommand) rCommand;
       cmd.getCommandInvocationId();
       if (throwable != null) {
@@ -201,7 +206,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       commandAckCollector.dispose(id);
    }
 
-   private BasicInvocationStage waitCollectorAsync(BasicInvocationStage stage, CommandInvocationId id) {
+   private InvocationStage waitCollectorAsync(InvocationStage stage, CommandInvocationId id) {
       //waiting for acknowledges based on default rpc timeout.
       CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFutureToWait(id);
       if (collectorFuture == null) {

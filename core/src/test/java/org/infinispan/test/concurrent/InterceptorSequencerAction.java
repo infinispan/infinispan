@@ -8,7 +8,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 
 /**
  * Replaces an {@link AsyncInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -96,10 +96,10 @@ public class InterceptorSequencerAction {
       }
 
       @Override
-      public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
          StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
-         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) ->  {
+         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) ->  {
             StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
          });
       }

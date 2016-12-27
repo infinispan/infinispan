@@ -7,7 +7,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -35,19 +35,22 @@ public class NotificationInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!command.isOnePhaseCommit()) return invokeNext(ctx, command);
 
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, transactionCompleteSuccessHandler);
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, transactionCompleteSuccessHandler);
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, transactionCompleteSuccessHandler);
    }
 }

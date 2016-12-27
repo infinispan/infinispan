@@ -31,7 +31,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
@@ -60,8 +60,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
          if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
             return rv;
@@ -244,7 +244,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       CacheSet<K> keySet;
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);

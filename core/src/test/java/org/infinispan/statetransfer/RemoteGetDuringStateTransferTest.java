@@ -22,7 +22,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -696,8 +696,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Override
-      public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-         return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {
+      public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
             if (t instanceof OutdatedTopologyException) {
                assertEquals(expectedTopologyId, ((OutdatedTopologyException) t).requestedTopologyId);
                retryOnJoiner.await(10, TimeUnit.SECONDS);

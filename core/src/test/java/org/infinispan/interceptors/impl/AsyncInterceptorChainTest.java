@@ -15,7 +15,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -99,7 +99,7 @@ public class AsyncInterceptorChainTest {
 
    private static class DummyCallInterceptor extends BaseAsyncInterceptor {
       @Override
-      public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
+      public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
             throws Throwable {
          return null;
       }

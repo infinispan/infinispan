@@ -29,7 +29,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
@@ -302,7 +302,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
    private static class FailingInterceptor extends DDAsyncInterceptor {
       @Override
-      public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          throw new CacheException("Injected");
       }
    }
@@ -317,7 +317,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          if (arrival != null) arrival.countDown();
          // the timeout has to be longer than remoteTimeout!
          release.await(30, TimeUnit.SECONDS);
@@ -335,11 +335,11 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
             retried.incrementAndGet();
          }
-         return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {
+         return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
             thrown.incrementAndGet();
             throw t;
          });

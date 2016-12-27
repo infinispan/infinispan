@@ -20,7 +20,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -60,7 +60,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final Collection<?> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
@@ -81,27 +81,27 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
       });
 
    }
 
    @Override
-   protected BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected InvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
 
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (needToMarkReads && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          for (Object key : command.getKeys()) {
@@ -112,12 +112,12 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public InvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return invokeNext(ctx, command);
    }
 
    @Override
-   protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected InvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       // Regardless of whether is conditional so that
       // write skews can be detected in both cases.
       markKeyAsRead(ctx, command, command.isConditional());
@@ -125,14 +125,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
-                                                                Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> InvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
+                                                        Collection<K> keys, boolean forwarded) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
    }
 

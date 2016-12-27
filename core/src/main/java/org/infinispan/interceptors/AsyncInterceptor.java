@@ -18,7 +18,7 @@ public interface AsyncInterceptor {
     * The interceptor is responsible for invoking the next interceptor in the chain.
     * See {@link BaseAsyncInterceptor} and {@link InvocationStage} for the ways to do that.
     */
-   BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
+   InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 
    /**
     * Sets up the interceptor. Do not call explicitly.

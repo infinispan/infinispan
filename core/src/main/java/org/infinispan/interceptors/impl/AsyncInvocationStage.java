@@ -6,13 +6,12 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationComposeSuccessHandler;
 import org.infinispan.interceptors.InvocationExceptionHandler;
 import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.interceptors.InvocationReturnValueHandler;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -65,7 +64,11 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
    }
 
    @Override
-   public InvocationStage compose(InvocationComposeHandler composeHandler) {
+   public InvocationStage compose(InvocationContext ctx, VisitableCommand command, InvocationComposeHandler composeHandler) {
+      if (ctx != this.ctx || command != this.command) {
+         return new AsyncInvocationStage(ctx, command, future).compose(ctx, command, composeHandler);
+      }
+
       if (addHandler(composeHandler)) {
          return this;
       }
@@ -75,36 +78,36 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       try {
          // join() instead of getNow() because the future is completed after freezing the deque
          Object rv = ((CompletableFuture<?>) future).join();
-         stage = new ReturnValueStage(ctx, command, rv);
+         stage = new ReturnValueStage(rv);
       } catch (Throwable t) {
-         stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
+         stage = new ExceptionStage(CompletableFutures.extractException(t));
       }
-      return stage.compose(composeHandler);
+      return stage.compose(ctx, command, composeHandler);
    }
 
    @Override
-   public InvocationStage thenCompose(InvocationComposeSuccessHandler thenComposeHandler) {
-      return compose(thenComposeHandler);
+   public InvocationStage thenCompose(InvocationContext ctx, VisitableCommand command, InvocationComposeSuccessHandler thenComposeHandler) {
+      return compose(ctx, command, thenComposeHandler);
    }
 
    @Override
-   public InvocationStage thenAccept(InvocationSuccessHandler successHandler) {
-      return compose(successHandler);
+   public InvocationStage thenAccept(InvocationContext ctx, VisitableCommand command, InvocationSuccessHandler successHandler) {
+      return compose(ctx, command, successHandler);
    }
 
    @Override
-   public InvocationStage thenApply(InvocationReturnValueHandler returnValueHandler) {
-      return compose(returnValueHandler);
+   public InvocationStage thenApply(InvocationContext ctx, VisitableCommand command, InvocationReturnValueHandler returnValueHandler) {
+      return compose(ctx, command, returnValueHandler);
    }
 
    @Override
-   public InvocationStage exceptionally(InvocationExceptionHandler exceptionHandler) {
-      return compose(exceptionHandler);
+   public InvocationStage exceptionally(InvocationContext ctx, VisitableCommand command, InvocationExceptionHandler exceptionHandler) {
+      return compose(ctx, command, exceptionHandler);
    }
 
    @Override
-   public InvocationStage handle(InvocationFinallyHandler finallyHandler) {
-      return compose(finallyHandler);
+   public InvocationStage handle(InvocationContext ctx, VisitableCommand command, InvocationFinallyHandler finallyHandler) {
+      return compose(ctx, command, finallyHandler);
    }
 
    @Override
@@ -112,13 +115,6 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       return future;
    }
 
-   @Override
-   public InvocationStage toInvocationStage(InvocationContext newCtx, VisitableCommand newCommand) {
-      if (newCtx != ctx || newCommand != command) {
-         return new AsyncInvocationStage(newCtx, newCommand, future);
-      }
-      return this;
-   }
 
    @Override
    public void accept(Object rv, Throwable t) {
@@ -126,19 +122,19 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       if (trace) log.tracef("Resuming invocation of command %s with %d handlers", command, handlersSize());
       InvocationStage currentStage;
       if (t != null) {
-         currentStage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
+         currentStage = new ExceptionStage(CompletableFutures.extractException(t));
       } else {
-         currentStage = new ReturnValueStage(ctx, command, rv);
+         currentStage = new ReturnValueStage(rv);
       }
       invokeHandlers(currentStage);
    }
 
    @Override
-   public BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand,
-                                     Object rv, Throwable t) throws Throwable {
+   public InvocationStage apply(InvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand,
+                                Object rv, Throwable t) throws Throwable {
       // We ran a handler that returned another AsyncInvocationStage
       // and now that async stage is complete.
-      invokeHandlers(stage.toInvocationStage(ctx, command));
+      invokeHandlers(stage);
       // We don't want to change the result of the other AsyncInvocationStage
       return stage;
    }
@@ -156,7 +152,7 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
          }
 
          // Run the handler (catching any exception and turning it into an ExceptionStage)
-         currentStage = currentStage.compose(handler);
+         currentStage = currentStage.compose(ctx, command, handler);
          if (!currentStage.isDone()) {
             if (currentStage instanceof BasicAsyncInvocationStage) {
                // Use the CompletableFuture directly, without creating another AsyncInvocationStage instance
@@ -170,7 +166,7 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
                }
                // Deque is frozen, we can continue with the next iteration
             } else {
-               currentStage = new ExceptionStage(ctx, command, new IllegalStateException(
+               currentStage = new ExceptionStage(new IllegalStateException(
                      "Unsupported asynchronous stage type: " + currentStage));
             }
          }
@@ -179,7 +175,7 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       }
    }
 
-   private void completeFromStage(BasicInvocationStage stage) {
+   private void completeFromStage(InvocationStage stage) {
       if (!stage.isDone())
          throw new IllegalArgumentException("Stage must be done");
 

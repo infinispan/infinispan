@@ -4,13 +4,13 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 
 /**
- * Callback interface for {@link InvocationStage#compose(InvocationComposeHandler)}.
+ * Callback interface for {@link InvocationStage#compose(InvocationContext, VisitableCommand, InvocationComposeHandler)}.
  *
  * @author Dan Berindei
  * @since 9.0
  */
 @FunctionalInterface
 public interface InvocationComposeHandler {
-   BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-         Throwable t) throws Throwable;
+   InvocationStage apply(InvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+                         Throwable t) throws Throwable;
 }

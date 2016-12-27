@@ -52,15 +52,13 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -134,7 +132,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return handlePrepareCommand(ctx, command);
    }
 
@@ -146,14 +144,15 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (this.statisticsEnabled) prepares.incrementAndGet();
       if (!ctx.isOriginLocal()) {
          ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
-         return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command)
+               .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
             if (!rCtx.isOriginLocal()) {
                return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
                      (AbstractTransactionBoundaryCommand) rCommand);
             }
 
             return stage;
-         }).thenAccept((rCtx, rCommand, rv) -> {
+         }).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             PrepareCommand prepareCommand = (PrepareCommand) rCommand;
             if (prepareCommand.isOnePhaseCommit()) {
                txTable.remoteTransactionCommitted(prepareCommand.getGlobalTransaction(), true);
@@ -170,7 +169,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
       if (!ctx.isOriginLocal()) {
          GlobalTransaction gtx = ctx.getGlobalTransaction();
@@ -181,10 +180,10 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
          if (!isTotalOrder) {
             InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
-                  command.getTopologyId());
+                                                                          command.getTopologyId());
             if (replayStage != null) {
-               return replayStage.compose(
-                     (stage, rCtx, rCommand, rv, t) -> finishCommit((TxInvocationContext<?>) rCtx, command));
+               return replayStage.compose(ctx, command,
+                                          (stage, rCtx, rCommand, rv, t) -> finishCommit((TxInvocationContext<?>) rCtx, rCommand));
             } else {
                return finishCommit(ctx, command);
             }
@@ -197,7 +196,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private InvocationStage finishCommit(TxInvocationContext<?> ctx, VisitableCommand command) {
       GlobalTransaction gtx = ctx.getGlobalTransaction();
       if (this.statisticsEnabled) commits.incrementAndGet();
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (!rCtx.isOriginLocal() || isTotalOrder) {
             txTable.remoteTransactionCommitted(gtx, false);
          }
@@ -205,13 +205,13 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
          // the recovery info here
          if (recoveryManager != null) {
@@ -222,7 +222,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
 
@@ -230,7 +230,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          command.setGlobalTransaction(ctx.getGlobalTransaction());
       }
 
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command)
+            .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
          if (!rCtx.isOriginLocal()) {
             return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
                   (AbstractTransactionBoundaryCommand) rCommand);
@@ -240,47 +241,47 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public InvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+   public InvocationStage visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCtx.isInTxScope()) {
             CacheSet<K> set = (CacheSet<K>) rv;
             return new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
@@ -318,9 +319,9 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCtx.isInTxScope()) {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
             return new AbstractDelegatingEntryCacheSet<K, V>(
@@ -359,27 +360,27 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand)
+   public InvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand)
          throws Throwable {
       return handleWriteCommand(ctx, invalidateCommand);
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public final InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
@@ -391,58 +392,58 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+   public InvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+   public InvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public InvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public InvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+   public InvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
 
-   private BasicInvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command)
+   private InvocationStage handleWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       if (shouldEnlist(ctx)) {
          LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
@@ -452,7 +453,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             command.addFlags(FlagBitSets.SKIP_LOCKING);
          }
       }
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          // We shouldn't mark the transaction for rollback if it's going to be retried
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (t != null && !(t instanceof OutdatedTopologyException)) {
@@ -556,8 +557,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       return rollbacks.get();
    }
 
-   private BasicInvocationStage verifyRemoteTransaction(BasicInvocationStage stage, RemoteTxInvocationContext ctx,
-         AbstractTransactionBoundaryCommand command) throws Throwable {
+   private InvocationStage verifyRemoteTransaction(InvocationStage stage, RemoteTxInvocationContext ctx,
+                                                   AbstractTransactionBoundaryCommand command) throws Throwable {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
       // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
@@ -594,7 +595,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                        globalTransaction, alreadyCompleted, originatorMissing);
          }
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
-         return invokeNext(ctx, rollback).handle((rCtx, rCommand, rv1, throwable1) -> {
+         return invokeNext(ctx, rollback).handle(ctx, command, (rCtx, rCommand, rv1, throwable1) -> {
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();
             remoteTx.markForRollback(true);
             txTable.removeRemoteTransaction(globalTransaction);

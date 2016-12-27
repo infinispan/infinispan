@@ -12,7 +12,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -54,7 +54,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    };
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addGet(command.getKey(), isRemote(command.getKey()));
       }
@@ -62,7 +62,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
             streamSummaryContainer.addGet(key, isRemote(key));
@@ -74,16 +74,16 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    // TODO: implement visitPutMapCommand
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
       }
-      return invokeNext(ctx, command).handle(writeSkewReturnHandler);
+      return invokeNext(ctx, command).handle(ctx, command, writeSkewReturnHandler);
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(writeSkewReturnHandler);
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(ctx, command, writeSkewReturnHandler);
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component",

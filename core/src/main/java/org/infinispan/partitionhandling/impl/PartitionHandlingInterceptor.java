@@ -27,7 +27,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
@@ -63,22 +63,22 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
-   protected BasicInvocationStage handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected InvocationStage handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkWrite(command.getKey());
       }
@@ -86,7 +86,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);
@@ -95,7 +95,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkClear();
       }
@@ -103,13 +103,13 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public InvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -117,7 +117,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -125,19 +125,19 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+   public final InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       return handleDataReadCommand(ctx, command);
    }
 
    @Override
-   public final BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public final InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       return handleDataReadCommand(ctx, command);
    }
 
-   private BasicInvocationStage handleDataReadCommand(InvocationContext ctx, DataCommand command) {
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+   private InvocationStage handleDataReadCommand(InvocationContext ctx, DataCommand command) {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          DataCommand dataCommand = (DataCommand) rCommand;
          if (t != null) {
             if (t instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
@@ -171,21 +171,21 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenAccept(
-            (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenAccept(
-            (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> postTxCommandCheck(((TxInvocationContext) rCtx)));
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
@@ -206,8 +206,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (t != null) {
             if (t instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {

@@ -36,7 +36,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
@@ -75,7 +75,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    protected abstract TypeConverter<Object, Object, Object, Object> determineTypeConverter(FlagAffectedCommand command);
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitPutKeyValueCommand(ctx, command);
       }
@@ -83,11 +83,11 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(command.getValue()));
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> converter.unboxValue(rv));
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> converter.unboxValue(rv));
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Map<Object, Object> map = command.getMap();
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
@@ -102,13 +102,13 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rv == null) {
             return rv;
          }
@@ -117,14 +117,14 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
       command.setKey(converter.boxKey(key));
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rv == null) {
             return rv;
          }
@@ -137,7 +137,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
       Collection<?> keys = command.getKeys();
@@ -147,7 +147,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          boxedKeys.add(converter.boxKey(key));
       }
       command.setKeys(boxedKeys);
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (rv == null) {
             return null;
          }
@@ -180,7 +180,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitReplaceCommand(ctx, command);
       }
@@ -191,7 +191,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       command.setOldValue(converter.boxValue(oldValue));
       command.setNewValue(converter.boxValue(command.getNewValue()));
       addVersionIfNeeded(command);
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          // Return of conditional replace is not the value type, but boolean, so
          // apply an exception that applies to all servers, regardless of what's
          // stored in the value side
@@ -210,7 +210,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return super.visitRemoveCommand(ctx, command);
       }
@@ -219,7 +219,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       Object conditionalValue = command.getValue();
       command.setKey(converter.boxKey(key));
       command.setValue(converter.boxValue(conditionalValue));
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          // Return of conditional remove is not the value type, but boolean, so
          // apply an exception that applies to all servers, regardless of what's
          // stored in the value side
@@ -230,12 +230,12 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
 
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          KeySetCommand keySetCommand = (KeySetCommand) rCommand;
          CacheSet<K> set = (CacheSet<K>) rv;
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(keySetCommand);
@@ -271,11 +271,11 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
 
 
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand);

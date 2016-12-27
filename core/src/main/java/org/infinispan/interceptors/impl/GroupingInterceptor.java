@@ -13,7 +13,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -44,11 +44,11 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public InvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       command.setGroupOwner(isGroupOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
-         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (rv instanceof List) {
                //noinspection unchecked
                filter((List<CacheEntry>) rv);
@@ -59,7 +59,7 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
       KeyListener listener = new KeyListener(groupName, groupManager, factory);
       //this is just to try to make the snapshot the most recent possible by picking some modification on the fly.
       cacheNotifier.addListener(listener);
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
          cacheNotifier.removeListener(listener);
 
          if (rv instanceof List) {

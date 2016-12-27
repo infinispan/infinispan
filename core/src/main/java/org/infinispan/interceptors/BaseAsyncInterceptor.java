@@ -45,47 +45,28 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * <p>{@link InvocationStage} then allows the caller to add a callback that will be executed after the remaining
     * interceptors.</p>
     * <p>Note: {@code invokeNext(ctx, command)} does not throw exceptions. In order to handle exceptions from the
-    * next interceptors, you <em>must</em> use {@link InvocationStage#exceptionally(InvocationExceptionHandler)},
-    * {@link InvocationStage#handle(InvocationFinallyHandler)}, or {@link InvocationStage#compose(InvocationComposeHandler)}</p>
+    * next interceptors, you <em>must</em> use
+    * {@link InvocationStage#exceptionally(InvocationContext, VisitableCommand, InvocationExceptionHandler)},
+    * {@link InvocationStage#handle(InvocationContext, VisitableCommand, InvocationFinallyHandler)}, or
+    * {@link InvocationStage#compose(InvocationContext, VisitableCommand, InvocationComposeHandler)}</p>
     */
    public final InvocationStage invokeNext(InvocationContext ctx, VisitableCommand command) {
       try {
          if (nextDDInterceptor != null) {
             return (InvocationStage) command.acceptVisitor(ctx, nextDDInterceptor);
          } else {
-            return nextInterceptor.visitCommand(ctx, command).toInvocationStage(ctx, command);
+            return nextInterceptor.visitCommand(ctx, command);
          }
       } catch (Throwable throwable) {
-         return new ExceptionStage(ctx, command, throwable);
+         return new ExceptionStage(throwable);
       }
    }
 
    /**
     * Return a value directly, skipping the remaining interceptors in the chain.
     */
-   public static BasicInvocationStage returnWith(Object returnValue) {
-      return new ReturnValueStage(null, null, returnValue);
-   }
-
-   /**
-    * Suspend the invocation until {@code stageFuture} completes, then evaluate its result and skip the remaining
-    * interceptors.
-    * <p>
-    * The caller is supposed to call the
-    */
-   public static InvocationStage goAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> valueFuture) {
-      if (valueFuture.isDone()) {
-         InvocationStage stage;
-         try {
-            Object value = valueFuture.join();
-            stage = new ReturnValueStage(ctx, command, value);
-         } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
-         }
-         return stage;
-      }
-
-      return new AsyncInvocationStage(ctx, command, valueFuture);
+   public static InvocationStage returnWith(Object returnValue) {
+      return new ReturnValueStage(returnValue);
    }
 
    /**
@@ -101,13 +82,13 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             delay.join();
             stage = invokeNext(ctx, command);
          } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
+            stage = new ExceptionStage(CompletableFutures.extractException(t));
          }
          return stage;
       }
 
-      return new AsyncInvocationStage(ctx, command, delay).thenCompose(
-            (stage, rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
+      return new AsyncInvocationStage(ctx, command, delay)
+            .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
    }
 
    /**
@@ -115,16 +96,16 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * interceptors.
     * <p>
     * The caller can continue invoking the next interceptor, e.g.
-    * {@code goAsync2(ctx, command, v).thenApply((rCtx, rCommand, rv, t) -> invokeNext(rCtx, rCommand))}
+    * {@code goAsync2(ctx, command, v).thenApply(ctx, command, (rCtx, rCommand, rv, t) -> invokeNext(rCtx, rCommand))}
     */
-   public static BasicInvocationStage returnWithAsync(CompletableFuture<?> valueFuture) {
+   public static InvocationStage returnWithAsync(CompletableFuture<?> valueFuture) {
       if (valueFuture.isDone()) {
          InvocationStage stage;
          try {
             Object value = valueFuture.join();
-            stage = new ReturnValueStage(null, null, value);
+            stage = new ReturnValueStage(value);
          } catch (Throwable t) {
-            stage = new ExceptionStage(null, null, CompletableFutures.extractException(t));
+            stage = new ExceptionStage(CompletableFutures.extractException(t));
          }
          return stage;
       }

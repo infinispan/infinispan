@@ -18,7 +18,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -61,7 +60,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected final BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command)
+   protected final InvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command)
          throws Throwable {
       if (!readNeedsLock(ctx, command)) {
          return invokeNext(ctx, command);
@@ -81,15 +80,17 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          TxInvocationContext txContext = (TxInvocationContext) ctx;
          LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
                txContext.getGlobalTransaction());
-         return invokeNext(ctx, lcc).thenCompose((stage, rCtx, rCommand, rv) -> invokeNext(rCtx, command)).handle(
-               (rCtx, rCommand, rv, t) -> {
-                  if (t != null) {
-                     rethrowAndReleaseLocksIfNeeded(rCtx, t);
-                     return;
-                  }
+         return invokeNext(ctx, lcc)
+               .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) ->
+                     invokeNext(rCtx, command))
+                           .handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+                              if (t != null) {
+                                 rethrowAndReleaseLocksIfNeeded(rCtx, t);
+                                 return;
+                              }
 
-                  acquireLocalLock(rCtx, command);
-               });
+                              acquireLocalLock(rCtx, command);
+                           });
       } catch (Throwable t) {
          rethrowAndReleaseLocksIfNeeded(ctx, t);
          throw t;
@@ -110,7 +111,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       try {
          InvocationStage stage;
          if (!readNeedsLock(ctx, command)) {
@@ -124,13 +125,14 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc)
+                     .thenCompose(ctx, lcc, (stage1, rCtx, rCommand, rv) -> {
                   acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, keys);
                   return invokeNext(rCtx, command);
                });
             }
          }
-         return stage.handle((rCtx, rCommand, rv, t) -> {
+         return stage.handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                releaseLocksOnFailureBeforePrepare(rCtx);
             }
@@ -148,18 +150,18 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
       }
 
       // Don't release the locks on exception, the RollbackCommand will do it
-      return invokeNext(ctx, command).thenAccept(
-            (rCtx, rCommand, rv) -> releaseLockOnTxCompletion(((TxInvocationContext) rCtx)));
+      return invokeNext(ctx, command)
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> releaseLockOnTxCompletion(((TxInvocationContext) rCtx)));
    }
 
    @Override
-   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> InvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       try {
          InvocationStage stage;
          if (hasSkipLocking(command)) {
@@ -172,13 +174,14 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc)
+                     .thenCompose(ctx, command, (stage1, rCtx, rCommand, rv) -> {
                   acquireLocalLocks(rCtx, (FlagAffectedCommand) rCommand, keys);
                   return invokeNext(rCtx, command);
                });
             }
          }
-         return stage.handle((rCtx, rCommand, rv, t) -> {
+         return stage.handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                rethrowAndReleaseLocksIfNeeded(rCtx, t);
             }
@@ -190,7 +193,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command)
+   protected InvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command)
          throws Throwable {
       try {
          InvocationStage stage;
@@ -210,14 +213,15 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               return invokeNext(ctx, lcc).compose((stage1, rCtx, rCommand, rv, t) -> {
+               return invokeNext(ctx, lcc)
+                     .compose(ctx, command, (stage1, rCtx, rCommand, rv, t) -> {
                   rethrowAndReleaseLocksIfNeeded(rCtx, t);
                   acquireLocalLock(rCtx, command);
                   return invokeNext(rCtx, command);
                });
             }
          }
-         return stage.handle((rCtx, rCommand, rv, t) -> {
+         return stage.handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                rethrowAndReleaseLocksIfNeeded(rCtx, t);
             }
@@ -229,7 +233,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public InvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       try {
          InvocationStage stage;
@@ -245,14 +249,15 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keysToLock, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc)
+                     .thenCompose(ctx, command, (stage1, rCtx, rCommand, rv) -> {
                   ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
                   acquireLocalCompositeLocks(command, keysToLock, rCtx);
                   return invokeNext(rCtx, command);
                });
             }
          }
-         return stage.handle((rCtx, rCommand, rv, t) -> {
+         return stage.handle(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                lockManager.unlockAll(rCtx);
             }
@@ -276,7 +281,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       if (!ctx.isInTxScope())
          throw new IllegalStateException("Locks should only be acquired within the scope of a transaction!");
@@ -306,7 +311,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
       }
 
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command)
+            .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
          rethrowAndReleaseLocksIfNeeded(rCtx, t);
          return returnWith(localLockCommandWork(rCtx, (LockControlCommand) rCommand));
       });
