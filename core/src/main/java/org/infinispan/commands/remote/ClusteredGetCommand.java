@@ -3,11 +3,11 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -125,12 +125,12 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
 
       ClusteredGetCommand that = (ClusteredGetCommand) o;
 
-      return AnyEquivalence.getInstance().equals(key, that.key);
+      return Objects.equals(key, that.key);
    }
 
    @Override
    public int hashCode() {
-      return AnyEquivalence.getInstance().hashCode(key);
+      return Objects.hashCode(key);
    }
 
    @Override

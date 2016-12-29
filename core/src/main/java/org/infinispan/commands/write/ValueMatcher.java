@@ -1,7 +1,8 @@
 package org.infinispan.commands.write;
 
+import java.util.Objects;
+
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -137,12 +138,16 @@ public enum ValueMatcher {
 
    public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue);
 
+   /**
+    * @deprecated Since 9.0, no longer used.
+    */
+   @Deprecated
    public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();
 
    protected boolean equal(Object a, Object b) {
-      return AnyEquivalence.getInstance().equals(a, b);
+      return Objects.equals(a, b);
    }
 
    private static final ValueMatcher[] CACHED_VALUES = values();

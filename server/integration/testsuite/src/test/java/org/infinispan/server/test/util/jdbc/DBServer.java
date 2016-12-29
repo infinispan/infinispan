@@ -9,9 +9,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 
 /**
@@ -160,7 +160,7 @@ public class DBServer {
         * with same hash value will be stored into same row (=bucket).
         */
         public Object getBucketByKey(Object key) throws Exception {
-            int keyHash = AnyEquivalence.getInstance().hashCode(key) & 0xfffffc00; //computation taken from BucketBasedCacheStore
+            int keyHash = Objects.hashCode(key) & 0xfffffc00; //computation taken from BucketBasedCacheStore
             Connection connection = factory.getConnection();
             final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
             Object result = null;

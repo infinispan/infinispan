@@ -23,7 +23,6 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -31,8 +30,6 @@ import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
@@ -120,8 +117,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private InternalEntryFactory entryFactory;
 
    private Metadata defaultMetadata;
-   private Equivalence<Object> keyEquivalence;
-   private Equivalence<Object> valueEquivalence;
 
    private boolean hasListeners = false;
 
@@ -155,8 +150,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       this.defaultMetadata = new EmbeddedMetadata.Builder()
             .lifespan(configuration.expiration().lifespan())
             .maxIdle(configuration.expiration().maxIdle()).build();
-      this.keyEquivalence = configuration.dataContainer().keyEquivalence();
-      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
       componentRegistry.start();
    }
 
@@ -228,7 +221,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Map<K, V> getAll(Set<?> keys) {
       Map<K, V> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence, valueEquivalence);
+            .makeMap(CollectionFactory.computeCapacity(keys.size()));
       for (Object k : keys) {
          Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(k);
@@ -262,8 +255,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
       Map<K, CacheEntry<K, V>> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence,
-                  AnyEquivalence.getInstance());
+            .makeMap(CollectionFactory.computeCapacity(keys.size()));
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(key);
@@ -408,7 +400,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public boolean containsValue(Object value) {
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
       for (V v : getDataContainer().values()) {
-         if (valueEquivalence.equals(v, value)) return true;
+         if (Objects.equals(v, value)) return true;
       }
       return false;
    }
@@ -675,7 +667,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V prevValue = getValue(oldEntry);
-         if (valueEquivalence.equals(prevValue, oldValue)) {
+         if (Objects.equals(prevValue, oldValue)) {
             oldRef.set(prevValue, oldEntry.getMetadata());
             if (hasListeners) {
                cacheNotifier.notifyCacheEntryModified(key, value, metadata, prevValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
@@ -849,7 +841,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute((K) key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
-         if (valueEquivalence.equals(oldValue, value)) {
+         if (Objects.equals(oldValue, value)) {
             if (hasListeners) {
                cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
             }
@@ -1259,7 +1251,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          }
          ref.set(k, newValue, null, null);
          return factory.create(k, newValue, defaultMetadata);
-      } else if (valueEquivalence.equals(oldValue, newValue)) {
+      } else if (Objects.equals(oldValue, newValue)) {
          return oldEntry;
       } else {
          if (hasListeners) {
@@ -1490,7 +1482,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size(), valueEquivalence);
+         Set<Object> retained = CollectionFactory.makeSet(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1509,7 +1501,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          } else if (removeSize == 1) {
             return remove(c.iterator().next());
          }
-         Set<Object> removed = CollectionFactory.makeSet(removeSize, valueEquivalence);
+         Set<Object> removed = CollectionFactory.makeSet(removeSize);
          removed.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1523,7 +1515,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public boolean remove(Object o) {
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
-            if (valueEquivalence.equals(entry.getValue(), o)) {
+            if (Objects.equals(entry.getValue(), o)) {
                if (SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue())) {
                   return true;
                }
@@ -1574,7 +1566,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size(), keyEquivalence);
+         Set<Object> retained = CollectionFactory.makeSet(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {

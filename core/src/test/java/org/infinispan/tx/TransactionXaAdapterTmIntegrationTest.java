@@ -10,7 +10,6 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -54,7 +53,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       gtf.init(false, false, true, false);
       GlobalTransaction globalTransaction = gtf.newGlobalTransaction(null, false);
       DummyBaseTransactionManager tm = new DummyBaseTransactionManager();
-      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, AnyEquivalence.getInstance(), 0);
+      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, 0);
       xid = new DummyXid(uuid);
 
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();

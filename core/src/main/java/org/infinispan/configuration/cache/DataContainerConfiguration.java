@@ -8,7 +8,6 @@ import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.StorageType;
 
 /**
  * Controls the data container for the cache.

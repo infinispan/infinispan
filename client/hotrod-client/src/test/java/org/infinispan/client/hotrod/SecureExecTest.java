@@ -58,9 +58,6 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config
-         .dataContainer()
-            .keyEquivalence(new AnyServerEquivalence())
-            .valueEquivalence(new AnyServerEquivalence())
          .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
       cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
       cacheManager.defineConfiguration(CACHE_NAME, config.build());

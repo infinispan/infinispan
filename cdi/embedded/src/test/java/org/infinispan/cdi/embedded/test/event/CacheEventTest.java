@@ -10,7 +10,6 @@ import javax.inject.Inject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.assertions.ObserverAssertion;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -39,7 +38,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "cdi.test.event.CacheEventTest")
 public class CacheEventTest extends Arquillian {
 
-   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null);
 
    @Inject
    @Cache1

@@ -27,7 +27,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -118,7 +117,6 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
-      when(config.dataContainer().keyEquivalence()).thenReturn(AnyEquivalence.getInstance());
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
       Answer answer = i -> Mockito.mock((Class) i.getArguments()[0]);
@@ -130,7 +128,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       n.start();
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null);
    }
 
 //   TODO: commented out until local listners support includeCurrentState

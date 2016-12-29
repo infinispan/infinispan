@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -78,7 +77,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null);
    }
 
    public void testNotifyCacheEntryCreated() {

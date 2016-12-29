@@ -2,8 +2,6 @@ package org.infinispan.persistence.sifs;
 
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,8 +16,8 @@ public class TemporaryTable {
    private static boolean trace = log.isTraceEnabled();
    private ConcurrentMap<Object, Entry> table;
 
-   public TemporaryTable(int capacity, Equivalence<Object> keyEquivalence) {
-      table = CollectionFactory.makeConcurrentMap(capacity, keyEquivalence, AnyEquivalence.getInstance());
+   public TemporaryTable(int capacity) {
+      table = CollectionFactory.makeConcurrentMap(capacity);
    }
 
    public void set(Object key, int file, int offset) {

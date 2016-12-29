@@ -2,9 +2,9 @@ package org.infinispan.context;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 
@@ -25,17 +25,14 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    private CacheEntry cacheEntry;
 
-   //TODO move reference to Equivalence to InvocationContextFactory (Memory allocation cost)
-   private final Equivalence keyEquivalence;
    //TODO move the Origin's address to the InvocationContextFactory when isOriginLocal=true -> all addresses are the same  (Memory allocation cost)
    //(verify if this is worth it by looking at object alignment - would need a different implementation as pointing to null wouldn't help)
    private final Address origin;
 
    private Object lockOwner;
 
-   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence) {
+   public SingleKeyNonTxInvocationContext(final Address origin) {
       this.origin = origin;
-      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -85,7 +82,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!keyEquivalence.equals(key, this.key)) {
+      } else if (!Objects.equals(key, this.key)) {
          throw illegalStateException();
       }
 
@@ -98,7 +95,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      if (keyEquivalence.equals(key, this.key))
+      if (Objects.equals(key, this.key))
          return cacheEntry;
 
       return null;
@@ -114,7 +111,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!keyEquivalence.equals(key, this.key)) {
+      } else if (!Objects.equals(key, this.key)) {
          throw illegalStateException();
       }
 
@@ -123,7 +120,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      if (keyEquivalence.equals(key, this.key)) {
+      if (Objects.equals(key, this.key)) {
          this.cacheEntry = null;
       }
    }
@@ -153,7 +150,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean hasLockedKey(final Object key) {
-      return isLocked && keyEquivalence.equals(this.key, key);
+      return isLocked && Objects.equals(this.key, key);
    }
 
    @Override

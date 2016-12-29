@@ -2,7 +2,6 @@ package org.infinispan.transaction.synchronization;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -14,9 +13,9 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  */
 public class SyncLocalTransaction extends LocalTransaction {
 
-   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx,
-         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence, txCreationTime);
+   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction,
+                               int topologyId, long txCreationTime) {
+      super(transaction, tx, implicitTransaction, topologyId, txCreationTime);
    }
 
    private boolean enlisted;

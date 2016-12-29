@@ -23,7 +23,6 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence());
       configure(builder);
       createHotRodServers(1, builder);
    }

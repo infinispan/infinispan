@@ -12,7 +12,6 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -67,7 +66,7 @@ public class OnlyPrimaryOwnerTest {
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null);
    }
 
    private static class MockCDL implements ClusteringDependentLogic {

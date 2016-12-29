@@ -135,7 +135,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          throw new IllegalStateException("This store is already started!");
       }
       started = true;
-      temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(), keyEquivalence);
+      temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<LogRequest>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength(), keyEquivalence);
       fileProvider = new FileProvider(configuration.dataLocation(), configuration.openFilesLimit());
