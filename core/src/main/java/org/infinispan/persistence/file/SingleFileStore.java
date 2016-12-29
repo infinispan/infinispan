@@ -20,9 +20,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
@@ -139,11 +136,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private <Key> Map<Key, FileEntry> newEntryMap() {
       // only use LinkedHashMap (LRU) for entries when cache store is bounded
       final Map<Key, FileEntry> entryMap;
-      Equivalence<Object> keyEq = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
       if (configuration.maxEntries() > 0)
-         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f, true, null, null);
+         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f, true);
       else
-         entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
+         entryMap = CollectionFactory.makeMap();
 
       return Collections.synchronizedMap(entryMap);
    }

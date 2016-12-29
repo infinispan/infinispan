@@ -34,9 +34,9 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       if (keyCount == 1) {
-         return new SingleKeyNonTxInvocationContext(null, keyEq);
+         return new SingleKeyNonTxInvocationContext(null);
       } else if (keyCount > 0) {
-         return new NonTxInvocationContext(keyCount, null, keyEq);
+         return new NonTxInvocationContext(keyCount, null);
       }
       return createInvocationContext(null, false);
    }
@@ -48,17 +48,17 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
 
    @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
-      return new NonTxInvocationContext(null, keyEq);
+      return new NonTxInvocationContext(null);
    }
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      return new SingleKeyNonTxInvocationContext(null, keyEq);
+      return new SingleKeyNonTxInvocationContext(null);
    }
 
    @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      return new NonTxInvocationContext(origin, keyEq);
+      return new NonTxInvocationContext(origin);
    }
 
    @Override
@@ -80,7 +80,7 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
    public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand,
                                                                           Address origin) {
       if (cacheCommand instanceof DataCommand && !(cacheCommand instanceof InvalidateCommand)) {
-         return new SingleKeyNonTxInvocationContext(origin, keyEq);
+         return new SingleKeyNonTxInvocationContext(origin);
       } else {
          return super.createRemoteInvocationContextForCommand(cacheCommand, origin);
       }

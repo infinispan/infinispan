@@ -26,7 +26,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.Gender
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
@@ -78,8 +77,6 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
-      // the default key equivalence works only for byte[] so we need to override it with one that works for Object
-      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
 
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();

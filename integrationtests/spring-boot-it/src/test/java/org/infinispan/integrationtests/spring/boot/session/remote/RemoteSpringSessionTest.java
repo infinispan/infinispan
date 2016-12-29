@@ -30,7 +30,6 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
       globalConfigurationBuilder.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
 
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
-      cacheConfiguration.dataContainer().keyEquivalence(new AnyServerEquivalence());
 
       serverCache = new DefaultCacheManager(globalConfigurationBuilder.build());
       serverCache.defineConfiguration("sessions", cacheConfiguration.build());

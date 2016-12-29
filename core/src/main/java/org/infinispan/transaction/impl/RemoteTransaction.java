@@ -11,8 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -50,21 +48,18 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private final AtomicReference<CompletableFuture<Void>> synchronization =
          new AtomicReference<>(INITIAL_FUTURE);
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
-                            Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
+   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
       this.modifications = modifications == null || modifications.length == 0
             ? Collections.emptyList()
             : Arrays.asList(modifications);
-      lookedUpEntries = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(this.modifications.size()), keyEquivalence,
-                  AnyEquivalence.getInstance());
+      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(this.modifications.size()));
    }
 
-   public RemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
-      this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = CollectionFactory.makeMap(4, keyEquivalence, AnyEquivalence.getInstance());
+   public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
+      this.modifications = new LinkedList<>();
+      lookedUpEntries = CollectionFactory.makeMap(4);
    }
 
    @Override
@@ -109,9 +104,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public Object clone() {
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
-         dolly.modifications = new ArrayList<WriteCommand>(modifications);
-         dolly.lookedUpEntries = CollectionFactory.makeMap(
-               lookedUpEntries, keyEquivalence, AnyEquivalence.getInstance());
+         dolly.modifications = new ArrayList<>(modifications);
+         dolly.lookedUpEntries = CollectionFactory.makeMap(lookedUpEntries);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!", e);

@@ -39,7 +39,6 @@ public class DistributedStreamTxEquivalenceTest extends BaseSetupStreamIteratorT
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       super.enhanceConfiguration(builder);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence());
    }
 
    enum OwnerMode {

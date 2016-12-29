@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
@@ -75,13 +74,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
     */
    private final long txCreationTime;
 
-   /**
-    * Equivalence function to compare keys that are stored in temporary
-    * collections used in the cache transaction to keep track of locked keys,
-    * looked up keys...etc.
-    */
-   protected final Equivalence<Object> keyEquivalence;
-
    private volatile Flag stateTransferFlag;
 
    private final CompletableFuture<Void> txCompleted;
@@ -95,10 +87,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       isMarkedForRollback = markForRollback;
    }
 
-   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       this.tx = tx;
       this.topologyId = topologyId;
-      this.keyEquivalence = keyEquivalence;
       this.txCreationTime = txCreationTime;
       txCompleted = new CompletableFuture<>();
       backupLockReleased = new CompletableFuture<>();
@@ -218,7 +209,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void registerLockedKey(Object key) {
       // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
-      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence)) : value);
+      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY)) : value);
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
       keys.add(key);
    }
@@ -278,7 +269,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence);
+      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY);
    }
 
    @Override

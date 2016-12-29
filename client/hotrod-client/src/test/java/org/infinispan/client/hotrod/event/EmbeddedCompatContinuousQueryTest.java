@@ -29,7 +29,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -98,7 +97,6 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      cfgBuilder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
       cfgBuilder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
       cfgBuilder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")

@@ -50,7 +50,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      return new SingleKeyNonTxInvocationContext(null, keyEq);
+      return new SingleKeyNonTxInvocationContext(null);
    }
 
    @Override
@@ -107,7 +107,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    }
 
    protected final NonTxInvocationContext newNonTxInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq);
+      NonTxInvocationContext ctx = new NonTxInvocationContext(origin);
       return ctx;
    }
 
@@ -115,7 +115,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand,
          Address origin) {
       if (cacheCommand instanceof DataCommand && !(cacheCommand instanceof InvalidateCommand)) {
-         return new SingleKeyNonTxInvocationContext(origin, keyEq);
+         return new SingleKeyNonTxInvocationContext(origin);
       } else {
          return super.createRemoteInvocationContextForCommand(cacheCommand, origin);
       }

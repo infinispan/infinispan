@@ -2,7 +2,6 @@ package org.infinispan.spring.session;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -24,7 +23,6 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
    @BeforeClass
    public void beforeClass() {
       org.infinispan.configuration.cache.ConfigurationBuilder cacheConfiguration = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      cacheConfiguration.dataContainer().keyEquivalence(new AnyServerEquivalence());
       embeddedCacheManager = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       hotrodServer = HotRodTestingUtil.startHotRodServer(embeddedCacheManager, 19723);
       ConfigurationBuilder builder = new ConfigurationBuilder();

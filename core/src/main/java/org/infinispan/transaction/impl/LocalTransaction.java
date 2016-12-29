@@ -12,8 +12,6 @@ import javax.transaction.Transaction;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -47,9 +45,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private boolean prepareSent;
    private boolean commitOrRollbackSent;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx,
-         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
+   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId,
+                           long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
       this.transaction = transaction;
       this.implicitTransaction = implicitTransaction;
    }
@@ -69,7 +67,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public void locksAcquired(Collection<Address> nodes) {
       if (trace) log.tracef("Adding remote locks on %s. Remote locks are %s", nodes, remoteLockedNodes);
       if (remoteLockedNodes == null)
-         remoteLockedNodes = new HashSet<Address>(nodes);
+         remoteLockedNodes = new HashSet<>(nodes);
       else
          remoteLockedNodes.addAll(nodes);
    }
@@ -89,7 +87,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries == null ? Collections.<Object, CacheEntry>emptyMap() : lookedUpEntries;
+      return lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries;
    }
 
    public boolean isImplicitTransaction() {
@@ -102,7 +100,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
          throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
       }
       if (lookedUpEntries == null)
-         lookedUpEntries = CollectionFactory.makeMap(4, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
+         lookedUpEntries = CollectionFactory.makeMap(4);
 
       lookedUpEntries.put(key, e);
    }
@@ -113,7 +111,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
          throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
       }
       if (lookedUpEntries == null) {
-         lookedUpEntries = CollectionFactory.makeMap(entries, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
+         lookedUpEntries = CollectionFactory.makeMap(entries);
       } else {
          lookedUpEntries.putAll(entries);
       }
@@ -155,7 +153,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public void addReadKey(Object key) {
-      if (readKeys == null) readKeys = new HashSet<Object>(2);
+      if (readKeys == null) readKeys = new HashSet<>(2);
       readKeys.add(key);
    }
 
@@ -206,7 +204,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (getTopologyId() == currentTopologyId) {
          return recipients;
       }
-      Set<Address> allRecipients = new HashSet<Address>(getRemoteLocksAcquired());
+      Set<Address> allRecipients = new HashSet<>(getRemoteLocksAcquired());
       allRecipients.addAll(recipients);
       allRecipients.retainAll(members);
       if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);

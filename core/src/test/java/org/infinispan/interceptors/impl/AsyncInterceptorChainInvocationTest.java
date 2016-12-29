@@ -7,15 +7,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -485,7 +482,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
 
    private SingleKeyNonTxInvocationContext newInvocationContext() {
       // Actual implementation doesn't matter, we are only testing the BaseAsyncInvocationContext methods
-      return new SingleKeyNonTxInvocationContext(null, AnyEquivalence.getInstance());
+      return new SingleKeyNonTxInvocationContext(null);
    }
 
    private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {

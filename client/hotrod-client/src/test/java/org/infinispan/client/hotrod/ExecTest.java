@@ -62,8 +62,6 @@ public class ExecTest extends MultiHotRodServersTest {
    private void defineInAll(String cacheName, CacheMode mode) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
       builder.dataContainer()
-            .keyEquivalence(new AnyServerEquivalence())
-            .valueEquivalence(new AnyServerEquivalence())
             .compatibility().enable()
             .marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
@@ -106,7 +104,7 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testScriptExecutionWithPassingParams(CacheMode cacheMode) throws IOException {
       String cacheName = "testScriptExecutionWithPassingParams_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.dataContainer().compatibility().enable().marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = TestingUtil.loadFileAsString(is);
@@ -137,8 +135,7 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testRemoteMapReduceWithStreams(CacheMode cacheMode) throws Exception {
       String cacheName = "testRemoteMapReduce_Streams_dist_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence())
-              .compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.dataContainer() .compatibility().enable().marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
       waitForClusterToForm(cacheName);
 

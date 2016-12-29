@@ -284,11 +284,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout())
             .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout())
             .eviction().strategy(EvictionStrategy.NONE)
-            .expiration().lifespan(-1).maxIdle(-1)
-            // Topology cache uses Object based equals/hashCodes
-            .dataContainer()
-            .keyEquivalence(AnyEquivalence.getInstance())
-            .valueEquivalence(AnyEquivalence.getInstance());
+            .expiration().lifespan(-1).maxIdle(-1);
 
       if (configuration.topologyStateTransfer()) {
          builder

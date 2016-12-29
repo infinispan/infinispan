@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -28,7 +27,6 @@ public class MultiServerCompatTest extends MultiHotRodServersTest implements Abs
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numSegments(60).numOwners(1);
       builder.compatibility().enable();
-      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
       return builder;
    }
 

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -64,7 +63,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null);
    }
 
    public void testFilters() {
