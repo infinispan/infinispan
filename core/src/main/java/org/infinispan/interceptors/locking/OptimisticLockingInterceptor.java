@@ -113,7 +113,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override
@@ -121,14 +121,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       // Regardless of whether is conditional so that
       // write skews can be detected in both cases.
       markKeyAsRead(ctx, command, command.isConditional());
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override
    protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
                                                                 Collection<K> keys, boolean forwarded) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNext(ctx, command);
    }
 
    @Override
