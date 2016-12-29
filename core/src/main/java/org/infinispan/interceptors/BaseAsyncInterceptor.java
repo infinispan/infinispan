@@ -23,6 +23,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
+   private DDAsyncInterceptor nextDDInterceptor;
 
    @Inject
    public void inject(Configuration cacheConfiguration) {
@@ -35,6 +36,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    @Override
    public final void setNextInterceptor(AsyncInterceptor nextInterceptor) {
       this.nextInterceptor = nextInterceptor;
+      this.nextDDInterceptor = nextInterceptor instanceof DDAsyncInterceptor ? (DDAsyncInterceptor) nextInterceptor : null;
    }
 
    /**
@@ -46,11 +48,14 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * next interceptors, you <em>must</em> use {@link InvocationStage#exceptionally(InvocationExceptionHandler)},
     * {@link InvocationStage#handle(InvocationFinallyHandler)}, or {@link InvocationStage#compose(InvocationComposeHandler)}</p>
     */
-   public InvocationStage invokeNext(InvocationContext ctx, VisitableCommand command) {
+   public final InvocationStage invokeNext(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = nextInterceptor.visitCommand(ctx, command);
-         return stage.toInvocationStage(ctx, command);
-       } catch (Throwable throwable) {
+         if (nextDDInterceptor != null) {
+            return (InvocationStage) command.acceptVisitor(ctx, nextDDInterceptor);
+         } else {
+            return nextInterceptor.visitCommand(ctx, command).toInvocationStage(ctx, command);
+         }
+      } catch (Throwable throwable) {
          return new ExceptionStage(ctx, command, throwable);
       }
    }
@@ -58,7 +63,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    /**
     * Return a value directly, skipping the remaining interceptors in the chain.
     */
-   public BasicInvocationStage returnWith(Object returnValue) {
+   public static BasicInvocationStage returnWith(Object returnValue) {
       return new ReturnValueStage(null, null, returnValue);
    }
 
@@ -68,7 +73,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * <p>
     * The caller is supposed to call the
     */
-   public InvocationStage goAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> valueFuture) {
+   public static InvocationStage goAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> valueFuture) {
       if (valueFuture.isDone()) {
          InvocationStage stage;
          try {
@@ -88,7 +93,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * <p>
     * If {@code delay} completes exceptionally, skip the next interceptor and continue with the exception.
     */
-   public InvocationStage invokeNextAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> delay) {
+   public final InvocationStage invokeNextAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> delay) {
       if (delay.isDone()) {
          InvocationStage stage;
          try {
@@ -112,7 +117,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * The caller can continue invoking the next interceptor, e.g.
     * {@code goAsync2(ctx, command, v).thenApply((rCtx, rCommand, rv, t) -> invokeNext(rCtx, rCommand))}
     */
-   public BasicInvocationStage returnWithAsync(CompletableFuture<?> valueFuture) {
+   public static BasicInvocationStage returnWithAsync(CompletableFuture<?> valueFuture) {
       if (valueFuture.isDone()) {
          InvocationStage stage;
          try {
