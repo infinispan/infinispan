@@ -84,6 +84,10 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    private InvocationStage composeWithAsyncResult(InvocationContext ctx, VisitableCommand command,
                                                   InvocationComposeHandler composeHandler) throws Throwable {
       AsyncResult asyncResult = (AsyncResult) this.result;
+      if (ctx != asyncResult.ctx || command != asyncResult.command) {
+         asyncResult.freezeHandlers();
+      }
+
       if (asyncResult.addHandler(composeHandler)) {
          return this;
       }
@@ -209,10 +213,10 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    @Override
    public void accept(Object o, Throwable throwable) {
       // We started with a valueFuture, and that valueFuture is now complete.
-      invokeHandlers(makeSynchronous(o, throwable));
+      invokeHandlers(o, throwable);
    }
 
-   private void invokeHandlers(InvocationStageImpl currentStage) {
+   private void invokeHandlers(Object returnValue, Throwable throwable) {
       AsyncResult asyncResult = (AsyncResult) this.result;
       if (trace) log.tracef("Resuming invocation of command %s with %d handlers", asyncResult.command, asyncResult.handlersSize());
       while (true) {
@@ -222,18 +226,29 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
          if (handler == null) {
             // Complete the future.
             // We finished running the handlers, and the last pollHandler() call locked the deque.
-            asyncResult.completeFromStage(currentStage);
+            asyncResult.complete(returnValue, throwable);
             return;
          }
 
          // Run the handler
-         currentStage = (InvocationStageImpl) currentStage.compose(asyncResult.ctx, asyncResult.command, handler);
-         if (!currentStage.isDone()) {
-            // The stage is not completed, that means the result is an AsyncResult.
-            // We stop running more handlers and continue only that AsyncResult is done.
-            AsyncResult newAsyncResult = (AsyncResult) currentStage.result;
-            newAsyncResult.whenComplete(this);
-            return;
+         try {
+            InvocationStageImpl currentStage =
+                  (InvocationStageImpl) handler.apply(this, asyncResult.ctx, asyncResult.command, returnValue, throwable);
+            if (currentStage == this) {
+               // Invoke the next handler
+               continue;
+            }
+            if (!currentStage.isDone()) {
+               // The stage is not completed, that means the result is an AsyncResult.
+               // We stop running more handlers and continue only that AsyncResult is done.
+               AsyncResult newAsyncResult = (AsyncResult) currentStage.result;
+               newAsyncResult.whenComplete(this);
+               return;
+            } else {
+               returnValue = currentStage.get();
+            }
+         } catch (Throwable t) {
+            throwable = t;
          }
       }
    }
@@ -243,7 +258,7 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
                                      Object rv, Throwable t) throws Throwable {
       // We ran a handler that returned another AsyncInvocationStage
       // and now that async stage is complete.
-      invokeHandlers((InvocationStageImpl) stage);
+      invokeHandlers(rv, t);
       return stage;
    }
 }

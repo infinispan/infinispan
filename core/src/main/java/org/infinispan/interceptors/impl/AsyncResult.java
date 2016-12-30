@@ -30,11 +30,6 @@ class AsyncResult extends CompletableFuture<Object> {
       return result;
    }
 
-   /**
-    * Complete this {@code AsyncResult}.
-    *
-    * The deque MUST be already frozen.
-    */
    final InvocationContext ctx;
    final VisitableCommand command;
 
@@ -43,14 +38,10 @@ class AsyncResult extends CompletableFuture<Object> {
       this.command = command;
    }
 
-   void completeFromStage(InvocationStage stage) {
-      if (!stage.isDone())
-         throw new IllegalArgumentException("Stage must be done");
-
-      try {
-         Object rv = stage.get();
-         complete(rv);
-      } catch (Throwable t) {
+   void complete(Object o, Throwable t) {
+      if (t == null) {
+         complete(o);
+      } else {
          completeExceptionally(t);
       }
    }

@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
@@ -25,6 +26,7 @@ import org.infinispan.interceptors.InterceptorChainTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestException;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -302,6 +304,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
+               assertNotNull(rCtx);
+               assertNotNull(rCommand);
                Exceptions.assertException(TestException.class, t);
                compose.set(true);
                return stage;
@@ -311,6 +315,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+               assertNotNull(rCtx);
+               assertNotNull(rCommand);
                Exceptions.assertException(TestException.class, t);
                handle.set(true);
             });
@@ -319,6 +325,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
+               assertNotNull(rCtx);
+               assertNotNull(rCommand);
                Exceptions.assertException(TestException.class, t);
                exceptionally.set(true);
                throw t;
@@ -328,6 +336,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+               assertNotNull(rCtx);
+               assertNotNull(rCommand);
                thenAccept.set(true);
             });
          }
@@ -335,6 +345,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
             return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+               assertNotNull(rCtx);
+               assertNotNull(rCommand);
                thenApply.set(true);
                return rv;
             });
@@ -342,6 +354,8 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
       }, new BaseAsyncInterceptor() {
          @Override
          public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+            assertNotNull(ctx);
+            assertNotNull(command);
             return callbacks.perform(ctx, command, this);
          }
       });
