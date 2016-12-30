@@ -213,7 +213,7 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
    @Override
    public void accept(Object o, Throwable throwable) {
       // We started with a valueFuture, and that valueFuture is now complete.
-      invokeHandlers(o, throwable);
+      invokeHandlers(o, throwable != null ? CompletableFutures.extractException(throwable) : null);
    }
 
    private void invokeHandlers(Object returnValue, Throwable throwable) {
@@ -235,7 +235,8 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
             InvocationStageImpl currentStage =
                   (InvocationStageImpl) handler.apply(this, asyncResult.ctx, asyncResult.command, returnValue, throwable);
             if (currentStage == this) {
-               // Invoke the next handler
+               // Returning the stage parameter means we don't want to change the return value.
+               // Invoke the next handler with the current return value + throwable.
                continue;
             }
             if (!currentStage.isDone()) {
@@ -246,9 +247,10 @@ public class InvocationStageImpl implements InvocationStage, InvocationComposeHa
                return;
             } else {
                returnValue = currentStage.get();
+               throwable = null;
             }
          } catch (Throwable t) {
-            throwable = t;
+            throwable = CompletableFutures.extractException(t);
          }
       }
    }
