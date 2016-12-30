@@ -72,7 +72,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private boolean defaultSynchronous;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
-   private final InvocationComposeHandler handleReadCommandReturn = this::handleReadCommandReturn;
    private final InvocationComposeHandler handleTxReturn = this::handleTxReturn;
    private final InvocationComposeHandler handleTxWriteReturn = this::handleTxWriteReturn;
    private final InvocationComposeHandler handleNonTxWriteReturn = this::handleNonTxWriteReturn;
@@ -190,7 +189,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId(command);
       return invokeNext(ctx, command)
-            .compose(ctx, command, handleReadCommandReturn);
+            .compose(ctx, command, this::handleReadCommandReturn);
    }
 
    private InvocationStage handleReadCommandReturn(InvocationStage stage, InvocationContext rCtx,
@@ -231,7 +230,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       cmd.addFlags(FlagBitSets.COMMAND_RETRY);
       CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
       return retryWhenDone(topologyFuture, newTopologyId, rCtx, cmd)
-            .compose(rCtx, rCommand, handleReadCommandReturn);
+            .compose(rCtx, rCommand, this::handleReadCommandReturn);
    }
 
    @Override
