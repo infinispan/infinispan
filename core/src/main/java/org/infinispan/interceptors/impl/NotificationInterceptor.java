@@ -9,8 +9,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.function.TriConsumer;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners
@@ -20,10 +20,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  */
 public class NotificationInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
-   private final InvocationSuccessHandler transactionCompleteSuccessHandler = new InvocationSuccessHandler() {
+   private final TriConsumer<InvocationContext, VisitableCommand, Object> transactionCompleteSuccessHandler = new TriConsumer<InvocationContext, VisitableCommand, Object>() {
       @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
-            throws Throwable {
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
          boolean successful = !(rCommand instanceof RollbackCommand);
          notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), successful, rCtx);
       }

@@ -99,7 +99,7 @@ public class InterceptorSequencerAction {
       public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
          StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
-         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) ->  {
+         return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) ->  {
             StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
          });
       }

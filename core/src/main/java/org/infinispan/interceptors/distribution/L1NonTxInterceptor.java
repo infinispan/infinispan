@@ -158,7 +158,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       if (presentSync == null) {
          // Note this is the same synchronizer we just created that is registered with the L1Manager
          l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
-         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (t != null) {
                l1WriteSync.retrievalEncounteredException(t);
             }
@@ -190,7 +190,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             // The command is read-only, and we found the value in the L1 cache. Return it.
             returnValue = ((InternalCacheEntry) returnValue).getValue();
          }
-         return returnWith(returnValue);
+         return completedStage(returnValue);
       }
    }
 
@@ -232,10 +232,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = command.getAffectedKeys().stream().filter(
             k -> !cdl.localNodeIsOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
-      return invokeNext(ctx, command).thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
          PutMapCommand putMapCommand = (PutMapCommand) rCommand;
          processInvalidationResult(putMapCommand, invalidationFuture);
-         return MultiSubCommandInvoker.thenForEach(rCtx, subCommands, this, returnWith(rv));
+         return MultiSubCommandInvoker.thenForEach(rCtx, subCommands, this, completedStage(rv));
       });
    }
 
@@ -296,7 +296,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
       Future<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
-      return invokeNext(ctx, command).thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          processInvalidationResult(dataWriteCommand, l1InvalidationFuture);
          return removeFromLocalL1(rCtx, dataWriteCommand, rv);
@@ -315,7 +315,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       } else if (trace) {
          log.trace("Allowing entry to commit as local node is owner");
       }
-      return returnWith(returnValue);
+      return completedStage(returnValue);
    }
 
    private VisitableCommand removeFromL1Command(InvocationContext ctx, Object key) {
@@ -330,10 +330,14 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             Collections.singleton(key));
    }
 
-   private void processInvalidationResult(FlagAffectedCommand command, Future<?> l1InvalidationFuture) throws InterruptedException, ExecutionException {
+   private void processInvalidationResult(FlagAffectedCommand command, Future<?> l1InvalidationFuture) {
       if (l1InvalidationFuture != null) {
          if (isSynchronous(command)) {
-            l1InvalidationFuture.get();
+            try {
+               l1InvalidationFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+               rethrowAsCompletedException(e);
+            }
          }
       }
    }

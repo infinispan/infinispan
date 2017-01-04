@@ -103,7 +103,11 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
                prepareBlocked = true;
                notifyAll();
                while (!unblock) {
-                  wait();
+                  try {
+                     wait();
+                  } catch (InterruptedException e) {
+                     rethrowAsCompletedException(e);
+                  }
                }
             }
          });

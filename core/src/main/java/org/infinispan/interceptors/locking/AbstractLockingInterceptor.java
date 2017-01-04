@@ -36,10 +36,10 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
+import org.infinispan.util.function.TetraConsumer;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -54,10 +54,10 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
 
-   protected final InvocationFinallyHandler unlockAllReturnHandler = new InvocationFinallyHandler() {
+   protected final TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable> unlockAllReturnHandler = new TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable>() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
+            Throwable throwable) {
          lockManager.unlockAll(rCtx);
       }
    };
@@ -119,7 +119,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          throw t;
       }
       return invokeNext(ctx, command)
-            .handle(ctx, command, unlockAllReturnHandler);
+            .whenComplete(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
@@ -133,14 +133,14 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          lockManager.unlockAll(ctx);
       }
       return invokeNext(ctx, command)
-            .handle(ctx, command, unlockAllReturnHandler);
+            .whenComplete(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
    public final InvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
          if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
-         return returnWith(null);
+         return completedStage(null);
       }
 
       if (hasSkipLocking(command)) {
@@ -149,7 +149,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
       final Object[] keys = command.getKeys();
       if (keys == null || keys.length < 1) {
-         return returnWith(null);
+         return completedStage(null);
       }
 
       ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
@@ -162,11 +162,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          }
       }
       if (keysToInvalidate.isEmpty()) {
-         return returnWith(null);
+         return completedStage(null);
       }
 
       command.setKeys(keysToInvalidate.toArray());
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          ((InvalidateL1Command) rCommand).setKeys(keys);
          if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
       });

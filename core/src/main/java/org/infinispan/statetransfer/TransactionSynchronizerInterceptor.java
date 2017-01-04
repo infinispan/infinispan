@@ -45,7 +45,7 @@ public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
       CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
       RemoteTransaction remoteTransaction = ((TxInvocationContext<RemoteTransaction>) ctx).getCacheTransaction();
       return invokeNextAsync(ctx, command, remoteTransaction.enterSynchronizationAsync(releaseFuture))
-            .handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+            .whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
                log.tracef("Completing tx command release future for %s", remoteTransaction);
                releaseFuture.complete(null);
             });

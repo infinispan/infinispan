@@ -29,6 +29,8 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,9 +60,11 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private Address localAddress;
 
-   private final InvocationComposeHandler onLocalWriteCommand = this::onLocalWriteCommand;
-   private final InvocationComposeHandler onRemotePrimaryOwner = this::onRemotePrimaryOwner;
-   private final InvocationComposeHandler onRemoteBackupOwner = this::onRemoteBackupOwner;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         onLocalWriteCommand = this::onLocalWriteCommand;
+   private final TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable>
+         onRemotePrimaryOwner = this::onRemotePrimaryOwner;
+   private final TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable> onRemoteBackupOwner = this::onRemoteBackupOwner;
 
    private static Collection<Integer> calculateSegments(Collection<?> keys, ConsistentHash ch) {
       return keys.stream().map(ch::getSegment).collect(Collectors.toSet());
@@ -108,7 +112,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private InvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
       return invokeNext(ctx, command)
-            .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
+            .compose(ctx, command, (rCtx, rCommand, rv, t) -> {
+         InvocationStage stage = completedStage(rv, t);
          final PutMapCommand cmd = (PutMapCommand) rCommand;
          if (t != null) {
             sendExceptionAck(cmd.getCommandInvocationId(), cmd.getTopologyId(), t);
@@ -128,9 +133,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private InvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       return invokeNext(ctx, command)
-            .compose(ctx, command, (stage, rCtx, rCommand, rv, throwable) -> {
+            .compose(ctx, command, (rCtx, rCommand, rv, t) -> {
+         InvocationStage stage = completedStage(rv, t);
          final PutMapCommand cmd = (PutMapCommand) rCommand;
-         if (throwable != null) {
+         if (t != null) {
             disposeCollectorOnException(cmd.getCommandInvocationId());
             return stage;
          }
@@ -155,10 +161,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          switch (distributionInfo.ownership()) {
             case BACKUP:
                return invokeNext(ctx, command)
-                     .compose(ctx, command, onRemoteBackupOwner);
+                     .whenComplete(ctx, command, onRemoteBackupOwner);
             case PRIMARY:
                return invokeNext(ctx, command)
-                     .compose(ctx, command, onRemotePrimaryOwner);
+                     .whenComplete(ctx, command, onRemotePrimaryOwner);
             default:
                throw new IllegalStateException();
          }
@@ -166,7 +172,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private InvocationStage onRemotePrimaryOwner(InvocationStage stage, InvocationContext rCtx,
+   private void onRemotePrimaryOwner(InvocationContext rCtx,
                                                 VisitableCommand rCommand, Object rv, Throwable throwable) {
       DataWriteCommand command = (DataWriteCommand) rCommand;
       if (throwable != null) {
@@ -174,11 +180,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          sendPrimaryAck(command, rv);
       }
-      return stage;
    }
 
    @SuppressWarnings("unused")
-   private InvocationStage onRemoteBackupOwner(InvocationStage stage, InvocationContext rCtx,
+   private void onRemoteBackupOwner(InvocationContext rCtx,
                                                VisitableCommand rCommand, Object rv, Throwable throwable) {
       DataWriteCommand cmd = (DataWriteCommand) rCommand;
       if (throwable != null) {
@@ -186,12 +191,12 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          sendBackupAck(cmd);
       }
-      return stage;
    }
 
    @SuppressWarnings("unused")
-   private InvocationStage onLocalWriteCommand(InvocationStage stage, InvocationContext rCtx,
+   private InvocationStage onLocalWriteCommand(InvocationContext rCtx,
                                                VisitableCommand rCommand, Object rv, Throwable throwable) {
+      InvocationStage stage = completedStage(rv, throwable);
       final DataWriteCommand cmd = (DataWriteCommand) rCommand;
       cmd.getCommandInvocationId();
       if (throwable != null) {
@@ -213,7 +218,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          //no collector, return immediately.
          return stage;
       }
-      return returnWithAsync(collectorFuture);
+      return asyncStage(collectorFuture);
    }
 
    private void sendPrimaryAck(DataWriteCommand command, Object returnValue) {

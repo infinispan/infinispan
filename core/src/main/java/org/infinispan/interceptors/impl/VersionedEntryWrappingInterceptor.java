@@ -89,7 +89,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       }
 
       return invokeNext(ctx, command)
-            .handle(ctx, command, (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
+            .whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
    }
 
    private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {

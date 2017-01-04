@@ -68,7 +68,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCtx.isOriginLocal()) {
             addLocalTransaction(CLEAR_TRANSACTION);
             //in total order, the transactions are self delivered. So, we simulate the self-deliver of the clear command.
@@ -80,21 +80,21 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
       });
    }
 
    @Override
    public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
       });
    }
 
    @Override
    public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          seen(command.getGlobalTransaction(), rCtx.isOriginLocal());
       });
    }
@@ -153,7 +153,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    protected InvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCtx.isOriginLocal() && rCtx.isInTxScope()) {
             GlobalTransaction globalTransaction = ((TxInvocationContext) rCtx).getGlobalTransaction();
             addLocalTransaction(globalTransaction);

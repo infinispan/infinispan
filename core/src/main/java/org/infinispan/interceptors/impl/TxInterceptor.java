@@ -145,8 +145,9 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (!ctx.isOriginLocal()) {
          ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
          return invokeNext(ctx, command)
-               .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
-            if (!rCtx.isOriginLocal()) {
+               .compose(ctx, command, (rCtx, rCommand, rv, t) -> {
+               InvocationStage stage = completedStage(rv, t);
+               if (!rCtx.isOriginLocal()) {
                return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
                      (AbstractTransactionBoundaryCommand) rCommand);
             }
@@ -175,7 +176,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          GlobalTransaction gtx = ctx.getGlobalTransaction();
          if (txTable.isTransactionCompleted(gtx)) {
             if (trace) log.tracef("Transaction %s already completed, skipping commit", gtx);
-            return returnWith(null);
+            return completedStage(null);
          }
 
          if (!isTotalOrder) {
@@ -183,7 +184,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                                                                           command.getTopologyId());
             if (replayStage != null) {
                return replayStage.compose(ctx, command,
-                                          (stage, rCtx, rCommand, rv, t) -> finishCommit((TxInvocationContext<?>) rCtx, rCommand));
+                                          (rCtx, rCommand, rv, t) -> finishCommit((TxInvocationContext<?>) rCtx, rCommand));
             } else {
                return finishCommit(ctx, command);
             }
@@ -211,7 +212,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
          // the recovery info here
          if (recoveryManager != null) {
@@ -231,7 +232,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
 
       return invokeNext(ctx, command)
-            .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
+            .compose(ctx, command, (rCtx, rCommand, rv, t) -> {
+         InvocationStage stage = completedStage(rv, t);
          if (!rCtx.isOriginLocal()) {
             return verifyRemoteTransaction(stage, (RemoteTxInvocationContext) rCtx,
                   (AbstractTransactionBoundaryCommand) rCommand);
@@ -453,14 +455,18 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             command.addFlags(FlagBitSets.SKIP_LOCKING);
          }
       }
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          // We shouldn't mark the transaction for rollback if it's going to be retried
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (t != null && !(t instanceof OutdatedTopologyException)) {
             // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
             if (rCtx.isOriginLocal() && rCtx.isInTxScope() && !writeCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY)) {
                TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-               txCtx.getTransaction().setRollbackOnly();
+               try {
+                  txCtx.getTransaction().setRollbackOnly();
+               } catch (SystemException e) {
+                  rethrowAsCompletedException(e);
+               }
             }
          }
          if (t == null && shouldEnlist(rCtx) && writeCommand.isSuccessful()) {
@@ -558,7 +564,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    }
 
    private InvocationStage verifyRemoteTransaction(InvocationStage stage, RemoteTxInvocationContext ctx,
-                                                   AbstractTransactionBoundaryCommand command) throws Throwable {
+                                                   AbstractTransactionBoundaryCommand command) {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
       // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
@@ -595,7 +601,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                        globalTransaction, alreadyCompleted, originatorMissing);
          }
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
-         return invokeNext(ctx, rollback).handle(ctx, command, (rCtx, rCommand, rv1, throwable1) -> {
+         return invokeNext(ctx, rollback).whenComplete(ctx, command, (rCtx, rCommand, rv1, throwable1) -> {
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();
             remoteTx.markForRollback(true);
             txTable.removeRemoteTransaction(globalTransaction);

@@ -21,6 +21,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -81,7 +82,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
+         if (t instanceof OutdatedTopologyException)
+            return;
+
          releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
       });
 

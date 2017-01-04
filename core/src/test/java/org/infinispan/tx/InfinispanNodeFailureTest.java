@@ -80,13 +80,17 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
 
          @Override
          public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-            return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+            return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
                LockControlCommand cmd = (LockControlCommand) rCommand;
                if (putKey.equals(cmd.getSingleKey())) {
                   // notify main thread it can start killing third node
                   beforeKill.countDown();
                   // wait for completion and proceed
-                  afterKill.await(10, TimeUnit.SECONDS);
+                  try {
+                     afterKill.await(10, TimeUnit.SECONDS);
+                  } catch (InterruptedException e) {
+                     rethrowAsCompletedException(e);
+                  }
                }
             });
          }

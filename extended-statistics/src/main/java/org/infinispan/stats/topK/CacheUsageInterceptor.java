@@ -13,7 +13,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -22,6 +21,7 @@ import org.infinispan.stats.logging.Log;
 import org.infinispan.stats.wrappers.TopKeyLockManager;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.TetraConsumer;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -38,10 +38,10 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    private StreamSummaryContainer streamSummaryContainer;
    private DistributionManager distributionManager;
 
-   private final InvocationFinallyHandler writeSkewReturnHandler = new InvocationFinallyHandler() {
+   private final TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable> writeSkewReturnHandler = new TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable>() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
+            Throwable throwable) {
          if (throwable instanceof WriteSkewException) {
             WriteSkewException wse = (WriteSkewException) throwable;
             Object key = wse.getKey();
@@ -78,12 +78,12 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
       }
-      return invokeNext(ctx, command).handle(ctx, command, writeSkewReturnHandler);
+      return invokeNext(ctx, command).whenComplete(ctx, command, writeSkewReturnHandler);
    }
 
    @Override
    public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, writeSkewReturnHandler);
+      return invokeNext(ctx, command).whenComplete(ctx, command, writeSkewReturnHandler);
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component",

@@ -221,7 +221,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
       }
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (t != null) {
             processWriteException(rCtx, globalTransaction, t);
          } else {
@@ -801,7 +801,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
          return invokeNext(ctx, command);
       }
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          long end = timeService.time();
          initStatsIfNecessary(rCtx);
 

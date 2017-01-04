@@ -10,7 +10,9 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 
 /**
@@ -96,11 +98,14 @@ public class StateSequencerUtil {
     * <p/>
     * Does nothing if {@code states} is {@code null} or empty.
     */
-   public static void advanceMultiple(StateSequencer stateSequencer, boolean condition, List<String> states)
-         throws TimeoutException, InterruptedException {
+   public static void advanceMultiple(StateSequencer stateSequencer, boolean condition, List<String> states) {
       if (condition && states != null) {
          for (String state : states) {
-            stateSequencer.advance(state);
+            try {
+               stateSequencer.advance(state);
+            } catch (TimeoutException | InterruptedException e) {
+               CompletableFutures.rethrowException(e);
+            }
          }
       }
    }

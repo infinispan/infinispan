@@ -1,6 +1,8 @@
 package org.infinispan.interceptors;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
@@ -8,6 +10,9 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.InvocationStageImpl;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TriFunction;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -36,15 +41,47 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    }
 
    /**
+    * Return a value directly, skipping the remaining interceptors in the chain.
+    */
+   public static InvocationStage completedStage(Object returnValue) {
+      return InvocationStageImpl.makeSuccessful(returnValue);
+   }
+
+   /**
+    * Return a value or rethrow an exception directly, skipping the remaining interceptors in the chain.
+    *
+    * Especially useful for callbacks that need to perform some work and then continue with the same value or exception.
+    */
+   public static InvocationStage completedStage(Object returnValue, Throwable throwable) {
+      return InvocationStageImpl.makeSynchronous(returnValue, throwable);
+   }
+
+   public static <T> T rethrowAsCompletedException(Throwable throwable) {
+      throw CompletableFutures.asCompletionException(throwable);
+   }
+
+   /**
+    * Suspend the invocation until {@code returnValueFuture} completes, then return its result and skip the remaining
+    * interceptors.
+    * <p>
+    * The caller can continue invoking the next interceptor, e.g.
+    * {@code goAsync2(ctx, command, v).thenApply(ctx, command, (rCtx, rCommand, rv, t) -> invokeNext(rCtx, rCommand))}
+    */
+   public static InvocationStage asyncStage(CompletableFuture<?> valueFuture) {
+      return InvocationStageImpl.makeAsynchronous(valueFuture);
+   }
+
+   /**
     * Invoke the next interceptor, possibly with a new command.
     *
     * <p>{@link InvocationStage} then allows the caller to add a callback that will be executed after the remaining
     * interceptors.</p>
     * <p>Note: {@code invokeNext(ctx, command)} does not throw exceptions. In order to handle exceptions from the
-    * next interceptors, you <em>must</em> use
-    * {@link InvocationStage#exceptionally(InvocationContext, VisitableCommand, InvocationExceptionHandler)},
-    * {@link InvocationStage#handle(InvocationContext, VisitableCommand, InvocationFinallyHandler)}, or
-    * {@link InvocationStage#compose(InvocationContext, VisitableCommand, InvocationComposeHandler)}</p>
+    * next interceptors, you <em>must</em> use one of the {@code InvocationStage} methods, e.g.
+    * {@link InvocationStage#exceptionally(Function)},
+    * {@link InvocationStage#handle(Object, TriFunction)}, or
+    * {@link InvocationStage#whenComplete(Object, Object, TetraConsumer)}, or
+    * {@link InvocationStage#compose(BiFunction)}</p>
     */
    public final InvocationStage invokeNext(InvocationContext ctx, VisitableCommand command) {
       try {
@@ -56,13 +93,6 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       } catch (Throwable throwable) {
          return InvocationStageImpl.makeExceptional(throwable);
       }
-   }
-
-   /**
-    * Return a value directly, skipping the remaining interceptors in the chain.
-    */
-   public static InvocationStage returnWith(Object returnValue) {
-      return InvocationStageImpl.makeSuccessful(returnValue);
    }
 
    /**
@@ -83,29 +113,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          return stage;
       }
 
-      return InvocationStageImpl.makeAsynchronous(ctx, command, delay)
-                                .thenCompose(ctx, command, (stage, rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
-   }
-
-   /**
-    * Suspend the invocation until {@code returnValueFuture} completes, then return its result and skip the remaining
-    * interceptors.
-    * <p>
-    * The caller can continue invoking the next interceptor, e.g.
-    * {@code goAsync2(ctx, command, v).thenApply(ctx, command, (rCtx, rCommand, rv, t) -> invokeNext(rCtx, rCommand))}
-    */
-   public static InvocationStage returnWithAsync(CompletableFuture<?> valueFuture) {
-      if (valueFuture.isDone()) {
-         InvocationStage stage;
-         try {
-            Object value = valueFuture.join();
-            stage = InvocationStageImpl.makeSuccessful(value);
-         } catch (Throwable t) {
-            stage = InvocationStageImpl.makeExceptional(t);
-         }
-         return stage;
-      }
-
-      return InvocationStageImpl.makeAsynchronous(null, null, valueFuture);
+      return InvocationStageImpl.makeAsynchronous(delay)
+                                .thenCompose(ctx, command, (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
    }
 }

@@ -59,7 +59,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw t;
       }
       return invokeNext(ctx, command)
-            .handle(ctx, command, unlockAllReturnHandler);
+            .whenComplete(ctx, command, unlockAllReturnHandler);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

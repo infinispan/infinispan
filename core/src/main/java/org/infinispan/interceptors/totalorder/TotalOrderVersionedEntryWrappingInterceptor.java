@@ -72,7 +72,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
 
    @Override
    public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
    }
 
    @Override

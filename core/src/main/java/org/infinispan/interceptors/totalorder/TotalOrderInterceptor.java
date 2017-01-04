@@ -74,7 +74,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
          simulateLocking(ctx, command, clusteringDependentLogic);
 
          if (ctx.isOriginLocal()) {
-            return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+            return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
                if (t != null) {
                   rollbackTxOnPrepareException(rCtx, (PrepareCommand) rCommand, t);
                }
@@ -100,7 +100,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
             log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
          }
 
-         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
             afterPrepare((TxInvocationContext) rCtx, (PrepareCommand) rCommand, state, t);
          });
       } catch (Throwable t) {
@@ -160,7 +160,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
       try {
          if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
             //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
-            return returnWith(null);
+            return completedStage(null);
          }
       } catch (Throwable t) {
          finishSecondPhaseCommand(commit, state, context, command);
@@ -168,8 +168,8 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
       }
 
       return invokeNext(context, command)
-            .handle(context, command, (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
-                                                                                          (AbstractTransactionBoundaryCommand) rCommand));
+            .whenComplete(context, command, (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
+                                                                                                (AbstractTransactionBoundaryCommand) rCommand));
    }
 
    private void finishSecondPhaseCommand(boolean commit, TotalOrderRemoteTransactionState state, InvocationContext ctx,

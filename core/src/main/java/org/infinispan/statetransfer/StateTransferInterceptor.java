@@ -36,13 +36,13 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -72,9 +72,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private boolean defaultSynchronous;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
-   private final InvocationComposeHandler handleTxReturn = this::handleTxReturn;
-   private final InvocationComposeHandler handleTxWriteReturn = this::handleTxWriteReturn;
-   private final InvocationComposeHandler handleNonTxWriteReturn = this::handleNonTxWriteReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage> handleTxReturn = this::handleTxReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleTxWriteReturn = this::handleTxWriteReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage> handleNonTxWriteReturn = this::handleNonTxWriteReturn;
 
    @Inject
    public void init(StateTransferManager stateTransferManager) {
@@ -192,10 +193,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             .compose(ctx, command, this::handleReadCommandReturn);
    }
 
-   private InvocationStage handleReadCommandReturn(InvocationStage stage, InvocationContext rCtx,
-                                                   VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleReadCommandReturn(InvocationContext rCtx,
+                                                   VisitableCommand rCommand, Object rv, Throwable t) {
       if (t == null)
-         return stage;
+         return completedStage(rv);
 
       Throwable ce = t;
       while (ce instanceof RemoteException) {
@@ -221,7 +222,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId, cmd);
       } else {
-         return stage;
+         return completedStage(rv, t);
       }
       // We increment the topology to wait for the next topology.
       // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
@@ -276,8 +277,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
    }
 
-   private InvocationStage handleTxReturn(InvocationStage stage, InvocationContext ctx,
-                                          VisitableCommand command, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleTxReturn(InvocationContext ctx,
+                                          VisitableCommand command, Object rv, Throwable t) {
+      InvocationStage stage = completedStage(rv, t);
       TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) command;
 
       int retryTopologyId = -1;
@@ -315,7 +317,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       } else {
          if (currentTopology > txCommand.getTopologyId()) {
             // Signal the originator to retry
-            return returnWith(UnsureResponse.INSTANCE);
+            return completedStage(UnsureResponse.INSTANCE);
          }
       }
       return stage;
@@ -353,15 +355,15 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             .compose(ctx, command, handleTxWriteReturn);
    }
 
-   private InvocationStage handleTxWriteReturn(InvocationStage stage, InvocationContext rCtx,
-                                               VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleTxWriteReturn(InvocationContext rCtx,
+                                               VisitableCommand rCommand, Object rv, Throwable t) {
       int retryTopologyId = -1;
       WriteCommand writeCommand = (WriteCommand) rCommand;
       if (t instanceof OutdatedTopologyException) {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
       } else if (t != null) {
-         throw t;
+         rethrowAsCompletedException(t);
       }
 
       if (rCtx.isOriginLocal()) {
@@ -379,10 +381,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       } else {
          if (currentTopologyId() > writeCommand.getTopologyId()) {
             // Signal the originator to retry
-            return returnWith(UnsureResponse.INSTANCE);
+            return completedStage(UnsureResponse.INSTANCE);
          }
       }
-      return stage;
+      return completedStage(rv, t);
    }
 
    /**
@@ -409,17 +411,17 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             .compose(ctx, command, handleNonTxWriteReturn);
    }
 
-   private InvocationStage handleNonTxWriteReturn(InvocationStage stage, InvocationContext rCtx,
-                                                  VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleNonTxWriteReturn(InvocationContext rCtx,
+                                                  VisitableCommand rCommand, Object rv, Throwable t) {
       if (t == null)
-         return stage;
+         return completedStage(rv);
 
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
       }
       if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-         throw t;
+         rethrowAsCompletedException(t);
 
       // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
       // next topology.

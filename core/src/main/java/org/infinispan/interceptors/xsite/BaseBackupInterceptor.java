@@ -58,7 +58,13 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
    protected InvocationStage processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
                                                    BackupResponse backupResponse) {
       return invokeNext(ctx, command)
-            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> backupSender.processResponses(backupResponse, command, ctx.getTransaction()));
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+               try {
+                  backupSender.processResponses(backupResponse, command, ctx.getTransaction());
+               } catch (Throwable t) {
+                  rethrowAsCompletedException(t);
+               }
+            });
    }
 
    protected InvocationStage handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
@@ -67,7 +73,13 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
          return invokeNext(ctx, command);
       }
       return invokeNext(ctx, command)
-            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> backupSender.processResponses(backupSender.backupWrite(command), command));
+            .thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+               try {
+                  backupSender.processResponses(backupSender.backupWrite(command), command);
+               } catch (Throwable throwable) {
+                  rethrowAsCompletedException(throwable);
+               }
+            });
    }
 
    protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {

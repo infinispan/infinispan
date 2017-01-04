@@ -153,7 +153,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             sendToBackups(command, localEntries, consistentHash);
          }
          return invokeNext(ctx, command)
-               .compose(ctx, command, (stage, rCtx, rCommand, rv, t) -> {
+               .whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
             PutMapCommand cmd = (PutMapCommand) rCommand;
             if (t != null) {
                commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
@@ -162,7 +162,6 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
                      (Map<Object, Object>) rv, cmd.getTopologyId());
             }
-            return stage;
          });
       }
 
@@ -265,7 +264,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
       rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
-      return returnWith(null);
+      return completedStage(null);
    }
 
    /**

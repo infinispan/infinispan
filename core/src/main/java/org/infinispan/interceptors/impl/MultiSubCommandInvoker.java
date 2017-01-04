@@ -6,7 +6,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.InvocationComposeHandler;
+import org.infinispan.util.function.TetraFunction;
 
 /**
  * Invoke a sequence of sub-commands.
@@ -14,7 +14,7 @@ import org.infinispan.interceptors.InvocationComposeHandler;
  * @author Dan Berindei
  * @since 9.0
  */
-public class MultiSubCommandInvoker implements InvocationComposeHandler {
+public class MultiSubCommandInvoker implements TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage> {
    private final BaseAsyncInterceptor interceptor;
    private final InvocationStage finalStage;
    private final Iterator<VisitableCommand> subCommands;
@@ -44,9 +44,10 @@ public class MultiSubCommandInvoker implements InvocationComposeHandler {
    }
 
    @Override
-   public InvocationStage apply(InvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand,
-                                Object rv, Throwable t) throws Throwable {
-      if (t != null) return stage;
+   public InvocationStage apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {
+      if (t != null) {
+         return BaseAsyncInterceptor.completedStage(rv, t);
+      }
 
       if (subCommands.hasNext()) {
          VisitableCommand newCommand = subCommands.next();

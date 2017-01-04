@@ -137,7 +137,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    private InvocationStage handleDataReadCommand(InvocationContext ctx, DataCommand command) {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          DataCommand dataCommand = (DataCommand) rCommand;
          if (t != null) {
             if (t instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
@@ -155,14 +155,14 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                   CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
                   if (cacheTopology == null || cacheTopology.getTopologyId() != dataCommand.getTopologyId()) {
                      // just rethrow the exception
-                     throw t;
+                     rethrowAsCompletedException(t);
                   }
                   List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(dataCommand.getKey());
                   if (!InfinispanCollections.containsAny(transport.getMembers(), owners)) {
                      throw log.degradedModeKeyUnavailable(dataCommand.getKey());
                   }
                }
-               throw t;
+               rethrowAsCompletedException(t);
             }
          }
 
@@ -196,7 +196,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private void postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key) throws Throwable {
+   private void postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key) {
       if (performPartitionCheck(ctx, command)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
@@ -207,7 +207,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (t != null) {
             if (t instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {
@@ -216,7 +216,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                // get response.
                throw log.degradedModeKeysUnavailable(((GetAllCommand) rCommand).getKeys());
             } else {
-               throw t;
+               rethrowAsCompletedException(t);
             }
          }
 

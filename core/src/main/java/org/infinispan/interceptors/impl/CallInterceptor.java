@@ -27,6 +27,6 @@ public class CallInterceptor extends BaseAsyncInterceptor {
          throws Throwable {
       if (trace)
          log.tracef("Invoking: %s", command.getClass().getSimpleName());
-      return returnWith(command.perform(ctx));
+      return completedStage(command.perform(ctx));
    }
 }

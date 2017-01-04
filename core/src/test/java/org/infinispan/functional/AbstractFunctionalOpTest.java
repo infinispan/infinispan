@@ -285,7 +285,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       @Override
       protected InvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          current.set(command);
-         return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> current.remove());
+         return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> current.remove());
       }
    }
 }

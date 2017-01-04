@@ -36,11 +36,11 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.InvocationComposeSuccessHandler;
-import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -201,7 +201,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Set<Integer> segments = pair.getValue();
             handleSegmentsForWriteOnlyManyCommand(ctx, command, helper, ch, allFuture, member, segments);
          }
-         return returnWithAsync(allFuture);
+         return asyncStage(allFuture);
       } else { // origin is not local
          // check that we have all the data we need
          return handleRemoteWriteOnlyManyCommand(ctx, command, helper);
@@ -218,7 +218,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
          // calls complete.
          invokeNext(ctx, localCommand)
-               .handle(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, (f, rv) -> {}));
+               .whenComplete(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, (f, rv) -> {}));
          return;
       }
 
@@ -303,7 +303,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                handleRemoteSegmentsForReadWriteManyCommand(command, helper, ch, allFuture, offset, member, segments);
             }
          }
-         return returnWithAsync(allFuture);
+         return asyncStage(allFuture);
       } else { // origin is not local
          return handleRemoteReadWriteManyCommand(ctx, command, helper, ch);
       }
@@ -342,7 +342,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
       // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
       // calls complete.
-      returnStage.handle(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, moveListItemsToFuture(myOffset)));
+      returnStage.whenComplete(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, moveListItemsToFuture(myOffset)));
    }
 
    private <C extends WriteCommand, Item> void handleRemoteSegmentsForReadWriteManyCommand(
@@ -412,7 +412,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private <C extends WriteCommand, F extends CountDownCompletableFuture, Item>
-   InvocationFinallyHandler createLocalInvocationHandler(
+   TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable> createLocalInvocationHandler(
          ConsistentHash ch, F allFuture, Set<Integer> segments, WriteManyCommandHelper<C, ?, Item> helper,
          BiConsumer<F, Object> returnValueConsumer) {
       return (rCtx, rCommand, rv, throwable) -> {
@@ -465,7 +465,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item>
-         implements InvocationComposeSuccessHandler {
+         implements TriFunction<InvocationContext, VisitableCommand, Object, InvocationStage> {
       public abstract C copyForLocal(C cmd, Container container);
 
       public abstract C copyForPrimary(C cmd, ConsistentHash ch, Set<Integer> segments);
@@ -488,7 +488,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       public abstract Object transformResult(Object[] results);
 
       @Override
-      public InvocationStage apply(InvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+      public InvocationStage apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+         InvocationStage stage = completedStage(rv);
          C original = (C) rCommand;
          ConsistentHash ch = checkTopologyId(original).getWriteConsistentHash();
          // We have already checked that the command topology is actual, so we can assume that we really are primary owner
@@ -507,7 +508,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultAsyncOptions);
             }
          }
-         return isSync ? returnWithAsync(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : stage;
+         return isSync ? asyncStage(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : stage;
       }
    }
 

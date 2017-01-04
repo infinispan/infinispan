@@ -68,7 +68,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (!getStatisticsEnabled(command))
          return invokeNext(ctx, command);
 
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
       });
    }
@@ -89,7 +89,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          StripeB stripe = counters.stripeForCurrentThread();
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          if (rv == null) {
@@ -110,7 +110,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          int requests = ((GetAllCommand) rCommand).getKeys().size();
          int hitCount = 0;
@@ -140,7 +140,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
          if (data != null && !data.isEmpty()) {
@@ -168,7 +168,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (command.isSuccessful()) {
             long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
@@ -185,7 +185,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          RemoveCommand removeCommand = (RemoveCommand) rCommand;
          if (removeCommand.isConditional()) {
             if (removeCommand.isSuccessful())

@@ -8,11 +8,13 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -700,9 +702,13 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
             if (t instanceof OutdatedTopologyException) {
                assertEquals(expectedTopologyId, ((OutdatedTopologyException) t).requestedTopologyId);
-               retryOnJoiner.await(10, TimeUnit.SECONDS);
+               try {
+                  retryOnJoiner.await(10, TimeUnit.SECONDS);
+               } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                  return rethrowAsCompletedException(e);
+               }
             }
-            throw t;
+            return rethrowAsCompletedException(t);
          });
       }
    }

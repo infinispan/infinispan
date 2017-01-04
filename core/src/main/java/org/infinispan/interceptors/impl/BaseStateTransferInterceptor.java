@@ -19,7 +19,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -28,6 +27,7 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,7 +51,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    private long transactionDataTimeout;
 
-   private final InvocationComposeHandler handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
@@ -87,8 +88,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private InvocationStage handleLocalGetKeysInGroupReturn(InvocationStage stage, InvocationContext ctx,
-                                                           VisitableCommand command, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleLocalGetKeysInGroupReturn(InvocationContext ctx,
+                                                           VisitableCommand command, Object rv, Throwable t) {
+      InvocationStage stage = completedStage(rv, t);
       GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) command;
       final int commandTopologyId = cmd.getTopologyId();
       boolean shouldRetry;
@@ -141,12 +143,12 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    protected <T extends VisitableCommand> InvocationStage retryWhenDone(
-         CompletableFuture<Void> future, int topologyId, InvocationContext ctx, T command) throws Throwable {
+         CompletableFuture<Void> future, int topologyId, InvocationContext ctx, T command) {
       if (future.isDone()) {
          getLog().tracef("Retrying command %s for topology %d", command, topologyId);
          return invokeNext(ctx, command);
       } else {
-         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId, stateTransferManager);
+         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId);
          // We have to use handleAsync and rethrow the exception in the handler, rather than
          // thenComposeAsync(), because if `future` completes with an exception we want to continue in remoteExecutor
          CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, remoteExecutor);
@@ -172,18 +174,17 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
       private final T command;
       private final int topologyId;
-      private final StateTransferManager stateTransferManager;
       private volatile Throwable cancelled = null;
       // retryFuture is not volatile because it is used only in the timeout handler = run()
       // and that is scheduled after retryFuture is set
       private CompletableFuture<Void> retryFuture;
       // ScheduledFuture does not have any dummy implementations, so we'll use plain Object as the field
+      @SuppressWarnings("unused")
       private volatile Object timeoutFuture;
 
-      public CancellableRetry(T command, int topologyId, StateTransferManager stateTransferManager) {
+      public CancellableRetry(T command, int topologyId) {
          this.command = command;
          this.topologyId = topologyId;
-         this.stateTransferManager = stateTransferManager;
       }
 
       /**
@@ -196,11 +197,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          }
 
          if (throwable != null) {
-            throw CompletableFutures.asCompletionException(throwable);
+            rethrowAsCompletedException(throwable);
          }
          if (!cancellableRetryUpdater.compareAndSet(this, null, DUMMY)) {
             log.tracef("Not retrying command %s as it has been cancelled.", command);
-            throw CompletableFutures.asCompletionException(cancelled);
+            rethrowAsCompletedException(cancelled);
          }
          log.tracef("Retrying command %s for topology %d", command, topologyId);
          return null;

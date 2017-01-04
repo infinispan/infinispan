@@ -60,10 +60,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyHandler;
-import org.infinispan.interceptors.InvocationSuccessHandler;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -74,6 +72,8 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -112,7 +112,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean transactional;
    private boolean totalOrder;
 
-   private final InvocationSuccessHandler dataReadReturnHandler = (rCtx, rCommand, rv) -> {
+   private final TriConsumer<InvocationContext, VisitableCommand, Object> dataReadReturnHandler = (rCtx, rCommand, rv) -> {
       AbstractDataCommand dataCommand = (AbstractDataCommand) rCommand;
 
       if (rCtx.isInTxScope() && useRepeatableRead) {
@@ -133,9 +133,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   private final InvocationSuccessHandler commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null, null);
+   private final TriConsumer<InvocationContext, VisitableCommand, Object>
+         commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null, null);
 
-   private final InvocationFinallyHandler commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
+   private final TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable>
+         commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
 
    protected Log getLog() {
       return log;
@@ -191,7 +193,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(ctx, command, commitEntriesFinallyHandler);
+      return invokeNext(ctx, command).whenComplete(ctx, command, commitEntriesFinallyHandler);
    }
 
    @Override
@@ -217,7 +219,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getKeys()) {
          entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
       }
-      return invokeNext(ctx, command).handle(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {

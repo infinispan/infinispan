@@ -258,7 +258,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
                  Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command);
       }
-      return returnWith(keySet);
+      return completedStage(keySet);
    }
 
    protected static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V>
