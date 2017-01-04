@@ -74,10 +74,9 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
          simulateLocking(ctx, command, clusteringDependentLogic);
 
          if (ctx.isOriginLocal()) {
-            return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-               if (t != null) {
-                  rollbackTxOnPrepareException(rCtx, (PrepareCommand) rCommand, t);
-               }
+            return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
+               rollbackTxOnPrepareException(rCtx, rCommand, t);
+               return rethrowAsCompletedException(t);
             });
          }
 
@@ -100,9 +99,8 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
             log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
          }
 
-         return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-            afterPrepare((TxInvocationContext) rCtx, (PrepareCommand) rCommand, state, t);
-         });
+         return invokeNext(ctx, command)
+               .whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> afterPrepare(rCtx, rCommand, state, t));
       } catch (Throwable t) {
          afterPrepare(ctx, command, state, t);
          throw t;
@@ -168,8 +166,8 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
       }
 
       return invokeNext(context, command)
-            .whenComplete(context, command, (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx,
-                                                                                                (AbstractTransactionBoundaryCommand) rCommand));
+            .whenComplete(context, command,
+                          (rCtx, rCommand, rv, t) -> finishSecondPhaseCommand(commit, state, rCtx, rCommand));
    }
 
    private void finishSecondPhaseCommand(boolean commit, TotalOrderRemoteTransactionState state, InvocationContext ctx,

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -89,7 +90,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private GroupManager groupManager;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
-   private final TriFunction<InvocationContext, VisitableCommand, Object, InvocationStage> primaryReturnHandler = this::primaryReturnHandler;
+   private final BiFunction<VisitableCommand, Object, InvocationStage> primaryReturnHandler = this::primaryReturnHandler;
 
    @Override
    protected Log getLog() {
@@ -239,7 +240,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
          if (info.isPrimary()) {
             return invokeNext(ctx, command)
-                  .thenCompose(ctx, command, primaryReturnHandler);
+                  .thenCompose(command, primaryReturnHandler);
          } else if (ctx.isOriginLocal()) {
             return invokeRemotely(command, info.primary());
          } else {
@@ -301,7 +302,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private InvocationStage primaryReturnHandler(InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
+   private InvocationStage primaryReturnHandler(VisitableCommand visitableCommand, Object localResult) {
       DataWriteCommand command = (DataWriteCommand) visitableCommand;
       if (!command.isSuccessful()) {
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
@@ -631,12 +632,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    protected static class CountDownCompletableFuture extends CompletableFuture<Object> {
-      protected final InvocationContext ctx;
       protected final AtomicInteger counter;
 
       public CountDownCompletableFuture(InvocationContext ctx, int participants) {
          if (trace) log.tracef("Creating shortcut countdown with %d participants", participants);
-         this.ctx = ctx;
          this.counter = new AtomicInteger(participants);
       }
 
@@ -806,11 +805,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected boolean readNeedsRemoteValue(InvocationContext ctx, AbstractDataCommand command) {
       return ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) &&
             !command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP);
-   }
-
-   @FunctionalInterface
-   protected interface RemoteReadManyCommandBuilder<C> {
-      ReplicableCommand build(InvocationContext ctx, C command, List<Object> keys);
    }
 
    protected interface ReadManyCommandHelper<C> extends TriFunction<InvocationContext, VisitableCommand, Object, Object> {

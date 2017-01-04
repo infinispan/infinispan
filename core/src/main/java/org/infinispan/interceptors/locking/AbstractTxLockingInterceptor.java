@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -23,6 +22,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -37,6 +37,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    private PartitionHandlingManager partitionHandlingManager;
    private PendingLockManager pendingLockManager;
    private boolean secondPhaseAsync;
+
+   private final TriConsumer<TxInvocationContext, Object, Throwable>
+         afterCommitCommand = this::afterCommitCommand;
 
    @Inject
    public void setDependencies(RpcManager rpcManager,
@@ -68,22 +71,16 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (ctx.isInTxScope())
-         return invokeNext(ctx, command);
-
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return invokeNext(ctx, command)
-            .whenComplete(ctx, command, unlockAllReturnHandler);
+            .whenComplete(ctx, afterCommitCommand);
    }
 
-   @Override
-   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (t instanceof OutdatedTopologyException)
-            return;
+   private void afterCommitCommand(TxInvocationContext rCtx, Object ignored, Throwable t) {
+      if (t instanceof OutdatedTopologyException)
+         return;
 
-         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-      });
+      releaseLockOnTxCompletion(rCtx);
    }
 
    /**

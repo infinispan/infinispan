@@ -304,10 +304,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return visitManyDataCommand(ctx, command, command.getAffectedKeys());
    }
 
-   protected final boolean isConditional(WriteCommand cmd) {
-      return cmd.isConditional();
-   }
-
    protected final boolean hasSkipLoadFlag(FlagAffectedCommand cmd) {
       return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
    }

@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -32,6 +33,8 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.StripedCounters;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TriConsumer;
 
 /**
  * Captures cache management statistics
@@ -48,6 +51,15 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
    private StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
+
+   private final TriConsumer<Long, Object, Throwable> afterDataReadCommand = this::afterDataReadCommand;
+   private final TetraConsumer<GetAllCommand, Long, Object, Throwable>
+         afterGetAllCommand = this::afterGetAllCommand;
+   private final TetraConsumer<RemoveCommand, Long, Object, Throwable>
+         afterRemoveCommand = this::afterRemoveCommand;
+   private final BiConsumer<Object, Throwable> afterEvictCommand = this::afterEvictCommand;
+   private final TetraConsumer<WriteCommand, Long, Object, Throwable> afterWriteCommand = this::afterWriteCommand;
+   private final TetraConsumer<PutMapCommand, Long, Object, Throwable> afterPutMapCommand = this::afterPutMapCommand;
 
    @Inject
    @SuppressWarnings("unused")
@@ -68,9 +80,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (!getStatisticsEnabled(command))
          return invokeNext(ctx, command);
 
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
-      });
+      return invokeNext(ctx, command)
+            .whenComplete(afterEvictCommand);
+   }
+
+   private void afterEvictCommand(Object rv, Throwable t) {
+      counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
    }
 
    @Override
@@ -89,17 +104,20 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         StripeB stripe = counters.stripeForCurrentThread();
-         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         if (rv == null) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(StripeB.missesFieldUpdater, stripe);
-         } else {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(StripeB.hitsFieldUpdater, stripe);
-         }
-      });
+      return invokeNext(ctx, command)
+            .whenComplete(start, afterDataReadCommand);
+   }
+
+   private void afterDataReadCommand(long start, Object rv, Throwable t) {
+      StripeB stripe = counters.stripeForCurrentThread();
+      long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+      if (rv == null) {
+         counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds);
+         counters.increment(StripeB.missesFieldUpdater, stripe);
+      } else {
+         counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds);
+         counters.increment(StripeB.hitsFieldUpdater, stripe);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -110,27 +128,30 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         int requests = ((GetAllCommand) rCommand).getKeys().size();
-         int hitCount = 0;
-         for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
-            if (entry.getValue() != null) {
-               hitCount++;
-            }
-         }
+      return invokeNext(ctx, command)
+            .whenComplete(command, start, afterGetAllCommand);
+   }
 
-         int missCount = requests - hitCount;
-         StripeB stripe = counters.stripeForCurrentThread();
-         if (hitCount > 0) {
-            counters.add(StripeB.hitsFieldUpdater, stripe, hitCount);
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds * hitCount / requests);
+   private void afterGetAllCommand(GetAllCommand command, long start, Object rv, Throwable t) {
+      long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+      int requests = command.getKeys().size();
+      int hitCount = 0;
+      for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
+         if (entry.getValue() != null) {
+            hitCount++;
          }
-         if (missCount > 0) {
-            counters.add(StripeB.missesFieldUpdater, stripe, missCount);
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
-         }
-      });
+      }
+
+      int missCount = requests - hitCount;
+      StripeB stripe = counters.stripeForCurrentThread();
+      if (hitCount > 0) {
+         counters.add(StripeB.hitsFieldUpdater, stripe, hitCount);
+         counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds * hitCount / requests);
+      }
+      if (missCount > 0) {
+         counters.add(StripeB.missesFieldUpdater, stripe, missCount);
+         counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
+      }
    }
 
    @Override
@@ -140,15 +161,18 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
-         if (data != null && !data.isEmpty()) {
-            StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.add(StripeB.storesFieldUpdater, stripe, data.size());
-         }
-      });
+      return invokeNext(ctx, command)
+            .whenComplete(command, start, afterPutMapCommand);
+   }
+
+   private void afterPutMapCommand(PutMapCommand command, long start, Object rv, Throwable t) {
+      final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+      final Map<Object, Object> data = command.getMap();
+      if (data != null && !data.isEmpty()) {
+         StripeB stripe = counters.stripeForCurrentThread();
+         counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+         counters.add(StripeB.storesFieldUpdater, stripe, data.size());
+      }
    }
 
    @Override
@@ -168,14 +192,17 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (command.isSuccessful()) {
-            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-            StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
-            counters.increment(StripeB.storesFieldUpdater, stripe);
-         }
-      });
+      return invokeNext(ctx, command)
+            .whenComplete(command, start, afterWriteCommand);
+   }
+
+   private void afterWriteCommand(WriteCommand rCommand, long start, Object rv, Throwable t) {
+      if (rCommand.isSuccessful()) {
+         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+         counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+         counters.increment(StripeB.storesFieldUpdater, stripe);
+      }
    }
 
    @Override
@@ -185,20 +212,22 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         RemoveCommand removeCommand = (RemoveCommand) rCommand;
-         if (removeCommand.isConditional()) {
-            if (removeCommand.isSuccessful())
-               increaseRemoveHits(start);
-            else
-               increaseRemoveMisses();
-         } else {
-            if (rv == null)
-               increaseRemoveMisses();
-            else
-               increaseRemoveHits(start);
-         }
-      });
+      return invokeNext(ctx, command)
+            .whenComplete(command, start, afterRemoveCommand);
+   }
+
+   private void afterRemoveCommand(RemoveCommand rCommand, long rStart, Object rv, Throwable ignored) {
+      if (rCommand.isConditional()) {
+         if (rCommand.isSuccessful())
+            increaseRemoveHits(rStart);
+         else
+            increaseRemoveMisses();
+      } else {
+         if (rv == null)
+            increaseRemoveMisses();
+         else
+            increaseRemoveHits(rStart);
+      }
    }
 
    private void increaseRemoveHits(long start) {

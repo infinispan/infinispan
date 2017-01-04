@@ -27,6 +27,9 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static final Log log = LogFactory.getLog(InvocationStageImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   /**
+    * Either a simple synchronous return value, or an AsyncResult (potentially already completed with an exception)
+    */
    private Object result;
 
    public static InvocationStageImpl makeSuccessful(Object returnValue) {
@@ -46,6 +49,10 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    }
 
    public static InvocationStageImpl makeAsynchronous(CompletableFuture<?> completableFuture) {
+      if (completableFuture.isDone() && !completableFuture.isCompletedExceptionally()) {
+         // We can use a simple result and not worry about join() throwing an exception
+         return makeSuccessful(completableFuture.join());
+      }
       InvocationStageImpl stage = new InvocationStageImpl(new AsyncResult());
       completableFuture.whenComplete(stage);
       return stage;
@@ -66,14 +73,14 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    @Override
    public Object get() throws Throwable {
-      if (!(result instanceof AsyncResult)) {
-         return result;
-      } else {
+      if (result instanceof AsyncResult) {
          try {
-            return ((AsyncResult) result).get();
+            return CompletableFutures.await(((AsyncResult) result));
          } catch (ExecutionException e) {
             throw e.getCause();
          }
+      } else {
+         return result;
       }
    }
 
@@ -774,6 +781,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
             } else {
                // We got a simple sync result, continue with that
                returnValue = newResult;
+               throwable = null;
             }
          } catch (Throwable t) {
             throwable = CompletableFutures.extractException(t);

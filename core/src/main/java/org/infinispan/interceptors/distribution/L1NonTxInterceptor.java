@@ -26,7 +26,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -93,7 +92,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Inject
    public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, EntryFactory entryFactory,
-                    DataContainer dataContainer, Configuration config, StateTransferLock stateTransferLock,
+                    DataContainer dataContainer, StateTransferLock stateTransferLock,
                     CommandsFactory commandsFactory, CommandAckCollector commandAckCollector) {
       this.l1Manager = l1Manager;
       this.cdl = cdl;
@@ -219,7 +218,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Override
    public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<Object> keys = command.getMap().keySet();
-      Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+      Set<Object> toInvalidate = new HashSet<>(keys.size());
       for (Object k : keys) {
          if (cdl.localNodeIsOwner(k)) {
             toInvalidate.add(k);
@@ -233,8 +232,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       Iterator<VisitableCommand> subCommands = command.getAffectedKeys().stream().filter(
             k -> !cdl.localNodeIsOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
       return invokeNext(ctx, command).thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
-         processInvalidationResult(putMapCommand, invalidationFuture);
+         processInvalidationResult(rCommand, invalidationFuture);
          return MultiSubCommandInvoker.thenForEach(rCtx, subCommands, this, completedStage(rv));
       });
    }
@@ -297,9 +295,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       Future<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
       return invokeNext(ctx, command).thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
-         processInvalidationResult(dataWriteCommand, l1InvalidationFuture);
-         return removeFromLocalL1(rCtx, dataWriteCommand, rv);
+         processInvalidationResult(rCommand, l1InvalidationFuture);
+         return removeFromLocalL1(rCtx, rCommand, rv);
       });
    }
 

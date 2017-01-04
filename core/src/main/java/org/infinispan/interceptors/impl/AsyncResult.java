@@ -74,15 +74,6 @@ class AsyncResult extends CompletableFuture<Object> {
    private boolean frozen;
 
    /**
-    * Stop adding new elements to this stage
-    */
-   void dequeFreeze() {
-      synchronized (this) {
-         frozen = true;
-      }
-   }
-
-   /**
     * Add a new handler to the deque.
     *
     * @return {@code true} if the handler was added, or {@code false} if the elements deque is frozen
@@ -169,14 +160,24 @@ class AsyncResult extends CompletableFuture<Object> {
       }
    }
 
-   @GuardedBy("this")
-   private void dequeInit() {
-      elements = new Object[DEQUE_INITIAL_CAPACITY];
-      mask = DEQUE_INITIAL_CAPACITY - 1;
+   /**
+    * Stop adding new elements to this stage
+    */
+   private void dequeFreeze() {
+      synchronized (this) {
+         frozen = true;
+      }
    }
 
    @GuardedBy("this")
    private void dequeExpand() {
+      // We start with no elements and mask 0
+      if (elements == null) {
+         elements = new Object[DEQUE_INITIAL_CAPACITY];
+         mask = DEQUE_INITIAL_CAPACITY - 1;
+         return;
+      }
+
       Object[] oldHandlers = elements;
       int oldMask = mask;
       int oldSize = oldMask + 1;

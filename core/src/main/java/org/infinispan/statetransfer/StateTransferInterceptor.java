@@ -72,10 +72,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private boolean defaultSynchronous;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
-   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage> handleTxReturn = this::handleTxReturn;
-   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+   private final TetraFunction<InvocationContext, TransactionBoundaryCommand, Object, Throwable, InvocationStage> handleTxReturn = this::handleTxReturn;
+   private final TetraFunction<InvocationContext, WriteCommand, Object, Throwable, InvocationStage>
          handleTxWriteReturn = this::handleTxWriteReturn;
-   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage> handleNonTxWriteReturn = this::handleNonTxWriteReturn;
+   private final TetraFunction<InvocationContext, WriteCommand, Object, Throwable, InvocationStage> handleNonTxWriteReturn = this::handleNonTxWriteReturn;
 
    @Inject
    public void init(StateTransferManager stateTransferManager) {
@@ -278,23 +278,21 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    private InvocationStage handleTxReturn(InvocationContext ctx,
-                                          VisitableCommand command, Object rv, Throwable t) {
+                                          TransactionBoundaryCommand command, Object rv, Throwable t) {
       InvocationStage stage = completedStage(rv, t);
-      TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) command;
-
       int retryTopologyId = -1;
       int currentTopology = currentTopologyId();
       if (t instanceof OutdatedTopologyException) {
          // This can only happen on the originator
-         retryTopologyId = Math.max(currentTopology, txCommand.getTopologyId() + 1);
+         retryTopologyId = Math.max(currentTopology, command.getTopologyId() + 1);
       } else if (t != null) {
          return stage;
       }
 
       // We need to forward the command to the new owners, if the command was asynchronous
-      boolean async = isTxCommandAsync(txCommand);
+      boolean async = isTxCommandAsync(command);
       if (async) {
-         stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(ctx, txCommand), getOrigin((TxInvocationContext) ctx));
+         stateTransferManager.forwardCommandIfNeeded(command, getAffectedKeys(ctx, command), getOrigin((TxInvocationContext) ctx));
          return stage;
       }
 
@@ -306,16 +304,16 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
          if (retryTopologyId > 0) {
             // Only the originator can retry the command
-            txCommand.setTopologyId(retryTopologyId);
-            if (txCommand instanceof PrepareCommand) {
-               ((PrepareCommand) txCommand).setRetriedCommand(true);
+            command.setTopologyId(retryTopologyId);
+            if (command instanceof PrepareCommand) {
+               ((PrepareCommand) command).setRetriedCommand(true);
             }
             CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, txCommand)
+            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, command)
                   .compose(ctx, command, handleTxReturn);
          }
       } else {
-         if (currentTopology > txCommand.getTopologyId()) {
+         if (currentTopology > command.getTopologyId()) {
             // Signal the originator to retry
             return completedStage(UnsureResponse.INSTANCE);
          }
@@ -355,31 +353,29 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             .compose(ctx, command, handleTxWriteReturn);
    }
 
-   private InvocationStage handleTxWriteReturn(InvocationContext rCtx,
-                                               VisitableCommand rCommand, Object rv, Throwable t) {
+   private InvocationStage handleTxWriteReturn(InvocationContext ctx, WriteCommand command, Object rv, Throwable t) {
       int retryTopologyId = -1;
-      WriteCommand writeCommand = (WriteCommand) rCommand;
       if (t instanceof OutdatedTopologyException) {
          // This can only happen on the originator
-         retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
+         retryTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
       } else if (t != null) {
          rethrowAsCompletedException(t);
       }
 
-      if (rCtx.isOriginLocal()) {
+      if (ctx.isOriginLocal()) {
          // On the originator, we only retry if we got an OutdatedTopologyException
          // Which could be caused either by an owner leaving or by an owner having a newer topology
          // No need to retry just because we have a new topology on the originator, all entries were
          // wrapped anyway
          if (retryTopologyId > 0) {
             // Only the originator can retry the command
-            writeCommand.setTopologyId(retryTopologyId);
+            command.setTopologyId(retryTopologyId);
             CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
-            return retryWhenDone(transactionDataFuture, retryTopologyId, rCtx, writeCommand)
-                  .compose(rCtx, rCommand, handleTxWriteReturn);
+            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, command)
+                  .compose(ctx, command, handleTxWriteReturn);
          }
       } else {
-         if (currentTopologyId() > writeCommand.getTopologyId()) {
+         if (currentTopologyId() > command.getTopologyId()) {
             // Signal the originator to retry
             return completedStage(UnsureResponse.INSTANCE);
          }
@@ -411,8 +407,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             .compose(ctx, command, handleNonTxWriteReturn);
    }
 
-   private InvocationStage handleNonTxWriteReturn(InvocationContext rCtx,
-                                                  VisitableCommand rCommand, Object rv, Throwable t) {
+   private InvocationStage handleNonTxWriteReturn(InvocationContext ctx, WriteCommand writeCommand, Object rv,
+                                                  Throwable t) {
       if (t == null)
          return completedStage(rv);
 
@@ -428,18 +424,16 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // Without this, we could retry the command too fast and we could get the
       // OutdatedTopologyException again.
       int currentTopologyId = currentTopologyId();
-      WriteCommand writeCommand = (WriteCommand) rCommand;
       if (trace)
          log.tracef("Retrying command because of topology change, current topology is %d: %s",
-               currentTopologyId, writeCommand);
-      int commandTopologyId = writeCommand.getTopologyId();
+                    currentTopologyId, writeCommand);
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
       writeCommand.setTopologyId(newTopologyId);
       writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology
       CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-      return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand)
-            .compose(rCtx, rCommand, handleNonTxWriteReturn);
+      return retryWhenDone(transactionDataFuture, newTopologyId, ctx, writeCommand)
+            .compose(ctx, writeCommand, handleNonTxWriteReturn);
    }
 
    private int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {

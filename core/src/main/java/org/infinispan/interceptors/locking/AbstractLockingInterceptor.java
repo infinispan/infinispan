@@ -167,7 +167,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
       command.setKeys(keysToInvalidate.toArray());
       return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         ((InvalidateL1Command) rCommand).setKeys(keys);
+         rCommand.setKeys(keys);
          if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
       });
    }
@@ -218,11 +218,6 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    protected abstract <K> InvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
-
-   protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
-      lockManager.unlockAll(ctx);
-      return te;
-   }
 
    protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 :

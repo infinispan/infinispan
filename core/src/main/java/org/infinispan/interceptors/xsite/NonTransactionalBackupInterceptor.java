@@ -51,12 +51,11 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    private InvocationStage handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
-         if (!skipXSiteBackup(dataWriteCommand)) {
-            if (dataWriteCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(dataWriteCommand.getKey())) {
+      return invokeNext(ctx, command).thenAccept(command, (rCommand, rv) -> {
+         if (!skipXSiteBackup(rCommand)) {
+            if (rCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(rCommand.getKey())) {
                try {
-                  backupSender.processResponses(backupSender.backupWrite(transform(dataWriteCommand)), dataWriteCommand);
+                  backupSender.processResponses(backupSender.backupWrite(transform(rCommand)), rCommand);
                } catch (Throwable t) {
                   rethrowAsCompletedException(t);
                }

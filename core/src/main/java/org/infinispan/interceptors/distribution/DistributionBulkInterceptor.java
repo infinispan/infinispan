@@ -62,16 +62,15 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    @Override
    public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
+         if (rCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
             return rv;
 
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
          if (rCtx.isInTxScope()) {
-            entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand,
-                  (LocalTxInvocationContext) rCtx);
+            entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, rCommand), entrySet, rCommand,
+                                               (LocalTxInvocationContext) rCtx);
          } else {
-            entrySet = new BackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand);
+            entrySet = new BackingEntrySet<>(Caches.getCacheWithFlags(cache, rCommand), entrySet, rCommand);
          }
          return entrySet;
       });

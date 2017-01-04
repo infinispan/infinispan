@@ -43,6 +43,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,11 +64,19 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote" +
       " caches when entries are written to locally.")
 public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxStatisticsExposer {
-   private final AtomicLong invalidations = new AtomicLong(0);
+   private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
+
    private CommandsFactory commandsFactory;
    private boolean statisticsEnabled;
 
-   private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
+   private final AtomicLong invalidations = new AtomicLong(0);
+
+   private final TriFunction<InvocationContext, ClearCommand, Object, InvocationStage>
+         afterClearCommand = this::afterClearCommand;
+   private final TriFunction<TxInvocationContext, PrepareCommand, Object, InvocationStage>
+         afterPrepareCommand = this::afterPrepareCommand;
+   private final TriFunction<LocalTxInvocationContext, LockControlCommand, Object, InvocationStage>
+         afterLockControlCommand = this::afterLockControlCommand;
 
    @Override
    protected Log getLog() {
@@ -105,18 +114,19 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Override
    public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return invokeNext(ctx, command)
-            .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         ClearCommand clearCommand = (ClearCommand) rCommand;
-         if (!isLocalModeForced(clearCommand)) {
-            // just broadcast the clear command - this is simplest!
-            if (rCtx.isOriginLocal()) {
-               CompletableFuture<Map<Address, Response>> remoteInvocation =
-                     rpcManager.invokeRemotelyAsync(null, clearCommand, getBroadcastRpcOptions(defaultSynchronous));
-               return asyncStage(remoteInvocation.thenApply(responses -> null));
-            }
+            .thenCompose(ctx, command, afterClearCommand);
+   }
+
+   private InvocationStage afterClearCommand(InvocationContext rCtx, ClearCommand rCommand, Object rv) {
+      if (!isLocalModeForced(rCommand)) {
+         // just broadcast the clear command - this is simplest!
+         if (rCtx.isOriginLocal()) {
+            CompletableFuture<Map<Address, Response>> remoteInvocation =
+                  rpcManager.invokeRemotelyAsync(null, rCommand, getBroadcastRpcOptions(defaultSynchronous));
+            return asyncStage(remoteInvocation.thenApply(responses -> null));
          }
-         return completedStage(rv);
-      });
+      }
+      return completedStage(rv);
    }
 
    @Override
@@ -131,37 +141,37 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          return invokeNext(ctx, command);
       }
       return invokeNext(ctx, command)
-            .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         InvocationStage stage = completedStage(rv);
-         log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
-         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
-            log.tracef("Nothing to invalidate - no modifications in the transaction.");
-            return stage;
-         }
+            .thenCompose(ctx, command, afterPrepareCommand);
+   }
 
-         if (txInvocationContext.getTransaction() == null)
-            throw new IllegalStateException("We must have an associated transaction");
-         PrepareCommand prepareCommand = (PrepareCommand) rCommand;
-         List<WriteCommand> mods = Arrays.asList(prepareCommand.getModifications());
-         Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
-         if (remoteKeys == null) {
-            return stage;
+   private InvocationStage afterPrepareCommand(TxInvocationContext rCtx, PrepareCommand rCommand, Object rv) {
+      InvocationStage stage = completedStage(rv);
+      log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
+      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+      if (!shouldInvokeRemoteTxCommand(rCtx)) {
+         log.tracef("Nothing to invalidate - no modifications in the transaction.");
+         return stage;
+      }
+
+      if (rCtx.getTransaction() == null)
+         throw new IllegalStateException("We must have an associated transaction");
+      List<WriteCommand> mods = Arrays.asList(rCommand.getModifications());
+      Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, rCtx);
+      if (remoteKeys == null) {
+         return stage;
+      }
+      CompletableFuture<Map<Address, Response>> remoteInvocation =
+            invalidateAcrossCluster(defaultSynchronous, remoteKeys.toArray(), rCtx);
+      return asyncStage(remoteInvocation.handle((responses, t) -> {
+         if (t == null) {
+            return null;
          }
-         CompletableFuture<Map<Address, Response>> remoteInvocation =
-               invalidateAcrossCluster(defaultSynchronous, remoteKeys.toArray(), txInvocationContext);
-         return asyncStage(remoteInvocation.handle((responses, t) -> {
-            if (t == null) {
-               return null;
-            }
-            log.unableToRollbackEvictionsDuringPrepare(t);
-            if (t instanceof RuntimeException)
-               throw ((RuntimeException) t);
-            else
-               throw new RuntimeException("Unable to broadcast invalidation messages", t);
-         }));
-      });
+         log.unableToRollbackEvictionsDuringPrepare(t);
+         if (t instanceof RuntimeException)
+            throw ((RuntimeException) t);
+         else
+            throw new RuntimeException("Unable to broadcast invalidation messages", t);
+      }));
    }
 
    @Override
@@ -170,7 +180,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
             .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
          Set<Object> affectedKeys = rCtx.getAffectedKeys();
          log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
-         CompletableFuture<Map<Address, Response>> remoteInvocation = null;
+               CompletableFuture<Map<Address, Response>> remoteInvocation;
          try {
             remoteInvocation = invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray(), rCtx);
             return asyncStage(remoteInvocation.handle((responses, t) -> {
@@ -184,7 +194,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       });
    }
 
-   private RuntimeException wrapException(Throwable t) {
+   private static RuntimeException wrapException(Throwable t) {
       if (t instanceof RuntimeException)
          return ((RuntimeException) t);
       else
@@ -198,15 +208,18 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          return invokeNext(ctx, command);
       }
       return invokeNext(ctx, command)
-            .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         //unlock will happen async as it is a best effort
-         LockControlCommand lockControlCommand = (LockControlCommand) rCommand;
-         boolean sync = !lockControlCommand.isUnlock();
-         ((LocalTxInvocationContext) rCtx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         CompletableFuture<Map<Address, Response>> remoteInvocation =
-               rpcManager.invokeRemotelyAsync(null, lockControlCommand, getBroadcastRpcOptions(sync));
-         return asyncStage(remoteInvocation.thenApply(responses -> null));
-      });
+            .thenCompose((LocalTxInvocationContext) ctx, command, afterLockControlCommand);
+   }
+
+   private InvocationStage afterLockControlCommand(LocalTxInvocationContext rCtx, LockControlCommand rCommand,
+                                                   Object ignored) {
+      //unlock will happen async as it is a best effort
+      boolean sync = !rCommand.isUnlock();
+      rCtx.remoteLocksAcquired(rpcManager.getTransport()
+                                         .getMembers());
+      CompletableFuture<Map<Address, Response>> remoteInvocation =
+            rpcManager.invokeRemotelyAsync(null, rCommand, getBroadcastRpcOptions(sync));
+      return asyncStage(remoteInvocation.thenApply(responses -> null));
    }
 
    private InvocationStage handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys)
@@ -215,19 +228,21 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          return invokeNext(ctx, command);
       }
       return invokeNext(ctx, command)
-            .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-         WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (writeCommand.isSuccessful()) {
-            if (keys != null && keys.length != 0) {
-               if (!isLocalModeForced(writeCommand)) {
-                  CompletableFuture<Map<Address, Response>> remoteInvocation =
-                        invalidateAcrossCluster(isSynchronous(writeCommand), keys, rCtx);
-                  return asyncStage(remoteInvocation.thenApply(responses -> rv));
-               }
+            .thenCompose(ctx, command, (rCtx, rCommand, rv) -> invalidateAfterInvokeNext(rCtx, rCommand, rv, keys));
+   }
+
+   private InvocationStage invalidateAfterInvokeNext(InvocationContext ctx, WriteCommand command, Object rv,
+                                                     Object[] keys) {
+      if (command.isSuccessful()) {
+         if (keys != null && keys.length != 0) {
+            if (!isLocalModeForced(command)) {
+               CompletableFuture<Map<Address, Response>> remoteInvocation =
+                     invalidateAcrossCluster(isSynchronous(command), keys, ctx);
+               return asyncStage(remoteInvocation).thenApply(rv, (rrv, responses) -> rrv);
             }
          }
-         return completedStage(rv);
-      });
+      }
+      return completedStage(rv);
    }
 
    private Collection<Object> keysToInvalidateForPrepare(List<WriteCommand> modifications,
@@ -259,7 +274,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       boolean containsLocalModeFlag = false;
 
       InvalidationFilterVisitor(int maxSetSize) {
-         result = new HashSet<Object>(maxSetSize);
+         result = new HashSet<>(maxSetSize);
       }
 
       private void processCommand(FlagAffectedCommand command) {

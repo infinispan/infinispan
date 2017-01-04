@@ -109,7 +109,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private static final long EVICT_FLAGS_BITSET =
          FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
-   private boolean transactional;
    private boolean totalOrder;
 
    private final TriConsumer<InvocationContext, VisitableCommand, Object> dataReadReturnHandler = (rCtx, rCommand, rv) -> {
@@ -169,7 +168,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
-      transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
@@ -220,9 +218,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
       }
       return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (useRepeatableRead) {
-            for (Object key : getAllCommand.getKeys()) {
+            for (Object key : rCommand.getKeys()) {
                rCtx.lookupEntry(key).setSkipLookup(true);
             }
          }
@@ -230,17 +227,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // Entry visit notifications used to happen in the CallInterceptor
          // instanceof check excludes the case when the command returns UnsuccessfulResponse
          if (t == null && rv instanceof Map) {
-            log.tracef("Notifying getAll? %s; result %s", !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION), rv);
+            log.tracef("Notifying getAll? %s; result %s", !rCommand.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION), rv);
             Map<Object, Object> map = (Map<Object, Object>) rv;
             // TODO: it would be nice to know if a listener was registered for this and
             // not do the full iteration if there was no visitor listener registered
-            if (!command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) {
+            if (!rCommand.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) {
                for (Map.Entry<Object, Object> entry : map.entrySet()) {
                   Object value = entry.getValue();
                   if (value != null) {
-                     value = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
-                     notifier.notifyCacheEntryVisited(entry.getKey(), value, true, rCtx, getAllCommand);
-                     notifier.notifyCacheEntryVisited(entry.getKey(), value, false, rCtx, getAllCommand);
+                     value = rCommand.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
+                     notifier.notifyCacheEntryVisited(entry.getKey(), value, true, rCtx, rCommand);
+                     notifier.notifyCacheEntryVisited(entry.getKey(), value, false, rCtx, rCommand);
                   }
                }
             }
@@ -275,8 +272,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          }
 
          if (!rCtx.isInTxScope()) {
-            ClearCommand clearCommand = (ClearCommand) rCommand;
-            applyChanges(rCtx, clearCommand, null);
+            applyChanges(rCtx, rCommand, null);
          }
 
          if (trace)
@@ -633,18 +629,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     */
    private InvocationStage setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, writeCommand, null);
+            applyChanges(rCtx, rCommand, null);
             return;
          }
 
          if (trace)
             log.tracef("The return value is %s", toStr(rv));
          if (useRepeatableRead) {
-            boolean addVersionRead = writeSkewCheck && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
+            boolean addVersionRead = writeSkewCheck && rCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
             TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-            for (Object key : writeCommand.getAffectedKeys()) {
+            for (Object key : rCommand.getAffectedKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
                if (cacheEntry != null) {
                   cacheEntry.setSkipLookup(true);
@@ -676,21 +671,20 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private InvocationStage setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
                                                                         DataWriteCommand command, Metadata metadata) {
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, dataWriteCommand, metadata);
+            applyChanges(rCtx, rCommand, metadata);
             return;
          }
 
          if (trace)
             log.tracef("The return value is %s", rv);
          if (useRepeatableRead) {
-            CacheEntry cacheEntry = rCtx.lookupEntry(dataWriteCommand.getKey());
+            CacheEntry cacheEntry = rCtx.lookupEntry(rCommand.getKey());
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
-                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
+               if (writeSkewCheck && rCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
+                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, rCommand.getKey());
                }
                ((MVCCEntry) cacheEntry).updatePreviousValue();
             }

@@ -101,19 +101,11 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * If {@code delay} completes exceptionally, skip the next interceptor and continue with the exception.
     */
    public final InvocationStage invokeNextAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> delay) {
-      if (delay.isDone()) {
-         InvocationStage stage;
-         try {
-            // Make sure the delay was successful
-            delay.join();
-            stage = invokeNext(ctx, command);
-         } catch (Throwable t) {
-            stage = InvocationStageImpl.makeExceptional(t);
-         }
-         return stage;
+      if (delay.isDone() && !delay.isCompletedExceptionally()) {
+         return invokeNext(ctx, command);
+      } else {
+         return InvocationStageImpl.makeAsynchronous(delay)
+                                   .thenCompose(ctx, command, (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
       }
-
-      return InvocationStageImpl.makeAsynchronous(delay)
-                                .thenCompose(ctx, command, (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand));
    }
 }

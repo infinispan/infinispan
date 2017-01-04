@@ -23,6 +23,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,11 +33,13 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea Markus
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
+   private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private boolean needToMarkReads;
 
-   private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final TriConsumer<TxInvocationContext, Object, Throwable>
+         afterOnePhasePrepareCommand = this::afterOnePhasePrepareCommand;
 
    @Override
    protected Log getLog() {
@@ -81,14 +84,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
+      } else {
+         return invokeNext(ctx, command)
+               .whenComplete(ctx, afterOnePhasePrepareCommand);
       }
-      return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (t instanceof OutdatedTopologyException)
-            return;
+   }
 
-         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-      });
+   private void afterOnePhasePrepareCommand(TxInvocationContext rCtx, Object ignored, Throwable t) {
+      if (t instanceof OutdatedTopologyException)
+         return;
 
+      releaseLockOnTxCompletion(rCtx);
    }
 
    @Override

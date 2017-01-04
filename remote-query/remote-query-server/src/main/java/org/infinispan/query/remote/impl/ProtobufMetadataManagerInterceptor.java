@@ -176,8 +176,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (!rCtx.isOriginLocal()) {
             // apply updates to the serialization context
-            for (WriteCommand wc : ((PrepareCommand) rCommand).getModifications()) {
-               wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
+            try {
+               for (WriteCommand wc : rCommand.getModifications()) {
+                  wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
+               }
+            } catch (Throwable t) {
+               rethrowAsCompletedException(t);
             }
          }
       });
@@ -185,10 +189,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    @Override
    public InvocationStage visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      final Object key = command.getKey();
-      final Object value = command.getValue();
-
       if (ctx.isOriginLocal()) {
+         final Object key = command.getKey();
+         final Object value = command.getValue();
+
          if (!(key instanceof String)) {
             throw new CacheException("The key must be a string");
          }
@@ -211,18 +215,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
-         if (putKeyValueCommand.isSuccessful()) {
+         if (rCommand.isSuccessful()) {
+            final Object key = rCommand.getKey();
+            final Object value = rCommand.getValue();
+
             FileDescriptorSource source =
                   new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
-            ProgressCallback progressCallback = null;
-            if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-               source.withProgressCallback(progressCallback);
-            } else {
-               source.withProgressCallback(EMPTY_CALLBACK);
-            }
+            ProgressCallback progressCallback = registerProgressCallback(rCtx, source, rCommand.getFlagsBitSet());
 
             try {
                serializationContext.registerProtoFiles(source);
@@ -231,7 +231,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
 
             if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), rCommand.getFlagsBitSet());
             }
          }
       });
@@ -263,13 +263,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       invoker.invoke(ctx.clone(), cmd);
 
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         ProgressCallback progressCallback = null;
-         if (rCtx.isOriginLocal()) {
-            progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-            source.withProgressCallback(progressCallback);
-         } else {
-            source.withProgressCallback(EMPTY_CALLBACK);
-         }
+         ProgressCallback progressCallback = registerProgressCallback(rCtx, source, rCommand.getFlagsBitSet());
 
          try {
             serializationContext.registerProtoFiles(source);
@@ -278,7 +272,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
 
          if (progressCallback != null) {
-            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), rCommand.getFlagsBitSet());
          }
       });
    }
@@ -357,17 +351,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       invoker.invoke(ctx.clone(), cmd);
 
       return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         if (((WriteCommand) rCommand).isSuccessful()) {
+         if (rCommand.isSuccessful()) {
             FileDescriptorSource source =
                   new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
-            ProgressCallback progressCallback = null;
-            if (rCtx.isOriginLocal()) {
-               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
-               source.withProgressCallback(progressCallback);
-            } else {
-               source.withProgressCallback(EMPTY_CALLBACK);
-            }
+            ProgressCallback progressCallback = registerProgressCallback(rCtx, source, rCommand.getFlagsBitSet());
 
             try {
                serializationContext.registerProtoFiles(source);
@@ -376,10 +364,26 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
 
             if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), rCommand.getFlagsBitSet());
             }
          }
       });
+   }
+
+   private ProgressCallback registerProgressCallback(InvocationContext ctx, FileDescriptorSource source,
+                                                     long flagsBitSet) {
+      ProgressCallback progressCallback = null;
+      try {
+         if (ctx.isOriginLocal() && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            progressCallback = new ProgressCallback(ctx, flagsBitSet);
+            source.withProgressCallback(progressCallback);
+         } else {
+            source.withProgressCallback(EMPTY_CALLBACK);
+         }
+      } catch (IOException e) {
+         rethrowAsCompletedException(e);
+      }
+      return progressCallback;
    }
 
    @Override

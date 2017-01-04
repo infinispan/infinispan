@@ -235,11 +235,10 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
          return invokeNext(ctx, command);
       }
 
-      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         KeySetCommand keySetCommand = (KeySetCommand) rCommand;
+      return invokeNext(ctx, command).thenApply(command, (rCommand, rv) -> {
          CacheSet<K> set = (CacheSet<K>) rv;
-         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(keySetCommand);
-         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, keySetCommand), set) {
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(rCommand);
+         return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, rCommand), set) {
             @Override
             public CloseableIterator<K> iterator() {
                return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
@@ -277,8 +276,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
 
       return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
-         EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(entrySetCommand);
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(rCommand);
          return new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
             @Override
             public CloseableIterator<CacheEntry<K, V>> iterator() {

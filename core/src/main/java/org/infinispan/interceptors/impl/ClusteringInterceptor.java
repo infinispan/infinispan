@@ -17,17 +17,13 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected CommandsFactory cf;
    protected EntryFactory entryFactory;
-   protected LockManager lockManager;
-   protected DataContainer dataContainer;
    protected StateTransferManager stateTransferManager;
 
    @Inject
-   public void injectDependencies(CommandsFactory cf, EntryFactory entryFactory, LockManager lockManager,
-         DataContainer dataContainer, StateTransferManager stateTransferManager) {
+   public void injectDependencies(CommandsFactory cf, EntryFactory entryFactory,
+                                  StateTransferManager stateTransferManager) {
       this.cf = cf;
       this.entryFactory = entryFactory;
-      this.lockManager = lockManager;
-      this.dataContainer = dataContainer;
       this.stateTransferManager = stateTransferManager;
    }
 }
