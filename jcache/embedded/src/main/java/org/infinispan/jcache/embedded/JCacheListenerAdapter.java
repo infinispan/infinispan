@@ -5,9 +5,11 @@ import org.infinispan.jcache.AbstractJCacheListenerAdapter;
 import org.infinispan.jcache.AbstractJCacheNotifier;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 
@@ -43,5 +45,11 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
       // JCache listeners notified only once, so do it after the event
       if (!e.isPre())
          notifier.notifyEntryRemoved(jcache, e.getKey(), e.getOldValue());
+   }
+
+   @CacheEntryExpired
+   public void handleCacheEntryExpiredEvent(CacheEntryExpiredEvent<K, V> e) {
+      if (!e.isPre())
+         notifier.notifyEntryExpired(jcache, e.getKey(), e.getValue());
    }
 }

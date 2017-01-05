@@ -34,14 +34,11 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.context.Flag;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
-import org.infinispan.jcache.AbstractJCacheNotifier;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
 import org.infinispan.jcache.MutableJCacheEntry;
-import org.infinispan.jcache.embedded.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.embedded.logging.Log;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -95,7 +92,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       setCacheLoader(configuration);
       setCacheWriter(configuration);
-      addExpirationTrackingInterceptor(cache, notifier);
 
       if (configuration.isManagementEnabled())
          setManagementEnabled(true);
@@ -128,12 +124,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @SuppressWarnings("unchecked")
    private JCacheWriterAdapter<K, V> getCacheWriterAdapter(PersistenceManagerImpl persistenceManager) {
       return (JCacheWriterAdapter<K, V>) persistenceManager.getAllWriters().get(0);
-   }
-
-   private void addExpirationTrackingInterceptor(AdvancedCache<K, V> cache, AbstractJCacheNotifier notifier) {
-      ExpirationTrackingInterceptor interceptor = new ExpirationTrackingInterceptor(
-            cache.getDataContainer(), this, notifier, cache.getComponentRegistry().getTimeService());
-      cache.addInterceptorBefore(interceptor, EntryWrappingInterceptor.class);
    }
 
    @Override
