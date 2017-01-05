@@ -667,7 +667,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public void accept(Object o, Throwable throwable) {
       // We started with a valueFuture, and that valueFuture is now complete.
-      invokeHandlers(o, throwable != null ? CompletableFutures.extractException(throwable) : null);
+      invokeQueuedHandlers(o, throwable != null ? CompletableFutures.extractException(throwable) : null);
    }
 
    @Override
@@ -678,7 +678,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    private InvocationStage addHandler0(Object handler, AsyncResult.Invoker0 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
-      if (asyncResult.dequeAdd0(invoker, handler)) {
+      if (asyncResult.queueAdd(invoker, handler)) {
          return this;
       }
 
@@ -701,7 +701,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    private InvocationStage addHandler1(Object handler, Object p1, AsyncResult.Invoker1 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
-      if (asyncResult.dequeAdd1(invoker, handler, p1)) {
+      if (asyncResult.queueAdd(invoker, handler, p1)) {
          return this;
       }
 
@@ -724,7 +724,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    private InvocationStage addHandler2(Object handler, Object p1, Object p2, AsyncResult.Invoker2 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
-      if (asyncResult.dequeAdd2(invoker, handler, p1, p2)) {
+      if (asyncResult.queueAdd(invoker, handler, p1, p2)) {
          return this;
       }
 
@@ -745,16 +745,16 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       }
    }
 
-   private void invokeHandlers(Object returnValue, Throwable throwable) {
+   private void invokeQueuedHandlers(Object returnValue, Throwable throwable) {
       AsyncResult asyncResult = (AsyncResult) this.result;
       if (trace) {
          // Search for a command to log
-         Object command = asyncResult.findFirst(o -> o instanceof VisitableCommand);
-         log.tracef("Resuming invocation of command %s with %d handlers", command, asyncResult.dequeSize());
+         Object command = asyncResult.queueFindFirst(o -> o instanceof VisitableCommand);
+         log.tracef("Resuming invocation of command %s with %d handlers", command, asyncResult.queueSize());
       }
       while (true) {
-         AsyncResult.DequeInvoker invoker;
-         invoker = asyncResult.dequePoll();
+         AsyncResult.QueueInvoker invoker;
+         invoker = asyncResult.queuePoll();
 
          if (invoker == null) {
             // Complete the future.
@@ -773,7 +773,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
                   action.accept(rv, throwable1);
                   return makeResult(rv, throwable1);
                };
-               if (newAsyncResult.dequeAdd0(invokeMe, this)) {
+               if (newAsyncResult.queueAdd(invokeMe, this)) {
                   // We stop running more handlers and continue only that AsyncResult is done.
                   return;
                } else {
@@ -793,7 +793,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       }
    }
 
-   private static Object invokeQueuedHandler(AsyncResult asyncResult, AsyncResult.DequeInvoker invoker,
+   private static Object invokeQueuedHandler(AsyncResult asyncResult, AsyncResult.QueueInvoker invoker,
                                              Object returnValue, Throwable throwable) {
       if (invoker instanceof AsyncResult.Invoker0) {
          return invokeQueuedHandler0(asyncResult, (AsyncResult.Invoker0) invoker, returnValue, throwable);
@@ -806,22 +806,22 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    private static Object invokeQueuedHandler0(AsyncResult asyncResult, AsyncResult.Invoker0 invoker, Object returnValue,
                                               Throwable throwable) {
-      Object handler = asyncResult.dequePoll();
+      Object handler = asyncResult.queuePoll();
       return invoker.invoke(handler, returnValue, throwable);
    }
 
    private static Object invokeQueuedHandler1(AsyncResult asyncResult, AsyncResult.Invoker1 invoker, Object returnValue,
                                               Throwable throwable) {
-      Object handler = asyncResult.dequePoll();
-      Object p1 = asyncResult.dequePoll();
+      Object handler = asyncResult.queuePoll();
+      Object p1 = asyncResult.queuePoll();
       return invoker.invoke(handler, p1, returnValue, throwable);
    }
 
    private static Object invokeQueuedHandler2(AsyncResult asyncResult, AsyncResult.Invoker2 invoker, Object returnValue,
                                               Throwable throwable) {
-      Object handler = asyncResult.dequePoll();
-      Object p1 = asyncResult.dequePoll();
-      Object p2 = asyncResult.dequePoll();
+      Object handler = asyncResult.queuePoll();
+      Object p1 = asyncResult.queuePoll();
+      Object p2 = asyncResult.queuePoll();
       return invoker.invoke(handler, p1, p2, returnValue, throwable);
    }
 

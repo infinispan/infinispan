@@ -8,37 +8,34 @@ import org.jgroups.annotations.GuardedBy;
 /**
  * Invocation stage representing a computation that may or may not be done yet.
  *
- * <p>It stores handler objects in a deque instead of creating a new instance every time a handler is added.
- * The deque may be frozen based on internal conditions, like executing the last handler or reaching the capacity
- * of the queue, and adding a handler will create a new instance.
+ * <p>It stores handler objects in a queue instead of creating a new instance every time a handler is added.
+ * It will freeze the queue and stop adding objects to it once the last handler was executed (before calling
+ * {@link #complete(Object)}).
  * </p>
- *
- * <p>When the queue is not frozen, adding a handler will change the result of the current stage.
- * When the queue is frozen, adding a handler may actually execute the handler synchronously.</p>
  *
  * @author Dan Berindei
  * @since 9.0
  */
 class AsyncResult extends CompletableFuture<Object> {
-   interface DequeInvoker {
+   interface QueueInvoker {
       // Just a pretty name, no methods
    }
 
-   interface Invoker0 extends DequeInvoker {
+   interface Invoker0 extends QueueInvoker {
       Object invoke(Object callback, Object returnValue, Throwable throwable);
    }
 
-   interface Invoker1 extends DequeInvoker {
+   interface Invoker1 extends QueueInvoker {
       Object invoke(Object callback, Object p1, Object returnValue, Throwable throwable);
    }
 
-   interface Invoker2 extends DequeInvoker {
+   interface Invoker2 extends QueueInvoker {
       Object invoke(Object callback, Object p1, Object p2, Object returnValue, Throwable throwable);
    }
 
    static AsyncResult makeExceptional(Throwable throwable) {
       AsyncResult result = new AsyncResult();
-      result.dequeFreeze();
+      result.queueFreeze();
       result.completeExceptionally(throwable);
       return result;
    }
@@ -58,11 +55,11 @@ class AsyncResult extends CompletableFuture<Object> {
     * An inline implementation of a deque with a fixed size that can be frozen so that no more elements
     * can be added.
     *
-    * The deque is frozen manually, with {@link #dequeFreeze()}, or automatically when the last handler is polled,
+    * The deque is frozen manually, with {@link #queueFreeze()}, or automatically when the last handler is polled,
     * or when the deque reaches capacity.
     */
    // Capacity must be a power of 2
-   private static final int DEQUE_INITIAL_CAPACITY = 16;
+   static final int QUEUE_INITIAL_CAPACITY = 16;
    @GuardedBy("this")
    private Object[] elements;
    @GuardedBy("this")
@@ -79,9 +76,9 @@ class AsyncResult extends CompletableFuture<Object> {
     *
     * @return {@code true} if the handler was added, or {@code false} if the elements deque is frozen
     */
-   boolean dequeAdd0(Invoker0 invoker, Object handler) {
+   boolean queueAdd(Invoker0 invoker, Object handler) {
       synchronized (this) {
-         return dequeBasicAdd(invoker, handler, 2);
+         return queueBasicAdd(invoker, handler, 2);
       }
    }
 
@@ -90,9 +87,9 @@ class AsyncResult extends CompletableFuture<Object> {
     *
     * @return {@code true} if the handler was added, or {@code false} if the elements deque is frozen
     */
-   boolean dequeAdd1(Invoker1 invoker, Object handler, Object p1) {
+   boolean queueAdd(Invoker1 invoker, Object handler, Object p1) {
       synchronized (this) {
-         if (!dequeBasicAdd(invoker, handler, 3))
+         if (!queueBasicAdd(invoker, handler, 3))
             return false;
 
          elements[tail++ & mask] = p1;
@@ -105,9 +102,9 @@ class AsyncResult extends CompletableFuture<Object> {
     *
     * @return {@code true} if the handler was added, or {@code false} if the elements deque is frozen
     */
-   boolean dequeAdd2(Invoker2 invoker, Object handler, Object p1, Object p2) {
+   boolean queueAdd(Invoker2 invoker, Object handler, Object p1, Object p2) {
       synchronized (this) {
-         if (!dequeBasicAdd(invoker, handler, 4))
+         if (!queueBasicAdd(invoker, handler, 4))
             return false;
 
          elements[tail++ & mask] = p1;
@@ -117,12 +114,13 @@ class AsyncResult extends CompletableFuture<Object> {
    }
 
    @GuardedBy("this")
-   private boolean dequeBasicAdd(DequeInvoker invoker, Object handler, int addCount) {
+   private boolean queueBasicAdd(QueueInvoker invoker, Object handler, int addCount) {
       if (frozen) {
          return false;
       }
+      // Assume no overflow on the head/tail
       if (tail - head + addCount > mask) {
-         dequeExpand();
+         queueExpand();
       }
       elements[tail++ & mask] = invoker;
       elements[tail++ & mask] = handler;
@@ -134,7 +132,7 @@ class AsyncResult extends CompletableFuture<Object> {
     *
     * @return The next handler, or {@code null} if the deque is empty.
     */
-   <T> T dequePoll() {
+   <T> T queuePoll() {
       Object element;
       synchronized (this) {
          if (tail != head) {
@@ -142,7 +140,7 @@ class AsyncResult extends CompletableFuture<Object> {
             head++;
          } else {
             element = null;
-            dequeFreeze();
+            queueFreeze();
          }
       }
       return (T) element;
@@ -151,14 +149,14 @@ class AsyncResult extends CompletableFuture<Object> {
    /**
     * @return The current number of elements in the deque, only useful for debugging.
     */
-   int dequeSize() {
+   int queueSize() {
       synchronized (this) {
          // We can assume tail and head won't overflow in our use case
          return tail - head;
       }
    }
 
-   public Object findFirst(Predicate<Object> predicate) {
+   Object queueFindFirst(Predicate<Object> predicate) {
       synchronized (this) {
          // We can assume tail and head won't overflow in our use case
          for (int i = head; i < tail; i++) {
@@ -174,32 +172,42 @@ class AsyncResult extends CompletableFuture<Object> {
    /**
     * Stop adding new elements to this stage
     */
-   private void dequeFreeze() {
+   private void queueFreeze() {
       synchronized (this) {
          frozen = true;
       }
    }
 
    @GuardedBy("this")
-   private void dequeExpand() {
+   private void queueExpand() {
       // We start with no elements and mask 0
       if (elements == null) {
-         elements = new Object[DEQUE_INITIAL_CAPACITY];
-         mask = DEQUE_INITIAL_CAPACITY - 1;
+         elements = new Object[QUEUE_INITIAL_CAPACITY];
+         mask = QUEUE_INITIAL_CAPACITY - 1;
          return;
       }
 
-      Object[] oldHandlers = elements;
+      Object[] oldElements = elements;
+      int oldCapacity = oldElements.length;
       int oldMask = mask;
-      int oldSize = oldMask + 1;
+      int oldHead = head;
+      int oldTail = tail;
+      int maskedHead = oldHead & oldMask;
+      int maskedTail = oldTail & oldMask;
+      int oldSize = tail - head;
 
-      int newSize = oldSize * 2;
+      int newSize = oldCapacity * 2;
       int newMask = newSize - 1;
       elements = new Object[newSize];
       mask = (byte) newMask;
+      head = 0;
+      tail = (byte) (oldTail - oldHead);
 
-      int maskedHead = head & mask;
-      System.arraycopy(oldHandlers, maskedHead, elements, 0, oldSize - maskedHead);
-      System.arraycopy(oldHandlers, 0, elements, maskedHead, maskedHead);
+      if (maskedHead < maskedTail) {
+         System.arraycopy(oldElements, maskedHead, elements, 0, oldSize);
+      } else {
+         System.arraycopy(oldElements, maskedHead, elements, 0, oldCapacity - maskedHead);
+         System.arraycopy(oldElements, 0, elements, oldCapacity - maskedHead, maskedTail);
+      }
    }
 }
