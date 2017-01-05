@@ -176,15 +176,15 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    }
 
    @Override
-   public InvocationStage thenCombine(CompletionStage<?> otherStage, BiFunction<Object, Object, Object> function) {
+   public InvocationStage thenCombine(CompletionStage<?> completionStage, BiFunction<Object, Object, Object> function) {
       if (result instanceof AsyncResult) {
-         InvocationStage otherInvocationStage = makeAsynchronous(otherStage.toCompletableFuture());
+         InvocationStage otherInvocationStage = makeAsynchronous(completionStage.toCompletableFuture());
          return thenCompose(otherInvocationStage, function, (rStage, rFunction, rv) -> rStage.thenApply(rv, rFunction));
       } else {
          try {
-            Object rv1 = result;
-            this.result = makeAsynchronous(otherStage.thenApply(rv2 -> function.apply(rv1, rv2)).toCompletableFuture());
-            return this;
+            Object rv1 = this.result;
+            InvocationStage otherStage = makeAsynchronous(completionStage.toCompletableFuture());
+            return otherStage.thenApply(function, rv1, BiFunction::apply);
          } catch (Throwable t) {
             this.result = AsyncResult.makeExceptional(t);
             return this;
@@ -199,8 +199,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       } else {
          try {
             Object rv1 = this.result;
-            this.result = otherStage.thenApply(function, rv1, BiFunction::apply);
-            return this;
+            return otherStage.thenApply(function, rv1, BiFunction::apply);
          } catch (Throwable t) {
             this.result = AsyncResult.makeExceptional(t);
             return this;
