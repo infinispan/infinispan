@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.TetraConsumer;
@@ -117,7 +118,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenApply0(Object callback, Object rv, Throwable throwable) {
       Function<Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       return function.apply(rv);
@@ -167,7 +168,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenCompose0(Object callback, Object rv, Throwable throwable) {
       Function<Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       InvocationStage stage = function.apply(rv);
@@ -326,7 +327,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenApply1(Object callback, Object p1, Object rv, Throwable throwable) {
       BiFunction<Object, Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       return function.apply(p1, rv);
@@ -376,7 +377,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenCompose1(Object callback, Object p1, Object rv, Throwable throwable) {
       BiFunction<Object, Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       InvocationStage stage = function.apply(p1, rv);
@@ -502,7 +503,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenApply2(Object callback, Object p1, Object p2, Object rv, Throwable throwable) {
       TriFunction<Object, Object, Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       return function.apply(p1, p2, rv);
@@ -552,7 +553,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    private static Object invokeThenCompose2(Object callback, Object p1, Object p2, Object rv, Throwable throwable) {
       TriFunction<Object, Object, Object, InvocationStage> function = castCallback(callback);
       if (throwable != null) {
-         return rv;
+         return AsyncResult.makeExceptional(throwable);
       }
 
       InvocationStage stage = function.apply(p1, p2, rv);
@@ -689,7 +690,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       try {
          returnValue = asyncResult.join();
       } catch (Throwable t) {
-         throwable = t;
+         throwable = CompletableFutures.extractException(t);
       }
       try {
          this.result = invoker.invoke(handler, returnValue, throwable);
@@ -712,7 +713,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       try {
          returnValue = asyncResult.join();
       } catch (Throwable t) {
-         throwable = t;
+         throwable = CompletableFutures.extractException(t);
       }
       try {
          this.result = invoker.invoke(handler, p1, returnValue, throwable);
@@ -735,7 +736,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       try {
          returnValue = asyncResult.join();
       } catch (Throwable t) {
-         throwable = t;
+         throwable = CompletableFutures.extractException(t);
       }
       try {
          this.result = invoker.invoke(handler, p1, p2, returnValue, throwable);
@@ -747,7 +748,11 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
 
    private void invokeHandlers(Object returnValue, Throwable throwable) {
       AsyncResult asyncResult = (AsyncResult) this.result;
-      if (trace) log.tracef("Resuming invocation with %d handlers", asyncResult.dequeSize());
+      if (trace) {
+         // Search for a command to log
+         Object command = asyncResult.findFirst(o -> o instanceof VisitableCommand);
+         log.tracef("Resuming invocation of command %s with %d handlers", command, asyncResult.dequeSize());
+      }
       while (true) {
          AsyncResult.DequeInvoker invoker;
          invoker = asyncResult.dequePoll();

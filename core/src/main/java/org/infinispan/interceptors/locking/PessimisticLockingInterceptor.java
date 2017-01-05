@@ -56,7 +56,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private final TetraConsumer<InvocationContext, DataCommand, Object, Throwable>
          afterDataReadCommand = this::afterDataReadCommand;
    private final BiFunction<InvocationContext, Throwable, Object>
-         afterWriteException = this::afterWriteException;
+         afterNonBoundaryCommandException = this::afterNonBoundaryCommandException;
    private final BiConsumer<TxInvocationContext, Object>
          afterOnePhasePrepareCommand = this::afterOnePhasePrepareCommand;
 
@@ -96,8 +96,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                .thenCompose(ctx, command, (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand))
                .whenComplete(ctx, command, afterDataReadCommand);
       } catch (Throwable t) {
-         rethrowAndReleaseLocksIfNeeded(ctx, t);
-         throw t;
+         return afterNonBoundaryCommandException(ctx, t);
       }
 
    }
@@ -130,14 +129,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             Collection<?> keys = command.getKeys();
             stage = acquireLocks(ctx, command, keys);
          }
-         return stage.whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-            if (t != null) {
-               releaseLocksOnFailureBeforePrepare(rCtx);
-            }
-         });
+         return stage.exceptionally(ctx, afterNonBoundaryCommandException);
       } catch (Throwable t) {
-         releaseLocksOnFailureBeforePrepare(ctx);
-         throw t;
+         return afterNonBoundaryCommandException(ctx, t);
       }
    }
 
@@ -152,13 +146,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                                                              txContext.getGlobalTransaction());
          stage = invokeNext(ctx, lcc)
-               .thenCompose(ctx, lcc, (rCtx, rCommand, rv) -> acquireLocalLocksAndInvokeNext(keys, rCtx, rCommand));
+               .thenCompose(ctx, command, (rCtx, rCommand, rv) -> acquireLocalLocksAndInvokeNext(keys, rCtx, rCommand));
       }
       return stage;
    }
 
    private InvocationStage acquireLocalLocksAndInvokeNext(Collection<?> keys, InvocationContext ctx,
-                                                          LockControlCommand command) {
+                                                          FlagAffectedCommand command) {
       acquireLocalLocks(ctx, command, keys);
       return invokeNext(ctx, command);
    }
@@ -192,15 +186,15 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          } else {
             stage = acquireLocks(ctx, command, keys);
          }
-         return stage.exceptionally(ctx, afterWriteException);
+         return stage.exceptionally(ctx, afterNonBoundaryCommandException);
       } catch (Throwable t) {
-         return afterWriteException(ctx, t);
+         return afterNonBoundaryCommandException(ctx, t);
       }
    }
 
-   private <T> T afterWriteException(InvocationContext rCtx, Throwable t) {
+   private <T> T afterNonBoundaryCommandException(InvocationContext rCtx, Throwable t) {
       rethrowAndReleaseLocksIfNeeded(rCtx, t);
-      throw new IllegalStateException("rethrowAndReleaseLocksIfNeeded should have thrown an exception");
+      return rethrowAsCompletedException(t);
    }
 
    @Override
@@ -228,7 +222,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                      .compose(ctx, command, afterWriteLockSubCommand);
             }
          }
-         return stage.exceptionally(ctx, afterWriteException);
+         return stage.exceptionally(ctx, afterNonBoundaryCommandException);
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
@@ -261,33 +255,33 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                LockControlCommand lcc = cf.buildLockControlCommand(keysToLock, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
                stage = invokeNext(ctx, lcc)
-                     .thenCompose(ctx, command, (rCtx, rCommand, rv) -> {
-                  ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
-                  acquireLocalCompositeLocks(command, keysToLock, rCtx);
-                  return invokeNext(rCtx, command);
-               });
+                     .thenCompose(ctx, command,
+                                  (rCtx, rCommand, rv) -> afterDeltaLockSubCommand(keysToLock, rCtx, rCommand));
             }
          }
-         return stage.whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
-            if (t != null) {
-               lockManager.unlockAll(rCtx);
-            }
-         });
+         return stage.exceptionally(ctx, afterNonBoundaryCommandException);
       } catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
       }
    }
 
-   private void acquireLocalCompositeLocks(ApplyDeltaCommand command, Set<Object> keysToLock, InvocationContext ctx1) {
+   private InvocationStage afterDeltaLockSubCommand(Set<Object> keysToLock, InvocationContext rCtx,
+                                                    ApplyDeltaCommand rCommand) {
+      ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
+      acquireLocalCompositeLocks(rCommand, keysToLock, rCtx);
+      return invokeNext(rCtx, rCommand);
+   }
+
+   private void acquireLocalCompositeLocks(ApplyDeltaCommand command, Set<Object> keysToLock, InvocationContext ctx) {
       if (cdl.localNodeIsPrimaryOwner(command.getKey())) {
          try {
-            lockAllAndRecord(ctx1, keysToLock, getLockTimeoutMillis(command));
+            lockAllAndRecord(ctx, keysToLock, getLockTimeoutMillis(command));
          } catch (InterruptedException e) {
             rethrowAsCompletedException(e);
          }
       } else if (cdl.localNodeIsOwner(command.getKey())) {
-         TxInvocationContext<?> txContext = (TxInvocationContext<?>) ctx1;
+         TxInvocationContext<?> txContext = (TxInvocationContext<?>) ctx;
          for (Object key : keysToLock) {
             txContext.getCacheTransaction().addBackupLockForKey(key);
          }

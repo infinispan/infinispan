@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.jgroups.annotations.GuardedBy;
 
@@ -80,10 +81,7 @@ class AsyncResult extends CompletableFuture<Object> {
     */
    boolean dequeAdd0(Invoker0 invoker, Object handler) {
       synchronized (this) {
-         if (!dequeBasicAdd(invoker, handler, 2))
-            return false;
-
-         return true;
+         return dequeBasicAdd(invoker, handler, 2);
       }
    }
 
@@ -155,9 +153,22 @@ class AsyncResult extends CompletableFuture<Object> {
     */
    int dequeSize() {
       synchronized (this) {
-         // We can assume tail and head won't overflow
+         // We can assume tail and head won't overflow in our use case
          return tail - head;
       }
+   }
+
+   public Object findFirst(Predicate<Object> predicate) {
+      synchronized (this) {
+         // We can assume tail and head won't overflow in our use case
+         for (int i = head; i < tail; i++) {
+            Object element = elements[i & mask];
+            if (predicate.test(element)) {
+               return element;
+            }
+         }
+      }
+      return null;
    }
 
    /**
