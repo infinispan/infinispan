@@ -90,9 +90,20 @@ public interface InvocationStage {
     */
    InvocationStage thenCompose(Function<Object, InvocationStage> function);
 
-   // TODO Javadoc, add P1+P2 overloads
+   /**
+    * Execute a callback after this stage and the {@code CompletionStage} parameter both completed successfully.
+    *
+    * The callback is a {@code BiFunction}, with the result of this stage as the first parameter and the result of the
+    * {@code completionStage} parameter as the second.
+    */
    InvocationStage thenCombine(CompletionStage<?> otherStage, BiFunction<Object, Object, Object> function);
 
+   /**
+    * Execute a callback after this stage and the {@code InvocationStage} parameter both completed successfully.
+    *
+    * The callback is a {@code BiFunction}, with the result of this stage as the first parameter and the result of the
+    * {@code completionStage} parameter as the second.
+    */
    InvocationStage thenCombine(InvocationStage otherStage, BiFunction<Object, Object, Object> function);
 
    /**
