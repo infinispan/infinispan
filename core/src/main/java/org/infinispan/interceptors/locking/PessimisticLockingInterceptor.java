@@ -194,7 +194,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private <T> T afterNonBoundaryCommandException(InvocationContext rCtx, Throwable t) {
       rethrowAndReleaseLocksIfNeeded(rCtx, t);
-      return rethrowAsCompletedException(t);
+      return rethrowAsCompletionException(t);
    }
 
    @Override
@@ -278,7 +278,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          try {
             lockAllAndRecord(ctx, keysToLock, getLockTimeoutMillis(command));
          } catch (InterruptedException e) {
-            rethrowAsCompletedException(e);
+            rethrowAsCompletionException(e);
          }
       } else if (cdl.localNodeIsOwner(command.getKey())) {
          TxInvocationContext<?> txContext = (TxInvocationContext<?>) ctx;
@@ -354,7 +354,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (!(throwable instanceof OutdatedTopologyException)) {
             releaseLocksOnFailureBeforePrepare(ctx);
          }
-         rethrowAsCompletedException(throwable);
+         rethrowAsCompletionException(throwable);
       }
    }
 

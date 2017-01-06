@@ -62,7 +62,7 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
                try {
                   backupSender.processResponses(backupResponse, command, ctx.getTransaction());
                } catch (Throwable t) {
-                  rethrowAsCompletedException(t);
+                  rethrowAsCompletionException(t);
                }
             });
    }
@@ -77,7 +77,7 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
                try {
                   backupSender.processResponses(backupSender.backupWrite(command), command);
                } catch (Throwable throwable) {
-                  rethrowAsCompletedException(throwable);
+                  rethrowAsCompletionException(throwable);
                }
             });
    }

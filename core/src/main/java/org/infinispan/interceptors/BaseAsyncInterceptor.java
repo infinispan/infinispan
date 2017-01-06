@@ -56,7 +56,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       return InvocationStageImpl.makeSynchronous(returnValue, throwable);
    }
 
-   public static <T> T rethrowAsCompletedException(Throwable throwable) {
+   public static <T> T rethrowAsCompletionException(Throwable throwable) {
       throw CompletableFutures.asCompletionException(throwable);
    }
 

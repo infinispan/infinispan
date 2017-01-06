@@ -705,10 +705,10 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
                try {
                   retryOnJoiner.await(10, TimeUnit.SECONDS);
                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                  return rethrowAsCompletedException(e);
+                  return rethrowAsCompletionException(e);
                }
             }
-            return rethrowAsCompletedException(t);
+            return rethrowAsCompletionException(t);
          });
       }
    }

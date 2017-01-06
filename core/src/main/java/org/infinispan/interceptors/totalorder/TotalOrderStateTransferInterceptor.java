@@ -80,7 +80,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       }
 
       if (!needsToPrepare) {
-         return rethrowAsCompletedException(t);
+         return rethrowAsCompletionException(t);
       } else {
          logRetry(command);
          prepareCommand.setTopologyId(currentTopologyId());

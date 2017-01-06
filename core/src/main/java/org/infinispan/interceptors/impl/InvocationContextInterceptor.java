@@ -31,7 +31,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +53,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) {
          if (t instanceof InvalidCacheUsageException || t instanceof InterruptedException) {
-            rethrowAsCompletedException(t);
+            rethrowAsCompletionException(t);
          } else {
             rethrowException(rCtx, rCommand, t);
          }
@@ -134,7 +133,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          if (ctx.isOriginLocal() && !(th instanceof CacheException)) {
             th = new CacheException(th);
          }
-         rethrowAsCompletedException(th);
+         rethrowAsCompletionException(th);
       }
    }
 
@@ -173,7 +172,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             try {
                transaction.setRollbackOnly();
             } catch (SystemException e) {
-               rethrowAsCompletedException(e);
+               rethrowAsCompletionException(e);
             }
          }
       }

@@ -179,7 +179,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
                                                                        lockTimeout, TimeUnit.MILLISECONDS);
          lockAndRecord(ctx, key, remaining);
       } catch (InterruptedException e) {
-         rethrowAsCompletedException(e);
+         rethrowAsCompletionException(e);
       }
    }
 
@@ -189,7 +189,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
                                                                                       lockTimeout, TimeUnit.MILLISECONDS);
          lockAllAndRecord(ctx, keys, remaining);
       } catch (InterruptedException e) {
-         rethrowAsCompletedException(e);
+         rethrowAsCompletionException(e);
       }
    }
 

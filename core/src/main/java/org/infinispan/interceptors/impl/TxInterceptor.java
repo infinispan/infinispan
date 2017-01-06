@@ -465,7 +465,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                try {
                   txCtx.getTransaction().setRollbackOnly();
                } catch (SystemException e) {
-                  rethrowAsCompletedException(e);
+                  rethrowAsCompletionException(e);
                }
             }
          }

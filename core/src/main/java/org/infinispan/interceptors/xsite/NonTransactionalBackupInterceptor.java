@@ -57,7 +57,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
                try {
                   backupSender.processResponses(backupSender.backupWrite(transform(rCommand)), rCommand);
                } catch (Throwable t) {
-                  rethrowAsCompletedException(t);
+                  rethrowAsCompletionException(t);
                }
             }
          }

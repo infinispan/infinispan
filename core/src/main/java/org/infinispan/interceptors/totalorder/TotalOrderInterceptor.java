@@ -76,7 +76,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
          if (ctx.isOriginLocal()) {
             return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
                rollbackTxOnPrepareException(rCtx, rCommand, t);
-               return rethrowAsCompletedException(t);
+               return rethrowAsCompletionException(t);
             });
          }
 

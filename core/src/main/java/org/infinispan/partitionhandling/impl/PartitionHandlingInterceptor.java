@@ -164,7 +164,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
                if (cacheTopology == null || cacheTopology.getTopologyId() != command.getTopologyId()) {
                   // just rethrow the exception
-                  rethrowAsCompletedException(t);
+                  rethrowAsCompletionException(t);
                }
                List<Address> owners = cacheTopology.getReadConsistentHash()
                                                    .locateOwners(command.getKey());
@@ -172,7 +172,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                   throw log.degradedModeKeyUnavailable(command.getKey());
                }
             }
-            rethrowAsCompletedException(t);
+            rethrowAsCompletionException(t);
          }
       }
 
@@ -228,7 +228,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // get response.
             throw log.degradedModeKeysUnavailable(command.getKeys());
          } else {
-            rethrowAsCompletedException(t);
+            rethrowAsCompletionException(t);
          }
       }
 

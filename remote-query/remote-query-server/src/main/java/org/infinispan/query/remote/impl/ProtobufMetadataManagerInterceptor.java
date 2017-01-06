@@ -181,7 +181,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                   wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
                }
             } catch (Throwable t) {
-               rethrowAsCompletedException(t);
+               rethrowAsCompletionException(t);
             }
          }
       });
@@ -381,7 +381,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             source.withProgressCallback(EMPTY_CALLBACK);
          }
       } catch (IOException e) {
-         rethrowAsCompletedException(e);
+         rethrowAsCompletionException(e);
       }
       return progressCallback;
    }

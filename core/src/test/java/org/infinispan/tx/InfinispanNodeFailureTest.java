@@ -89,7 +89,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
                   try {
                      afterKill.await(10, TimeUnit.SECONDS);
                   } catch (InterruptedException e) {
-                     rethrowAsCompletedException(e);
+                     rethrowAsCompletionException(e);
                   }
                }
             });

@@ -341,7 +341,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
          }
          return invokeNext(ctx, command).exceptionally(ctx, command, (rCtx, rCommand, t) -> {
             thrown.incrementAndGet();
-            return rethrowAsCompletedException(t);
+            return rethrowAsCompletionException(t);
          });
       }
    }

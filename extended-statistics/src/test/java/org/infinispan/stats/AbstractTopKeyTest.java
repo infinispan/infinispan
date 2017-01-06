@@ -106,7 +106,7 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
                   try {
                      wait();
                   } catch (InterruptedException e) {
-                     rethrowAsCompletedException(e);
+                     rethrowAsCompletionException(e);
                   }
                }
             }

@@ -103,7 +103,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage thenApply(Function<Object, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeThenApply0);
+         return addHandler(function, InvocationStageImpl::invokeThenApply0);
       } else {
          try {
             this.result = function.apply(result);
@@ -127,7 +127,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage thenAccept(Consumer<Object> action) {
       if (result instanceof AsyncResult) {
-         return addHandler0(action, InvocationStageImpl::invokeThenAccept0);
+         return addHandler(action, InvocationStageImpl::invokeThenAccept0);
       } else {
          try {
             action.accept(result);
@@ -152,7 +152,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage thenCompose(Function<Object, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeThenCompose0);
+         return addHandler(function, InvocationStageImpl::invokeThenCompose0);
       } else {
          try {
             InvocationStage stage = function.apply(result);
@@ -210,7 +210,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage exceptionally(Function<Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeExceptionally0);
+         return addHandler(function, InvocationStageImpl::invokeExceptionally0);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -229,7 +229,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage exceptionallyCompose(Function<Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeExceptionallyCompose0);
+         return addHandler(function, InvocationStageImpl::invokeExceptionallyCompose0);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -249,7 +249,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage handle(BiFunction<Object, Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeHandle0);
+         return addHandler(function, InvocationStageImpl::invokeHandle0);
       } else {
          try {
             this.result = function.apply(result, null);
@@ -269,7 +269,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage whenComplete(BiConsumer<Object, Throwable> action) {
       if (result instanceof AsyncResult) {
-         return addHandler0(action, InvocationStageImpl::invokeWhenComplete0);
+         return addHandler(action, InvocationStageImpl::invokeWhenComplete0);
       } else {
          try {
             action.accept(result, null);
@@ -290,7 +290,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public InvocationStage compose(BiFunction<Object, Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler0(function, InvocationStageImpl::invokeCompose0);
+         return addHandler(function, InvocationStageImpl::invokeCompose0);
       } else {
          try {
             this.result = extractResult(function.apply(result, null));
@@ -311,7 +311,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage thenApply(P1 p1, BiFunction<P1, Object, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeThenApply1);
+         return addHandler(function, p1, InvocationStageImpl::invokeThenApply1);
       } else {
          try {
             this.result = function.apply(p1, result);
@@ -335,7 +335,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage thenAccept(P1 p1, BiConsumer<P1, Object> action) {
       if (result instanceof AsyncResult) {
-         return addHandler1(action, p1, InvocationStageImpl::invokeThenAccept1);
+         return addHandler(action, p1, InvocationStageImpl::invokeThenAccept1);
       } else {
          try {
             action.accept(p1, result);
@@ -360,7 +360,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage thenCompose(P1 p1, BiFunction<P1, Object, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeThenCompose1);
+         return addHandler(function, p1, InvocationStageImpl::invokeThenCompose1);
       } else {
          try {
             InvocationStage stage = function.apply(p1, result);
@@ -386,7 +386,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage exceptionally(P1 p1, BiFunction<P1, Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeExceptionally1);
+         return addHandler(function, p1, InvocationStageImpl::invokeExceptionally1);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -405,7 +405,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage exceptionallyCompose(P1 p1, BiFunction<P1, Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeExceptionallyCompose1);
+         return addHandler(function, p1, InvocationStageImpl::invokeExceptionallyCompose1);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -425,7 +425,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage handle(P1 p1, TriFunction<P1, Object, Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeHandle1);
+         return addHandler(function, p1, InvocationStageImpl::invokeHandle1);
       } else {
          try {
             this.result = function.apply(p1, result, null);
@@ -445,7 +445,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage whenComplete(P1 p1, TriConsumer<P1, Object, Throwable> action) {
       if (result instanceof AsyncResult) {
-         return addHandler1(action, p1, InvocationStageImpl::invokeWhenComplete1);
+         return addHandler(action, p1, InvocationStageImpl::invokeWhenComplete1);
       } else {
          try {
             action.accept(p1, result, null);
@@ -466,7 +466,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1> InvocationStage compose(P1 p1, TriFunction<P1, Object, Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler1(function, p1, InvocationStageImpl::invokeCompose1);
+         return addHandler(function, p1, InvocationStageImpl::invokeCompose1);
       } else {
          try {
             this.result = extractResult(function.apply(p1, result, null));
@@ -487,7 +487,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage thenApply(P1 p1, P2 p2, TriFunction<P1, P2, Object, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeThenApply2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeThenApply2);
       } else {
          try {
             this.result = function.apply(p1, p2, result);
@@ -511,7 +511,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage thenAccept(P1 p1, P2 p2, TriConsumer<P1, P2, Object> action) {
       if (result instanceof AsyncResult) {
-         return addHandler2(action, p1, p2, InvocationStageImpl::invokeThenAccept2);
+         return addHandler(action, p1, p2, InvocationStageImpl::invokeThenAccept2);
       } else {
          try {
             action.accept(p1, p2, result);
@@ -536,7 +536,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage thenCompose(P1 p1, P2 p2, TriFunction<P1, P2, Object, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeThenCompose2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeThenCompose2);
       } else {
          try {
             InvocationStage stage = function.apply(p1, p2, result);
@@ -562,7 +562,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage exceptionally(P1 p1, P2 p2, TriFunction<P1, P2, Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeExceptionally2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeExceptionally2);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -582,7 +582,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    public <P1, P2> InvocationStage exceptionallyCompose(P1 p1, P2 p2,
                                                         TriFunction<P1, P2, Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeExceptionallyCompose2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeExceptionallyCompose2);
       } else {
          // Exceptional stages always have an AsyncResult
          return this;
@@ -603,7 +603,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage handle(P1 p1, P2 p2, TetraFunction<P1, P2, Object, Throwable, Object> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeHandle2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeHandle2);
       } else {
          try {
             this.result = function.apply(p1, p2, result, null);
@@ -623,7 +623,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    @Override
    public <P1, P2> InvocationStage whenComplete(P1 p1, P2 p2, TetraConsumer<P1, P2, Object, Throwable> action) {
       if (result instanceof AsyncResult) {
-         return addHandler2(action, p1, p2, InvocationStageImpl::invokeWhenComplete2);
+         return addHandler(action, p1, p2, InvocationStageImpl::invokeWhenComplete2);
       } else {
          try {
             action.accept(p1, p2, result, null);
@@ -645,7 +645,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    public <P1, P2> InvocationStage compose(P1 p1, P2 p2,
                                            TetraFunction<P1, P2, Object, Throwable, InvocationStage> function) {
       if (result instanceof AsyncResult) {
-         return addHandler2(function, p1, p2, InvocationStageImpl::invokeCompose2);
+         return addHandler(function, p1, p2, InvocationStageImpl::invokeCompose2);
       } else {
          try {
             this.result = extractResult(function.apply(p1, p2, result, null));
@@ -676,7 +676,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
    }
 
 
-   private InvocationStage addHandler0(Object handler, AsyncResult.Invoker0 invoker) {
+   private InvocationStage addHandler(Object handler, AsyncResult.Invoker0 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
       if (asyncResult.queueAdd(invoker, handler)) {
          return this;
@@ -699,7 +699,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       }
    }
 
-   private InvocationStage addHandler1(Object handler, Object p1, AsyncResult.Invoker1 invoker) {
+   private InvocationStage addHandler(Object handler, Object p1, AsyncResult.Invoker1 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
       if (asyncResult.queueAdd(invoker, handler, p1)) {
          return this;
@@ -722,7 +722,7 @@ public class InvocationStageImpl implements InvocationStage, BiConsumer<Object, 
       }
    }
 
-   private InvocationStage addHandler2(Object handler, Object p1, Object p2, AsyncResult.Invoker2 invoker) {
+   private InvocationStage addHandler(Object handler, Object p1, Object p2, AsyncResult.Invoker2 invoker) {
       AsyncResult asyncResult = (AsyncResult) this.result;
       if (asyncResult.queueAdd(invoker, handler, p1, p2)) {
          return this;

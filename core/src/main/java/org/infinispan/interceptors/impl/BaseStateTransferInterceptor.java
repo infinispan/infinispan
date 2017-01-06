@@ -25,7 +25,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
@@ -52,7 +51,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private long transactionDataTimeout;
 
    private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
-         handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
+         handleLocalGetKeysInGroupReturn1 = this::handleLocalGetKeysInGroupReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleLocalGetKeysInGroupReturn = handleLocalGetKeysInGroupReturn1;
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
@@ -112,7 +113,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          cmd.setTopologyId(newTopologyId);
          CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
          return retryWhenDone(transactionDataFuture, newTopologyId, ctx, command)
-               .compose(ctx, command, this::handleLocalGetKeysInGroupReturn);
+               .compose(ctx, command, handleLocalGetKeysInGroupReturn1);
       } else {
          return stage;
       }
@@ -196,11 +197,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          }
 
          if (throwable != null) {
-            rethrowAsCompletedException(throwable);
+            rethrowAsCompletionException(throwable);
          }
          if (!cancellableRetryUpdater.compareAndSet(this, null, DUMMY)) {
             log.tracef("Not retrying command %s as it has been cancelled.", command);
-            rethrowAsCompletedException(cancelled);
+            rethrowAsCompletionException(cancelled);
          }
          log.tracef("Retrying command %s for topology %d", command, topologyId);
          return null;

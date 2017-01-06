@@ -43,6 +43,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.function.TetraFunction;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -65,6 +66,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
    private static boolean trace = log.isTraceEnabled();
+   private final TriFunction<InvocationContext, VisitableCommand, Throwable, InvocationStage>
+         handleReadCommandReturn = this::handleReadCommandReturn;
 
    private StateTransferManager stateTransferManager;
 
@@ -185,19 +188,16 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    private InvocationStage handleReadCommand(InvocationContext ctx, AbstractTopologyAffectedCommand command) throws Throwable {
-      if (isLocalOnly(command)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
       return invokeNext(ctx, command)
-            .compose(ctx, command, this::handleReadCommandReturn);
+            .exceptionallyCompose(ctx, command, handleReadCommandReturn);
    }
 
    private InvocationStage handleReadCommandReturn(InvocationContext rCtx,
-                                                   VisitableCommand rCommand, Object rv, Throwable t) {
-      if (t == null)
-         return completedStage(rv);
-
+                                                   VisitableCommand rCommand, Throwable t) {
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
@@ -222,7 +222,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
                   currentTopologyId, cmd);
       } else {
-         return completedStage(rv, t);
+         return rethrowAsCompletionException(t);
       }
       // We increment the topology to wait for the next topology.
       // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
@@ -231,7 +231,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       cmd.addFlags(FlagBitSets.COMMAND_RETRY);
       CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
       return retryWhenDone(topologyFuture, newTopologyId, rCtx, cmd)
-            .compose(rCtx, rCommand, this::handleReadCommandReturn);
+            .exceptionallyCompose(rCtx, rCommand, handleReadCommandReturn);
    }
 
    @Override
@@ -263,7 +263,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private InvocationStage handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
       if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
 
-      if (isLocalOnly(command)) {
+      if (command instanceof FlagAffectedCommand &&
+            ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
@@ -344,7 +345,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
 
-      if (isLocalOnly(command)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
@@ -359,7 +360,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
       } else if (t != null) {
-         rethrowAsCompletedException(t);
+         rethrowAsCompletionException(t);
       }
 
       if (ctx.isOriginLocal()) {
@@ -392,7 +393,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
-      if (isLocalOnly(command)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
       }
 
@@ -417,7 +418,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          ce = ce.getCause();
       }
       if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-         rethrowAsCompletedException(t);
+         rethrowAsCompletionException(t);
 
       // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
       // next topology.
@@ -461,20 +462,12 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                                                          VisitableCommand command, Address origin) throws Throwable {
       if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
-      if (isLocalOnly(command)) {
+      if (((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId((TopologyAffectedCommand) command);
 
       return invokeNext(ctx, command);
-   }
-
-   private boolean isLocalOnly(VisitableCommand command) {
-      boolean cacheModeLocal = false;
-      if (command instanceof FlagAffectedCommand) {
-         cacheModeLocal = ((FlagAffectedCommand)command).hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
-      }
-      return cacheModeLocal;
    }
 
    @SuppressWarnings("unchecked")

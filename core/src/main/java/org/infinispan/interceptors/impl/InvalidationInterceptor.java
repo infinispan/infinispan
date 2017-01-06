@@ -255,7 +255,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       try {
          filterVisitor.visitCollection(ctx, modifications);
       } catch (Throwable throwable) {
-         rethrowAsCompletedException(throwable);
+         rethrowAsCompletionException(throwable);
       }
 
       if (filterVisitor.containsPutForExternalRead) {

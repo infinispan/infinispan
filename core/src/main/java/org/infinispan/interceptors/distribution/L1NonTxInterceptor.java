@@ -333,7 +333,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             try {
                l1InvalidationFuture.get();
             } catch (InterruptedException | ExecutionException e) {
-               rethrowAsCompletedException(e);
+               rethrowAsCompletionException(e);
             }
          }
       }
