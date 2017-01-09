@@ -505,7 +505,7 @@ pom. Custom schemas for object marshalling must then be registered with the sele
 the client or by implementing a RegistryService for the given marshaller bridge. Examples of how to achieve this for both
 libraries are presented below:
 
-====== Protostuff
+===== Protostuff
 
 Add the protostuff marshaller dependency to your pom:
 
@@ -531,7 +531,7 @@ in the `register()` method.  Implementations of this interface are loaded via Ja
 of the implementing class(es) should be provided in a `META-INF/services/org/infinispan/marshaller/protostuff/SchemaRegistryService`
 file within your deployment jar.
 
-====== Kryo
+===== Kryo
 
 Add the kryo marshaller dependency to your pom:
 
