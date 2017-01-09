@@ -1,4 +1,4 @@
-== Server Modules
+== Client/Server
 Infinispan offers two alternative access methods: embedded mode and client-server mode.
 
 * In Embedded mode the Infinispan libraries co-exist with the user application in the same JVM as shown in the following diagram
@@ -7,7 +7,7 @@ image::images/server_modules_1.png[align="center", title="Peer-to-peer access"]
 
 * Client-server mode is when applications access the data stored in a remote Infinispan server using some kind of network protocol
 
-=== Why Client-Server?
+=== Why Client/Server?
 There are situations when accessing Infinispan in a client-server mode might make more sense than embedding it within your application, for example, when trying to access Infinispan from a non-JVM environment.
 Since Infinispan is written in Java, if someone had a C\+\+ application that wanted to access it, it couldn't just do it in a p2p way.
 On the other hand, client-server would be perfectly suited here assuming that a language neutral protocol was used and the corresponding client and server implementations were available.

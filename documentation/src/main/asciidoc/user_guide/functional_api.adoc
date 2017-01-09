@@ -1,4 +1,4 @@
-== Functional Map API
+=== Functional Map API
 
 Infinispan 8 introduces a new experimental API for interacting with your
 data which takes advantage of the functional programming additions and
@@ -7,7 +7,7 @@ improved asynchronous programming capabilities available in Java 8.
 Infinispan's link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
 is a distilled map-like asynchronous API which uses functions to interact with data.
 
-=== Asynchronous and Lazy
+==== Asynchronous and Lazy
 
 Being an asynchronous API, all methods that return a single result,
 return a CompletableFuture which wraps the result, so you can use the
@@ -29,7 +29,7 @@ link:{javadocroot}/org/infinispan/commons/api/functional/Traversable.html[`​Tr
 implementation itself can decide when to compute
 those results.
 
-=== Function transparency
+==== Function transparency
 
 Since the content of the functions is transparent to Infinispan, the API
 has been split into 3 interfaces for read­-only (
@@ -41,7 +41,7 @@ link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnly
 )​ operations respectively, in order to provide hints to the Infinispan
 internals on the type of work needed to support functions.
 
-=== Constructing Functional Maps
+==== Constructing Functional Maps
 
 To construct any of the read-only, write-only or read-write map
 instances, an Infinispan
@@ -74,7 +74,7 @@ WARNING: At this stage, the Functional Map API is experimental and hence the
 way FunctionalMap, ReadOnlyMap, WriteOnlyMap and ReadWriteMap are constructed
 is temporary.
 
-=== Read-Only Map API
+==== Read-Only Map API
 
 Read-only operations have the advantage that no locks are acquired
 for the duration of the operation. Here's an example on how to the
@@ -111,7 +111,7 @@ Finally, read-only map also exposes methods to read all existing keys as well
 as entries, which include both key and value information.
 
 [[_read_only_entry_view]]
-==== Read-Only Entry View
+===== Read-Only Entry View
 
 The function parameters for read-only maps provide the user with a
 link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html[read-only entry view]
@@ -136,7 +136,7 @@ associated with the cache entry to be looked up, for example: entry
 lifespan, last  accessed time...etc.
 See <<_meta_parameter, Metadata Parameter Handling section>> to find out more.
 
-=== Write-Only Map API
+==== Write-Only Map API
 
 Write-only operations include operations that insert or update data in the
 cache and also removals. Crucially, a write-only operation does not attempt
@@ -216,7 +216,7 @@ truncateFuture.thenAccept(x -> "Cache contents cleared");
 ----
 
 [[_write_only_entry_view]]
-==== Write-Only Entry View
+===== Write-Only Entry View
 The function parameters for write-only maps provide the user with a
 link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html[write-only entry view]
 to modify the data in the cache, which include these
@@ -232,7 +232,7 @@ find out more).
 method removes the cache entry, including both value and metadata
 parameters associated with this key.
 
-=== Read-Write Map API
+==== Read-Write Map API
 
 The final type of operations we have are read­write operations, and within
 this category CAS-like (Compare­And­Swap) operations can be found.
@@ -302,7 +302,7 @@ similar to the write-only map offerings, except that they enable previous
 value and metadata parameters to be read.
 
 [[_read_write_entry_view]]
-==== Read-Write Entry View
+===== Read-Write Entry View
 The function parameters for read-write maps provide the user with the
 possibility to query the information associated with the key, including
 value and metadata parameters, and the user can also use this
@@ -314,7 +314,7 @@ the operations exposed by <<_read-only_entry_view, read-only entry views>>
 and <<_write_only_entry_view, write-only entry views>>
 
 [[_meta_parameter]]
-=== Metadata Parameter Handling
+==== Metadata Parameter Handling
 link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.html[Metadata parameters]
 provide extra information about the cache entry, such
 as version information, lifespan, last accessed/used time...etc. Some of
@@ -404,7 +404,7 @@ suit their needs. They are stored and retrieved in the very same way as done
 for the metadata parameters already provided by the functional map API.
 
 [[_invocation_parameter]]
-=== Invocation Parameter
+==== Invocation Parameter
 link:{javadocroot}/org/infinispan/commons/api/functional/Param.html[Per-invocation parameters]
 are applied to regular functional map API calls to
 alter the behaviour of certain aspects. Adding per invocation parameters is
@@ -471,7 +471,7 @@ to add new interceptors to the internal stack. These users have the ability
 to query these parameters within the interceptors.
 
 [[_functional_listeners]]
-=== Functional Listeners
+==== Functional Listeners
 The functional map offers a listener API, where clients can register for and
 get notified when events take place. These notifications are post-event, so
 that means the events are received after the event has happened.
@@ -481,7 +481,7 @@ link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListener
 and
 link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[read-write listeners].
 
-==== Write Listeners
+===== Write Listeners
 link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.WriteListeners.html[Write listeners]
 enable user to register listeners for any cache entry write events
 that happen in either a read-write or write-only functional map.
@@ -543,7 +543,7 @@ try(writeFunctionCloseHandler) {
 writeCloseHanlder.close();
 ----
 
-==== Read-Write Listeners
+===== Read-Write Listeners
 link:{javadocroot}/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.html[Read-write listeners]
 enable users to register listeners for cache entry created, modified
 and removed events, and also register listeners for any cache entry
@@ -653,7 +653,7 @@ try(readWriteClose) {
 writeClose.close();
 ----
 
-=== Marshalling of Functions
+==== Marshalling of Functions
 Running functional map in a cluster of nodes involves marshalling and
 replication of the operation parameters under certain circumstances.
 
@@ -746,7 +746,7 @@ CompletableFuture<Boolean> future = readWriteMap.eval("key1,
 future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
 ----
 
-=== Use cases for Functional API
+==== Use cases for Functional API
 
 This new API is meant to complement existing Key/Value Infinispan API
 offerings, so you'll still be able to use
@@ -771,3 +771,4 @@ link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/
 , for example, if you want to do a replace
 operation using metadata parameter equality instead of value equality, or
 if you want to retrieve metadata information from values...etc.
+
