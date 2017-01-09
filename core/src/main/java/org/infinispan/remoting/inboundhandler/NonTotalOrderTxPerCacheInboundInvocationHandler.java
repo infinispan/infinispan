@@ -38,9 +38,9 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private final CheckTopologyAction checkTopologyAction;
 
    private LockManager lockManager;
+   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private PendingLockManager pendingLockManager;
-   private Configuration configuration;
    private boolean pessimisticLocking;
    private long lockAcquisitionTimeout;
 
@@ -49,11 +49,10 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    }
 
    @Inject
-   public void inject(LockManager lockManager, ClusteringDependentLogic clusteringDependentLogic, Configuration configuration,
+   public void inject(LockManager lockManager, @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, Configuration configuration,
                       PendingLockManager pendingLockManager) {
       this.lockManager = lockManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
-      this.configuration = configuration;
       this.pendingLockManager = pendingLockManager;
       this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.lockAcquisitionTimeout = configuration.locking().lockAcquisitionTimeout();
@@ -76,13 +75,13 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
                if (pessimisticLocking) {
                   runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService, sync);
                } else {
-                  runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
+                  runnable = createReadyActionRunnable(command, reply, commandTopologyId, onExecutorService,
                         sync, createReadyAction(commandTopologyId, (PrepareCommand) command)
                   );
                }
                break;
             case LockControlCommand.COMMAND_ID:
-               runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
+               runnable = createReadyActionRunnable(command, reply, commandTopologyId, onExecutorService,
                      sync, createReadyAction(commandTopologyId, (LockControlCommand) command)
                );
                break;
@@ -107,11 +106,9 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       return trace;
    }
 
-   protected final BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply,
-                                                              int commandTopologyId,
-                                                              boolean waitTransactionalData, boolean onExecutorService,
-                                                              boolean sync, ReadyAction readyAction) {
-      final TopologyMode topologyMode = TopologyMode.create(onExecutorService, waitTransactionalData);
+   private BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply,
+         int commandTopologyId, boolean onExecutorService, boolean sync, ReadyAction readyAction) {
+      final TopologyMode topologyMode = TopologyMode.create(onExecutorService, true);
       if (onExecutorService && readyAction != null) {
          readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
          return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync) {
@@ -125,17 +122,17 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       }
    }
 
-   private ReadyAction createReadyAction(int topologyId, TransactionalRemoteLockCommand command) {
-      if (command.hasSkipLocking()) {
+   private ReadyAction createReadyAction(int topologyId, TransactionalRemoteLockCommand replicableCommand) {
+      if (replicableCommand.hasSkipLocking()) {
          return null;
       }
-      Collection<?> keys = command.getKeysToLock();
+      Collection<?> keys = replicableCommand.getKeysToLock();
       if (keys.isEmpty()) {
          return null;
       }
-      final long timeoutMillis = command.hasZeroLockAcquisition() ? 0 : lockAcquisitionTimeout;
+      final long timeoutMillis = replicableCommand.hasZeroLockAcquisition() ? 0 : lockAcquisitionTimeout;
 
-      DefaultReadyAction action = new DefaultReadyAction(new ActionState(command, topologyId, timeoutMillis),
+      DefaultReadyAction action = new DefaultReadyAction(new ActionState(replicableCommand, topologyId, timeoutMillis),
                                                          checkTopologyAction,
                                                          new PendingTxAction(pendingLockManager, clusteringDependentLogic),
                                                          new LockAction(lockManager, clusteringDependentLogic));

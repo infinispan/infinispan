@@ -24,14 +24,4 @@ public class CheckTopologyAction implements Action {
             ActionStatus.CANCELED :
             ActionStatus.READY;
    }
-
-   @Override
-   public void addListener(ActionListener listener) {
-      //no-op
-   }
-
-   @Override
-   public void cleanup(ActionState state) {
-      //no-op
-   }
 }

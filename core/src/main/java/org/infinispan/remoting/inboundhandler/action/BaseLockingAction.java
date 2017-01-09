@@ -9,11 +9,12 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.LockUtil;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
  * A base {@link Action} implementation for locking.
  * <p/>
- * This contains the basic steps for lock acquition: try to acquire, check when it is available and acquired (or not).
+ * This contains the basic steps for lock acquisition: try to acquire, check when it is available and acquired (or not).
  *
  * @author Pedro Ruivo
  * @since 8.0
@@ -23,10 +24,11 @@ public abstract class BaseLockingAction implements Action {
    private static final AtomicReferenceFieldUpdater<BaseLockingAction, InternalState> UPDATER =
          newUpdater(BaseLockingAction.class, InternalState.class, "internalState");
 
+   @SuppressWarnings("deprecation")
    private final ClusteringDependentLogic clusteringDependentLogic;
    private volatile InternalState internalState;
 
-   public BaseLockingAction(ClusteringDependentLogic clusteringDependentLogic) {
+   public BaseLockingAction(@SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic) {
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.internalState = InternalState.INIT;
    }
@@ -67,17 +69,13 @@ public abstract class BaseLockingAction implements Action {
    protected final List<Object> getAndUpdateFilteredKeys(ActionState state) {
       List<Object> filteredKeys = state.getFilteredKeys();
       if (filteredKeys == null) {
-         Collection<?> rawKeys = state.getCommand().getKeysToLock();
+         RemoteLockCommand remoteLockCommand = state.getCommand();
+         Collection<?> rawKeys = remoteLockCommand.getKeysToLock();
          filteredKeys = new ArrayList<>(rawKeys.size());
          filterByLockOwner(rawKeys, filteredKeys);
          state.updateFilteredKeys(filteredKeys);
       }
       return filteredKeys;
-   }
-
-   @Override
-   public void cleanup(ActionState state) {
-      //no-op by default
    }
 
    protected enum InternalState {

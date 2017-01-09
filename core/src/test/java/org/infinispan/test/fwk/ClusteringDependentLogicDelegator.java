@@ -73,4 +73,9 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
    }
+
+   @Override
+   public int getSegmentForKey(Object key) {
+      return clusteringDependentLogic.getSegmentForKey(key);
+   }
 }

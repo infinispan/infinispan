@@ -45,6 +45,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.KnownComponentNames;
@@ -53,7 +54,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -105,7 +106,7 @@ public class StateConsumerImpl implements StateConsumer {
    private TransactionTable transactionTable;       // optional
    private DataContainer<Object, Object> dataContainer;
    private PersistenceManager persistenceManager;
-   private InterceptorChain interceptorChain;
+   private AsyncInterceptorChain interceptorChain;
    private InvocationContextFactory icf;
    private StateTransferLock stateTransferLock;
    private CacheNotifier cacheNotifier;
@@ -120,6 +121,7 @@ public class StateConsumerImpl implements StateConsumer {
    private CommitManager commitManager;
    private ExecutorService stateTransferExecutor;
    private CommandAckCollector commandAckCollector;
+   private TriangleOrderManager triangleOrderManager;
 
    private volatile CacheTopology cacheTopology;
 
@@ -181,7 +183,7 @@ public class StateConsumerImpl implements StateConsumer {
    public void init(Cache cache,
                     @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
                     StateTransferManager stateTransferManager,
-                    InterceptorChain interceptorChain,
+                    AsyncInterceptorChain interceptorChain,
                     InvocationContextFactory icf,
                     Configuration configuration,
                     RpcManager rpcManager,
@@ -195,7 +197,8 @@ public class StateConsumerImpl implements StateConsumer {
                     TotalOrderManager totalOrderManager,
                     @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
                     CommitManager commitManager,
-                    CommandAckCollector commandAckCollector) {
+                    CommandAckCollector commandAckCollector,
+                    TriangleOrderManager triangleOrderManager) {
       this.cache = cache;
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
@@ -215,6 +218,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.commitManager = commitManager;
       this.commandAckCollector = commandAckCollector;
+      this.triangleOrderManager = triangleOrderManager;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
 
@@ -301,6 +305,7 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
+      triangleOrderManager.updateCacheTopology(cacheTopology);
       if (startRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);

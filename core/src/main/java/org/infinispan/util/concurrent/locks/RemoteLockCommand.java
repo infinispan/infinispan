@@ -2,6 +2,8 @@ package org.infinispan.util.concurrent.locks;
 
 import java.util.Collection;
 
+import org.infinispan.commands.ReplicableCommand;
+
 /**
  * Simple interface to extract all the keys that may need to be locked.
  * <p>
@@ -11,7 +13,7 @@ import java.util.Collection;
  * @author Pedro Ruivo
  * @since 8.0
  */
-public interface RemoteLockCommand {
+public interface RemoteLockCommand extends ReplicableCommand {
 
    /**
     * It returns a {@link Collection} with the keys to be lock.

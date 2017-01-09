@@ -40,8 +40,13 @@ public class CompositeAction implements ReadyAction, ActionListener {
    }
 
    @Override
-   public void cleanup() {
-      actions.forEach(ReadyAction::cleanup);
+   public void onException() {
+      actions.forEach(ReadyAction::onException);
+   }
+
+   @Override
+   public void onFinally() {
+      actions.forEach(ReadyAction::onFinally);
    }
 
    @Override

@@ -58,6 +58,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -172,6 +173,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
+   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private CommandAckCollector commandAckCollector;
 
@@ -190,7 +192,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
+                                 @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
                                  CommandAckCollector commandAckCollector) {
       this.dataContainer = container;
       this.notifier = notifier;
@@ -541,6 +543,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ExceptionAckCommand.COMMAND_ID:
             ((ExceptionAckCommand) c).setCommandAckCollector(commandAckCollector);
             break;
+         case BackupPutMapRcpCommand.COMMAND_ID:
+            ((BackupPutMapRcpCommand) c).init(icf, interceptorChain, notifier);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -783,6 +788,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
       BackupWriteRcpCommand cmd = new BackupWriteRcpCommand(cacheName);
       command.initBackupWriteRcpCommand(cmd);
       return cmd;
+   }
+
+   @Override
+   public BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command) {
+      return new BackupPutMapRcpCommand(cacheName, command);
    }
 
    private ValueMatcher getValueMatcher(Object o) {

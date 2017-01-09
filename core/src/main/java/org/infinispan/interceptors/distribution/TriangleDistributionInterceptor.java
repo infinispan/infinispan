@@ -13,6 +13,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
@@ -22,10 +23,10 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -78,11 +79,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private static final boolean trace = log.isTraceEnabled();
    private CommandAckCollector commandAckCollector;
    private CommandsFactory commandsFactory;
+   private TriangleOrderManager triangleOrderManager;
 
    @Inject
-   public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory) {
+   public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
+         TriangleOrderManager triangleOrderManager) {
       this.commandAckCollector = commandAckCollector;
       this.commandsFactory = commandsFactory;
+      this.triangleOrderManager = triangleOrderManager;
    }
 
    @Override
@@ -126,11 +130,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       BackupOwnerClassifier filter = new BackupOwnerClassifier(ch);
       entries.entrySet().forEach(filter::add);
       for (Map.Entry<Address, Map<Object, Object>> entry : filter.perBackupKeyValue.entrySet()) {
-         PutMapCommand copy = new PutMapCommand(command, false);
-         copy.setMap(entry.getValue());
-         copy.setForwarded(true);
-         copy.addFlags(FlagBitSets.SKIP_LOCKING);
-         rpcManager.sendTo(entry.getKey(), copy, DeliverOrder.PER_SENDER);
+         Map<Integer, Long> segmentsAndSequences = new HashMap<>();
+         Map<Object, Object> map = entry.getValue();
+         map.keySet().forEach(key -> segmentsAndSequences.put(cdl.getSegmentForKey(key), -1L));
+         triangleOrderManager.next(segmentsAndSequences, command.getTopologyId());
+         BackupPutMapRcpCommand backupPutMapRcpCommand = commandsFactory.buildBackupPutMapRcpCommand(command);
+         backupPutMapRcpCommand.setMap(map);
+         backupPutMapRcpCommand.setSegmentsAndSequences(segmentsAndSequences);
+         rpcManager.sendTo(entry.getKey(), backupPutMapRcpCommand, DeliverOrder.NONE);
       }
    }
 
@@ -245,9 +252,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             if (trace) {
                log.tracef("Command %s send to backup owner %s.", dwCommand.getCommandInvocationId(), backupOwners);
             }
+            long sequenceNumber = triangleOrderManager.next(distributionInfo.getSegmentId(), dwCommand.getTopologyId());
+            BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
+            backupWriteRcpCommand.setSequence(sequenceNumber);
             // we must send the message only after the collector is registered in the map
-            rpcManager.sendToMany(backupOwners, commandsFactory.buildBackupWriteRcpCommand(dwCommand),
-                  DeliverOrder.PER_SENDER);
+            rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
          }
       });
    }

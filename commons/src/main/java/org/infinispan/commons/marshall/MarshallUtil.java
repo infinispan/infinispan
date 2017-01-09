@@ -1,5 +1,7 @@
 package org.infinispan.commons.marshall;
 
+import static org.infinispan.commons.util.CollectionFactory.computeCapacity;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -63,9 +65,55 @@ public class MarshallUtil {
       if (size == NULL_VALUE) {
          return null;
       }
-      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(size);
+      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(computeCapacity(size));
       for (int i = 0; i < size; i++) //noinspection unchecked
          map.put((K) in.readObject(), (V) in.readObject());
+      return map;
+   }
+
+   /**
+    * Marshall the {@code map} to the {@code ObjectOutput}.
+    * <p>
+    * {@code null} maps are supported.
+    *
+    * @param map {@link Map} to marshall.
+    * @param out {@link ObjectOutput} to write. It must be non-null.
+    * @param <K> Key type of the map.
+    * @param <V> Value type of the map.
+    * @param <T> Type of the {@link Map}.
+    * @throws IOException If any of the usual Input/Output related exceptions occur.
+    */
+   public static <K, V, T extends Map<K, V>> void marshallMap(T map, ElementWriter<K> keyWriter, ElementWriter<V> valueWrite, ObjectOutput out) throws IOException {
+      final int mapSize = map == null ? NULL_VALUE : map.size();
+      marshallSize(out, mapSize);
+      if (mapSize <= 0) return;
+
+      for (Map.Entry<K, V> me : map.entrySet()) {
+         keyWriter.writeTo(out, me.getKey());
+         valueWrite.writeTo(out, me.getValue());
+      }
+   }
+
+   /**
+    * Unmarshall the {@link Map}.
+    * <p>
+    * If the marshalled map is {@link null}, then the {@link MapBuilder} is not invoked.
+    *
+    * @param in      {@link ObjectInput} to read.
+    * @param builder {@link MapBuilder} to create the concrete {@link Map} implementation.
+    * @return The populated {@link Map} created by the {@link MapBuilder} or {@code null}.
+    * @throws IOException            If any of the usual Input/Output related exceptions occur.
+    * @throws ClassNotFoundException If the class of a serialized object cannot be found.
+    * @see #marshallMap(Map, ElementWriter, ElementWriter, ObjectOutput)
+    */
+   public static <K, V, T extends Map<K, V>> T unmarshallMap(ObjectInput in, ElementReader<K> keyReader, ElementReader<V> valueReader, MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException {
+      final int size = unmarshallSize(in);
+      if (size == NULL_VALUE) {
+         return null;
+      }
+      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(computeCapacity(size));
+      for (int i = 0; i < size; i++) //noinspection unchecked
+         map.put(keyReader.readFrom(in), valueReader.readFrom(in));
       return map;
    }
 
@@ -301,7 +349,7 @@ public class MarshallUtil {
    }
 
    /**
-    * Same as {@link #unmarshallArray(ObjectInput, ArrayBuilder)} but specialzed for byte array.
+    * Same as {@link #unmarshallArray(ObjectInput, ArrayBuilder)} but specialized for byte array.
     * <p>
     * No {@link ArrayBuilder} is necessary.
     *

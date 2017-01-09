@@ -113,6 +113,8 @@ public interface ClusteringDependentLogic {
 
    Address getAddress();
 
+   int getSegmentForKey(Object key);
+
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
 
       protected DataContainer<Object, Object> dataContainer;
@@ -343,6 +345,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public int getSegmentForKey(Object key) {
+         return 0;
+      }
+
+      @Override
       protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
                                        Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
@@ -454,6 +461,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public int getSegmentForKey(Object key) {
+         return stateTransferManager.getCacheTopology().getWriteConsistentHash().getSegment(key);
+      }
+
+      @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
          return null; //not used because write skew check is not allowed with invalidation
       }
@@ -548,6 +560,11 @@ public interface ClusteringDependentLogic {
       @Override
       public Address getAddress() {
          return rpcManager.getAddress();
+      }
+
+      @Override
+      public int getSegmentForKey(Object key) {
+         return dm.getWriteConsistentHash().getSegment(key);
       }
 
       @Override
