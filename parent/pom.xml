@@ -172,7 +172,7 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>2.3.4.Final</version.weld>
       <version.weld-se>2.3.4.Final</version.weld-se>
-      <version.groups.kubernetes>0.9.0</version.groups.kubernetes>
+      <version.jgroups.kubernetes>0.9.1</version.jgroups.kubernetes>
       <version.oauth.core>20090531</version.oauth.core>
 
       <version.org.wildfly>10.1.0.Final</version.org.wildfly>
@@ -991,12 +991,12 @@
          <dependency>
             <groupId>org.jgroups.kubernetes</groupId>
             <artifactId>kubernetes</artifactId>
-            <version>${version.groups.kubernetes}</version>
+            <version>${version.jgroups.kubernetes}</version>
          </dependency>
          <dependency>
             <groupId>org.jgroups.kubernetes</groupId>
             <artifactId>common</artifactId>
-            <version>${version.groups.kubernetes}</version>
+            <version>${version.jgroups.kubernetes}</version>
             <exclusions>
                <exclusion>
                   <groupId>io.undertow</groupId>
@@ -1007,7 +1007,7 @@
          <dependency>
             <groupId>org.jgroups.kubernetes</groupId>
             <artifactId>dns</artifactId>
-            <version>${version.groups.kubernetes}</version>
+            <version>${version.jgroups.kubernetes}</version>
          </dependency>
          <dependency>
             <groupId>net.oauth.core</groupId>
