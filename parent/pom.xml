@@ -157,7 +157,7 @@
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.picketbox>4.0.20.Final</version.org.picketbox>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
-      <version.resteasy>3.1.0.Beta1</version.resteasy>
+      <version.resteasy>3.1.0.Final</version.resteasy>
       <version.shrinkwrapResolver>2.2.4</version.shrinkwrapResolver>
       <version.slf4j>1.7.21</version.slf4j>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
