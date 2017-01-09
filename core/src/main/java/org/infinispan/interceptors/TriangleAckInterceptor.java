@@ -188,7 +188,6 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private BasicInvocationStage onLocalWriteCommand(BasicInvocationStage stage, InvocationContext rCtx,
          VisitableCommand rCommand, Object rv, Throwable throwable) {
       final DataWriteCommand cmd = (DataWriteCommand) rCommand;
-      cmd.getCommandInvocationId();
       if (throwable != null) {
          disposeCollectorOnException(cmd.getCommandInvocationId());
          return stage;
@@ -265,7 +264,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          ack.initWithReturnValue(returnValue);
       }
-      rpcManager.sendTo(id.getAddress(), ack, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
+      rpcManager.sendTo(id.getAddress(), ack, DeliverOrder.NONE);
    }
 
    private void sendExceptionAck(CommandInvocationId id, int topologyId, Throwable throwable) {

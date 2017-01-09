@@ -25,11 +25,22 @@ public interface Action {
     *
     * @param listener the {@link ActionListener} to add.
     */
-   void addListener(ActionListener listener);
+   default void addListener(ActionListener listener) {
+   }
 
    /**
-    * Cleanups when it is no longer needed.
-    * @param state
+    * Invoked when an exception occurs while processing the command.
+    *
+    * @param state the current state.
     */
-   void cleanup(ActionState state);
+   default void onException(ActionState state) {
+   }
+
+   /**
+    * Invoked always after the command is executed.
+    *
+    * @param state the current state.\
+    */
+   default void onFinally(ActionState state) {
+   }
 }

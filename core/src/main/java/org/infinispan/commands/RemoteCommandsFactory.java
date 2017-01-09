@@ -41,6 +41,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
@@ -331,6 +332,9 @@ public class RemoteCommandsFactory {
                break;
             case BackupWriteRcpCommand.COMMAND_ID:
                command = new BackupWriteRcpCommand(cacheName);
+               break;
+            case BackupPutMapRcpCommand.COMMAND_ID:
+               command = new BackupPutMapRcpCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

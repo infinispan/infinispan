@@ -116,6 +116,11 @@ public class OnlyPrimaryOwnerTest {
       public Address getAddress() {
          throw new UnsupportedOperationException();
       }
+
+      @Override
+      public int getSegmentForKey(Object key) {
+         throw new UnsupportedOperationException();
+      }
    }
 
    public void testOwnership() {
