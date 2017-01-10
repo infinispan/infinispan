@@ -15,6 +15,7 @@ import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
@@ -32,11 +33,11 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       cacheCfg.indexing()
             .index(Index.LOCAL)
             .addIndexedEntity(Car.class)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
-      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
+      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, "default", cacheCfg);
 
       for(int i = 0; i < NUM_NODES; i++) {
          ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);

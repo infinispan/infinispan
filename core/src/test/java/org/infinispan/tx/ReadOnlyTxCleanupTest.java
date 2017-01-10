@@ -28,6 +28,7 @@ public class ReadOnlyTxCleanupTest extends SingleCacheManagerTest {
 
    public void testReadOnlyTx() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException, NotSupportedException {
       Cache<String, String> c1 = cacheManager.getCache();
+      cacheManager.defineConfiguration("two", cacheManager.getDefaultCacheConfiguration());
       Cache<String, String> c2 = cacheManager.getCache("two");
 
       c1.put("c1", "c1");

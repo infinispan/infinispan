@@ -67,6 +67,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(gc, c);
       cacheContainers.add(container);
+      container.defineConfiguration("TestCache", c.build());
       return container.getCache("TestCache");
    }
 }

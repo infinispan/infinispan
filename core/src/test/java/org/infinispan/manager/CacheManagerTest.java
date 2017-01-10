@@ -97,8 +97,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testStartAndStop() {
-      CacheContainer cm = createCacheManager(false);
+      EmbeddedCacheManager cm = createCacheManager(false);
       try {
+         cm.defineConfiguration("cache1", new ConfigurationBuilder().build());
+         cm.defineConfiguration("cache2", new ConfigurationBuilder().build());
+         cm.defineConfiguration("cache3", new ConfigurationBuilder().build());
          Cache<?, ?> c1 = cm.getCache("cache1");
          Cache<?, ?> c2 = cm.getCache("cache2");
          Cache<?, ?> c3 = cm.getCache("cache3");
@@ -222,6 +225,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       try {
          cm.defineConfiguration("one", new ConfigurationBuilder().build());
          cm.defineConfiguration("two", new ConfigurationBuilder().build());
+         cm.defineConfiguration("three", new ConfigurationBuilder().build());
          cm.getCache("three");
          Set<String> cacheNames = cm.getCacheNames();
          assertEquals(3, cacheNames.size());
@@ -409,7 +413,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().clusteredDefault();
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      return TestCacheManagerFactory.createClusteredCacheManager(gcb, c);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, c);
+      cm.defineConfiguration("cache", c.build());
+
+      return cm;
    }
 
    private void doTestRemoveCacheClustered(final Method m, final boolean isStoreShared) {
@@ -420,6 +427,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          public void call() {
             EmbeddedCacheManager manager1 = cms[0];
             EmbeddedCacheManager manager2 = cms[0];
+
             Cache<String, String> cache1 = manager1.getCache("cache", true);
             Cache<String, String> cache2 = manager2.getCache("cache", true);
             assert cache1 != null;

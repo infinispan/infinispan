@@ -230,6 +230,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          final String cacheName = "to-be-removed";
+         local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
          cache.put("1", wrap("1", "v1"));
@@ -247,6 +248,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          final String cacheName = "to-be-removed";
+         local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
          cache.put("1", wrap("1", "v1"));

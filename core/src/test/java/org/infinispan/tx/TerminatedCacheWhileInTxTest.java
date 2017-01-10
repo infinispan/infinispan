@@ -51,6 +51,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
     * once the cache is in stopping mode.
     */
    public void testNotAllowCallsWhileStopping(final Method m) throws Throwable {
+      cacheManager.defineConfiguration("cache-" + m.getName(), cacheManager.getDefaultCacheConfiguration());
       final Cache<String, String> cache1 = cacheManager.getCache("cache-" + m.getName());
       final CyclicBarrier barrier = new CyclicBarrier(2);
       final CountDownLatch latch = new CountDownLatch(1);

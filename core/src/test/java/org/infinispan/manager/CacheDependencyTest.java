@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -27,6 +28,8 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
 
    @Test
    public void testExplicitStop() {
+      cacheManager.defineConfiguration("A", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("B", new ConfigurationBuilder().build());
       Cache<?, ?> cacheA = cacheManager.getCache("A");
       Cache<?, ?> cacheB = cacheManager.getCache("B");
 
@@ -40,6 +43,8 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
 
    @Test
    public void testDependencyOnStoppedCaches() {
+      cacheManager.defineConfiguration("A", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("B", new ConfigurationBuilder().build());
       Cache<?, ?> cacheA = cacheManager.getCache("A");
       Cache<?, ?> cacheB = cacheManager.getCache("B");
       cacheA.stop();
@@ -57,6 +62,8 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
 
    @Test
    public void testCyclicDependencies() {
+      cacheManager.defineConfiguration("A", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("B", new ConfigurationBuilder().build());
       Cache<?, ?> cacheA = cacheManager.getCache("A");
       Cache<?, ?> cacheB = cacheManager.getCache("B");
 
@@ -73,6 +80,11 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
    public void testStopCacheManager() {
       CacheEventListener listener = new CacheEventListener();
       cacheManager.addListener(listener);
+
+      cacheManager.defineConfiguration("A", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("B", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("C", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("D", new ConfigurationBuilder().build());
 
       Cache<?, ?> cacheA = cacheManager.getCache("A");
       Cache<?, ?> cacheB = cacheManager.getCache("B");
@@ -94,6 +106,10 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
 
    @Test
    public void testRemoveCache() {
+      cacheManager.defineConfiguration("A", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("B", new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("C", new ConfigurationBuilder().build());
+
       Cache<?, ?> cacheA = cacheManager.getCache("A");
       Cache<?, ?> cacheB = cacheManager.getCache("B");
       Cache<?, ?> cacheC = cacheManager.getCache("C");

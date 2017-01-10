@@ -1,7 +1,5 @@
 package org.infinispan.configuration;
 
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

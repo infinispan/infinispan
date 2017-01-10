@@ -7,6 +7,7 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -21,7 +22,6 @@ import javax.management.ServiceNotFoundException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -133,12 +133,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    @Test(dependsOnMethods="testJmxOperations")
    public void testCacheMBeanUnregisterOnRemove() throws Exception {
-      Cache<Object, Object> testCache = cacheManager.getCache("test");
+      cacheManager.defineConfiguration("test", new ConfigurationBuilder().build());
+      assertNotNull(cacheManager.getCache("test"));
       ObjectName cacheMBean = getCacheObjectName(JMX_DOMAIN, "test(local)");
       assertTrue(existsObject(cacheMBean));
       cacheManager.removeCache("test");
       assertFalse(existsObject(cacheMBean));
-      cacheManager.getCache("test");
    }
 
 }

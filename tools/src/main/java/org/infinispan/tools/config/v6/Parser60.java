@@ -56,6 +56,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -148,6 +149,11 @@ public class Parser60 implements ConfigurationParser {
 
    private void parseDefaultCache(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
+      // Reuse the builder if it was made before
+      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(CacheContainer.DEFAULT_CACHE_NAME);
+      if (builder == null) {
+         holder.newConfigurationBuilder(CacheContainer.DEFAULT_CACHE_NAME);
+      }
       parseCache(reader, holder);
    }
 

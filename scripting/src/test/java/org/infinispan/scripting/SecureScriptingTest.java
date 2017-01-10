@@ -30,7 +30,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
    static final Subject ACHILLES = TestingUtil.makeSubject("achilles", "achilles");
-   static final String CACHE_NAME = "secured-script-exec";
+   static final String SECURE_CACHE_NAME = "secured-script-exec";
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -58,8 +58,10 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
          @Override
          public Void run() throws Exception {
+            cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
             cm.getCache(ScriptingTest.CACHE_NAME);
-            cm.getCache(SecureScriptingTest.CACHE_NAME);
+            cm.defineConfiguration(SecureScriptingTest.SECURE_CACHE_NAME, cm.getDefaultCacheConfiguration());
+            cm.getCache(SecureScriptingTest.SECURE_CACHE_NAME);
             return null;
          }
       });
@@ -78,6 +80,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
          @Override
          public Void run() throws Exception {
             SecureScriptingTest.super.setup();
+            cacheManager.defineConfiguration(SECURE_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
             cacheManager.defineConfiguration("nonSecuredCache", TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
             return null;
          }

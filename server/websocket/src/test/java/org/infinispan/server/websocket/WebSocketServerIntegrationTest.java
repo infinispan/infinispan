@@ -19,6 +19,8 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.websocket.configuration.WebSocketServerConfigurationBuilder;
 import org.infinispan.server.websocket.json.JsonObject;
@@ -173,6 +175,6 @@ public class WebSocketServerIntegrationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().defaultCacheName(cacheName), new ConfigurationBuilder());
    }
 }

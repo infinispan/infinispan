@@ -36,6 +36,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 
+   public static final String CACHE_NAME = "repl";
+
    @Override
    protected void createCacheManagers() throws Throwable {
       // The test method will create the cache managers
@@ -67,7 +69,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
 
          log.debugf("Channels created. Starting the caches");
-         Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache("repl"));
+         Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache(CACHE_NAME));
 
          // If eagerManager == 0, the coordinator broadcasts a GET_STATUS command.
          // If eagerManager == 1, the non-coordinator sends a POLICY_GET_STATUS command to the coordinator.
@@ -77,13 +79,13 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          // command, so we don't try to wait for a precise amount of time.
          Thread.sleep(500);
 
-         Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache("repl"));
+         Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache(CACHE_NAME));
 
          repl1Future.get(10, SECONDS);
          repl2Future.get(10, SECONDS);
 
-         Cache<String, String> c1r = cm1.getCache("repl");
-         Cache<String, String> c2r = cm2.getCache("repl");
+         Cache<String, String> c1r = cm1.getCache(CACHE_NAME);
+         Cache<String, String> c2r = cm2.getCache(CACHE_NAME);
 
          blockUntilViewsReceived(10000, cm1, cm2);
          waitForRehashToComplete(c1r, c2r);
@@ -111,6 +113,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm1 = new DefaultCacheManager(gcb1.build(), replCfg.build(), false);
       registerCacheManager(cm1);
+      cm1.defineConfiguration(CACHE_NAME, replCfg.build());
       return cm1;
    }
 

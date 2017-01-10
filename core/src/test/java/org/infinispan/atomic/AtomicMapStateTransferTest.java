@@ -30,9 +30,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "atomic.AtomicMapStateTransferTest")
 public class AtomicMapStateTransferTest extends MultipleCacheManagersTest {
 
+   public static final String CACHE_NAME = "atomic";
+
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfigurationBuilder();
-      createClusteredCaches(1, "atomic", c);
+      createClusteredCaches(1, CACHE_NAME, c);
    }
 
    private ConfigurationBuilder getConfigurationBuilder() {
@@ -43,7 +45,7 @@ public class AtomicMapStateTransferTest extends MultipleCacheManagersTest {
    }
 
    public void testAtomicMapPutDuringJoin() throws ExecutionException, InterruptedException {
-      Cache cache = cache(0, "atomic");
+      Cache cache = cache(0, CACHE_NAME);
       ControlledRpcManager crm = new ControlledRpcManager(cache.getAdvancedCache().getRpcManager());
       TestingUtil.replaceComponent(cache, RpcManager.class, crm, true);
 
@@ -55,10 +57,11 @@ public class AtomicMapStateTransferTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder c = getConfigurationBuilder();
       final EmbeddedCacheManager joiner = addClusterEnabledCacheManager(c);
+      joiner.defineConfiguration(CACHE_NAME, c.build());
       Future<Cache> future = fork(new Callable<Cache>() {
          @Override
          public Cache call() throws Exception {
-            return joiner.getCache("atomic");
+            return joiner.getCache(CACHE_NAME);
          }
       });
 

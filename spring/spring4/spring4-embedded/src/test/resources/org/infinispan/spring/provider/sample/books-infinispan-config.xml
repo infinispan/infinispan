@@ -6,13 +6,15 @@
     <!-- ************************************** -->
     <!-- Corresponds to @Cacheable("cache-name") -->
     <!-- ************************************** -->
-    <cache-container default-cache="default">
+    <cache-container>
         <jmx duplicate-domains="true"/>
         <local-cache name="fibonacci"/>
         <local-cache name="books" />
         <local-cache name="booksTransactional" >
             <transaction mode="NON_DURABLE_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" />
         </local-cache>
+        <local-cache name="backup" />
+        <local-cache name="custom" />
     </cache-container>
 
 </infinispan>

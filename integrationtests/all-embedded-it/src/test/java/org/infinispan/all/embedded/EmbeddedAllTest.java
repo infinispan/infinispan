@@ -177,7 +177,14 @@ public class EmbeddedAllTest {
 
    @Test
    public void testEmbeddedDistExec() throws Exception {
-      DefaultExecutorService defaultExecutorService = new DefaultExecutorService(manager.getCache());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC)
+            .stateTransfer().fetchInMemoryState(true)
+            .clustering().hash().numOwners(2);
+
+      manager.defineConfiguration("distexec-cache", builder.build());
+      manager2.defineConfiguration("distexec-cache", builder.build());
+      DefaultExecutorService defaultExecutorService = new DefaultExecutorService(manager.getCache("distexec-cache"));
       List<CompletableFuture<String>> results = defaultExecutorService.submitEverywhere(new TestCallable());
       for(Future<String> result : results) {
          assertEquals("OK", result.get());

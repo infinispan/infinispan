@@ -36,6 +36,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
+      defineConfigurationOnAllManagers(cacheName(), builder);
 
       waitForClusterToForm(cacheName());
    }

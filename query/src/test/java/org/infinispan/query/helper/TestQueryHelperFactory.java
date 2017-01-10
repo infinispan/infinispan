@@ -61,7 +61,7 @@ public class TestQueryHelperFactory {
    }
 
    public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider) {
+                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName) {
       List caches = new ArrayList();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
@@ -90,7 +90,7 @@ public class TestQueryHelperFactory {
       for (int i = 0; i < numberOfNodes; i++) {
          GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder
                .defaultClusteredBuilder();
-         globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i);
+         globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i).defaultCacheName(defaultCacheName);
 
          EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(
                globalConfigurationBuilder, builder);

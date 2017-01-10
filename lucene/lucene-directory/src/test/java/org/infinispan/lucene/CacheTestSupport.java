@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
@@ -72,7 +73,7 @@ public abstract class CacheTestSupport {
       return builder;
    }
 
-   public static CacheContainer createLocalCacheManager() {
+   public static EmbeddedCacheManager createLocalCacheManager() {
       ConfigurationBuilder builder = createLocalCacheConfiguration();
       return TestCacheManagerFactory.createCacheManager(builder);
    }

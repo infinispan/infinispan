@@ -2,6 +2,8 @@ package org.infinispan.server.websocket.handlers;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.server.websocket.json.JsonObject;
@@ -30,7 +32,7 @@ public class MockClient {
       this.cacheName = cacheName;
       this.ctx = new MockChannelHandlerContext(mockChannel);
 
-      cacheContainer = TestCacheManagerFactory.createCacheManager();
+      cacheContainer = TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().defaultCacheName(cacheName), new ConfigurationBuilder());
       cache = cacheContainer.getCache(cacheName);
    }
 

@@ -55,7 +55,9 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       location = TestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
+      return cacheManager;
    }
 
    public void testReadsAndWrites() throws ExecutionException, InterruptedException {

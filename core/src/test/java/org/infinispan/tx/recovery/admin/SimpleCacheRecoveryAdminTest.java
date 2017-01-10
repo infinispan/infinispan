@@ -53,6 +53,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
       EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
       registerCacheManager(cm1, cm2, cm3);
+      defineConfigurationOnAllManagers("test", configuration);
       cache(0, "test");
       cache(1, "test");
       cache(2, "test");

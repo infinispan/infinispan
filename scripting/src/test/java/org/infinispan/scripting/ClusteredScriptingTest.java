@@ -39,6 +39,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
          @Override
          public void call() throws IOException, ExecutionException, InterruptedException {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
+            for(EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            }
             Cache cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             loadScript(scriptingManager, "/test.js");
             executeScriptOnManager("test.js", cms[0]);
@@ -54,7 +57,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
          @Override
          public void call() throws Exception {
-            Cache cache = cms[0].getCache();
+            for(EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            }
+            Cache<Object, Object> cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             loadScript(scriptingManager, "/test1.js");
 

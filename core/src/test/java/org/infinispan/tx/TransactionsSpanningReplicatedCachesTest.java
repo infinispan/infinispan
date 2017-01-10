@@ -33,6 +33,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
+      defineConfigurationOnAllManagers("cache1", c);
+      defineConfigurationOnAllManagers("cache2", c);
    }
 
    private void startAllCaches() {

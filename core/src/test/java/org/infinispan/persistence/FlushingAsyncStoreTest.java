@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.FlushingAsyncStoreTest", singleThreaded = true)
 public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
+   public static final String CACHE_NAME = "AsyncStoreInMemory";
    /** to assert the test methods are run in proper order **/
    private boolean storeWasRun = false;
 
@@ -33,13 +34,15 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
                .slow(true)
                .async().enable().threadPoolSize(1)
          .build();
-      return TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(config);
+      cacheManager.defineConfiguration(CACHE_NAME, config.build());
+      return cacheManager;
    }
 
    @Test(timeOut = 10000)
    public void writeOnStorage() {
       TestResourceTracker.testThreadStarted(this);
-      cache = cacheManager.getCache("AsyncStoreInMemory");
+      cache = cacheManager.getCache(CACHE_NAME);
       cache.put("key1", "value");
       cache.stop();
       storeWasRun = true;
@@ -48,7 +51,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods = "writeOnStorage")
    public void verifyStorageContent() {
       assert storeWasRun;
-      cache = cacheManager.getCache("AsyncStoreInMemory");
+      cache = cacheManager.getCache(CACHE_NAME);
       assert "value".equals(cache.get("key1"));
    }
 }

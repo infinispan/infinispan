@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.server.hotrod.configuration.{HotRodServerConfiguration, HotRodServerConfigurationBuilder}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.server.core.QueryFacade
 import org.infinispan.AdvancedCache
@@ -464,24 +464,6 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutBigSizeValue(m: Method) {
       val value = generateRandomString(1024 * 1024).getBytes
       assertStatus(client.put(k(m), 0, 0, value), Success)
-   }
-
-   def testStoreAsBinaryOverrideOnNamedCache(m: Method) {
-      Stoppable.useCacheManager(createTestCacheManager, new Consumer[EmbeddedCacheManager] {
-         override def accept(cm: EmbeddedCacheManager): Unit = {
-            Stoppable.useServer(startHotRodServer(cm, server.getPort + 33), new Consumer[HotRodServer] {
-               override def accept(server: HotRodServer): Unit = {
-                  val cacheName = "cache-" + m.getName
-                  val namedBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
-                     .storeAsBinary.enable
-                  val namedCfg = namedBuilder.build
-                  assertTrue(namedCfg.storeAsBinary().enabled())
-                  cm.defineConfiguration(cacheName, namedCfg)
-                  assertFalse(cm.getCache(cacheName).getCacheConfiguration.storeAsBinary().enabled())
-               }
-            })
-         }
-      })
    }
 
    def testQuery() {

@@ -64,6 +64,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
    private CountDownLatch viewLatch;
 
    public void killedNodeDoesNotBreakReplaceCommand() throws Exception {
+      defineConfigurationOnAllManagers(TEST_CACHE, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
       waitForClusterToForm(TEST_CACHE);
       waitForRehashToComplete(caches(TEST_CACHE));
 

@@ -83,6 +83,7 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
                   .getResourceAsStream(NAMED_ASYNC_CACHE_CONFIG_LOCATION));
       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
             nativeCacheManager);
+      nativeCacheManager.defineConfiguration(nameOfInfinispanCacheAddedLater, nativeCacheManager.getDefaultCacheConfiguration());
 
       final org.infinispan.Cache<Object, Object> infinispanCacheAddedLater = nativeCacheManager
             .getCache(nameOfInfinispanCacheAddedLater);

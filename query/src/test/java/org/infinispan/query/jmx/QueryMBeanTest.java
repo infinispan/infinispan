@@ -189,6 +189,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                .jmxStatistics().enable();
 
          cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", JMX_DOMAIN, true, true, defaultCacheConfig2, new PerThreadMBeanServerLookup());
+         cm2.defineConfiguration(CACHE_NAME, defaultCacheConfig2.build());
          cm2.getCache(CACHE_NAME); // Start the cache belonging to second cache manager
 
          matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);

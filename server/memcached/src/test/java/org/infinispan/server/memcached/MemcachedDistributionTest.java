@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -34,7 +35,9 @@ public class MemcachedDistributionTest extends MemcachedMultiNodeTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1)
               .dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
-      return TestCacheManagerFactory.createClusteredCacheManager(builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(
+            GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
+            builder);
    }
 
    public void testGetFromNonOwner() throws InterruptedException, ExecutionException, TimeoutException {

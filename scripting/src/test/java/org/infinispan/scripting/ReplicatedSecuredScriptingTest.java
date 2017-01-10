@@ -61,9 +61,9 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 createCluster(global, builder, 2);
-                defineConfigurationOnAllManagers(SecureScriptingTest.CACHE_NAME, builder);
+                defineConfigurationOnAllManagers(SecureScriptingTest.SECURE_CACHE_NAME, builder);
                 for (EmbeddedCacheManager cm : cacheManagers)
-                    cm.getCache(SecureScriptingTest.CACHE_NAME);
+                    cm.getCache(SecureScriptingTest.SECURE_CACHE_NAME);
                 waitForClusterToForm();
                 return null;
             }
@@ -112,7 +112,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                Cache cache = manager(0).getCache(SecureScriptingTest.CACHE_NAME);
+                Cache cache = manager(0).getCache(SecureScriptingTest.SECURE_CACHE_NAME);
                 String value = (String) scriptingManager.runScript("testRole.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
 

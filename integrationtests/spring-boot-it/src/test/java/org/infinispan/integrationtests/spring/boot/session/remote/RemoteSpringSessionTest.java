@@ -2,7 +2,6 @@ package org.infinispan.integrationtests.spring.boot.session.remote;
 
 import java.util.UUID;
 
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.AbstractSpringSessionTCK;
@@ -35,7 +34,7 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
       serverCache.defineConfiguration("sessions", cacheConfiguration.build());
 
       HotRodServerConfigurationBuilder hotRodServerConfigurationBuilder = new HotRodServerConfigurationBuilder();
-      hotRodServerConfigurationBuilder.port(RemoteConfiguration.SERVER_PORT);
+      hotRodServerConfigurationBuilder.port(RemoteConfiguration.SERVER_PORT).defaultCacheName("sessions");
 
       server = new HotRodServer();
       server.start(hotRodServerConfigurationBuilder.build(), serverCache);

@@ -47,7 +47,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "stream.LocalStreamIteratorWithPassivationTest")
 public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIteratorWithPassivationTest {
-   protected final static String CACHE_NAME = "LocalStreamIteratorWithPassivationTest";
    protected ConfigurationBuilder builderUsed;
 
    public LocalStreamIteratorWithPassivationTest() {

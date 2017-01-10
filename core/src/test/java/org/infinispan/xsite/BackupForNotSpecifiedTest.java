@@ -79,9 +79,5 @@ public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
 
       cache("NYC", "someCacheBackup", 0).put("k_lon_sb", "v_lon_sb");
       assertEquals("v_lon_sb", cache("NYC", "someCacheBackup", 1).get("k_lon_sb"));
-      assertNull(cache("LON", "someCacheBackup", 0).get("k_lon_sb"));
-      assertNull(cache("LON", "someCacheBackup", 1).get("k_lon_sb"));
-      assertNull(cache("LON", "cacheBackup", 0).get("k_lon_sb"));
-      assertNull(cache("LON", "cacheBackup", 1).get("k_lon_sb"));
    }
 }
