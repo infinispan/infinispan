@@ -57,6 +57,18 @@ Enabling Cache statistics collections differs depending on the configuration sty
  ConfigurationBuilder configurationBuilder = ...
  configurationBuilder.jmxStatistics().enable();
 
+==== Monitoring cluster health
+
+It is also possible to monitor Infinispan cluster health using JMX. On CacheManager there's an additional object called `CacheContainerHealth`. It contains the following attributes:
+
+* cacheHealth - a list of caches and corresponding statuses (HEALTHY, UNHEALTHY or REBALANCING)
+* clusterHealth - overall cluster health
+* clusterName - cluster name
+* freeMemoryKb - Free memory obtained from JVM runtime measured in KB
+* numberOfCpus - The number of CPUs obtained from JVM runtime
+* numberOfNodes - The number of nodes in the cluster
+* totalMemoryKb - Total memory obtained from JVM runtime measured in KB
+
 ==== Multiple JMX Domains
 There can be situations where several CacheManager instances are created in a single VM, or Cache names belonging to different CacheManagers under the same VM clash.
 

@@ -249,7 +249,9 @@ public class ModelKeys {
     static final String TRANSACTION = "transaction";
     static final String TRANSACTION_NAME = "TRANSACTION";
     static final String TRANSPORT = "transport";
+    static final String HEALTH = "health";
     static final String TRANSPORT_NAME = "TRANSPORT";
+    static final String HEALTH_NAME = "HEALTH";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
     static final String VALUE = "value";

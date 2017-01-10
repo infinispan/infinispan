@@ -346,6 +346,21 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
             }
         }
+
+        addSyntheticHealthOperation(operations, containerAddress);
+    }
+
+    /**
+     * A {@link HealthResource} is not populated to the XML. However the easiest way to propagate a Health node
+     * (we need to attach Health node to the Cache Container node) and attach metrics to it is to
+     * simply simulate reading it.
+     *
+     * Since we are not persisting it - there is no need to check the namespaces.
+     */
+    private void addSyntheticHealthOperation(Map<PathAddress, ModelNode> operations, PathAddress containerAddress) {
+        PathAddress healthAddress = containerAddress.append(ModelKeys.HEALTH, ModelKeys.HEALTH_NAME);
+        ModelNode health = Util.createAddOperation(healthAddress);
+        operations.put(healthAddress, health);
     }
 
     private void parseGlobalState(XMLExtendedStreamReader reader, PathAddress containerAddress,

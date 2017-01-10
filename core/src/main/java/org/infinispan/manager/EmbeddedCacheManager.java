@@ -12,6 +12,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
@@ -319,5 +320,11 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
       throw new UnsupportedOperationException();
    }
 
-
+   /**
+    * Returns an entry point for a Health Check API.
+    *
+    * @since 9.0
+    * @return Health API for this {@link EmbeddedCacheManager}.
+     */
+   Health getHealth();
 }
