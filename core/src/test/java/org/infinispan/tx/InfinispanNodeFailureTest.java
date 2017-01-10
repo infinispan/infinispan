@@ -15,7 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -79,14 +79,18 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       advancedCache(1, TEST_CACHE).getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
 
          @Override
-         public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-            return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+         public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+            return invokeNext(ctx, command).whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
                LockControlCommand cmd = (LockControlCommand) rCommand;
                if (putKey.equals(cmd.getSingleKey())) {
                   // notify main thread it can start killing third node
                   beforeKill.countDown();
                   // wait for completion and proceed
-                  afterKill.await(10, TimeUnit.SECONDS);
+                  try {
+                     afterKill.await(10, TimeUnit.SECONDS);
+                  } catch (InterruptedException e) {
+                     rethrowAsCompletionException(e);
+                  }
                }
             });
          }

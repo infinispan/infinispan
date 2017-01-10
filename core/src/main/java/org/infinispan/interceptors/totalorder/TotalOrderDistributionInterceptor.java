@@ -8,7 +8,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -34,7 +34,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (onePhaseTotalOrderCommit || !ctx.hasModifications() ||
             !shouldTotalOrderRollbackBeInvokedRemotely(ctx)) {
          return invokeNext(ctx, command);
@@ -44,7 +44,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (onePhaseTotalOrderCommit || !ctx.hasModifications()) {
          return invokeNext(ctx, command);
       }

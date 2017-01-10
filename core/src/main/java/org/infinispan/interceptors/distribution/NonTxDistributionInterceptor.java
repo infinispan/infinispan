@@ -35,13 +35,12 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationComposeSuccessHandler;
-import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.function.TetraConsumer;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -126,64 +125,64 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws
          Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
+   public InvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
+   public InvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command)
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command)
          throws Throwable {
       return handleReadWriteManyCommand(ctx, command, putMapHelper);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
-                                                                WriteOnlyManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
+                                                           WriteOnlyManyEntriesCommand command) throws Throwable {
       return handleWriteOnlyManyCommand(ctx, command, writeOnlyManyEntriesHelper);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx,
-                                                         WriteOnlyManyCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyManyCommand(InvocationContext ctx,
+                                                    WriteOnlyManyCommand command) throws Throwable {
       return handleWriteOnlyManyCommand(ctx, command, writeOnlyManyHelper);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx,
-                                                         ReadWriteManyCommand command) throws Throwable {
+   public InvocationStage visitReadWriteManyCommand(InvocationContext ctx,
+                                                    ReadWriteManyCommand command) throws Throwable {
       return handleReadWriteManyCommand(ctx, command, readWriteManyHelper);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
-                                                                ReadWriteManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
+                                                           ReadWriteManyEntriesCommand command) throws Throwable {
       return handleReadWriteManyCommand(ctx, command, readWriteManyEntriesHelper);
    }
 
-   private <C extends WriteCommand, Container, Item> BasicInvocationStage handleWriteOnlyManyCommand(
+   private <C extends WriteCommand, Container, Item> InvocationStage handleWriteOnlyManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Container, Item> helper) throws Exception {
       // TODO: due to possible repeating of the operation (after OutdatedTopologyException is thrown)
       // it is possible that the function will be applied multiple times on some of the nodes.
@@ -202,7 +201,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Set<Integer> segments = pair.getValue();
             handleSegmentsForWriteOnlyManyCommand(ctx, command, helper, ch, allFuture, member, segments);
          }
-         return returnWithAsync(allFuture);
+         return asyncStage(allFuture);
       } else { // origin is not local
          // check that we have all the data we need
          return handleRemoteWriteOnlyManyCommand(ctx, command, helper);
@@ -218,9 +217,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          C localCommand = helper.copyForLocal(command, myItems);
          // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
          // calls complete.
-         invokeNext(ctx, localCommand).handle(
-               createLocalInvocationHandler(ch, allFuture, segments, helper, (f, rv) -> {
-               }));
+         invokeNext(ctx, localCommand)
+               .whenComplete(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, (f, rv) -> {}));
          return;
       }
 
@@ -246,7 +244,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return;
    }
 
-   private <C extends WriteCommand, Item> BasicInvocationStage handleRemoteWriteOnlyManyCommand(
+   private <C extends WriteCommand, Item> InvocationStage handleRemoteWriteOnlyManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, ?, Item> helper) {
       for (Item item : helper.getItems(command)) {
          Object key = helper.item2key(item);
@@ -255,7 +253,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          }
       }
 
-      return helper.registerRemoteReturnHandler(invokeNext(ctx, command), command, null);
+      return helper.registerRemoteReturnHandler(invokeNext(ctx, command), ctx, command, null);
    }
 
    private <C extends WriteCommand, Container, Item> Container filterAndWrap(
@@ -276,7 +274,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return myItems;
    }
 
-   private <C extends WriteCommand, Container, Item> BasicInvocationStage handleReadWriteManyCommand(
+   private <C extends WriteCommand, Container, Item> InvocationStage handleReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Item, Container> helper) throws Exception {
       // TODO: due to possible repeating of the operation (after OutdatedTopologyException is thrown)
       // it is possible that the function will be applied multiple times on some of the nodes.
@@ -305,7 +303,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                handleRemoteSegmentsForReadWriteManyCommand(command, helper, ch, allFuture, offset, member, segments);
             }
          }
-         return returnWithAsync(allFuture);
+         return asyncStage(allFuture);
       } else { // origin is not local
          return handleRemoteReadWriteManyCommand(ctx, command, helper, ch);
       }
@@ -344,7 +342,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
       // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
       // calls complete.
-      returnStage.handle(createLocalInvocationHandler(ch, allFuture, segments, helper, moveListItemsToFuture(myOffset)));
+      returnStage.whenComplete(ctx, command, createLocalInvocationHandler(ch, allFuture, segments, helper, moveListItemsToFuture(myOffset)));
    }
 
    private <C extends WriteCommand, Item> void handleRemoteSegmentsForReadWriteManyCommand(
@@ -376,7 +374,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             });
    }
 
-   private <C extends WriteCommand, Item> BasicInvocationStage handleRemoteReadWriteManyCommand(
+   private <C extends WriteCommand, Item> InvocationStage handleRemoteReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, ?, Item> helper, ConsistentHash ch) throws Exception {
       List<CompletableFuture<?>> retrievals = null;
       // check that we have all the data we need
@@ -391,7 +389,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       } else {
          returnStage = invokeNext(ctx, command);
       }
-      return helper.registerRemoteReturnHandler(returnStage, command, ch);
+      return helper.registerRemoteReturnHandler(returnStage, ctx, command, ch);
    }
 
    private List<CompletableFuture<?>> addRemoteGet(InvocationContext ctx, WriteCommand command,
@@ -414,7 +412,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private <C extends WriteCommand, F extends CountDownCompletableFuture, Item>
-   InvocationFinallyHandler createLocalInvocationHandler(
+   TetraConsumer<InvocationContext, VisitableCommand, Object, Throwable> createLocalInvocationHandler(
          ConsistentHash ch, F allFuture, Set<Integer> segments, WriteManyCommandHelper<C, ?, Item> helper,
          BiConsumer<F, Object> returnValueConsumer) {
       return (rCtx, rCommand, rv, throwable) -> {
@@ -451,13 +449,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
+   public InvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
+   public InvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
@@ -467,7 +465,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item>
-         implements InvocationComposeSuccessHandler {
+         implements TriFunction<InvocationContext, VisitableCommand, Object, InvocationStage> {
       public abstract C copyForLocal(C cmd, Container container);
 
       public abstract C copyForPrimary(C cmd, ConsistentHash ch, Set<Integer> segments);
@@ -484,12 +482,14 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
       public abstract int containerSize(Container container);
 
-      public abstract InvocationStage registerRemoteReturnHandler(InvocationStage stage, C cmd, ConsistentHash ch);
+      public abstract InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx, C cmd,
+                                                                  ConsistentHash ch);
 
       public abstract Object transformResult(Object[] results);
 
       @Override
-      public BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+      public InvocationStage apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+         InvocationStage stage = completedStage(rv);
          C original = (C) rCommand;
          ConsistentHash ch = checkTopologyId(original).getWriteConsistentHash();
          // We have already checked that the command topology is actual, so we can assume that we really are primary owner
@@ -508,7 +508,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultAsyncOptions);
             }
          }
-         return isSync ? returnWithAsync(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : stage;
+         return isSync ? asyncStage(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : stage;
       }
    }
 
@@ -556,8 +556,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, PutMapCommand cmd, ConsistentHash ch) {
-         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(this);
+      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx,
+                                                         PutMapCommand cmd, ConsistentHash ch) {
+         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(ctx, cmd, this);
       }
 
       @Override
@@ -618,8 +619,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, ReadWriteManyEntriesCommand cmd, ConsistentHash ch) {
-         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(this);
+      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx,
+                                                         ReadWriteManyEntriesCommand cmd, ConsistentHash ch) {
+         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(ctx, cmd, this);
       }
 
       @Override
@@ -673,8 +675,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, ReadWriteManyCommand cmd, ConsistentHash ch) {
-         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(this);
+      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx,
+                                                         ReadWriteManyCommand cmd, ConsistentHash ch) {
+         return cmd.isForwarded() || ch.getNumOwners() <= 1 ? stage : stage.thenCompose(ctx, cmd, this);
       }
 
       @Override
@@ -730,8 +733,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, WriteOnlyManyEntriesCommand cmd, ConsistentHash ch) {
-         return cmd.isForwarded() ? stage : stage.thenCompose(this);
+      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx,
+                                                         WriteOnlyManyEntriesCommand cmd, ConsistentHash ch) {
+         return cmd.isForwarded() ? stage : stage.thenCompose(ctx, cmd, this);
       }
 
       @Override
@@ -786,8 +790,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, WriteOnlyManyCommand cmd, ConsistentHash ch) {
-         return cmd.isForwarded() ? stage : stage.thenCompose(this);
+      public InvocationStage registerRemoteReturnHandler(InvocationStage stage, InvocationContext ctx,
+                                                         WriteOnlyManyCommand cmd, ConsistentHash ch) {
+         return cmd.isForwarded() ? stage : stage.thenCompose(ctx, cmd, this);
       }
 
       @Override

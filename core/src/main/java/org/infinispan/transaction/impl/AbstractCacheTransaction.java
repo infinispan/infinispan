@@ -143,12 +143,22 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Collections.synchronizedList(mods);
    }
 
+   public boolean hasModifications() {
+      if (modifications != null) {
+         for (WriteCommand modification : modifications) {
+            if (!modification.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
+               return true;
+         }
+      }
+      return false;
+   }
+
    public final boolean hasModification(Class<?> modificationClass) {
       if (modifications != null) {
-         for (WriteCommand mod : getModifications()) {
-            if (modificationClass.isAssignableFrom(mod.getClass())) {
+         for (WriteCommand modification : modifications) {
+            if (!modification.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) &&
+                  modificationClass.isAssignableFrom(modification.getClass()))
                return true;
-            }
          }
       }
       return false;
@@ -157,11 +167,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void freezeModifications() {
-      if (modifications != null) {
-         modifications = Immutables.immutableListCopy(modifications);
-      } else {
-         modifications = Collections.emptyList();
-      }
+      modifications = Immutables.immutableListCopy(modifications);
    }
 
    @Override

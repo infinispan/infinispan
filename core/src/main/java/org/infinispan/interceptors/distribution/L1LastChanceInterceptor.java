@@ -14,18 +14,17 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  */
 public class L1LastChanceInterceptor extends BaseRpcInterceptor {
-
    private static final Log log = LogFactory.getLog(L1LastChanceInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -47,8 +45,11 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private boolean nonTransactional;
 
+   private final TriConsumer<InvocationContext, PutMapCommand, Object>
+         afterPutMapCommand = this::afterPutMapCommand;
+
    @Inject
-   public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, Configuration configuration) {
+   public void init(L1Manager l1Manager, ClusteringDependentLogic cdl) {
       this.l1Manager = l1Manager;
       this.cdl = cdl;
    }
@@ -59,58 +60,61 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, false);
    }
 
-   public BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
-         Object key;
-         DataWriteCommand writeCommand = (DataWriteCommand) rCommand;
-         if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
-               cdl.localNodeIsOwner((key = writeCommand.getKey()))) {
-            if (trace) {
-               log.trace("Sending additional invalidation for requestors if necessary.");
-            }
-            // Send out a last attempt L1 invalidation in case if someone cached the L1
-            // value after they already received an invalidation
-            blockOnL1FutureIfNeeded(l1Manager
-                  .flushCache(Collections.singleton(key), rCtx.getOrigin(), assumeOriginKeptEntryInL1));
+   public InvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> afterDataWriteCommand(assumeOriginKeptEntryInL1, rCtx, rCommand, rv));
+   }
+
+   private Object afterDataWriteCommand(boolean assumeOriginKeptEntryInL1, InvocationContext ctx,
+                                        DataWriteCommand command, Object rv) {
+      Object key;
+      if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() &&
+            cdl.localNodeIsOwner((key = command.getKey()))) {
+         if (trace) {
+            log.trace("Sending additional invalidation for requestors if necessary.");
          }
-         return rv;
-      });
+         // Send out a last attempt L1 invalidation in case if someone cached the L1
+         // value after they already received an invalidation
+         blockOnL1FutureIfNeeded(l1Manager
+               .flushCache(Collections.singleton(key), ctx.getOrigin(), assumeOriginKeptEntryInL1));
+      }
+      return rv;
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
-         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
-         if (shouldUpdateOnWriteCommand(putMapCommand)) {
-            Set<Object> keys = putMapCommand.getMap().keySet();
-            Set<Object> toInvalidate = new HashSet<Object>(keys.size());
-            for (Object k : keys) {
-               if (cdl.localNodeIsOwner(k)) {
-                  toInvalidate.add(k);
-               }
-            }
-            if (!toInvalidate.isEmpty()) {
-               if (trace) {
-                  log.trace("Sending additional invalidation for requestors if necessary.");
-               }
-               blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, rCtx.getOrigin(), true));
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenAccept(ctx, command, afterPutMapCommand);
+   }
+
+   private void afterPutMapCommand(InvocationContext rCtx, PutMapCommand rCommand, Object ignored) {
+      if (shouldUpdateOnWriteCommand(rCommand)) {
+         Set<Object> keys = rCommand.getMap().keySet();
+         Set<Object> toInvalidate = new HashSet<>(keys.size());
+         for (Object k : keys) {
+            if (cdl.localNodeIsOwner(k)) {
+               toInvalidate.add(k);
             }
          }
-      });
+         if (!toInvalidate.isEmpty()) {
+            if (trace) {
+               log.trace("Sending additional invalidation for requestors if necessary.");
+            }
+            blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, rCtx.getOrigin(), true));
+         }
+      }
    }
 
    private boolean shouldUpdateOnWriteCommand(WriteCommand command) {
@@ -118,9 +122,9 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
-         if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if (rCommand.isOnePhaseCommit()) {
             blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) rCtx)));
          }
          return rv;
@@ -128,8 +132,8 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx));
          return rv;
       });

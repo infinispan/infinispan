@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -17,12 +16,13 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -37,6 +37,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    private PartitionHandlingManager partitionHandlingManager;
    private PendingLockManager pendingLockManager;
    private boolean secondPhaseAsync;
+
+   private final TriConsumer<TxInvocationContext, Object, Throwable>
+         afterCommitCommand = this::afterCommitCommand;
 
    @Inject
    public void setDependencies(RpcManager rpcManager,
@@ -53,12 +56,13 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .whenComplete(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
@@ -67,21 +71,16 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (ctx.isInTxScope())
-         return invokeNext(ctx, command);
-
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNext(ctx, command)
+            .whenComplete(ctx, afterCommitCommand);
    }
 
-   @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
-         if (t instanceof OutdatedTopologyException)
-            throw t;
+   private void afterCommitCommand(TxInvocationContext rCtx, Object ignored, Throwable t) {
+      if (t instanceof OutdatedTopologyException)
+         return;
 
-         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-      });
+      releaseLockOnTxCompletion(rCtx);
    }
 
    /**
@@ -93,8 +92,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     *
     * @return {@code true} if the key was really locked.
     */
-   protected final boolean lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
-         throws InterruptedException {
+   protected final boolean lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout) {
       switch (LockUtil.getLockOwnership(key, cdl)) {
          case PRIMARY:
             if (trace) {
@@ -119,7 +117,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * @return a collection with the keys locked.
     */
    protected final Collection<Object> lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<?> keys,
-                                                                  long lockTimeout) throws InterruptedException {
+                                                                  long lockTimeout) {
       if (keys.isEmpty()) {
          return Collections.emptyList();
       }
@@ -174,17 +172,25 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * Note: The algorithm described below only when nodes leave the cluster, so it doesn't add a performance burden
     * when the cluster is stable.
     */
-   private void checkPendingAndLockKey(InvocationContext ctx, Object key, long lockTimeout) throws InterruptedException {
-      final long remaining = pendingLockManager.awaitPendingTransactionsForKey((TxInvocationContext<?>) ctx, key,
-                                                                               lockTimeout, TimeUnit.MILLISECONDS);
-      lockAndRecord(ctx, key, remaining);
+   private void checkPendingAndLockKey(InvocationContext ctx, Object key, long lockTimeout) {
+      final long remaining;
+      try {
+         remaining = pendingLockManager.awaitPendingTransactionsForKey((TxInvocationContext<?>) ctx, key,
+                                                                       lockTimeout, TimeUnit.MILLISECONDS);
+         lockAndRecord(ctx, key, remaining);
+      } catch (InterruptedException e) {
+         rethrowAsCompletionException(e);
+      }
    }
 
-   private void checkPendingAndLockAllKeys(InvocationContext ctx, Collection<Object> keys, long lockTimeout)
-         throws InterruptedException {
-      final long remaining = pendingLockManager.awaitPendingTransactionsForAllKeys((TxInvocationContext<?>) ctx, keys,
-                                                                                   lockTimeout, TimeUnit.MILLISECONDS);
-      lockAllAndRecord(ctx, keys, remaining);
+   private void checkPendingAndLockAllKeys(InvocationContext ctx, Collection<Object> keys, long lockTimeout) {
+      try {
+         final long remaining = pendingLockManager.awaitPendingTransactionsForAllKeys((TxInvocationContext<?>) ctx, keys,
+                                                                                      lockTimeout, TimeUnit.MILLISECONDS);
+         lockAllAndRecord(ctx, keys, remaining);
+      } catch (InterruptedException e) {
+         rethrowAsCompletionException(e);
+      }
    }
 
    protected void releaseLockOnTxCompletion(TxInvocationContext ctx) {

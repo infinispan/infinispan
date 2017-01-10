@@ -31,7 +31,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
@@ -60,18 +60,17 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
-         EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      return invokeNext(ctx, command).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if (rCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
             return rv;
 
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
          if (rCtx.isInTxScope()) {
-            entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand,
-                  (LocalTxInvocationContext) rCtx);
+            entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, rCommand), entrySet, rCommand,
+                                               (LocalTxInvocationContext) rCtx);
          } else {
-            entrySet = new BackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand);
+            entrySet = new BackingEntrySet<>(Caches.getCacheWithFlags(cache, rCommand), entrySet, rCommand);
          }
          return entrySet;
       });
@@ -244,7 +243,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       CacheSet<K> keySet;
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          return invokeNext(ctx, command);
@@ -258,7 +257,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
                  Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command);
       }
-      return returnWith(keySet);
+      return completedStage(keySet);
    }
 
    protected static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V>

@@ -4,12 +4,11 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,10 +21,11 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final InvocationComposeHandler handleLocalPrepareReturn = this::handleLocalPrepareReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleLocalPrepareReturn = this::handleLocalPrepareReturn;
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return localPrepare(ctx, command);
       }
@@ -54,7 +54,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       return invokeNext(ctx, command);
    }
 
-   private BasicInvocationStage localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private InvocationStage localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       command.setTopologyId(currentTopologyId());
 
       if (trace) {
@@ -63,13 +63,11 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       }
 
       return invokeNext(ctx, command)
-            .compose(handleLocalPrepareReturn);
+            .compose(ctx, command, handleLocalPrepareReturn);
    }
 
-   private BasicInvocationStage handleLocalPrepareReturn(BasicInvocationStage invocation, InvocationContext ctx,
-                                                         VisitableCommand command, Object rv, Throwable t)
-         throws Throwable {
-      if (t == null) return invocation;
+   private InvocationStage handleLocalPrepareReturn(InvocationContext ctx, VisitableCommand command, Object rv, Throwable t) {
+      if (t == null) return completedStage(rv);
 
       // If we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
       // Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the
@@ -82,12 +80,12 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       }
 
       if (!needsToPrepare) {
-         throw t;
+         return rethrowAsCompletionException(t);
       } else {
          logRetry(command);
          prepareCommand.setTopologyId(currentTopologyId());
          return invokeNext(ctx, command)
-               .compose(handleLocalPrepareReturn);
+               .compose(ctx, command, handleLocalPrepareReturn);
       }
    }
 

@@ -45,190 +45,190 @@ import org.infinispan.context.impl.TxInvocationContext;
 public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements Visitor {
    @SuppressWarnings("unchecked")
    @Override
-   public final BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return (BasicInvocationStage) command.acceptVisitor(ctx, this);
+   public final InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      return (InvocationStage) command.acceptVisitor(ctx, this);
    }
 
-   protected BasicInvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   protected InvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public InvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+   public InvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+   public InvocationStage visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+   public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public InvocationStage visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public InvocationStage visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public InvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public InvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public InvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
+   public InvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
+   public InvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+   public InvocationStage visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public InvocationStage visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public <V> BasicInvocationStage visitDistributedExecuteCommand(InvocationContext ctx,
-         DistributedExecuteCommand<V> command) throws Throwable {
+   public <V> InvocationStage visitDistributedExecuteCommand(InvocationContext ctx,
+                                                             DistributedExecuteCommand<V> command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
+   public InvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
+   public InvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
+   public InvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
+   public InvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
+   public InvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
+   public InvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
-         WriteOnlyManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
+                                                           WriteOnlyManyEntriesCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
+   public InvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
+   public InvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
+   public InvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
-         ReadWriteManyEntriesCommand command) throws Throwable {
+   public InvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
+                                                           ReadWriteManyEntriesCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 }

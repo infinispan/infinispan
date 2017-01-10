@@ -7,30 +7,26 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationComposeHandler;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.function.TetraFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,7 +50,10 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    private long transactionDataTimeout;
 
-   private final InvocationComposeHandler handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleLocalGetKeysInGroupReturn1 = this::handleLocalGetKeysInGroupReturn;
+   private final TetraFunction<InvocationContext, VisitableCommand, Object, Throwable, InvocationStage>
+         handleLocalGetKeysInGroupReturn = handleLocalGetKeysInGroupReturn1;
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
@@ -70,17 +69,16 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public InvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       updateTopologyId(command);
 
       if (ctx.isOriginLocal()) {
          return invokeNext(ctx, command)
-               .compose(handleLocalGetKeysInGroupReturn);
+               .compose(ctx, command, handleLocalGetKeysInGroupReturn);
       } else {
-         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
-            GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
-            final int commandTopologyId = cmd.getTopologyId();
-            String groupName = cmd.getGroupName();
+         return invokeNext(ctx, command).thenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            final int commandTopologyId = rCommand.getTopologyId();
+            String groupName = rCommand.getGroupName();
             if (groupManager.isOwner(groupName) && currentTopologyId() != commandTopologyId) {
                throw new OutdatedTopologyException(
                      "Cache topology changed while the command was executing: expected " +
@@ -90,8 +88,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private BasicInvocationStage handleLocalGetKeysInGroupReturn(BasicInvocationStage stage, InvocationContext ctx,
-                                                                VisitableCommand command, Object rv, Throwable t) throws Throwable {
+   private InvocationStage handleLocalGetKeysInGroupReturn(InvocationContext ctx,
+                                                           VisitableCommand command, Object rv, Throwable t) {
+      InvocationStage stage = completedStage(rv, t);
       GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) command;
       final int commandTopologyId = cmd.getTopologyId();
       boolean shouldRetry;
@@ -114,7 +113,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          cmd.setTopologyId(newTopologyId);
          CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
          return retryWhenDone(transactionDataFuture, newTopologyId, ctx, command)
-               .compose(this::handleLocalGetKeysInGroupReturn);
+               .compose(ctx, command, handleLocalGetKeysInGroupReturn1);
       } else {
          return stage;
       }
@@ -144,12 +143,12 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    protected <T extends VisitableCommand> InvocationStage retryWhenDone(
-         CompletableFuture<Void> future, int topologyId, InvocationContext ctx, T command) throws Throwable {
+         CompletableFuture<Void> future, int topologyId, InvocationContext ctx, T command) {
       if (future.isDone()) {
          getLog().tracef("Retrying command %s for topology %d", command, topologyId);
          return invokeNext(ctx, command);
       } else {
-         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId, stateTransferManager);
+         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId);
          // We have to use handleAsync and rethrow the exception in the handler, rather than
          // thenComposeAsync(), because if `future` completes with an exception we want to continue in remoteExecutor
          CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, remoteExecutor);
@@ -175,18 +174,17 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
       private final T command;
       private final int topologyId;
-      private final StateTransferManager stateTransferManager;
       private volatile Throwable cancelled = null;
       // retryFuture is not volatile because it is used only in the timeout handler = run()
       // and that is scheduled after retryFuture is set
       private CompletableFuture<Void> retryFuture;
       // ScheduledFuture does not have any dummy implementations, so we'll use plain Object as the field
+      @SuppressWarnings("unused")
       private volatile Object timeoutFuture;
 
-      public CancellableRetry(T command, int topologyId, StateTransferManager stateTransferManager) {
+      public CancellableRetry(T command, int topologyId) {
          this.command = command;
          this.topologyId = topologyId;
-         this.stateTransferManager = stateTransferManager;
       }
 
       /**
@@ -199,11 +197,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          }
 
          if (throwable != null) {
-            throw CompletableFutures.asCompletionException(throwable);
+            rethrowAsCompletionException(throwable);
          }
          if (!cancellableRetryUpdater.compareAndSet(this, null, DUMMY)) {
             log.tracef("Not retrying command %s as it has been cancelled.", command);
-            throw CompletableFutures.asCompletionException(cancelled);
+            rethrowAsCompletionException(cancelled);
          }
          log.tracef("Retrying command %s for topology %d", command, topologyId);
          return null;

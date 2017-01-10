@@ -46,7 +46,7 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "replication", build);
    }
 
-   public void put() {
+   public void put() throws Exception {
       AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
       AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
       // test a simple put!
@@ -57,7 +57,9 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
       cache1.put("key", "value");
       waitForRpc(cache2);
 
+      tm(cache1).begin();
       assert cache1.get("key").equals("value");
+      tm(cache1).commit();
       assert cache2.get("key").equals("value");
 
       Map map = new HashMap();

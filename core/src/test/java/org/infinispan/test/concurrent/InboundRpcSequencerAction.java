@@ -105,10 +105,7 @@ public class InboundRpcSequencerAction {
       private void advance(boolean accepted, List<String> states, Reply reply) {
          try {
             StateSequencerUtil.advanceMultiple(stateSequencer, accepted, states);
-         } catch (TimeoutException e) {
-            reply.reply(new ExceptionResponse(e));
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+         } catch (Exception e) {
             reply.reply(new ExceptionResponse(e));
          }
       }

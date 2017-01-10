@@ -24,16 +24,14 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationExceptionHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,11 +49,11 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
 
-   private final InvocationExceptionHandler suppressExceptionsHandler = new InvocationExceptionHandler() {
+   private final TriFunction<InvocationContext, VisitableCommand, Throwable, Object> suppressExceptionsHandler = new TriFunction<InvocationContext, VisitableCommand, Throwable, Object>() {
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) {
          if (t instanceof InvalidCacheUsageException || t instanceof InterruptedException) {
-            throw t;
+            rethrowAsCompletionException(t);
          } else {
             rethrowException(rCtx, rCommand, t);
          }
@@ -82,7 +80,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
 
    @Override
-   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public InvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace)
          log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null)
@@ -91,7 +89,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       ComponentStatus status = componentRegistry.getStatus();
       if (command.ignoreCommandOnStatus(status)) {
          log.debugf("Status: %s : Ignoring %s command", status, command);
-         return returnWith(null);
+         return completedStage(null);
       } else {
          if (status.isTerminated()) {
             throw log.cacheIsTerminated(getCacheNamePrefix());
@@ -101,10 +99,10 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       }
 
       InvocationStage stage = invokeNext(ctx, command);
-      return stage.exceptionally(suppressExceptionsHandler);
+      return stage.exceptionally(ctx, command, suppressExceptionsHandler);
    }
 
-   private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th) throws Throwable {
+   private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th) {
       // Only check for fail silently if there's a failure :)
       boolean suppressExceptions = (command instanceof FlagAffectedCommand)
             && ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.FAIL_SILENTLY);
@@ -135,7 +133,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          if (ctx.isOriginLocal() && !(th instanceof CacheException)) {
             th = new CacheException(th);
          }
-         throw th;
+         rethrowAsCompletionException(th);
       }
    }
 
@@ -145,7 +143,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       } else if (command instanceof LockControlCommand) {
          return Collections.emptyList();
       } else if (command instanceof TransactionBoundaryCommand) {
-         return ((TxInvocationContext<AbstractCacheTransaction>) ctx).getAffectedKeys();
+         return ((TxInvocationContext<?>) ctx).getAffectedKeys();
       }
       return Collections.emptyList();
    }
@@ -167,16 +165,20 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       return status.isStopping() && (!ctx.isInTxScope() || !isOngoingTransaction(ctx));
    }
 
-   private void markTxForRollback(InvocationContext ctx) throws Throwable {
+   private void markTxForRollback(InvocationContext ctx) {
       if (ctx.isOriginLocal() && ctx.isInTxScope()) {
          Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
          if (transaction != null && isValidRunningTx(transaction)) {
-            transaction.setRollbackOnly();
+            try {
+               transaction.setRollbackOnly();
+            } catch (SystemException e) {
+               rethrowAsCompletionException(e);
+            }
          }
       }
    }
 
-   private boolean isValidRunningTx(Transaction tx) throws Exception {
+   private boolean isValidRunningTx(Transaction tx) {
       int status;
       try {
          status = tx.getStatus();

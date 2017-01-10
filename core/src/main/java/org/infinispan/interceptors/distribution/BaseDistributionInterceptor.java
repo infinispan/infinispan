@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -48,9 +49,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationComposeSuccessHandler;
-import org.infinispan.interceptors.InvocationReturnValueHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -69,6 +67,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.function.TriFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -91,7 +90,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private GroupManager groupManager;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
-   private final InvocationComposeSuccessHandler primaryReturnHandler = this::primaryReturnHandler;
+   private final BiFunction<VisitableCommand, Object, InvocationStage> primaryReturnHandler = this::primaryReturnHandler;
 
    @Override
    protected Log getLog() {
@@ -115,7 +114,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   public final BasicInvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
+   public final InvocationStage visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
       final String groupName = command.getGroupName();
       if (command.isGroupOwner()) {
@@ -140,7 +139,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   public final BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final InvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !isLocalModeForced(command)) {
          RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(
                isSynchronous(command) ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS).build();
@@ -209,7 +208,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       entryFactory.wrapExternalEntry(ctx, key, ice, isWrite);
    }
 
-   protected final BasicInvocationStage handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
+   protected final InvocationStage handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
          throws Throwable {
       Object key = command.getKey();
       CacheEntry entry = ctx.lookupEntry(key);
@@ -241,7 +240,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
          if (info.isPrimary()) {
             return invokeNext(ctx, command)
-                  .thenCompose(primaryReturnHandler);
+                  .thenCompose(command, primaryReturnHandler);
          } else if (ctx.isOriginLocal()) {
             return invokeRemotely(command, info.primary());
          } else {
@@ -277,7 +276,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private BasicInvocationStage invokeRemotely(DataWriteCommand command, Address primaryOwner) {
+   private InvocationStage invokeRemotely(DataWriteCommand command, Address primaryOwner) {
       if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
       boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
 
@@ -290,7 +289,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          throw t;
       }
       if (isSyncForwarding) {
-         return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+         return asyncStage(remoteInvocation.handle((responses, t) -> {
             command.setValueMatcher(command.getValueMatcher().matcherForRetry());
             CompletableFutures.rethrowException(t);
 
@@ -299,20 +298,20 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return primaryResult;
          }));
       } else {
-         return returnWith(null);
+         return completedStage(null);
       }
    }
 
-   private BasicInvocationStage primaryReturnHandler(BasicInvocationStage ignored, InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
+   private InvocationStage primaryReturnHandler(VisitableCommand visitableCommand, Object localResult) {
       DataWriteCommand command = (DataWriteCommand) visitableCommand;
       if (!command.isSuccessful()) {
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
-         return returnWith(localResult);
+         return completedStage(localResult);
       }
       // check if a single owner has been configured and the target for the key is the local address
       boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
       if (isSingleOwnerAndLocal) {
-         return returnWith(localResult);
+         return completedStage(localResult);
       }
       ConsistentHash writeCH = checkTopologyId(command).getWriteConsistentHash();
       List<Address> recipients = writeCH.isReplicated() ? null : writeCH.locateOwners(command.getKey());
@@ -324,7 +323,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       RpcOptions rpcOptions = determineRpcOptionsForBackupReplication(rpcManager, isSynchronous(command), recipients);
       CompletableFuture<Map<Address, Response>> remoteInvocation =
             rpcManager.invokeRemotelyAsync(recipients, command, rpcOptions);
-      return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+      return asyncStage(remoteInvocation.handle((responses, t) -> {
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
          command.setValueMatcher(originalMatcher.matcherForRetry());
          CompletableFutures.rethrowException(t instanceof RemoteException ? t.getCause() : t);
@@ -369,7 +368,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public InvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          return invokeNext(ctx, command);
       }
@@ -429,11 +428,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+   public InvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       return handleFunctionalReadManyCommand(ctx, command, readOnlyManyHelper);
    }
 
-   protected <C extends TopologyAffectedCommand & FlagAffectedCommand> BasicInvocationStage handleFunctionalReadManyCommand(
+   protected <C extends TopologyAffectedCommand & FlagAffectedCommand> InvocationStage handleFunctionalReadManyCommand(
          InvocationContext ctx, C command, ReadManyCommandHelper<C> helper) {
       // We cannot merge this method with visitGetAllCommand because this can't wrap entries into context
       // TODO: repeatable-reads are not implemented - see visitReadOnlyKeyCommand
@@ -447,7 +446,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleRemoteReadManyCommand(ctx, command, keys, helper);
       }
       if (keys.isEmpty()) {
-         return returnWith(Stream.empty());
+         return completedStage(Stream.empty());
       }
 
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
@@ -470,7 +469,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          remoteReadMany(addressKeys.getKey(), keysForAddress, ctx, command, allFuture, pos, helper);
          pos += keysForAddress.size();
       }
-      return returnWithAsync(allFuture);
+      return asyncStage(allFuture);
    }
 
    private InvocationStage handleLocalOnlyReadManyCommand(InvocationContext ctx, VisitableCommand command, Collection<?> keys) {
@@ -482,14 +481,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   private <C extends TopologyAffectedCommand & VisitableCommand> BasicInvocationStage handleRemoteReadManyCommand(
-         InvocationContext ctx, C command, Collection<?> keys, InvocationReturnValueHandler remoteReturnHandler) {
+   private <C extends TopologyAffectedCommand & VisitableCommand> InvocationStage handleRemoteReadManyCommand(
+         InvocationContext ctx, C command, Collection<?> keys, TriFunction<InvocationContext, VisitableCommand, Object, Object> remoteReturnHandler) {
       for (Object key : keys) {
          if (ctx.lookupEntry(key) == null) {
             return handleMissingEntryOnRead(command);
          }
       }
-      return invokeNext(ctx, command).thenApply(remoteReturnHandler);
+      return invokeNext(ctx, command).thenApply(ctx, command, remoteReturnHandler);
    }
 
    private <C extends ReplicableCommand> void remoteReadMany(Address owner, List<Object> keys,
@@ -527,7 +526,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return;
       }
       C localCommand = helper.copyForLocal(command, availableKeys);
-      invokeNext(ctx, localCommand).compose((stage, rCtx, rCommand, rv, throwable) -> {
+      invokeNext(ctx, localCommand).compose(ctx, command, (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             allFuture.completeExceptionally(throwable);
          } else {
@@ -538,7 +537,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                allFuture.completeExceptionally(t);
             }
          }
-         return returnWithAsync(allFuture);
+         return asyncStage(allFuture);
       });
    }
 
@@ -633,12 +632,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    protected static class CountDownCompletableFuture extends CompletableFuture<Object> {
-      protected final InvocationContext ctx;
       protected final AtomicInteger counter;
 
       public CountDownCompletableFuture(InvocationContext ctx, int participants) {
          if (trace) log.tracef("Creating shortcut countdown with %d participants", participants);
-         this.ctx = ctx;
          this.counter = new AtomicInteger(participants);
       }
 
@@ -677,7 +674,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private BasicInvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private InvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       Object key = command.getKey();
       CacheEntry entry = ctx.lookupEntry(key);
 
@@ -686,7 +683,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             if (readNeedsRemoteValue(ctx, command)) {
                return invokeNextAsync(ctx, command, remoteGet(ctx, command, command.getKey(), false));
             } else {
-               return returnWith(null);
+               return completedStage(null);
             }
          } else {
             return handleMissingEntryOnRead(command);
@@ -695,13 +692,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   protected final BasicInvocationStage handleMissingEntryOnRead(TopologyAffectedCommand command) {
+   protected final InvocationStage handleMissingEntryOnRead(TopologyAffectedCommand command) {
       // If we have the entry in context it means that we are read owners, so we don't have to check the topology
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
       if (cmdTopology < currentTopologyId) {
-         return returnWith(UnsuccessfulResponse.INSTANCE);
+         return completedStage(UnsuccessfulResponse.INSTANCE);
       } else {
          // If cmdTopology > currentTopologyId: the topology of this node is outdated
          // TODO: This situation won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
@@ -714,19 +711,19 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+   public InvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       return visitGetCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx,
-         GetCacheEntryCommand command) throws Throwable {
+   public InvocationStage visitGetCacheEntryCommand(InvocationContext ctx,
+                                                    GetCacheEntryCommand command) throws Throwable {
       return visitGetCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
+   public InvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
          throws Throwable {
       // TODO: repeatable-reads are not implemented, these need to keep the read values on remote side for the duration
       // of the transaction, and that requires synchronous invocation of the readonly command on all owners.
@@ -739,7 +736,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             // the entry is owned locally (it is NullCacheEntry if it was not found), no need to go remote
             return invokeNext(ctx, command);
          } else {
-            return wrapFunctionalResultOnNonOriginOnReturn(invokeNext(ctx, command), entry);
+            return wrapFunctionalResultOnNonOriginOnReturn(invokeNext(ctx, command), entry, ctx, command);
          }
       }
       if (!ctx.isOriginLocal()) {
@@ -756,7 +753,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          remoteCommand.setTopologyId(cacheTopology.getTopologyId());
 
          CompletableFuture<Map<Address, Response>> rpc = rpcManager.invokeRemotelyAsync(owners, remoteCommand, staggeredOptions);
-         return returnWithAsync(rpc.thenApply(responses -> {
+         return asyncStage(rpc.thenApply(responses -> {
                for (Response rsp : responses.values()) {
                   if (rsp.isSuccessful()) {
                      return unwrapFunctionalResultOnOrigin(ctx, key, ((SuccessfulResponse) rsp).getResponseValue());
@@ -778,7 +775,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return command;
    }
 
-   protected InvocationStage wrapFunctionalResultOnNonOriginOnReturn(InvocationStage stage, CacheEntry entry) {
+   protected InvocationStage wrapFunctionalResultOnNonOriginOnReturn(InvocationStage stage, CacheEntry entry,
+                                                                     InvocationContext ctx, VisitableCommand command) {
       return stage;
    }
 
@@ -809,12 +807,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             !command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP);
    }
 
-   @FunctionalInterface
-   protected interface RemoteReadManyCommandBuilder<C> {
-      ReplicableCommand build(InvocationContext ctx, C command, List<Object> keys);
-   }
-
-   protected interface ReadManyCommandHelper<C> extends InvocationReturnValueHandler {
+   protected interface ReadManyCommandHelper<C> extends TriFunction<InvocationContext, VisitableCommand, Object, Object> {
       Collection<?> keys(C command);
       C copyForLocal(C command, List<Object> keys);
       ReplicableCommand copyForRemote(C command, List<Object> keys, InvocationContext ctx);
@@ -824,7 +817,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected class ReadOnlyManyHelper implements ReadManyCommandHelper<ReadOnlyManyCommand> {
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
          return wrapFunctionalManyResultOnNonOrigin(rCtx, ((ReadOnlyManyCommand) rCommand).getKeys(), ((Stream) rv).toArray());
       }
 

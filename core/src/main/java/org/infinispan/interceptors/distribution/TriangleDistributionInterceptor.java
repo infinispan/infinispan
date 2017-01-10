@@ -22,13 +22,12 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.TriangleAckInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
@@ -86,13 +85,13 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public InvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public InvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return handleLocalPutMapCommand(ctx, command);
       } else {
@@ -101,16 +100,16 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public InvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public InvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
-   private BasicInvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
+   private InvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
       CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       if (command.isForwarded() || ch.getNumOwners() == 1) {
@@ -134,7 +133,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
    }
 
-   private BasicInvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
+   private InvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       //local command. we need to split by primary owner to send the command to them
       final CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash consistentHash = cacheTopology.getWriteConsistentHash();
@@ -153,7 +152,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          if (localEntries != null) {
             sendToBackups(command, localEntries, consistentHash);
          }
-         return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
+         return invokeNext(ctx, command)
+               .whenComplete(ctx, command, (rCtx, rCommand, rv, t) -> {
             PutMapCommand cmd = (PutMapCommand) rCommand;
             if (t != null) {
                commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
@@ -162,7 +162,6 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
                      (Map<Object, Object>) rv, cmd.getTopologyId());
             }
-            return stage;
          });
       }
 
@@ -183,7 +182,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    // TODO: this should just override handleNonTxWriteCommand when functional commands will be triangelized
-   private BasicInvocationStage handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
+   private InvocationStage handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
       assert !context.isInTxScope();
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          //don't go through the triangle
@@ -218,14 +217,15 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       throw new IllegalStateException();
    }
 
-   private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
-         final DistributionInfo distributionInfo) {
+   private InvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
+                                             final DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
 
-      return invokeNext(context, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNext(context, command)
+            .thenAccept(context, command, (rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          if (!dwCommand.isSuccessful()) {
@@ -252,8 +252,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       });
    }
 
-   private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
-         DistributionInfo distributionInfo) {
+   private InvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
+                                                DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&
@@ -264,7 +264,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
       rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
-      return returnWith(null);
+      return completedStage(null);
    }
 
    /**
