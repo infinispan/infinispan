@@ -1242,11 +1242,13 @@ clientBuilder.addServer()
 
 RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
-SerializationContext srcCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
 
-serCtx.registerProtofiles("/library.proto");
-serCtx.registerMarshaller(Book.class, new BookMarshaller());
-serCtx.registerMarshaller(Author.class, new AuthorMarshaller());
+FileDescriptorSource fds = new FileDescriptorSource();
+fds.addProtoFiles("/library.proto");
+serCtx.registerProtoFiles(fds);
+serCtx.registerMarshaller(new BookMarshaller());
+serCtx.registerMarshaller(new AuthorMarshaller());
 
 // Book and Author classes omitted for brevity
 ----
@@ -1286,6 +1288,7 @@ public class BookMarshaller implements MessageMarshaller<Book> {
    public void writeTo(ProtoStreamWriter writer, Book book) throws IOException {
       writer.writeString("title", book.getTitle());
       writer.writeString("description", book.getDescription());
+      writer.writeInt("publicationYear", book.getPublicationYear());
       writer.writeCollection("authors", book.getAuthors(), Author.class);
    }
 
