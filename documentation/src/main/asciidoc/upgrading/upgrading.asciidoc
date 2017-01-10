@@ -86,6 +86,14 @@ The LevelDB cache store was replaced with a link:http//rocksdb.org[RocksDB]. Roc
 superior performance in high concurrency scenarios. The new cache store can parse old LevelDB configurations but will always use
 the RocksDB implementation.
 
+=== JDBC Mixed and Binary stores removed
+The JDBC Mixed and Binary stores have been removed due to the poor performance associated with storing entries in buckets.
+Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
+deserialised, updated, serialised and then re-inserted back into the db.  If you were previously using one of the removed
+stores, we have provided a migrator tool to assist in migrating data from an existing binary table to a JDBC string based
+store. See link:../user_guide/persistence_jdbc.adoc#JDBC_Migrator[JDBC Migrator Guide] for more details.
+
+
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated
 Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
