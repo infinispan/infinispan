@@ -214,7 +214,8 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
       // Add an extra so that when we remove 1 it means not all the values will be on 1 node
-      addClusterEnabledCacheManager(builderUsed);
+      addClusterEnabledCacheManager(builderUsed).defineConfiguration(CACHE_NAME, builderUsed.build());
+
 
       // put a lot of entries in cache0, so that when a node goes down it will lose some
       Map<Object, String> values = new HashMap<>();

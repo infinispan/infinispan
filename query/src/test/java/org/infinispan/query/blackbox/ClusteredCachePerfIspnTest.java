@@ -1,8 +1,12 @@
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
@@ -17,9 +21,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(new ConfigurationBuilder());
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(new ConfigurationBuilder());
-
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
             .index(Index.ALL)
@@ -35,11 +36,15 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       enhanceConfig(cacheCfg);
+      ConfigurationBuilder indexCfg = new ConfigurationBuilder();
+      for(int i = 0; i < 2; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(cacheCfg);
+         cm.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCfg.build());
+         cm.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCfg.build());
+         cm.defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCfg.build());
+      }
 
-      cm1.defineConfiguration("perfConf", cacheCfg.build());
-      cm2.defineConfiguration("perfConf", cacheCfg.build());
-
-      cache1 = cm1.getCache("perfConf");
-      cache2 = cm2.getCache("perfConf");
+      cache1 = manager(0).getCache();
+      cache2 = manager(1).getCache();
    }
 }

@@ -60,6 +60,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void queryNotIndexedCache() throws ParseException {
+      cacheManager.defineConfiguration("notIndexedA", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedA");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
@@ -74,6 +75,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Test
    public void notIndexedCacheNormalUse() {
+      cacheManager.defineConfiguration("notIndexedB", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedB");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       assert notIndexedCache.get("1") != null;

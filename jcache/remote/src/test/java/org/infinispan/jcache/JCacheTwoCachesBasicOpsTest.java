@@ -47,7 +47,7 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
       properties.put("infinispan.client.hotrod.server_list", hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
       cm2 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
 
-      waitForClusterToForm("default");
+      waitForClusterToForm(CACHE_NAME);
    }
 
    @AfterClass

@@ -345,13 +345,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return A list with size numMembersInCluster containing a list of cacheNames.length caches
     */
    protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
-         ConfigurationBuilder defaultConfigBuilder, String[] cacheNames) {
+         ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
       List<List<Cache<K, V>>> allCaches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
          List<Cache<K, V>> currentCacheManagerCaches = new ArrayList<>(cacheNames.length);
 
          for (String cacheName : cacheNames) {
+            cm.defineConfiguration(cacheName, defaultConfigBuilder.build());
             Cache<K, V> cache = cm.getCache(cacheName);
             currentCacheManagerCaches.add(cache);
          }

@@ -51,6 +51,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       sourceContainer = TestCacheManagerFactory
               .createCacheManager(hotRodCacheConfiguration(serverBuilder));
       sourceServerDefaultCache = sourceContainer.getCache();
+      sourceContainer.defineConfiguration(ALT_CACHE_NAME, sourceContainer.getDefaultCacheConfiguration());
       sourceServerAltCache = sourceContainer.getCache(ALT_CACHE_NAME);
       sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceContainer);
 

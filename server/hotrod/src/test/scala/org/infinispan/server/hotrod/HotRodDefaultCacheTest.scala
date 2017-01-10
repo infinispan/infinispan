@@ -15,12 +15,16 @@ import org.testng.AssertJUnit._
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodDefaultCacheTest")
 class HotRodDefaultCacheTest extends HotRodSingleNodeTest {
-   override def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager, cacheName)
+   val ANOTHER_CACHE = "AnotherCache"
+   override def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
+      cacheManager.defineConfiguration(ANOTHER_CACHE, cacheManager.getDefaultCacheConfiguration)
+      startHotRodServer(cacheManager, ANOTHER_CACHE)
+   }
 
    def testPutOnDefaultCache(m: Method) {
       val resp = client.execute(0xA0, 0x01, "", k(m), 0, 0, v(m), 0, 1, 0)
       assertStatus(resp, Success)
-      assertHotRodEquals(cacheManager, cacheName, k(m), v(m))
+      assertHotRodEquals(cacheManager, ANOTHER_CACHE, k(m), v(m))
       assertFalse(cacheManager.getCache().containsKey(k(m)))
    }
 }

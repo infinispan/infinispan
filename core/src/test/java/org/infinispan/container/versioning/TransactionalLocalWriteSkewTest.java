@@ -38,7 +38,9 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
             .writeSkewCheck(true)
             .versioning().enable().scheme(VersioningScheme.SIMPLE);
 
-      return TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      cacheManager.defineConfiguration("cache", builder.build());
+      return cacheManager;
    }
 
    public void testSharedCounter() throws Exception {

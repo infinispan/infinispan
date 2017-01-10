@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -43,7 +44,9 @@ public class MemcachedReplicationTest extends MemcachedMultiNodeTest {
       // and not instance reference pointers.
       builder.clustering().cacheMode(CacheMode.REPL_SYNC)
               .dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
-      return TestCacheManagerFactory.createClusteredCacheManager(builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(
+            GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
+            builder);
    }
 
    public void testReplicatedSet(Method m) throws InterruptedException, ExecutionException, TimeoutException {

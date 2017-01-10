@@ -51,6 +51,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    @Test
    public void testIndexingOnNamedCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager(getIndexedConfig());
+      cacheManager.defineConfiguration("custom", cacheManager.getDefaultCacheConfiguration());
       startAndIndexData("custom", cacheManager);
       cacheManager.stop();
 

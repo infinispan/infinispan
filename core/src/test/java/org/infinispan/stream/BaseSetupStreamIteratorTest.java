@@ -57,6 +57,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          enhanceConfiguration(builderUsed);
          EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builderUsed);
          cacheManagers.add(cm);
+         cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
    }
 

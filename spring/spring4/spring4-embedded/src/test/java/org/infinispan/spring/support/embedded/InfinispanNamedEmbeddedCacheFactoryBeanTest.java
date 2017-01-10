@@ -42,6 +42,8 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractInfinis
    public void startCacheManagers() {
       DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
       DEFAULT_CACHE_MANAGER.start();
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.cache.Name", DEFAULT_CACHE_MANAGER.getDefaultCacheConfiguration());
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.bean.Name", DEFAULT_CACHE_MANAGER.getDefaultCacheConfiguration());
 
       InputStream configStream = null;
       try {

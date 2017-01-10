@@ -16,7 +16,7 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true, false);
+      caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true, false, "default");
 
       for(Object cache : caches) {
          Cache cacheObj = (Cache) cache;

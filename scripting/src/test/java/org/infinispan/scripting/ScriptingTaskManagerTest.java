@@ -35,6 +35,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+      cacheManager.defineConfiguration(ScriptingTest.CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
    }
 
    public void testTask() throws Exception {

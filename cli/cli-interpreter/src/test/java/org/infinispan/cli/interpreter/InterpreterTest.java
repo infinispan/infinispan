@@ -76,6 +76,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    public void testCacheQualifier() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      cacheManager.defineConfiguration("otherCache", new ConfigurationBuilder().build());
       Cache<Object, Object> otherCache = cacheManager.getCache("otherCache");
       execute(interpreter, sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
       Object a = cache.get("a");

@@ -5,7 +5,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -23,6 +22,7 @@ import org.testng.annotations.Test;
 @Test(testName = "tx.LargeTransactionTest", groups = "functional")
 public class LargeTransactionTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(LargeTransactionTest.class);
+   public static final String TEST_CACHE = "TestCache";
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = new ConfigurationBuilder();
@@ -36,22 +36,24 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(c);
       container.start();
       registerCacheManager(container);
-      container.startCaches(CacheContainer.DEFAULT_CACHE_NAME, "TestCache");
-      Cache cache1 = container.getCache("TestCache");
+      container.defineConfiguration(TEST_CACHE, c.build());
+      container.startCaches(TEST_CACHE);
+      Cache cache1 = container.getCache(TEST_CACHE);
       assert cache1.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
       cache1.start();
 
       container = TestCacheManagerFactory.createClusteredCacheManager(c);
       container.start();
       registerCacheManager(container);
-      container.startCaches(CacheContainer.DEFAULT_CACHE_NAME, "TestCache");
-      Cache cache2 = container.getCache("TestCache");
+      container.defineConfiguration(TEST_CACHE, c.build());
+      container.startCaches(TEST_CACHE);
+      Cache cache2 = container.getCache(TEST_CACHE);
       assert cache2.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
    }
 
    public void testLargeTx() throws Exception {
-      Cache cache1 = cache(0, "TestCache");
-      Cache cache2 = cache(1, "TestCache");
+      Cache cache1 = cache(0, TEST_CACHE);
+      Cache cache2 = cache(1, TEST_CACHE);
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);
       tm.begin();
       for (int i = 0; i < 200; i++)
@@ -65,8 +67,8 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    }
 
    public void testSinglePutInTx() throws Exception {
-      Cache cache1 = cache(0, "TestCache");
-      Cache cache2 = cache(1, "TestCache");
+      Cache cache1 = cache(0, TEST_CACHE);
+      Cache cache2 = cache(1, TEST_CACHE);
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);
 
       tm.begin();
@@ -78,8 +80,8 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    }
 
    public void testSimplePutNoTx() {
-      Cache cache1 = cache(0, "TestCache");
-      Cache cache2 = cache(1, "TestCache");
+      Cache cache1 = cache(0, TEST_CACHE);
+      Cache cache2 = cache(1, TEST_CACHE);
       cache1.put("key", "val");
       assert cache2.get("key").equals("val");
    }

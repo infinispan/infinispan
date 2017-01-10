@@ -33,6 +33,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.BytesRef;
 import org.infinispan.Cache;
 import org.infinispan.Version;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -66,7 +67,8 @@ public class InfinispanLuceneDirectoryIT {
    @Before
    public void setup() {
       cacheManager = new DefaultCacheManager();
-      cache = cacheManager.getCache();
+      cacheManager.defineConfiguration("index", new ConfigurationBuilder().build());
+      cache = cacheManager.getCache("index");
       directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "index").create();
    }
 

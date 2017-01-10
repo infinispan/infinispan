@@ -298,6 +298,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
+      cacheManager1.defineConfiguration("cache1", config.build());
+      cacheManager2.defineConfiguration("cache1", config.build());
       try {
          Cache<Object, Object> cache1 = cacheManager1.getCache("cache1");
          cache1.put("key1", "value1");

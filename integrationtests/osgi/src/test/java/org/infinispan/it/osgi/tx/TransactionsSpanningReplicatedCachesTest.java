@@ -42,6 +42,8 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
       addClusterEnabledCacheManager(c);
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
+      defineConfigurationOnAllManagers("cache1", c);
+      defineConfigurationOnAllManagers("cache2", c);
    }
 
    @After

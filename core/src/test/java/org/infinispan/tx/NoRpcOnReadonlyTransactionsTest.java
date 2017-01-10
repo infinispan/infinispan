@@ -76,6 +76,7 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
    }
 
    public void testReadOnlyTxNoNetworkCallMultipleCaches() throws Exception {
+      defineConfigurationOnAllManagers("a", new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
       cache(0, "a");
       cache(1, "a");
       cache(2, "a");

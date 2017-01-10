@@ -5,7 +5,7 @@
                           urn:infinispan:config:store:jdbc:9.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-9.0.xsd"
       xmlns="urn:infinispan:config:9.0">
 
-   <cache-container>
+   <cache-container default-cache="JDBCBased_LocalIndex">
       <transport cluster="MyCluster"/>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
@@ -68,7 +68,6 @@
       <!-- ***************************** -->
       <replicated-cache name="LuceneIndexesLocking_custom1">
          <transaction mode="NON_XA" />
-         <indexing index="NONE" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
@@ -84,6 +83,7 @@
                <write-behind modification-queue-size="1024" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
+         <indexing index="NONE" />
       </replicated-cache>
    </cache-container>
 

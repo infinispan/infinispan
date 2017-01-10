@@ -20,7 +20,8 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
 
     @Override
     protected void createCacheManagers() throws Throwable {
-        addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder());
+        addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder())
+              .defineConfiguration("test", getConfigurationBuilder().build());
     }
 
     private ConfigurationBuilder getConfigurationBuilder() {

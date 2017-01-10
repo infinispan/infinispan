@@ -12,6 +12,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -60,7 +61,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       UnitTestDatabaseManager.setDialect(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(cc);
+      cacheManager = TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().defaultCacheName("Test"), cc);
       cache = cacheManager.getCache("Test");
       store = TestingUtil.getFirstTxWriter(cache);
    }

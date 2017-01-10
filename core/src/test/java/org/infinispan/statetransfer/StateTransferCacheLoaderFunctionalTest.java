@@ -32,7 +32,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() {
+   protected EmbeddedCacheManager createCacheManager(String cacheName) {
       configurationBuilder.persistence().clearStores();
       // increment the DIMCS store id
       DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(configurationBuilder.persistence());
@@ -41,7 +41,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
       configurationBuilder.persistence().addStore(dimcs);
       configurationBuilder.persistence();
 
-      return super.createCacheManager();
+      return super.createCacheManager(cacheName);
    }
 
    @Override
@@ -84,11 +84,11 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    public void testSharedLoader() throws Exception {
       try {
          sharedCacheLoader.set(true);
-         Cache<Object, Object> c1 = createCacheManager().getCache(cacheName);
+         Cache<Object, Object> c1 = createCacheManager(cacheName).getCache(cacheName);
          writeInitialData(c1);
 
          // starting the second cache would initialize an in-memory state transfer but not a persistent one since the loader is shared
-         Cache<Object, Object> c2 = createCacheManager().getCache(cacheName);
+         Cache<Object, Object> c2 = createCacheManager(cacheName).getCache(cacheName);
          TestingUtil.blockUntilViewsReceived(60000, c1, c2);
          TestingUtil.waitForRehashToComplete(c1, c2);
 
@@ -111,7 +111,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
       // preload is ignored. At the end, node 1 contains REPL cache with all entries, node 2 has same cache without entries.
       try {
          sharedCacheLoader.set(true);
-         EmbeddedCacheManager cm1 = createCacheManager();
+         EmbeddedCacheManager cm1 = createCacheManager(cacheName);
          Cache<Object, Object> cache1 = cm1.getCache(cacheName);
          verifyNoDataOnLoader(cache1);
          verifyNoData(cache1);
@@ -127,11 +127,11 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          final ConfigurationBuilder defaultConfigurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
 
          // now lets start cm and shortly after another cache manager
-         final EmbeddedCacheManager cm2 = super.createCacheManager();
+         final EmbeddedCacheManager cm2 = super.createCacheManager(cacheName);
          cm2.defineConfiguration("initialCache", defaultConfigurationBuilder.build());
          cm2.startCaches("initialCache");
 
-         EmbeddedCacheManager cm3 = super.createCacheManager();
+         EmbeddedCacheManager cm3 = super.createCacheManager(cacheName);
          cm3.defineConfiguration("initialCache", defaultConfigurationBuilder.build());
          cm3.startCaches("initialCache");
 

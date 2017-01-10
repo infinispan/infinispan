@@ -113,6 +113,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          enhanceConfiguration(builderUsed);
          EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builderUsed);
          cacheManagers.add(cm);
+         cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
    }
 

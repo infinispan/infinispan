@@ -77,6 +77,8 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
 
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
+
       // Now wait for cache3 to come up fully
       waitForClusterToForm(CACHE_NAME);
 
@@ -125,6 +127,8 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
 
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
+
       // Now wait for cache3 to come up fully
       waitForClusterToForm(CACHE_NAME);
 
@@ -164,6 +168,8 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
+
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
 
       Future<Cache<Object, String>> future = fork(new Callable<Cache<Object, String>>() {
          @Override
@@ -231,6 +237,8 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
+
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
 
       Future<Cache<Object, String>> future = fork(new Callable<Cache<Object, String>>() {
          @Override

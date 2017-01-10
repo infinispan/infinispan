@@ -98,7 +98,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          converter = new WrappedByteArrayConverter();
          cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
       }
-      bootstrap(cacheName, cache, configuration, globalComponentRegistry);
+      bootstrap(cacheName, cache, configuration, globalComponentRegistry, converter);
       if (marshaller != null) {
          componentRegistry.wireDependencies(marshaller);
       }
@@ -132,6 +132,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             if (statisticsAvailable) {
                registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
             }
+            registerComponent(converter, TypeConverter.class);
             registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
             registerComponent(new PassivationManagerStub(), PassivationManager.class);
             registerComponent(new ActivationManagerStub(), ActivationManager.class);
@@ -147,7 +148,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
       componentRegistry.registerComponent(cache, Cache.class.getName(), true);
-      componentRegistry.registerComponent(converter, TypeConverter.class);
+
       return cache;
    }
 
@@ -156,11 +157,16 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
-                          GlobalComponentRegistry globalComponentRegistry) {
+                          GlobalComponentRegistry globalComponentRegistry, TypeConverter converter) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
+         @Override
+         protected void bootstrapComponents() {
+            registerComponent(converter, TypeConverter.class);
+         }
+      };
 
       /*
          --------------------------------------------------------------------------------------------------------------

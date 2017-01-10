@@ -43,6 +43,8 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    @BeforeMethod
    protected void setUp() throws Exception {
+      cacheManager.defineConfiguration("data", cacheManager.getDefaultCacheConfiguration());
+      cacheManager.defineConfiguration("metadata", cacheManager.getDefaultCacheConfiguration());
       dataCache = cacheManager.getCache("data");
       metadataCache = cacheManager.getCache("metadata");
       fs = new GridFilesystem(dataCache, metadataCache);

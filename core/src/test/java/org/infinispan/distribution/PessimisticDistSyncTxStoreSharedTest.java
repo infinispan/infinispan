@@ -56,6 +56,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       createCluster(getCB(), 1);
+      defineConfigurationOnAllManagers("P006", getCB());
       waitForClusterToForm();
    }
 
@@ -75,7 +76,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       Assert.assertEquals(keys.size(), 4);
 
       // now start 2nd node
-      addClusterEnabledCacheManager(getCB());
+      addClusterEnabledCacheManager(getCB()).defineConfiguration("P006", getCB().build());
       waitForClusterToForm("P006");
 
       cache = cacheManagers.get(1).getCache("P006");

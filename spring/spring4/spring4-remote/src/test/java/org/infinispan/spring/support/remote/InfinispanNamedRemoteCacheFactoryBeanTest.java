@@ -39,7 +39,9 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      cacheManager.defineConfiguration(TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
+      cacheManager.defineConfiguration(TEST_BEAN_NAME, cacheManager.getDefaultCacheConfiguration());
       cache = cacheManager.getCache(TEST_BEAN_NAME);
 
       return cacheManager;

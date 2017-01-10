@@ -15,6 +15,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -81,7 +82,8 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      EmbeddedCacheManager otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      otherContainer.defineConfiguration("galder", new ConfigurationBuilder().build());
       registerCacheManager(otherContainer);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});
@@ -116,16 +118,6 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
          assert e instanceof JmxDomainConflictException;
       } finally {
          TestingUtil.killCacheManagers(otherContainer);
-      }
-   }
-
-   public void testMalformedCacheName(Method m) throws Exception {
-      final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
-      try {
-         otherContainer.getCache("persistence.unit:unitName=#helloworld.MyRegion");
-      } finally {
-         otherContainer.stop();
       }
    }
 

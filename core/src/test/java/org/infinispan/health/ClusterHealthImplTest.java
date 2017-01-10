@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.health.impl.ClusterHealthImpl;
 import org.infinispan.manager.DefaultCacheManager;
@@ -26,6 +27,7 @@ public class ClusterHealthImplTest {
         globalConfigurationBuilder.transport().clusterName("test").nodeName("test");
 
         cacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());
+        cacheManager.defineConfiguration("test", new ConfigurationBuilder().build());
         clusterHealth = new ClusterHealthImpl(cacheManager);
     }
 

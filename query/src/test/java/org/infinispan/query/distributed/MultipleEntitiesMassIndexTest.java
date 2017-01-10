@@ -48,7 +48,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
 
       List<Cache<String, Car>> cacheList = createClusteredCaches(2, cacheCfg);
 
-      waitForClusterToForm(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      waitForClusterToForm();
 
       for (Cache cache : cacheList) {
          caches.add(cache);

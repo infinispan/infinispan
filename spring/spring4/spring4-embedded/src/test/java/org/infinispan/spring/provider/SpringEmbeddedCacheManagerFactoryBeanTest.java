@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.builders.SpringEmbeddedCacheManagerFactoryBeanBuilder;
@@ -104,8 +105,10 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public void testIfSpringEmbeddedCacheManagerFactoryBeanStopsTheCreatedEmbeddedCacheManagerWhenBeingDestroyed()
          throws Exception {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.defaultCacheName("default").globalJmxStatistics().allowDuplicateDomains(true);
       objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
-            .defaultBuilder().build();
+            .defaultBuilder().withGlobalConfiguration(builder).build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
       springEmbeddedCacheManager.getCache("default"); // Implicitly starts

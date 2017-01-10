@@ -84,7 +84,10 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
       public void start() {
          cacheManager = createClusteredCacheManager(hotRodCacheConfiguration(getConfigurationBuilder()));
          registerCacheManager(cacheManager);
-         stream(cacheNames).forEach(cacheManager::getCache);
+         stream(cacheNames).forEach(cacheName -> {
+            cacheManager.defineConfiguration(cacheName, getConfigurationBuilder().build());
+            cacheManager.getCache(cacheName);
+         });
          server = startHotRodServer(cacheManager);
          waitForClusterToForm(cacheNames);
       }

@@ -42,6 +42,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      cacheManager.defineConfiguration(TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 
       return cacheManager;

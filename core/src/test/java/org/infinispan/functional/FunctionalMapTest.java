@@ -398,18 +398,21 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() throws Exception {
+            cm.defineConfiguration("read-only", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> readOnlyCache = cm.getCache("read-only").getAdvancedCache();
             try (ReadOnlyMap<?, ?> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(readOnlyCache))) {
                assertNotNull(ro); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(readOnlyCache.getStatus().isTerminated());
 
+            cm.defineConfiguration("write-only", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> writeOnlyCache = cm.getCache("write-only").getAdvancedCache();
             try (WriteOnlyMap<?, ?> wo = WriteOnlyMapImpl.create(FunctionalMapImpl.create(writeOnlyCache))) {
                assertNotNull(wo); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(writeOnlyCache.getStatus().isTerminated());
 
+            cm.defineConfiguration("read-write", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> readWriteCache = cm.getCache("read-write").getAdvancedCache();
             try (ReadWriteMap<?, ?> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(readWriteCache))) {
                assertNotNull(rw); // No-op, just verify that it implements AutoCloseable

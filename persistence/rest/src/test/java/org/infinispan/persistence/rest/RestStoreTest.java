@@ -40,6 +40,7 @@ public class RestStoreTest extends BaseStoreTest {
       globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, localBuilder);
+      localCacheManager.defineConfiguration(REMOTE_CACHE, localCacheManager.getDefaultCacheConfiguration());
       localCacheManager.getCache(REMOTE_CACHE);
       GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
       gcr.registerComponent(timeService, TimeService.class);
