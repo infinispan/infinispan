@@ -7,10 +7,8 @@ import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -30,31 +28,25 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
-         throws Throwable {
-      return invokeNext(ctx, command);
-   }
-
-   @Override
-   protected final BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   protected BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return visitNonTxDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   protected <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       assertNonTransactional(ctx);
       if (forwarded || hasSkipLocking(command)) {
          return invokeNext(ctx, command);
@@ -65,7 +57,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          lockManager.unlockAll(ctx);
          throw t;
       }
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

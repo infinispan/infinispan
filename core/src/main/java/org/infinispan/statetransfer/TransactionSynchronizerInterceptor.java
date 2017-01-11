@@ -7,7 +7,6 @@ import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,15 +36,15 @@ public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(TransactionSynchronizerInterceptor.class);
 
    @Override
-   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (ctx.isOriginLocal() || !(command instanceof TransactionBoundaryCommand)) {
          return invokeNext(ctx, command);
       }
 
       CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
       RemoteTransaction remoteTransaction = ((TxInvocationContext<RemoteTransaction>) ctx).getCacheTransaction();
-      return invokeNextAsync(ctx, command, remoteTransaction.enterSynchronizationAsync(releaseFuture)).handle(
-            (rCtx, rCommand, rv, t) -> {
+      Object result = asyncInvokeNext(ctx, command, remoteTransaction.enterSynchronizationAsync(releaseFuture));
+      return makeStage(result).andFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
                log.tracef("Completing tx command release future for %s", remoteTransaction);
                releaseFuture.complete(null);
             });

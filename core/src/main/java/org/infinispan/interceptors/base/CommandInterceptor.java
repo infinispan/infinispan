@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.base;
 
 import java.util.List;
-import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
@@ -21,9 +20,9 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.impl.ReturnValueStage;
+import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -122,8 +121,12 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
     * @throws Throwable in the event of problems
     */
    public final Object invokeNextInterceptor(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      BasicInvocationStage stage = nextInterceptor.visitCommand(ctx, command);
-      return stage.get();
+      Object maybeStage = nextInterceptor.visitCommand(ctx, command);
+      if (maybeStage instanceof SimpleAsyncInvocationStage) {
+         return ((InvocationStage) maybeStage).get();
+      } else {
+         return maybeStage;
+      }
    }
 
    /**
@@ -162,9 +165,8 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
    }
 
    @Override
-   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      Object returnValue = command.acceptVisitor(ctx, this);
-      return new ReturnValueStage(ctx, command, returnValue);
+      return command.acceptVisitor(ctx, this);
    }
 }

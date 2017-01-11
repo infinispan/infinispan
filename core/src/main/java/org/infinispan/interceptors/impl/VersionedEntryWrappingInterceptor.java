@@ -13,7 +13,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
@@ -41,7 +40,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
@@ -55,7 +54,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          originVersionData = null;
       }
 
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          EntryVersionsMap newVersionData;
          if (txInvocationContext.isOriginLocal()) {
@@ -82,14 +81,14 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
       if (ctx.isOriginLocal()) {
          versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
 
-      return invokeNext(ctx, command).handle(
-            (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) ->
+            doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
    }
 
    private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {

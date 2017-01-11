@@ -17,7 +17,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
@@ -38,7 +37,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       final CountDownLatch block = new CountDownLatch(1);
       final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
-         public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
             block.await();
             return invokeNext(ctx, command);
          }
@@ -66,7 +65,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       final CountDownLatch block = new CountDownLatch(1);
       final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
-         public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
                throws Throwable {
             if (!ctx.isOriginLocal()) {
                block.await();

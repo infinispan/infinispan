@@ -40,7 +40,8 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationExceptionFunction;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.TriangleAckInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
@@ -94,6 +95,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
 
+   private final InvocationFinallyAction onPutMapWithLocalEntries = this::afterPutMapCommand;
+   private final InvocationExceptionFunction onPutMapNoLocalEntriesException = this::onPutMapNoLocalEntriesException;
+
    @Inject
    public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
          TriangleOrderManager triangleOrderManager) {
@@ -108,13 +112,13 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return handleLocalPutMapCommand(ctx, command);
       } else {
@@ -123,28 +127,28 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleDataWriteCommand(ctx, command);
    }
 
-   private BasicInvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
+   private Object handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
       CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       final VisitableCommand.LoadType loadType = command.loadType();
 
       if (command.isForwarded() || ch.getNumOwners() == 1) {
          //backup & remote || no backups
-         return invokeNextAsync(ctx, command,
+         return asyncInvokeNext(ctx, command,
                checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), ch, loadType == OWNER));
       }
       //primary, we need to send the command to the backups ordered!
       sendToBackups(command, command.getMap(), ch);
-      return invokeNextAsync(ctx, command,
+      return asyncInvokeNext(ctx, command,
             checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), ch, loadType == OWNER));
    }
 
@@ -172,7 +176,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
    }
 
-   private BasicInvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
+   private Object handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       //local command. we need to split by primary owner to send the command to them
       final CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash consistentHash = cacheTopology.getWriteConsistentHash();
@@ -190,36 +194,41 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          forwardToPrimaryOwners(command, filter);
          if (localEntries != null) {
             sendToBackups(command, localEntries, consistentHash);
-            return invokeNextAsync(ctx, command,
-                  checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
-                        loadType == PRIMARY || loadType == OWNER)).handle((rCtx, rCommand, rv, t) -> {
-               PutMapCommand cmd = (PutMapCommand) rCommand;
-               if (t != null) {
-                  commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
-               } else {
-                  //noinspection unchecked
-                  commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
-                        (Map<Object, Object>) rv, cmd.getTopologyId());
-               }
-            });
+            CompletableFuture<?> remoteGet = checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
+                                                                loadType == PRIMARY || loadType == OWNER);
+            return makeStage(asyncInvokeNext(ctx, command, remoteGet))
+                  .andFinally(ctx, command, onPutMapWithLocalEntries);
          }
-         return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {
-            PutMapCommand cmd = (PutMapCommand) rCommand;
-            commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
-            assert t != null;
-            throw t;
-         });
+         return invokeNextAndExceptionally(ctx, command, onPutMapNoLocalEntriesException);
       }
 
       final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
       forwardToPrimaryOwners(command, filter);
       if (localEntries != null) {
          sendToBackups(command, localEntries, consistentHash);
-         return invokeNextAsync(ctx, command,
+         return asyncInvokeNext(ctx, command,
                checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
                      loadType == PRIMARY || loadType == OWNER));
       }
       return invokeNext(ctx, command);
+   }
+
+   private void afterPutMapCommand(InvocationContext ctx, VisitableCommand rCommand, Object rv, Throwable t) {
+      PutMapCommand cmd = (PutMapCommand) rCommand;
+      if (t != null) {
+         commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+      } else {
+         //noinspection unchecked
+         commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
+                                                (Map<Object, Object>) rv, cmd.getTopologyId());
+      }
+   }
+
+   private Object onPutMapNoLocalEntriesException(InvocationContext ctx, VisitableCommand rCommand, Throwable t) throws Throwable {
+      PutMapCommand cmd = (PutMapCommand) rCommand;
+      commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+      assert t != null;
+      throw t;
    }
 
    private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<?> checkRemoteGetIfNeeded(
@@ -270,7 +279,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    // TODO: this should just override handleNonTxWriteCommand when functional commands will be triangelized
-   private BasicInvocationStage handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
+   private Object handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
       assert !context.isInTxScope();
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          //don't go through the triangle
@@ -291,7 +300,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                CacheEntry entry = context.lookupEntry(command.getKey());
                if (entry == null) {
                   if (command.loadType() == OWNER) {
-                     return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
+                     return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
                   }
                   entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
                }
@@ -305,14 +314,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       throw new IllegalStateException();
    }
 
-   private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
+   private Object primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
          final DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
 
-      return invokeNext(context, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(context, command, (rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          if (!dwCommand.isSuccessful()) {
@@ -348,7 +357,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          log.tracef("Command %s got sequence %s for segment %s", id, sequence, segment);
    }
 
-   private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
+   private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
@@ -360,7 +369,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
       rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
-      return returnWith(null);
+      return null;
    }
 
    /**

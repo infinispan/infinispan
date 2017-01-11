@@ -10,7 +10,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,7 +36,7 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       // eviction is non-tx, so this interceptor should be no-op for EvictCommands
       return invokeNext(ctx, command);
    }
@@ -48,7 +47,7 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
     * suspend the batch's tx.</li> <li>If there is no batch in progress, just pass the call up the chain.</li> </ul>
     */
    @Override
-   public BasicInvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          // Nothing to do for remote calls
          return invokeNext(ctx, command);

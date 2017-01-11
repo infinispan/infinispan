@@ -11,7 +11,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 
 /**
@@ -22,28 +21,28 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 public class L1TxInterceptor extends L1NonTxInterceptor {
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // TODO: need to figure out if we do anything here? - is the prepare/commmit L1 invalidation sufficient?
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, false);
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (command.isOnePhaseCommit() && shouldFlushL1(ctx)) {
          blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }
@@ -52,7 +51,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldFlushL1(ctx)) {
          blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }

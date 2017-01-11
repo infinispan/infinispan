@@ -7,7 +7,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -86,25 +85,25 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
 
       @Override
-      public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
-      public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (isRightType(ctx)) removeOkay = true;
          return super.visitRemoveCommand(ctx, command);
       }
 
       @Override
-      public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) getOkay = true;
          return super.visitGetKeyValueCommand(ctx, command);
       }
 
       @Override
-      public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (isRightType(ctx)) replaceOkay = true;
          return super.visitReplaceCommand(ctx, command);
       }

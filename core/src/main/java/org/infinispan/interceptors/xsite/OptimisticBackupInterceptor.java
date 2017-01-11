@@ -4,7 +4,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
 
 /**
@@ -16,7 +15,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!shouldInvokeRemoteTxCommand(ctx))
          return invokeNext(ctx, command);
 
@@ -29,7 +28,7 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!shouldRollbackRemoteTxCommand(ctx))
          return invokeNext(ctx, command);
 

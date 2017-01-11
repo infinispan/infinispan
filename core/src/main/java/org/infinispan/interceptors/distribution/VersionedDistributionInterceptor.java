@@ -70,13 +70,11 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    @Override
-   protected InvocationStage wrapFunctionalResultOnNonOriginOnReturn(InvocationStage stage, CacheEntry entry) {
-      return stage.thenApply((rCtx, rCommand, rv) -> {
-         Metadata metadata = entry.getMetadata();
-         EntryVersion version = metadata == null || metadata.version() == null ?
-               versionGenerator.nonExistingVersion() : metadata.version();
-         return new VersionedResult(rv, version);
-      });
+   protected Object wrapFunctionalResultOnNonOriginOnReturn(Object rv, CacheEntry entry) {
+      Metadata metadata = entry.getMetadata();
+      EntryVersion version = metadata == null || metadata.version() == null ?
+            versionGenerator.nonExistingVersion() : metadata.version();
+      return new VersionedResult(rv, version);
    }
 
    @Override

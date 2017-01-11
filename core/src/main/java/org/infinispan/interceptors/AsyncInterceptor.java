@@ -15,10 +15,13 @@ public interface AsyncInterceptor {
    /**
     * Perform some work for a command invocation.
     *
-    * The interceptor is responsible for invoking the next interceptor in the chain.
-    * See {@link BaseAsyncInterceptor} and {@link InvocationStage} for the ways to do that.
+    * The interceptor is responsible for invoking the next interceptor in the chain, using
+    * {@link BaseAsyncInterceptor#invokeNext(InvocationContext, VisitableCommand)} or the other methods in
+    * {@link BaseAsyncInterceptor}.
+    *
+    * @return Either a regular value, or an {@link InvocationStage} created by the {@link BaseAsyncInterceptor} methods.
     */
-   BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
+   Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 
    /**
     * Sets up the interceptor. Do not call explicitly.
