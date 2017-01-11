@@ -28,7 +28,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
@@ -509,7 +508,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       private boolean putOkay;
 
       @Override
-      public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return invokeNext(ctx, command);
       }

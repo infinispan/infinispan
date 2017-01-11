@@ -5,8 +5,7 @@ import java.util.Iterator;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationComposeHandler;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 
 /**
  * Invoke a sequence of sub-commands.
@@ -14,15 +13,15 @@ import org.infinispan.interceptors.InvocationComposeHandler;
  * @author Dan Berindei
  * @since 9.0
  */
-public class MultiSubCommandInvoker implements InvocationComposeHandler {
+public class MultiSubCommandInvoker implements InvocationSuccessFunction {
    private final BaseAsyncInterceptor interceptor;
-   private final BasicInvocationStage finalStage;
+   private final Object finalStage;
    private final Iterator<VisitableCommand> subCommands;
 
-   private MultiSubCommandInvoker(BaseAsyncInterceptor interceptor, BasicInvocationStage finalStage,
+   private MultiSubCommandInvoker(BaseAsyncInterceptor interceptor, Object finalReturnValue,
                                   Iterator<VisitableCommand> subCommands) {
       this.interceptor = interceptor;
-      this.finalStage = finalStage;
+      this.finalStage = finalReturnValue;
       this.subCommands = subCommands;
    }
 
@@ -33,20 +32,18 @@ public class MultiSubCommandInvoker implements InvocationComposeHandler {
     * the sub-commands are successful, return the {@code finalStage}. If {@code finalStage} has and exception, skip all
     * the sub-commands and just return the {@code finalStage}.
     */
-   public static BasicInvocationStage thenForEach(InvocationContext ctx, Iterator<VisitableCommand> subCommands,
-                                                  BaseAsyncInterceptor interceptor, BasicInvocationStage finalStage) {
-      MultiSubCommandInvoker invoker = new MultiSubCommandInvoker(interceptor, finalStage, subCommands);
-      if (!subCommands.hasNext()) return finalStage;
+   public static Object invokeEach(InvocationContext ctx, Iterator<VisitableCommand> subCommands,
+                                   BaseAsyncInterceptor interceptor, Object finalReturnValue) {
+      if (!subCommands.hasNext())
+         return finalReturnValue;
 
+      MultiSubCommandInvoker invoker = new MultiSubCommandInvoker(interceptor, finalReturnValue, subCommands);
       VisitableCommand newCommand = subCommands.next();
-      return interceptor.invokeNext(ctx, newCommand).compose(invoker);
+      return interceptor.invokeNextThenApply(ctx, newCommand, invoker);
    }
 
    @Override
-   public BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand,
-                                     Object rv, Throwable t) throws Throwable {
-      if (t != null) return stage;
-
+   public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
       if (subCommands.hasNext()) {
          VisitableCommand newCommand = subCommands.next();
          return interceptor.invokeNext(rCtx, newCommand);

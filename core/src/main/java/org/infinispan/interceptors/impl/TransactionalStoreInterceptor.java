@@ -29,7 +29,6 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.PersistenceUtil;
@@ -58,7 +57,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Transaction tx = ctx.getTransaction();
          Updater modBuilder = new Updater(ctx.getCacheTransaction().getAffectedKeys());
@@ -72,7 +71,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          persistenceManager.commitAllTxStores(ctx.getTransaction(), SHARED);
       }
@@ -80,7 +79,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          persistenceManager.rollbackAllTxStores(ctx.getTransaction(), SHARED);
       }

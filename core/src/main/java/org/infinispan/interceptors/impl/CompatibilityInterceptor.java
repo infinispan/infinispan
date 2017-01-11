@@ -1,13 +1,10 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 
@@ -26,7 +23,7 @@ public class CompatibilityInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       addVersionIfNeeded(command);
       return super.visitReplaceCommand(ctx, command);
    }

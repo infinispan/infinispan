@@ -32,7 +32,6 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.CountingCARD;
@@ -283,9 +282,9 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       }
 
       @Override
-      protected BasicInvocationStage handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          current.set(command);
-         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> current.remove());
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> current.remove());
       }
    }
 }

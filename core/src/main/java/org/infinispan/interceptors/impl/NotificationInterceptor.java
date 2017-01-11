@@ -7,9 +7,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationSuccessHandler;
+import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
@@ -20,12 +19,18 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  */
 public class NotificationInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
-   private final InvocationSuccessHandler transactionCompleteSuccessHandler = new InvocationSuccessHandler() {
+   private final InvocationSuccessAction commitSuccessAction = new InvocationSuccessAction() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
             throws Throwable {
-         boolean successful = !(rCommand instanceof RollbackCommand);
-         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), successful, rCtx);
+         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), true, rCtx);
+      }
+   };
+   private final InvocationSuccessAction rollbackSuccessAction = new InvocationSuccessAction() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
+            throws Throwable {
+         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), false, rCtx);
       }
    };
 
@@ -35,19 +40,19 @@ public class NotificationInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!command.isOnePhaseCommit()) return invokeNext(ctx, command);
 
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+      return invokeNextThenAccept(ctx, command, commitSuccessAction);
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, commitSuccessAction);
    }
 
    @Override
-   public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept(transactionCompleteSuccessHandler);
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, rollbackSuccessAction);
    }
 }

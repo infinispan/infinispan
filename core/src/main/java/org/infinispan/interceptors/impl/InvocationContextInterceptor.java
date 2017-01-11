@@ -24,9 +24,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
-import org.infinispan.interceptors.InvocationExceptionHandler;
-import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationExceptionFunction;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -51,13 +49,13 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
 
-   private final InvocationExceptionHandler suppressExceptionsHandler = new InvocationExceptionHandler() {
+   private final InvocationExceptionFunction suppressExceptionsHandler = new InvocationExceptionFunction() {
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
-         if (t instanceof InvalidCacheUsageException || t instanceof InterruptedException) {
-            throw t;
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable throwable) throws Throwable {
+         if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
+            throw throwable;
          } else {
-            rethrowException(rCtx, rCommand, t);
+            rethrowException(rCtx, rCommand, throwable);
          }
          // Ignore the exception
          return rCommand instanceof LockControlCommand ? Boolean.FALSE : null;
@@ -82,7 +80,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
 
    @Override
-   public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace)
          log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null)
@@ -90,10 +88,9 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
       ComponentStatus status = componentRegistry.getStatus();
       if (status != ComponentStatus.RUNNING && ignoreCommand(ctx, command, status))
-         return returnWith(null);
+         return null;
 
-      InvocationStage stage = invokeNext(ctx, command);
-      return stage.exceptionally(suppressExceptionsHandler);
+      return invokeNextAndExceptionally(ctx, command, suppressExceptionsHandler);
    }
 
    private boolean ignoreCommand(InvocationContext ctx, VisitableCommand command, ComponentStatus status)

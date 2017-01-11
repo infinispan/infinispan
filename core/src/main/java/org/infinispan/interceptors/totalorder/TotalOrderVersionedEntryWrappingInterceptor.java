@@ -14,7 +14,6 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -34,12 +33,12 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
    @Override
-   public final BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
                commitContextEntries(ctx, null, null);
             }
@@ -50,7 +49,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
 
       wrapEntriesForPrepare(ctx, command);
 
-      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) rCommand;
          EntryVersionsMap versionsMap =
@@ -70,8 +69,8 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    }
 
    @Override
-   public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
    }
 
    @Override

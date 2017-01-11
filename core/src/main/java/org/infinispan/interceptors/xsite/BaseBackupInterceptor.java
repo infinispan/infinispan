@@ -9,7 +9,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -37,12 +36,12 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if this is an "empty" tx no point replicating it to other clusters
       if (!shouldInvokeRemoteTxCommand(ctx)) return invokeNext(ctx, command);
 
@@ -55,19 +54,21 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       return processBackupResponse(ctx, command, backupResponse);
    }
 
-   protected BasicInvocationStage processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
+   protected Object processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
          BackupResponse backupResponse) {
-      return invokeNext(ctx, command).thenAccept(
-            (rCtx, rCommand, rv) -> backupSender.processResponses(backupResponse, command, ctx.getTransaction()));
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         backupSender.processResponses(backupResponse, command, ctx.getTransaction());
+      });
    }
 
-   protected BasicInvocationStage handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
+   protected Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
       if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenAccept(
-            (rCtx, rCommand, rv) -> backupSender.processResponses(backupSender.backupWrite(command), command));
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         backupSender.processResponses(backupSender.backupWrite(command), command);
+      });
    }
 
    protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {

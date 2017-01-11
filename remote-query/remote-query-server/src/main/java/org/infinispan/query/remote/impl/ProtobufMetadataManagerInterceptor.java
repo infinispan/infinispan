@@ -23,7 +23,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -172,8 +171,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (!rCtx.isOriginLocal()) {
             // apply updates to the serialization context
             for (WriteCommand wc : ((PrepareCommand) rCommand).getModifications()) {
@@ -184,7 +183,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       final Object key = command.getKey();
       final Object value = command.getValue();
 
@@ -210,7 +209,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
       }
 
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
          if (putKeyValueCommand.isSuccessful()) {
             FileDescriptorSource source =
@@ -238,7 +237,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(final InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(final InvocationContext ctx, PutMapCommand command) throws Throwable {
       final Map<Object, Object> map = command.getMap();
 
       FileDescriptorSource source = new FileDescriptorSource();
@@ -262,7 +261,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
       invoker.invoke(ctx.clone(), cmd);
 
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          ProgressCallback progressCallback = null;
          if (rCtx.isOriginLocal()) {
             progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
@@ -284,7 +283,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          if (!(command.getKey() instanceof String)) {
             throw new CacheException("The key must be a string");
@@ -331,7 +330,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(final InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(final InvocationContext ctx, ReplaceCommand command) throws Throwable {
       final Object key = command.getKey();
       final Object value = command.getNewValue();
 
@@ -356,7 +355,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
       invoker.invoke(ctx.clone(), cmd);
 
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (((WriteCommand) rCommand).isSuccessful()) {
             FileDescriptorSource source =
                   new FileDescriptorSource().addProtoFile((String) key, (String) value);
@@ -383,7 +382,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       for (String fileName : serializationContext.getFileDescriptors().keySet()) {
          serializationContext.unregisterProtoFile(fileName);
       }

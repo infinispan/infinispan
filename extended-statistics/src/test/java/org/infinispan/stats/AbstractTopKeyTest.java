@@ -8,7 +8,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
@@ -97,8 +96,8 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
       private boolean prepareBlocked = false;
 
       @Override
-      public BasicInvocationStage visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) ->  {
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) ->  {
             synchronized (this) {
                prepareBlocked = true;
                notifyAll();

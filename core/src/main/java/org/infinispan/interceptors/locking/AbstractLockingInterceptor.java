@@ -32,12 +32,10 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.Ownership;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyHandler;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
@@ -55,7 +53,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
 
-   protected final InvocationFinallyHandler unlockAllReturnHandler = new InvocationFinallyHandler() {
+   protected final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
@@ -74,41 +72,41 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
-   protected abstract BasicInvocationStage visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
+   protected abstract Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
 
-   protected abstract BasicInvocationStage visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
+   protected abstract Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
 
    // We need this method in here because of putForExternalRead
-   protected final BasicInvocationStage visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
          return invokeNext(ctx, command);
       }
@@ -119,11 +117,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          lockManager.unlockAll(ctx);
          throw t;
       }
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
-   public final BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       if (hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
@@ -132,14 +130,14 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       } catch (Throwable t) {
          lockManager.unlockAll(ctx);
       }
-      return invokeNext(ctx, command).handle(unlockAllReturnHandler);
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
-   public final BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+   public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
          if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
-         return returnWith(null);
+         return null;
       }
 
       if (hasSkipLocking(command)) {
@@ -148,7 +146,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
       final Object[] keys = command.getKeys();
       if (keys == null || keys.length < 1) {
-         return returnWith(null);
+         return null;
       }
 
       ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
@@ -161,67 +159,62 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          }
       }
       if (keysToInvalidate.isEmpty()) {
-         return returnWith(null);
+         return null;
       }
 
       command.setKeys(keysToInvalidate.toArray());
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          ((InvalidateL1Command) rCommand).setKeys(keys);
          if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
       });
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded());
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+   public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
 
    @Override
-   public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
 
    @Override
-   public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
 
-   protected abstract <K> BasicInvocationStage handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
-
-   protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
-      lockManager.unlockAll(ctx);
-      return te;
-   }
+   protected abstract <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
 
    protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 :

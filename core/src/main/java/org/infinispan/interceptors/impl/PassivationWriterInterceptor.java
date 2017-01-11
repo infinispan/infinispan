@@ -8,7 +8,6 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.logging.Log;
@@ -36,7 +35,7 @@ public class PassivationWriterInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (isStoreEnabled(command) && !ctx.isInTxScope())
          persistenceManager.clearAllStores(ctx.isOriginLocal() ? BOTH : PRIVATE);
 

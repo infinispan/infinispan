@@ -13,7 +13,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 
 /**
@@ -43,7 +42,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getValue());
       }
@@ -51,7 +50,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getMap());
       }
@@ -59,7 +58,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getKey());
       }
@@ -67,7 +66,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getNewValue());
       }
