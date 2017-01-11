@@ -14,7 +14,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -77,7 +76,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    }
 
    /**
-    * This is invoked only on the receiving node, before {@link #perform(InvocationContext)}
+    * This is invoked only on the receiving node, before {@link #perform(org.infinispan.context.InvocationContext)}.
     */
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {

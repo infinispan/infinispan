@@ -28,7 +28,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    private CallbackHandler callbackHandler;
    private boolean enabled = false;
    private String serverName;
-   private Map<String, String> saslProperties = new HashMap<String, String>();
+   private Map<String, String> saslProperties = new HashMap<>();
    private String saslMechanism;
    private Subject clientSubject;
 

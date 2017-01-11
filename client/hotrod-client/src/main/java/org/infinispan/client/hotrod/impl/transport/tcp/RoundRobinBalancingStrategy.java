@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;

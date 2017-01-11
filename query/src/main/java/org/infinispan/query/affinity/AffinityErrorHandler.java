@@ -3,7 +3,6 @@ package org.infinispan.query.affinity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.store.LockObtainFailedException;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.ErrorContext;
 import org.hibernate.search.exception.ErrorHandler;
@@ -13,7 +12,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Unveils {@link LockObtainFailedException} from the Hibernate Search backend and presents it
+ * Unveils {@link org.apache.lucene.store.LockObtainFailedException} from the Hibernate Search backend and presents it
  *
  * @since 9.0
  */
