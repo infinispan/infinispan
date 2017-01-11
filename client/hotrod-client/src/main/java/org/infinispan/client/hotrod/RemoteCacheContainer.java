@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;

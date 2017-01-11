@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl;
 
 import java.util.Properties;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;

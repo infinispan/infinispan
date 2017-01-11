@@ -7,7 +7,6 @@ import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
 import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
-import org.hibernate.search.engine.nulls.codec.impl.LuceneLongNullMarkerCodec;
 import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -15,7 +14,6 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
-import org.infinispan.server.core.QueryFacade;
 
 /**
  * @author anistor@redhat.com
