@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -81,8 +83,6 @@ import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link Cache} instance, and is often used as a
  * starting point to using the {@link Cache}.
@@ -141,8 +141,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final Health health;
    private final ConfigurationManager configurationManager;
 
-   @GuardedBy("this")
-   private boolean stopping;
+   private final Lock stopLock = new ReentrantLock();
+   private final Lock startLock = new ReentrantLock();
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -665,18 +665,24 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void start() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
-      final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
-      if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
-         log.authorizationEnabledWithoutSecurityManager();
+
+      startLock.lock();
+      try {
+         final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
+         if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
+            log.authorizationEnabledWithoutSecurityManager();
+         }
+         globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
+         String clusterName = globalConfiguration.transport().clusterName();
+         String nodeName = globalConfiguration.transport().nodeName();
+         if (globalConfiguration.security().authorization().enabled()) {
+            globalConfiguration.security().authorization().principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
+         }
+         globalComponentRegistry.start();
+         log.debugf("Started cache manager %s on %s", clusterName, nodeName);
+      } finally {
+         startLock.unlock();
       }
-      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
-      String clusterName = globalConfiguration.transport().clusterName();
-      String nodeName = globalConfiguration.transport().nodeName();
-      if (globalConfiguration.security().authorization().enabled()) {
-         globalConfiguration.security().authorization().principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
-      }
-      globalComponentRegistry.start();
-      log.debugf("Started cache manager %s on %s", clusterName, nodeName);
    }
 
    private void terminate(String cacheName) {
@@ -700,18 +706,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public void stop() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
 
-      synchronized (this) {
-         if (stopping) {
-            log.trace("Ignore call to stop as the cache manager is stopping");
-            return;
+      //if start is in progress we need to wait until it's finished
+      startLock.lock();
+      //check if we are not stopping at the moment
+      if (stopLock.tryLock()) {
+         try {
+            log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
+            stopCaches();
+            globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+            globalComponentRegistry.stop();
+         } finally {
+            stopLock.unlock();
          }
-
-         log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
-         stopping = true;
-         stopCaches();
-         globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-         globalComponentRegistry.stop();
+      } else {
+         log.trace("Ignore call to stop as the cache manager is stopping");
       }
+      startLock.unlock();
    }
 
    private void stopCaches() {
