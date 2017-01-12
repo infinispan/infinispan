@@ -68,4 +68,35 @@ public class BaseHotRodQueryIT {
 
       rcm.stop();
    }
+
+   /**
+    * Sorting on a field that does not contain DocValues so Hibernate Search is forced to uninvert it.
+    * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
+    */
+   @Test
+   public void testUninverting() throws Exception {
+      RemoteCacheManager rcm = createCacheManager();
+
+      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(rcm);
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      String protoFile = protoSchemaBuilder.fileName("test.proto")
+            .addClass(Person.class)
+            .build(serializationContext);
+
+      RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put("test.proto", protoFile);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
+      RemoteCache<String, Person> cache = rcm.getCache();
+      cache.clear();
+
+      QueryFactory qf = Search.getQueryFactory(cache);
+      Query query = qf.from(Person.class)
+            .having("name").eq("John")
+            .orderBy("id")
+            .build();
+      assertEquals(0, query.list().size());
+
+      rcm.stop();
+   }
 }
