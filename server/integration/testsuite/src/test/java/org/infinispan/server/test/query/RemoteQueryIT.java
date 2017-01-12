@@ -1,5 +1,14 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
@@ -13,13 +22,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests for remote queries over HotRod on a local cache using RAM directory.
@@ -106,6 +108,23 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertEquals(Object[].class, list.get(0).getClass());
         assertEquals("Tom", list.get(0)[0]);
         assertEquals("Cat", list.get(0)[1]);
+    }
+
+    /**
+     * Sorting on a field that does not contain DocValues so Hibernate Search is forced to uninvert it.
+     * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
+     */
+    @Test
+    public void testUninverting() throws Exception {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        Query query = qf.from(User.class)
+              .having("name").eq("John").toBuilder()
+              .orderBy("id")
+              .build();
+        assertEquals(0, query.list().size());
     }
 
     @Test
