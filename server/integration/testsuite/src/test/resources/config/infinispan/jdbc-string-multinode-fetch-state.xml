@@ -13,9 +13,9 @@
                     <state-transfer 
                         enabled="true"
                         timeout="60000" />
-                    <eviction 
-                        strategy="LRU" 
-                        size="2" />
+                    <memory>
+                        <object size="2"/>
+                    </memory>
                     <string-keyed-jdbc-store
                         datasource="${jndi.name}"
                         dialect="${database.type}"
