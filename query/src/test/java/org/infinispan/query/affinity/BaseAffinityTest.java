@@ -6,6 +6,8 @@ import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
 import static org.testng.Assert.assertTrue;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +92,11 @@ public class BaseAffinityTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createClusteredCaches(getNumNodes(), getCacheConfig());
-      cacheManagers.forEach(
+      configureIndexCaches(cacheManagers);
+   }
+
+   private void configureIndexCaches(Collection<EmbeddedCacheManager> managers) {
+      managers.forEach(
             cm -> {
                cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, getLockCacheConfig());
                cm.defineConfiguration(DEFAULT_INDEXESMETADATA_CACHENAME, getMetadataCacheConfig());
@@ -138,7 +144,8 @@ public class BaseAffinityTest extends MultipleCacheManagersTest {
    }
 
    synchronized void addNode() {
-      addClusterEnabledCacheManager(getCacheConfig());
+      EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(getCacheConfig());
+      configureIndexCaches(Collections.singleton(cacheManager));
       waitForClusterToForm();
    }
 
