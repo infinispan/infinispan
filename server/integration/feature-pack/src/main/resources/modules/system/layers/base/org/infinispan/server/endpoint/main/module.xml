@@ -16,6 +16,7 @@
       <module name="org.infinispan.extension" />
       <module name="org.infinispan.persistence.jdbc" />
       <module name="org.infinispan.persistence.remote" />
+      <module name="org.infinispan.query" />
       <module name="org.infinispan.remote-query.server" services="import"/>
       <module name="org.infinispan.server" />
       <module name="org.infinispan.server.commons"/>

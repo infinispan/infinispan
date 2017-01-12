@@ -43,4 +43,8 @@ public interface Log extends org.infinispan.commons.logging.Log {
 
    @Message(id = 26006, value = "%s")
    SearchException getInvalidIntegerValueException(String msg, @Cause Throwable throwable);
+
+   @LogMessage(level = WARN)
+   @Message(id = 26007, value = "Cache '%s' required for indexing has not been configured. Using an internal default configuration.")
+   void missingIndexCacheConfiguration(String metadataCacheName);
 }

@@ -14,6 +14,8 @@ import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.store.spi.DirectoryHelper;
 import org.hibernate.search.store.spi.LockFactoryCreator;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.hibernate.search.impl.AsyncDeleteExecutorService;
 import org.infinispan.hibernate.search.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
@@ -122,6 +124,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    public void start(DirectoryBasedIndexManager indexManager) {
       log.debug("Starting InfinispanDirectory");
       deletesExecutor = getDeleteOperationsExecutor();
+      validateCacheManagerConfiguration();
       cacheManager.startCaches(metadataCacheName, dataCacheName, lockingCacheName);
       Cache<?, ?> metadataCache = cacheManager.getCache(metadataCacheName);
       Cache<?, ?> dataCache = cacheManager.getCache(dataCacheName);
@@ -143,6 +146,56 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       directory = directoryBuildContext.create();
       DirectoryHelper.initializeIndexIfNeeded(directory);
       log.debugf("Initialized Infinispan index: '%s'", directoryProviderName);
+   }
+
+   private void validateCacheManagerConfiguration() {
+      if (cacheManager.getCacheConfiguration(metadataCacheName) == null) {
+         log.missingIndexCacheConfiguration(metadataCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(metadataCacheName, builder.build());
+      }
+
+      if (cacheManager.getCacheConfiguration(dataCacheName) == null) {
+         log.missingIndexCacheConfiguration(dataCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(dataCacheName, builder.build());
+      }
+
+      if (cacheManager.getCacheConfiguration(lockingCacheName) == null) {
+         log.missingIndexCacheConfiguration(lockingCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(lockingCacheName, builder.build());
+      }
    }
 
    private AsyncDeleteExecutorService getDeleteOperationsExecutor() {
