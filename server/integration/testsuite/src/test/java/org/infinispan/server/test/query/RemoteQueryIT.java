@@ -110,6 +110,23 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertEquals("Cat", list.get(0)[1]);
     }
 
+    /**
+     * Sorting on a field that does not contain DocValues so Hibernate Search is forced to uninvert it.
+     * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
+     */
+    @Test
+    public void testUninverting() throws Exception {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        Query query = qf.from(User.class)
+              .having("name").eq("John")
+              .orderBy("id")
+              .build();
+        assertEquals(0, query.list().size());
+    }
+
     @Test
     public void testIteratorWithQuery() throws Exception {
         remoteCache.put(1, createUser1());
