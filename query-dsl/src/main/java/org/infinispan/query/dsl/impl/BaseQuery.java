@@ -74,6 +74,17 @@ public abstract class BaseQuery implements Query {
       return queryString;
    }
 
+   /**
+    * Returns the named parameters Map.
+    *
+    * @return the named parameters (unmodifiable) or {@code null} if the query does not have parameters
+    * @deprecated To be removed in Infinispan 10.0. Use {@link #getParameters()} instead.
+    */
+   @Deprecated
+   public Map<String, Object> getNamedParameters() {
+      return getParameters();
+   }
+
    @Override
    public Map<String, Object> getParameters() {
       return namedParameters != null ? Collections.unmodifiableMap(namedParameters) : null;
