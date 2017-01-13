@@ -10,7 +10,7 @@
          max_bundle_size="31k"
          enable_diagnostics="false"
          tcp_nodelay="true"
-         bundler_type="transfer-queue"
+         bundler_type="no-bundler"
 
          thread_naming_pattern="pl"
 

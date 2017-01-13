@@ -6,7 +6,7 @@
          recv_buf_size="20000000"
          send_buf_size="640000"
          max_bundle_size="64k"
-         bundler_type="transfer-queue"
+         bundler_type="no-bundler"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
 
