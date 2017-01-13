@@ -433,39 +433,6 @@
         </persistence>
     </namedCache>
 
-    <namedCache name="jdbcBinary">
-        <persistence>
-            <binaryKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false"
-                                  purgeOnStartup="false">
-                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" />
-                <binaryKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_BINARY_TABLE">
-                    <idColumn name="ID_COLUMN" type="BINARY" />
-                    <dataColumn name="DATA_COLUMN" type="BINARY" />
-                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-                </binaryKeyedTable>
-            </binaryKeyedJdbcStore>
-        </persistence>
-    </namedCache>
-
-    <namedCache name="jdbcMixed">
-        <persistence>
-            <mixedKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false"
-                                 purgeOnStartup="false" key2StringMapper="org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper">
-                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" password="sa"/>
-                <binaryKeyedTable dropOnExit="true" createOnStart="false" prefix="ISPN_BINARY_TABLE">
-                    <idColumn name="ID_COLUMN" type="BINARY" />
-                    <dataColumn name="DATA_COLUMN" type="BINARY" />
-                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-                </binaryKeyedTable>
-                <stringKeyedTable dropOnExit="false" createOnStart="true" prefix="ISPN_STRING_TABLE">
-                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-                    <dataColumn name="DATA_COLUMN" type="BINARY" />
-                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-                </stringKeyedTable>
-            </mixedKeyedJdbcStore>
-        </persistence>
-    </namedCache>
-
     <namedCache name="withRemoteStore">
         <jmxStatistics enabled="false" />
         <deadlockDetection enabled="true" spinDuration="1221" />
