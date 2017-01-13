@@ -1,5 +1,6 @@
 package org.infinispan.commons.test;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.annotations.Test;
 
 /**
  * Logs TestNG test progress.
@@ -53,7 +55,17 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    }
 
    private String testName(ITestResult res) {
-      return res.getTestClass().getName() + "." + res.getMethod().getMethodName();
+      StringBuilder result = new StringBuilder();
+      result.append(res.getTestClass().getRealClass().getName() + "." + res.getMethod().getMethodName());
+      if (res.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
+         String dataProviderName = res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
+               .dataProvider();
+         // Add parameters for methods that use a data provider only
+         if (res.getParameters().length != 0 && (dataProviderName != null && !dataProviderName.isEmpty())) {
+            result.append("(").append(Arrays.deepToString(res.getParameters())).append(")");
+         }
+      }
+      return result.toString();
    }
 
    @Override

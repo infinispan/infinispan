@@ -84,7 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
-      <testNGListener>org.infinispan.commons.test.TestNGTestListener</testNGListener>
+      <testNGListener>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListener>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1129,6 +1129,11 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${version.maven.surefire}</version>
+               <configuration>
+	              <systemPropertyVariables>
+	                 <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+	              </systemPropertyVariables>
+	           </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
