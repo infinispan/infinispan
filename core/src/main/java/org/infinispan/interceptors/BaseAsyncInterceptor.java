@@ -21,6 +21,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
 
    protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
+   private DDAsyncInterceptor nextDDInterceptor;
 
    @Inject
    public void inject(Configuration cacheConfiguration) {
@@ -33,6 +34,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    @Override
    public final void setNextInterceptor(AsyncInterceptor nextInterceptor) {
       this.nextInterceptor = nextInterceptor;
+      this.nextDDInterceptor =
+            nextInterceptor instanceof DDAsyncInterceptor ? (DDAsyncInterceptor) nextInterceptor : null;
    }
 
    /**
@@ -50,7 +53,11 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     */
    public final Object invokeNext(InvocationContext ctx, VisitableCommand command) {
       try {
-         return nextInterceptor.visitCommand(ctx, command);
+         if (nextDDInterceptor != null) {
+            return command.acceptVisitor(ctx, nextDDInterceptor);
+         } else {
+            return nextInterceptor.visitCommand(ctx, command);
+         }
       } catch (Throwable throwable) {
          return new SimpleAsyncInvocationStage(throwable);
       }
@@ -65,7 +72,12 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    public final Object invokeNextThenApply(InvocationContext ctx, VisitableCommand command,
                                            InvocationSuccessFunction function) {
       try {
-         Object rv = nextInterceptor.visitCommand(ctx, command);
+         Object rv;
+         if (nextDDInterceptor != null) {
+            rv = command.acceptVisitor(ctx, nextDDInterceptor);
+         } else {
+            rv = nextInterceptor.visitCommand(ctx, command);
+         }
          if (rv instanceof InvocationStage) {
             return ((InvocationStage) rv).thenApply(ctx, command, function);
          }
@@ -84,7 +96,12 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    public final Object invokeNextThenAccept(InvocationContext ctx, VisitableCommand command,
                                            InvocationSuccessAction action) {
       try {
-         Object rv = nextInterceptor.visitCommand(ctx, command);
+         Object rv;
+         if (nextDDInterceptor != null) {
+            rv = command.acceptVisitor(ctx, nextDDInterceptor);
+         } else {
+            rv = nextInterceptor.visitCommand(ctx, command);
+         }
          if (rv instanceof InvocationStage) {
             return ((InvocationStage) rv).thenAccept(ctx, command, action);
          }
@@ -104,7 +121,12 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    public final Object invokeNextAndExceptionally(InvocationContext ctx, VisitableCommand command,
                                                   InvocationExceptionFunction function) {
       try {
-         Object rv = nextInterceptor.visitCommand(ctx, command);
+         Object rv;
+         if (nextDDInterceptor != null) {
+            rv = command.acceptVisitor(ctx, nextDDInterceptor);
+         } else {
+            rv = nextInterceptor.visitCommand(ctx, command);
+         }
          if (rv instanceof InvocationStage) {
             return ((InvocationStage) rv).andExceptionally(ctx, command, function);
          }
@@ -127,7 +149,11 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          Object rv;
          Throwable throwable;
          try {
-            rv = nextInterceptor.visitCommand(ctx, command);
+            if (nextDDInterceptor != null) {
+               rv = command.acceptVisitor(ctx, nextDDInterceptor);
+            } else {
+               rv = nextInterceptor.visitCommand(ctx, command);
+            }
             throwable = null;
 
             if (rv instanceof InvocationStage) {
@@ -156,7 +182,11 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          Object rv;
          Throwable throwable;
          try {
-            rv = nextInterceptor.visitCommand(ctx, command);
+            if (nextDDInterceptor != null) {
+               rv = command.acceptVisitor(ctx, nextDDInterceptor);
+            } else {
+               rv = nextInterceptor.visitCommand(ctx, command);
+            }
             throwable = null;
 
             if (rv instanceof InvocationStage) {
