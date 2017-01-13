@@ -59,7 +59,8 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
          }
          case BINARY_KEYED_JDBC_STORE:
          case MIXED_KEYED_JDBC_STORE: {
-            throw new UnsupportedOperationException("Binary and Mixed Keyed JDBC Stores no longer exist.");
+            throw new UnsupportedOperationException("Since Infinispan 9.x, Binary and Mixed Keyed JDBC Stores no longer exist. " +
+                  "You can migrate an existing Mixed/Binary store to the JdbcStringBasedStore by using org.infinispan.tools.jdbc.migrator.JDBCMigrator");
          }
          default: {
             throw ParseUtils.unexpectedElement(reader);
