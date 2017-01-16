@@ -1236,6 +1236,11 @@
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.org.wildfly.maven-plugin}</version>
              </plugin>
+            <plugin>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>infinispan-defaults-maven-plugin</artifactId>
+               <version>${project.version}</version>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
