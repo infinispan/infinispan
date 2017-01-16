@@ -1,7 +1,5 @@
 package org.infinispan.commands.write;
 
-import java.util.Objects;
-
 import org.infinispan.Cache;
 
 /**
@@ -45,7 +43,7 @@ public enum ValueMatcher {
    MATCH_EXPECTED() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
-         return equal(existingValue, expectedValue);
+         return existingValue == null ? expectedValue == null : existingValue.equals(expectedValue);
       }
 
       @Override
@@ -65,8 +63,10 @@ public enum ValueMatcher {
    MATCH_EXPECTED_OR_NEW() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
-         return equal(existingValue, expectedValue) ||
-               equal(existingValue, newValue);
+         if (existingValue == null)
+            return expectedValue == null || newValue == null;
+         else
+            return existingValue.equals(expectedValue) || existingValue.equals(newValue);
       }
 
       @Override
@@ -83,7 +83,7 @@ public enum ValueMatcher {
    MATCH_EXPECTED_OR_NULL() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
-         return newValue == null || equal(existingValue, expectedValue);
+         return existingValue == null || existingValue.equals(expectedValue);
       }
 
       @Override
@@ -145,10 +145,6 @@ public enum ValueMatcher {
    public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();
-
-   protected boolean equal(Object a, Object b) {
-      return Objects.equals(a, b);
-   }
 
    private static final ValueMatcher[] CACHED_VALUES = values();
 
