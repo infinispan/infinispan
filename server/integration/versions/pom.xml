@@ -718,6 +718,11 @@
                   </execution>
                </executions>
              </plugin>
+            <plugin>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-defaults-maven-plugin</artifactId>
+               <version>${project.version}</version>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>

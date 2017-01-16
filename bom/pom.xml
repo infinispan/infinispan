@@ -347,11 +347,6 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-defaults-maven-plugin</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
             <groupId>gnu.getopt</groupId>
             <artifactId>java-getopt</artifactId>
             <version>${version.gnu.getopt}</version>
