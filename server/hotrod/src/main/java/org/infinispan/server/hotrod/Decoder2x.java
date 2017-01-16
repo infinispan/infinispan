@@ -62,7 +62,13 @@ class Decoder2x implements VersionedDecoder {
             return false;
          }
          byte streamOp = buffer.readByte();
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header op: %d", streamOp);
+
          int length = ExtendedByteBufJava.readMaybeVInt(buffer);
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header cache name length: %d", length);
+
          // Didn't have enough bytes for VInt or the length is too long for remaining
          if (length == Integer.MIN_VALUE || length > buffer.readableBytes()) {
             return false;
@@ -79,21 +85,42 @@ class Decoder2x implements VersionedDecoder {
          }
          buffer.markReaderIndex();
       }
-      int flag = ExtendedByteBufJava.readMaybeVInt(buffer);
-      if (flag == Integer.MIN_VALUE) {
-         return false;
+
+      if (header.flag == null) {
+         int flag = ExtendedByteBufJava.readMaybeVInt(buffer);
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header flag: %d", flag);
+
+         if (flag == Integer.MIN_VALUE) {
+            return false;
+         }
+
+         header.flag = flag;
       }
+
       if (buffer.readableBytes() < 2) {
          return false;
       }
-      byte clientIntelligence = buffer.readByte();
-      int topologyId = ExtendedByteBufJava.readMaybeVInt(buffer);
-      if (topologyId == Integer.MIN_VALUE) {
-         return false;
+
+      if (header.clientIntel == null) {
+         byte clientIntelligence = buffer.readByte();
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header client intelligence: %d", clientIntelligence);
+
+         header.clientIntel = clientIntelligence;
       }
-      header.flag = flag;
-      header.clientIntel = clientIntelligence;
-      header.topologyId = topologyId;
+
+      if (header.topologyId == null) {
+         int topologyId = ExtendedByteBufJava.readMaybeVInt(buffer);
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header topology id: %d", topologyId);
+
+         if (topologyId == Integer.MIN_VALUE) {
+            return false;
+         }
+
+         header.topologyId = topologyId;
+      }
 
       buffer.markReaderIndex();
       return true;

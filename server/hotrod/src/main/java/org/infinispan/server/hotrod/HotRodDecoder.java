@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 import org.infinispan.server.core.transport.NettyTransport;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
@@ -76,6 +78,8 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
 
          if (resetRequested) {
+            if (CacheDecodeContext.isTrace)
+               log.tracef("Reset cached decoder data: %s", decodeCtx);
             resetNow();
          }
 
@@ -171,8 +175,12 @@ public class HotRodDecoder extends ByteToMessageDecoder {
             return false;
          }
          short magic = buffer.readUnsignedByte();
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header magic: %d", magic);
+
          if (magic != Constants.MAGIC_REQ) {
             if (previousException == null) {
+               dumpBuffer("Invalid magic id", buffer);
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic);
             } else {
                log.tracef("Error happened previously, ignoring %d byte until we find the magic number again", magic);
@@ -183,7 +191,10 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
 
          long messageId = ExtendedByteBufJava.readMaybeVLong(buffer);
-         if (messageId == Integer.MIN_VALUE) {
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header message id: %d", messageId);
+
+         if (messageId == Long.MIN_VALUE) {
             return false;
          }
          header.messageId = messageId;
@@ -193,12 +204,15 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
          byte version = (byte) buffer.readUnsignedByte();
          header.version = version;
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Header version: %d", version);
 
          if (Constants.isVersion2x(version)) {
             decoder = new Decoder2x();
          } else if (Constants.isVersion1x(version)) {
             decoder = new Decoder10();
          } else {
+            dumpBuffer("Unknown version", buffer);
             throw new UnknownVersionException("Unknown version:" + version, version, messageId);
          }
          decodeCtx.decoder = decoder;
@@ -221,6 +235,13 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       }
    }
 
+   private void dumpBuffer(String prefix, ByteBuf in) {
+      if (log.isTraceEnabled()) {
+         String dump = ByteBufUtil.hexDump(in).toUpperCase();
+         log.tracef("%s error encountered, the buffer contains: %s", prefix, dump);
+      }
+   }
+
    private void readCustomHeader(ByteBuf in, List<Object> out) {
       decodeCtx.decoder.customReadHeader(decodeCtx.header, in, decodeCtx, out);
       // If out was written to, it means we read everything, else we have to reread again
@@ -234,6 +255,9 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       // If we want a single key read that - else we do try for custom read
       if (op.requiresKey()) {
          byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(in);
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Body key: %s", Util.toHexString(bytes));
+
          // If the bytes don't exist then we need to reread
          if (bytes != null) {
             decodeCtx.key = bytes;
@@ -265,6 +289,9 @@ public class HotRodDecoder extends ByteToMessageDecoder {
 
    boolean decodeParameters(ByteBuf in, List<Object> out) {
       CacheDecodeContext.RequestParameters params = decodeCtx.decoder.readParameters(decodeCtx.header, in);
+      if (CacheDecodeContext.isTrace)
+         log.tracef("Body parameters: %s", params);
+
       if (params != null) {
          decodeCtx.params = params;
          if (decodeCtx.header.op.getDecoderRequirements() == DecoderRequirements.PARAMETERS) {
@@ -288,6 +315,8 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          byte[] bytes = new byte[valueLength];
          in.readBytes(bytes);
          decodeCtx.operationDecodeContext = bytes;
+         if (CacheDecodeContext.isTrace)
+            log.tracef("Body value: %s", Util.toHexString(bytes));
       }
       switch (op.getDecoderRequirements()) {
          case VALUE_CUSTOM:

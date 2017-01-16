@@ -1,9 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import java.util.Arrays;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
@@ -283,6 +286,16 @@ public final class CacheDecodeContext {
 
    ComponentRegistry getCacheRegistry(String cacheName) {
       return server.getCacheRegistry(cacheName);
+   }
+
+   @Override
+   public String toString() {
+      return "CacheDecodeContext{" +
+            "header=" + header +
+            ", subject=" + subject +
+            ", key=" + Util.toHexString(key) +
+            ", params=" + params +
+            '}';
    }
 
    static class ExpirationParam {
