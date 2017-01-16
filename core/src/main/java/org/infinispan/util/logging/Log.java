@@ -1480,4 +1480,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
    WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);
+
+   @Message(value = "%s cannot be shared", id = 430)
+   CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to validate all properties of %s's configuration as the @Store attribute is missing", id = 431)
+   void warnStoreAnnotationMissing(String name);
 }

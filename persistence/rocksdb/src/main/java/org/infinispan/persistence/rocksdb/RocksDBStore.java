@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
@@ -33,6 +34,7 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 
+@Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore implements AdvancedLoadWriteStore {
     private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);

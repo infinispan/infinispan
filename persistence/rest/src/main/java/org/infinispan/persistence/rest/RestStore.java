@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -66,6 +67,7 @@ import net.jcip.annotations.ThreadSafe;
  * @author Tristan Tarrant
  * @since 6.0
  */
+@Store(shared = true)
 @ThreadSafe
 @ConfiguredBy(RestStoreConfiguration.class)
 public class RestStore implements AdvancedLoadWriteStore {

@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.filter.KeyFilter;
@@ -34,6 +35,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
+@Store(shared = true)
 public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
