@@ -24,31 +24,20 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class Responses implements Iterable<Map.Entry<Address, Rsp<Response>>> {
    public static final Responses EMPTY = new Responses(Collections.emptyList());
+   public static final Rsp<Response> SUSPECTED_RSP = new Rsp<>();
+
    private final Address[] addresses;
    private final AtomicReferenceArray<Rsp<Response>> responses;
    private volatile boolean timedOut = false;
+
+   static {
+      SUSPECTED_RSP.setSuspected();
+   }
 
    public Responses(Collection<Address> addresses) {
       int size = addresses.size();
       this.addresses = addresses.toArray(new Address[size]);
       this.responses = new AtomicReferenceArray<>(size);
-   }
-
-   /**
-    * Constructs a new instance with responses from all recipients marked
-    * as suspected.
-    *
-    * @param dests Collection of recipients.
-    * @return
-    */
-   public static Responses suspected(Collection<Address> dests) {
-      Responses responses = new Responses(dests);
-      for (int i = 0; i < responses.addresses.length; ++i) {
-         Rsp<Response> rsp = new Rsp<>();
-         rsp.setSuspected();
-         responses.responses.set(i, rsp);
-      }
-      return responses;
    }
 
    /**
@@ -58,19 +47,39 @@ public class Responses implements Iterable<Map.Entry<Address, Rsp<Response>>> {
     *
     * @param results Received responses.
     */
-   public Responses(RspList<Response> results) {
-      int size = results.size();
-      this.addresses = new Address[size];
-      this.responses = new AtomicReferenceArray<>(size);
-      int i = 0;
-      for (Map.Entry<Address, Rsp<Response>> e : results.entrySet()) {
-         addresses[i] = e.getKey();
-         Rsp<Response> rsp = e.getValue();
-         // keep non-received response as null
-         if (rsp.wasReceived() || rsp.wasSuspected() || rsp.wasUnreachable()) {
-            responses.set(i, rsp);
+   public Responses(Collection<Address> dests, RspList<Response> results) {
+      if (dests != null && results.size() < dests.size()) {
+         // We don't have a Rsp for each destination, and we have to mark the missing destinations as suspect
+         int size = dests.size();
+         this.addresses = new Address[size];
+         this.responses = new AtomicReferenceArray<>(size);
+         int i = 0;
+         for (Address address : dests) {
+            this.addresses[i] = address;
+            Rsp<Response> rsp = results.get(address);
+            if (rsp == null) {
+               // The Rsp is only missing if the recipient was not a view member
+               responses.set(i, SUSPECTED_RSP);
+            } else if (rsp.wasReceived() || rsp.wasSuspected() || rsp.wasUnreachable()) {
+               // keep non-received response as null
+               responses.set(i, rsp);
+            }
+            ++i;
          }
-         ++i;
+      } else {
+         int size = results.size();
+         this.addresses = new Address[size];
+         this.responses = new AtomicReferenceArray<>(size);
+         int i = 0;
+         for (Map.Entry<Address, Rsp<Response>> e : results.entrySet()) {
+            addresses[i] = e.getKey();
+            Rsp<Response> rsp = e.getValue();
+            // keep non-received response as null
+            if (rsp.wasReceived() || rsp.wasSuspected() || rsp.wasUnreachable()) {
+               responses.set(i, rsp);
+            }
+            ++i;
+         }
       }
    }
 

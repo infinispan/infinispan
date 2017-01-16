@@ -678,15 +678,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                }
             }
 
-            if (mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS && recipients != null &&
-                  rsps.size() < recipients.size()) {
-               recipients.forEach(dest -> {
-                  if (!dest.equals(getAddress())) {
-                     responseMap.putIfAbsent(dest, CacheNotFoundResponse.INSTANCE);
-                  }
-               });
-            }
-
             return responseMap;
          });
       } else {

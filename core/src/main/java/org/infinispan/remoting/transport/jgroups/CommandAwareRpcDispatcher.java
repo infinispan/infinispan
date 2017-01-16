@@ -390,7 +390,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
 
       GroupRequest<Response> request = cast(realDest, buf, opts, false);
       if (mode == ResponseMode.GET_NONE) return null;
-      RspListFuture retval = new RspListFuture(request);
+      RspListFuture retval = new RspListFuture(dests, request);
       if (timeout > 0 && !retval.isDone()) {
          ScheduledFuture<?> timeoutFuture = timeoutExecutor.schedule(retval, timeout, TimeUnit.MILLISECONDS);
          retval.setTimeoutFuture(timeoutFuture);
