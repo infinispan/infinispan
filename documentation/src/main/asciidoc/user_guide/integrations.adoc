@@ -1437,6 +1437,11 @@ A JBoss AS 5.x application can be configured to use Infinispan 4.x as the Hibern
 
 ----
 
+===  Using Infinispan with Spring Boot
+
+Infinispan Spring Boot Starters allow to easily turn on Infinispan and Spring integration.
+More information might be found at link:https://github.com/infinispan/infinispan-spring-boot[Infinispan Spring Boot Starters Gihub page].
+
 ===  Using Infinispan as a Spring Cache provider
 Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
 While out of the box Spring's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
