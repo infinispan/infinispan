@@ -99,6 +99,11 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
    }
 
    @Override
+   public boolean canBlock() {
+      return true;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallMap(map, output);
