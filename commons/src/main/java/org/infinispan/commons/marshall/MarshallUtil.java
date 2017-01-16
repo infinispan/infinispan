@@ -485,30 +485,37 @@ public class MarshallUtil {
       return collection;
    }
 
+   @FunctionalInterface
    public interface ArrayBuilder<E> {
       E[] build(int size);
    }
 
+   @FunctionalInterface
    public interface CollectionBuilder<E, T extends Collection<E>> {
       T build(int size);
    }
 
+   @FunctionalInterface
    public interface UnboundedCollectionBuilder<E, T extends Collection<E>> {
       T build();
    }
 
+   @FunctionalInterface
    public interface MapBuilder<K, V, T extends Map<K, V>> {
       T build(int size);
    }
 
+   @FunctionalInterface
    public interface EnumBuilder<E extends Enum<E>> {
       E build(int ordinal);
    }
 
+   @FunctionalInterface
    public interface ElementReader<E> {
       E readFrom(ObjectInput input) throws ClassNotFoundException, IOException;
    }
 
+   @FunctionalInterface
    public interface ElementWriter<E> {
       void writeTo(ObjectOutput output, E element) throws IOException;
    }
