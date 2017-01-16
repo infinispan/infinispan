@@ -1,5 +1,6 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -7,6 +8,7 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.jgroups.Address;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.util.RspList;
 
@@ -16,10 +18,12 @@ import org.jgroups.util.RspList;
  */
 public class RspListFuture extends CompletableFuture<Responses>
       implements Callable<Void>, BiConsumer<RspList<Response>, Throwable> {
+   private final Collection<Address> addresses;
    private final GroupRequest<Response> request;
    private volatile Future<?> timeoutFuture = null;
 
-   RspListFuture(GroupRequest<Response> request) {
+   RspListFuture(Collection<Address> addresses, GroupRequest<Response> request) {
+      this.addresses = addresses;
       this.request = request;
       request.whenComplete(this);
    }
@@ -46,7 +50,7 @@ public class RspListFuture extends CompletableFuture<Responses>
 
    private void requestDone(RspList<Response> rsps, Throwable throwable) {
       if (throwable == null) {
-         complete(new Responses(rsps));
+         complete(new Responses(addresses, rsps));
       } else {
          completeExceptionally(throwable);
       }
