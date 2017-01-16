@@ -29,6 +29,7 @@ import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -51,6 +52,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
+@Store(shared = true)
 @ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore implements AdvancedLoadWriteStore {
    private static final Log log = LogFactory.getLog(JpaStore.class);

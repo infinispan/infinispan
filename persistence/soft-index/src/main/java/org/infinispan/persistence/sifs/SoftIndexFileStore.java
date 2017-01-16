@@ -9,6 +9,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -97,6 +98,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@Store
 public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class);
