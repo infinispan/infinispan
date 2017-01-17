@@ -168,6 +168,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       HotRodHeader header = decodeCtx.header;
       if (decoder == null) {
          if (buffer.readableBytes() < 1) {
+            buffer.resetReaderIndex();
             return false;
          }
          short magic = buffer.readUnsignedByte();
@@ -183,7 +184,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
 
          long messageId = ExtendedByteBufJava.readMaybeVLong(buffer);
-         if (messageId == Integer.MIN_VALUE) {
+         if (messageId == Long.MIN_VALUE) {
             return false;
          }
          header.messageId = messageId;

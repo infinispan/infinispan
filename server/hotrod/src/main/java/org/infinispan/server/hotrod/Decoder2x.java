@@ -59,12 +59,14 @@ class Decoder2x implements VersionedDecoder {
          int readableBytes = buffer.readableBytes();
          // We require at least 2 bytes at minimum
          if (readableBytes < 2) {
+            buffer.resetReaderIndex();
             return false;
          }
          byte streamOp = buffer.readByte();
          int length = ExtendedByteBufJava.readMaybeVInt(buffer);
          // Didn't have enough bytes for VInt or the length is too long for remaining
          if (length == Integer.MIN_VALUE || length > buffer.readableBytes()) {
+            buffer.resetReaderIndex();
             return false;
          } else if (length == 0) {
             header.cacheName = "";
@@ -84,6 +86,7 @@ class Decoder2x implements VersionedDecoder {
          return false;
       }
       if (buffer.readableBytes() < 2) {
+         buffer.resetReaderIndex();
          return false;
       }
       byte clientIntelligence = buffer.readByte();
@@ -149,7 +152,7 @@ class Decoder2x implements VersionedDecoder {
       }
       if (readVersion) {
          version = ExtendedByteBufJava.readUnsignedMaybeLong(buffer);
-         if (version == Integer.MIN_VALUE) {
+         if (version == Long.MIN_VALUE) {
             return null;
          }
       } else {
