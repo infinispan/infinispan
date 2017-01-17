@@ -2,6 +2,9 @@ package org.infinispan.xsite;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
@@ -74,6 +77,13 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
       assertEquals(admin("LON", 0).status(), "NYC[ONLINE]");
       assertEquals(admin("LON", 1).status(), "NYC[ONLINE]");
 
+   }
+
+   public void testSitesView() {
+      assertEquals(new HashSet<>(Arrays.asList("LON", "NYC")),
+            site("LON").cacheManagers().get(0).getTransport().getSitesView());
+      assertEquals(new HashSet<>(Arrays.asList("LON", "NYC")),
+            site("NYC").cacheManagers().get(0).getTransport().getSitesView());
    }
 
    private BackupSenderImpl backupSender(String site, int cache) {

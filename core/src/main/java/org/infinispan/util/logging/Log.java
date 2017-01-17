@@ -16,6 +16,7 @@ import java.security.Permission;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -1512,4 +1513,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache with name %s is defined more than once!", id = 438)
    CacheConfigurationException duplicateCacheName(String name);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Received new x-site view: %s", id = 439)
+   void receivedXSiteClusterView(Set<String> view);
+   
 }

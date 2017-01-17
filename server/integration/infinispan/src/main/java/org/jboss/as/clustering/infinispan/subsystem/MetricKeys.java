@@ -91,6 +91,7 @@ public class MetricKeys {
     public static final String SITES_ONLINE = "sites-online";
     public static final String SITES_OFFLINE = "sites-offline";
     public static final String SITES_MIXED = "sites-mixed";
+    public static final String SITES_VIEW = "sites-view";
 
     public static final String NUMBER_OF_CPUS = "number-of-cpus";
     public static final String TOTAL_MEMORY_KB = "total-memory";

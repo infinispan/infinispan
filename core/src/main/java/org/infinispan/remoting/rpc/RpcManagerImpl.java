@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -369,6 +370,12 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          return 0;
       }
       return totalReplicationTime.get() / replicationCount.get();
+   }
+
+   @ManagedAttribute(description = "Retrieves the x-site view.", displayName = "Cross site (x-site) view", dataType = DataType.TRAIT)
+   public String getSitesView() {
+      Set<String> sitesView = t.getSitesView();
+      return sitesView != null ? sitesView.toString() : "N/A";
    }
 
    // mainly for unit testing

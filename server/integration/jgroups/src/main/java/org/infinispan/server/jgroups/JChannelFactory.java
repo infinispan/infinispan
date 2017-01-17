@@ -49,6 +49,7 @@ import org.jgroups.protocols.SASL;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.relay.RELAY2;
+import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
@@ -64,11 +65,15 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Supplier;
 
 import static org.infinispan.server.jgroups.logging.JGroupsLogger.ROOT_LOGGER;
 
@@ -134,6 +139,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
                 bridges.put(clusterName, bridge);
             }
             RELAY2 relay = new RELAY2().site(localSite);
+            relay.setRouteStatusListener(new DefaultRouteStatusListener());
             for (String site: sites) {
                 RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(site);
                 relay.addSite(site, siteConfig);
@@ -433,4 +439,36 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
             return this.properties.contains(property);
         }
     }
+
+    static class DefaultRouteStatusListener implements RouteStatusListener, Supplier<Set<String>> {
+
+        private final Set<String> view = new ConcurrentSkipListSet<>();
+
+        @Override
+        public void sitesUp(String... sites) {
+            JGroupsLogger log = JGroupsLogger.ROOT_LOGGER;
+            if (log.isTraceEnabled())
+                log.tracef("Joined x-site view: %s", Arrays.toString(sites));
+
+            this.view.addAll(Arrays.asList(sites));
+            log.receivedXSiteClusterView(this.view);
+        }
+
+        @Override
+        public void sitesDown(String... sites) {
+            JGroupsLogger log = JGroupsLogger.ROOT_LOGGER;
+            if (log.isTraceEnabled())
+                log.tracef("Left x-site view: %s", Arrays.toString(sites));
+
+            this.view.removeAll(Arrays.asList(sites));
+            log.receivedXSiteClusterView(this.view);
+        }
+
+        @Override
+        public Set<String> get() {
+            return Collections.unmodifiableSet(this.view);
+        }
+
+    }
+
 }
