@@ -73,20 +73,18 @@ public class AsyncInvocationStage implements InvocationStage, InvocationComposeH
       }
 
       // Deque is frozen
-      InvocationStage stage;
-      if (future.isDone()) {
-         // We can switch to a synchronous stage
-         try {
-            Object rv = ((CompletableFuture<?>) future).getNow(null);
-            stage = new ReturnValueStage(ctx, command, rv);
-         } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
-         }
-      } else {
-         // Give up and create a new asynchronous stage
-         stage = new AsyncInvocationStage(ctx, command, toCompletableFuture());
+      // Give up and create a new asynchronous stage
+      return future.isDone() ?
+            completedInvocationStage().compose(composeHandler) :
+            new AsyncInvocationStage(ctx, command, toCompletableFuture()).compose(composeHandler);
+   }
+
+   private InvocationStage completedInvocationStage() {
+      try {
+         return new ReturnValueStage(ctx, command, future.getNow(null));
+      } catch (Throwable t) {
+         return new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
       }
-      return stage.compose(composeHandler);
    }
 
    @Override

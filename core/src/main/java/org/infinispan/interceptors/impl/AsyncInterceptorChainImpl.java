@@ -230,8 +230,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
-         return stage.toCompletableFuture();
+         return firstInterceptor.visitCommand(ctx, command).toCompletableFuture();
       } catch (Throwable t) {
          CompletableFuture<Object> cf = new CompletableFuture<>();
          cf.completeExceptionally(t);
@@ -242,8 +241,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = firstInterceptor.visitCommand(ctx, command);
-         return stage.get();
+         return firstInterceptor.visitCommand(ctx, command).get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);

@@ -48,8 +48,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     */
    public InvocationStage invokeNext(InvocationContext ctx, VisitableCommand command) {
       try {
-         BasicInvocationStage stage = nextInterceptor.visitCommand(ctx, command);
-         return stage.toInvocationStage(ctx, command);
+         return nextInterceptor.visitCommand(ctx, command).toInvocationStage(ctx, command);
        } catch (Throwable throwable) {
          return new ExceptionStage(ctx, command, throwable);
       }
@@ -88,17 +87,16 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * <p>
     * If {@code delay} completes exceptionally, skip the next interceptor and continue with the exception.
     */
-   public InvocationStage invokeNextAsync(InvocationContext ctx, VisitableCommand command, CompletableFuture<?> delay) {
+   protected InvocationStage invokeNextAsync(InvocationContext ctx, VisitableCommand command,
+         CompletableFuture<?> delay) {
       if (delay.isDone()) {
-         InvocationStage stage;
          try {
             // Make sure the delay was successful
             delay.join();
-            stage = invokeNext(ctx, command);
+            return invokeNext(ctx, command);
          } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
+            return new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
          }
-         return stage;
       }
 
       return new AsyncInvocationStage(ctx, command, delay).thenCompose(
