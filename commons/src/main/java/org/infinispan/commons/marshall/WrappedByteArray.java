@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import org.infinispan.commons.util.Util;
+
 /**
  * Simple wrapper around a byte[] to provide equals and hashCode semantics
  * @author wburns
@@ -73,6 +75,14 @@ public class WrappedByteArray implements WrappedBytes {
    @Override
    public int hashCode() {
       return hashCode;
+   }
+
+   @Override
+   public String toString() {
+      return "WrappedByteArray{" +
+            "bytes=0x" + Util.toHexString(bytes) +
+            ", hashCode=" + hashCode +
+            '}';
    }
 
    public static class Externalizer extends AbstractExternalizer<WrappedByteArray> {
