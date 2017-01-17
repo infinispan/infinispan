@@ -165,19 +165,19 @@ public class HotRodTestingUtils {
                if (configuration.idleTimeout() > 0)
                   inits = Arrays.asList(
                         new HotRodChannelInitializer(this, transport, getEncoder(), getExecutor("test")),
+                        new TimeoutEnabledChannelInitializer<>(this));
+               else // Idle timeout logic is disabled with -1 or 0 values
+                  inits = Collections.singletonList(new HotRodChannelInitializer(this, transport, getEncoder(),
+                        getExecutor("test")));
+            } else {
+               if (configuration.idleTimeout() > 0)
+                  inits = Arrays.asList(
+                        new HotRodChannelInitializer(this, transport, getEncoder(), getExecutor("test")),
                         new TimeoutEnabledChannelInitializer<>(this), new SingleByteFrameDecoderChannelInitializer());
                else // Idle timeout logic is disabled with -1 or 0 values
                   inits = Arrays.asList(
                         new HotRodChannelInitializer(this, transport, getEncoder(), getExecutor("test")),
                         new SingleByteFrameDecoderChannelInitializer());
-            } else {
-               if (configuration.idleTimeout() > 0)
-                  inits = Arrays.asList(
-                        new HotRodChannelInitializer(this, transport, getEncoder(), getExecutor("test")),
-                        new TimeoutEnabledChannelInitializer<>(this));
-               else // Idle timeout logic is disabled with -1 or 0 values
-                  inits = Collections.singletonList(new HotRodChannelInitializer(this, transport, getEncoder(),
-                        getExecutor("test")));
             }
             return new NettyInitializers(inits);
          }
