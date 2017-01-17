@@ -9,9 +9,9 @@ public class HotRodHeader {
    byte version;
    long messageId;
    String cacheName;
-   int flag;
-   short clientIntel;
-   int topologyId;
+   Integer flag = null;
+   Byte clientIntel = null;
+   Integer topologyId = null;
 
    public HotRodOperation getOp() {
       return op;
