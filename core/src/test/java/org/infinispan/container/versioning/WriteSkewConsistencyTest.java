@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -41,6 +40,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -55,7 +55,8 @@ import org.testng.annotations.Test;
 public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
-      final Object key = new MagicKey(cache(1), cache(0));
+      // ControlledConsistentHashFactory sets cache(1) as the primary owner and cache(0) as the backup for all keys
+      final Object key = "key";
       final DataContainer primaryOwnerDataContainer = TestingUtil.extractComponent(cache(1), DataContainer.class);
       final DataContainer backupOwnerDataContainer = TestingUtil.extractComponent(cache(0), DataContainer.class);
       final VersionGenerator versionGenerator = TestingUtil.extractComponent(cache(1), VersionGenerator.class);
@@ -155,7 +156,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       builder.versioning()
             .enabled(true)
             .scheme(VersioningScheme.SIMPLE);
-      builder.clustering().hash().numSegments(60);
+      builder.clustering().hash().numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(1, 0));
       createClusteredCaches(4, builder);
    }
 
