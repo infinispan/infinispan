@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -71,6 +75,8 @@ import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.relay.RELAY2;
+import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.util.Buffer;
@@ -199,6 +205,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.startingJGroupsChannel(configuration.transport().clusterName());
 
       initChannelAndRPCDispatcher();
+      addXSiteViewListener();
       startJGroupsChannelIfNeeded();
 
       waitForInitialNodes();
@@ -912,6 +919,22 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return response;
    }
 
+   private void addXSiteViewListener() {
+      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      if (relay2 != null && relay2.getRouteStatusListener() == null) {
+         relay2.setRouteStatusListener(new DefaultRouteStatusListener());
+      }
+   }
+
+   @Override
+   public Set<String> getSitesView() {
+      RELAY2 relay = channel.getProtocolStack().findProtocol(RELAY2.class);
+      RouteStatusListener listener = relay != null ?
+            relay.getRouteStatusListener() : null;
+      return (listener instanceof Supplier) ?
+            ((Supplier<Set<String>>) listener).get() : null;
+   }
+
    // ------------------------------------------------------------------------------------------------------------------
    // Implementations of JGroups interfaces
    // ------------------------------------------------------------------------------------------------------------------
@@ -1086,4 +1109,28 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                                                 "must be present in the JGroups's config.");
       }
    }
+
+   class DefaultRouteStatusListener implements RouteStatusListener, Supplier<Set<String>> {
+
+      private final Set<String> view = new ConcurrentSkipListSet<>();
+
+      @Override
+      public void sitesUp(String... sites) {
+         this.view.addAll(Arrays.asList(sites));
+         log.receivedXSiteClusterView(this.view);
+      }
+
+      @Override
+      public void sitesDown(String... sites) {
+         this.view.removeAll(Arrays.asList(sites));
+         log.receivedXSiteClusterView(this.view);
+      }
+
+      @Override
+      public Set<String> get() {
+         return Collections.unmodifiableSet(this.view);
+      }
+
+   }
+
 }

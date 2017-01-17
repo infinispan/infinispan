@@ -28,6 +28,7 @@ import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.net.URL;
+import java.util.Set;
 
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.logging.BasicLogger;
@@ -137,4 +138,9 @@ public interface JGroupsLogger extends BasicLogger {
 
     @Message(id = 100, value = "Unauthorized node %s attempting to join cluster.")
     SecurityException unauthorizedNodeJoin(String nodeName);
+
+    @LogMessage(level = INFO)
+    @Message(id = 101, value = "Received new x-site view: %s")
+    void receivedXSiteClusterView(Set<String> view);
+
 }

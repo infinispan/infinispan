@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -154,4 +155,18 @@ public interface Transport extends Lifecycle {
     * protocol stack.
     */
    void checkTotalOrderSupported();
+
+   /**
+    * Get the view of interconnected sites.
+    * If no cross site replication has been configured, this method returns null.
+    *
+    * Inspecting the site view can be useful to see if the different sites
+    * have managed to join each other, which is pre-requisite to get cross
+    * replication working.
+    *
+    * @return set containing the connected sites, or null if no cross site
+    *         replication has been enabled.
+    */
+   Set<String> getSitesView();
+
 }

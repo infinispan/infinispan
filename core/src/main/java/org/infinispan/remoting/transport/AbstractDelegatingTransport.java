@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -175,4 +176,10 @@ public abstract class AbstractDelegatingTransport implements Transport {
    protected BackupResponse afterBackupRemotely(ReplicableCommand command, BackupResponse response) {
       return response;
    }
+
+   @Override
+   public Set<String> getSitesView() {
+      return actual.getSitesView();
+   }
+
 }

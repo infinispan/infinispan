@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.Version;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -75,6 +76,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, ModelType.STRING, false),
         OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
         MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false),
+        SITES_VIEW(MetricKeys.SITES_VIEW, ModelType.STRING, true, true),
 
         // see org.infinispan.stats.CacheContainerStats
         AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
@@ -267,6 +269,10 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                     }
                     break;
                 }
+                case SITES_VIEW:
+                    Set<String> sitesView = SecurityActions.getSitesView(cacheManager);
+                    result.set(sitesView != null ? sitesView.toString() : "N/A");
+                    break;
                 default:
                     context.getFailureDescription().set(String.format("Unknown metric %s", metric));
                     break;

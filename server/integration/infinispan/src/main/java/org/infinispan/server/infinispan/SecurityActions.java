@@ -6,6 +6,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -43,6 +44,7 @@ import org.infinispan.server.infinispan.actions.GetDefinedCacheNamesAction;
 import org.infinispan.server.infinispan.actions.GetMembersAction;
 import org.infinispan.server.infinispan.actions.GetRunningCacheCountAction;
 import org.infinispan.server.infinispan.actions.GetSearchManagerAction;
+import org.infinispan.server.infinispan.actions.GetSitesViewAction;
 import org.infinispan.server.infinispan.actions.ResetComponentJmxStatisticsAction;
 import org.infinispan.server.infinispan.actions.ResetInterceptorJmxStatisticsAction;
 import org.infinispan.server.infinispan.actions.StartCacheAction;
@@ -299,4 +301,10 @@ public final class SecurityActions {
         GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
         return doPrivileged(action);
     }
+
+    public static Set<String> getSitesView(DefaultCacheContainer cacheManager) {
+        GetSitesViewAction action = new GetSitesViewAction(cacheManager);
+        return doPrivileged(action);
+    }
+
 }
