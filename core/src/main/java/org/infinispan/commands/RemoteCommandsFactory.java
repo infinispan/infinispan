@@ -197,6 +197,21 @@ public class RemoteCommandsFactory {
             case TxReadOnlyManyCommand.COMMAND_ID:
                command = new TxReadOnlyManyCommand<>();
                break;
+            case ExceptionAckCommand.COMMAND_ID:
+               command = new ExceptionAckCommand();
+               break;
+            case BackupAckCommand.COMMAND_ID:
+               command = new BackupAckCommand();
+               break;
+            case PrimaryAckCommand.COMMAND_ID:
+               command = new PrimaryAckCommand();
+               break;
+            case BackupMultiKeyAckCommand.COMMAND_ID:
+               command = new BackupMultiKeyAckCommand();
+               break;
+            case PrimaryMultiKeyAckCommand.COMMAND_ID:
+               command = new PrimaryMultiKeyAckCommand();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }
@@ -314,21 +329,6 @@ public class RemoteCommandsFactory {
                break;
             case StreamResponseCommand.COMMAND_ID:
                command = new StreamResponseCommand(cacheName);
-               break;
-            case BackupAckCommand.COMMAND_ID:
-               command = new BackupAckCommand(cacheName);
-               break;
-            case PrimaryAckCommand.COMMAND_ID:
-               command = new PrimaryAckCommand(cacheName);
-               break;
-            case BackupMultiKeyAckCommand.COMMAND_ID:
-               command = new BackupMultiKeyAckCommand(cacheName);
-               break;
-            case PrimaryMultiKeyAckCommand.COMMAND_ID:
-               command = new PrimaryMultiKeyAckCommand(cacheName);
-               break;
-            case ExceptionAckCommand.COMMAND_ID:
-               command = new ExceptionAckCommand(cacheName);
                break;
             case BackupWriteRcpCommand.COMMAND_ID:
                command = new BackupWriteRcpCommand(cacheName);

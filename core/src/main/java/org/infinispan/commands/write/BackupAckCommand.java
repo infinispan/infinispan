@@ -1,15 +1,15 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
@@ -19,30 +19,27 @@ import java.util.concurrent.CompletableFuture;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupAckCommand extends BaseRpcCommand {
+public class BackupAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 2;
-   private CommandInvocationId commandInvocationId;
    private CommandAckCollector commandAckCollector;
+   private Address origin;
+   private long id;
    private int topologyId;
 
    public BackupAckCommand() {
-      super(null);
+      super();
    }
 
-   public BackupAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
 
-   public BackupAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId) {
-      super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+   public BackupAckCommand(long id, int topologyId) {
+      this.id = id;
       this.topologyId = topologyId;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.backupAck(commandInvocationId, getOrigin(), topologyId);
+      commandAckCollector.backupAck(id, origin, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -57,17 +54,23 @@ public class BackupAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       topologyId = input.readInt();
    }
 
+   @Inject
    public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
       this.commandAckCollector = commandAckCollector;
    }
@@ -75,8 +78,14 @@ public class BackupAckCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "BackupAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
+            ", origin=" + origin +
             ", topologyId=" + topologyId +
             '}';
+   }
+
+   @Override
+   public void setOrigin(Address origin) {
+      this.origin = origin;
    }
 }

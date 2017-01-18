@@ -5,9 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -20,33 +20,29 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupMultiKeyAckCommand extends BaseRpcCommand {
+public class BackupMultiKeyAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 41;
-   private CommandInvocationId commandInvocationId;
    private CommandAckCollector commandAckCollector;
    private int segment;
+   private Address origin;
+   private long id;
    private int topologyId;
 
    public BackupMultiKeyAckCommand() {
-      super(null);
+      super();
    }
 
-   public BackupMultiKeyAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
 
-   public BackupMultiKeyAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int segment,
-         int topologyId) {
-      super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+   public BackupMultiKeyAckCommand(long id, int segment, int topologyId) {
+      this.id = id;
       this.segment = segment;
       this.topologyId = topologyId;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.multiKeyBackupAck(commandInvocationId, getOrigin(), segment, topologyId);
+      commandAckCollector.multiKeyBackupAck(id, origin, segment, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -61,19 +57,25 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       output.writeInt(segment);
       output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       segment = input.readInt();
       topologyId = input.readInt();
    }
 
+   @Inject
    public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
       this.commandAckCollector = commandAckCollector;
    }
@@ -81,9 +83,14 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "BackupMultiKeyAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
             ", segment=" + segment +
             ", topologyId=" + topologyId +
             '}';
+   }
+
+   @Override
+   public void setOrigin(Address origin) {
+      this.origin = origin;
    }
 }

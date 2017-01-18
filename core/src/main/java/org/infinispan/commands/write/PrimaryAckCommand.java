@@ -1,16 +1,16 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an acknowledge sent by the primary owner to the originator.
@@ -21,31 +21,23 @@ import java.util.concurrent.CompletableFuture;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class PrimaryAckCommand extends BaseRpcCommand {
+public class PrimaryAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 30;
    private static final Type[] CACHED_TYPE = Type.values();
-   private CommandInvocationId commandInvocationId;
+   private long id;
    private Object returnValue;
    private Type type;
    private CommandAckCollector commandAckCollector;
    private int topologyId;
+   private Address origin;
 
    public PrimaryAckCommand() {
-      super(null);
-   }
-
-   public PrimaryAckCommand(ByteString cacheName) {
-      super(cacheName);
+      super();
    }
 
    private static Type valueOf(int index) {
       return CACHED_TYPE[index];
-   }
-
-   public void initCommandInvocationIdAndTopologyId(CommandInvocationId id, int topologyId) {
-      this.commandInvocationId = id;
-      this.topologyId = topologyId;
    }
 
    @Override
@@ -54,12 +46,12 @@ public class PrimaryAckCommand extends BaseRpcCommand {
          case SUCCESS_WITH_BOOL_RETURN_VALUE:
          case SUCCESS_WITH_RETURN_VALUE:
          case SUCCESS_WITHOUT_RETURN_VALUE:
-            commandAckCollector.primaryAck(commandInvocationId, returnValue, true, getOrigin(), topologyId);
+            commandAckCollector.primaryAck(id, returnValue, true, origin, topologyId);
             break;
          case UNSUCCESSFUL_WITH_BOOL_RETURN_VALUE:
          case UNSUCCESSFUL_WITH_RETURN_VALUE:
          case UNSUCCESSFUL_WITHOUT_RETURN_VALUE:
-            commandAckCollector.primaryAck(commandInvocationId, returnValue, false, getOrigin(), topologyId);
+            commandAckCollector.primaryAck(id, returnValue, false, origin, topologyId);
             break;
       }
       return CompletableFutures.completedNull();
@@ -76,9 +68,14 @@ public class PrimaryAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeInt(topologyId);
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
          case SUCCESS_WITH_RETURN_VALUE:
@@ -92,7 +89,7 @@ public class PrimaryAckCommand extends BaseRpcCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       topologyId = input.readInt();
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       type = MarshallUtil.unmarshallEnum(input, PrimaryAckCommand::valueOf);
       assert type != null;
       switch (type) {
@@ -110,7 +107,32 @@ public class PrimaryAckCommand extends BaseRpcCommand {
       }
    }
 
-   public void initWithReturnValue(boolean success, Object returnValue) {
+   @Inject
+   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
+   }
+
+   @Override
+   public String toString() {
+      return "PrimaryAckCommand{" +
+            "id=" + id +
+            ", origin=" + origin +
+            ", returnValue=" + returnValue +
+            ", type=" + type +
+            ", topologyId=" + topologyId +
+            '}';
+   }
+
+   public void setOrigin(Address origin) {
+      this.origin = origin;
+   }
+
+   void initCommandInvocationIdAndTopologyId(long id, int topologyId) {
+      this.id = id;
+      this.topologyId = topologyId;
+   }
+
+   void initWithReturnValue(boolean success, Object returnValue) {
       this.returnValue = returnValue;
       if (success) {
          type = Type.SUCCESS_WITH_RETURN_VALUE;
@@ -119,7 +141,7 @@ public class PrimaryAckCommand extends BaseRpcCommand {
       }
    }
 
-   public void initWithBoolReturnValue(boolean success) {
+   void initWithBoolReturnValue(boolean success) {
       this.returnValue = success;
       if (success) {
          type = Type.SUCCESS_WITH_BOOL_RETURN_VALUE;
@@ -128,26 +150,12 @@ public class PrimaryAckCommand extends BaseRpcCommand {
       }
    }
 
-   public void initWithoutReturnValue(boolean success) {
+   void initWithoutReturnValue(boolean success) {
       if (success) {
          type = Type.SUCCESS_WITHOUT_RETURN_VALUE;
       } else {
          type = Type.UNSUCCESSFUL_WITHOUT_RETURN_VALUE;
       }
-   }
-
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
-   }
-
-   @Override
-   public String toString() {
-      return "PrimaryAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
-            ", returnValue=" + returnValue +
-            ", type=" + type +
-            ", topologyId=" + topologyId +
-            '}';
    }
 
    private enum Type {
