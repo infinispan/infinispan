@@ -501,7 +501,7 @@ public interface CommandsFactory {
 
    PrimaryAckCommand buildPrimaryAckCommand();
 
-   BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, Collection<Integer> segments, int topologyId);
+   BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId);
 
    PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId);
 

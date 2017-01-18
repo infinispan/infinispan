@@ -2,6 +2,7 @@ package org.infinispan.remoting.inboundhandler;
 
 import java.util.Collection;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -17,7 +18,6 @@ import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
-import org.infinispan.remoting.inboundhandler.action.TriangleOrderMultiSegmentAction;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.locks.LockListener;
@@ -167,19 +167,28 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
 
    private ReadyAction createReadyAction(BackupWriteRcpCommand command, int topologyId) {
       final int segmentId = clusteringDependentLogic.getSegmentForKey(command.getKey());
+      final long sequence = command.getSequence();
       if (trace) {
-         log.tracef("Command %s has sequence %s for segment %s", command.getCommandInvocationId(), segmentId, command.getSequence());
+         traceSequenceAndSegment(command.getCommandInvocationId(), segmentId, command.getSequence());
       }
-      return new DefaultReadyAction(new ActionState(command, topologyId, 0), checkTopologyAction,
-            new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, segmentId, command.getSequence()));
+      return createTriangleOrderAction(command, topologyId, segmentId, sequence);
    }
 
    private ReadyAction createReadyAction(BackupPutMapRcpCommand command, int topologyId) {
+      final int segmentId = clusteringDependentLogic.getSegmentForKey(command.getMap().keySet().iterator().next());
+      final long sequence = command.getSequence();
       if (trace) {
-         log.tracef("Command %s has sequences/segments %s", command.getCommandInvocationId(), command.getSegmentsAndSequences());
+         traceSequenceAndSegment(command.getCommandInvocationId(), segmentId, command.getSequence());
       }
+      return createTriangleOrderAction(command, topologyId, segmentId, sequence);
+   }
+
+   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, int segmentId, long sequence) {
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), checkTopologyAction,
-            new TriangleOrderMultiSegmentAction(triangleOrderManager, remoteCommandsExecutor,
-                  command.getSegmentsAndSequences()));
+            new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, segmentId, sequence));
+   }
+
+   private void traceSequenceAndSegment(CommandInvocationId id, int segment, long sequence) {
+      log.tracef("Command %s has sequence %s for segment %s", id, sequence, segment);
    }
 }

@@ -1,7 +1,5 @@
 package org.infinispan.commands.write;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -40,7 +38,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
    private Metadata metadata;
    private long flags;
    private int topologyId;
-   private Map<Integer, Long> segmentsAndSequences;
+   private long sequence;
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;
    private CacheNotifier cacheNotifier;
@@ -61,20 +59,16 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
       super(cacheName);
    }
 
-   public CommandInvocationId getCommandInvocationId() {
-      return commandInvocationId;
+   public Map<Object, Object> getMap() {
+      return map;
    }
 
    public void setMap(Map<Object, Object> map) {
       this.map = map;
    }
 
-   public Map<Integer, Long> getSegmentsAndSequences() {
-      return segmentsAndSequences;
-   }
-
-   public void setSegmentsAndSequences(Map<Integer, Long> segmentsAndSequences) {
-      this.segmentsAndSequences = segmentsAndSequences;
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
@@ -110,7 +104,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
       MarshallUtil.marshallMap(map, output);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
-      MarshallUtil.marshallMap(segmentsAndSequences, DataOutput::writeInt, DataOutput::writeLong, output);
+      output.writeLong(sequence);
 
    }
 
@@ -120,7 +114,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
       map = MarshallUtil.unmarshallMap(input, HashMap::new);
       metadata = (Metadata) input.readObject();
       flags = input.readLong();
-      segmentsAndSequences = MarshallUtil.unmarshallMap(input, DataInput::readInt, DataInput::readLong, HashMap::new);
+      sequence = input.readLong();
    }
 
    @Override
@@ -148,7 +142,15 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
             ", metadata=" + metadata +
             ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
             ", topologyId=" + topologyId +
-            ", segmentsAndSequences=" + segmentsAndSequences +
+            ", sequence=" + sequence +
             '}';
+   }
+
+   public long getSequence() {
+      return sequence;
+   }
+
+   public void setSequence(long sequence) {
+      this.sequence = sequence;
    }
 }

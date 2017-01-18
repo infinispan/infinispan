@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -129,15 +130,24 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private void sendToBackups(PutMapCommand command, Map<Object, Object> entries, ConsistentHash ch) {
       BackupOwnerClassifier filter = new BackupOwnerClassifier(ch);
       entries.entrySet().forEach(filter::add);
-      for (Map.Entry<Address, Map<Object, Object>> entry : filter.perBackupKeyValue.entrySet()) {
-         Map<Integer, Long> segmentsAndSequences = new HashMap<>();
+      int topologyId = command.getTopologyId();
+      for (Map.Entry<Integer, Map<Object, Object>> entry : filter.perSegmentKeyValue.entrySet()) {
+         int segmentId = entry.getKey();
+         List<Address> owners = ch.locateOwnersForSegment(segmentId);
+         int size = owners.size();
+         if (size == 1) {
+            //only the primary owner
+            continue; //or break? can we have another segment with backups?
+         }
          Map<Object, Object> map = entry.getValue();
-         map.keySet().forEach(key -> segmentsAndSequences.put(cdl.getSegmentForKey(key), -1L));
-         triangleOrderManager.next(segmentsAndSequences, command.getTopologyId());
+         long sequence = triangleOrderManager.next(segmentId, topologyId);
          BackupPutMapRcpCommand backupPutMapRcpCommand = commandsFactory.buildBackupPutMapRcpCommand(command);
          backupPutMapRcpCommand.setMap(map);
-         backupPutMapRcpCommand.setSegmentsAndSequences(segmentsAndSequences);
-         rpcManager.sendTo(entry.getKey(), backupPutMapRcpCommand, DeliverOrder.NONE);
+         backupPutMapRcpCommand.setSequence(sequence);
+         if (trace) {
+            logCommandSequence(command.getCommandInvocationId(), segmentId, sequence);
+         }
+         rpcManager.sendToMany(owners.subList(1, size), backupPutMapRcpCommand, DeliverOrder.NONE);
       }
    }
 
@@ -256,12 +266,16 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
             backupWriteRcpCommand.setSequence(sequenceNumber);
             if (trace) {
-               log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, distributionInfo.getSegmentId());
+               logCommandSequence(id, distributionInfo.getSegmentId(), sequenceNumber);
             }
             // we must send the message only after the collector is registered in the map
             rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
          }
       });
+   }
+
+   private void logCommandSequence(CommandInvocationId id, int segment, long sequence) {
+         log.tracef("Command %s got sequence %s for segment %s", id, sequence, segment);
    }
 
    private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
@@ -314,7 +328,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
     * It maps the backup owner address to the subset of keys.
     */
    private static class BackupOwnerClassifier {
-      private final Map<Address, Map<Object, Object>> perBackupKeyValue = new HashMap<>();
+      private final Map<Integer, Map<Object, Object>> perSegmentKeyValue = new HashMap<>();
       private final ConsistentHash consistentHash;
 
       private BackupOwnerClassifier(ConsistentHash consistentHash) {
@@ -322,12 +336,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
 
       public void add(Map.Entry<Object, Object> entry) {
-         Iterator<Address> iterator = consistentHash.locateOwners(entry.getKey()).iterator();
-         iterator.next();
-         while (iterator.hasNext()) {
-            perBackupKeyValue.computeIfAbsent(iterator.next(), address -> new HashMap<>())
-                  .put(entry.getKey(), entry.getValue());
-         }
+         perSegmentKeyValue.computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>())
+               .put(entry.getKey(), entry.getValue());
       }
    }
 
