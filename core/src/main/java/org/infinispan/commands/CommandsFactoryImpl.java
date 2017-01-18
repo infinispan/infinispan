@@ -66,7 +66,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -741,11 +740,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public BackupAckCommand buildBackupAckCommand(long id, int topologyId) {
       return new BackupAckCommand(id, topologyId);
-   }
-
-   @Override
-   public PrimaryAckCommand buildPrimaryAckCommand() {
-      return new PrimaryAckCommand();
    }
 
    @Override

@@ -224,16 +224,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       command.setWrite(commandInvocationId, key, value, metadata, getFlagsBitSet(), getTopologyId());
    }
 
-   @Override
-   public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
-      command.initCommandInvocationIdAndTopologyId(commandInvocationId.getId(), getTopologyId());
-      if (isConditional() || isReturnValueExpected()) {
-         command.initWithReturnValue(successful, localReturnValue);
-      } else {
-         command.initWithoutReturnValue(successful);
-      }
-   }
-
    private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;

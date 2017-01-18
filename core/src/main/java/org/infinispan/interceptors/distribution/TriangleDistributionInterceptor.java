@@ -5,6 +5,7 @@ import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +28,6 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -45,6 +45,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.TriangleAckInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.WriteResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -65,7 +67,7 @@ import org.infinispan.util.logging.LogFactory;
  * <ul>
  * <li>The command if forwarded to the primary owner of the key.</li>
  * <li>The primary owner locks the key and executes the operation; sends the {@link BackupWriteRcpCommand} to the backup
- * owners; releases the lock; sends the {@link PrimaryAckCommand} back to the originator.</li>
+ * owners; releases the lock; sends the {@link WriteResponse} back to the originator.</li>
  * <li>The backup owner applies the update and sends a {@link BackupAckCommand} back to the originator.</li>
  * <li>The originator collects the ack from all the owners and returns.</li>
  * </ul>
@@ -334,27 +336,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             }
             return;
          }
-         if (distributionInfo.owners().size() > 1) {
-            Collection<Address> backupOwners = distributionInfo.backups();
-            if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
-               commandAckCollector.create(id.getId(), rv, distributionInfo.owners(), dwCommand.getTopologyId(),
-                     timeoutNanos);
-               //check the topology after registering the collector.
-               //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-               checkTopologyId(dwCommand);
-            }
-            if (trace) {
-               log.tracef("Command %s send to backup owner %s.", dwCommand.getCommandInvocationId(), backupOwners);
-            }
-            long sequenceNumber = triangleOrderManager.next(distributionInfo.getSegmentId(), dwCommand.getTopologyId());
-            BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
-            backupWriteRcpCommand.setSequence(sequenceNumber);
-            if (trace) {
-               logCommandSequence(id, distributionInfo.getSegmentId(), sequenceNumber);
-            }
-            // we must send the message only after the collector is registered in the map
-            rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
-         }
+         sendToBackups(distributionInfo, dwCommand, rCtx.isOriginLocal());
       });
    }
 
@@ -366,16 +348,64 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
-      if ((isSynchronous(command) || command.isReturnValueExpected()) &&
-            !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId.getId(), distributionInfo.owners(), command.getTopologyId(),
-               timeoutNanos);
+      boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
+      if (isSyncForwarding && !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         commandAckCollector.create(invocationId.getId(), distributionInfo.backups(), command.getTopologyId(), timeoutNanos);
+         //check the topology after registering the collector.
+         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+         checkTopologyId(command);
       }
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
-      rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
-      return returnWith(null);
+      CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager
+            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command,
+                  rpcManager.getDefaultRpcOptions(isSyncForwarding));
+      if (isSyncForwarding) {
+         return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+            CompletableFutures.rethrowException(t);
+            return handlePrimaryOwnerResponse((WriteResponse) responses.values().iterator().next(), command);
+         }));
+      } else {
+         return returnWith(null);
+      }
+   }
+
+   private Object handlePrimaryOwnerResponse(WriteResponse response, DataWriteCommand command) {
+      //The only response possible is WriteResponse.
+      //A SuccessfulResponse would be a bug and an ExceptionResponse will throw the exception.
+      if (!response.isCommandSuccessful()) {
+         //the command failed. it would be never sent to the backups so we need to cancel the collector.
+         commandAckCollector.unsuccessfulCommand(command.getCommandInvocationId());
+      }
+      Object primaryResult = response.getReturnValue();
+      command.updateStatusFromRemoteResponse(primaryResult);
+      return primaryResult;
+   }
+
+   private void sendToBackups(DistributionInfo distributionInfo, DataWriteCommand command, boolean local) {
+      Collection<Address> backupOwners = distributionInfo.backups();
+      if (backupOwners.isEmpty()) {
+         return;
+      }
+      if (local && (isSynchronous(command) || command.isReturnValueExpected())) {
+         commandAckCollector.create(command.getCommandInvocationId().getId(), backupOwners, command.getTopologyId(),
+               timeoutNanos);
+         //check the topology after registering the collector.
+         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+         checkTopologyId(command);
+      }
+      if (trace) {
+         log.tracef("Command %s send to backup owner %s.", command.getCommandInvocationId(), backupOwners);
+      }
+      long sequenceNumber = triangleOrderManager.next(distributionInfo.getSegmentId(), command.getTopologyId());
+      BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(command);
+      backupWriteRcpCommand.setSequence(sequenceNumber);
+      if (trace) {
+         logCommandSequence(command.getCommandInvocationId(), distributionInfo.getSegmentId(), sequenceNumber);
+      }
+      // we must send the message only after the collector is registered in the map
+      rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
    }
 
    /**

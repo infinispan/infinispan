@@ -7,7 +7,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -54,7 +53,6 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private DistributionManager distributionManager;
    private StateTransferManager stateTransferManager;
    private Address localAddress;
-   private final InvocationComposeHandler onRemotePrimaryOwner = this::onRemotePrimaryOwner;
    private final InvocationComposeHandler onRemoteBackupOwner = this::onRemoteBackupOwner;
 
    @Inject
@@ -143,23 +141,11 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
             case BACKUP:
                return invokeNext(ctx, command).compose(onRemoteBackupOwner);
             case PRIMARY:
-               return invokeNext(ctx, command).compose(onRemotePrimaryOwner);
+               return invokeNext(ctx, command);
             default:
                throw new IllegalStateException();
          }
       }
-   }
-
-   @SuppressWarnings("unused")
-   private BasicInvocationStage onRemotePrimaryOwner(BasicInvocationStage stage, InvocationContext rCtx,
-         VisitableCommand rCommand, Object rv, Throwable throwable) throws Exception {
-      DataWriteCommand command = (DataWriteCommand) rCommand;
-      if (throwable != null) {
-         sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(), throwable);
-      } else {
-         sendPrimaryAck(command, rv);
-      }
-      return stage;
    }
 
    @SuppressWarnings("unused")
@@ -182,7 +168,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          disposeCollectorOnException(cmd.getCommandInvocationId());
          return stage;
       }
-      return waitCollectorAsync(stage, cmd.getCommandInvocationId());
+      return waitCollectorAsync(stage, rv, cmd.getCommandInvocationId().getId());
    }
 
    private void disposeCollectorOnException(CommandInvocationId id) {
@@ -200,15 +186,14 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       return returnWithAsync(collectorFuture);
    }
 
-   private void sendPrimaryAck(DataWriteCommand command, Object returnValue) throws Exception {
-      final CommandInvocationId id = command.getCommandInvocationId();
-      final Address origin = id.getAddress();
-      if (trace) {
-         log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
+   private BasicInvocationStage waitCollectorAsync(BasicInvocationStage stage, Object rv, long id) {
+      //waiting for acknowledges based on default rpc timeout.
+      CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFutureToWait(id);
+      if (collectorFuture == null) {
+         //no collector, return immediately.
+         return stage;
       }
-      PrimaryAckCommand ackCommand = commandsFactory.buildPrimaryAckCommand();
-      command.initPrimaryAck(ackCommand, returnValue);
-      transport.noFcSendTo(origin, ackCommand, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
+      return returnWithAsync(collectorFuture.thenApply(o -> rv));
    }
 
    private void sendBackupAck(DataWriteCommand command) throws Exception {
