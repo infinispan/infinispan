@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -23,6 +25,8 @@ import net.jcip.annotations.GuardedBy;
  */
 public class TriangleOrderManager {
 
+   private static final Log log = LogFactory.getLog(TriangleOrderManager.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final TriangleSequencer[] sequencers;
    private volatile CacheTopology currentCacheTopology;
 
@@ -112,13 +116,25 @@ public class TriangleOrderManager {
 
       private synchronized long next(int commandTopologyId) {
          if (senderTopologyId == commandTopologyId) {
+            if (trace) {
+               log.tracef("Sender Increment sequence (%s:%s). commandTopologyId=%s", senderTopologyId,
+                     senderSequenceNumber, commandTopologyId);
+            }
             return senderSequenceNumber++;
          } else if (senderTopologyId < commandTopologyId) {
+            if (trace) {
+               log.tracef("Sender update topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
+                     commandTopologyId);
+            }
             //update topology. this command will be the first
             senderTopologyId = commandTopologyId;
             senderSequenceNumber = 2;
             return 1;
          } else {
+            if (trace) {
+               log.tracef("Sender old topology. CurrentTopologyId=%s, CommandTopologyId=%s", senderTopologyId,
+                     commandTopologyId);
+            }
             //this topology is higher than the command topology id.
             //another topology was installed. this command will fail with OutdatedTopologyException.
             throw OutdatedTopologyException.getCachedInstance();
@@ -128,18 +144,33 @@ public class TriangleOrderManager {
       private synchronized void deliver(int commandTopologyId, long sequenceNumber) {
          if (receiverTopologyId == commandTopologyId && receiverSequenceNumber == sequenceNumber) {
             receiverSequenceNumber++;
+            if (trace) {
+               log.tracef("Deliver done. Next sequence (%s:%s)", receiverTopologyId, receiverSequenceNumber);
+            }
          }
       }
 
       private synchronized boolean isNext(int commandTopologyId, long sequenceNumber) {
          if (receiverTopologyId == commandTopologyId) {
+            if (trace) {
+               log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
+                     receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
+            }
             return receiverSequenceNumber == sequenceNumber;
          } else if (receiverTopologyId < commandTopologyId) {
             //update topology. this command will be the first
+            if (trace) {
+               log.tracef("Receiver update topology. CommandTopologyId=%s, command sequence=%s", commandTopologyId,
+                     sequenceNumber);
+            }
             receiverTopologyId = commandTopologyId;
             receiverSequenceNumber = 1;
             return 1 == sequenceNumber;
          } else {
+            if (trace) {
+               log.tracef("Receiver old topology. Current sequence (%s:%s), command sequence (%s:%s)",
+                     receiverTopologyId, receiverSequenceNumber, commandTopologyId, sequenceNumber);
+            }
             //this topology is higher than the command topology id.
             //another topology was installed. this command will fail with OutdatedTopologyException.
             return true;

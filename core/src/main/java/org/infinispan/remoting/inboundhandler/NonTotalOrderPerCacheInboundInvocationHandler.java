@@ -167,11 +167,17 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
 
    private ReadyAction createReadyAction(BackupWriteRcpCommand command, int topologyId) {
       final int segmentId = clusteringDependentLogic.getSegmentForKey(command.getKey());
+      if (trace) {
+         log.tracef("Command %s has sequence %s for segment %s", command.getCommandInvocationId(), segmentId, command.getSequence());
+      }
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), checkTopologyAction,
             new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, segmentId, command.getSequence()));
    }
 
    private ReadyAction createReadyAction(BackupPutMapRcpCommand command, int topologyId) {
+      if (trace) {
+         log.tracef("Command %s has sequences/segments %s", command.getCommandInvocationId(), command.getSegmentsAndSequences());
+      }
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), checkTopologyAction,
             new TriangleOrderMultiSegmentAction(triangleOrderManager, remoteCommandsExecutor,
                   command.getSegmentsAndSequences()));

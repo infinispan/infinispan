@@ -108,7 +108,7 @@ public class CommandAckCollector {
          Map<Address, Collection<Integer>> backups, int topologyId) {
       collectorMap.putIfAbsent(id, new MultiKeyCollector(id, primary, backups, topologyId));
       if (trace) {
-         log.tracef("Created new collector for %s. PrimarySegments=%s. BackupSegments", id, primary, backups);
+         log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
       }
    }
 

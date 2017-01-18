@@ -130,6 +130,10 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
       return COMMAND_ID;
    }
 
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
+   }
+
    @Override
    public boolean isReturnValueExpected() {
       return false;
