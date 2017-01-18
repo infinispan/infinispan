@@ -769,8 +769,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, Collection<Integer> segments, int topologyId) {
-      return new BackupMultiKeyAckCommand(cacheName, id, segments, topologyId);
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+      return new BackupMultiKeyAckCommand(cacheName, id, segment, topologyId);
    }
 
    @Override

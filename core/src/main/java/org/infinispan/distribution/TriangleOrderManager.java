@@ -1,8 +1,5 @@
 package org.infinispan.distribution;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
@@ -48,28 +45,10 @@ public class TriangleOrderManager {
       }
    }
 
-   public void next(Map<Integer, Long> segmentsIds, final int commandTopologyId) {
-      checkTopologyId(commandTopologyId);
-      try {
-         for (Map.Entry<Integer, Long> entry : segmentsIds.entrySet()) {
-            entry.setValue(getNext(entry.getKey(), commandTopologyId));
-         }
-      } finally {
-         //check if topology didn't change in the meanwhile
-         checkTopologyId(commandTopologyId);
-      }
-   }
-
    public boolean isNext(int segmentId, long sequenceNumber, int commandTopologyId) {
       final int topologyId = currentCacheTopology.getTopologyId();
       return commandTopologyId < topologyId ||
             (commandTopologyId == topologyId && checkIfNext(segmentId, commandTopologyId, sequenceNumber));
-   }
-
-   public boolean isNext(Map<Integer, Long> sequenceNumbers, int commandTopologyId) {
-      final int topologyId = currentCacheTopology.getTopologyId();
-      return commandTopologyId < topologyId ||
-            (commandTopologyId == topologyId && checkAllEntries(sequenceNumbers, commandTopologyId));
    }
 
    public void markDelivered(int segmentId, long sequenceNumber, int commandTopologyId) {
@@ -86,16 +65,6 @@ public class TriangleOrderManager {
 
    private boolean checkIfNext(int segmentId, int topologyId, long sequenceNumber) {
       return sequencers[segmentId].isNext(topologyId, sequenceNumber);
-   }
-
-   private boolean checkAllEntries(Map<Integer, Long> sequenceNumbers, int commandTopologyId) {
-      Iterator<Map.Entry<Integer, Long>> iterator = sequenceNumbers.entrySet().iterator();
-      boolean result = true;
-      while (result && iterator.hasNext()) {
-         Map.Entry<Integer, Long> entry = iterator.next();
-         result = checkIfNext(entry.getKey(), commandTopologyId, entry.getValue());
-      }
-      return result;
    }
 
    private void checkTopologyId(int topologyId) {

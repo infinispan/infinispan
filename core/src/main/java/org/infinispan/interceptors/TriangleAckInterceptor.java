@@ -1,9 +1,7 @@
 package org.infinispan.interceptors;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -19,7 +17,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -53,18 +50,12 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
    private CommandAckCollector commandAckCollector;
+   private final InvocationComposeHandler onLocalWriteCommand = this::onLocalWriteCommand;
    private DistributionManager distributionManager;
    private StateTransferManager stateTransferManager;
-
    private Address localAddress;
-
-   private final InvocationComposeHandler onLocalWriteCommand = this::onLocalWriteCommand;
    private final InvocationComposeHandler onRemotePrimaryOwner = this::onRemotePrimaryOwner;
    private final InvocationComposeHandler onRemoteBackupOwner = this::onRemoteBackupOwner;
-
-   private static Collection<Integer> calculateSegments(Collection<?> keys, ConsistentHash ch) {
-      return keys.stream().map(ch::getSegment).collect(Collectors.toSet());
-   }
 
    @Inject
    public void inject(RpcManager rpcManager, CommandsFactory commandsFactory, CommandAckCollector commandAckCollector,
@@ -113,10 +104,9 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
             sendExceptionAck(cmd.getCommandInvocationId(), cmd.getTopologyId(), t);
             return stage;
          }
-         final Collection<Integer> segments = calculateSegments(cmd.getAffectedKeys(),
-               distributionManager.getWriteConsistentHash());
+         int segment = distributionManager.getConsistentHash().getSegment(command.getMap().keySet().iterator().next());
          if (cmd.isForwarded()) {
-            sendPutMapBackupAck(cmd, segments);
+            sendPutMapBackupAck(cmd, segment);
          } else {
             //noinspection unchecked
             sendPrimaryPutMapAck(cmd, (Map<Object, Object>) rv);
@@ -235,17 +225,17 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private void sendPutMapBackupAck(PutMapCommand command, Collection<Integer> segments) {
+   private void sendPutMapBackupAck(PutMapCommand command, int segment) {
       final CommandInvocationId id = command.getCommandInvocationId();
       final Address origin = id.getAddress();
       if (trace) {
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       if (id.getAddress().equals(localAddress)) {
-         commandAckCollector.multiKeyBackupAck(id, localAddress, segments, command.getTopologyId());
+         commandAckCollector.multiKeyBackupAck(id, localAddress, segment, command.getTopologyId());
       } else {
          rpcManager.sendTo(id.getAddress(),
-               commandsFactory.buildBackupMultiKeyAckCommand(id, segments, command.getTopologyId()), DeliverOrder.NONE);
+               commandsFactory.buildBackupMultiKeyAckCommand(id, segment, command.getTopologyId()), DeliverOrder.NONE);
       }
    }
 

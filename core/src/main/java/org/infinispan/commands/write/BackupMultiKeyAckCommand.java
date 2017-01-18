@@ -1,18 +1,15 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
@@ -28,7 +25,7 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 41;
    private CommandInvocationId commandInvocationId;
    private CommandAckCollector commandAckCollector;
-   private Collection<Integer> segments;
+   private int segment;
    private int topologyId;
 
    public BackupMultiKeyAckCommand() {
@@ -39,17 +36,17 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public BackupMultiKeyAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId,
-         Collection<Integer> segments, int topologyId) {
+   public BackupMultiKeyAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int segment,
+         int topologyId) {
       super(cacheName);
       this.commandInvocationId = commandInvocationId;
-      this.segments = segments;
+      this.segment = segment;
       this.topologyId = topologyId;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.multiKeyBackupAck(commandInvocationId, getOrigin(), segments, topologyId);
+      commandAckCollector.multiKeyBackupAck(commandInvocationId, getOrigin(), segment, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -66,14 +63,14 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallIntCollection(segments, output);
+      output.writeInt(segment);
       output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      segments = MarshallUtil.unmarshallIntCollection(input, ArrayList::new);
+      segment = input.readInt();
       topologyId = input.readInt();
    }
 
@@ -85,7 +82,7 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    public String toString() {
       return "BackupMultiKeyAckCommand{" +
             "commandInvocationId=" + commandInvocationId +
-            ", segments=" + segments +
+            ", segment=" + segment +
             ", topologyId=" + topologyId +
             '}';
    }

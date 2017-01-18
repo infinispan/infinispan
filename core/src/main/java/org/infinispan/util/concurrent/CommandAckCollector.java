@@ -130,17 +130,15 @@ public class CommandAckCollector {
 
    /**
     * Acknowledges a {@link org.infinispan.commands.write.PutMapCommand} completion in the backup owner.
-    *
     * @param id         the {@link CommandInvocationId}.
     * @param from       the backup owner.
-    * @param segments   the segments affected and acknowledged.
+    * @param segment   the segments affected and acknowledged.
     * @param topologyId the topology id.
     */
-   public void multiKeyBackupAck(CommandInvocationId id, Address from, Collection<Integer> segments, int topologyId) {
+   public void multiKeyBackupAck(CommandInvocationId id, Address from, int segment, int topologyId) {
       MultiKeyCollector collector = (MultiKeyCollector) collectorMap.get(id);
       if (collector != null) {
-
-         collector.backupAck(from, segments, topologyId);
+         collector.backupAck(from, segment, topologyId);
       }
    }
 
@@ -274,9 +272,9 @@ public class CommandAckCollector {
 
    private abstract class Collector<T> implements Callable<Void>, BiConsumer<T, Throwable> {
 
-      protected final CommandInvocationId id;
-      protected final CompletableFuture<T> future;
-      protected final int topologyId;
+      final CommandInvocationId id;
+      final CompletableFuture<T> future;
+      final int topologyId;
       private volatile ScheduledFuture<?> timeoutTask;
 
       protected Collector(CommandInvocationId id, int topologyId) {
@@ -495,16 +493,16 @@ public class CommandAckCollector {
          }
       }
 
-      synchronized void backupAck(Address from, Collection<Integer> segments, int topologyId) {
+      synchronized void backupAck(Address from, int segment, int topologyId) {
          if (trace) {
-            log.tracef("[Collector#%s] PutMap Backup ACK. Address=%s. TopologyId=%s (expected=%s). Segments=%s",
-                  id, from, topologyId, this.topologyId, segments);
+            log.tracef("[Collector#%s] PutMap Backup ACK. Address=%s. TopologyId=%s (expected=%s). Segment=%s",
+                  id, from, topologyId, this.topologyId, segment);
          }
          if (this.topologyId != topologyId) {
             return;
          }
          Collection<Integer> pendingSegments = backups.getOrDefault(from, Collections.emptyList());
-         if (pendingSegments.removeAll(segments) && pendingSegments.isEmpty()) {
+         if (pendingSegments.remove(segment) && pendingSegments.isEmpty()) {
             backups.remove(from);
             checkCompleted();
          }

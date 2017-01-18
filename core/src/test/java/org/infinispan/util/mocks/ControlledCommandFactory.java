@@ -462,8 +462,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, Collection<Integer> segments, int topologyId) {
-      return actual.buildBackupMultiKeyAckCommand(id, segments, topologyId);
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+      return actual.buildBackupMultiKeyAckCommand(id, segment, topologyId);
    }
 
    @Override
