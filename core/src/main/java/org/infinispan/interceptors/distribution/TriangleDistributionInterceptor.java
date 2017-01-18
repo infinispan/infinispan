@@ -255,6 +255,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             long sequenceNumber = triangleOrderManager.next(distributionInfo.getSegmentId(), dwCommand.getTopologyId());
             BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
             backupWriteRcpCommand.setSequence(sequenceNumber);
+            if (trace) {
+               log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, distributionInfo.getSegmentId());
+            }
             // we must send the message only after the collector is registered in the map
             rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
          }
