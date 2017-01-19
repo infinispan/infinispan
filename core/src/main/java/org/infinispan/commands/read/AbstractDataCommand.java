@@ -2,6 +2,8 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.Objects;
+
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.context.InvocationContext;
@@ -14,6 +16,25 @@ import org.infinispan.lifecycle.ComponentStatus;
  */
 public abstract class AbstractDataCommand extends AbstractTopologyAffectedCommand implements DataCommand {
    protected Object key;
+   private long flags;
+
+   protected AbstractDataCommand(Object key, long flagsBitSet) {
+      this.key = key;
+      this.flags = flagsBitSet;
+   }
+
+   protected AbstractDataCommand() {
+   }
+
+   @Override
+   public long getFlagsBitSet() {
+      return flags;
+   }
+
+   @Override
+   public void setFlagsBitSet(long bitSet) {
+      this.flags = bitSet;
+   }
 
    @Override
    public Object getKey() {
@@ -22,14 +43,6 @@ public abstract class AbstractDataCommand extends AbstractTopologyAffectedComman
 
    public void setKey(Object key) {
       this.key = key;
-   }
-
-   protected AbstractDataCommand(Object key, long flagsBitSet) {
-      this.key = key;
-      setFlagsBitSet(flagsBitSet);
-   }
-
-   protected AbstractDataCommand() {
    }
 
    @Override
@@ -44,21 +57,17 @@ public abstract class AbstractDataCommand extends AbstractTopologyAffectedComman
 
    @Override
    public boolean equals(Object obj) {
-      if (this == obj)
+      if (this == obj) {
          return true;
-      if (obj == null)
+      }
+      if (obj == null) {
          return false;
-      if (getClass() != obj.getClass())
+      }
+      if (getClass() != obj.getClass()) {
          return false;
+      }
       AbstractDataCommand other = (AbstractDataCommand) obj;
-      if (key == null) {
-         if (other.key != null)
-            return false;
-      } else if (!key.equals(other.key))
-         return false;
-      if (!hasSameFlags(other))
-         return false;
-      return true;
+      return flags == other.flags && Objects.equals(key, other.key);
    }
 
    @Override
@@ -68,12 +77,10 @@ public abstract class AbstractDataCommand extends AbstractTopologyAffectedComman
 
    @Override
    public String toString() {
-      return new StringBuilder(getClass().getSimpleName())
-         .append(" {key=")
-         .append(toStr(key))
-         .append(", flags=").append(printFlags())
-         .append("}")
-         .toString();
+      return getClass().getSimpleName() +
+            " {key=" + toStr(key) +
+            ", flags=" + printFlags() +
+            "}";
    }
 
    @Override

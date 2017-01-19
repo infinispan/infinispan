@@ -209,7 +209,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
-      entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      final Object key = command.getKey();
+      entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership(command) || canRead(key));
       return invokeNextThenAccept(ctx, command, dataReadReturnHandler);
    }
 

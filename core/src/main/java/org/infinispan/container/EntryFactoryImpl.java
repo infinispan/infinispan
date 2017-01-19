@@ -74,7 +74,7 @@ public class EntryFactoryImpl implements EntryFactory {
       }
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         cacheEntry = getFromContainer(key, isOwner, false);
+         cacheEntry = getFromContainerForRead(key, isOwner);
 
          if (cacheEntry != null) {
             // With repeatable read, we need to create a RepeatableReadEntry as internal cache entries are mutable
@@ -207,6 +207,18 @@ public class EntryFactoryImpl implements EntryFactory {
          return ice;
       }
       return null;
+   }
+
+   private CacheEntry getFromContainerForRead(Object key, boolean isOwner) {
+      InternalCacheEntry ice = container.get(key);
+      if (trace) {
+         log.tracef("Retrieved from container %s", ice);
+      }
+      if (isOwner) {
+         return ice == null ? NullCacheEntry.getInstance() : ice;
+      } else {
+         return ice == null || !ice.isL1Entry() ? null : ice;
+      }
    }
 
    private InternalCacheEntry innerGetFromContainer(Object key, boolean writeOperation) {

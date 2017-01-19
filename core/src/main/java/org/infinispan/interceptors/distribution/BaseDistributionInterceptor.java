@@ -674,21 +674,19 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
-      Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
+      return ctx.lookupEntry(command.getKey()) == null ? onEntryMiss(ctx, command) : invokeNext(ctx, command);
+   }
 
-      if (entry == null) {
-         if (ctx.isOriginLocal()) {
-            if (readNeedsRemoteValue(ctx, command)) {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false));
-            } else {
-               return null;
-            }
-         } else {
-            return handleMissingEntryOnRead(command);
-         }
-      }
-      return invokeNext(ctx, command);
+   private Object onEntryMiss(InvocationContext ctx, AbstractDataCommand command) {
+      return ctx.isOriginLocal() ?
+            handleMissingEntryOnLocalRead(ctx, command) :
+            handleMissingEntryOnRead(command);
+   }
+
+   private Object handleMissingEntryOnLocalRead(InvocationContext ctx, AbstractDataCommand command) {
+      return readNeedsRemoteValue(command) ?
+            asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false)) :
+            null;
    }
 
    protected final Object handleMissingEntryOnRead(TopologyAffectedCommand command) {
@@ -742,7 +740,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!ctx.isOriginLocal()) {
          return handleMissingEntryOnRead(command);
       }
-      if (readNeedsRemoteValue(ctx, command)) {
+      if (readNeedsRemoteValue(command)) {
          CacheTopology cacheTopology = checkTopologyId(command);
          List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(key);
          if (trace)
@@ -801,9 +799,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     * @return {@code true} if the value is not available on the local node and a read command is allowed to
     * fetch it from a remote node. Does not check if the value is already in the context.
     */
-   protected boolean readNeedsRemoteValue(InvocationContext ctx, AbstractDataCommand command) {
-      return ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) &&
-            !command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP);
+   protected boolean readNeedsRemoteValue(AbstractDataCommand command) {
+      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP);
    }
 
    @FunctionalInterface
