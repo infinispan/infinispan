@@ -135,11 +135,6 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
    }
 
    @Override
-   public boolean canBlock() {
-      return true;
-   }
-
-   @Override
    public String toString() {
       return "BackupPutMapRcpCommand{" +
             "commandInvocationId=" + commandInvocationId +
