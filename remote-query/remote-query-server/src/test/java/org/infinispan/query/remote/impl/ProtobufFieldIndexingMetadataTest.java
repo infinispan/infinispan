@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -36,10 +37,10 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
                "      required string postCode = 20;\n" +
                "   }\n" +
                "\n" +
-               "   /** @IndexedField */ repeated Address indexedAddresses = 3; \n" +
+               "   /** @IndexedField */ repeated Address indexedAddresses = 3;\n" +
                "\n" +
                "   /** @IndexedField(index=false, store=false) */ repeated Address unindexedAddresses = 4;\n" +
-               "}\n";
+               "}";
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
@@ -50,7 +51,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   public void testProvider() throws Exception {
+   public void testProtobufFieldIndexingMetadata() throws Exception {
       SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_DEFINITIONS));
       ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
@@ -67,5 +68,54 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses", "postCode"}));
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "street"}));
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "postCode"}));
+   }
+
+   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Field' on field test.User.age")
+   public void testIndexedFieldAndField() throws Exception {
+      String testProto = "package test;\n" +
+            "/* @Indexed */ message User {\n" +
+            "   /* @IndexedField(index=false, store=false) @Field(store=Store.NO, index=Index.NO) */ " +
+            "   required int32 age = 1;\n" +
+            "}";
+
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test.proto", testProto));
+   }
+
+   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'SortableField' on field test.User1.age")
+   public void testIndexedFieldAndSortableField() throws Exception {
+      String testProto = "package test;\n" +
+            "/* @Indexed */ message User1 {\n" +
+            "   /* @IndexedField(index=false, store=false) @SortableField */ " +
+            "   required int32 age = 1;\n" +
+            "}";
+
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
+   }
+
+   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Analyzer' on field test.User2.name")
+   public void testIndexedFieldAndAnalyzer() throws Exception {
+      String testProto = "package test;\n" +
+            "/* @Indexed */" +
+            "message User2 {\n" +
+            "   /* @IndexedField(index=false, store=false) @Analyzer(definition=\"standard\") */" +
+            "   required string name = 1;\n" +
+            "}";
+
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
+   }
+
+   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Cannot specify an analyzer for field test.User3.name unless the field is analyzed.")
+   public void testAnalyzerForNotAnalyzedField() throws Exception {
+      String testProto = "package test;\n" +
+            "/* @Indexed */ message User3 {\n" +
+            "   /* @Field(store=Store.NO, index=Index.YES, analyze=Analyze.NO, analyzer=@Analyzer(definition=\"standard\")) */" +
+            "   required string name = 1;\n" +
+            "}";
+
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test2.proto", testProto));
    }
 }

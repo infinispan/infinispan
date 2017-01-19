@@ -46,21 +46,24 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
    protected HSQuery hSearchQuery;
    private ProjectionConverter projectionConverter;
 
-   public CacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory, AdvancedCache<?, ?> cache,
-         KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
-       this(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
-   }
-
+   /**
+    * Create a CacheQueryImpl based on a Lucene query.
+    */
    public CacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory, AdvancedCache<?, ?> cache,
                          KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory,
                          Class<?>... classes) {
-      this.keyTransformationHandler = keyTransformationHandler;
-      this.cache = cache;
-      hSearchQuery = searchFactory.createHSQuery(luceneQuery, classes);
+      this(timeoutExceptionFactory == null ? searchFactory.createHSQuery(luceneQuery, classes) :
+                  searchFactory.createHSQuery(luceneQuery, classes).timeoutExceptionFactory(timeoutExceptionFactory),
+            cache, keyTransformationHandler);
+   }
 
-      if (timeoutExceptionFactory != null) {
-         hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
-      }
+   /**
+    * Create a CacheQueryImpl based on a HSQuery.
+    */
+   public CacheQueryImpl(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
+      this.hSearchQuery = hSearchQuery;
+      this.cache = cache;
+      this.keyTransformationHandler = keyTransformationHandler;
    }
 
    /**

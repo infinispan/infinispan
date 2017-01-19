@@ -52,7 +52,7 @@
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
-      <version.org.infinispan.protostream>4.0.0.Alpha7</version.org.infinispan.protostream>
+      <version.org.infinispan.protostream>4.0.0.Alpha9</version.org.infinispan.protostream>
       <version.http.client>4.3</version.http.client>
       <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
       <version.xpp3>1.1.4c</version.xpp3>

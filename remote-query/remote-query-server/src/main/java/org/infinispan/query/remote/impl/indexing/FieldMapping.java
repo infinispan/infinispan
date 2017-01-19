@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.LuceneOptions;
 
 /**
@@ -32,6 +33,8 @@ public final class FieldMapping {
     */
    private final boolean store;
 
+   private final boolean sortable;
+
    /**
     * The name of the analyzer definition.
     */
@@ -41,13 +44,16 @@ public final class FieldMapping {
 
    private final LuceneOptions luceneOptions;
 
-   FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store,
+   private FieldBridge fieldBridge;
+
+   FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable,
                 String analyzer, String indexNullAs, LuceneOptions luceneOptions) {
       this.name = name;
       this.index = index;
       this.boost = boost;
       this.analyze = analyze;
       this.store = store;
+      this.sortable = sortable;
       this.analyzer = analyzer;
       this.indexNullAs = indexNullAs;
       this.luceneOptions = luceneOptions;
@@ -73,6 +79,10 @@ public final class FieldMapping {
       return store;
    }
 
+   public boolean sortable() {
+      return sortable;
+   }
+
    public String analyzer() {
       return analyzer;
    }
@@ -85,6 +95,14 @@ public final class FieldMapping {
       return luceneOptions;
    }
 
+   public FieldBridge getFieldBridge() {
+      return fieldBridge;
+   }
+
+   public void setFieldBridge(FieldBridge fieldBridge) {
+      this.fieldBridge = fieldBridge;
+   }
+
    @Override
    public String toString() {
       return "FieldMapping{" +
@@ -93,9 +111,11 @@ public final class FieldMapping {
             ", boost=" + boost +
             ", analyze=" + analyze +
             ", store=" + store +
+            ", sortable=" + sortable +
             ", analyzer='" + analyzer + '\'' +
             ", indexNullAs='" + indexNullAs + '\'' +
-            ", luceneOptions='" + luceneOptions + '\'' +
+            ", luceneOptions=" + luceneOptions +
+            ", fieldBridge=" + fieldBridge +
             '}';
    }
 }

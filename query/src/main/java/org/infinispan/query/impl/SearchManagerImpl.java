@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.EntityContext;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.stat.Statistics;
@@ -49,6 +50,21 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       queryInterceptor.enableClasses(classes);
       return new CacheQueryImpl<>(luceneQuery, searchFactory, cache,
          queryInterceptor.getKeyTransformationHandler(), timeoutExceptionFactory, classes);
+   }
+
+   /**
+    * Internal and experimental! Creates a {@link CacheQuery}, filtered according to the given {@link HSQuery}.
+    *
+    * @param hSearchQuery {@link HSQuery}
+    * @return the CacheQuery object which can be used to iterate through results
+    */
+   public <E> CacheQuery<E> getQuery(HSQuery hSearchQuery) {
+      if (timeoutExceptionFactory != null) {
+         hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
+      }
+      Class<?>[] classes = hSearchQuery.getTargetedEntities().toArray(new Class[hSearchQuery.getTargetedEntities().size()]);
+      queryInterceptor.enableClasses(classes);
+      return new CacheQueryImpl<>(hSearchQuery, cache, queryInterceptor.getKeyTransformationHandler());
    }
 
    /**

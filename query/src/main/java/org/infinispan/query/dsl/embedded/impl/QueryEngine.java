@@ -109,7 +109,7 @@ public class QueryEngine<TypeMetadata> {
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
    }
 
-   private SearchManager getSearchManager() {
+   protected SearchManager getSearchManager() {
       if (!isIndexed) {
          throw new IllegalStateException("Cache is not indexed");
       }
@@ -703,8 +703,7 @@ public class QueryEngine<TypeMetadata> {
          log.debugf("The resulting Lucene query is : %s", luceneQuery.toString());
       }
 
-      CacheQuery<?> cacheQuery = getSearchManager().getQuery(luceneQuery, getTargetedClass(filterParsingResult));
-
+      CacheQuery<?> cacheQuery = makeCacheQuery(filterParsingResult, luceneQuery);
       if (luceneParsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
       }
@@ -727,6 +726,10 @@ public class QueryEngine<TypeMetadata> {
 
    protected Class<?> getTargetedClass(FilterParsingResult<?> parsingResult) {
       return (Class<?>) parsingResult.getTargetEntityMetadata();
+   }
+
+   protected CacheQuery<?> makeCacheQuery(FilterParsingResult<TypeMetadata> filterParsingResult, org.apache.lucene.search.Query luceneQuery) {
+      return getSearchManager().getQuery(luceneQuery, getTargetedClass(filterParsingResult));
    }
 
    private LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {

@@ -1,18 +1,23 @@
 package org.infinispan.query.remote.impl;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.spi.CustomTypeMetadata;
 import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
@@ -20,7 +25,9 @@ import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
+import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
 /**
@@ -104,6 +111,27 @@ final class RemoteQueryEngine extends QueryEngine<Descriptor> {
                   .add(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.FILTER)
                   .add(query, BooleanClause.Occur.MUST)
                   .build();
+   }
+
+   @Override
+   protected CacheQuery<?> makeCacheQuery(FilterParsingResult<Descriptor> filterParsingResult, org.apache.lucene.search.Query luceneQuery) {
+      if (isCompatMode) {
+         return super.makeCacheQuery(filterParsingResult, luceneQuery);
+      }
+      CustomTypeMetadata customTypeMetadata = new CustomTypeMetadata() {
+         @Override
+         public Class<?> getEntityType() {
+            return ProtobufValueWrapper.class;
+         }
+
+         @Override
+         public Set<String> getSortableFields() {
+            IndexingMetadata indexingMetadata = filterParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+            return indexingMetadata != null ? indexingMetadata.getSortableFields() : Collections.emptySet();
+         }
+      };
+      HSQuery hSearchQuery = getSearchFactory().createHSQuery(luceneQuery, customTypeMetadata);
+      return ((SearchManagerImpl) getSearchManager()).getQuery(hSearchQuery);
    }
 
    @Override
