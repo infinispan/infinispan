@@ -63,7 +63,7 @@ import com.thoughtworks.xstream.XStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Path("/rest")
+@Path("/")
 public class Server {
    private final RestServerConfiguration configuration;
    private final RestCacheManager manager;

@@ -127,6 +127,7 @@
 
     <!-- Allow for some code sanity rules to be violated by test code -->
     <module name="org.infinispan.checkstyle.filters.ExcludeTestPackages" />
+    <module name="org.infinispan.checkstyle.filters.ExcludeGeneratedTestPackages" />
 
     <!--&lt;!&ndash; Check that the copyright header is correct (empty) &ndash;&gt;-->
     <!--<module name="org.infinispan.checkstyle.filters.HeadersNoCopyrightCheck" />-->

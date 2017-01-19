@@ -329,6 +329,11 @@
                 <xsl:call-template name="copynode"/>
                 <xsl:copy-of select="document($addNewRestSocketBinding)"/>
             </xsl:when>
+            <xsl:when test="$addNewHotrodSocketBinding != 'false' and $addNewRestSocketBinding != 'false'">
+                <xsl:call-template name="copynode"/>
+                <xsl:copy-of select="document($addNewRestSocketBinding)"/>
+                <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
+            </xsl:when>
         </xsl:choose>
     </xsl:template>
 

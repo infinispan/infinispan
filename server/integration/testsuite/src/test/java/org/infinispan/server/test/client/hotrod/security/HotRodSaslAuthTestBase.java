@@ -14,7 +14,7 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.junit.After;
 import org.junit.Test;
 
@@ -98,8 +98,8 @@ public abstract class HotRodSaslAuthTestBase {
       return getDefaultSaslConfigBuilder().forSubject(subj).build();
    }
 
-   protected SaslConfigurationBuilder getDefaultSaslConfigBuilder() {
-      SaslConfigurationBuilder config = new SaslConfigurationBuilder(getTestedMech());
+   protected SecurityConfigurationHelper getDefaultSaslConfigBuilder() {
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper(getTestedMech());
       config.forIspnServer(getRemoteServer()).withServerName(TEST_SERVER_NAME);
       return config;
    }

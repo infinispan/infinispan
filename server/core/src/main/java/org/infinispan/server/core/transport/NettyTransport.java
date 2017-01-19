@@ -3,6 +3,7 @@ package org.infinispan.server.core.transport;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -111,6 +112,8 @@ public class NettyTransport implements Transport {
    private final AtomicLong totalBytesRead = new AtomicLong();
    private final boolean isGlobalStatsEnabled;
 
+   private Optional<Integer> nettyPort = Optional.empty();
+
    @Override
    public void start() {
       // Make netty use log4j, otherwise it goes to JDK logging.
@@ -131,6 +134,7 @@ public class NettyTransport implements Transport {
       Channel ch;
       try {
          ch = bootstrap.bind(address).sync().channel();
+         nettyPort = Optional.of(((InetSocketAddress)ch.localAddress()).getPort());
       } catch (InterruptedException e) {
          throw new CacheException(e);
       }
@@ -166,6 +170,7 @@ public class NettyTransport implements Transport {
          log.debug("Channel group completely closed, release external resources");
       masterGroup.shutdownGracefully();
       workerGroup.shutdownGracefully();
+      nettyPort = Optional.empty();
    }
 
    @Override
@@ -184,8 +189,8 @@ public class NettyTransport implements Transport {
    }
 
    @Override
-   public String getPort() {
-      return Integer.toString(address.getPort());
+   public Integer getPort() {
+      return nettyPort.orElse(address.getPort());
    }
 
    @Override

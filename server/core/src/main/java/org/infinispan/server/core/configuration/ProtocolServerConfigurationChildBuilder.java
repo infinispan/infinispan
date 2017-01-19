@@ -66,6 +66,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S ignoredCaches(Set<String> ignoredCaches);
 
    /**
+    * Indicates whether transport implementation should or should not be started.
+    */
+   S startTransport(boolean startTransport);
+
+   /**
     * Builds a configuration object
     */
    T build();

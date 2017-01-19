@@ -15,6 +15,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       Builder<RestServerConfiguration> {
 
    private final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+   private boolean startTransport = true;
 
    private static final int DEFAULT_PORT = 8080;
 
@@ -29,6 +30,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public RestServerConfigurationBuilder startTransport(boolean startTransport) {
+      this.startTransport = startTransport;
+      return this;
+   }
+
    @Override
    public void validate() {
       // Nothing to do
@@ -36,7 +42,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches, ssl.create());
+      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches, ssl.create(), startTransport);
    }
 
    @Override

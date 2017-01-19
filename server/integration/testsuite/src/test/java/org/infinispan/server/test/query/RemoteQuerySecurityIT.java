@@ -35,7 +35,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -103,7 +103,7 @@ public class RemoteQuerySecurityIT {
    }
 
    private ConfigurationBuilder getClientConfigBuilderForUser(String login, String password) {
-      return new SaslConfigurationBuilder(SASL_MECH)
+      return new SecurityConfigurationHelper(SASL_MECH)
             .forIspnServer(server)
             .withServerName(TEST_SERVER_NAME)
             .forCredentials(login, password)

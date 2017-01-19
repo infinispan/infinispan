@@ -20,8 +20,9 @@ public abstract class ProtocolServerConfiguration {
    private final boolean tcpNoDelay;
    private final int workerThreads;
    private final Set<String> ignoredCaches;
+   private final boolean startTransport;
 
-   protected ProtocolServerConfiguration(String defaultCacheName, String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, Set<String> ignoredCaches) {
+   protected ProtocolServerConfiguration(String defaultCacheName, String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, Set<String> ignoredCaches, boolean startTransport) {
       this.defaultCacheName = defaultCacheName;
       this.name = name;
       this.host = host;
@@ -33,6 +34,7 @@ public abstract class ProtocolServerConfiguration {
       this.tcpNoDelay = tcpNoDelay;
       this.workerThreads = workerThreads;
       this.ignoredCaches = ignoredCaches;
+      this.startTransport = startTransport;
    }
 
    public String defaultCacheName() {
@@ -77,6 +79,10 @@ public abstract class ProtocolServerConfiguration {
 
    public Set<String> ignoredCaches() {
       return ignoredCaches;
+   }
+
+   public boolean startTransport() {
+      return startTransport;
    }
 
    @Override

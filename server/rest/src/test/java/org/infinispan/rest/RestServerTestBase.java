@@ -56,7 +56,7 @@ public class RestServerTestBase extends AbstractInfinispanTest {
       if (ctx == null) {
          return null;
       }
-      return ctx.cacheManager;
+      return ctx.getCacheManager();
    }
 
    public void startServers() throws Exception {

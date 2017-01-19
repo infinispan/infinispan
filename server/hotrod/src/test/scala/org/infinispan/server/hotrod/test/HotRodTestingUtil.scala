@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.test
 
 import java.lang.reflect.Method
-import java.net.NetworkInterface
+import java.net.{InetAddress, NetworkInterface}
 import java.util.{Arrays, Collections, Optional, List => JList, Map => JMap}
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -14,7 +14,8 @@ import org.infinispan.commons.logging.LogFactory
 import org.infinispan.commons.marshall.WrappedByteArray
 import org.infinispan.commons.util.Util
 import org.infinispan.configuration.cache.ConfigurationBuilder
-import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.configuration.global.{GlobalAuthorizationConfigurationBuilder, GlobalConfigurationBuilder}
+import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.infinispan.marshall.core.JBossMarshaller
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
@@ -91,6 +92,22 @@ object HotRodTestingUtil {
 
    def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer =
       startHotRodServer(manager, host, port, delay, false, builder)
+
+   def startHotRodServerWithoutTransport(): HotRodServer = {
+      startHotRodServerWithoutTransport(new HotRodServerConfigurationBuilder)
+   }
+
+   def startHotRodServerWithoutTransport(builder: HotRodServerConfigurationBuilder): HotRodServer = {
+      val globalConfiguration: GlobalConfigurationBuilder = new GlobalConfigurationBuilder()
+      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true)
+
+      val cacheConfiguration: ConfigurationBuilder = new ConfigurationBuilder()
+      cacheConfiguration.compatibility().enable()
+
+      builder.startTransport(false)
+
+      startHotRodServer(new DefaultCacheManager(globalConfiguration.build(), cacheConfiguration.build()), builder)
+   }
 
    def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, perf: Boolean, builder: HotRodServerConfigurationBuilder): HotRodServer = {
       log.infof("Start server in port %d", port)

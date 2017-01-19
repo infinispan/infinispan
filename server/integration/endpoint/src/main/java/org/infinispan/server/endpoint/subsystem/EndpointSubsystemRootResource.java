@@ -34,6 +34,7 @@ import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelType;
 
+
 /**
  * The root resource of the Endpoint subsystem.
  *
@@ -100,6 +101,7 @@ public class EndpointSubsystemRootResource extends SimpleResourceDefinition {
         resourceRegistration.registerSubModel(new MemcachedConnectorResource(isRuntimeRegistration()));
         resourceRegistration.registerSubModel(new RestConnectorResource(isRuntimeRegistration()));
         resourceRegistration.registerSubModel(new WebSocketConnectorResource(isRuntimeRegistration()));
+        resourceRegistration.registerSubModel(new RouterConnectorResource());
     }
 
     public boolean isRuntimeRegistration() {

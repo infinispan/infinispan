@@ -23,7 +23,7 @@ public class WebSocketServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public WebSocketServerConfiguration create() {
-      return new WebSocketServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, ignoredCaches);
+      return new WebSocketServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, ignoredCaches, startTransport);
    }
 
    public WebSocketServerConfiguration build(boolean validate) {

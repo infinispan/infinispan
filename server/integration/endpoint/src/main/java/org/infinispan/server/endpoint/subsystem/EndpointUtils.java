@@ -18,11 +18,10 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.endpoint.Constants;
+import org.infinispan.rest.NettyRestServer;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.PathAddress;
@@ -38,6 +37,9 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.value.InjectedValue;
+
+import static org.infinispan.server.endpoint.Constants.DATAGRID;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 
 public class EndpointUtils {
@@ -57,9 +59,9 @@ public class EndpointUtils {
       final PathAddress address = PathAddress.pathAddress(node.require(OP_ADDR));
       final String name = address.getLastElement().getValue();
       if (prefix.length > 0) {
-         return Constants.DATAGRID.append(prefix).append(name);
+         return DATAGRID.append(prefix).append(name);
       } else {
-         return Constants.DATAGRID.append(name);
+         return DATAGRID.append(name);
       }
    }
 
@@ -80,9 +82,22 @@ public class EndpointUtils {
       builder.addDependency(cacheContainerServiceName, EmbeddedCacheManager.class, target);
    }
 
+   public static void addHotRodDependency(ServiceBuilder<?> builder, String protocolServerName, InjectedValue<HotRodServer> target) {
+      ServiceName protocolServerServiceName = DATAGRID.append("hotrod").append(protocolServerName);
+      builder.addDependency(protocolServerServiceName, HotRodServer.class, target);
+   }
+
+   public static void addRestDependency(ServiceBuilder<?> builder, String protocolServerName, InjectedValue<NettyRestServer> target) {
+      ServiceName protocolServerServiceName = DATAGRID.append("rest").append(protocolServerName);
+      builder.addDependency(protocolServerServiceName, NettyRestServer.class, target);
+   }
+
    public static void addSocketBindingDependency(ServiceBuilder<?> builder, String socketBindingName, InjectedValue<SocketBinding> target) {
-      ServiceName socketName = SocketBinding.JBOSS_BINDING_NAME.append(socketBindingName);
-      builder.addDependency(socketName, SocketBinding.class, target);
+      // socket binding can be disabled in multi tenant router scenarios
+      if(socketBindingName != null) {
+         ServiceName socketName = SocketBinding.JBOSS_BINDING_NAME.append(socketBindingName);
+         builder.addDependency(socketName, SocketBinding.class, target);
+      }
    }
 
    public static void addSecurityDomainDependency(ServiceBuilder<?> builder, String securityDomainName, InjectedValue<SecurityDomainContext> target) {
