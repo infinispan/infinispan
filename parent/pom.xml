@@ -84,7 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
-      <testNGListener>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListener>
+      <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter,org.infinispan.commons.test.skip.SkipOnOsListener</testNGListeners>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1435,7 +1435,7 @@
                   </property>
                   <property>
                      <name>listener</name>
-                     <value>${testNGListener}</value>
+                     <value>${testNGListeners}</value>
                   </property>
                </properties>
 
