@@ -26,13 +26,14 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
- * Tests for remote queries over HotRod on a local cache using RAM directory.
+ * Tests for remote queries over HotRod using protostream annotations on a local cache using RAM directory.
  *
  * @author Adrian Nistor
  */
-@org.testng.annotations.Test(testName = "client.hotrod.query.RemoteQueryWithProtostreamAnnotationsTest", groups = "functional")
+@Test(testName = "client.hotrod.query.RemoteQueryWithProtostreamAnnotationsTest", groups = "functional")
 public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServerTest {
 
    @ProtoDoc("@Indexed")
@@ -45,7 +46,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
       private Author author;
 
-      @ProtoDoc("@IndexedField(index = false, store=false)")
+      @ProtoDoc("@Field(index = Index.NO, store = Store.NO)")
       @ProtoField(number = 10, required = true)
       public int getId() {
          return id;

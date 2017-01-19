@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
-import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
-import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
@@ -31,17 +28,9 @@ public final class QueryFacadeImpl implements QueryFacade {
    private static final Log log = LogFactory.getLog(QueryFacadeImpl.class, Log.class);
 
    /**
-    * A special hidden Lucene document field that holds the actual protobuf type name.
+    * A special 'hidden' Lucene document field that holds the actual protobuf type name.
     */
    public static final String TYPE_FIELD_NAME = "$type$";
-
-   /**
-    * A special placeholder value that is indexed if the actual field value is null. This placeholder is needed because
-    * Lucene does not index null values.
-    */
-   public static final String NULL_TOKEN = "_null_";
-
-   public static final NullMarkerCodec NULL_TOKEN_CODEC = new LuceneStringNullMarkerCodec(new ToStringNullMarker(NULL_TOKEN));
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {

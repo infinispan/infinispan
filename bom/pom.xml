@@ -60,7 +60,7 @@
       <version.maven-compiler-plugin>3.5.1</version.maven-compiler-plugin>
 
       <version.caffeine>2.4.0</version.caffeine>
-      <version.protostream>4.0.0.Alpha7</version.protostream>
+      <version.protostream>4.0.0.Alpha9</version.protostream>
       <version.aesh>0.66.13</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>

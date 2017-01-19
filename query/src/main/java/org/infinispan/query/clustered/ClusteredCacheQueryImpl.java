@@ -40,7 +40,7 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
-      super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
+      super(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
       this.asyncExecutor = asyncExecutor;
       this.hSearchQuery = searchFactory.createHSQuery(luceneQuery, classes);
    }
