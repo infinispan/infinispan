@@ -108,6 +108,10 @@ public class IspnKarafOptions {
       return mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject();
    }
 
+   public static Option bundleTestAnnotations() {
+      return wrappedBundle(mavenBundle().groupId("org.infinispan").artifactId("infinispan-commons-test").versionAsInProject().getURL());
+   }
+
    public static Option featureJpaStore() {
       return mvnFeature("org.infinispan", "infinispan-cachestore-jpa", "infinispan-cachestore-jpa");
    }
@@ -309,6 +313,7 @@ public class IspnKarafOptions {
                        keepRuntimeFolder(),
             /* Required for the @Category(Per{Suite,Class,Method}) annotations. */
             bundlePaxExamSpi(),
+            bundleTestAnnotations(),
             localRepoForPAXUrl());
    }
 
