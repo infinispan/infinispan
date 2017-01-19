@@ -368,7 +368,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected <C extends TopologyAffectedCommand & FlagAffectedCommand, K, V> Object
-         handleTxWriteManyEntriesCommand(InvocationContext ctx,C command, Map<K, V> entries,
+         handleTxWriteManyEntriesCommand(InvocationContext ctx, C command, Map<K, V> entries,
                                   BiFunction<C, Map<K, V>, C> copyCommand) {
       Map<K, V> filtered = new HashMap<>(entries.size());
       Collection<CompletableFuture<?>> remoteGets = null;
@@ -381,7 +381,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   entryFactory.wrapExternalEntry(ctx, key, null, true);
                } else {
                   if (remoteGets == null) {
-                     remoteGets = new ArrayList();
+                     remoteGets = new ArrayList<>();
                   }
                   remoteGets.add(remoteGet(ctx, command, key, true));
                }
