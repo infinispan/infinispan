@@ -63,7 +63,7 @@
                <properties>
                   <property>
                      <name>listener</name>
-                     <value>${testNGListener}</value>
+                     <value>${testNGListeners}</value>
                   </property>
                </properties>
                <argLine>-Xmx2G -Dsun.nio.ch.bugLevel</argLine>
