@@ -197,7 +197,8 @@ public class DefaultsExtractorMojo extends AbstractMojo {
             getLog().error(String.format("Unable to process jar '%s'", jarName), e);
          }
       } else {
-         throw new IllegalArgumentException("Jar '" + jarName + "' not on the classpath");
+         // We just warn here, as jars are required for `mvn install`, but not for `mvn test`
+         getLog().info("Skipping Jar '" + jarName + "' as it cannot be found on the classpath");
       }
    }
 
