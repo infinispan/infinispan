@@ -111,10 +111,15 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
          } else {
             configurationBuilder.defaultCacheName(((DefaultCacheContainer) cacheManager.getValue()).getDefaultCacheName());
          }
-         SocketBinding socketBinding = getSocketBinding().getValue();
-         InetSocketAddress socketAddress = socketBinding.getSocketAddress();
-         configurationBuilder.host(socketAddress.getAddress().getHostAddress());
-         configurationBuilder.port(socketAddress.getPort());
+
+         InetSocketAddress address = socketBinding.getOptionalValue() != null ? socketBinding.getValue().getSocketAddress() : null;
+         if(address != null) {
+            configurationBuilder.host(address.getAddress().getHostAddress());
+            configurationBuilder.port(address.getPort());
+         } else {
+            configurationBuilder.startTransport(false);
+            ROOT_LOGGER.startingServerWithoutTransport(serverName);
+         }
 
          SecurityRealm encryptionRealm = encryptionSecurityRealm.getOptionalValue();
 
@@ -138,7 +143,7 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
          }
 
 
-         ROOT_LOGGER.endpointStarted(serverName + qual, NetworkUtils.formatAddress(socketAddress));
+         ROOT_LOGGER.endpointStarted(serverName + qual, address != null ? NetworkUtils.formatAddress(address) : "None");
          // Start the connector
          startProtocolServer(configurationBuilder.build());
 

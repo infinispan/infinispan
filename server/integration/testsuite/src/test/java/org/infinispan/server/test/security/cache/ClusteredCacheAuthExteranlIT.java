@@ -17,7 +17,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -62,7 +62,7 @@ public class ClusteredCacheAuthExteranlIT {
 
     public void initRCM() {
         controller.start(ARQ_NODE_1_ID);
-        final SaslConfigurationBuilder cb = new SaslConfigurationBuilder(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
+        final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
         rcm = new RemoteCacheManager(cb.forExternalAuth().build(), true);
         controller.stop(ARQ_NODE_1_ID);
         isInitialized = true;

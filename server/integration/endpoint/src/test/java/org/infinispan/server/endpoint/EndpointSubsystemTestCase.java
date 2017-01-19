@@ -46,6 +46,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 
 
+
 /**
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
@@ -53,13 +54,11 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(value = Parameterized.class)
 public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
-   private final String xmlFile;
    private final String xsdPath;
    int operations = 0;
 
    public EndpointSubsystemTestCase(String xmlFile, int operations, String xsdPath) {
       super(Constants.SUBSYSTEM_NAME, new EndpointExtension(), xmlFile);
-      this.xmlFile = xmlFile;
       this.operations = operations;
       this.xsdPath = xsdPath;
    }
@@ -69,7 +68,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
       Object[][] data = new Object[][] {
             { "endpoint-7.2.xml", 16, "schema/jboss-infinispan-endpoint_7_2.xsd" },
             { "endpoint-8.0.xml", 16, "schema/jboss-infinispan-endpoint_8_0.xsd" },
-            { "endpoint-9.0.xml", 25, "schema/jboss-infinispan-endpoint_9_0.xsd" },
+            { "endpoint-9.0.xml", 37, "schema/jboss-infinispan-endpoint_9_0.xsd" },
       };
       return Arrays.asList(data);
    }

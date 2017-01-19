@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.fest.util.Collections;
+import org.assertj.core.util.Sets;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -85,7 +85,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // ensure the query cache has it now: one FilterParsingResult and one LuceneQueryParsingResult
       assertEquals(2, internalCache.size());
       Set<Class<?>> cacheValueClasses = internalCache.entrySet().stream().map(e -> e.getValue().getClass()).collect(Collectors.toSet());
-      Set<Class<?>> expectedCachedValueClasses = Collections.set(FilterParsingResult.class, LuceneQueryParsingResult.class);
+      Set<Class<?>> expectedCachedValueClasses = Sets.newLinkedHashSet(FilterParsingResult.class, LuceneQueryParsingResult.class);
       assertEquals(expectedCachedValueClasses, cacheValueClasses);
 
       // ensure the QueryCreator does not get invoked now

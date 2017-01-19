@@ -351,6 +351,11 @@
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
                    addVault="${other.parts}/vault.xml" />
+        <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-multitenancy.xml"
+                   addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
+                   addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
+                   modifyInfinispan="${infinispan.parts}/multitenancy.xml"
+                   infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints-multitenancy.xml"/>
     </target>
 
     <macrodef name="transform">

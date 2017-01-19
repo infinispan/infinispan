@@ -69,7 +69,8 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       // Start default cache
       startDefaultCache();
 
-      startTransport();
+      if(configuration.startTransport())
+         startTransport();
    }
 
    @Override
@@ -122,7 +123,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
-   protected String getQualifiedName() {
+   public String getQualifiedName() {
       return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
    }
 
@@ -164,5 +165,13 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected void startDefaultCache() {
       cacheManager.getCache(configuration.defaultCacheName());
+   }
+
+   public boolean isTransportEnabled() {
+      return transport != null;
+   }
+
+   public NettyTransport getTransport() {
+      return transport;
    }
 }

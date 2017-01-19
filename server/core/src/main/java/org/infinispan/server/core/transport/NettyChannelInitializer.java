@@ -35,7 +35,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    @Override
    public void initializeChannel(Channel ch) throws Exception {
    ChannelPipeline pipeline = ch.pipeline();
-      pipeline.addLast("stats", new StatsChannelHandler(transport));
+      if(transport != null) {
+         pipeline.addLast("stats", new StatsChannelHandler(transport));
+      }
       SslConfiguration ssl = server.getConfiguration().ssl();
       if (ssl.enabled()) {
          //add default domain mapping

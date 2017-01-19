@@ -9,10 +9,12 @@ import org.infinispan.server.core.configuration.SslConfiguration;
 @BuiltBy(RestServerConfigurationBuilder.class)
 public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final ExtendedHeaders extendedHeaders;
+   private final boolean startTransport;
 
-   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl) {
-      super(null, null, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches);
+   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport) {
+      super(null, null, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches, startTransport);
       this.extendedHeaders = extendedHeaders;
+      this.startTransport = startTransport;
    }
 
    public ExtendedHeaders extendedHeaders() {
@@ -25,5 +27,9 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    @Deprecated
    public Set<String> getIgnoredCaches() {
       return ignoredCaches();
+   }
+
+   public boolean startTransport() {
+      return startTransport;
    }
 }

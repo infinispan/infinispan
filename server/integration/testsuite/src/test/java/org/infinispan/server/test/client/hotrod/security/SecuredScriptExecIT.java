@@ -24,7 +24,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -54,7 +54,7 @@ public class SecuredScriptExecIT {
    @Before
    public void prepareAdminRCM() {
       if (adminRCM == null) {
-         SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+         SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
          config.forIspnServer(server1).withServerName("node0");
          config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
          adminRCM = new RemoteCacheManager(config.build(), true);
@@ -82,7 +82,7 @@ public class SecuredScriptExecIT {
    public void testExecuteScript() throws Exception {
       uploadScript("test.js");
 
-      SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
       config.forIspnServer(server1).withServerName("node0");
       config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
       RemoteCacheManager execRCM = new RemoteCacheManager(config.build(), true);
@@ -104,7 +104,7 @@ public class SecuredScriptExecIT {
    public void testExecuteScriptWithoutExecPerm() throws IOException {
       uploadScript("test.js");
 
-      SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
       config.forIspnServer(server1).withServerName("node0");
       config.forCredentials(WRITER_LOGIN, WRITER_PASSWD);
       RemoteCacheManager writerRCM = new RemoteCacheManager(config.build(), true);
@@ -122,7 +122,7 @@ public class SecuredScriptExecIT {
 
    @Test(expected = HotRodClientException.class)
    public void testUploadScriptWithoutAdminPerm() {
-      SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
       config.forIspnServer(server1).withServerName("node0");
       config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
       RemoteCacheManager execRCM = new RemoteCacheManager(config.build(), true);

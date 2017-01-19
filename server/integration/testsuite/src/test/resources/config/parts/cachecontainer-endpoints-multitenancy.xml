@@ -1,0 +1,22 @@
+        <subsystem xmlns="urn:infinispan:server:endpoint:9.0">
+            <hotrod-connector name="multi-tenant-hotrod-1" cache-container="multi-tenancy-1" />
+            <hotrod-connector name="multi-tenant-hotrod-2" cache-container="multi-tenancy-2" />
+            <rest-connector name="multi-tenant-rest-1" cache-container="multi-tenancy-1" />
+            <rest-connector name="multi-tenant-rest-2" cache-container="multi-tenancy-2" />
+            <router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" keep-alive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
+                <multi-tenancy>
+                    <hotrod name="multi-tenant-hotrod-1" >
+                        <sni host-name="sni1" security-realm="SSLRealm2"/>
+                    </hotrod>
+                    <hotrod name="multi-tenant-hotrod-2" >
+                        <sni host-name="sni2" security-realm="SSLRealm2"/>
+                    </hotrod>
+                    <rest name="multi-tenant-rest-1">
+                        <prefix path="multi-tenancy-1" />
+                    </rest>
+                    <rest name="multi-tenant-rest-2">
+                        <prefix path="multi-tenancy-2" />
+                    </rest>
+                </multi-tenancy>
+            </router-connector>
+        </subsystem>

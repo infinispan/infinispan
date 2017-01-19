@@ -1,7 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.DocumentId;

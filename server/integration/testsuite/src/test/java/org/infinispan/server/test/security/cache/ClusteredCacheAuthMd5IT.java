@@ -28,7 +28,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -73,7 +73,7 @@ public class ClusteredCacheAuthMd5IT {
 
    public void initRCMs() {
       controller.start(ARQ_NODE_1_ID);
-      final SaslConfigurationBuilder cb = new SaslConfigurationBuilder(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME);
+      final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME);
       rcms = new HashMap<String, RemoteCacheManager>();
       rcms.put(ADMIN_LOGIN, new RemoteCacheManager(cb.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD).build(), true));
       rcms.put(WRITER_LOGIN, new RemoteCacheManager(cb.forCredentials(WRITER_LOGIN, WRITER_PASSWD).build(), true));

@@ -107,3 +107,78 @@ Date: Wed, 10 Aug 2016 10:39:15 GMT
 ----
 
 Note that the result is exactly the same as the one obtained by CLI interface.
+
+== Multi-tenancy
+
+Multi-tenancy allows accessing multiple containers as shown below:
+
+image::images/multi-tenancy.png[]
+
+Currently there are two supported protocols for accessing the data - using Hot Rod client and using REST interface.
+
+=== Using REST interface
+
+Multi-tenancy router uses URL prefixes to separate containers using the following template: `https://<server_ip>:<server_port>/rest/<rest_connector_name>/<cache_name>/<key>`. All HTTP operations remain exactly the same as using standard `rest-connector`.
+
+=== Using Hot Rod client
+
+Multi-tenant routing for binary protocols requires using a standard, transport layer mechanism such as link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[SSL/TLS Server Name Indication]. The server needs to be configured to support encryption and additional SNI routing needs to be added to the `router-connector`.
+
+In order to connect to a secured Hot Rod server, the client needs to use configuration similar to this:
+
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(hotrodServer.getPort())
+     .security()
+        .ssl()
+           .enabled(sslClient)
+           .sniHostName("hotrod-1") // SNI Host Name
+           .trustStoreFileName("truststore.jks")
+           .trustStorePassword("secret".toCharArray());
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+----
+
+==== Multi-tenant router
+
+The Multi-tenant router endpoint works as a facade for one or more REST/Hot Rod connectors. Its main purpose is to forward client requests into proper container.
+
+In order to properly configure the routing, `socket-binding` attributes of other connectors must be disabled and additional attribute `name` must be used as shown below:
+
+[source,xml]
+----
+
+<rest-connector name="rest-1" cache-container="local"/>
+<rest-connector name="rest-2" cache-container="local"/>
+<hotrod-connector name="hotrod-1" cache-container="local" />
+<hotrod-connector name="hotrod-1" cache-container="local" />
+
+----
+
+The next step is to add a new `router-connector` endpoint and configure how other containers will be accessed. Note that Hot Rod connectors require using TLS/SNI and REST connectors require using prefix in the URL:
+
+[source,xml]
+----
+
+<router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" keep-alive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
+    <hotrod name="hotrod-1" >
+        <sni host-name="hotrod-1" security-realm="SSLRealm1"/>
+    </hotrod>
+    <hotrod name="hotrod-2" >
+        <sni host-name="hotrod-2" security-realm="SSLRealm2"/>
+    </hotrod>
+    <rest name="rest-1">
+        <prefix path="rest-1" />
+    </rest>
+    <rest name="rest-2">
+        <prefix path="rest-2" />
+    </rest>
+</router-connector>
+
+----
+
+With the following configuration, Hot Rod clients will access `hotrod-1` connector when using SNI Host Name "hotrod-1".
+REST clients will need to use the following URL to access "rest-1" connector - `https://<server_ip>:<server_port>/rest/rest-1`.

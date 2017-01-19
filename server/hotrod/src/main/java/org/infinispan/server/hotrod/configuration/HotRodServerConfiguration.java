@@ -19,8 +19,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final AuthenticationConfiguration authentication;
 
    HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
-                             String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches) {
-      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, ignoredCaches);
+         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches, boolean startTransport) {
+      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, ignoredCaches, startTransport);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
       this.topologyCacheName = TOPOLOGY_CACHE_NAME_PREFIX + (name.length() > 0 ? "_" + name : name);

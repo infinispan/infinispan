@@ -223,6 +223,11 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
    }
 
    @Override
+   public S startTransport(boolean startTransport) {
+      return parentConfigurationBuilder.startTransport(startTransport);
+   }
+
+   @Override
    public T build() {
       return parentConfigurationBuilder.build();
    }

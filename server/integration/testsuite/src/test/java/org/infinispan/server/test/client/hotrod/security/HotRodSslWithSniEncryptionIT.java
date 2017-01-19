@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Test;
@@ -42,10 +43,6 @@ import org.junit.runner.RunWith;
 @WithRunningServer({@RunningServer(name = "hotrodSslWithSni", config = "testsuite/hotrod-ssl-with-sni.xml")})
 public class HotRodSslWithSniEncryptionIT {
 
-   protected static final String DEFAULT_TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
-           + "truststore_client.jks";
-   protected static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
-
    protected static RemoteCache<String, String> remoteCache = null;
    protected static RemoteCacheManager remoteCacheManager = null;
 
@@ -61,11 +58,9 @@ public class HotRodSslWithSniEncryptionIT {
 
    @Test
    public void testUnauthorizedAccessToDefaultSSLContext() throws Exception {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = new SecurityConfigurationHelper().withDefaultSsl();
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
-      SSLContext cont = SslContextFactory.getContext(null, null, DEFAULT_TRUSTSTORE_PATH, DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
-      builder.security().ssl().sslContext(cont).enable();
       remoteCacheManager = new RemoteCacheManager(builder.build());
       try {
          remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
@@ -76,14 +71,9 @@ public class HotRodSslWithSniEncryptionIT {
 
    @Test
    public void testAuthorizedAccessThroughSni() throws Exception {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = new SecurityConfigurationHelper().withDefaultSsl().withSni("sni");
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
-      SSLContext cont = SslContextFactory.getContext(null, null, DEFAULT_TRUSTSTORE_PATH, DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
-      builder.security().ssl()
-              .sslContext(cont)
-              .sniHostName("sni")
-              .enable();
       remoteCacheManager = new RemoteCacheManager(builder.build());
       remoteCache = remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
       assertNotNull(remoteCache);

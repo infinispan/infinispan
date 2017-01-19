@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.NettyRestServer;
 import org.infinispan.rest.configuration.ExtendedHeaders;
@@ -42,13 +41,14 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 
+
 /**
  * A service which starts the REST web application
  *
  * @author Tristan Tarrant <ttarrant@redhat.com>
  * @since 6.0
  */
-public class RestService implements Service<Lifecycle>, EncryptableService {
+public class RestService implements Service<NettyRestServer>, EncryptableService {
    private static final String DEFAULT_CONTEXT_PATH = "";
    private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<PathManager>();
    private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<EmbeddedCacheManager>();
@@ -59,7 +59,7 @@ public class RestService implements Service<Lifecycle>, EncryptableService {
 
    private final ModelNode config;
    private final String serverName;
-   private Lifecycle restServer;
+   private NettyRestServer restServer;
    private boolean clientAuth;
 
    public RestService(String serverName, ModelNode config) {
@@ -97,10 +97,15 @@ public class RestService implements Service<Lifecycle>, EncryptableService {
 
       ROOT_LOGGER.endpointStarting(protocolName);
       try {
-         SocketBinding socketBinding = getSocketBinding().getValue();
-         InetSocketAddress socketAddress = socketBinding.getSocketAddress();
-         builder.host(socketAddress.getAddress().getHostAddress());
-         builder.port(socketAddress.getPort());
+         SocketBinding socketBinding = getSocketBinding().getOptionalValue();
+         if(socketBinding == null) {
+            builder.startTransport(false);
+            ROOT_LOGGER.startingServerWithoutTransport("REST");
+         } else {
+            InetSocketAddress socketAddress = socketBinding.getSocketAddress();
+            builder.host(socketAddress.getAddress().getHostAddress());
+            builder.port(socketAddress.getPort());
+         }
          restServer = NettyRestServer.createServer(builder.build(), cacheManagerInjector.getValue());
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextCreationFailed(e);
@@ -127,7 +132,7 @@ public class RestService implements Service<Lifecycle>, EncryptableService {
 
    /** {@inheritDoc} */
    @Override
-   public synchronized Lifecycle getValue() throws IllegalStateException {
+   public synchronized NettyRestServer getValue() throws IllegalStateException {
       if (restServer == null) {
          throw new IllegalStateException();
       }

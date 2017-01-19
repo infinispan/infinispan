@@ -79,6 +79,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             parseWebSocketConnector(reader, subsystemAddress, operations);
             break;
          }
+         case ROUTER_CONNECTOR: {
+            parseRouterConnector(reader, subsystemAddress, operations);
+            break;
+         }
          default: {
             throw ParseUtils.unexpectedElement(reader);
          }
@@ -91,18 +95,12 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
 
       ModelNode connector = Util.getEmptyOperation(ADD, null);
       String name = ModelKeys.HOTROD_CONNECTOR;
-      final Set<Attribute> required = EnumSet.of(Attribute.SOCKET_BINDING);
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         required.remove(attribute);
          name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
-      }
-
-      if (!required.isEmpty()) {
-         throw ParseUtils.missingRequired(reader, required);
       }
 
       PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.HOTROD_CONNECTOR, name));
@@ -218,6 +216,45 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       return name;
    }
 
+   private String parseRouterConnectorAttributes(XMLExtendedStreamReader reader, ModelNode connector, String name, int i,
+                                           String value, Attribute attribute) throws XMLStreamException {
+      switch (attribute) {
+         case NAME: {
+            RouterConnectorResource.NAME.parseAndSetParameter(value, connector, reader);
+            name = value;
+            break;
+         }
+         case REST_SOCKET_BINDING: {
+            RouterConnectorResource.REST_SOCKET_BINDING.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         case TCP_NODELAY: {
+            RouterConnectorResource.TCP_NODELAY.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         case KEEP_ALIVE: {
+            RouterConnectorResource.KEEP_ALIVE.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         case SEND_BUFFER_SIZE: {
+            RouterConnectorResource.SEND_BUFFER_SIZE.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         case RECEIVE_BUFFER_SIZE: {
+            RouterConnectorResource.RECEIVE_BUFFER_SIZE.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         case HOTROD_SOCKET_BINDING: {
+            RouterConnectorResource.HOTROD_SOCKET_BINDING.parseAndSetParameter(value, connector, reader);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      return name;
+   }
+
    private void parseRestConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
          List<ModelNode> operations) throws XMLStreamException {
 
@@ -327,6 +364,41 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       operations.add(connector);
    }
 
+   private void parseRouterConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
+                                     List<ModelNode> operations) throws XMLStreamException {
+      ModelNode connector = Util.getEmptyOperation(ADD, null);
+      String name = ModelKeys.ROUTER_CONNECTOR;
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         name = parseRouterConnectorAttributes(reader, connector, name, i, value, attribute);
+      }
+
+      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.ROUTER_CONNECTOR, name));
+      connector.get(OP_ADDR).set(connectorAddress.toModelNode());
+      operations.add(connector);
+
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         switch (element) {
+            case MULTI_TENANCY: {
+               parseMultiTenancy(reader, connector, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
    private void parseTopologyStateTransfer(XMLExtendedStreamReader reader, ModelNode connector,
          List<ModelNode> operations) throws XMLStreamException {
       PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
@@ -421,6 +493,36 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          }
          }
       }
+   }
+
+   private void parseMultiTenancy(final XMLExtendedStreamReader reader, final ModelNode connector, final List<ModelNode> operations) throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.MULTI_TENANCY, ModelKeys.MULTI_TENANCY_NAME));
+      ModelNode multiTenancy = Util.createAddOperation(address);
+      operations.add(multiTenancy);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case HOTROD: {
+               parseHotRod(reader, multiTenancy, operations);
+               break;
+            }
+            case REST: {
+               parseRest(reader, multiTenancy, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
    }
 
    private void parseSasl(final XMLExtendedStreamReader reader, final ModelNode authentication, final List<ModelNode> list) throws XMLStreamException {
@@ -622,5 +724,76 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
 
       ParseUtils.requireNoContent(reader);
       operations.add(sniOp);
+   }
+
+   private void parsePrefix(final XMLExtendedStreamReader reader, final ModelNode prefix, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName());
+      String path = reader.getAttributeValue(null, Attribute.PATH.getLocalName());
+
+      PathAddress pathOpAddress = PathAddress.pathAddress(prefix.get(OP_ADDR)).append(ModelKeys.PREFIX, path);
+      ModelNode pathOp = Util.createAddOperation(pathOpAddress);
+
+      PrefixResource.PATH.parseAndSetParameter(path, pathOp, reader);
+
+      ParseUtils.requireNoContent(reader);
+      operations.add(pathOp);
+   }
+
+   private void parseHotRod(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+
+      PathAddress hotrodOpAddress = PathAddress.pathAddress(multiTenancy.get(OP_ADDR)).append(ModelKeys.HOTROD, name);
+      ModelNode hotrodOp = Util.createAddOperation(hotrodOpAddress);
+      RouterHotRodResource.NAME.parseAndSetParameter(name, hotrodOp, reader);
+      operations.add(hotrodOp);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case SNI: {
+               parseSni(reader, hotrodOp, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseRest(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+
+      PathAddress restOpAddress = PathAddress.pathAddress(multiTenancy.get(OP_ADDR)).append(ModelKeys.REST, name);
+      ModelNode restOp = Util.createAddOperation(restOpAddress);
+      RouterRestResource.NAME.parseAndSetParameter(name, restOp, reader);
+      operations.add(restOp);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PREFIX: {
+               parsePrefix(reader, restOp, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
    }
 }

@@ -22,6 +22,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected boolean tcpNoDelay = true;
    protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
    protected Set<String> ignoredCaches = Collections.EMPTY_SET;
+   protected boolean startTransport = true;
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
@@ -108,6 +109,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       if (workerThreads < 0) {
          throw log.illegalWorkerThreads(workerThreads);
       }
+   }
+
+   @Override
+   public S startTransport(boolean startTransport) {
+      this.startTransport = startTransport;
+      return this.self();
    }
 
    @Override

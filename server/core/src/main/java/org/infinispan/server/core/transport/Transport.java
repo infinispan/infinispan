@@ -53,7 +53,7 @@ public interface Transport {
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )
-   String getPort();
+   Integer getPort();
 
    @ManagedAttribute(
          description = "Returns the number of worker threads.",

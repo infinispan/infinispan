@@ -1,8 +1,10 @@
 package org.infinispan.server.core;
 
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import io.netty.channel.Channel;
@@ -41,6 +43,18 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       MockServerConfigurationBuilder b = new MockServerConfigurationBuilder();
       b.recvBufSize(-1);
       expectIllegalArgument(b, new MockProtocolServer());
+   }
+
+   public void testStartingWithoutTransport() {
+      MockServerConfigurationBuilder b = new MockServerConfigurationBuilder();
+      b.startTransport(false);
+      AbstractProtocolServer server = new MockProtocolServer();
+      try {
+         server.start(b.build(), new DefaultCacheManager());
+         Assert.assertFalse(server.isTransportEnabled());
+      } finally {
+         server.stop();
+      }
    }
 
    private void expectIllegalArgument(MockServerConfigurationBuilder builder, MockProtocolServer server) {

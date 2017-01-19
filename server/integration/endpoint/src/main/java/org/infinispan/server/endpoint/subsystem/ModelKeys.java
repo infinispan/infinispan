@@ -27,10 +27,14 @@ public class ModelKeys {
    public static final String MEMCACHED_CONNECTOR = "memcached-connector";
    public static final String REST_CONNECTOR = "rest-connector";
    public static final String WEBSOCKET_CONNECTOR = "websocket-connector";
+   public static final String ROUTER_CONNECTOR = "router-connector";
 
    public static final String NAME = "name"; // string
    public static final String CACHE_NAME = "cache-name"; // string
    public static final String SOCKET_BINDING = "socket-binding"; // string
+   public static final String HOTROD_SOCKET_BINDING = "hotrod-socket-binding"; // string
+   public static final String REST_SOCKET_BINDING = "rest-socket-binding"; // string
+   public static final String KEEP_ALIVE = "keep-alive"; // boolean
    public static final String CACHE = "cache"; // string
    public static final String CACHE_CONTAINER = "cache-container"; // string
    public static final String WORKER_THREADS = "worker-threads"; // integer
@@ -63,10 +67,11 @@ public class ModelKeys {
    public static final String AUTHENTICATION_NAME = "AUTHENTICATION";
    public static final String AUTHENTICATION = "authentication";
    public static final String ENCRYPTION_NAME = "ENCRYPTION";
-   public static final String SNI_NAME = "SNI";
    public static final String ENCRYPTION = "encryption";
    public static final String SNI = "sni";
+   public static final String PREFIX = "prefix";
    public static final String HOST_NAME = "host-name";
+   public static final String PATH = "path";
    public static final String SASL_NAME = "SASL";
    public static final String SASL = "sasl";
    public static final String SASL_POLICY_NAME = "SASL_POLICY";
@@ -92,4 +97,9 @@ public class ModelKeys {
    public static final String IGNORED_CACHE = "ignored-cache";
    public static final String IGNORED_CACHES = "ignored-caches";
    public static final String CACHE_NAMES = "cache-names";
+
+   public static final String HOTROD = "hotrod";
+   public static final String REST = "rest";
+   public static final String MULTI_TENANCY = "multi-tenancy";
+   public static final String MULTI_TENANCY_NAME = "MULTI_TENANCY";
 }

@@ -32,7 +32,7 @@ import org.jboss.dmr.ModelType;
 public class ProtocolServerConnectorResource extends CommonConnectorResource {
 
    static final SimpleAttributeDefinition SOCKET_BINDING =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, false)
+         new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.SOCKET_BINDING)
                  .setRestartAllServices()

@@ -1,7 +1,6 @@
 package org.infinispan.rest;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseFilter;
@@ -21,40 +20,17 @@ import org.jboss.resteasy.plugins.server.netty.SniConfiguration;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 public final class NettyRestServer extends AbstractCacheIgnoreAware implements Lifecycle {
-   final EmbeddedCacheManager cacheManager;
-   private final RestServerConfiguration configuration;
-   private final NettyJaxrsServer netty;
-   private final Consumer<? super EmbeddedCacheManager> onStop;
-
    private final static Log log = LogFactory.getLog(NettyRestServer.class, Log.class);
 
-   public static NettyRestServer createServer(RestServerConfiguration configuration) {
-      return createServer(configuration, new DefaultCacheManager(), EmbeddedCacheManager::stop);
-   }
+   private static final String DEFAULT_REST_PATH = "rest";
 
-   public static NettyRestServer createServer(RestServerConfiguration configuration, String configurationFile) {
-      return createServer(configuration, createCacheManager(configurationFile), EmbeddedCacheManager::stop);
-   }
+   private final EmbeddedCacheManager cacheManager;
+   private final RestServerConfiguration configuration;
+   private NettyJaxrsServer netty;
+   private Server server;
 
    public static NettyRestServer createServer(RestServerConfiguration configuration, EmbeddedCacheManager manager) {
-      return createServer(configuration, manager, cm -> {
-      });
-   }
-
-   public static NettyRestServer createServer(RestServerConfiguration configuration, EmbeddedCacheManager manager,
-                                              Consumer<? super EmbeddedCacheManager> consumer) {
-      // Start caches first, if not started
-      startCaches(manager);
-
-      NettyJaxrsServer netty = new NettyJaxrsServer();
-      ResteasyDeployment deployment = new ResteasyDeployment();
-      netty.setDeployment(deployment);
-      netty.setHostname(configuration.host());
-      netty.setPort(configuration.port());
-      netty.setRootResourcePath("");
-      netty.setSecurityDomain(null);
-      addEncryption(configuration, netty);
-      return new NettyRestServer(manager, configuration, netty, consumer);
+      return new NettyRestServer(manager, configuration);
    }
 
    private static void addEncryption(RestServerConfiguration config, NettyJaxrsServer netty) {
@@ -88,30 +64,58 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
       }
    }
 
-   private NettyRestServer(EmbeddedCacheManager cacheManager, RestServerConfiguration configuration, NettyJaxrsServer netty,
-                           Consumer<? super EmbeddedCacheManager> onStop) {
+   private NettyRestServer(EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
       this.cacheManager = cacheManager;
       this.configuration = configuration;
-      this.netty = netty;
-      this.onStop = onStop;
    }
 
    @Override
    public void start() {
-      netty.start();
-      ResteasyDeployment deployment = netty.getDeployment();
       configuration.ignoredCaches().forEach(this::ignoreCache);
       RestCacheManager restCacheManager = new RestCacheManager(cacheManager, this::isCacheIgnored);
-      Server server = new Server(configuration, restCacheManager);
-      deployment.getRegistry().addSingletonResource(server);
-      deployment.getProviderFactory().register(new RestAccessLoggingHandler(), ContainerRequestFilter.class,
-            ContainerResponseFilter.class);
-      log.startRestServer(configuration.host(), configuration.port());
+      server = new Server(configuration, restCacheManager);
+
+      if(configuration.startTransport()) {
+         NettyJaxrsServer nettyServer = createNetty();
+         addEncryption(configuration, nettyServer);
+         nettyServer.start();
+         ResteasyDeployment deployment = nettyServer.getDeployment();
+         deployment.getRegistry().addSingletonResource(server, DEFAULT_REST_PATH);
+         deployment.getProviderFactory().register(new RestAccessLoggingHandler(), ContainerRequestFilter.class,
+               ContainerResponseFilter.class);
+         log.startRestServer(configuration.host(), configuration.port());
+         netty = nettyServer;
+      }
+   }
+
+   private NettyJaxrsServer createNetty() {
+      // Start caches first, if not started
+      startCaches(cacheManager);
+
+      NettyJaxrsServer netty = new NettyJaxrsServer();
+      ResteasyDeployment deployment = new ResteasyDeployment();
+      netty.setDeployment(deployment);
+      netty.setHostname(configuration.host());
+      netty.setPort(configuration.port());
+      netty.setRootResourcePath("");
+      netty.setSecurityDomain(null);
+      return netty;
    }
 
    @Override
    public void stop() {
-      netty.stop();
-      onStop.accept(cacheManager);
+      if(netty != null) {
+         netty.stop();
+      }
+      netty = null;
+      server = null;
+   }
+
+   public Server getServer() {
+      return server;
+   }
+
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
    }
 }

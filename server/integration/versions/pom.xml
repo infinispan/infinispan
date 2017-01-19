@@ -392,6 +392,12 @@
 
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-router</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
             <version>${version.org.infinispan}</version>
          </dependency>

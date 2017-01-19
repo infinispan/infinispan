@@ -32,13 +32,17 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
       </dependency>
-
       <dependency>
-         <groupId>org.easytesting</groupId>
-         <artifactId>fest-assert</artifactId>
+         <groupId>org.assertj</groupId>
+         <artifactId>assertj-core</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -50,7 +54,7 @@
    </dependencies>
 
    <properties>
-      <suite.exclude.groups>org.infinispan.objectfilter.test.perf.Profiling</suite.exclude.groups>
+      <suite.exclude.groups>org.infinispan.commons.test.annotations.Profiling</suite.exclude.groups>
       <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
       <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
