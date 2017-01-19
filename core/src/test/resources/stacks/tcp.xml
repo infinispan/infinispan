@@ -8,10 +8,8 @@
          port_range="30"
          recv_buf_size="20m"
          send_buf_size="640k"
-         max_bundle_size="31k"
          enable_diagnostics="false"
-         tcp_nodelay="true"
-         bundler_type="transfer-queue"
+         bundler_type="no-bundler"
 
          thread_naming_pattern="pl"
 
@@ -65,7 +63,6 @@
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
    <MFC max_credits="2m" min_threshold="0.40"/>
-   <FRAG2 frag_size="30k"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
    <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml" relay_multicasts="false" async_relay_creation="false"/>
