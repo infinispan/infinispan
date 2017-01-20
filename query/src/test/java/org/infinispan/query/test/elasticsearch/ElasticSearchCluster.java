@@ -31,8 +31,6 @@ import org.testng.Assert;
  */
 public final class ElasticSearchCluster {
 
-   private static final long DEFAULT_GREEN_TIMEOUT_MS = 1000L;
-
    private static final String CLUSTER_NAME_CFG = "cluster.name";
    private static final String DISCOVERY_CFG = "discovery.type";
    private static final String PATH_HOME_CFG = "path.home";
@@ -133,18 +131,20 @@ public final class ElasticSearchCluster {
 
    public void start() {
       nodes.forEach(Node::start);
-      nodes.forEach(n -> waitForGreen(n.client()));
+      if (timeout != null) {
+         nodes.forEach(n -> waitForGreen(n.client()));
+      }
    }
 
    public void stop() {
       nodes.forEach(node -> {
          node.close();
-         if(deleteDataOnExit) recursiveFileRemove(Paths.get(node.settings().get(PATH_HOME_CFG)).toFile());
+         if (deleteDataOnExit) recursiveFileRemove(Paths.get(node.settings().get(PATH_HOME_CFG)).toFile());
       });
    }
 
    private void waitForGreen(Client client) {
-      TimeValue waitTime = TimeValue.timeValueMillis(timeout == null ? DEFAULT_GREEN_TIMEOUT_MS : timeout);
+      TimeValue waitTime = TimeValue.timeValueMillis(timeout);
       ClusterHealthResponse healthAction = client.admin().cluster().health(Requests.clusterHealthRequest()
             .timeout(waitTime).waitForGreenStatus()).actionGet();
       if (healthAction.isTimedOut()) {
