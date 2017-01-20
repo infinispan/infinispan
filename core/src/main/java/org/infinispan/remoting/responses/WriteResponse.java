@@ -45,6 +45,14 @@ public class WriteResponse implements Response {
       return true;
    }
 
+   @Override
+   public String toString() {
+      return "WriteResponse{" +
+            "returnValue=" + returnValue +
+            ", commandSuccessful=" + commandSuccessful +
+            '}';
+   }
+
    private static class Externalizer extends AbstractExternalizer<WriteResponse> {
       @Override
       public void writeObject(ObjectOutput output, WriteResponse response) throws IOException {

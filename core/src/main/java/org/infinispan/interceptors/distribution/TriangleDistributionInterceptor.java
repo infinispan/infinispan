@@ -371,7 +371,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       //A SuccessfulResponse would be a bug and an ExceptionResponse will throw the exception.
       if (!response.isCommandSuccessful()) {
          //the command failed. it would be never sent to the backups so we need to cancel the collector.
-         commandAckCollector.unsuccessfulCommand(command.getCommandInvocationId());
+         commandAckCollector.unsuccessfulCommand(command.getCommandInvocationId().getId());
       }
       Object primaryResult = response.getReturnValue();
       command.updateStatusFromRemoteResponse(primaryResult);
