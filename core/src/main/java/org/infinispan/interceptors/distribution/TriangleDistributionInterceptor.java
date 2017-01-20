@@ -321,7 +321,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
-         final DistributionInfo distributionInfo) {
+         DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
@@ -329,10 +329,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
       return invokeNext(context, command).thenAccept((rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
-         final CommandInvocationId id = dwCommand.getCommandInvocationId();
          if (!dwCommand.isSuccessful()) {
             if (trace) {
-               log.tracef("Command %s not successful in primary owner.", id);
+               log.tracef("Command %s not successful in primary owner.", dwCommand.getCommandInvocationId());
             }
             return;
          }
@@ -347,13 +346,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
-      final CommandInvocationId invocationId = command.getCommandInvocationId();
       boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
       if (isSyncForwarding && !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId.getId(), distributionInfo.backups(), command.getTopologyId(), timeoutNanos);
-         //check the topology after registering the collector.
-         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-         checkTopologyId(command);
+         createCollector(command, distributionInfo.backups());
       }
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
@@ -388,12 +383,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       if (backupOwners.isEmpty()) {
          return;
       }
-      if (local && (isSynchronous(command) || command.isReturnValueExpected())) {
-         commandAckCollector.create(command.getCommandInvocationId().getId(), backupOwners, command.getTopologyId(),
-               timeoutNanos);
-         //check the topology after registering the collector.
-         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-         checkTopologyId(command);
+      if (local && (isSynchronous(command) || command.isReturnValueExpected()) && !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         createCollector(command, backupOwners);
       }
       if (trace) {
          log.tracef("Command %s send to backup owner %s.", command.getCommandInvocationId(), backupOwners);
@@ -406,6 +397,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
       // we must send the message only after the collector is registered in the map
       rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
+   }
+
+   private void createCollector(DataWriteCommand command,  Collection<Address> backupOwners) {
+      commandAckCollector.create(command.getCommandInvocationId().getId(), backupOwners, command.getTopologyId(),
+            timeoutNanos);
+      //check the topology after registering the collector.
+      //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+      checkTopologyId(command);
    }
 
    /**

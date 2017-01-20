@@ -202,9 +202,6 @@ public class RemoteCommandsFactory {
             case BackupAckCommand.COMMAND_ID:
                command = new BackupAckCommand();
                break;
-            case PrimaryAckCommand.COMMAND_ID:
-               command = new PrimaryAckCommand();
-               break;
             case BackupMultiKeyAckCommand.COMMAND_ID:
                command = new BackupMultiKeyAckCommand();
                break;
