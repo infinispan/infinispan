@@ -136,7 +136,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    void startElasticsearch() throws IOException {
       ElasticSearchCluster cluster = new ElasticSearchClusterBuilder()
             .withNumberNodes(2)
-            .waitingForGreen(2000L)
             .addPlugin(DeleteByQueryPlugin.class)
             .build();
       cluster.start();

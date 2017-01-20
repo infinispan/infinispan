@@ -64,7 +64,6 @@ public class ElasticsearchIndexManagerIT extends BaseQueryTest {
    public static void startElastic() throws Exception {
       elasticSearchCluster = new ElasticSearchClusterBuilder()
             .withNumberNodes(2)
-            .waitingForGreen(2000L)
             .addPlugin(DeleteByQueryPlugin.class)
             .build();
       elasticSearchCluster.start();

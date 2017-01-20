@@ -29,7 +29,6 @@ public class ClusteredCacheWithElasticsearchIndexManagerTest extends ClusteredCa
    public void prepareElasticSearch() throws IOException {
       elasticSearchCluster = new ElasticSearchClusterBuilder()
             .withNumberNodes(2)
-            .waitingForGreen(2000L)
             .refreshInterval(100L)
             .addPlugin(DeleteByQueryPlugin.class)
             .build();
