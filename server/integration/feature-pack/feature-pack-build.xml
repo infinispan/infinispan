@@ -66,6 +66,10 @@
            subsystems="configuration/examples/subsystems-hotrod-ssl.xml"
            output-file="docs/examples/configs/standalone-hotrod-ssl.xml"/>
         <standalone
+           template="configuration/examples/template-ssl.xml"
+           subsystems="configuration/examples/subsystems-hotrod-ssl.xml"
+           output-file="docs/examples/configs/standalone-multi-tenancy.xml"/>
+        <standalone
            template="configuration/standalone/template.xml"
            subsystems="configuration/examples/subsystems-storage-only.xml"
            output-file="docs/examples/configs/clustered-storage-only.xml"/>
