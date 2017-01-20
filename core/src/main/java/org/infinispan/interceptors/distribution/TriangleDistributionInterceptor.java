@@ -304,12 +304,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private BasicInvocationStage remoteBackupWrite(InvocationContext context, AbstractDataWriteCommand command) {
       if (context.lookupEntry(command.getKey()) == null) {
-         switch (command.loadType()) {
-            case OWNER:
-               return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
-            default:
-               entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
-               return invokeNext(context, command);
+         if (command.loadType() == OWNER) {
+            return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
+         } else {
+            entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
+            return invokeNext(context, command);
          }
       }
       return invokeNext(context, command);
