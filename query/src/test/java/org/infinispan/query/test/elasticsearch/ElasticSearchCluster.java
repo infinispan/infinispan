@@ -38,6 +38,7 @@ public final class ElasticSearchCluster {
    private static final String PATH_HOME_CFG = "path.home";
    private static final String REFRESH_INTERVAL_CFG = "index.refresh_interval";
    private static final String TRANSPORT_PORT_CFG = "transport.tcp.port";
+   private static final String ALLOCATION_THRESHOLD_CFG = "cluster.routing.allocation.disk.threshold_enabled";
 
    private final List<Node> nodes;
    private final Long timeout;
@@ -118,6 +119,7 @@ public final class ElasticSearchCluster {
                .put(CLUSTER_NAME_CFG, Thread.currentThread().getName())
                .put(TRANSPORT_PORT_CFG, 0)
                .put(REFRESH_INTERVAL_CFG, TimeValue.timeValueMillis(refreshInterval))
+               .put(ALLOCATION_THRESHOLD_CFG, "false")
                .build();
          return new TestNode(settings, plugins);
       }
