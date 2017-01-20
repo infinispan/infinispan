@@ -51,8 +51,6 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<ReplicableC
 
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       switch (input.readByte()) {
-         case PrimaryAckCommand.COMMAND_ID:
-            return primaryAckCommand(input);
          case BackupAckCommand.COMMAND_ID:
             return backupAckCommand(input);
          case ExceptionAckCommand.COMMAND_ID:
@@ -86,12 +84,6 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<ReplicableC
 
    private ReplicableCommand backupAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
       BackupAckCommand command = new BackupAckCommand(commandAckCollector);
-      command.readFrom(input);
-      return command;
-   }
-
-   private ReplicableCommand primaryAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrimaryAckCommand command = new PrimaryAckCommand(commandAckCollector);
       command.readFrom(input);
       return command;
    }
