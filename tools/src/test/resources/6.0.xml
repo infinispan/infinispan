@@ -219,7 +219,7 @@
 
     <namedCache name="withLoaderDefaults">
         <persistence>
-            <store class="org.infinispan.persistence.file.SingleFileStore" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" shared="true">
+            <store class="org.infinispan.persistence.file.SingleFileStore" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" shared="false">
                 <properties>
                     <property name="location" value="/tmp/Another-FileCacheStore-Location" />
                 </properties>
@@ -459,7 +459,7 @@
     <namedCache name="withLevelDBStore">
         <persistence passivation="true">
             <leveldbStore xmlns="urn:infinispan:config:store:leveldb:6.0" location="/tmp/leveldb/data" expiredLocation="/tmp/leveldb/expired"
-                          implementationType="JAVA" shared="true" preload="true" clearThreshold="20" expiryQueueSize="30" blockSize="10" cacheSize="50" compressionType="SNAPPY"/>
+                          implementationType="JAVA" shared="false" preload="true" clearThreshold="20" expiryQueueSize="30" blockSize="10" cacheSize="50" compressionType="SNAPPY"/>
         </persistence>
     </namedCache>
 

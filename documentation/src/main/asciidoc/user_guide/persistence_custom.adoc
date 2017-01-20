@@ -21,7 +21,8 @@ As an optional step, you should add the following annotations to your configurat
 as adding `@ConfiguredBy` to your store implementation class.  These additional annotations will ensure that your custom
 configuration builder is used to parse your store configuration from xml. If these annotations are not added, then the
 `CustomStoreConfigurationBuilder` will be used to parse the common store attributes defined in `AbstractStoreConfiguration`
-and any additional elements will be ignored.
+and any additional elements will be ignored. If a store and its configuration do not declare the `@Store` and `@ConfigurationFor`
+annotations respectively, a warning message will be logged upon cache initialisation.
 
 
 4. Add your custom store to your cache's configuration:

@@ -681,7 +681,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(singleFileStoreConfiguration.fetchPersistentState());
       assertTrue(singleFileStoreConfiguration.ignoreModifications());
       assertTrue(singleFileStoreConfiguration.purgeOnStartup());
-      assertTrue(singleFileStoreConfiguration.shared());
+      assertFalse(singleFileStoreConfiguration.shared());
 
       //--------------------------------------------------------------------------------------------
 
@@ -901,7 +901,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       RocksDBStoreConfiguration rocksDBStoreConfiguration = (RocksDBStoreConfiguration) config.persistence().stores().get(0);
       assertEquals("/tmp/leveldb/data", rocksDBStoreConfiguration.location());
       assertEquals("/tmp/leveldb/expired", rocksDBStoreConfiguration.expiredLocation());
-      assertTrue(rocksDBStoreConfiguration.shared());
+      assertFalse(rocksDBStoreConfiguration.shared());
       assertTrue(rocksDBStoreConfiguration.preload());
       assertEquals(20, rocksDBStoreConfiguration.clearThreshold());
       assertEquals(30, rocksDBStoreConfiguration.expiryQueueSize());

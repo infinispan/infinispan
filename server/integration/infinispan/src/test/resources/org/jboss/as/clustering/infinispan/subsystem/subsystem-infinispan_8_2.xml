@@ -46,7 +46,7 @@
             <eviction size="20000" strategy="LIRS" type="COUNT"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
-            <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="true" singleton="false" max-entries="1000000" name="file-store">
+            <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="false" singleton="false" max-entries="1000000" name="file-store">
                 <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
             </file-store>
             <indexing index="LOCAL" auto-config="true"/>
