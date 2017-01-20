@@ -68,6 +68,7 @@ import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
+import org.jgroups.Message;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
@@ -725,6 +726,23 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             toJGroupsAddress(destination),
             dispatcher.marshallCall(rpcCommand),
             asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder));
+   }
+
+   @Override
+   public void noFcSendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder)
+         throws Exception {
+      if (trace) {
+         log.tracef("sendTo: destination=%s, command=%s, order=%s", destination, rpcCommand, deliverOrder);
+      }
+      if (destination.equals(address)) {
+         if (trace) {
+            log.tracef("Not sending message to self");
+         }
+         return;
+      }
+      dispatcher.sendMessage(toJGroupsAddress(destination),
+            dispatcher.marshallCall(rpcCommand),
+            asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder).setFlags(Message.Flag.NO_FC.value()));
    }
 
    @Override

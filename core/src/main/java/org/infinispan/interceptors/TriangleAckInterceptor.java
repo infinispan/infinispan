@@ -208,7 +208,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       }
       PrimaryAckCommand ackCommand = commandsFactory.buildPrimaryAckCommand();
       command.initPrimaryAck(ackCommand, returnValue);
-      transport.sendTo(origin, ackCommand, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
+      transport.noFcSendTo(origin, ackCommand, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
    }
 
    private void sendBackupAck(DataWriteCommand command) throws Exception {
@@ -220,7 +220,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       if (origin.equals(localAddress)) {
          commandAckCollector.backupAck(id.getId(), origin, command.getTopologyId());
       } else {
-         transport.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), command.getTopologyId()),
+         transport.noFcSendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), command.getTopologyId()),
                DeliverOrder.NONE);
       }
    }
@@ -234,7 +234,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       if (id.getAddress().equals(localAddress)) {
          commandAckCollector.multiKeyBackupAck(id.getId(), localAddress, segment, command.getTopologyId());
       } else {
-         transport.sendTo(id.getAddress(),
+         transport.noFcSendTo(id.getAddress(),
                commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, command.getTopologyId()),
                DeliverOrder.NONE);
       }
@@ -255,7 +255,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          ack.initWithReturnValue(returnValue);
       }
-      transport.sendTo(id.getAddress(), ack, DeliverOrder.NONE);
+      transport.noFcSendTo(id.getAddress(), ack, DeliverOrder.NONE);
    }
 
    private void sendExceptionAck(CommandInvocationId id, int topologyId, Throwable throwable) throws Exception {
@@ -266,7 +266,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       if (origin.equals(localAddress)) {
          commandAckCollector.completeExceptionally(id.getId(), throwable, topologyId);
       } else {
-         transport.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId),
+         transport.noFcSendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId),
                DeliverOrder.NONE);
       }
    }

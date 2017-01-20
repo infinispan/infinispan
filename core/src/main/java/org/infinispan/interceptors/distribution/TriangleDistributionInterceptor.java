@@ -282,33 +282,40 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          //don't go through the triangle
          return invokeNext(context, command);
       }
-      final CacheTopology topology = checkTopologyId(command);
-      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(),
-            localAddress);
+      DistributionInfo distributionInfo = getDistributionInfo(command);
 
       switch (distributionInfo.ownership()) {
          case PRIMARY:
             assert context.lookupEntry(command.getKey()) != null;
             return primaryOwnerWrite(context, command, distributionInfo);
          case BACKUP:
-            if (context.isOriginLocal()) {
-               return localWriteInvocation(context, command, distributionInfo);
-            } else {
-               CacheEntry entry = context.lookupEntry(command.getKey());
-               if (entry == null) {
-                  if (command.loadType() == OWNER) {
-                     return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
-                  }
-                  entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
-               }
-               return invokeNext(context, command);
-            }
+            return context.isOriginLocal() ?
+                  localWriteInvocation(context, command, distributionInfo) :
+                  remoteBackupWrite(context, command);
          case NON_OWNER:
             //always local!
             assert context.isOriginLocal();
             return localWriteInvocation(context, command, distributionInfo);
       }
       throw new IllegalStateException();
+   }
+
+   private BasicInvocationStage remoteBackupWrite(InvocationContext context, AbstractDataWriteCommand command) {
+      if (context.lookupEntry(command.getKey()) == null) {
+         switch (command.loadType()) {
+            case OWNER:
+               return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
+            default:
+               entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
+               return invokeNext(context, command);
+         }
+      }
+      return invokeNext(context, command);
+   }
+
+   private DistributionInfo getDistributionInfo(AbstractDataWriteCommand command) {
+      final CacheTopology topology = checkTopologyId(command);
+      return new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(), localAddress);
    }
 
    private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,

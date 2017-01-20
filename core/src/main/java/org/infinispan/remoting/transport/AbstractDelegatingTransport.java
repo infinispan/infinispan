@@ -66,6 +66,12 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public void noFcSendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder)
+         throws Exception {
+      actual.noFcSendTo(destination, rpcCommand, deliverOrder);
+   }
+
+   @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
       beforeBackupRemotely(rpcCommand);
       BackupResponse response = actual.backupRemotely(backups, rpcCommand);
