@@ -99,9 +99,41 @@
          </hotrod-connector>
       </replacement>
    </supplement>
+   <supplement name="multi-tenancy">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector name="hotrod1" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <hotrod-connector name="hotrod2" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <rest-connector name="rest1" cache-container="local" />
+         <rest-connector name="rest2" cache-container="local" />
+         <router-connector name="router" hotrod-socket-binding="hotrod-multi-tenancy" rest-socket-binding="rest-multi-tenancy">
+            <multi-tenancy>
+               <hotrod name="hotrod1">
+                  <sni host-name="sample_sni_name" security-realm="other" />
+                  <sni host-name="sample_sni_name2" security-realm="other2" />
+               </hotrod>
+               <hotrod name="hotrod2">
+                  <sni host-name="sample_sni_nam3" security-realm="other" />
+               </hotrod>
+               <rest name="rest1">
+                  <prefix path="rest1" />
+               </rest>
+               <rest name="rest2">
+                  <prefix path="rest2" />
+               </rest>
+            </multi-tenancy>
+         </router-connector>
+      </replacement>
+   </supplement>
    <socket-binding name="hotrod" port="11222" />
    <socket-binding name="hotrod-internal" port="11223" />
+   <socket-binding name="hotrod-multi-tenancy" port="11224" />
    <socket-binding name="memcached" port="11211" />
    <socket-binding name="websocket" port="8181" />
    <socket-binding name="rest" port="8080" />
+   <socket-binding name="rest-multi-tenancy" port="8081" />
 </config>
