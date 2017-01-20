@@ -103,8 +103,9 @@ store. See link:../user_guide/persistence_jdbc.adoc#JDBC_Migrator[JDBC Migrator 
 === @Store Annotation Introduced
 A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
 explicitly defined and validated against the provided store configuration.  Existing stores should be updated to use this
-annotation where possible.  If no annotation is present your store will continue to function as before, albeit with a warning that
-additional store validation cannot be completed.
+annotation and the store's configuration class should also declare the `@ConfigurationFor` annotation.  If neither of these
+annotations are present on the store or configuration class, then a your store will continue to function as before, albeit
+with a warning that additional store validation cannot be completed.
 
 
 == Upgrading from 8.1 to 8.2

@@ -1485,7 +1485,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to validate all properties of %s's configuration as the @Store attribute is missing", id = 431)
+   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
    void warnStoreAnnotationMissing(String name);
 
    @Message(value = "Missing configuration for default cache '%s' declared on container", id = 432)
@@ -1504,4 +1504,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache '%s' has been requested, but no cache configuration exists with that name and no default cache has been set for this container", id = 436)
    CacheConfigurationException noSuchCacheConfiguration(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to validate %s with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
+   void warnConfigurationForAnnotationMissing(String name);
 }

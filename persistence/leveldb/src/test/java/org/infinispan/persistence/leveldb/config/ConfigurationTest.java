@@ -79,7 +79,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
       // check generic store attributes
       StoreConfiguration cacheLoaderConfig = cacheConfig.persistence().stores().get(0);
-      assertTrue(cacheLoaderConfig.shared());
+      assertFalse(cacheLoaderConfig.shared());
       assertTrue(cacheLoaderConfig.preload());
       assertTrue(cacheLoaderConfig instanceof LevelDBStoreConfiguration);
 

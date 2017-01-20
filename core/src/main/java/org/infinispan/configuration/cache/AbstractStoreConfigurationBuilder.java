@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -190,14 +191,19 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       ConfigurationBuilder builder = getBuilder();
 
-      Class storeClazz = attributes.getKlass();
-      if (storeClazz != null && storeClazz.isAnnotationPresent(Store.class)) {
-         Store storeProps = (Store) storeClazz.getAnnotation(Store.class);
-         if (!storeProps.shared() && shared) {
-            throw log.nonSharedStoreConfiguredAsShared(attributes.getName());
+      Class configKlass = attributes.getKlass();
+      if (configKlass != null && configKlass.isAnnotationPresent(ConfigurationFor.class)) {
+         Class storeKlass = ((ConfigurationFor) configKlass.getAnnotation(ConfigurationFor.class)).value();
+         if (storeKlass.isAnnotationPresent(Store.class)) {
+            Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
+            if (!storeProps.shared() && shared) {
+               throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
+            }
+         } else {
+            log.warnStoreAnnotationMissing(storeKlass.getSimpleName());
          }
       } else {
-         log.warnStoreAnnotationMissing(attributes.getName());
+         log.warnConfigurationForAnnotationMissing(attributes.getName());
       }
 
       if (!shared && !fetchPersistentState && !purgeOnStartup

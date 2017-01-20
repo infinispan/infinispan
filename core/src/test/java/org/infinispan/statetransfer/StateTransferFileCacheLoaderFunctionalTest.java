@@ -12,13 +12,22 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -86,7 +95,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    protected EmbeddedCacheManager createCacheManager(String tmpDirectory) {
       configurationBuilder.persistence().clearStores();
 
-      SingleFileStoreConfigurationBuilder fcsBuilder = configurationBuilder.persistence().addSingleFileStore();
+      SharedSingleFileStoreConfigurationBulder fcsBuilder = configurationBuilder.persistence().addStore(SharedSingleFileStoreConfigurationBulder.class);
       fcsBuilder
             .fetchPersistentState(true)
             .purgeOnStartup(false)
@@ -253,6 +262,34 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          if (cm2 != null) cm2.stop();
          if (cm30 != null) cm30.stop();
          if (cm40 != null) cm40.stop();
+      }
+   }
+
+   // Create shared version of file stores so that validation does not fail, but the logic for this test still works
+   @Store(shared = true)
+   public static class SharedSingleFileStore extends SingleFileStore {}
+
+   @BuiltBy(SharedSingleFileStoreConfigurationBulder.class)
+   @ConfigurationFor(SharedSingleFileStore.class)
+   public static class SharedSingleFileStoreConfiguration extends SingleFileStoreConfiguration {
+
+      public static AttributeSet attributeDefinitionSet() {
+         return new AttributeSet(SharedSingleFileStoreConfiguration.class, SingleFileStoreConfiguration.attributeDefinitionSet());
+      }
+
+      SharedSingleFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+         super(attributes, async, singletonStore);
+      }
+   }
+
+   public static class SharedSingleFileStoreConfigurationBulder extends SingleFileStoreConfigurationBuilder {
+      public SharedSingleFileStoreConfigurationBulder(PersistenceConfigurationBuilder builder) {
+         super(builder, SharedSingleFileStoreConfiguration.attributeDefinitionSet());
+      }
+
+      @Override
+      public SingleFileStoreConfiguration create() {
+         return new SharedSingleFileStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
       }
    }
 }

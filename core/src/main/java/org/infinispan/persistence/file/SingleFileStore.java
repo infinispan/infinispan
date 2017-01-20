@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -64,6 +65,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea Markus
  * @since 6.0
  */
+@Store
 @ConfiguredBy(SingleFileStoreConfiguration.class)
 public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);

@@ -83,7 +83,7 @@ public class StoreConfigurationValidationTest {
    static class NonSharedDummyStoreConfiguration extends DummyInMemoryStoreConfiguration {
 
       public static AttributeSet attributeDefinitionSet() {
-         return new AttributeSet(NonSharedDummyInMemoryStore.class, DummyInMemoryStoreConfiguration.attributeDefinitionSet());
+         return new AttributeSet(NonSharedDummyStoreConfiguration.class, DummyInMemoryStoreConfiguration.attributeDefinitionSet());
       }
 
       NonSharedDummyStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {

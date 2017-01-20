@@ -5,6 +5,8 @@ import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LO
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Single file cache store configuration builder.
  *
@@ -14,9 +16,12 @@ import org.infinispan.commons.configuration.Builder;
 public class SingleFileStoreConfigurationBuilder
       extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> {
 
-
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder, SingleFileStoreConfiguration.attributeDefinitionSet());
+      this(builder, SingleFileStoreConfiguration.attributeDefinitionSet());
+   }
+
+   public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributeSet) {
+      super(builder, attributeSet);
    }
 
    @Override
