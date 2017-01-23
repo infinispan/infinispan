@@ -37,6 +37,7 @@ public final class ElasticSearchCluster {
    private static final String REFRESH_INTERVAL_CFG = "index.refresh_interval";
    private static final String TRANSPORT_PORT_CFG = "transport.tcp.port";
    private static final String ALLOCATION_THRESHOLD_CFG = "cluster.routing.allocation.disk.threshold_enabled";
+   private static final String RECOVERY_TIMEOUT_CFG = "indices.recovery.retry_delay_network";
 
    private final List<Node> nodes;
    private final Long timeout;
@@ -66,7 +67,7 @@ public final class ElasticSearchCluster {
       private boolean deleteDataOnExit = true;
       private int numberNodes;
       private final Collection<Class<? extends Plugin>> plugins = new HashSet<>();
-      private long timeoutMs;
+      private Long timeoutMs;
       private long refreshInterval;
 
       public ElasticSearchClusterBuilder withNumberNodes(int numberNodes) {
@@ -118,6 +119,7 @@ public final class ElasticSearchCluster {
                .put(TRANSPORT_PORT_CFG, 0)
                .put(REFRESH_INTERVAL_CFG, TimeValue.timeValueMillis(refreshInterval))
                .put(ALLOCATION_THRESHOLD_CFG, "false")
+               .put(RECOVERY_TIMEOUT_CFG, "500ms")
                .build();
          return new TestNode(settings, plugins);
       }
