@@ -1100,7 +1100,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
    }
 
-   private static final class RunnableAdapter<T> implements Callable<T>, Serializable {
+   public static final class RunnableAdapter<T> implements Callable<T>, Serializable {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 6629286923873531028L;
@@ -1114,6 +1114,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       protected RunnableAdapter(Runnable task, T result) {
          this.task = task;
          this.result = result;
+      }
+
+      public Runnable getTask() {
+         return task;
       }
 
       @Override
