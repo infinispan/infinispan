@@ -221,7 +221,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
          getCacheForWrite().put("transaction_" + transaction.getId(), transaction);
       }
 
-      // this value should be ignored gracefully
+      // this value should be ignored gracefully for indexing and querying because primitives are not currently supported
       getCacheForWrite().put("dummy", "a primitive value cannot be queried");
 
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));

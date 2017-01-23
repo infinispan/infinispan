@@ -311,7 +311,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
       @ClientCacheEntryCreated
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
          byte[] eventData = (byte[]) event.getEventData();
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
          createEvents.add(r);
 
          log.debugf("handleClientCacheEntryCreatedEvent instance=%s projection=%s sortProjection=%s\n",
@@ -323,7 +323,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
       @ClientCacheEntryModified
       public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
          byte[] eventData = (byte[]) event.getEventData();
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
          modifyEvents.add(r);
 
          log.debugf("handleClientCacheEntryModifiedEvent instance=%s projection=%s sortProjection=%s\n",

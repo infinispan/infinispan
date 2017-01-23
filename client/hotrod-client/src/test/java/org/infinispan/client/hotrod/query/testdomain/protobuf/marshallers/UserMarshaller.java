@@ -31,13 +31,13 @@ public class UserMarshaller implements MessageMarshaller<UserPB> {
    @Override
    public UserPB readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
-      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<Integer>(), Integer.class);
+      Set<Integer> accountIds = reader.readCollection("accountIds", new HashSet<>(), Integer.class);
 
       // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
 
-      List<Address> addresses = reader.readCollection("addresses", new ArrayList<Address>(), AddressPB.class);
+      List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), AddressPB.class);
 
       Integer age = reader.readInt("age");
       User.Gender gender = reader.readObject("gender", User.Gender.class);
