@@ -60,14 +60,12 @@
       xmit_table_num_rows="50"
       xmit_table_msgs_per_row="1024"
       xmit_table_max_compaction_time="30000"
-      max_msg_batch_size="100"
       resend_last_seqno="true"/>
    <UNICAST3
       xmit_interval="500"
       xmit_table_num_rows="50"
       xmit_table_msgs_per_row="1024"
       xmit_table_max_compaction_time="30000"
-      max_msg_batch_size="100"
       conn_expiry_timeout="0"/>
    <pbcast.STABLE 
       stability_delay="500"
