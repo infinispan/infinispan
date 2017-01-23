@@ -59,6 +59,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -230,13 +231,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
          Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(localTxCtx));
+         // Mark the locks as acquired even if the remote invocation fails, e.g. with a SuspectException
+         localTxCtx.getCacheTransaction().locksAcquired(
+               recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
          CompletableFuture<Object> remotePrepare =
                prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
-         return returnWithAsync(remotePrepare.thenApply(o -> {
-            localTxCtx.getCacheTransaction().locksAcquired(
-                  recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
-            return o;
-         }));
+         return returnWithAsync(remotePrepare);
       });
    }
 
@@ -285,16 +285,22 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          TransactionBoundaryCommand command, TxInvocationContext<LocalTransaction> context,
          Collection<Address> recipients) {
       OutdatedTopologyException outdatedTopologyException = null;
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
          Response response = e.getValue();
          if (response == CacheNotFoundResponse.INSTANCE) {
             // No need to retry if the missing node wasn't a member when the command started.
-            if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId()
+            if (command.getTopologyId() == cacheTopology.getTopologyId()
                   && !rpcManager.getMembers().contains(recipient)) {
                if (trace) log.tracef("Ignoring response from node not targeted %s", recipient);
             } else {
-               if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients)) {
+               // If the recipient is still in the actualMembers list, but we got a CacheNotFoundResponse,
+               // it means we should receive a new topology soon, and we have to retry with that topology.
+               // We still have to register the partial prepare/commit/rollback every time
+               // (by calling checkCacheNotFoundResponseInPartitionHandling).
+               if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients) &&
+                     !cacheTopology.getActualMembers().contains(recipient)) {
                   if (trace) log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager", recipient);
                   return;
                } else {
@@ -307,6 +313,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (trace) log.tracef("Node %s has a newer topology id", recipient);
             //noinspection ThrowableInstanceNeverThrown
             outdatedTopologyException = new OutdatedTopologyException(format("Node %s has a newer topology id", recipient));
+         } else if (response instanceof UnsuccessfulResponse) {
+            // The commit command didn't find the remote transaction.
+            // We can ignore it if the node was only an owner in an older topology.
+            if (cdl.getOwners(context.getAffectedKeys()).contains(recipient)) {
+               throw new IllegalStateException("Remote transaction not found on node " + recipient);
+            }
          }
       }
       if (outdatedTopologyException != null) {
@@ -324,6 +336,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (((PrepareCommand) command).isOnePhaseCommit()) {
             return partitionHandlingManager.addPartialCommit1PCTransaction(globalTransaction, recipients, lockedKeys,
                                                                            Arrays.asList(((PrepareCommand) command).getModifications()));
+         } else {
+            // The RollbackCommand will be invoked on the same nodes, and the transaction will then be registered
+            // as partially rolled back again (assuming the cluster is still split).
+            // For now, we just want to make sure that we don't throw an OutdatedTopologyException.
+            return partitionHandlingManager.addPartialRollbackTransaction(globalTransaction, recipients, lockedKeys);
          }
       } else if (command instanceof CommitCommand) {
          EntryVersionsMap newVersion = null;

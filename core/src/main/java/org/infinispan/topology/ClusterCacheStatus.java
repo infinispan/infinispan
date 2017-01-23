@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -144,7 +145,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       synchronized (this) {
          boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
 
-         if (modeChanged || !actualMembers.equals(currentTopology.getActualMembers())) {
+         if (modeChanged || !Objects.equals(actualMembers, currentTopology.getActualMembers())) {
             log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
             ConsistentHash newPendingCH = currentTopology.getPendingCH();
             if (cancelRebalance) {

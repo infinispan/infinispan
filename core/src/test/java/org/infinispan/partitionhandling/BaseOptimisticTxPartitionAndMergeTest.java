@@ -13,6 +13,9 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -62,6 +65,8 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
       });
 
       filterCollection.await(30, TimeUnit.SECONDS);
+      ClusterTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      ltm0.setRebalancingEnabled(false);
       splitMode.split(this);
       filterCollection.unblock();
 
@@ -73,6 +78,7 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
 
       checkLocksDuringPartition(splitMode, keyInfo, discard);
 
+      ltm0.setRebalancingEnabled(true);
       mergeCluster(OPTIMISTIC_TX_CACHE_NAME);
       finalAsserts(OPTIMISTIC_TX_CACHE_NAME, keyInfo, txFail ? INITIAL_VALUE : FINAL_VALUE);
    }
