@@ -175,7 +175,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       return cacheManager;
    }
 
-   public Address getLockOwner(String indexName, String lockName) {
+   public Address getLockOwner(String indexName, int affinityId, String lockName) {
       FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName, affinityId);
       Cache<?, Address> lockCache = cacheManager.getCache(lockingCacheName);
       Address address = lockCache.get(fileCacheKey);

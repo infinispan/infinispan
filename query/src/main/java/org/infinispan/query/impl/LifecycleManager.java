@@ -44,6 +44,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.affinity.ShardAllocationManagerImpl;
+import org.infinispan.query.affinity.ShardAllocatorManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.QueryKnownClasses;
@@ -109,6 +111,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          SearchIntegrator searchFactory = null;
          if (isIndexed) {
             log.registeringQueryInterceptor(cacheName);
+            cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = getSearchFactory(cacheName, cfg.indexing(), cr);
             createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
