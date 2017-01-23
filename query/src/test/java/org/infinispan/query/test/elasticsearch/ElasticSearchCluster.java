@@ -23,7 +23,6 @@ import org.elasticsearch.http.HttpServer;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.plugins.Plugin;
-import org.testng.Assert;
 
 /**
  * Simple In-JVM Elasticsearch cluster for testing purposes, with local discovery and support for plugins.
@@ -105,7 +104,7 @@ public final class ElasticSearchCluster {
          try {
             pathHome = Files.createTempDirectory("elasticsearch").toFile();
          } catch (IOException cause) {
-            Assert.fail("Cannot create temporary directory", cause);
+            throw new AssertionError("Cannot create temporary directory", cause);
          }
          return pathHome;
       }
@@ -150,7 +149,7 @@ public final class ElasticSearchCluster {
       ClusterHealthResponse healthAction = client.admin().cluster().health(Requests.clusterHealthRequest()
             .timeout(waitTime).waitForGreenStatus()).actionGet();
       if (healthAction.isTimedOut()) {
-         Assert.fail("Timeout while waiting for Elasticsearch cluster");
+         throw new AssertionError("Timeout while waiting for Elasticsearch cluster");
       }
    }
 
