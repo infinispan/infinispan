@@ -780,16 +780,16 @@ public interface Log extends BasicLogger {
    void couldNotInterruptThread(UUID id);
 
    @LogMessage(level = ERROR)
-   @Message(value = "No live owners found for segment %d of cache %s. Current owners are:  %s. Faulty owners: %s", id=208)
+   @Message(value = "No live owners found for segment %d of cache %s. Current owners are: %s. Faulty owners: %s", id=208)
    void noLiveOwnersFoundForSegment(int segmentId, String cacheName, Collection<Address> owners, Collection<Address> faultySources);
 
    @LogMessage(level = WARN)
-   @Message(value = "Failed to retrieve transactions for segments %s of cache %s from node %s", id=209)
-   void failedToRetrieveTransactionsForSegments(Collection<Integer> segments, String cacheName, Address source, @Cause Exception e);
+   @Message(value = "Failed to retrieve transactions of cache %s from node %s, segments %s", id=209)
+   void failedToRetrieveTransactionsForSegments(String cacheName, Address source, Collection<Integer> segments, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Failed to request segments %s of cache %s from node %s (node will not be retried)", id=210)
-   void failedToRequestSegments(Collection<Integer> segments, String cacheName, Address source, @Cause Throwable e);
+   @Message(value = "Failed to request state of cache %s from node %s, segments %s", id=210)
+   void failedToRequestSegments(String cacheName, Address source, Collection<Integer> segments, @Cause Throwable e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to load %s from any of the following classloaders: %s", id=213)

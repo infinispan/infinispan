@@ -118,7 +118,7 @@ public class InboundTransferTask {
             return completionFuture;
          }
          if (trace) {
-            log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
+            log.tracef("Requesting state from node %s for segments %s", source, segmentsCopy);
          }
          // start transfer of cache entries
          try {
@@ -127,17 +127,17 @@ public class InboundTransferTask {
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
                if (trace) {
-                  log.tracef("Successfully requested segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
+                  log.tracef("Successfully requested state from node %s for segments %s", source, segmentsCopy);
                }
                return completionFuture;
             } else {
                Exception e = response instanceof ExceptionResponse ?
                      ((ExceptionResponse) response).getException() : new CacheException(String.valueOf(response));
-               log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
+               log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
                completionFuture.completeExceptionally(e);
             }
          } catch (Exception e) {
-            log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
+            log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
             completionFuture.completeExceptionally(e);
          }
       }
@@ -155,7 +155,7 @@ public class InboundTransferTask {
       }
 
       if (trace) {
-         log.tracef("Cancelling inbound state transfer of segments %s of cache %s", cancelledSegments, cacheName);
+         log.tracef("Partially cancelling inbound state transfer from node %s, segments %s", source, cancelledSegments);
       }
 
       synchronized (segments) {
@@ -184,7 +184,7 @@ public class InboundTransferTask {
 
          Set<Integer> segmentsCopy = getSegments();
          if (trace) {
-            log.tracef("Cancelling inbound state transfer of segments %s of cache %s", segmentsCopy, cacheName);
+            log.tracef("Cancelling inbound state transfer from %s with segments %s", source, segmentsCopy);
          }
 
          sendCancelCommand(segmentsCopy);
@@ -205,8 +205,8 @@ public class InboundTransferTask {
          rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false));
       } catch (Exception e) {
          // Ignore exceptions here, the worst that can happen is that the provider will send some extra state
-         log.debugf("Caught an exception while cancelling state transfer for segments %s from %s",
-               cancelledSegments, source);
+         log.debugf("Caught an exception while cancelling state transfer from node %s for segments %s",
+                    source, cancelledSegments);
       }
    }
 
@@ -217,7 +217,7 @@ public class InboundTransferTask {
             if (segments.contains(segmentId)) {
                finishedSegments.add(segmentId);
                if (finishedSegments.size() == segments.size()) {
-                  log.debugf("Finished receiving state for segments %s of cache %s", segments, cacheName);
+                  log.debugf("Finished receiving state for segments %s", segments);
                   isCompleted = true;
                }
             }
