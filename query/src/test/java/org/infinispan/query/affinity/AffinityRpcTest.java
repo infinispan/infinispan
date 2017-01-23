@@ -30,9 +30,9 @@ public class AffinityRpcTest extends BaseAffinityTest {
 
       RpcCollector rpcCollector = new RpcCollector();
 
-      // Load some data to the cache before starting the recording.
-      // due to HSEARCH-2522
-      populate(1, 10);
+      // Force initialization of all shards in all nodes before measuring RPCs due to HSEARCH-2522
+      populate(1, 500);
+      caches().forEach(Cache::clear);
 
       cacheManagers.stream()
             .flatMap(cm -> cm.getCacheNames().stream().map(cm::getCache))
