@@ -19,9 +19,9 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       person.setName(reader.readString("name"));
       person.setSurname(reader.readString("surname"));
       person.setAddress(reader.readObject("address", Address.class));
-      person.setPhoneNumbers(reader.readCollection("phoneNumbers", new ArrayList<PhoneNumber>(), PhoneNumber.class));
+      person.setPhoneNumbers(reader.readCollection("phoneNumbers", new ArrayList<>(), PhoneNumber.class));
       person.setAge(reader.readInt("age"));
-      person.setFavouriteNumbers(reader.readCollection("favouriteNumbers", new ArrayList<Integer>(), Integer.class));
+      person.setFavouriteNumbers(reader.readCollection("favouriteNumbers", new ArrayList<>(), Integer.class));
       person.setLicense(reader.readString("license"));
       person.setGender(reader.readObject("gender", Person.Gender.class));
       person.setLastUpdate(new Date(reader.readLong("lastUpdate")));
