@@ -1,5 +1,12 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.spi.SearchIntegrator;
@@ -17,13 +24,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author anistor@redhat.com
@@ -82,7 +82,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
             .createQuery();
 
       List<EntityInfo> queryEntityInfos = searchFactory.createHSQuery().luceneQuery(luceneQuery2)
-            .targetedEntities(Collections.<Class<?>>singletonList(ProtobufValueWrapper.class))
+            .targetedEntities(Collections.singletonList(ProtobufValueWrapper.class))
             .projection("surname")
             .queryEntityInfos();
 
