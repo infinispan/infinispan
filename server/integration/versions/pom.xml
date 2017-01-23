@@ -37,7 +37,7 @@
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
-      <version.org.infinispan.infinispan-management-console>9.0.0.Beta1</version.org.infinispan.infinispan-management-console>
+      <version.org.infinispan.infinispan-management-console>9.0.0.Beta2</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Beta1</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
