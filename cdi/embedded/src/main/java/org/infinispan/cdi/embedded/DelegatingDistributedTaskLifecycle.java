@@ -9,7 +9,7 @@ import javax.enterprise.inject.spi.InjectionTarget;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.common.util.CDIHelper;
-import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.RunnableAdapter;
 import org.infinispan.distexec.spi.DistributedTaskLifecycle;
 
 public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecycle {
@@ -49,8 +49,8 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
             return;
          ContextInputCache.set(inputDataCache);
           preInject(bm, task);
-          if(task instanceof DefaultExecutorService.RunnableAdapter) {
-             preInject(bm, ((DefaultExecutorService.RunnableAdapter) task).getTask());
+          if(task instanceof RunnableAdapter) {
+             preInject(bm, ((RunnableAdapter) task).getTask());
           }
       }
 
@@ -61,9 +61,9 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
             if (bm == null)
                return;
             postInject(bm, task);
-            if(task instanceof DefaultExecutorService.RunnableAdapter)
+            if(task instanceof RunnableAdapter)
             {
-               postInject(bm, ((DefaultExecutorService.RunnableAdapter) task).getTask());
+               postInject(bm, ((RunnableAdapter) task).getTask());
             }
          } finally {
             ContextInputCache.clean();
