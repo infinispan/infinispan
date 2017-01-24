@@ -1,5 +1,7 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.io.Serializable;
+
 import javax.transaction.xa.Xid;
 
 /**
@@ -9,7 +11,7 @@ import javax.transaction.xa.Xid;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public final class RecoveryInfoKey {
+public final class RecoveryInfoKey implements Serializable {
    final Xid xid;
 
    final String cacheName;
