@@ -51,7 +51,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    public void testProvider() throws Exception {
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_DEFINITIONS));
       ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
       ProtobufFieldIndexingMetadata addressIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"));
