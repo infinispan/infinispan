@@ -3,8 +3,14 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Collections;
+
+import javax.security.sasl.Sasl;
+
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -49,11 +55,37 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions=TransportException.class)
-   public void testAuthenticationFail() {
+   public void testAuthenticationFailWrongAuth() {
       ConfigurationBuilder clientBuilder = initServerAndClient();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar".toCharArray()));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCacheManager.getCache();
+   }
+
+   @Test(expectedExceptions=HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")
+   public void testAuthenticationFailNoAuth() {
+      ConfigurationBuilder clientBuilder = initServerAndClient(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "true"));
+      clientBuilder.security().authentication().disable();
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      RemoteCache<String, String> cache = remoteCacheManager.getCache();
+      cache.put("a", "a");
+   }
+
+   @Test
+   public void testAuthenticationUsername() {
+      ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().username("user").realm("realm").password("password");
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
+      defaultRemote.put("a", "a");
+      assertEquals("a", defaultRemote.get("a"));
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*ISPN004067.*")
+   public void testAuthenticationUsernameWithCallbackFail() {
+      ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().username("user").realm("realm").password("password").callbackHandler(new TestCallbackHandler("user", "realm", "foobar".toCharArray()));
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
 }

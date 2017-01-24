@@ -74,7 +74,7 @@ Here is an example:
 
 Additionally there is no Logger implementation specified (since this may vary depending on use case).
 
-=== Total order executor is not removed
+=== Total order executor is now removed
 The total order protocol now uses the `remote-command-executor`. The attribute `total-order-executor` in `<container>` tag is removed.
 
 === HikariCP is now the default implementation for JDBC PooledConnectionFactory
@@ -106,6 +106,9 @@ explicitly defined and validated against the provided store configuration.  Exis
 annotation and the store's configuration class should also declare the `@ConfigurationFor` annotation.  If neither of these
 annotations are present on the store or configuration class, then a your store will continue to function as before, albeit
 with a warning that additional store validation cannot be completed.
+
+=== Server authentication changes
+The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified. 
 
 
 == Upgrading from 8.1 to 8.2

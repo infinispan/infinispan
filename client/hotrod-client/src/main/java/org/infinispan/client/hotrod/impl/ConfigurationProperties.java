@@ -51,6 +51,9 @@ public class ConfigurationProperties {
    public static final String SASL_MECHANISM = "infinispan.client.hotrod.sasl_mechanism";
    public static final String AUTH_CALLBACK_HANDLER = "infinispan.client.hotrod.auth_callback_handler";
    public static final String AUTH_SERVER_NAME = "infinispan.client.hotrod.auth_server_name";
+   public static final String AUTH_USERNAME = "infinispan.client.hotrod.auth_username";
+   public static final String AUTH_PASSWORD = "infinispan.client.hotrod.auth_password";
+   public static final String AUTH_REALM = "infinispan.client.hotrod.auth_realm";
    public static final String AUTH_CLIENT_SUBJECT = "infinispan.client.hotrod.auth_client_subject";
    public static final String SASL_PROPERTIES_PREFIX = "infinispan.client.hotrod.sasl_properties";
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
