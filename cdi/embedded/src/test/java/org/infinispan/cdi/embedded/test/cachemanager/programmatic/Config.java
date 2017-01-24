@@ -3,6 +3,7 @@ package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -18,6 +19,29 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
+
+   /**
+    * <p>Associates the "large" cache with qualifier "large"</p>
+    *
+    * Note that {@link Named} works as a string-based qualifier, so it is necessary to support also {@link ConfigureCache}.
+    *
+    * @see Named
+    * @see ConfigureCache
+    */
+   @Named("large")
+   @ConfigureCache("large")
+   @Produces
+   public Configuration largeConfiguration = new ConfigurationBuilder().memory().size(10).build();
+
+   /**
+    * The same as the above. The intention here is to check whether we can use 2 Configurations with <code>@Named</code>
+    * annotations.
+    */
+   @Named("super-large")
+   @ConfigureCache("super-large")
+   @Produces
+   public Configuration superLargeConfiguration = new ConfigurationBuilder().memory().size(20).build();
+
    /**
     * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
     *
