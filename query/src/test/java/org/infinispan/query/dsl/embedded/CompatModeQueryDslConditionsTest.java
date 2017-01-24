@@ -5,9 +5,9 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-//todo This does not seem to actually test compatibility if no data is put via the remote client. I think EmbeddedCompatTest already tests this. need to check if other Compat test have this issue
 /**
- * Verify query DSL in compatibility mode.
+ * Verify query DSL in compatibility mode. Just a smoke test that executes in embedded mode and no interaction is done
+ * via a remote client. This just ensures nothing gets broken on the embedded side if compatibility is active.
  *
  * @author Martin Gencur
  * @since 6.0
