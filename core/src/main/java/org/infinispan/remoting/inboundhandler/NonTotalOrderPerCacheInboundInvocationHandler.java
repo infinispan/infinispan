@@ -2,7 +2,6 @@ package org.infinispan.remoting.inboundhandler;
 
 import java.util.Collection;
 
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -166,29 +165,17 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
    }
 
    private ReadyAction createReadyAction(BackupWriteRcpCommand command, int topologyId) {
-      final int segmentId = clusteringDependentLogic.getSegmentForKey(command.getKey());
-      final long sequence = command.getSequence();
-      if (trace) {
-         traceSequenceAndSegment(command.getCommandInvocationId(), segmentId, command.getSequence());
-      }
-      return createTriangleOrderAction(command, topologyId, segmentId, sequence);
+      return createTriangleOrderAction(command, topologyId, command.getSequence(), command.getKey());
    }
 
    private ReadyAction createReadyAction(BackupPutMapRcpCommand command, int topologyId) {
-      final int segmentId = clusteringDependentLogic.getSegmentForKey(command.getMap().keySet().iterator().next());
-      final long sequence = command.getSequence();
-      if (trace) {
-         traceSequenceAndSegment(command.getCommandInvocationId(), segmentId, command.getSequence());
-      }
-      return createTriangleOrderAction(command, topologyId, segmentId, sequence);
+      return createTriangleOrderAction(command, topologyId, command.getSequence(),
+            command.getMap().keySet().iterator().next());
    }
 
-   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, int segmentId, long sequence) {
+   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, Object key) {
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), checkTopologyAction,
-            new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, segmentId, sequence));
-   }
-
-   private void traceSequenceAndSegment(CommandInvocationId id, int segment, long sequence) {
-      log.tracef("Command %s has sequence %s for segment %s", id, sequence, segment);
+            new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, clusteringDependentLogic, sequence,
+                  key));
    }
 }
