@@ -56,8 +56,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
       serverConfig = server.getConfiguration();
       authenticationConfig = server.getConfiguration().authentication();
-      requireAuthentication = authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS)
-            && authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
+         requireAuthentication = !authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS)
+            || authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
    }
 
    @Override

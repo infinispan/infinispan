@@ -10,10 +10,12 @@ import java.security.PrivilegedActionException;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 
+import org.infinispan.arquillian.core.HotRodEndpoint;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.junit.After;
 import org.junit.Test;
@@ -60,6 +62,14 @@ public abstract class HotRodSaslAuthTestBase {
    public abstract void initAsWriter() throws PrivilegedActionException, LoginException;
 
    public abstract void initAsSupervisor() throws PrivilegedActionException, LoginException;
+
+   public void initAsAnonymous() throws PrivilegedActionException, LoginException {
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      HotRodEndpoint endpoint = getRemoteServer().getHotrodEndpoint();
+      config.addServer().host(endpoint.getInetAddress().getHostAddress()).port(endpoint.getPort());
+      remoteCacheManager = new RemoteCacheManager(config.build(), true);
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+   }
 
    @After
    public void release() {
@@ -139,6 +149,12 @@ public abstract class HotRodSaslAuthTestBase {
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterWriteRead() throws PrivilegedActionException, LoginException {
       initAsWriter();
+      testPutGet(remoteCache);
+   }
+
+   @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
+   public void testAnonymous() throws Exception {
+      initAsAnonymous();
       testPutGet(remoteCache);
    }
 
