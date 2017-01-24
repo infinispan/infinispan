@@ -24,6 +24,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * Tests the interceptor chain and surrounding logic
  *
@@ -254,5 +256,20 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInCacheNotInStore("k1", "v1-NEW");
       assertInCacheNotInStore("k2", "v2-NEW");
       assertInCacheNotInStore("k3", "v3-NEW");
+   }
+
+   public void testClear() {
+      assertNotInCacheAndStore("k1", "k2", "k3");
+      cache.put("k1", "v1");
+      cache.put("k2", "v2");
+
+      cache.evict("k2");
+
+      assertInCacheNotInStore("k1", "v1");
+      assertInStoreNotInCache("k2", "v2");
+
+      cache.clear();
+
+      assertEquals(0, cache.size());
    }
 }
