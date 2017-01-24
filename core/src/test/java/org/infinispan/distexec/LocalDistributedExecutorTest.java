@@ -99,7 +99,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    public void basicInvocation(Runnable call) throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      des.submit(call);
+      des.submit(call).get();
    }
 
    protected DistributedExecutorService createDES(Cache<?,?> cache){

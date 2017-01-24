@@ -48,10 +48,10 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
          if (bm == null)
             return;
          ContextInputCache.set(inputDataCache);
-          preInject(bm, task);
-          if(task instanceof RunnableAdapter) {
-             preInject(bm, ((RunnableAdapter) task).getTask());
-          }
+         preInject(bm, task);
+         if (task instanceof RunnableAdapter) {
+            preInject(bm, ((RunnableAdapter) task).getTask());
+         }
       }
 
       @Override
@@ -61,8 +61,7 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
             if (bm == null)
                return;
             postInject(bm, task);
-            if(task instanceof RunnableAdapter)
-            {
+            if (task instanceof RunnableAdapter) {
                postInject(bm, ((RunnableAdapter) task).getTask());
             }
          } finally {
