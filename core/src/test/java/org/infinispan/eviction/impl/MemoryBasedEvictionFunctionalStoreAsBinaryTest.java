@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Random;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.StorageType;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.marshall.CustomClass;
 import org.testng.annotations.Test;
 

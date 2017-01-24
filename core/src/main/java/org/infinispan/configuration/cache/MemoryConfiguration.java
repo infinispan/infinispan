@@ -5,7 +5,6 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
-import org.infinispan.container.StorageType;
 import org.infinispan.eviction.EvictionType;
 
 /**

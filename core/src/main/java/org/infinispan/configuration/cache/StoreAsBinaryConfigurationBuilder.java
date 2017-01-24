@@ -1,13 +1,10 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.STORE_KEYS_AS_BINARY;
-import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.STORE_VALUES_AS_BINARY;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.container.StorageType;
 
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
