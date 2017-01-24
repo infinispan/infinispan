@@ -119,6 +119,31 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
             if (strength != null) {
                authenticationBuilder.addMechProperty(Sasl.STRENGTH, strength);
             }
+            if (sasl.hasDefined(ModelKeys.SASL_POLICY) && sasl.get(ModelKeys.SASL_POLICY, ModelKeys.SASL_POLICY_NAME).isDefined()) {
+               for(Property property : sasl.get(ModelKeys.SASL_POLICY, ModelKeys.SASL_POLICY_NAME).asPropertyList()) {
+                  String value = property.getValue().asString();
+                  switch (property.getName()) {
+                     case ModelKeys.FORWARD_SECRECY:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_FORWARD_SECRECY, value);
+                        break;
+                     case ModelKeys.NO_ACTIVE:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_NOACTIVE, value);
+                        break;
+                     case ModelKeys.NO_ANONYMOUS:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_NOANONYMOUS, value);
+                        break;
+                     case ModelKeys.NO_DICTIONARY:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_NODICTIONARY, value);
+                        break;
+                     case ModelKeys.NO_PLAIN_TEXT:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_NOPLAINTEXT, value);
+                        break;
+                     case ModelKeys.PASS_CREDENTIALS:
+                        authenticationBuilder.addMechProperty(Sasl.POLICY_PASS_CREDENTIALS, value);
+                        break;
+                  }
+               }
+            }
             if (sasl.hasDefined(ModelKeys.PROPERTY)) {
                for(Property property : sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
                   authenticationBuilder.addMechProperty(property.getName(), property.getValue().asProperty().getValue().asString());
