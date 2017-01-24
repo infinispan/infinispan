@@ -266,8 +266,8 @@ public class CommandAckCollector {
       collectorMap.remove(id);
    }
 
-   private TimeoutException createTimeoutException() {
-      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS));
+   private TimeoutException createTimeoutException(CommandInvocationId id) {
+      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), id);
    }
 
    private abstract class Collector<T> implements Callable<Void>, BiConsumer<T, Throwable> {
@@ -290,7 +290,7 @@ public class CommandAckCollector {
        */
       @Override
       public final synchronized Void call() throws Exception {
-         doCompleteExceptionally(createTimeoutException());
+         doCompleteExceptionally(createTimeoutException(id));
          return null;
       }
 

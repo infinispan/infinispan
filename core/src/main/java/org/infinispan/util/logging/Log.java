@@ -30,6 +30,7 @@ import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -1468,11 +1469,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
    CacheConfigurationException memoryEvictionInvalidStrategyLIRS();
 
-   @Message(value = "Timeout after %s waiting for acks. Missing acks are %s", id = 426)
-   TimeoutException timeoutWaitingForAcks(String timeout, String missingAcks);
+   //removed unused message (id=426)
 
-   @Message(value = "Timeout after %s waiting for acks", id = 427)
-   TimeoutException timeoutWaitingForAcks(String timeout);
+   @Message(value = "Timeout after %s waiting for acks. Id=%s", id = 427)
+   TimeoutException timeoutWaitingForAcks(String timeout, CommandInvocationId id);
 
    @LogMessage(level = WARN)
    @Message(value = "The eviction element has been deprecated. Please use the memory element instead", id = 428)
