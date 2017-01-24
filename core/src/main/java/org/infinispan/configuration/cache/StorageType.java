@@ -1,4 +1,4 @@
-package org.infinispan.container;
+package org.infinispan.configuration.cache;
 
 /**
  * Enumeration defining the various storage types for the data container

@@ -1,18 +1,13 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
-import org.infinispan.container.StorageType;
-import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapDataContainer;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 /**
  * Constructs the data container

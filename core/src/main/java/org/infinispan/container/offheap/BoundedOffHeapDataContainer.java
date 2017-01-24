@@ -15,8 +15,8 @@ import org.infinispan.metadata.Metadata;
  * Data Container implementation that stores entries in native memory (off-heap) that is also bounded.  This
  * implementation uses a simple LRU doubly linked list off-heap guarded by a single lock.
  * <p>
- * The link list consists of 24 bytes (3 longs).  The first long is the actual entry address, the second is the
- * previous pointer and lastly the next pointer.
+ * The link list consists of 28 bytes (3 longs and 1 int).  The first long is the actual entry address, the second is the
+ * previous pointer, the third is the next pointer and lastly the int is the hashCode of the key to retrieve the lock.
  * @author wburns
  * @since 9.0
  */
@@ -35,8 +35,8 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       if (type == EvictionType.COUNT) {
          sizeCalculator = i -> 1;
       } else {
-         // Use size of entry plus 24 for our LRU pointer node
-         sizeCalculator = i -> offHeapEntryFactory.determineSize(i) + 24;
+         // Use size of entry plus 28 for our LRU pointer node
+         sizeCalculator = i -> offHeapEntryFactory.determineSize(i) + 28;
       }
       this.lruLock = new ReentrantLock();
       firstAddress = 0;

@@ -1,7 +1,7 @@
 package org.infinispan.stream;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.StorageType;
+import org.infinispan.configuration.cache.StorageType;
 import org.testng.annotations.Test;
 
 /**

@@ -4,10 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.IOException;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CyclicBarrier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -17,14 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.StorageType;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.filter.KeyFilter;
 import org.testng.annotations.Test;
 
 /**
@@ -58,23 +52,33 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
       AtomicInteger offset = new AtomicInteger();
       AtomicBoolean collision = new AtomicBoolean();
       int threadCount = 5;
-      Future[] futures = new Future[threadCount];
+      List<Future> futures = new ArrayList<>(threadCount);
 
       for (int i = 0; i < threadCount; ++i) {
-         futures[i] = fork(() -> {
+         futures.add(fork(() -> {
             boolean collide = collision.get();
             // We could have overrides, that is fine
             collision.set(!collide);
             int value = collide ? offset.get() : offset.incrementAndGet();
-            for (int j = 0; j < COUNT * 10; ++j) {
+            for (int j = 0; j < COUNT + 5; ++j) {
+               if (Thread.interrupted()) {
+                  log.tracef("Test was ordered to stop!");
+                  return;
+               }
                String key = "key" + value + "-" + j;
                cache.put(key, "value" + value + "-" + j);
             }
-         });
+         }));
       }
 
       for (Future future : futures) {
-         future.get(10, TimeUnit.SECONDS);
+         try {
+            future.get(10, TimeUnit.SECONDS);
+         } catch (Exception e) {
+            // If we have an exception we need to stop all the others
+            futures.forEach(f -> f.cancel(true));
+            throw e;
+         }
       }
 
       int cacheSize = cache.size();
