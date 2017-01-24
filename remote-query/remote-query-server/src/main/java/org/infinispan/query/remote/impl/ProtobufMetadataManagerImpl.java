@@ -219,10 +219,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       return metadataManager;
    }
 
-   public static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
-      return new DelegatingSerializationContext(getProtobufMetadataManager(cacheManager));
-   }
-
    public static SerializationContext getSerializationContextInternal(EmbeddedCacheManager cacheManager) {
       return getProtobufMetadataManager(cacheManager).getSerializationContext();
    }
