@@ -173,7 +173,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
-      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+      return stateTransferManager == null || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
    private boolean canRead(Object key) {
