@@ -150,9 +150,9 @@
                 <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="socket-binding" type="xs:string" use="required">
+        <xs:attribute name="socket-binding" type="xs:string">
             <xs:annotation>
-                <xs:documentation>The socket on which this connector will bind itself</xs:documentation>
+                <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not listen to TCP connections</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="virtual-host" type="xs:string" use="optional">
