@@ -1,5 +1,7 @@
 package org.infinispan.server.core;
 
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -50,7 +52,7 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       b.startTransport(false);
       AbstractProtocolServer server = new MockProtocolServer();
       try {
-         server.start(b.build(), new DefaultCacheManager());
+         server.start(b.build(), new DefaultCacheManager(new ConfigurationBuilder().build()));
          Assert.assertFalse(server.isTransportEnabled());
       } finally {
          server.stop();

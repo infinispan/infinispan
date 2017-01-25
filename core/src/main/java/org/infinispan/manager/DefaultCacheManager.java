@@ -435,6 +435,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
       if (DEFAULT_CACHE_NAME.equals(cacheName)) {
+         if (defaultCacheName == null) {
+            throw log.noDefaultCache();
+         }
          cacheName = defaultCacheName;
          log.deprecatedDefaultCache();
       }
