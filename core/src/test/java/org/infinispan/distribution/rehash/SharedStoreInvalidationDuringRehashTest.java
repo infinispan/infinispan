@@ -82,7 +82,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       });
 
       DummyInMemoryStoreConfigurationBuilder dummyCB = cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      dummyCB.debug(true).preload(preload).shared(true).purgeOnStartup(false);
+      dummyCB.preload(preload).shared(true).purgeOnStartup(false);
       dummyCB.storeName(SharedStoreInvalidationDuringRehashTest.class.getSimpleName());
 
       if (clustered) {

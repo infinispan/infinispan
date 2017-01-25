@@ -34,15 +34,19 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+/**
+ * A Dummy cache store which stores objects in memory. Instance of the store can be shared
+ * amongst multiple caches by utilising the same `storeName` for each store instance.
+ */
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
 @Store(shared = true)
 public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
-   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<String, Map<Object, byte[]>>();
-   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats =
-         new ConcurrentHashMap<String, ConcurrentMap<String, AtomicInteger>>();
+   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<>();
+   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
+   public static final int SLOW_STORE_WAIT = 100;
    String storeName;
    Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
@@ -78,17 +82,14 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       stats.get(method).incrementAndGet();
    }
 
-
    @Override
    public void write(MarshalledEntry entry) {
-//      System.out.println("[" + Thread.currentThread().getName() + "] entry.getKey() = " + entry.getKey());
       record("write");
       if (configuration.slow()) {
-         TestingUtil.sleepThread(100);
+         TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
       if (entry!= null) {
          if (debug) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
-         configuration.failKey();
          store.put(entry.getKey(), serialize(entry));
       }
    }
