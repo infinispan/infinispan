@@ -18,7 +18,7 @@
          ucast_send_buf_size="640000"
          mcast_recv_buf_size="25000000"
          mcast_send_buf_size="640000"
-         max_bundle_size="64000"
+         max_bundle_size="8500"
          bundler_type="no-bundler"
          ip_ttl="${jgroups.udp.ip_ttl:0}"
          enable_diagnostics="true"
@@ -47,7 +47,7 @@
           min_threshold="0.40"/>
     <MFC max_credits="2M"
           min_threshold="0.40"/>
-    <FRAG2 frag_size="60000"  />
+    <FRAG2 frag_size="8000"/>
     <RELAY site="zrh" bridge_props="config-samples/jgroups-tcp.xml"  />
 
 </config>

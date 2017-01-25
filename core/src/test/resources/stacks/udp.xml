@@ -9,7 +9,7 @@
          ucast_send_buf_size="640k"
          mcast_recv_buf_size="25m"
          mcast_send_buf_size="640k"
-         max_bundle_size="31k"
+         max_bundle_size="8500"
          ip_ttl="${jgroups.udp.ip_ttl:2}"
          enable_diagnostics="false"
          bundler_type="no-bundler"
@@ -49,7 +49,7 @@
 
    <UFC max_credits="2m" min_threshold="0.40"/>
    <MFC max_credits="2m" min_threshold="0.40"/>
-   <FRAG2 frag_size="30k"  />
+   <FRAG2 frag_size="8000"  />
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
    <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"

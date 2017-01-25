@@ -64,7 +64,6 @@ The following are the default stacks:
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
     <protocol type="MFC"/>
-    <protocol type="FRAG2"/>
 </stack>
 
 ----
@@ -93,7 +92,6 @@ The following example stack configures the TCPPING discovery protocol with two i
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
     <protocol type="MFC"/>
-    <protocol type="FRAG2"/>
 </stack>
 
 ----

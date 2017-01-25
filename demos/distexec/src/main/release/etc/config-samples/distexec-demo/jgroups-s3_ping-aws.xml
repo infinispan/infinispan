@@ -15,5 +15,4 @@
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="400000"/>
    <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}" view_bundling="true"/>
    <MFC max_credits="2M" min_threshold="0.40"/>
-   <FRAG2 frag_size="60000"/>
 </config>

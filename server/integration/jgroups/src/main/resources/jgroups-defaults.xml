@@ -31,7 +31,8 @@
       ip_ttl="${jgroups.ip_ttl:2}"
       thread_naming_pattern="pl"
       enable_diagnostics="false"
-      bundler_type="no-bundler"/>
+      bundler_type="no-bundler"
+      max_bundle_size="8500"/>
    <TCP 
       enable_diagnostics="false"
       thread_naming_pattern="pl"
@@ -81,7 +82,7 @@
    <MFC 
       max_credits="2m" 
       min_threshold="0.40"/>
-   <FRAG2 />
+   <FRAG2 frag_size="8000"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false"/>
    <pbcast.STATE_TRANSFER/>
    <pbcast.FLUSH timeout="0" start_flush_timeout="10000"/>

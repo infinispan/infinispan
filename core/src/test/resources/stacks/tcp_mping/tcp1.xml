@@ -5,7 +5,7 @@
         port_range="30"
         recv_buf_size="20000000"
         send_buf_size="640000"
-        max_bundle_size="64k"
+        max_bundle_size="8500"
         sock_conn_timeout="300"
         bundler_type="no-bundler"
 
@@ -53,5 +53,4 @@
    <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" view_bundling="false"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
    <MFC max_credits="2M" min_threshold="0.40"/>
-   <FRAG2 frag_size="60000"/>
 </config>

@@ -146,6 +146,8 @@
                     <property name="thread_pool.min_threads">0</property>
                     <property name="thread_pool.max_threads">200</property>
                     <property name="thread_pool.keep_alive_time">5000000000</property>
+                    <property name="max_bundle_size">8500</property>
+                    <property name="bundler_type">no-bundler</property>
                 </transport>
                 <protocol type="PING">
                     <property name="timeout">5000</property>
@@ -206,7 +208,6 @@
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>
-                <protocol type="FRAG2"/>
                 <protocol type="RSVP">
                     <property name="timeout">60000</property>
                     <property name="resend_interval">500</property>

@@ -7,7 +7,7 @@
          port_range="30"
          recv_buf_size="20m"
          send_buf_size="640k"
-         max_bundle_size="31k"
+         max_bundle_size="8500"
          enable_diagnostics="false"
          tcp_nodelay="true"
          bundler_type="no-bundler"
