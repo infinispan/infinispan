@@ -10,6 +10,7 @@
         ip_ttl="${jgroups.ip_ttl:2}"
         thread_naming_pattern="pl"
         enable_diagnostics="false"
+        max_bundle_size="8500"
         bundler_type="no-bundler"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
@@ -54,5 +55,5 @@
    <MFC max_credits="2m" 
         min_threshold="0.40"
    />
-   <FRAG2 />
+   <FRAG2 frag_size="8000"/>
 </config>

@@ -5,7 +5,7 @@
    <TCP  bind_port="7800" port_range="10"
          recv_buf_size="20000000"
          send_buf_size="640000"
-         max_bundle_size="64k"
+         max_bundle_size="8500"
          bundler_type="no-bundler"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
@@ -48,7 +48,6 @@
    <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" view_bundling="false"/>
 
    <MFC max_credits="2m" min_threshold="0.40"/>
-   <FRAG2 frag_size="30k"  />
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
     
 </config>

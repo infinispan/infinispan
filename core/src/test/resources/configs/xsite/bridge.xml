@@ -7,7 +7,7 @@
          port_range="30"
          recv_buf_size="20000000"
          send_buf_size="640000"
-         max_bundle_size="64k"
+         max_bundle_size="8500"
          sock_conn_timeout="300"
          enable_diagnostics="false"
          bundler_type="no-bundler"
@@ -56,9 +56,6 @@
 
     <MFC max_credits="2M"
          min_threshold="0.40"/>
-
-
-    <FRAG2 frag_size="60000"  />
 
     <RSVP />
 </config>

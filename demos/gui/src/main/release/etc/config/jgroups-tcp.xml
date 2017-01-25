@@ -14,7 +14,7 @@
     <TCP bind_port="7800" port_range="10"
          recv_buf_size="20000000"
          send_buf_size="640000"
-         max_bundle_size="64k"
+         max_bundle_size="8500"
          bundler_type="no-bundler"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
@@ -45,5 +45,4 @@
                 view_bundling="true"/>
     <MFC max_credits="2M"
          min_threshold="0.4"/>
-    <FRAG2 frag_size="60000"  />
 </config>
