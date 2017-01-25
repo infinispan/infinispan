@@ -113,11 +113,11 @@
          <router-connector name="router" hotrod-socket-binding="hotrod-multi-tenancy" rest-socket-binding="rest-multi-tenancy">
             <multi-tenancy>
                <hotrod name="hotrod1">
-                  <sni host-name="sample_sni_name" security-realm="other" />
-                  <sni host-name="sample_sni_name2" security-realm="other2" />
+                  <sni host-name="sample_sni_name" security-realm="ApplicationRealm-multi-tenancy-1" />
+                  <sni host-name="sample_sni_name2" security-realm="ApplicationRealm-multi-tenancy-2" />
                </hotrod>
                <hotrod name="hotrod2">
-                  <sni host-name="sample_sni_nam3" security-realm="other" />
+                  <sni host-name="sample_sni_nam3" security-realm="ApplicationRealm-multi-tenancy-2" />
                </hotrod>
                <rest name="rest1">
                   <prefix path="rest1" />
