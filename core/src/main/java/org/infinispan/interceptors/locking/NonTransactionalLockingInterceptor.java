@@ -7,6 +7,7 @@ import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -26,6 +27,12 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    protected Log getLog() {
       return log;
+   }
+
+   @Override
+   public final BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override

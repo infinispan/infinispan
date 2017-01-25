@@ -89,9 +89,18 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          throw new IllegalStateException("Null context not allowed!!");
 
       ComponentStatus status = componentRegistry.getStatus();
+      if (status != ComponentStatus.RUNNING && ignoreCommand(ctx, command, status))
+         return returnWith(null);
+
+      InvocationStage stage = invokeNext(ctx, command);
+      return stage.exceptionally(suppressExceptionsHandler);
+   }
+
+   private boolean ignoreCommand(InvocationContext ctx, VisitableCommand command, ComponentStatus status)
+         throws Exception {
       if (command.ignoreCommandOnStatus(status)) {
          log.debugf("Status: %s : Ignoring %s command", status, command);
-         return returnWith(null);
+         return true;
       } else {
          if (status.isTerminated()) {
             throw log.cacheIsTerminated(getCacheNamePrefix());
@@ -99,9 +108,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             throw log.cacheIsStopping(getCacheNamePrefix());
          }
       }
-
-      InvocationStage stage = invokeNext(ctx, command);
-      return stage.exceptionally(suppressExceptionsHandler);
+      return false;
    }
 
    private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th) throws Throwable {

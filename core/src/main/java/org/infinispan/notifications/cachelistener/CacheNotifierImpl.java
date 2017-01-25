@@ -783,7 +783,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    public boolean isNotificationAllowed(FlagAffectedCommand cmd, List<CacheEntryListenerInvocation<K, V>> listeners) {
-      return (cmd == null || !cmd.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) && !listeners.isEmpty();
+      return !listeners.isEmpty() && (cmd == null || !cmd.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION));
    }
 
    @Override
