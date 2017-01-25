@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -38,6 +37,10 @@ public class BackupMultiKeyAckCommand implements ReplicableCommand {
       this.id = id;
       this.segment = segment;
       this.topologyId = topologyId;
+   }
+
+   public BackupMultiKeyAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    @Override
@@ -73,11 +76,6 @@ public class BackupMultiKeyAckCommand implements ReplicableCommand {
       id = input.readLong();
       segment = input.readInt();
       topologyId = input.readInt();
-   }
-
-   @Inject
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

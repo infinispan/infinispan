@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -35,6 +34,10 @@ public class BackupAckCommand implements ReplicableCommand {
    public BackupAckCommand(long id, int topologyId) {
       this.id = id;
       this.topologyId = topologyId;
+   }
+
+   public BackupAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    @Override
@@ -68,11 +71,6 @@ public class BackupAckCommand implements ReplicableCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       id = input.readLong();
       topologyId = input.readInt();
-   }
-
-   @Inject
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

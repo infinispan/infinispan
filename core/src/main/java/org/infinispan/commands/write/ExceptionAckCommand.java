@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -34,6 +33,10 @@ public class ExceptionAckCommand implements ReplicableCommand {
       this.id = id;
       this.throwable = throwable;
       this.topologyId = topologyId;
+   }
+
+   public ExceptionAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    @Override
@@ -69,11 +72,6 @@ public class ExceptionAckCommand implements ReplicableCommand {
       id = input.readLong();
       throwable = (Throwable) input.readObject();
       topologyId = input.readInt();
-   }
-
-   @Inject
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

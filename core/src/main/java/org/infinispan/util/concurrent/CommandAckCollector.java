@@ -75,7 +75,7 @@ public class CommandAckCollector {
     * @param topologyId   the current topology id.
     * @param timeoutNanos the timeout in nano seconds.
     */
-   public void create(long id, Collection<Address> owners, int topologyId, long timeoutNanos) {
+   public void create(Long id, Collection<Address> owners, int topologyId, long timeoutNanos) {
       collectorMap.putIfAbsent(id, new SingleKeyCollector(id, owners, topologyId, timeoutNanos));
       if (trace) {
          log.tracef("Created new collector for %s. Owners=%s", id, owners);
@@ -94,7 +94,7 @@ public class CommandAckCollector {
     * @param topologyId   the current topology id.
     * @param timeoutNanos the timeout in nano seconds.
     */
-   public void create(long id, Object returnValue, Collection<Address> owners, int topologyId, long timeoutNanos) {
+   public void create(Long id, Object returnValue, Collection<Address> owners, int topologyId, long timeoutNanos) {
       collectorMap.putIfAbsent(id, new SingleKeyCollector(id, returnValue, owners, topologyId, timeoutNanos));
       if (trace) {
          log.tracef("Created new collector for %s. ReturnValue=%s. Owners=%s", id, returnValue, owners);
@@ -110,7 +110,7 @@ public class CommandAckCollector {
     * @param topologyId   the current topology id.
     * @param timeoutNanos the timeout in nano seconds.
     */
-   public void createMultiKeyCollector(long id, Collection<Address> primary,
+   public void createMultiKeyCollector(Long id, Collection<Address> primary,
          Map<Address, Collection<Integer>> backups, int topologyId, long timeoutNanos) {
       collectorMap.putIfAbsent(id, new MultiKeyCollector(id, primary, backups, topologyId, timeoutNanos));
       if (trace) {
@@ -223,13 +223,10 @@ public class CommandAckCollector {
    public <T> CompletableFuture<T> getCollectorCompletableFutureToWait(long id) {
       //noinspection unchecked
       Collector<T> collector = (Collector<T>) collectorMap.get(id);
-      if (collector == null) {
-         return null;
-      }
       if (trace) {
          log.tracef("[Collector#%s] Waiting for acks asynchronously.", id);
       }
-      return collector.addCleanupTasksAndGetFuture();
+      return collector == null ? null : collector.addCleanupTasksAndGetFuture();
    }
 
    /**
@@ -275,13 +272,13 @@ public class CommandAckCollector {
 
    private abstract class Collector<T> implements Callable<Void>, BiConsumer<T, Throwable> {
 
-      final long id;
+      final Long id;
       final CompletableFuture<T> future;
       final int topologyId;
       private final long timeoutNanoSeconds;
       private volatile ScheduledFuture<?> timeoutTask;
 
-      Collector(long id, int topologyId, long timeoutNanoSeconds) {
+      Collector(Long id, int topologyId, long timeoutNanoSeconds) {
          this.id = id;
          this.topologyId = topologyId;
          this.timeoutNanoSeconds = timeoutNanoSeconds;
@@ -313,7 +310,7 @@ public class CommandAckCollector {
       synchronized final void completeExceptionally(Throwable throwable, int topologyId) {
          if (trace) {
             log.tracef(throwable, "[Collector#%s] completed exceptionally. TopologyId=%s (expected=%s)",
-                  id, topologyId, this.topologyId);
+                  (Object) id, topologyId, this.topologyId);
          }
          if (this.topologyId != topologyId) {
             return;
@@ -343,27 +340,27 @@ public class CommandAckCollector {
 
    private class SingleKeyCollector extends Collector<Object> {
       @GuardedBy("this")
-      private final Collection<Address> owners;
+      private final HashSet<Address> owners;
       @GuardedBy("this")
       private final Address primaryOwner;
       @GuardedBy("this")
       private Object returnValue;
 
-      private SingleKeyCollector(long id, Collection<Address> owners, int topologyId, long timeoutNanos) {
+      private SingleKeyCollector(Long id, Collection<Address> owners, int topologyId, long timeoutNanos) {
          super(id, topologyId, timeoutNanos);
          this.primaryOwner = owners.iterator().next();
          this.owners = new HashSet<>(owners); //removal is fast
       }
 
-      private SingleKeyCollector(long id, Object returnValue, Collection<Address> owners,
+      private SingleKeyCollector(Long id, Object returnValue, Collection<Address> owners,
             int topologyId, long timeoutNanos) {
          super(id, topologyId, timeoutNanos);
          this.returnValue = returnValue;
          this.primaryOwner = owners.iterator().next();
-         Collection<Address> tmpOwners = new HashSet<>(owners);
+         HashSet<Address> tmpOwners = new HashSet<>(owners);
          tmpOwners.remove(primaryOwner);
          if (tmpOwners.isEmpty()) { //num owners is 1 or single member in cluster
-            this.owners = Collections.emptyList();
+            this.owners = new HashSet<>();
             this.future.complete(returnValue);
          } else {
             this.owners = tmpOwners;
@@ -419,8 +416,7 @@ public class CommandAckCollector {
 
       synchronized void backupAck(int topologyId, Address from) {
          if (trace) {
-            log.tracef("[Collector#%s] Backup ACK. Address=%s, TopologyId=%s (expected=%s)",
-                  id, from, topologyId, this.topologyId);
+            traceBackupAck(topologyId, from);
          }
          if (this.topologyId == topologyId && owners.remove(from) && owners.isEmpty()) {
             markReady();
@@ -436,25 +432,34 @@ public class CommandAckCollector {
       @GuardedBy("this")
       private void markReady() {
          if (trace) {
-            log.tracef("[Collector#%s] Ready! Return value=%ss.", id, returnValue);
+            traceReady();
          }
          future.complete(returnValue);
+      }
+
+      private void traceReady() {
+         log.tracef("[Collector#%s] Ready! Return value=%ss.", id, returnValue);
+      }
+
+      private void traceBackupAck(int topologyId, Address from) {
+         log.tracef("[Collector#%s] Backup ACK. Address=%s, TopologyId=%s (expected=%s)",
+               id, from, topologyId, this.topologyId);
       }
    }
 
    private class MultiKeyCollector extends Collector<Map<Object, Object>> {
       @GuardedBy("this")
-      private final Collection<Address> primary;
+      private final HashSet<Address> primary;
       @GuardedBy("this")
-      private final Map<Address, Collection<Integer>> backups;
+      private final HashMap<Address, Collection<Integer>> backups;
       @GuardedBy("this")
-      private Map<Object, Object> returnValue;
+      private HashMap<Object, Object> returnValue;
 
-      MultiKeyCollector(long id, Collection<Address> primary, Map<Address, Collection<Integer>> backups,
+      MultiKeyCollector(Long id, Collection<Address> primary, Map<Address, Collection<Integer>> backups,
             int topologyId, long timeoutNanos) {
          super(id, topologyId, timeoutNanos);
          this.returnValue = null;
-         this.backups = backups;
+         this.backups = new HashMap<>(backups);
          this.primary = new HashSet<>(primary);
       }
 

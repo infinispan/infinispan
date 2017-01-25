@@ -7,7 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
@@ -16,6 +15,8 @@ import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.util.concurrent.CommandAckCollector;
 
 /**
  * Externalizer for the triangle acknowledges.
@@ -28,10 +29,10 @@ import org.infinispan.commons.util.Util;
  */
 public class TriangleAckExternalizer implements AdvancedExternalizer<ReplicableCommand> {
 
-   private final RemoteCommandsFactory remoteCommandsFactory;
+   private final CommandAckCollector commandAckCollector;
 
-   public TriangleAckExternalizer(RemoteCommandsFactory remoteCommandsFactory) {
-      this.remoteCommandsFactory = remoteCommandsFactory;
+   public TriangleAckExternalizer(GlobalComponentRegistry registry) {
+      this.commandAckCollector = registry.getCommandAckCollector();
    }
 
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
@@ -50,7 +51,48 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<ReplicableC
    }
 
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      ReplicableCommand command = remoteCommandsFactory.fromStream(input.readByte(), (byte) 0);
+      switch (input.readByte()) {
+         case PrimaryAckCommand.COMMAND_ID:
+            return primaryAckCommand(input);
+         case BackupAckCommand.COMMAND_ID:
+            return backupAckCommand(input);
+         case ExceptionAckCommand.COMMAND_ID:
+            return exceptionAckCommand(input);
+         case PrimaryMultiKeyAckCommand.COMMAND_ID:
+            return primaryMultiKeyAckCommand(input);
+         case BackupMultiKeyAckCommand.COMMAND_ID:
+            return backupMultiKeyAckCommand(input);
+         default:
+            throw new IllegalStateException();
+      }
+   }
+
+   private ReplicableCommand backupMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+      BackupMultiKeyAckCommand command = new BackupMultiKeyAckCommand(commandAckCollector);
+      command.readFrom(input);
+      return command;
+   }
+
+   private ReplicableCommand primaryMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+      PrimaryMultiKeyAckCommand command = new PrimaryMultiKeyAckCommand(commandAckCollector);
+      command.readFrom(input);
+      return command;
+   }
+
+   private ReplicableCommand exceptionAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+      ExceptionAckCommand command = new ExceptionAckCommand(commandAckCollector);
+      command.readFrom(input);
+      return command;
+   }
+
+   private ReplicableCommand backupAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+      BackupAckCommand command = new BackupAckCommand(commandAckCollector);
+      command.readFrom(input);
+      return command;
+   }
+
+   private ReplicableCommand primaryAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+      PrimaryAckCommand command = new PrimaryAckCommand(commandAckCollector);
       command.readFrom(input);
       return command;
    }

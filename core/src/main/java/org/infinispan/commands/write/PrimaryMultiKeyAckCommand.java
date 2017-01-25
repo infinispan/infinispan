@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -42,6 +41,10 @@ public class PrimaryMultiKeyAckCommand implements ReplicableCommand {
    public PrimaryMultiKeyAckCommand(long id, int topologyId) {
       this.id = id;
       this.topologyId = topologyId;
+   }
+
+   public PrimaryMultiKeyAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    private static Type valueOf(int index) {
@@ -102,11 +105,6 @@ public class PrimaryMultiKeyAckCommand implements ReplicableCommand {
 
    public void initWithoutReturnValue() {
       type = Type.SUCCESS_WITHOUT_RETURN_VALUE;
-   }
-
-   @Inject
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

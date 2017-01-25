@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -34,6 +33,10 @@ public class PrimaryAckCommand implements ReplicableCommand {
 
    public PrimaryAckCommand() {
       super();
+   }
+
+   public PrimaryAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    private static Type valueOf(int index) {
@@ -105,11 +108,6 @@ public class PrimaryAckCommand implements ReplicableCommand {
             break;
          default:
       }
-   }
-
-   @Inject
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override
