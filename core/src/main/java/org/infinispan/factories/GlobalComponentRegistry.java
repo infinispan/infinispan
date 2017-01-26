@@ -41,6 +41,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -139,6 +140,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
+   }
+
+   public CommandAckCollector getCommandAckCollector() {
+      return getOrCreateComponent(CommandAckCollector.class);
    }
 
    @Override

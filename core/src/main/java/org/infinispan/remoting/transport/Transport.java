@@ -64,6 +64,8 @@ public interface Transport extends Lifecycle {
     */
    void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
 
+   void noFcSendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
+
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
     * DeliverOrder}.

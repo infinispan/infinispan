@@ -58,7 +58,6 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -497,15 +496,13 @@ public interface CommandsFactory {
 
    <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
 
-   BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId);
+   BackupAckCommand buildBackupAckCommand(long id, int topologyId);
 
-   PrimaryAckCommand buildPrimaryAckCommand();
+   BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId);
 
-   BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId);
+   PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(long id, int topologyId);
 
-   PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId);
-
-   ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId);
+   ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId);
 
    BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command);
 
