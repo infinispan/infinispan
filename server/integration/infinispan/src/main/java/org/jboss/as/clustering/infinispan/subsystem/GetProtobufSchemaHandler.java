@@ -35,9 +35,14 @@ public class GetProtobufSchemaHandler extends AbstractRuntimeOnlyHandler {
 
       if (protoManager != null) {
          try {
-            ModelNode name = operation.require(CacheContainerResource.PROTO_NAME.getName());
-            validateParameters(name);
-            context.getResult().set(new ModelNode().set(protoManager.getProtofile(name.asString())));
+            ModelNode fileName = operation.require(CacheContainerResource.PROTO_NAME.getName());
+            validateParameters(fileName);
+            ModelNode result = new ModelNode();
+            String fileContents = protoManager.getProtofile(fileName.asString());
+            if (fileContents != null) {
+               result.set(fileContents);
+            }
+            context.getResult().set(result);
          } catch (Exception e) {
             throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
          }

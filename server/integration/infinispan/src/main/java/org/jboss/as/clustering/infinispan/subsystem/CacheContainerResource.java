@@ -160,6 +160,15 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            .setRuntimeOnly()
            .build();
 
+    static final OperationDefinition GET_PROTO_SCHEMAS_WITH_ERRORS = new SimpleOperationDefinitionBuilder("get-proto-schemas-with-errors", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setRuntimeOnly()
+           .build();
+
+    static final OperationDefinition GET_PROTO_SCHEMA_ERRORS = new SimpleOperationDefinitionBuilder("get-proto-schema-errors", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAME)
+           .setRuntimeOnly()
+           .build();
+
     static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_URLS)
            .setRuntimeOnly()
@@ -352,6 +361,8 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(GET_PROTO_NAMES, GetProtobufSchemaNamesHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(GET_PROTO, GetProtobufSchemaHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO_SCHEMAS_WITH_ERRORS, GetProtobufSchemasWithErrorsHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO_SCHEMA_ERRORS, GetProtoSchemaErrorsHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(UNREGISTER_PROTO, UnregisterProtoSchemasOperationHandler.INSTANCE);

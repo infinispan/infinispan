@@ -1,11 +1,13 @@
 package org.infinispan.query.remote.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.management.MBeanException;
 import javax.management.ObjectName;
@@ -71,8 +73,8 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    protected void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
-                                                  getProtobufMetadataCacheConfig().build(),
-                                                  EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
+            getProtobufMetadataCacheConfig().build(),
+            EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
    }
 
    /**
@@ -159,12 +161,13 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @ManagedAttribute(description = "The names of all Protobuf files", displayName = "Protofile Names")
    @Override
    public String[] getProtofileNames() {
-      Set<String> fileNames = new HashSet<>();
+      List<String> fileNames = new ArrayList<>();
       for (String k : getCache().keySet()) {
          if (k.endsWith(PROTO_KEY_SUFFIX)) {
             fileNames.add(k);
          }
       }
+      Collections.sort(fileNames);
       return fileNames.toArray(new String[fileNames.size()]);
    }
 
@@ -184,7 +187,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       if (filesWithErrors == null) {
          return null;
       }
-      return filesWithErrors.split("\n");
+      String[] fileNames = filesWithErrors.split("\n");
+      Arrays.sort(fileNames);
+      return fileNames;
    }
 
    @ManagedOperation(description = "Obtains the errors associated with a protobuf definition file", displayName = "Get Errors For A File")

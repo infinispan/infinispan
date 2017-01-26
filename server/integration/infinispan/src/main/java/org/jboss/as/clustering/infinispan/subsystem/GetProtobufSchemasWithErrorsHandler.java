@@ -17,14 +17,14 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * Handler to get the names of the registered protobuf schemas.
+ * Handler to get the names of the registered protobuf schemas that have errors (syntactic or semantic).
  *
  * @author anistor@redhat.com
- * @since 8.2
+ * @since 9.0
  */
-public class GetProtobufSchemaNamesHandler extends AbstractRuntimeOnlyHandler {
+public class GetProtobufSchemasWithErrorsHandler extends AbstractRuntimeOnlyHandler {
 
-   public static final GetProtobufSchemaNamesHandler INSTANCE = new GetProtobufSchemaNamesHandler();
+   public static final GetProtobufSchemasWithErrorsHandler INSTANCE = new GetProtobufSchemasWithErrorsHandler();
 
    @Override
    public void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
@@ -37,12 +37,18 @@ public class GetProtobufSchemaNamesHandler extends AbstractRuntimeOnlyHandler {
 
       if (protoManager != null) {
          try {
-            String[] fileNames = protoManager.getProtofileNames();
-            List<ModelNode> models = new ArrayList<>(fileNames.length);
-            for (String name : fileNames) {
-               models.add(new ModelNode().set(name));
+            String[] fileNames = protoManager.getFilesWithErrors();
+            ModelNode result = new ModelNode();
+            if (fileNames != null) {
+               List<ModelNode> models = new ArrayList<>(fileNames.length);
+               for (String name : fileNames) {
+                  models.add(new ModelNode().set(name));
+               }
+               result.set(models);
+            } else {
+               result.setEmptyList();
             }
-            context.getResult().set(new ModelNode().set(models));
+            context.getResult().set(result);
          } catch (Exception e) {
             throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
          }
