@@ -1,7 +1,7 @@
 package org.infinispan.query.remote.client;
 
 /**
- * MBean interface for ProtobufMetadataManager,suitable for building invocation proxies with one of the {@link
+ * MBean interface for ProtobufMetadataManager, suitable for building invocation proxies with one of the {@link
  * javax.management.JMX#newMBeanProxy} methods.
  *
  * @author anistor@redhat.com
@@ -11,20 +11,26 @@ package org.infinispan.query.remote.client;
 public interface ProtobufMetadataManagerMBean extends ProtobufMetadataManagerConstants {
 
    /**
-    * Register a *.proto schema file.
+    * Register a *.proto schema file. If there are any syntax or semantic errors a *.proto.errors key will be created in
+    * the underlying cache and its value will be the actual error message. The error message, if any, can be retrieved
+    * using {@link #getFileErrors(String fileName)} method. The list of offending files can be retrieved using {@link
+    * #getFilesWithErrors()} method.
     *
     * @param fileName the full name of the file (name can contain '/'); must end with ".proto" suffix
     * @param contents the file contents
-    * @throws Exception if the file has invalid syntax
+    * @throws Exception in case of failure
     */
    void registerProtofile(String fileName, String contents) throws Exception;
 
    /**
-    * Registers multiple *.proto schema files.
+    * Registers multiple *.proto schema files. If there are any syntax or semantic errors a *.proto.errors key will be
+    * created in the underlying cache for each offending file and its value will be the actual error message. The error
+    * message, if any, can be retrieved using {@link #getFileErrors(String fileName)} method. The list of offending
+    * files can be retrieved using {@link #getFilesWithErrors()} method.
     *
     * @param fileNames the full names of the files (name can contain '/'); names must end with ".proto" suffix
     * @param contents  the contents of each file; this array must have the same length as {@code fileNames}
-    * @throws Exception Exception if any of files has invalid syntax
+    * @throws Exception in case of failure
     */
    void registerProtofiles(String[] fileNames, String[] contents) throws Exception;
 
