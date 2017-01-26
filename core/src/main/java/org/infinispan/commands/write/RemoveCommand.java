@@ -222,7 +222,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
-      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId.getId(), getTopologyId());
       if (isConditional()) {
          command.initWithBoolReturnValue(successful);
       } else if (isReturnValueExpected()) {

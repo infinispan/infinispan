@@ -7,10 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.util.ByteString;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -23,28 +22,29 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
+public class PrimaryMultiKeyAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 31;
    private static final Type[] CACHED_TYPE = Type.values();
-   private CommandInvocationId commandInvocationId;
+   private long id;
    private Map<Object, Object> returnValue = null;
    private Type type;
    private CommandAckCollector commandAckCollector;
    private int topologyId;
+   private Address origin;
 
    public PrimaryMultiKeyAckCommand() {
-      super(null);
+      super();
    }
 
-   public PrimaryMultiKeyAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
 
-   public PrimaryMultiKeyAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId) {
-      super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+   public PrimaryMultiKeyAckCommand(long id, int topologyId) {
+      this.id = id;
       this.topologyId = topologyId;
+   }
+
+   public PrimaryMultiKeyAckCommand(CommandAckCollector commandAckCollector) {
+      this.commandAckCollector = commandAckCollector;
    }
 
    private static Type valueOf(int index) {
@@ -53,7 +53,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.multiKeyPrimaryAck(commandInvocationId, getOrigin(), returnValue, topologyId);
+      commandAckCollector.multiKeyPrimaryAck(id, origin, returnValue, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -68,8 +68,13 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       MarshallUtil.marshallEnum(type, output);
       output.writeInt(topologyId);
       if (type == Type.SUCCESS_WITH_RETURN_VALUE) {
@@ -79,13 +84,18 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       type = MarshallUtil.unmarshallEnum(input, PrimaryMultiKeyAckCommand::valueOf);
       topologyId = input.readInt();
       assert type != null;
       if (type == Type.SUCCESS_WITH_RETURN_VALUE) {
          returnValue = MarshallUtil.unmarshallMap(input, HashMap::new);
       }
+   }
+
+   @Override
+   public void setOrigin(Address origin) {
+      this.origin = origin;
    }
 
    public void initWithReturnValue(Map<Object, Object> returnValue) {
@@ -97,14 +107,11 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
       type = Type.SUCCESS_WITHOUT_RETURN_VALUE;
    }
 
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
-   }
-
    @Override
    public String toString() {
       return "PrimaryMultiKeyAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
+            ", origin=" + origin +
             ", returnValue=" + returnValue +
             ", type=" + type +
             ", topologyId=" + topologyId +

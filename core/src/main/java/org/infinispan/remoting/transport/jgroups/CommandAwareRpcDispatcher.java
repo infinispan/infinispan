@@ -174,8 +174,9 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
 
    private void executeCommandFromLocalCluster(final ReplicableCommand cmd, final Message req,
          final org.jgroups.blocks.Response response) {
-      Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req);
-      handler.handleFromCluster(fromJGroupsAddress(req.getSrc()), cmd, reply, decodeDeliverMode(req));
+      handler.handleFromCluster(fromJGroupsAddress(req.getSrc()), cmd,
+            returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req),
+            decodeDeliverMode(req));
    }
 
    private static DeliverOrder decodeDeliverMode(Message request) {
@@ -198,10 +199,11 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
             request.setFlags(Message.Flag.OOB.value());
             break;
          case PER_SENDER:
-            request.setFlags(Message.Flag.NO_TOTAL_ORDER.value());
+            request.setFlags(Message.Flag.NO_TOTAL_ORDER.value()).setTransientFlags(Message.TransientFlag.DONT_LOOPBACK.value());
             break;
          case NONE:
-            request.setFlags((short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value()));
+            request.setFlags((short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value())).setTransientFlags(
+                  Message.TransientFlag.DONT_LOOPBACK.value());
             break;
          default:
             throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
@@ -248,14 +250,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
                                                  long timeout) {
       RequestOptions options = new RequestOptions(mode, timeout);
       encodeDeliverMode(options, deliverOrder);
-      // Only the commands in total order must be received by the originator.
-      if (deliverOrder != DeliverOrder.TOTAL) {
-         options.setTransientFlags(Message.TransientFlag.DONT_LOOPBACK.value());
-      }
-      if (rsvp) {
-         options.setFlags(Message.Flag.RSVP.value());
-      }
-      return options;
+      return rsvp ? options.setFlags(Message.Flag.RSVP.value()) : options;
    }
 
    Buffer marshallCall(ReplicableCommand command) {

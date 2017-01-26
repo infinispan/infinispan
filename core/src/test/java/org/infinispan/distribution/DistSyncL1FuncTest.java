@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -69,8 +68,8 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          barrier.await(5, TimeUnit.SECONDS);
 
          //we need to wait for the command to complete everywhere.
-         CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
-         List<CommandInvocationId> pendingIds = collector.getPendingCommands();
+         CommandAckCollector collector = TestingUtil.extractGlobalComponent(nonOwnerCache.getCacheManager(), CommandAckCollector.class);
+         List<Long> pendingIds = collector.getPendingCommands();
          assertEquals(1, pendingIds.size());
          CompletableFuture<?> cFuture = collector.getCollectorCompletableFuture(pendingIds.get(0));
          cFuture.get(30, TimeUnit.SECONDS);
@@ -334,8 +333,8 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          // Wait until owner has already replicated to backup owner, but hasn't updated local value
          ownerPutBarrier.await(10, TimeUnit.SECONDS);
 
-         CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
-         List<CommandInvocationId> pendingIds = collector.getPendingCommands();
+         CommandAckCollector collector = TestingUtil.extractGlobalComponent(nonOwnerCache.getCacheManager(), CommandAckCollector.class);
+         List<Long> pendingIds = collector.getPendingCommands();
          assertEquals(1, pendingIds.size());
          eventually(() -> !collector.hasPendingBackupAcks(pendingIds.get(0)));
 

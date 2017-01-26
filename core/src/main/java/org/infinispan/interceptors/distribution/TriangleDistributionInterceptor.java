@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -32,6 +33,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -93,13 +95,15 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private CommandsFactory commandsFactory;
    private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
+   private long timeoutNanos;
 
    @Inject
    public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
-         TriangleOrderManager triangleOrderManager) {
+         TriangleOrderManager triangleOrderManager, Configuration configuration) {
       this.commandAckCollector = commandAckCollector;
       this.commandsFactory = commandsFactory;
       this.triangleOrderManager = triangleOrderManager;
+      timeoutNanos = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
    }
 
    @Start
@@ -184,8 +188,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
       if (sync) {
          commandAckCollector
-               .createMultiKeyCollector(command.getCommandInvocationId(), filter.primaries.keySet(), filter.backups,
-                     command.getTopologyId());
+               .createMultiKeyCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
+                     filter.backups,
+                     command.getTopologyId(), timeoutNanos);
          final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
          forwardToPrimaryOwners(command, filter);
          if (localEntries != null) {
@@ -195,17 +200,18 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                         loadType == PRIMARY || loadType == OWNER)).handle((rCtx, rCommand, rv, t) -> {
                PutMapCommand cmd = (PutMapCommand) rCommand;
                if (t != null) {
-                  commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+                  commandAckCollector
+                        .completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
                } else {
                   //noinspection unchecked
-                  commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
+                  commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId().getId(), localAddress,
                         (Map<Object, Object>) rv, cmd.getTopologyId());
                }
             });
          }
          return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {
             PutMapCommand cmd = (PutMapCommand) rCommand;
-            commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+            commandAckCollector.completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
             assert t != null;
             throw t;
          });
@@ -324,7 +330,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          if (distributionInfo.owners().size() > 1) {
             Collection<Address> backupOwners = distributionInfo.backups();
             if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
-               commandAckCollector.create(id, rv, distributionInfo.owners(), dwCommand.getTopologyId());
+               commandAckCollector.create(id.getId(), rv, distributionInfo.owners(), dwCommand.getTopologyId(),
+                     timeoutNanos);
                //check the topology after registering the collector.
                //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
                checkTopologyId(dwCommand);
@@ -345,7 +352,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private void logCommandSequence(CommandInvocationId id, int segment, long sequence) {
-         log.tracef("Command %s got sequence %s for segment %s", id, sequence, segment);
+      log.tracef("Command %s got sequence %s for segment %s", id, sequence, segment);
    }
 
    private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
@@ -354,7 +361,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&
             !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId, distributionInfo.owners(), command.getTopologyId());
+         commandAckCollector.create(invocationId.getId(), distributionInfo.owners(), command.getTopologyId(),
+               timeoutNanos);
       }
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());

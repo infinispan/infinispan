@@ -1,5 +1,8 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher.constructRequestOptions;
+import static org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher.isRsvpCommand;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -9,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -130,8 +132,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected volatile List<Address> members = null;
    protected volatile Address coordinator = null;
    protected volatile boolean isCoordinator = false;
-   protected final Lock viewUpdateLock = new ReentrantLock();
-   protected final Condition viewUpdateCondition = viewUpdateLock.newCondition();
+   private final Lock viewUpdateLock = new ReentrantLock();
+   private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
 
    private final ThreadPoolProbeHandler handler;
 
@@ -687,7 +689,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
-   public TimeoutException addSuppressedExceptions(TimeoutException timeoutException, Responses rsps) {
+   private TimeoutException addSuppressedExceptions(TimeoutException timeoutException, Responses rsps) {
       for (Map.Entry<org.jgroups.Address, Rsp<Response>> e : rsps) {
          Rsp<Response> rsp = e.getValue();
          Throwable exception;
@@ -710,22 +712,19 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      Objects.requireNonNull(destination, "Destination must be non-null");
       if (trace) {
          log.tracef("sendTo: destination=%s, command=%s, order=%s", destination, rpcCommand, deliverOrder);
       }
-      if (getAddress().equals(destination)) {
+      if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
          if (trace) {
-            log.tracef("Not sending message to self");
+            log.trace("sendTo: not sending to self.");
          }
          return;
       }
-      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(rpcCommand);
-      final org.jgroups.Address jgrpAddr = toJGroupsAddress(destination);
-
-      final Buffer buffer = dispatcher.marshallCall(rpcCommand);
-      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
-      dispatcher.sendMessage(jgrpAddr, buffer, options);
+      dispatcher.sendMessage(
+            toJGroupsAddress(destination),
+            dispatcher.marshallCall(rpcCommand),
+            asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder));
    }
 
    @Override
@@ -746,11 +745,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.tracef("sendTo: destinations=%s, command=%s, order=%s", destinations, rpcCommand, deliverOrder);
       }
 
-      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(rpcCommand);
       final List<org.jgroups.Address> jgrpAddrList = toJGroupsAddressListExcludingSelf(destinations, deliverOrder == DeliverOrder.TOTAL);
 
       final Buffer buffer = dispatcher.marshallCall(rpcCommand);
-      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
       if (deliverOrder == DeliverOrder.TOTAL) {
          AnycastAddress anycastAddress = new AnycastAddress(jgrpAddrList);
          dispatcher.sendMessage(anycastAddress, buffer, options);
@@ -761,18 +759,18 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
+   private static RequestOptions asyncRequestOptions(boolean rsvp, DeliverOrder deliverOrder) {
+      return constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+   }
+
    private void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
       if (trace) {
          log.tracef("sendToAll: command=%s, order=%s", rpcCommand, deliverOrder);
       }
-
-      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(rpcCommand);
-
       final Buffer buffer = dispatcher.marshallCall(rpcCommand);
-      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
       if (deliverOrder == DeliverOrder.TOTAL) {
-         AnycastAddress anycastAddress = new AnycastAddress();
-         dispatcher.sendMessage(anycastAddress, buffer, options);
+         dispatcher.sendMessage(new AnycastAddress(), buffer, options);
       } else {
          dispatcher.castMessage(null, buffer, options.anycasting(false));
       }
@@ -861,11 +859,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       for (XSiteBackup xsb : backups) {
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
-            RequestOptions sync = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL,
+            RequestOptions sync = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL,
                   false, DeliverOrder.NONE, xsb.getTimeout());
             syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), sync));
          } else {
-            RequestOptions async = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE,
+            RequestOptions async = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE,
                   false, DeliverOrder.PER_SENDER, xsb.getTimeout());
             dispatcher.sendMessage(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), async);
          }
