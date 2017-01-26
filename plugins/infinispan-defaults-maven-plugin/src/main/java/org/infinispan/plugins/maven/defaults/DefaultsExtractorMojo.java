@@ -220,7 +220,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
 
    private String formatOutput(Map.Entry<String, String> entry) {
       if (outputAscii) {
-         return ":" + entry.getKey() + ":" + entry.getValue();
+         return ":" + entry.getKey() + ": " + entry.getValue();
       }
       return entry.getKey() + " = " + entry.getValue();
    }
