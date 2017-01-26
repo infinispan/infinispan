@@ -101,6 +101,7 @@
                         <goals>
                             <goal>extract-defaults</goal>
                         </goals>
+                        <phase>generate-sources</phase>
                         <configuration>
                             <attributeDefType>ALL</attributeDefType>
                             <defaultsFile>${defaults.file}</defaultsFile>
