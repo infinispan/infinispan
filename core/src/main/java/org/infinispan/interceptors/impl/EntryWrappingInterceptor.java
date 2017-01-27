@@ -110,7 +110,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private static final long EVICT_FLAGS_BITSET =
          FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
-   private boolean transactional;
    private boolean totalOrder;
 
    private final InvocationSuccessHandler dataReadReturnHandler = (rCtx, rCommand, rv) -> {
@@ -168,12 +167,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
-      transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
-      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
    private boolean canRead(Object key) {
@@ -208,7 +206,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private BasicInvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
-      entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      final Object key = command.getKey();
+      entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership(command) || canRead(key));
       return invokeNext(ctx, command).thenAccept(dataReadReturnHandler);
    }
 
