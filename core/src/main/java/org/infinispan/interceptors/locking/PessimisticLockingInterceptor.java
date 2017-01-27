@@ -387,12 +387,20 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
-      lockManager.unlockAll(ctx);
-      if (ctx.isOriginLocal() && ctx.isInTxScope() && rpcManager != null) {
-         final TxInvocationContext txContext = (TxInvocationContext) ctx;
-         TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
-         final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      try {
+         lockManager.unlockAll(ctx);
+         if (ctx.isOriginLocal() && ctx.isInTxScope() && rpcManager != null) {
+            TxCompletionNotificationCommand command =
+                  cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
+            final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
+            if (!cacheTransaction.getRemoteLocksAcquired().isEmpty()) {
+               rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command,
+                                         rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+            }
+         }
+      } catch (Throwable t) {
+         log.debugf(t, "Error releasing locks for failure before prepare for transaction %s", txContext.getCacheTransaction());
       }
    }
 
