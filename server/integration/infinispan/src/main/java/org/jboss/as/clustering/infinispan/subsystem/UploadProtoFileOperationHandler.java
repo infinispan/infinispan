@@ -58,28 +58,30 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(
               CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
-        EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-        ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-        if (protoManager != null) {
-           try {
-              List<ModelNode> descriptorsNames = names.asList();
-              List<ModelNode> descriptorsUrls = urls.asList();
-              if (descriptorsNames.size() != descriptorsUrls.size()) {
-                 throw MESSAGES.invalidParameterSizes(namesParameter, urlsParameter);
-              }
-              String[] nameArray = new String[descriptorsNames.size()];
-              String[] contentArray = new String[descriptorsUrls.size()];
-              int i = 0;
-              for (ModelNode modelNode : descriptorsNames) {
-                 nameArray[i] = modelNode.asString();
-                 String urlString = descriptorsUrls.get(i).asString();
-                 contentArray[i] = Util.read(new URL(urlString).openStream());
-                 i++;
-              }
-              protoManager.registerProtofiles(nameArray, contentArray);
-           } catch (Exception e) {
-              throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
-           }
-        }
+       if (controller != null) {
+          EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+          ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+          if (protoManager != null) {
+             try {
+                List<ModelNode> descriptorsNames = names.asList();
+                List<ModelNode> descriptorsUrls = urls.asList();
+                if (descriptorsNames.size() != descriptorsUrls.size()) {
+                   throw MESSAGES.invalidParameterSizes(namesParameter, urlsParameter);
+                }
+                String[] nameArray = new String[descriptorsNames.size()];
+                String[] contentArray = new String[descriptorsUrls.size()];
+                int i = 0;
+                for (ModelNode modelNode : descriptorsNames) {
+                   nameArray[i] = modelNode.asString();
+                   String urlString = descriptorsUrls.get(i).asString();
+                   contentArray[i] = Util.read(new URL(urlString).openStream());
+                   i++;
+                }
+                protoManager.registerProtofiles(nameArray, contentArray);
+             } catch (Exception e) {
+                throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+             }
+          }
+       }
     }
 }
