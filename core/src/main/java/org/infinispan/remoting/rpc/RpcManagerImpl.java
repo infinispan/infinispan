@@ -242,7 +242,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Override
    public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
       if (trace) {
-         log.tracef("%s invoking %s to %s ordered by %s", t.getAddress(), command, destination, deliverOrder);
+         traceSendTo(destination, command, deliverOrder);
       }
 
       // Set the topology id of the command, in case we don't have it yet
@@ -257,9 +257,27 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    @Override
+   public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      if (trace) {
+         traceSendTo(destination, command, deliverOrder);
+      }
+
+      try {
+         t.sendTo(destination, command, deliverOrder, internalExternalizerId);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   private void traceSendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+      log.tracef("%s invoking %s to %s ordered by %s", t.getAddress(), command, destination, deliverOrder);
+   }
+
+   @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
       if (trace) {
-         log.tracef("%s invoking %s to list %s ordered by %s", t.getAddress(), command, destinations, deliverOrder);
+         traceSendToMany(command, destinations, deliverOrder);
       }
 
       // Set the topology id of the command, in case we don't have it yet
@@ -271,6 +289,24 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       } catch (Exception e) {
          errorReplicating(e);
       }
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      if (trace) {
+         traceSendToMany(command, destinations, deliverOrder);
+      }
+
+      try {
+         t.sendToMany(destinations, command, deliverOrder, internalExternalizerId);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   private void traceSendToMany(ReplicableCommand command, Collection<Address> destinations, DeliverOrder deliverOrder) {
+      log.tracef("%s invoking %s to list %s ordered by %s", t.getAddress(), command, destinations, deliverOrder);
    }
 
    private void errorReplicating(Exception e) {

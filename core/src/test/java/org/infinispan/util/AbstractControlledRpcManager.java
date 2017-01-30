@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -64,8 +65,20 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      realOne.sendTo(destination, command, deliverOrder, internalExternalizerId);
+   }
+
+   @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
       realOne.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      realOne.sendToMany(destinations, command, deliverOrder, internalExternalizerId);
    }
 
    @Override

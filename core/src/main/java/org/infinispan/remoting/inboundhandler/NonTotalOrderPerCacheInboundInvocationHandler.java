@@ -7,6 +7,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
+import org.infinispan.commands.write.PrimaryWriteRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
@@ -86,6 +87,10 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
             case BackupPutMapRcpCommand.COMMAND_ID:
                runnable = createReadyActionRunnable(command, reply, commandTopologyId, sync,
                      createReadyAction((BackupPutMapRcpCommand) command, commandTopologyId));
+               break;
+            case PrimaryWriteRpcCommand.COMMAND_ID:
+               runnable = createReadyActionRunnable(command, reply, commandTopologyId, sync,
+                     createReadyAction(commandTopologyId, (PrimaryWriteRpcCommand) command));
                break;
             default:
                runnable = createDefaultRunnable(command, reply, commandTopologyId,

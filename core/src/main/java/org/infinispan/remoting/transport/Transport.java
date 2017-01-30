@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -75,6 +76,8 @@ public interface Transport extends Lifecycle {
     * @throws Exception if there was problem sending the request.
     */
    void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
+
+   void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder, int internalExternalizerId) throws Exception;
 
    /**
     * @deprecated Use {@link #invokeRemotely(Map, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead
@@ -154,4 +157,7 @@ public interface Transport extends Lifecycle {
     * protocol stack.
     */
    void checkTotalOrderSupported();
+
+   void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder, int internalExternalizerId)
+         throws Exception;
 }

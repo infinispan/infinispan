@@ -70,6 +70,7 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
+import org.infinispan.commands.write.PrimaryWriteRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -484,5 +485,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command) {
       return actual.buildBackupPutMapRcpCommand(command);
+   }
+
+   @Override
+   public PrimaryWriteRpcCommand buildPrimaryWriteRpcCommand() {
+      return actual.buildPrimaryWriteRpcCommand();
    }
 }

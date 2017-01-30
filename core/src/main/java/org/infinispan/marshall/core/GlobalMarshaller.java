@@ -300,6 +300,32 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    @Override
+   public ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId) throws IOException {
+      try {
+         return writeObjectOutputWithExternalizerId(command, internalExternalizerId).toByteBuffer();
+      } catch (java.io.NotSerializableException nse) {
+         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
+         throw new NotSerializableException(nse.getMessage(), nse.getCause());
+      }
+   }
+
+   private BytesObjectOutput writeObjectOutputWithExternalizerId(Object obj, int internalExternalizerId)
+         throws IOException {
+      BufferSizePredictor sizePredictor = marshallableTypeHints.getBufferSizePredictor(obj);
+      BytesObjectOutput out = writeObjectOutputWithExternalizerId(obj, sizePredictor.nextSize(obj), internalExternalizerId);
+      sizePredictor.recordSize(out.pos);
+      return out;
+   }
+
+   private BytesObjectOutput writeObjectOutputWithExternalizerId(Object obj, int estimatedSize, int internalExternalizerId)
+         throws IOException {
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
+      AdvancedExternalizer ext = reverseInternalExts.get(internalExternalizerId);
+      writeInternal(obj, ext, out);
+      return out;
+   }
+
+   @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       try {
          BytesObjectOutput out = writeObjectOutput(o);

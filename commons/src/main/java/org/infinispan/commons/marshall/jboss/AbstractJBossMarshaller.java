@@ -331,4 +331,9 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       }
    }
 
+   @Override
+   public ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId)
+         throws IOException, InterruptedException {
+      return objectToBuffer(command);
+   }
 }

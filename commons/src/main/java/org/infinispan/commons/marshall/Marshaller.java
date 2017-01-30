@@ -100,4 +100,6 @@ public interface Marshaller {
     */
    BufferSizePredictor getBufferSizePredictor(Object o);
 
+   ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId)
+         throws IOException, InterruptedException;
 }

@@ -28,10 +28,12 @@ import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
+import org.infinispan.commands.write.PrimaryWriteRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.marshall.Ids;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -348,7 +350,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                logCommandSequence(id, distributionInfo.getSegmentId(), sequenceNumber);
             }
             // we must send the message only after the collector is registered in the map
-            rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
+            rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE, Ids.CACHE_RPC_COMMAND);
          }
       });
    }
@@ -368,8 +370,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
-      rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
+      rpcManager.sendTo(distributionInfo.primary(), primaryCommand(command), DeliverOrder.NONE, Ids.CACHE_RPC_COMMAND);
       return null;
+   }
+
+   private PrimaryWriteRpcCommand primaryCommand(DataWriteCommand command) {
+      PrimaryWriteRpcCommand primaryWriteRpcCommand = commandsFactory.buildPrimaryWriteRpcCommand();
+      primaryWriteRpcCommand.initWithDataWriteCommand(command);
+      return primaryWriteRpcCommand;
    }
 
    /**

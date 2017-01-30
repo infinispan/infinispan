@@ -86,6 +86,17 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
       this.channel.removeChannelListener(this);
    }
 
+   public Buffer marshallCall(ReplicableCommand command, int internalExternalizerId) {
+      try {
+         ByteBuffer bytes = ispnMarshaller.objectToBufferWithExternalizer(command, internalExternalizerId);
+         return new Buffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
+      } catch (RuntimeException e) {
+         throw e;
+      } catch (Exception e) {
+         throw new RuntimeException("Failure to marshal argument(s)", e);
+      }
+   }
+
    private boolean isValid(Message req) {
       if (req == null || req.getLength() == 0) {
          log.msgOrMsgBufferEmpty();

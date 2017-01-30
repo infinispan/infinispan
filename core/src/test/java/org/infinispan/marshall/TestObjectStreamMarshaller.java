@@ -84,6 +84,12 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
    }
 
    @Override
+   public ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId)
+         throws IOException, InterruptedException {
+      return marshaller.objectToBufferWithExternalizer(command, internalExternalizerId);
+   }
+
+   @Override
    @Stop
    public void stop() {
       log.trace("TestObjectStreamMarshaller.stop()");

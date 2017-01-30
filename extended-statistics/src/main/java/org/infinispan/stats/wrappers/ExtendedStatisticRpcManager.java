@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -124,8 +125,20 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      actual.sendTo(destination, command, deliverOrder, internalExternalizerId);
+   }
+
+   @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
       actual.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      actual.sendToMany(destinations, command, deliverOrder, internalExternalizerId);
    }
 
    @Override
