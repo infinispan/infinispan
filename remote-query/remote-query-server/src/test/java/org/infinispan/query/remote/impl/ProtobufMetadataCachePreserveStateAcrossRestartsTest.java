@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
@@ -48,6 +47,8 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
          public void call() throws Exception {
             Cache<String, String> protobufMetadaCache = cms[0].getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
             assertTrue(protobufMetadaCache.containsKey("testA.proto"));
+            assertTrue(protobufMetadaCache.containsKey("testB.proto"));
+            assertTrue(protobufMetadaCache.containsKey("testB.proto.errors"));
          }
       });
    }
