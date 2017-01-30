@@ -19,6 +19,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,6 +47,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
    private boolean isUsingLockDelegation;
    private ClusteringDependentLogic cdl;
+   private StateTransferManager stateTransferManager;
 
    @Override
    protected Log getLog() {
@@ -53,10 +55,11 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    }
 
    @Inject
-   public void inject(DistributionManager dm, Transport transport, ClusteringDependentLogic cdl) {
+   public void inject(DistributionManager dm, Transport transport, ClusteringDependentLogic cdl, StateTransferManager stateTransferManager) {
       this.dm = dm;
       this.transport = transport;
       this.cdl = cdl;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Start(priority = 25) // after the distribution manager!
@@ -169,7 +172,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return false;
          }
       }
-      if (!dm.getWriteConsistentHash().isKeyLocalToNode(address, key)) {
+      if (stateTransferManager.getCacheTopology() != null && !dm.getWriteConsistentHash().isKeyLocalToNode(address, key)) {
          log.tracef("Skipping cache store since the key is not local: %s", key);
          return false;
       }

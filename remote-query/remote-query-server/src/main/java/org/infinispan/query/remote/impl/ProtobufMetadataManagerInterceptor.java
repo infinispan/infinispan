@@ -7,6 +7,7 @@ import java.util.TreeSet;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -79,14 +80,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          // handle first error per file, ignore the rest if any
          if (errorFiles.add(fileName)) {
             VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(fileName + ERRORS_KEY_SUFFIX, exception.getMessage(), null, flagsBitSet);
-            invoker.invoke(ctx.clone(), cmd);
+            invoker.invoke(ctx, cmd);
          }
       }
 
       @Override
       public void handleSuccess(String fileName) {
          VisitableCommand cmd = commandsFactory.buildRemoveCommand(fileName + ERRORS_KEY_SUFFIX, null, flagsBitSet);
-         invoker.invoke(ctx.clone(), cmd);
+         invoker.invoke(ctx, cmd);
       }
    }
 
@@ -197,14 +198,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             throw new CacheException("The value must be a string");
          }
          if (shouldIntercept(key)) {
-            if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER) && !command.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
+            if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
                if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
                   throw new CacheException("The key must end with \".proto\" : " + key);
                }
 
                // lock .errors key
-               VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-               invoker.invoke(ctx.clone(), cmd);
+               VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
+               invoker.invoke(ctx, cmd);
             }
          } else {
             return invokeNext(ctx, command);
@@ -213,13 +214,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+         long flagsBitSet = copyFlags(putKeyValueCommand);
          if (putKeyValueCommand.isSuccessful()) {
             FileDescriptorSource source =
                   new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
             ProgressCallback progressCallback = null;
             if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+               progressCallback = new ProgressCallback(rCtx, flagsBitSet);
                source.withProgressCallback(progressCallback);
             } else {
                source.withProgressCallback(EMPTY_CALLBACK);
@@ -232,10 +234,18 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
 
             if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
             }
          }
       });
+   }
+
+   /**
+    * For preload, we need to copy the CACHE_MODE_LOCAL flag from the put command.
+    * But we also need to remove the SKIP_CACHE_STORE flag, so that existing .errors keys are updated.
+    */
+   private long copyFlags(FlagAffectedCommand command) {
+      return EnumUtil.diffBitSets(command.getFlagsBitSet(), FlagBitSets.SKIP_CACHE_STORE);
    }
 
    @Override
@@ -260,13 +270,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       // lock .errors key
-      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-      invoker.invoke(ctx.clone(), cmd);
+      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
+      invoker.invoke(ctx, cmd);
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         long flagsBitSet = copyFlags(((PutMapCommand) rCommand));
          ProgressCallback progressCallback = null;
          if (rCtx.isOriginLocal()) {
-            progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+            progressCallback = new ProgressCallback(rCtx, flagsBitSet);
             source.withProgressCallback(progressCallback);
          } else {
             source.withProgressCallback(EMPTY_CALLBACK);
@@ -279,7 +290,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
 
          if (progressCallback != null) {
-            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
          }
       });
    }
@@ -293,11 +304,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             // lock .errors key
-            VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-            invoker.invoke(ctx.clone(), cmd);
+            long flagsBitSet = copyFlags(command);
+            VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
+            invoker.invoke(ctx, cmd);
 
-            cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
-            invoker.invoke(ctx.clone(), cmd);
+            cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, flagsBitSet);
+            invoker.invoke(ctx, cmd);
 
             if (serializationContext.getFileDescriptors().containsKey(key)) {
                serializationContext.unregisterProtoFile(key);
@@ -307,25 +319,27 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             StringBuilder sb = new StringBuilder();
             for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
                if (fd.isResolved()) {
-                  cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
-                  invoker.invoke(ctx.clone(), cmd);
+                  cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, flagsBitSet);
+                  invoker.invoke(ctx, cmd);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
                   }
                   sb.append(fd.getName());
-                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX, "One of the imported files is missing or has errors", null, EnumUtil.EMPTY_BIT_SET);
+                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX,
+                                                                                   "One of the imported files is missing or has errors",
+                                                                                   null, flagsBitSet);
                   put.setPutIfAbsent(true);
-                  invoker.invoke(ctx.clone(), put);
+                  invoker.invoke(ctx, put);
                }
             }
 
             if (sb.length() > 0) {
-               cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, EnumUtil.EMPTY_BIT_SET);
+               cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, flagsBitSet);
             } else {
-               cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
+               cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, flagsBitSet);
             }
-            invoker.invoke(ctx.clone(), cmd);
+            invoker.invoke(ctx, cmd);
          }
       }
 
@@ -354,18 +368,18 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       // lock .errors key
-      VisitableCommand cmd =
-            commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-      invoker.invoke(ctx.clone(), cmd);
+      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
+      invoker.invoke(ctx, cmd);
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (((WriteCommand) rCommand).isSuccessful()) {
             FileDescriptorSource source =
                   new FileDescriptorSource().addProtoFile((String) key, (String) value);
 
+            long flagsBitSet = copyFlags(((WriteCommand) rCommand));
             ProgressCallback progressCallback = null;
             if (rCtx.isOriginLocal()) {
-               progressCallback = new ProgressCallback(rCtx, command.getFlagsBitSet());
+               progressCallback = new ProgressCallback(rCtx, flagsBitSet);
                source.withProgressCallback(progressCallback);
             } else {
                source.withProgressCallback(EMPTY_CALLBACK);
@@ -378,7 +392,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
 
             if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), command.getFlagsBitSet());
+               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
             }
          }
       });
@@ -412,6 +426,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
          cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, flagsBitSet);
       }
-      invoker.invoke(ctx.clone(), cmd);
+      invoker.invoke(ctx, cmd);
    }
 }
