@@ -62,6 +62,7 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
