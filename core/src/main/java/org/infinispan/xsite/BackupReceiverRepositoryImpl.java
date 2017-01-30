@@ -57,10 +57,10 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    }
 
    /**
-    * Returns the local cache associated defined as backup for the provided remote (site, cache) combo, or throws an
-    * exception of no such site is defined.
+    * Returns the local cache defined as backup for the provided remote (site, cache) combo, or throws an
+    * exception if no such site is defined.
     * <p/>
-    * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
+    * Also starts the cache if not already started; that is because the cache is needed for update after this method
     * is invoked.
     */
    @Override
@@ -71,7 +71,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
       //check the default cache first
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      if (isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
+      if (dcc != null && isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
          Cache<Object, Object> cache = cacheManager.getCache();
          backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
          toLookFor.setLocalCacheName(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
