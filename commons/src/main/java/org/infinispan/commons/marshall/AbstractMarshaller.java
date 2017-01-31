@@ -104,4 +104,9 @@ public abstract class AbstractMarshaller implements Marshaller {
       return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
    }
 
+   @Override
+   public ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId)
+         throws IOException, InterruptedException {
+      return objectToBuffer(command);
+   }
 }

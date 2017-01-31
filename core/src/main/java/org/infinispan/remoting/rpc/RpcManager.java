@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -56,6 +57,8 @@ public interface RpcManager {
     */
    void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder);
 
+   void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder, int internalExternalizerId);
+
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
     * DeliverOrder}.
@@ -66,6 +69,9 @@ public interface RpcManager {
     * @param deliverOrder the {@link DeliverOrder} to use.
     */
    void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder);
+
+   //assumption: command is not null, it is handled by our internal externalizers, it has topology Id set
+   void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder, int internalExternalizerId);
 
    /**
     * @return a reference to the underlying transport.

@@ -59,6 +59,12 @@ public class HotRodEntryMarshaller implements Marshaller {
       return predictor;
    }
 
+   @Override
+   public ByteBuffer objectToBufferWithExternalizer(Object command, int internalExternalizerId)
+         throws IOException, InterruptedException {
+      return objectToBuffer(command);
+   }
+
    class IdentityBufferSizePredictor implements BufferSizePredictor {
 
       @Override

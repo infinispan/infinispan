@@ -13,6 +13,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.marshall.Ids;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -50,11 +51,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
    private CommandAckCollector commandAckCollector;
+   private final InvocationFinallyFunction onLocalWriteCommand = this::onLocalWriteCommand;
    private DistributionManager distributionManager;
    private StateTransferManager stateTransferManager;
    private Address localAddress;
-
-   private final InvocationFinallyFunction onLocalWriteCommand = this::onLocalWriteCommand;
    private final InvocationFinallyAction onRemotePrimaryOwner = this::onRemotePrimaryOwner;
    private final InvocationFinallyAction onRemoteBackupOwner = this::onRemoteBackupOwner;
 
@@ -152,7 +152,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private void onRemotePrimaryOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private void onRemotePrimaryOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+         Throwable throwable) {
       DataWriteCommand command = (DataWriteCommand) rCommand;
       if (throwable != null) {
          sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(), throwable);
@@ -205,7 +206,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       }
       PrimaryAckCommand ackCommand = commandsFactory.buildPrimaryAckCommand();
       command.initPrimaryAck(ackCommand, returnValue);
-      rpcManager.sendTo(origin, ackCommand, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
+      rpcManager.sendTo(origin, ackCommand, command.isSuccessful() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER,
+            Ids.TRIANGLE_ACK_EXTERNALIZER);
    }
 
    private void sendBackupAck(DataWriteCommand command) {
@@ -218,7 +220,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          commandAckCollector.backupAck(id, origin, command.getTopologyId());
       } else {
          rpcManager
-               .sendTo(origin, commandsFactory.buildBackupAckCommand(id, command.getTopologyId()), DeliverOrder.NONE);
+               .sendTo(origin, commandsFactory.buildBackupAckCommand(id, command.getTopologyId()), DeliverOrder.NONE,
+                     Ids.TRIANGLE_ACK_EXTERNALIZER);
       }
    }
 
@@ -232,7 +235,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          commandAckCollector.multiKeyBackupAck(id, localAddress, segment, command.getTopologyId());
       } else {
          rpcManager.sendTo(id.getAddress(),
-               commandsFactory.buildBackupMultiKeyAckCommand(id, segment, command.getTopologyId()), DeliverOrder.NONE);
+               commandsFactory.buildBackupMultiKeyAckCommand(id, segment, command.getTopologyId()), DeliverOrder.NONE,
+               Ids.TRIANGLE_ACK_EXTERNALIZER);
       }
    }
 
@@ -251,7 +255,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          ack.initWithReturnValue(returnValue);
       }
-      rpcManager.sendTo(id.getAddress(), ack, DeliverOrder.NONE);
+      rpcManager.sendTo(id.getAddress(), ack, DeliverOrder.NONE, Ids.TRIANGLE_ACK_EXTERNALIZER);
    }
 
    private void sendExceptionAck(CommandInvocationId id, int topologyId, Throwable throwable) {
@@ -263,7 +267,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          commandAckCollector.completeExceptionally(id, throwable, topologyId);
       } else {
          rpcManager
-               .sendTo(origin, commandsFactory.buildExceptionAckCommand(id, throwable, topologyId), DeliverOrder.NONE);
+               .sendTo(origin, commandsFactory.buildExceptionAckCommand(id, throwable, topologyId), DeliverOrder.NONE,
+                     Ids.TRIANGLE_ACK_EXTERNALIZER);
       }
    }
 }

@@ -66,6 +66,12 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder,
+         int internalExternalizerId) throws Exception {
+      actual.sendToMany(destinations, rpcCommand, deliverOrder, internalExternalizerId);
+   }
+
+   @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
       beforeBackupRemotely(rpcCommand);
       BackupResponse response = actual.backupRemotely(backups, rpcCommand);
@@ -125,6 +131,12 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public void checkTotalOrderSupported() {
       actual.checkTotalOrderSupported();
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) throws Exception {
+      actual.sendTo(destination, command, deliverOrder, internalExternalizerId);
    }
 
    @Override

@@ -44,6 +44,10 @@ public class RemoveExpiredCommand extends RemoveCommand {
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
    }
 
+   public Long getLifespan() {
+      return lifespan;
+   }
+
    /**
     * Performs an expiration on a specified entry
     *

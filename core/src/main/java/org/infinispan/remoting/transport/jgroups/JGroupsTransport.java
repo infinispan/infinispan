@@ -761,6 +761,39 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder,
+         int internalExternalizerId) throws Exception {
+      if (destinations == null) {
+         sendToAll(rpcCommand, deliverOrder, internalExternalizerId);
+         return;
+      }
+      switch (destinations.size()) {
+         case 0:
+            return;
+         case 1:
+            sendTo(destinations.iterator().next(), rpcCommand, deliverOrder, internalExternalizerId);
+            return;
+      }
+
+      if (trace) {
+         log.tracef("sendTo: destinations=%s, command=%s, order=%s", destinations, rpcCommand, deliverOrder);
+      }
+
+      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(rpcCommand);
+      final List<org.jgroups.Address> jgrpAddrList = toJGroupsAddressListExcludingSelf(destinations, deliverOrder == DeliverOrder.TOTAL);
+
+      final Buffer buffer = dispatcher.marshallCall(rpcCommand, internalExternalizerId);
+      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      if (deliverOrder == DeliverOrder.TOTAL) {
+         dispatcher.sendMessage(new AnycastAddress(jgrpAddrList), buffer, options);
+      } else if (jgrpAddrList.size() == 1) {
+         dispatcher.sendMessage(jgrpAddrList.get(0), buffer, options);
+      } else {
+         dispatcher.castMessage(jgrpAddrList, buffer, options.anycasting(true).useAnycastAddresses(false));
+      }
+   }
+
    private void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
       if (trace) {
          log.tracef("sendToAll: command=%s, order=%s", rpcCommand, deliverOrder);
@@ -773,6 +806,22 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (deliverOrder == DeliverOrder.TOTAL) {
          AnycastAddress anycastAddress = new AnycastAddress();
          dispatcher.sendMessage(anycastAddress, buffer, options);
+      } else {
+         dispatcher.castMessage(null, buffer, options.anycasting(false));
+      }
+   }
+
+   private void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder, int internalExternalizerId) throws Exception {
+      if (trace) {
+         log.tracef("sendToAll: command=%s, order=%s", rpcCommand, deliverOrder);
+      }
+
+      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(rpcCommand);
+
+      final Buffer buffer = dispatcher.marshallCall(rpcCommand, internalExternalizerId);
+      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      if (deliverOrder == DeliverOrder.TOTAL) {
+         dispatcher.sendMessage(new AnycastAddress(), buffer, options);
       } else {
          dispatcher.castMessage(null, buffer, options.anycasting(false));
       }
@@ -1085,5 +1134,25 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          throw new CacheConfigurationException("In order to support total order based transaction, the TOA protocol " +
                                                 "must be present in the JGroups's config.");
       }
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) throws Exception {
+      if (trace) {
+         log.tracef("sendTo: destination=%s, command=%s, order=%s", destination, command, deliverOrder);
+      }
+      if (destination.equals(address)) {
+         if (trace) {
+            log.tracef("Not sending message to self");
+         }
+         return;
+      }
+      final boolean rsvp = CommandAwareRpcDispatcher.isRsvpCommand(command);
+      final org.jgroups.Address jgrpAddr = toJGroupsAddress(destination);
+
+      final Buffer buffer = dispatcher.marshallCall(command, internalExternalizerId);
+      final RequestOptions options = CommandAwareRpcDispatcher.constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      dispatcher.sendMessage(jgrpAddr, buffer, options);
    }
 }

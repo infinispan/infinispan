@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -53,9 +54,23 @@ class TrackingRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      rpcCollector.addRPC(new RpcDetail(getAddress(), command, cacheName, Collections.singletonList(destination)));
+      delegate.sendTo(destination, command, deliverOrder, internalExternalizerId);
+   }
+
+   @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
       rpcCollector.addRPC(new RpcDetail(getAddress(), command, cacheName, destinations));
       delegate.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder,
+         int internalExternalizerId) {
+      rpcCollector.addRPC(new RpcDetail(getAddress(), command, cacheName, destinations));
+      delegate.sendToMany(destinations, command, deliverOrder, internalExternalizerId);
    }
 
    @Override

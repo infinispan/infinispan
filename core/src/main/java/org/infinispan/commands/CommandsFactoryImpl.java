@@ -68,6 +68,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
+import org.infinispan.commands.write.PrimaryWriteRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -546,6 +547,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case BackupPutMapRcpCommand.COMMAND_ID:
             ((BackupPutMapRcpCommand) c).init(icf, interceptorChain, notifier);
             break;
+         case PrimaryWriteRpcCommand.COMMAND_ID:
+            ((PrimaryWriteRpcCommand) c).init(notifier, interceptorChain, icf);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -793,6 +797,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command) {
       return new BackupPutMapRcpCommand(cacheName, command);
+   }
+
+   @Override
+   public PrimaryWriteRpcCommand buildPrimaryWriteRpcCommand() {
+      return new PrimaryWriteRpcCommand(cacheName);
    }
 
    private ValueMatcher getValueMatcher(Object o) {
