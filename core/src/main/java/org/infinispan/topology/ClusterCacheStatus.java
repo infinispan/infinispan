@@ -104,13 +104,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public void queueRebalance(List<Address> newMembers) {
-      synchronized (this) {
-         if (newMembers != null && !newMembers.isEmpty()) {
-            log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
-            queuedRebalanceMembers = newMembers;
-            startQueuedRebalance();
-         }
+   public synchronized void queueRebalance(List<Address> newMembers) {
+      if (newMembers != null && !newMembers.isEmpty()) {
+         log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
+         queuedRebalanceMembers = newMembers;
+         startQueuedRebalance();
       }
    }
 
@@ -142,47 +140,42 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public void updateAvailabilityMode(List<Address> actualMembers, AvailabilityMode newAvailabilityMode,
-         boolean cancelRebalance) {
-      synchronized (this) {
-         boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
+   public synchronized void updateAvailabilityMode(List<Address> actualMembers, AvailabilityMode newAvailabilityMode,
+                                                   boolean cancelRebalance) {
+      boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
 
-         if (modeChanged || !actualMembers.equals(currentTopology.getActualMembers())) {
-            log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
-            ConsistentHash newPendingCH = currentTopology.getPendingCH();
-            CacheTopology.Phase newPhase = currentTopology.getPhase();
-            if (cancelRebalance) {
-               newPendingCH = null;
-               newPhase = CacheTopology.Phase.STABLE;
-               rebalanceConfirmationCollector = null;
-            }
-            CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
-                  currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH, newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
-            setCurrentTopology(newTopology);
-            clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode,
-                  isTotalOrder(), isDistributed());
+      if (modeChanged || !actualMembers.equals(currentTopology.getActualMembers())) {
+         log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
+         ConsistentHash newPendingCH = currentTopology.getPendingCH();
+         CacheTopology.Phase newPhase = currentTopology.getPhase();
+         if (cancelRebalance) {
+            newPendingCH = null;
+            newPhase = CacheTopology.Phase.STABLE;
+            rebalanceConfirmationCollector = null;
          }
+         CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
+               currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH, newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+         setCurrentTopology(newTopology);
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode,
+               isTotalOrder(), isDistributed());
       }
    }
 
    @Override
-   public void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode) {
-      // This method must be called while holding the lock anyway
-      synchronized (this) {
-         log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, " +
-                     "availability mode = %s",
-               cacheName, currentTopology, stableTopology, availabilityMode);
-         this.currentTopology = currentTopology;
-         this.stableTopology = stableTopology;
-         this.availabilityMode = availabilityMode;
+   public synchronized void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode) {
+      log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, " +
+                  "availability mode = %s",
+            cacheName, currentTopology, stableTopology, availabilityMode);
+      this.currentTopology = currentTopology;
+      this.stableTopology = stableTopology;
+      this.availabilityMode = availabilityMode;
 
-         if (currentTopology != null) {
-            clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder(), isDistributed());
-         }
-         if (stableTopology != null) {
-            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(),
-                  isDistributed());
-         }
+      if (currentTopology != null) {
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder(), isDistributed());
+      }
+      if (stableTopology != null) {
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(),
+               isDistributed());
       }
    }
 
@@ -201,7 +194,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             if (status == ComponentStatus.INSTANTIATED) {
                throw log.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
             }
-         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()){
+         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
             throw log.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
          }
       } else {
@@ -220,74 +213,71 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       expectedMembers = immutableAdd(expectedMembers, joiner);
       persistentUUIDManager.addPersistentAddressMapping(joiner, joinInfo.getPersistentUUID());
       joiners = immutableAdd(joiners, joiner);
-      if (trace) log.tracef("Added joiner %s to cache %s with persistent uuid %s: members = %s, joiners = %s", joiner, cacheName,
-            joinInfo.getPersistentUUID(), expectedMembers, joiners);
+      if (trace)
+         log.tracef("Added joiner %s to cache %s with persistent uuid %s: members = %s, joiners = %s", joiner, cacheName,
+               joinInfo.getPersistentUUID(), expectedMembers, joiners);
       return true;
    }
 
    /**
     * @return {@code true} if the leaver was a member, {@code false} otherwise
     */
+   @GuardedBy("this")
    private boolean removeMember(Address leaver) {
-      synchronized (this) {
-         if (!expectedMembers.contains(leaver)) {
-            if (trace) log.tracef("Trying to remove node %s from cache %s, but it is not a member: " +
-                  "members = %s", leaver, cacheName, expectedMembers);
-            return false;
-         }
-
-         expectedMembers = immutableRemove(expectedMembers, leaver);
-         HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
-         newCapacityFactors.remove(leaver);
-         capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
-         joiners = immutableRemove(joiners, leaver);
-         if (trace) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
-               cacheName, expectedMembers, joiners);
-         return true;
+      if (!expectedMembers.contains(leaver)) {
+         if (trace) log.tracef("Trying to remove node %s from cache %s, but it is not a member: " +
+               "members = %s", leaver, cacheName, expectedMembers);
+         return false;
       }
+
+      expectedMembers = immutableRemove(expectedMembers, leaver);
+      HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
+      newCapacityFactors.remove(leaver);
+      capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
+      joiners = immutableRemove(joiners, leaver);
+      if (trace) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
+            cacheName, expectedMembers, joiners);
+      return true;
    }
 
    /**
     * @return {@code true} if the members list has changed, {@code false} otherwise
     */
+   @GuardedBy("this")
    private boolean retainMembers(List<Address> newClusterMembers) {
-      synchronized (this) {
-         if (newClusterMembers.containsAll(expectedMembers)) {
-            if (trace) log.tracef("Cluster members updated for cache %s, no abrupt leavers detected: " +
-                  "cache members = %s. Existing members = %s", cacheName, newClusterMembers, expectedMembers);
-            return false;
-         }
-
-         expectedMembers = immutableRetainAll(expectedMembers, newClusterMembers);
-         joiners = immutableRetainAll(joiners, newClusterMembers);
-         if (trace) log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s", cacheName,
-               expectedMembers, joiners);
-         return true;
+      if (newClusterMembers.containsAll(expectedMembers)) {
+         if (trace) log.tracef("Cluster members updated for cache %s, no abrupt leavers detected: " +
+               "cache members = %s. Existing members = %s", cacheName, newClusterMembers, expectedMembers);
+         return false;
       }
+
+      expectedMembers = immutableRetainAll(expectedMembers, newClusterMembers);
+      joiners = immutableRetainAll(joiners, newClusterMembers);
+      if (trace) log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s", cacheName,
+            expectedMembers, joiners);
+      return true;
    }
 
+   @GuardedBy("this")
    private void setCurrentTopology(CacheTopology newTopology) {
-      synchronized (this) {
-         this.currentTopology = newTopology;
+      this.currentTopology = newTopology;
 
-         // update the joiners list
-         if (newTopology != null) {
-            joiners = immutableRemoveAll(expectedMembers, newTopology.getCurrentCH().getMembers());
-         }
-         if (trace) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
-               cacheName, currentTopology, expectedMembers, joiners);
-         if (newTopology != null) {
-            newTopology.logRoutingTableInformation();
-         }
+      // update the joiners list
+      if (newTopology != null) {
+         joiners = immutableRemoveAll(expectedMembers, newTopology.getCurrentCH().getMembers());
+      }
+      if (trace) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
+            cacheName, currentTopology, expectedMembers, joiners);
+      if (newTopology != null) {
+         newTopology.logRoutingTableInformation();
       }
    }
 
+   @GuardedBy("this")
    private void setStableTopology(CacheTopology newTopology) {
-      synchronized (this) {
-         this.stableTopology = newTopology;
-         if (trace) log.tracef("Cache %s stable topology updated: members = %s, joiners = %s, topology = %s",
-               cacheName, expectedMembers, joiners, newTopology);
-      }
+      this.stableTopology = newTopology;
+      if (trace) log.tracef("Cache %s stable topology updated: members = %s, joiners = %s, topology = %s",
+            cacheName, expectedMembers, joiners, newTopology);
    }
 
    private boolean needConsistentHashUpdate() {
@@ -330,15 +320,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             newTopology.getMembers(), whenCompleted);
    }
 
-   public void confirmRebalancePhase(Address member, int receivedTopologyId) throws Exception {
-      synchronized (this) {
-         if (rebalanceConfirmationCollector == null) {
-            throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
-                  "for cache %s, we don't have a rebalance in progress", member, cacheName));
-         }
-
-         rebalanceConfirmationCollector.confirmPhase(member, receivedTopologyId);
+   public synchronized void confirmRebalancePhase(Address member, int receivedTopologyId) throws Exception {
+      if (rebalanceConfirmationCollector == null) {
+         throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
+               "for cache %s, we don't have a rebalance in progress", member, cacheName));
       }
+
+      rebalanceConfirmationCollector.confirmPhase(member, receivedTopologyId);
    }
 
    /**
@@ -356,19 +344,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public void doHandleClusterView() throws Exception {
-      synchronized (this) {
-         // TODO Clean up ClusterCacheStatus instances once they no longer have any members
-         if (currentTopology == null)
-            return;
+   public synchronized void doHandleClusterView() throws Exception {
+      // TODO Clean up ClusterCacheStatus instances once they no longer have any members
+      if (currentTopology == null)
+         return;
 
-         List<Address> newClusterMembers = transport.getMembers();
-         boolean cacheMembersModified = retainMembers(newClusterMembers);
-         availabilityStrategy.onClusterViewChange(this, newClusterMembers);
+      List<Address> newClusterMembers = transport.getMembers();
+      boolean cacheMembersModified = retainMembers(newClusterMembers);
+      availabilityStrategy.onClusterViewChange(this, newClusterMembers);
 
-         if (cacheMembersModified) {
-            updateMembers();
-         }
+      if (cacheMembersModified) {
+         updateMembers();
       }
    }
 
@@ -442,73 +428,71 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    // TODO: newMembers isn't really used, pruneInvalidMembers uses expectedMembers
    @Override
-   public void updateCurrentTopology(List<Address> newMembers) {
-      synchronized (this) {
-         // The current topology might be null just after a joiner became the coordinator
-         if (currentTopology == null) {
-            createInitialCacheTopology();
-         }
-         ConsistentHashFactory<ConsistentHash> consistentHashFactory = getJoinInfo().getConsistentHashFactory();
-         int topologyId = currentTopology.getTopologyId();
-         int rebalanceId = currentTopology.getRebalanceId();
-         ConsistentHash currentCH = currentTopology.getCurrentCH();
-         ConsistentHash pendingCH = currentTopology.getPendingCH();
-         if (!needConsistentHashUpdate()) {
-            log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",
-                  cacheName, currentTopology);
-            return;
-         }
-
-         if (newMembers.isEmpty()) {
-            log.tracef("Cache %s no longer has any members, removing topology", cacheName);
-            setCurrentTopology(null);
-            setStableTopology(null);
-            rebalanceConfirmationCollector = null;
-            // TODO Remove the cache from the cache status map in ClusterTopologyManagerImpl instead
-            return;
-         }
-
-
-         List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
-         ConsistentHash newCurrentCH;
-         List<Address> actualMembers;
-         if (newCurrentMembers.isEmpty()) {
-            // All the current members left, try to replace them with the joiners
-            log.tracef("All current members left, re-initializing status for cache %s", cacheName);
-            rebalanceConfirmationCollector = null;
-
-            newCurrentMembers = getExpectedMembers();
-            actualMembers = newCurrentMembers;
-            newCurrentCH = joinInfo.getConsistentHashFactory().create(
-                  joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
-                  newCurrentMembers, getCapacityFactors());
-         } else {
-            // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
-            newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
-            actualMembers = newCurrentMembers;
-            if (pendingCH != null) {
-               // Sending topology update with pendingCH != null could trigger a rebalance on the other node,
-               // while if this is called due to a lost member during ST we'll start a rebalance right away
-               // StateRequests from the rebalance caused by this CH_UPDATE would be ignored on this node.
-               actualMembers = pruneInvalidMembers(pendingCH.getMembers());
-            }
-         }
-         CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, null,
-               CacheTopology.Phase.STABLE, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
-         setCurrentTopology(newTopology);
-
-         if (rebalanceConfirmationCollector != null) {
-            // The node that will cancel the state transfer because of another topology update won't send topology confirm
-            log.debugf("Cancelling topology confirmation %s because of another topology update", rebalanceConfirmationCollector);
-            rebalanceConfirmationCollector = null;
-         }
-         // TODO: losing members during state transfer could lead to a state where we have more than two topologies
-         // concurrently in the cluster. We need to make sure that all the topologies are compatible (properties set
-         // in CacheTopology docs hold).
-
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
-               isTotalOrder(), isDistributed());
+   public synchronized void updateCurrentTopology(List<Address> newMembers) {
+      // The current topology might be null just after a joiner became the coordinator
+      if (currentTopology == null) {
+         createInitialCacheTopology();
       }
+      ConsistentHashFactory<ConsistentHash> consistentHashFactory = getJoinInfo().getConsistentHashFactory();
+      int topologyId = currentTopology.getTopologyId();
+      int rebalanceId = currentTopology.getRebalanceId();
+      ConsistentHash currentCH = currentTopology.getCurrentCH();
+      ConsistentHash pendingCH = currentTopology.getPendingCH();
+      if (!needConsistentHashUpdate()) {
+         log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",
+               cacheName, currentTopology);
+         return;
+      }
+
+      if (newMembers.isEmpty()) {
+         log.tracef("Cache %s no longer has any members, removing topology", cacheName);
+         setCurrentTopology(null);
+         setStableTopology(null);
+         rebalanceConfirmationCollector = null;
+         // TODO Remove the cache from the cache status map in ClusterTopologyManagerImpl instead
+         return;
+      }
+
+
+      List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
+      ConsistentHash newCurrentCH;
+      List<Address> actualMembers;
+      if (newCurrentMembers.isEmpty()) {
+         // All the current members left, try to replace them with the joiners
+         log.tracef("All current members left, re-initializing status for cache %s", cacheName);
+         rebalanceConfirmationCollector = null;
+
+         newCurrentMembers = getExpectedMembers();
+         actualMembers = newCurrentMembers;
+         newCurrentCH = joinInfo.getConsistentHashFactory().create(
+               joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+               newCurrentMembers, getCapacityFactors());
+      } else {
+         // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
+         newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
+         actualMembers = newCurrentMembers;
+         if (pendingCH != null) {
+            // Sending topology update with pendingCH != null could trigger a rebalance on the other node,
+            // while if this is called due to a lost member during ST we'll start a rebalance right away
+            // StateRequests from the rebalance caused by this CH_UPDATE would be ignored on this node.
+            actualMembers = pruneInvalidMembers(pendingCH.getMembers());
+         }
+      }
+      CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, null,
+            CacheTopology.Phase.STABLE, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+      setCurrentTopology(newTopology);
+
+      if (rebalanceConfirmationCollector != null) {
+         // The node that will cancel the state transfer because of another topology update won't send topology confirm
+         log.debugf("Cancelling topology confirmation %s because of another topology update", rebalanceConfirmationCollector);
+         rebalanceConfirmationCollector = null;
+      }
+      // TODO: losing members during state transfer could lead to a state where we have more than two topologies
+      // concurrently in the cluster. We need to make sure that all the topologies are compatible (properties set
+      // in CacheTopology docs hold).
+
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
+            isTotalOrder(), isDistributed());
    }
 
    private boolean setAvailabilityMode(AvailabilityMode newAvailabilityMode) {
@@ -556,38 +540,36 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             '}';
    }
 
-   public void doMergePartitions(Map<Address, CacheStatusResponse> statusResponses) {
-      synchronized (this) {
-         try {
-            if (statusResponses.isEmpty()) {
-               throw new IllegalArgumentException("Should have at least one current topology");
-            }
-
-            HashMap<Address, CacheJoinInfo> joinInfos = new HashMap<>();
-            Set<CacheTopology> currentTopologies = new HashSet<>();
-            Set<CacheTopology> stableTopologies = new HashSet<>();
-            for (Map.Entry<Address, CacheStatusResponse> e : statusResponses.entrySet()) {
-               Address sender = e.getKey();
-               CacheStatusResponse response = e.getValue();
-               joinInfos.put(sender, response.getCacheJoinInfo());
-               if (response.getCacheTopology() != null) {
-                  currentTopologies.add(response.getCacheTopology());
-               }
-               if (response.getStableTopology() != null) {
-                  stableTopologies.add(response.getStableTopology());
-               }
-            }
-
-            log.debugf("Recovered %d partition(s) for cache %s: %s", currentTopologies.size(), cacheName, currentTopologies);
-            recoverMembers(joinInfos, currentTopologies, stableTopologies);
-
-            // TODO Should automatically detect when the coordinator has left and there is only one partition
-            // and continue any in-progress rebalance without resetting the cache topology.
-
-            availabilityStrategy.onPartitionMerge(this, statusResponses.values());
-         } catch (Exception e) {
-            log.failedToRecoverCacheState(cacheName, e);
+   public synchronized void doMergePartitions(Map<Address, CacheStatusResponse> statusResponses) {
+      try {
+         if (statusResponses.isEmpty()) {
+            throw new IllegalArgumentException("Should have at least one current topology");
          }
+
+         HashMap<Address, CacheJoinInfo> joinInfos = new HashMap<>();
+         Set<CacheTopology> currentTopologies = new HashSet<>();
+         Set<CacheTopology> stableTopologies = new HashSet<>();
+         for (Map.Entry<Address, CacheStatusResponse> e : statusResponses.entrySet()) {
+            Address sender = e.getKey();
+            CacheStatusResponse response = e.getValue();
+            joinInfos.put(sender, response.getCacheJoinInfo());
+            if (response.getCacheTopology() != null) {
+               currentTopologies.add(response.getCacheTopology());
+            }
+            if (response.getStableTopology() != null) {
+               stableTopologies.add(response.getStableTopology());
+            }
+         }
+
+         log.debugf("Recovered %d partition(s) for cache %s: %s", currentTopologies.size(), cacheName, currentTopologies);
+         recoverMembers(joinInfos, currentTopologies, stableTopologies);
+
+         // TODO Should automatically detect when the coordinator has left and there is only one partition
+         // and continue any in-progress rebalance without resetting the cache topology.
+
+         availabilityStrategy.onPartitionMerge(this, statusResponses.values());
+      } catch (Exception e) {
+         log.failedToRecoverCacheState(cacheName, e);
       }
    }
 
@@ -629,53 +611,50 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return cacheName;
    }
 
-   public CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) throws Exception {
-      boolean isFirstMember;
-      CacheTopology topologyBeforeRebalance;
-      synchronized (this) {
-         isFirstMember = getCurrentTopology() == null;
-         boolean memberJoined = addMember(joiner, joinInfo);
-         if (!isFirstMember && !memberJoined) {
-            if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
-                  "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
-            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
-         }
-         if (status == ComponentStatus.INSTANTIATED) {
-            if (persistentState.isPresent()) {
-               if (trace) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
-               // We can only allow this to proceed if we have a complete cluster
-               CacheTopology topology = restoreCacheTopology(persistentState.get());
-               if (topology != null) {
-                  // Change our status
-                  status = ComponentStatus.RUNNING;
-                  clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode, isTotalOrder(), isDistributed());
-                  clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology, isTotalOrder(), isDistributed());
-                  return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
-               }
-            } else {
-               if (isFirstMember) {
-                  // This node was the first to join. We need to install the initial CH
-                  CacheTopology initialTopology = createInitialCacheTopology();
+   public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) throws Exception {
+      boolean isFirstMember = getCurrentTopology() == null;
+      boolean memberJoined = addMember(joiner, joinInfo);
+      if (!isFirstMember && !memberJoined) {
+         if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
+               "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
+         return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
+      }
+      if (status == ComponentStatus.INSTANTIATED) {
+         if (persistentState.isPresent()) {
+            if (trace) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
+            // We can only allow this to proceed if we have a complete cluster
+            CacheTopology topology = restoreCacheTopology(persistentState.get());
+            if (topology != null) {
+               // Change our status
+               status = ComponentStatus.RUNNING;
+               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode, isTotalOrder(), isDistributed());
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology, isTotalOrder(), isDistributed());
+               return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
+            }
+         } else {
+            if (isFirstMember) {
+               // This node was the first to join. We need to install the initial CH
+               CacheTopology initialTopology = createInitialCacheTopology();
 
-                  // Change our status
-                  status = ComponentStatus.RUNNING;
+               // Change our status
+               status = ComponentStatus.RUNNING;
 
-                  // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
-                  // But we do need to broadcast the initial topology as the stable topology
-                  clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology, isTotalOrder(), isDistributed());
-               }
+               // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
+               // But we do need to broadcast the initial topology as the stable topology
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology, isTotalOrder(), isDistributed());
             }
          }
-
-         topologyBeforeRebalance = getCurrentTopology();
-         // Only trigger availability strategy if we have a topology installed
-         if (topologyBeforeRebalance != null)
-            availabilityStrategy.onJoin(this, joiner);
       }
+
+      CacheTopology topologyBeforeRebalance = getCurrentTopology();
+      // Only trigger availability strategy if we have a topology installed
+      if (topologyBeforeRebalance != null)
+         availabilityStrategy.onJoin(this, joiner);
 
       return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode);
    }
 
+   @GuardedBy("this")
    protected CacheTopology restoreCacheTopology(ScopedPersistentState state) {
       if (trace) log.tracef("Attempting to restore CH for cache %s", cacheName);
 
@@ -699,6 +678,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return initialTopology;
    }
 
+   @GuardedBy("this")
    protected CacheTopology createInitialCacheTopology() {
       log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
@@ -712,21 +692,19 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return initialTopology;
    }
 
-   public boolean doLeave(Address leaver) throws Exception {
-      synchronized (this) {
-         if (currentTopology == null)
-            return false;
+   public synchronized boolean doLeave(Address leaver) throws Exception {
+      if (currentTopology == null)
+         return false;
 
-         boolean actualLeaver = removeMember(leaver);
-         if (!actualLeaver)
-            return false;
+      boolean actualLeaver = removeMember(leaver);
+      if (!actualLeaver)
+         return false;
 
-         availabilityStrategy.onGracefulLeave(this, leaver);
+      availabilityStrategy.onGracefulLeave(this, leaver);
 
-         updateMembers();
+      updateMembers();
 
-         return expectedMembers.isEmpty();
-      }
+      return expectedMembers.isEmpty();
    }
 
    public void startQueuedRebalance() {
@@ -808,15 +786,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return rebalancingEnabled && clusterTopologyManager.isRebalancingEnabled();
    }
 
-   public void setRebalanceEnabled(boolean enabled) {
-      synchronized (this) {
-         rebalancingEnabled = enabled;
-         if (rebalancingEnabled) {
-            log.debugf("Rebalancing is now enabled for cache %s", cacheName);
-            startQueuedRebalance();
-         } else {
-            log.debugf("Rebalancing is now disabled for cache %s", cacheName);
-         }
+   public synchronized void setRebalanceEnabled(boolean enabled) {
+      rebalancingEnabled = enabled;
+      if (rebalancingEnabled) {
+         log.debugf("Rebalancing is now enabled for cache %s", cacheName);
+         startQueuedRebalance();
+      } else {
+         log.debugf("Rebalancing is now disabled for cache %s", cacheName);
       }
    }
 
@@ -829,14 +805,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       availabilityStrategy.onManualAvailabilityChange(this, newAvailabilityMode);
    }
 
-   public void shutdownCache() throws Exception {
-      synchronized (this) {
-         if (status == ComponentStatus.RUNNING) {
-            status = ComponentStatus.STOPPING;
-            clusterTopologyManager.setRebalancingEnabled(cacheName, false);
-            clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology(), this.isTotalOrder(), this.isDistributed());
-            status = ComponentStatus.TERMINATED;
-         }
+   public synchronized void shutdownCache() throws Exception {
+      if (status == ComponentStatus.RUNNING) {
+         status = ComponentStatus.STOPPING;
+         clusterTopologyManager.setRebalancingEnabled(cacheName, false);
+         clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology(), this.isTotalOrder(), this.isDistributed());
+         status = ComponentStatus.TERMINATED;
       }
    }
 
