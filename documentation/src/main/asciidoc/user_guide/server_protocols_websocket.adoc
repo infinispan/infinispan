@@ -1,4 +1,4 @@
-===  Infinispan WebSocket Server
+===  WebSocket Server
 The Infinispan Server distribution contains a server module that implements the link:http://dev.w3.org/html5/websockets/[WebSocket Interface] via a very simple Javascript "Cache" API.  The WebSocket Interface was introduced as part of the HTML 5 specification.  It defines a full-duplex communication channel to the browser, operating over a single socket (unlike Comet or Ajax) and is exposed to the browser via a Javascript interface.
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a WebSocket server.
  

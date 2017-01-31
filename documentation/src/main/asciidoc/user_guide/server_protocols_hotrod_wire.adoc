@@ -1,4 +1,4 @@
-==== Hot Rod Protocol
+=== Hot Rod Protocol
 The following articles provides detailed information about each version of
 the custom TCP client/server Hot Rod protocol.
 
@@ -14,7 +14,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_5[Hot Rod Protocol 2.5]
 * link:#hot_rod_protocol_2_6[Hot Rod Protocol 2.6]
 
-===== Hot Rod Protocol 1.0
+==== Hot Rod Protocol 1.0
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 4.1.0.Final
@@ -60,7 +60,7 @@ More details link:http://developers.google.com/protocol-buffers/docs/encoding#ty
 applied to longer values. They're between 1 and 9 bytes long.
 * String : Strings are always represented using UTF-8 encoding.
 
-====== Request Header
+===== Request Header
 
 The header for a request is composed of:
 
@@ -140,7 +140,7 @@ transaction associated to this call. Its length is determined by the
 transaction type. If transaction type is 0, no transaction id will be present.
 |==============================================================================
 
-====== Response Header
+===== Response Header
 
 The header for a response is composed of:
 
@@ -204,14 +204,14 @@ CAUTION: Exceptional error status responses, those that start with 0x8 ...,
 are followed by the length of the error message (as a vInt ) and
 error message itself as String.
 
-====== Topology Change Headers
+===== Topology Change Headers
 The following section discusses how the response headers look for
 topology-aware or hash-distribution-aware clients when there's been a cluster
 or view formation change. Note that it's the server that makes the decision on
 whether it sends back the new topology based on the current topology id and
 the one the client sent. If they're different, it will send back the new topology.
 
-====== Topology-Aware Client Topology Change Header
+===== Topology-Aware Client Topology Change Header
 This is what topology-aware clients receive as response header when a
 topology change is sent back:
 
@@ -240,7 +240,7 @@ Port that Hot Rod clients can use to communicate with this cluster member.
 | ...etc||
 |==============================================================================
 
-====== Distribution-Aware Client Topology Change Header
+===== Distribution-Aware Client Topology Change Header
 This is what hash-distribution-aware clients receive as response header
 when a topology change is sent back:
 
@@ -298,7 +298,7 @@ operations with hash-topology-aware client settings that are targeting caches
 that are not configured with distribution.
 
 
-====== Operations
+===== Operations
 
 .Get (0x03)/Remove (0x0B)/ContainsKey (0x0F)/GetWithVersion (0x11)
 
@@ -790,7 +790,7 @@ not to be confused with bulk-get operations. In bulk-gets, either all or a
 number of keys are retrieved, but the client does not know which keys to
 retrieve, whereas in multi-get, the client defines which keys to retrieve.
 
-====== Example - Put request
+===== Example - Put request
 
 * Coded request
 
@@ -845,12 +845,12 @@ retrieve, whereas in multi-get, the client defines which keys to retrieve.
 
 |===============
 
-===== Hot Rod Protocol 1.1
+==== Hot Rod Protocol 1.1
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 5.1.0.FINAL
 
-====== Request Header
+===== Request Header
 The `version` field in the header is updated to `11`.
 
 ===== Distribution-Aware Client Topology Change Header
@@ -951,12 +951,12 @@ public static int virtualNodeHashCode(int nodeBaseHashCode, int id, Hash hashFct
 ----
 
 
-===== Hot Rod Protocol 1.2
+==== Hot Rod Protocol 1.2
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 5.2.0.Final. Since Infinispan 5.3.0, HotRod supports encryption via SSL. However, since this only affects the transport, the version number of the protocol has not been incremented.
 
-====== Request Header
+===== Request Header
 The `version` field in the header is updated to `12`.
 
 Two new request operation codes have been added:
@@ -969,14 +969,14 @@ Two new flags have been added too:
 * +0x0002+	= use cache-level configured default lifespan
 * +0x0004+	= use cache-level configured default max idle
 
-====== Response Header
+===== Response Header
 
 Two new response operation codes have been added:
 
 * +0x1C+ = getWithMetadata response
 * +0x1E+ = bulkKeysGet response
 
-====== Operations
+===== Operations
 
 .GetWithMetadata
 
@@ -1074,25 +1074,25 @@ link:http://community.jboss.org/docs/DOC-15592[here]
 |... etc||
 |==============================================================================
 
-===== Hot Rod Protocol 1.3
+==== Hot Rod Protocol 1.3
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 6.0.0.Final.
 
-====== Request Header
+===== Request Header
 The `version` field in the header is updated to `13`.
 
 A new request operation code has been added:
 
 * +0x1F+ = query request
 
-====== Response Header
+===== Response Header
 
 A new response operation code has been added:
 
 * +0x20+ = query response
 
-====== Operations
+===== Operations
 
 .Query
 
@@ -1122,12 +1122,12 @@ These definitions could change in future Infinispan versions, but as long as the
 compatible (according to the rules defined link:https://developers.google.com/protocol-buffers/docs/proto#updating[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
 
-===== Hot Rod Protocol 2.0
+==== Hot Rod Protocol 2.0
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
 
-====== Request Header
+===== Request Header
 
 The request header no longer contains `Transaction Type` and `Transaction ID`
 elements since they're not in use, and even if they were in use, there are
@@ -1150,7 +1150,7 @@ The following new request operation codes have been added:
 * +0x27+ = remove client remote event listener request
 * +0x29+ = size request
 
-====== Response Header
+===== Response Header
 
 The following new response operation codes have been added:
 
@@ -1254,7 +1254,7 @@ the hash segments and be able to find out which nodes are owners for each
 segment. Even though there could be more than 2 owners per segment, Hot Rod
 protocol limits the number of owners to send for efficiency reasons.
 
-====== Operations
+===== Operations
 
 .Auth Mech List
 
@@ -1437,7 +1437,7 @@ Response (0x2C):
 |==============================================================================
 
 
-====== Remote Events
+===== Remote Events
 
 Starting with Hot Rod 2.0, clients can register listeners for remote events
 happening in the server. Sending these events commences the moment a client
@@ -1514,16 +1514,16 @@ If command is retried, it returns `1`, otherwise `0`.
 converter implementation logic.
 |==============================================================================
 
-===== Hot Rod Protocol 2.1
+==== Hot Rod Protocol 2.1
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 7.1.0.Final.
 
-====== Request Header
+===== Request Header
 
 The `version` field in the header is updated to `21`.
 
-====== Operations
+===== Operations
 
 .Add client listener for remote events
 
@@ -1570,7 +1570,7 @@ converter. If custom marker is `2`, it represents the byte array, as returned
 by the converter.
 |==============================================================================
 
-===== Hot Rod Protocol 2.2
+==== Hot Rod Protocol 2.2
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 8.0
@@ -1578,7 +1578,7 @@ TIP: This version of the protocol is implemented since Infinispan 8.0
 
 Added support for different time units.
 
-====== Operations
+===== Operations
 
 .Put/PutAll/PutIfAbsent/Replace/ReplaceIfUnmodified
 
@@ -1603,12 +1603,12 @@ DEFAULT and INFINITE can be used for default server expiration and no expiration
 | Max Idle            | vLong       | Duration that each entry can be idle before it's evicted from the cache. Only sent when time unit is not DEFAULT or INFINITE
 |==============================================================================
 
-===== Hot Rod Protocol 2.3
+==== Hot Rod Protocol 2.3
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 8.0
 
-====== Operations
+===== Operations
 
 .Iteration Start
 
@@ -1689,7 +1689,7 @@ Response (0x36):
 +0x05+ = for non existent IterationId  +
 |==============================================================================
 
-===== Hot Rod Protocol 2.4
+==== Hot Rod Protocol 2.4
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 8.1
@@ -1704,7 +1704,7 @@ hints on whether the server has compatibility mode enabled or not:
 The Iteration Start operation can optionally send parameters if a custom filter is provided and
 it's parametrised:
 
-====== Operations
+===== Operations
 
 .Iteration Start
 
@@ -1772,7 +1772,7 @@ returned:
 | globalRemoveMisses |Total number of removal misses across the Hot Rod cluster.
 |===============
 
-===== Hot Rod Protocol 2.5
+==== Hot Rod Protocol 2.5
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 8.2
@@ -1848,7 +1848,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 |... continues until entry count is reached ||
 |==============================================================================
 
-===== Hot Rod Protocol 2.6
+==== Hot Rod Protocol 2.6
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 9.0
