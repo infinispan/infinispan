@@ -1516,5 +1516,4 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Received new x-site view: %s", id = 439)
    void receivedXSiteClusterView(Set<String> view);
-   
 }
