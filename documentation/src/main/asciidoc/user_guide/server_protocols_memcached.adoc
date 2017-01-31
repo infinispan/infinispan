@@ -1,4 +1,4 @@
-===  Using Infinispan Memcached Server
+===  Memcached Server
 The Infinispan Server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several Infinispan backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other Infinispan backed Memcached servers, thus providing clients with failover capabilities.
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a Memcached server.
 

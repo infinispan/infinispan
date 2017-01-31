@@ -1,4 +1,4 @@
-===  Infinispan REST Server
+===  REST Server
 
 The Infinispan Server distribution contains a server module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on JAX_RS.
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a REST server.
