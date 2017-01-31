@@ -178,25 +178,25 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_SSL, enabled));
-      this.keyStoreFileName(typed.getProperty(ConfigurationProperties.KEY_STORE_FILE_NAME, keyStoreFileName));
+      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_SSL, enabled, true));
+      this.keyStoreFileName(typed.getProperty(ConfigurationProperties.KEY_STORE_FILE_NAME, keyStoreFileName, true));
 
       if (typed.containsKey(ConfigurationProperties.KEY_STORE_PASSWORD))
-         this.keyStorePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_PASSWORD).toCharArray());
+         this.keyStorePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_PASSWORD, null, true).toCharArray());
 
       if (typed.containsKey(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD))
-         this.keyStoreCertificatePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD).toCharArray());
+         this.keyStoreCertificatePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD, null, true).toCharArray());
 
-      this.trustStoreFileName(typed.getProperty(ConfigurationProperties.TRUST_STORE_FILE_NAME, trustStoreFileName));
+      this.trustStoreFileName(typed.getProperty(ConfigurationProperties.TRUST_STORE_FILE_NAME, trustStoreFileName, true));
 
       if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PASSWORD))
-         this.trustStorePassword(typed.getProperty(ConfigurationProperties.TRUST_STORE_PASSWORD).toCharArray());
+         this.trustStorePassword(typed.getProperty(ConfigurationProperties.TRUST_STORE_PASSWORD, null, true).toCharArray());
 
       if(typed.containsKey(ConfigurationProperties.SSL_PROTOCOL))
-         this.protocol(typed.getProperty(ConfigurationProperties.SSL_PROTOCOL));
+         this.protocol(typed.getProperty(ConfigurationProperties.SSL_PROTOCOL, null, true));
 
       if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
-         this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME));
+         this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME, null, true));
 
       this.sslContext((SSLContext) typed.get(ConfigurationProperties.SSL_CONTEXT));
 

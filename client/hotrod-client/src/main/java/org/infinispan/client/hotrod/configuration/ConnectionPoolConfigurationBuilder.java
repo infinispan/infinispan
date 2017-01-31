@@ -172,19 +172,19 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     */
    public ConnectionPoolConfigurationBuilder withPoolProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      exhaustedAction(ExhaustedAction.values()[typed.getIntProperty("whenExhaustedAction", exhaustedAction.ordinal())]);
-      lifo(typed.getBooleanProperty("lifo", lifo));
-      maxActive(typed.getIntProperty("maxActive", maxActive));
-      maxTotal(typed.getIntProperty("maxTotal", maxTotal));
-      maxWait(typed.getLongProperty("maxWait", maxWait));
-      maxIdle(typed.getIntProperty("maxIdle", maxIdle));
-      minIdle(typed.getIntProperty("minIdle", minIdle));
-      numTestsPerEvictionRun(typed.getIntProperty("numTestsPerEvictionRun", numTestsPerEvictionRun));
-      timeBetweenEvictionRuns(typed.getLongProperty("timeBetweenEvictionRunsMillis", timeBetweenEvictionRuns));
-      minEvictableIdleTime(typed.getLongProperty("minEvictableIdleTimeMillis", minEvictableIdleTime));
-      testOnBorrow(typed.getBooleanProperty("testOnBorrow", testOnBorrow));
-      testOnReturn(typed.getBooleanProperty("testOnReturn", testOnReturn));
-      testWhileIdle(typed.getBooleanProperty("testWhileIdle", testWhileIdle));
+      exhaustedAction(ExhaustedAction.values()[typed.getIntProperty("whenExhaustedAction", exhaustedAction.ordinal(), true)]);
+      lifo(typed.getBooleanProperty("lifo", lifo, true));
+      maxActive(typed.getIntProperty("maxActive", maxActive, true));
+      maxTotal(typed.getIntProperty("maxTotal", maxTotal, true));
+      maxWait(typed.getLongProperty("maxWait", maxWait, true));
+      maxIdle(typed.getIntProperty("maxIdle", maxIdle, true));
+      minIdle(typed.getIntProperty("minIdle", minIdle, true));
+      numTestsPerEvictionRun(typed.getIntProperty("numTestsPerEvictionRun", numTestsPerEvictionRun, true));
+      timeBetweenEvictionRuns(typed.getLongProperty("timeBetweenEvictionRunsMillis", timeBetweenEvictionRuns, true));
+      minEvictableIdleTime(typed.getLongProperty("minEvictableIdleTimeMillis", minEvictableIdleTime, true));
+      testOnBorrow(typed.getBooleanProperty("testOnBorrow", testOnBorrow, true));
+      testOnReturn(typed.getBooleanProperty("testOnReturn", testOnReturn, true));
+      testWhileIdle(typed.getBooleanProperty("testWhileIdle", testWhileIdle, true));
       return this;
    }
 

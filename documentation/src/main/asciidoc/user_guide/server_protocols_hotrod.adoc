@@ -63,6 +63,18 @@ minIdle = 1
 ----
 
 The properties file is then passed to one of constructors of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[RemoteCacheManager].
+You can use property substitution to replace values at runtime with link:https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html[Java system properties]:
+
+[source]
+----
+infinispan.client.hotrod.server_list = ${server_list}
+
+----
+
+In the above example the value of the _infinispan.client.hotrod.server_list_ property will be expanded to the value of the _server_list_ Java system property.
+
+which means that the value should be taken from a system property named jboss.bind.address.management and if it is not defined use 127.0.0.1.
+
 For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]'s javadoc.
 
 ==== Basic API [[hr:basic-api]]

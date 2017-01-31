@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -208,20 +209,22 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled));
-      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM));
+      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled, true));
+      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
       Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
       if (prop instanceof String) {
-         CallbackHandler handler = Util.getInstance((String) prop, builder.getBuilder().classLoader());
+         String cbhClassName = StringPropertyReplacer.replaceProperties((String) prop);
+         CallbackHandler handler = Util.getInstance(cbhClassName, builder.getBuilder().classLoader());
          this.callbackHandler(handler);
       } else {
          this.callbackHandler((CallbackHandler) prop);
       }
-      this.username(typed.getProperty(ConfigurationProperties.AUTH_USERNAME));
-      this.password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD));
+      this.username(typed.getProperty(ConfigurationProperties.AUTH_USERNAME, username, true));
+      if (typed.containsKey(ConfigurationProperties.AUTH_PASSWORD))
+         this.password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD, null, true));
       this.realm(typed.getProperty(ConfigurationProperties.AUTH_REALM));
 
-      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME));
+      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME, serverName, true));
       this.clientSubject((Subject) typed.get(ConfigurationProperties.AUTH_CLIENT_SUBJECT));
 
       Map<String, String> saslProperties = typed.entrySet().stream()
@@ -229,7 +232,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
             .collect(Collectors.toMap(
                   e -> ConfigurationProperties.SASL_PROPERTIES_PREFIX_REGEX
                         .matcher((String) e.getKey()).replaceFirst(""),
-                  e -> (String) e.getValue()));
+                  e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
       this.saslProperties(saslProperties);
 
       return builder.getBuilder();
