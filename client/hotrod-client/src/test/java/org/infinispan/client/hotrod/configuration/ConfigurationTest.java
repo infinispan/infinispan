@@ -28,8 +28,11 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_SSL;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +43,8 @@ import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
@@ -47,8 +52,12 @@ import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.SomeTransportfactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactory;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.testng.annotations.Test;
+
 @Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
 public class ConfigurationTest {
 
@@ -315,6 +324,55 @@ public class ConfigurationTest {
       assertServer("ff01::1", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(3));
       assertServer("localhost", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(4));
       assertServer("localhost", 8382, cfg.servers().get(5));
+   }
+
+   public void testPropertyReplacement() throws IOException, UnsupportedCallbackException {
+      System.setProperty("test.property.server_list","myhost:12345");
+      System.setProperty("test.property.marshaller", "org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller");
+      System.setProperty("test.property.tcp_no_delay", "false");
+      System.setProperty("test.property.tcp_keep_alive", "true");
+      System.setProperty("test.property.key_size_estimate", "128");
+      System.setProperty("test.property.value_size_estimate", "256");
+      System.setProperty("test.property.maxTotal", "79");
+      System.setProperty("test.property.maxActive", "78");
+      System.setProperty("test.property.maxIdle", "77");
+      System.setProperty("test.property.minIdle", "76");
+      System.setProperty("test.property.timeBetweenEvictionRunsMillis", "1000");
+      System.setProperty("test.property.minEvictableIdleTimeMillis", "2000");
+      System.setProperty("test.property.testWhileIdle", "true");
+      System.setProperty("test.property.use_auth", "true");
+      System.setProperty("test.property.auth_username", "testuser");
+      System.setProperty("test.property.auth_password", "testpassword");
+      System.setProperty("test.property.auth_realm", "testrealm");
+      System.setProperty("test.property.sasl_mechanism", "PLAIN");
+
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      Properties p = new Properties();
+      InputStream inputStream = FileLookupFactory.newInstance().lookupFile("hotrod-client-replacement.properties", this.getClass().getClassLoader());
+      p.load(inputStream);
+      builder.withProperties(p);
+      Configuration cfg = builder.build();
+      assertServer("myhost", 12345, cfg.servers().get(0));
+      assertEquals(ProtoStreamMarshaller.class, cfg.marshallerClass());
+      assertFalse(cfg.tcpNoDelay());
+      assertTrue(cfg.tcpKeepAlive());
+      assertEquals(128, cfg.keySizeEstimate());
+      assertEquals(256, cfg.valueSizeEstimate());
+      assertEquals(79, cfg.connectionPool().maxTotal());
+      assertEquals(78, cfg.connectionPool().maxActive());
+      assertEquals(77, cfg.connectionPool().maxIdle());
+      assertEquals(76, cfg.connectionPool().minIdle());
+      assertEquals(1000, cfg.connectionPool().timeBetweenEvictionRuns());
+      assertEquals(2000, cfg.connectionPool().minEvictableIdleTime());
+      assertTrue(cfg.connectionPool().testWhileIdle());
+      assertTrue(cfg.security().authentication().enabled());
+      assertEquals("PLAIN", cfg.security().authentication().saslMechanism());
+      CallbackHandler callbackHandler = cfg.security().authentication().callbackHandler();
+      assertEquals(BasicCallbackHandler.class, callbackHandler.getClass());
+      NameCallback nameCallback = new NameCallback("name");
+      callbackHandler.handle(new Callback[] { nameCallback });
+      assertEquals("testuser", nameCallback.getName());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
