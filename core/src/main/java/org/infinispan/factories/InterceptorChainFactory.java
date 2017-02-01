@@ -53,6 +53,7 @@ import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingIn
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingInterceptor;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.statetransfer.TransactionSynchronizerInterceptor;
@@ -153,14 +154,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          if (transactionMode.isTransactional()) {
             interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
          }
+         if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
+            interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
+         }
       }
-
-      // The partition handling must run every time the state transfer interceptor retries a command (in non-transactional caches)
-      if (configuration.clustering().partitionHandling().enabled()
-            && (cacheMode.isDistributed() || cacheMode.isReplicated())) {
-         interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
-      }
-
 
       //load total order interceptor
       if (isTotalOrder) {

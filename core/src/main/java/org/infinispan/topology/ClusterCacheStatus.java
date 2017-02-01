@@ -12,12 +12,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.conflict.ConflictManagerFactory;
+import org.infinispan.conflict.impl.DefaultConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
@@ -29,11 +33,11 @@ import org.infinispan.util.logging.LogFactory;
 import net.jcip.annotations.GuardedBy;
 
 /**
-* Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
-*
-* @author Dan Berindei
-* @since 5.2
-*/
+ * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
+ *
+ * @author Dan Berindei
+ * @since 5.2
+ */
 public class ClusterCacheStatus implements AvailabilityStrategyContext {
    // The HotRod client starts with topology 0, so we start with 1 to force an update
    public static final int INITIAL_TOPOLOGY_ID = 1;
@@ -42,10 +46,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
    private static boolean trace = log.isTraceEnabled();
 
+   private final EmbeddedCacheManager cacheManager;
    private final String cacheName;
    private final AvailabilityStrategy availabilityStrategy;
    private final ClusterTopologyManager clusterTopologyManager;
    private final PersistentUUIDManager persistentUUIDManager;
+   private final boolean resolveConflictsOnMerge;
    private Transport transport;
 
    // Minimal cache clustering configuration
@@ -70,13 +76,16 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private RebalanceConfirmationCollector rebalanceConfirmationCollector;
    private ComponentStatus status;
 
-   public ClusterCacheStatus(String cacheName, AvailabilityStrategy availabilityStrategy,
-                             ClusterTopologyManager clusterTopologyManager, Transport transport, Optional<ScopedPersistentState> state, PersistentUUIDManager persistentUUIDManager) {
+   public ClusterCacheStatus(EmbeddedCacheManager cacheManager, String cacheName, AvailabilityStrategy availabilityStrategy,
+                             ClusterTopologyManager clusterTopologyManager, Transport transport, Optional<ScopedPersistentState> state,
+                             PersistentUUIDManager persistentUUIDManager, boolean resolveConflictsOnMerge) {
+      this.cacheManager = cacheManager;
       this.cacheName = cacheName;
       this.availabilityStrategy = availabilityStrategy;
       this.clusterTopologyManager = clusterTopologyManager;
       this.transport = transport;
       this.persistentState = state;
+      this.resolveConflictsOnMerge = resolveConflictsOnMerge;
 
       this.currentTopology = null;
       this.stableTopology = null;
@@ -162,17 +171,24 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public synchronized void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode) {
+   public synchronized void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode, boolean resolveConflicts) {
       log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, " +
-                  "availability mode = %s",
-            cacheName, currentTopology, stableTopology, availabilityMode);
+                  "availability mode = %s, resolveConflicts = %s",
+            cacheName, currentTopology, stableTopology, availabilityMode, resolveConflicts);
       this.currentTopology = currentTopology;
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
 
       if (currentTopology != null) {
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder(), isDistributed());
+
+         if (resolveConflictsOnMerge && resolveConflicts) {
+            AdvancedCache<?, ?> cache = cacheManager.getCache(cacheName).getAdvancedCache();
+            DefaultConflictManager<?, ?> conflictManager = (DefaultConflictManager) ConflictManagerFactory.get(cache);
+            conflictManager.resolveConflicts(currentTopology);
+         }
       }
+
       if (stableTopology != null) {
          clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(),
                isDistributed());
@@ -320,8 +336,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
     * Should be called after the members list was updated in any other way ({@link #removeMember(Address)},
     * {@link #retainMembers} etc.)
     *
-    * @return {@code true} if the rebalance was confirmed with this update, {@code false} if more confirmations
-    *    are needed or if the rebalance was already confirmed in another way (e.g. the last member confirmed)
+    * @return {@code true} if the rebalance was confirmed with this update, {@code false} if more confirmations are
+    * needed or if the rebalance was already confirmed in another way (e.g. the last member confirmed)
     */
    @GuardedBy("this")
    private void updateMembers() {
@@ -551,7 +567,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          // TODO Should automatically detect when the coordinator has left and there is only one partition
          // and continue any in-progress rebalance without resetting the cache topology.
 
-         availabilityStrategy.onPartitionMerge(this, statusResponses.values());
+         availabilityStrategy.onPartitionMerge(this, statusResponses);
       } catch (Exception e) {
          log.failedToRecoverCacheState(cacheName, e);
       }
@@ -559,7 +575,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @GuardedBy("this")
    private void recoverMembers(Map<Address, CacheJoinInfo> joinInfos,
-         Collection<CacheTopology> currentTopologies, Collection<CacheTopology> stableTopologies) {
+                               Collection<CacheTopology> currentTopologies, Collection<CacheTopology> stableTopologies) {
       expectedMembers = Collections.emptyList();
 
       // Try to preserve the member order at least for the first partition

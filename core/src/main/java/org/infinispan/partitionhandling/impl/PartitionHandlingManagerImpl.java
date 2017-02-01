@@ -21,12 +21,14 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
@@ -50,8 +52,10 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private Configuration configuration;
    private RpcManager rpcManager;
    private LockManager lockManager;
+   private Transport transport;
 
    private boolean isVersioned;
+   private PartitionHandling partitionHandling;
 
    public PartitionHandlingManagerImpl() {
       partialTransactions = CollectionFactory.makeConcurrentMap();
@@ -60,7 +64,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Inject
    public void init(DistributionManager distributionManager, LocalTopologyManager localTopologyManager,
                     StateTransferManager stateTransferManager, Cache cache, CacheNotifier notifier, CommandsFactory commandsFactory,
-                    Configuration configuration, RpcManager rpcManager, LockManager lockManager) {
+                    Configuration configuration, RpcManager rpcManager, LockManager lockManager, Transport transport) {
       this.distributionManager = distributionManager;
       this.localTopologyManager = localTopologyManager;
       this.stateTransferManager = stateTransferManager;
@@ -70,11 +74,13 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.lockManager = lockManager;
+      this.transport = transport;
    }
 
    @Start
    public void start() {
       isVersioned = Configurations.isTxVersioned(configuration);
+      partitionHandling = configuration.clustering().partitionHandling().whenSplit();
    }
 
    @Override
@@ -94,24 +100,24 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void checkWrite(Object key) {
-      doCheck(key);
+      doCheck(key, true);
    }
 
    @Override
    public void checkRead(Object key) {
-      doCheck(key);
+      doCheck(key, false);
    }
 
    @Override
    public void checkClear() {
-      if (availabilityMode != AvailabilityMode.AVAILABLE) {
+      if (!isOperationAllowed(true)) {
          throw log.clearDisallowedWhilePartitioned();
       }
    }
 
    @Override
    public void checkBulkRead() {
-      if (availabilityMode != AvailabilityMode.AVAILABLE) {
+      if (!isOperationAllowed(false)) {
          throw log.partitionDegraded();
       }
    }
@@ -238,19 +244,25 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers());
    }
 
-   private void doCheck(Object key) {
+   private void doCheck(Object key, boolean isWrite) {
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
       Collection<Address> owners = distributionManager.getCacheTopology().getDistribution(key).writeOwners();
       List<Address> actualMembers = stateTransferManager.getCacheTopology().getActualMembers();
-      if (!actualMembers.containsAll(owners)) {
-         if (trace) log.tracef("Partition is in %s mode, access is not allowed for key %s", availabilityMode, key);
+      if (!actualMembers.containsAll(owners) && !isOperationAllowed(isWrite)) {
+         if (trace) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
          throw log.degradedModeKeyUnavailable(key);
       } else {
          if (trace) log.tracef("Key %s is available.", key);
       }
+   }
+
+   private boolean isOperationAllowed(boolean isWrite) {
+      return availabilityMode == AvailabilityMode.AVAILABLE ||
+            partitionHandling == PartitionHandling.ALLOW_READ_WRITES ||
+            (!isWrite && partitionHandling != PartitionHandling.DENY_READ_WRITES);
    }
 
    private interface TransactionInfo {

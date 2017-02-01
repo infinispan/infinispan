@@ -294,6 +294,32 @@ public class TestingUtil {
       }
    }
 
+   public static void waitForTopologyPhase(List<Address> expectedMembers, CacheTopology.Phase phase, Cache... caches) {
+      final int TOPOLOGY_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
+      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(TOPOLOGY_TIMEOUT_SECONDS);
+      for (Cache c : caches) {
+         if (c instanceof SecureCacheImpl) {
+            c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
+         }
+         StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
+         while (true) {
+            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+            boolean allMembersExist = cacheTopology != null && cacheTopology.getMembers().containsAll(expectedMembers);
+            boolean isCorrectPhase = cacheTopology != null && cacheTopology.getPhase() == phase;
+            if (allMembersExist && isCorrectPhase) break;
+
+            if (System.nanoTime() - giveup > 0) {
+               String message = String.format("Timed out waiting for a CacheTopology to be installed with members %s and phase %s. Current topology=%s",
+                     expectedMembers, phase, cacheTopology);
+               log.error(message);
+               throw new RuntimeException(message);
+            }
+
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+         }
+      }
+   }
+
    public static void waitForNoRebalance(Collection<? extends Cache> caches) {
       waitForNoRebalance(caches.toArray(new Cache[caches.size()]));
    }

@@ -95,7 +95,7 @@
          <memory>
             <object size="21500"/>
          </memory>
-         <partition-handling enabled="true"/>
+         <partition-handling when-split="ALLOW_READS" merge-policy="PREFERRED_NON_NULL"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache>
       <replicated-cache name="capedwarf-data" mode="SYNC">
@@ -273,7 +273,7 @@
          <memory>
             <object size="21500"/>
          </memory>
-         <partition-handling enabled="true"/>
+         <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache-configuration>
       <distributed-cache name="dist-instance" configuration="dist-template" />

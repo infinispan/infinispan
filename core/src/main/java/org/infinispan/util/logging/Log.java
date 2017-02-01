@@ -1579,4 +1579,21 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class %s should be a subclass of %s", id = 461)
    CacheException invalidEncodingClass(Class<?> configured, Class<?> required);
+
+   @Message(value = "ConflictManager.getConflicts() already in progress", id = 462)
+   IllegalStateException getConflictsAlreadyInProgress();
+
+   @Message(value = "Unable to retrieve conflicts as StateTransfer is currently in progress for cache '%s'", id = 463)
+   IllegalStateException getConflictsStateTransferInProgress(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The partition handling 'enable' attribute has been deprecated. Please update your configuration file to use the 'type' attribute instead", id = 464)
+   void partitionHandlingConfigurationEnabledDeprecated();
+
+   @Message(value = "Keys '%s' are not available. No owners exist in this partition", id = 465)
+   AvailabilityException degradedModeNoOwnersExist(Object key);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Exception encountered when trying to resolve conflict on Keys '%s': %s", id = 466)
+   void exceptionDuringConflictResolution(Object key, Throwable t);
 }

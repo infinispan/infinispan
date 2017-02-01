@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public PartitionHappeningTest() {
-      partitionHandling = false;
+      partitionHandling = PartitionHandling.ALLOW_READ_WRITES;
    }
 
    public void testPartitionHappening() throws Throwable {
@@ -28,7 +28,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
       eventually(() -> {
          for (ViewChangedHandler l : listeners)
-            if (!l.notified) return false;
+            if (!l.isNotified()) return false;
          return true;
       });
 

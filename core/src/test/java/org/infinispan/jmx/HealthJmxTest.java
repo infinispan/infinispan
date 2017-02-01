@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.health.jmx.HealthJMXExposer;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.clustering().cacheMode(CacheMode.DIST_SYNC)
                 .stateTransfer().awaitInitialTransfer(false)
-                .partitionHandling().enabled(true);
+                .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
         return cb;
     }
 

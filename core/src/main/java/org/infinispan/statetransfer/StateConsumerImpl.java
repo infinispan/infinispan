@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -40,6 +42,8 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
+import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -47,8 +51,8 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distribution.DistributionInfo;
-import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.executors.LimitedExecutor;
@@ -60,6 +64,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -130,6 +135,7 @@ public class StateConsumerImpl implements StateConsumer {
    private TriangleOrderManager triangleOrderManager;
    private DistributionManager distributionManager;
    private KeyPartitioner keyPartitioner;
+   private InternalConflictManager conflictManager;
 
    private volatile CacheTopology cacheTopology;
 
@@ -210,7 +216,8 @@ public class StateConsumerImpl implements StateConsumer {
                     CommitManager commitManager,
                     CommandAckCollector commandAckCollector,
                     TriangleOrderManager triangleOrderManager,
-                    DistributionManager distributionManager, KeyPartitioner keyPartitioner) {
+                    DistributionManager distributionManager, KeyPartitioner keyPartitioner,
+                    InternalConflictManager conflictManager) {
       this.cache = cache;
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
@@ -234,6 +241,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.triangleOrderManager = triangleOrderManager;
       this.distributionManager = distributionManager;
       this.keyPartitioner = keyPartitioner;
+      this.conflictManager = conflictManager;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
 
@@ -276,6 +284,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public void onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
+      final boolean startConflictResolution = !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
 
       if (!ownsData && isMember) {
@@ -288,7 +297,7 @@ public class StateConsumerImpl implements StateConsumer {
       // If a member leaves/crashes immediately after a rebalance was started, the new CH_UPDATE
       // command may be executed before the REBALANCE_START command, so it has to start the rebalance.
       boolean startRebalance = isRebalance;
-      if (!isRebalance) {
+      if (!isRebalance && !startConflictResolution) {
          if (cacheTopology.getPendingCH() != null && this.cacheTopology.getPendingCH() == null) {
             if (trace) log.tracef("Forcing startRebalance = true");
             startRebalance = true;
@@ -298,8 +307,14 @@ public class StateConsumerImpl implements StateConsumer {
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_STATE_TRANSFER_IN_PROGRESS, cacheTopology.getTopologyId());
+         conflictManager.cancelVersionRequests();
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
-                                          cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
+               cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
+      }
+
+      if (startConflictResolution) {
+         // This stops state being applied from a prior rebalance and also prevents tracking from being stopped
+         stateTransferTopologyId.set(NO_STATE_TRANSFER_IN_PROGRESS);
       }
 
       awaitTotalOrderTransactions(cacheTopology, startRebalance);
@@ -321,8 +336,12 @@ public class StateConsumerImpl implements StateConsumer {
       triangleOrderManager.updateCacheTopology(cacheTopology);
       if (distributionManager != null) {
          distributionManager.setCacheTopology(cacheTopology);
+         conflictManager.onTopologyUpdate(distributionManager.getCacheTopology());
       }
-      if (startRebalance) {
+
+      // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
+      // Tracking is stopped once the subsequent rebalance completes
+      if (startRebalance || startConflictResolution) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
          commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
@@ -333,7 +352,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       try {
          // fetch transactions and data segments from other owners if this is enabled
-         if (isTransactional || isFetchEnabled) {
+         if (!startConflictResolution && (isTransactional || isFetchEnabled)) {
             Set<Integer> addedSegments;
             if (previousWriteCh == null) {
                // If we have any segments assigned in the initial CH, it means we are the first member.
@@ -416,6 +435,7 @@ public class StateConsumerImpl implements StateConsumer {
                // but we only want to notify the @DataRehashed listeners once
                cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getPendingCH(), previousWriteCh,
                      cacheTopology.getTopologyId(), false);
+
                if (trace) {
                   log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
                }
@@ -457,18 +477,19 @@ public class StateConsumerImpl implements StateConsumer {
                localTopologyManager.confirmRebalancePhase(cacheName, cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), null);
          }
 
+         PartitionHandlingConfiguration phConfig = configuration.clustering().partitionHandling();
+         boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
+         boolean deletePastMemberVals = wasMember && phConfig.whenSplit() != PartitionHandling.ALLOW_READ_WRITES && phConfig.mergePolicy() == null;
          // Any data for segments we do not own should be removed from data container and cache store
          // We need to discard data from all segments we don't own, not just those we previously owned,
          // when we lose membership (e.g. because there was a merge, the local partition was in degraded mode
          // and the other partition was available) or when L1 is enabled.
+         // The only exception, is if a merge policy has been enabled, in which case we must only perform the removal
+         // when this node is a member of the new topology, otherwise entries updated during conflict resolution can be
+         // removed, resulting in only a subset of the owners hosting the resolved entry.
          Set<Integer> removedSegments;
-         boolean wasMember =
-               previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
-         if ((isMember || wasMember) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
-            removedSegments = new HashSet<>(newWriteCh.getNumSegments());
-            for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
-               removedSegments.add(i);
-            }
+         if ((isMember || deletePastMemberVals) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
+            removedSegments = IntStream.range(0, newWriteCh.getNumSegments()).boxed().collect(Collectors.toSet());
             Set<Integer> newSegments = getOwnedSegments(newWriteCh);
             removedSegments.removeAll(newSegments);
 
@@ -478,6 +499,7 @@ public class StateConsumerImpl implements StateConsumer {
                Thread.currentThread().interrupt();
                throw new CacheException(e);
             }
+            conflictManager.restartVersionRequests();
          }
       }
    }
@@ -1019,8 +1041,8 @@ public class StateConsumerImpl implements StateConsumer {
             return null;
          }
 
-         inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
-               cacheTopology.getTopologyId(), rpcManager, commandsFactory, timeout, cacheName);
+         inboundTransfer = new InboundTransferTask(segmentsFromSource, source, cacheTopology.getTopologyId(),
+               rpcManager, commandsFactory, timeout, cacheName, true);
          for (int segmentId : segmentsFromSource) {
             transfersBySegment.put(segmentId, inboundTransfer);
          }

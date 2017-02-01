@@ -1,8 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.partitionhandling.PartitionHandling;
 
 /**
  * Controls how the cache handles partitioning and/or multiple node failures.
@@ -12,23 +14,35 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 public class PartitionHandlingConfiguration {
 
+   @Deprecated
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()
          .build();
+   public static final AttributeDefinition<PartitionHandling> WHEN_SPLIT = AttributeDefinition.builder("whenSplit", PartitionHandling.ALLOW_READ_WRITES)
+         .immutable().build();
+   public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy",
+         null, EntryMergePolicy.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(PartitionHandlingConfiguration.class, ENABLED);
+      return new AttributeSet(PartitionHandlingConfiguration.class, ENABLED, WHEN_SPLIT, MERGE_POLICY);
    }
 
-   private final Attribute<Boolean> enabled;
    private final AttributeSet attributes;
 
    public PartitionHandlingConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      enabled = attributes.attribute(ENABLED);
    }
 
+   @Deprecated
    public boolean enabled() {
-      return enabled.get();
+      return whenSplit() != PartitionHandling.ALLOW_READ_WRITES;
+   }
+
+   public PartitionHandling whenSplit() {
+      return attributes.attribute(WHEN_SPLIT).get();
+   }
+
+   public EntryMergePolicy mergePolicy() {
+      return attributes.attribute(MERGE_POLICY).get();
    }
 
    public AttributeSet attributes() {
@@ -64,5 +78,4 @@ public class PartitionHandlingConfiguration {
          return false;
       return true;
    }
-
 }

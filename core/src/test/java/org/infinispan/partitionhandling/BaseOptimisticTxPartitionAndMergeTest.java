@@ -33,7 +33,7 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      builder.clustering().partitionHandling().enabled(true);
+      builder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC).transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       defineConfigurationOnAllManagers(OPTIMISTIC_TX_CACHE_NAME, builder);
    }

@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.ClusterStreamManagerImpl;
 import org.infinispan.stream.impl.LocalStreamManager;
@@ -25,7 +26,7 @@ public class StreamManagerFactory extends AbstractNamedCacheComponentFactory imp
             return componentType.cast(new LocalStreamManagerImpl<>());
          }
          if (componentType.equals(ClusterStreamManager.class)) {
-            if (configuration.clustering().partitionHandling().enabled()) {
+            if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
                return componentType.cast(new PartitionAwareClusterStreamManager<>());
             } else {
                return componentType.cast(new ClusterStreamManagerImpl<>());

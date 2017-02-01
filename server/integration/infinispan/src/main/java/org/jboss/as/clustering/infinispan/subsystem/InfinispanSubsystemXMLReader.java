@@ -24,7 +24,6 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ATTRIBUTE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 import java.util.Collections;
@@ -41,6 +40,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -2485,7 +2485,19 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED: {
-               PartitionHandlingConfigurationResource.ENABLED.parseAndSetParameter(value, partitionHandling, reader);
+               if (namespace.since(Namespace.INFINISPAN_SERVER_9_1))
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+
+               PartitionHandling type = Boolean.valueOf(value) ? PartitionHandling.DENY_READ_WRITES : PartitionHandling.ALLOW_READ_WRITES;
+               PartitionHandlingConfigurationResource.WHEN_SPLIT.parseAndSetParameter(type.toString(), partitionHandling, reader);
+               break;
+            }
+            case WHEN_SPLIT: {
+               PartitionHandlingConfigurationResource.WHEN_SPLIT.parseAndSetParameter(value, partitionHandling, reader);
+               break;
+            }
+            case MERGE_POLICY: {
+               PartitionHandlingConfigurationResource.MERGE_POLICY.parseAndSetParameter(value, partitionHandling, reader);
                break;
             }
             default: {

@@ -1,10 +1,12 @@
 package org.infinispan.partitionhandling.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 
 
@@ -18,6 +20,10 @@ import org.infinispan.topology.CacheTopology;
  */
 public interface AvailabilityStrategyContext {
    String getCacheName();
+
+   CacheJoinInfo getJoinInfo();
+
+   Map<Address, Float> getCapacityFactors();
 
    /**
     * @return The current cache topology.
@@ -82,5 +88,5 @@ public interface AvailabilityStrategyContext {
     * Does not install the current topology on the cache members.
     */
    void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology,
-         AvailabilityMode availabilityMode);
+         AvailabilityMode availabilityMode, boolean resolveConflicts);
 }

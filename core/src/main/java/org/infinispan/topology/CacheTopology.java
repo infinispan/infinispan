@@ -49,7 +49,7 @@ public class CacheTopology {
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
                         ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
-      if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
+      if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers()) && phase != Phase.CONFLICT_RESOLUTION) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members: currentCH=" + currentCH + ", pendingCH=" + pendingCH);
       }
@@ -131,6 +131,7 @@ public class CacheTopology {
             assert pendingCH == null;
             assert unionCH == null;
             return currentCH;
+         case CONFLICT_RESOLUTION:
          case READ_OLD_WRITE_ALL:
             assert pendingCH != null;
             assert unionCH != null;
@@ -264,6 +265,11 @@ public class CacheTopology {
        * Only currentCH should be set, this works as both readCH and writeCH
        */
       NO_REBALANCE,
+      /**
+       * Interim state between NO_REBALANCE -> READ_OLD_WRITE_ALL
+       * readCh is set locally using previous Topology (of said node) readCH, whilst writeCH contains all members after merge
+       */
+      CONFLICT_RESOLUTION,
       /**
        * Used during state transfer: readCH == currentCH, writeCH = unionCH
        */

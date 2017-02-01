@@ -941,3 +941,28 @@ if (!available) {
    ac.setAvailability(AvailabilityMode.AVAILABLE);
 }
 ----
+
+
+[[conflict-manager]]
+==== Conflict Manager
+The conflict manager is a tool that allows users to retrieve all stored replica values for a given key. In addition to allowing users
+to process a stream of cache entries whose stored replicas have conflicting values. Note that the stream of conflicts is
+processed per entry, however it is lazily loaded on a per segment basis.  Conflicts are exposed via a stream, opposed to a
+collection, in order to reduce the chances of an OutOfMemoryError occurring.
+
+The code below shows how to retrieve an EmbeddedCacheManager's ConflictManager, how to retrieve all versions of a given
+key and how to check for conflicts across a given cache.
+
+[source,java]
+----
+EmbeddedCacheManager manager = new DefaultCacheManager("example-config.xml");
+Cache<Integer, String> cache = manager.getCache("testCache");
+ConflictManager<Integer, String> crm = ConflictManagerFactory.get(cache.getAdvancedCache());
+
+// Get All Versions of Key
+Map<Address, InternalCacheValue<String>> versions = crm.getAllVersions(1);
+
+// Process conflicts stream
+Stream<Map<Address, InternalCacheEntry<Integer, String>>> stream = crm.getConflicts();
+stream.forEach(System.out::println);
+----

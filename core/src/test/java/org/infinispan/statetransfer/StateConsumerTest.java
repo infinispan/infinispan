@@ -31,6 +31,7 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -146,6 +147,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       InvocationContextFactory icf = mock(InvocationContextFactory.class);
       TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
+      InternalConflictManager conflictManager = mock(InternalConflictManager.class);
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))
          .thenAnswer(invocation-> new StateRequestCommand(ByteString.fromString("cache1"),
@@ -190,7 +192,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, localTopologyManager, interceptorChain, icf, configuration, rpcManager, null,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0), null,
-                         new HashFunctionPartitioner());
+                         new HashFunctionPartitioner(), conflictManager);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();

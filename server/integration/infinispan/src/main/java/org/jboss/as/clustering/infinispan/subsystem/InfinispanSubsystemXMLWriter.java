@@ -618,7 +618,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         if (cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME).isDefined()) {
             ModelNode partitionHandling = cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
             writer.writeStartElement(Element.PARTITION_HANDLING.getLocalName());
-            this.writeOptional(writer, Attribute.ENABLED, partitionHandling, ModelKeys.ENABLED);
+            this.writeOptional(writer, Attribute.WHEN_SPLIT, partitionHandling, ModelKeys.WHEN_SPLIT);
+            this.writeOptional(writer, Attribute.MERGE_POLICY, partitionHandling, ModelKeys.MERGE_POLICY);
             writer.writeEndElement();
         }
 

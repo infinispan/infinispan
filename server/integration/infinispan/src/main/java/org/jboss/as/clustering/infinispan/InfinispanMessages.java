@@ -275,4 +275,7 @@ public interface InfinispanMessages {
 
    @Message(id = 124, value = "Could not inject resolve destination address for outbound socket binding named '%s'")
    InjectionException failedToInjectSecurityRealm(@Cause UnknownHostException cause, SecurityRealm realm);
+
+   @Message(id = 125, value = "%s is not a valid EntryMergePolicy")
+   IllegalArgumentException invalidEntryMergePolicy(@Cause Throwable cause, String mergePolicy);
 }

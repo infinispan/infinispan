@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -28,11 +29,13 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.conflict.MergePolicies;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -43,6 +46,7 @@ import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -59,7 +63,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
-      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"}, {"9.0.xml"} };
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"}, {"9.0.xml"}, {"9.1.xml"} };
    }
 
    @Test(dataProvider="configurationFiles")
@@ -73,6 +77,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             switch (version) {
+               case 91:
+                  configurationCheck91(cm);
+                  break;
                case 90:
                   configurationCheck90(cm);
                   break;
@@ -95,6 +102,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private static void configurationCheck91(EmbeddedCacheManager cm) {
+      configurationCheck90(cm);
+      PartitionHandlingConfiguration ph = cm.getCacheConfiguration("dist").clustering().partitionHandling();
+      assertTrue(ph.enabled());
+      assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
+      assertEquals(MergePolicies.PREFERRED_NON_NULL, ph.mergePolicy());
+
+      ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
+      assertFalse(ph.enabled());
+      assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
+      assertNull(ph.mergePolicy());
    }
 
    private static void configurationCheck90(EmbeddedCacheManager cm) {

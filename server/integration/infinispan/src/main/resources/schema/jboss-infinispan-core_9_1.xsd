@@ -1427,12 +1427,71 @@
     </xs:complexType>
 
     <xs:complexType name="partition-handling">
-        <xs:attribute name="enabled" type="xs:boolean" default="${Server.PartitionHandling.enabled}">
+        <xs:attribute name="enabled" type="xs:boolean">
             <xs:annotation>
-                <xs:documentation>If enabled, the cache will enter degraded mode when it loses too many nodes.</xs:documentation>
+                <xs:documentation>Deprecated, use type instead. If enabled, the cache will enter degraded mode when it loses too many nodes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="when-split" type="tns:partition-handling-type" default="${Server.PartitionHandling.when-split}">
+            <xs:annotation>
+                <xs:documentation>The type of actions that are possible when a split brain scenario is encountered.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="merge-policy" type="tns:merge-policy" default="${Server.PartitionHandling.merge-policy}">
+            <xs:annotation>
+                <xs:documentation>The entry merge policy which should be applied on partition merges.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
+
+    <xs:simpleType name="partition-handling-type">
+        <xs:restriction base="xs:token">
+            <xs:enumeration value="DENY_READ_WRITES">
+                <xs:annotation>
+                    <xs:documentation>If the partition does not have all owners for a given segment, both reads and writes are denied for all keys in that segment.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ALLOW_READS">
+                <xs:annotation>
+                    <xs:documentation>Allows reads for a given key if it exists in this partition, but only allows writes if this partition contains all owners of a segment.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ALLOW_READ_WRITES">
+                <xs:annotation>
+                    <xs:documentation>Allow entries on each partition to diverge, with conflicts resolved during merge.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="merge-policy">
+        <xs:union memberTypes="tns:merge-policy-defaults xs:string"/>
+    </xs:simpleType>
+
+    <xs:simpleType name="merge-policy-defaults">
+        <xs:restriction base="xs:token">
+            <xs:enumeration value="NONE">
+                <xs:annotation>
+                    <xs:documentation>Do not attempt to resolve conflicts on merge.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="PREFERRED_ALWAYS">
+                <xs:annotation>
+                    <xs:documentation>Always utilise the entry located in the preferred partition.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="PREFERRED_NON_NULL">
+                <xs:annotation>
+                    <xs:documentation>Utilise entries from the preferred partition if non-null, otherwise utilise entries from the other partition.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="REMOVE_ALL">
+                <xs:annotation>
+                    <xs:documentation>If a conflict is encountered for a given key, remove all versions of that key.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="backups">
         <xs:sequence>
