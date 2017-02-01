@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -47,11 +48,15 @@ public interface StateProvider {
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a
     * StateRequestCommand of type StateRequestCommand.Type.START_STATE_TRANSFER.
     *
+    * If the applyState field is set to false, then upon delivery at the destination the cache entries are processed
+    * by a {@link StateReceiver} and are not applied to the local cache.
+    *
     * @param destination the address of the requester
     * @param topologyId
     * @param segments
+    * @param applyState
     */
-   void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException;
+   void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments, boolean applyState) throws InterruptedException;
 
    /**
     * Cancel sending of cache entries that belong to the given set of segments. This is invoked in response to a

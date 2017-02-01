@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
@@ -14,10 +15,18 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "partitionhandling.TwoWaySplitAndMergeTest")
 public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new TwoWaySplitAndMergeTest().partitionHandling(PartitionHandling.DENY_READ_WRITES),
+            new TwoWaySplitAndMergeTest().partitionHandling(PartitionHandling.ALLOW_READS)
+      };
+   }
+
    public void testSplitAndMerge0() throws Exception {
       testSplitAndMerge(new PartitionDescriptor(0, 1), new PartitionDescriptor(2, 3));
    }
-//
+
    public void testSplitAndMerge1() throws Exception {
       testSplitAndMerge(new PartitionDescriptor(0, 2), new PartitionDescriptor(1, 3));
    }
@@ -58,16 +67,13 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < numMembersInCluster; i++) {
-               if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
-                  return false;
-               }
+      eventually(() -> {
+         for (int i = 0; i < numMembersInCluster; i++) {
+            if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+               return false;
             }
-            return true;
          }
+         return true;
       });
 
       splitCluster(p0.getNodes(), p1.getNodes());
@@ -79,13 +85,20 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(partitionHandlingManager(2).getLastStableTopology().getMembers(), allMembers);
       assertEquals(partitionHandlingManager(3).getLastStableTopology().getMembers(), allMembers);
 
-      //1. check key visibility in partition 1
       partition(0).assertKeyAvailableForRead(k0, 0);
-      partition(0).assertKeysNotAvailableForRead(k1, k2, k3);
-
-      //2. check key visibility in partition 2
       partition(1).assertKeyAvailableForRead(k2, 2);
-      partition(1).assertKeysNotAvailableForRead(k0, k1, k3);
+
+      if (partitionHandling == PartitionHandling.DENY_READ_WRITES) {
+         partition(0).assertKeysNotAvailableForRead(k1, k2, k3);
+         partition(1).assertKeysNotAvailableForRead(k0, k1, k3);
+      } else {
+         IntStream.range(0, 2).forEach(i -> {
+            partition(i).assertKeyAvailableForRead(k1, 1);
+            partition(i).assertKeyAvailableForRead(k3, 3);
+         });
+         partition(0).assertKeyNotAvailableForRead(k2);
+         partition(1).assertKeyNotAvailableForRead(k0);
+      }
 
       //3. check key ownership
       assertTrue(dataContainer(p0.node(0)).containsKey(k0));
@@ -167,6 +180,5 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertExpectedValue(100, k1);
       assertExpectedValue(1000, k2);
       assertExpectedValue(10000, k3);
-
    }
 }

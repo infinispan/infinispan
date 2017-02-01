@@ -52,7 +52,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode);
       builder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
-      builder.clustering().partitionHandling().enabled(true);
+      builder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
       for (int i = 0; i < NUM_NODES; i++) {
          addClusterEnabledCacheManager(builder, new TransportFlags().withFD(true).withMerge(true));
       }

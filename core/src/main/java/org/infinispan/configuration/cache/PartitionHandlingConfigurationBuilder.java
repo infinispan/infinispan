@@ -1,12 +1,13 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.MERGE_POLICY;
+import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.WHEN_SPLIT;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.partitionhandling.PartitionHandling;
 /**
  * Controls how the cache handles partitioning and/or multiple node failures.
  *
@@ -14,8 +15,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class PartitionHandlingConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<PartitionHandlingConfiguration> {
-
-   private static Log log = LogFactory.getLog(PartitionHandlingConfigurationBuilder.class);
 
    private final AttributeSet attributes;
 
@@ -27,8 +26,19 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
    /**
     * @param enabled If {@code true}, partitions will enter degraded mode. If {@code false}, they will keep working independently.
     */
+   @Deprecated
    public PartitionHandlingConfigurationBuilder enabled(boolean enabled) {
-      attributes.attribute(ENABLED).set(enabled);
+      whenSplit(enabled ? PartitionHandling.DENY_READ_WRITES : PartitionHandling.ALLOW_READ_WRITES);
+      return this;
+   }
+
+   public PartitionHandlingConfigurationBuilder whenSplit(PartitionHandling partitionHandling) {
+      attributes.attribute(WHEN_SPLIT).set(partitionHandling);
+      return this;
+   }
+
+   public PartitionHandlingConfigurationBuilder mergePolicy(EntryMergePolicy mergePolicy) {
+      attributes.attribute(MERGE_POLICY).set(mergePolicy);
       return this;
    }
 

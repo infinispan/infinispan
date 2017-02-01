@@ -163,6 +163,7 @@ public class ModelKeys {
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
     static final String MECHANISM = "mechanism";
     static final String MEMORY = "memory";
+    static final String MERGE_POLICY = "merge-policy";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MIN_THREADS = "min-threads";
     static final String MODE = "mode";
@@ -264,6 +265,7 @@ public class ModelKeys {
     static final String VALUE = "value";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
+    static final String WHEN_SPLIT = "when-split";
     static final String WRITE_BEHIND = "write-behind";
     static final String WRITE_BEHIND_NAME = "WRITE_BEHIND";
 

@@ -266,6 +266,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       return throwable;
    }
 
+   public CacheTopology.Phase getPhase() {
+      return phase;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;

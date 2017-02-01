@@ -118,7 +118,7 @@
             </store>
             <indexing index="LOCAL" auto-config="true"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000" await-initial-transfer="true"/>
-            <partition-handling enabled="true"/>
+            <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
         </replicated-cache>
         <replicated-cache name="repl2" mode="ASYNC" batching="true" start="EAGER" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
@@ -156,7 +156,7 @@
             </string-keyed-jdbc-store>
             <indexing index="LOCAL" />
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
-            <partition-handling enabled="true"/>
+            <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
         </distributed-cache>
         <distributed-cache name="dist2" batching="false" l1-lifespan="1200000" owners="4"
                            remote-timeout="35000" start="EAGER" segments="20" capacity-factor="2.0"

@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
@@ -114,7 +115,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
-      stateResponseCommand.init(TestingUtil.extractComponent(cache(0), StateConsumer.class));
+      stateResponseCommand.init(TestingUtil.extractComponent(cache(0), StateConsumer.class), TestingUtil.extractComponent(cache(0), StateReceiver.class));
       handler.handle(stateResponseCommand, new Reply() {
          @Override
          public void reply(Object returnValue) {

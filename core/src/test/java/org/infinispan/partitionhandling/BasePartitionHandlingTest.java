@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -48,7 +49,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected int numMembersInCluster = 4;
    protected CacheMode cacheMode = CacheMode.DIST_SYNC;
    protected volatile Partition[] partitions;
-   protected boolean partitionHandling = true;
+   protected PartitionHandling partitionHandling = PartitionHandling.DENY_READ_WRITES;
+   protected EntryMergePolicy mergePolicy = null;
 
    public BasePartitionHandlingTest() {
       this.cleanup = CleanupPhase.AFTER_METHOD;
@@ -57,9 +59,14 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = cacheConfiguration();
-      dcc.clustering().cacheMode(cacheMode).partitionHandling().enabled(partitionHandling);
+      dcc.clustering().cacheMode(cacheMode).partitionHandling().whenSplit(partitionHandling).mergePolicy(mergePolicy);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
+   }
+
+   protected BasePartitionHandlingTest partitionHandling(PartitionHandling partitionHandling) {
+      this.partitionHandling = partitionHandling;
+      return this;
    }
 
    protected ConfigurationBuilder cacheConfiguration() {
@@ -67,9 +74,17 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   static class ViewChangedHandler {
+   public static class ViewChangedHandler {
 
-      volatile boolean notified = false;
+      private volatile boolean notified = false;
+
+      public boolean isNotified() {
+         return notified;
+      }
+
+      public void setNotified(boolean notified) {
+         this.notified = notified;
+      }
 
       @ViewChanged
       public void viewChanged(ViewChangedEvent vce) {
@@ -200,6 +215,10 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void merge(Partition partition) {
+         merge(partition, true);
+      }
+
+      public void merge(Partition partition, boolean waitForNoRebalance) {
          observeMembers(partition);
          partition.observeMembers(this);
          ArrayList<JChannel> view1 = new ArrayList<>(channels);
@@ -208,7 +227,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 //         System.out.println("view2 = " + printView(view2));
          partition.channels.stream().filter(c -> !channels.contains(c)).forEach(c -> channels.add(c));
          installMergeView(view1, view2);
-         waitForPartitionToForm();
+         waitForPartitionToForm(waitForNoRebalance);
          List<Partition> tmp = new ArrayList<>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
          if (!tmp.remove(partition)) throw new AssertionError();
          BasePartitionHandlingTest.this.partitions = tmp.toArray(new Partition[tmp.size()]);
@@ -220,7 +239,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          return sb.insert(0, "[ ").append(" ]").toString();
       }
 
-      private void waitForPartitionToForm() {
+      private void waitForPartitionToForm(boolean waitForNoRebalance) {
          List<Cache<Object, Object>> caches = new ArrayList<>(getCaches(null));
          Iterator<Cache<Object, Object>> i = caches.iterator();
          while (i.hasNext()) {
@@ -229,8 +248,11 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
-         if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
-            TestingUtil.waitForNoRebalance(caches);
+
+         if (waitForNoRebalance) {
+            if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+               TestingUtil.waitForNoRebalance(caches);
+            }
          }
       }
 
@@ -264,7 +286,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void assertDegradedMode() {
-         if (partitionHandling) {
+         if (partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
             assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          }
       }

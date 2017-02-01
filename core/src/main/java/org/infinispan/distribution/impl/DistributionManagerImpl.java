@@ -176,7 +176,11 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void setCacheTopology(CacheTopology cacheTopology) {
-      this.extendedTopology = new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, transport.getAddress());
+      this.extendedTopology = createLocalizedCacheTopology(cacheTopology);
    }
 
+   @Override
+   public LocalizedCacheTopology createLocalizedCacheTopology(CacheTopology cacheTopology) {
+      return new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, transport.getAddress());
+   }
 }

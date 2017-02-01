@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -15,6 +16,7 @@ import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChan
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.PartitionHandling;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
@@ -23,20 +25,26 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerImpl<K> {
    protected final PartitionListener listener;
    protected Cache<?, ?> cache;
+   private PartitionHandling partitionHandling;
 
    public PartitionAwareClusterStreamManager() {
       this.listener = new PartitionListener();
    }
 
+   @Inject
+   public void init(Configuration configuration) {
+      this.partitionHandling = configuration.clustering().partitionHandling().whenSplit();
+   }
+
    @Listener
-   protected class PartitionListener {
-      protected volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
+   private class PartitionListener {
+      volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
 
       @PartitionStatusChanged
       public void onPartitionChange(PartitionStatusChangedEvent<K, ?> event) {
          if (!event.isPre()) {
             currentMode = event.getAvailabilityMode();
-            if (currentMode != AvailabilityMode.AVAILABLE) {
+            if (isPartitionDegraded()) {
                // We just mark the iterator - relying on the fact that callers must call forget properly
                currentlyRunning.values().forEach(t ->
                        markTrackerWithException(t, null, new AvailabilityException(), null));
@@ -101,8 +109,12 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
    }
 
    private void checkPartitionStatus() {
-      if (listener.currentMode != AvailabilityMode.AVAILABLE) {
+      if (isPartitionDegraded()) {
          throw log.partitionDegraded();
       }
+   }
+
+   private boolean isPartitionDegraded() {
+      return listener.currentMode != AvailabilityMode.AVAILABLE && partitionHandling == PartitionHandling.DENY_READ_WRITES;
    }
 }

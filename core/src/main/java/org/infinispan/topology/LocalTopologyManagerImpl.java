@@ -16,6 +16,7 @@ import org.infinispan.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.ComponentRegistry;
@@ -256,19 +257,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public void handleTopologyUpdate(final String cacheName, final CacheTopology cacheTopology,
          final AvailabilityMode availabilityMode, final int viewId, final Address sender) throws InterruptedException {
-      if (!running) {
-         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
-               cacheTopology.getTopologyId(), cacheName);
+      if (ignoreTopologyUpdate(cacheName, cacheTopology))
          return;
-      }
 
       final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      if (cacheStatus == null) {
-         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
-               cacheTopology.getTopologyId(), cacheName);
-         return;
-      }
-
       cacheStatus.getTopologyUpdatesExecutor().execute(() -> {
          try {
             doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
@@ -276,6 +268,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             log.topologyUpdateError(cacheName, t);
          }
       });
+   }
+
+   private boolean ignoreTopologyUpdate(final String cacheName, final CacheTopology cacheTopology) {
+      if (!running) {
+         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
+               cacheTopology.getTopologyId(), cacheName);
+         return true;
+      }
+
+      if (runningCaches.get(cacheName) == null) {
+         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
+               cacheTopology.getTopologyId(), cacheName);
+         return true;
+      }
+      return false;
    }
 
    /**
@@ -314,22 +321,30 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (!updateCacheTopology(cacheName, cacheTopology, viewId, sender, cacheStatus))
             return false;
 
+         ConsistentHash currentCH = cacheTopology.getCurrentCH();
          ConsistentHash unionCH = null;
          if (cacheTopology.getPendingCH() != null) {
-            if (cacheTopology.getPhase() == CacheTopology.Phase.READ_NEW_WRITE_ALL) {
-               // When removing members from topology, we have to make sure that the unionCH has
-               // owners from pendingCH (which is used as the readCH in this phase) before
-               // owners from currentCH, as primary owners must match in readCH and writeCH.
-               unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
-                     cacheTopology.getPendingCH(), cacheTopology.getCurrentCH());
-            } else {
-               unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
-                     cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+            ConsistentHashFactory chf = cacheStatus.getJoinInfo().getConsistentHashFactory();
+            switch (cacheTopology.getPhase()) {
+               case READ_NEW_WRITE_ALL:
+                  // When removing members from topology, we have to make sure that the unionCH has
+                  // owners from pendingCH (which is used as the readCH in this phase) before
+                  // owners from currentCH, as primary owners must match in readCH and writeCH.
+                  unionCH = chf.union(cacheTopology.getPendingCH(), cacheTopology.getCurrentCH());
+                  break;
+               case CONFLICT_RESOLUTION:
+                  // Ensure that this node utilises it's old partitions readConsistentHash during conflict resolution
+                  // But has an updated write consistent hash which contains owners from the pre and post merge hashes
+                  unionCH = chf.union(existingTopology.getWriteConsistentHash(), cacheTopology.getPendingCH());
+                  currentCH = existingTopology.getCurrentCH();
+                  break;
+               default:
+                  unionCH = chf.union(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
             }
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getPhase(),
+               currentCH, cacheTopology.getPendingCH(), unionCH, cacheTopology.getPhase(),
                cacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
          unionTopology.logRoutingTableInformation();
 
@@ -337,7 +352,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (updateAvailabilityModeFirst && availabilityMode != null) {
             cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
-         if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
+
+         boolean startConflictResolution = cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
+         if (!startConflictResolution && (existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId())
+               && unionCH != null) {
             // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
             // We will start the rebalance now and ignore the REBALANCE_START command when it arrives.
             log.tracef("This topology update has a pending CH, starting the rebalance now");

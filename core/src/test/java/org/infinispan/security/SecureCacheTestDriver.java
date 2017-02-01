@@ -10,6 +10,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
@@ -572,6 +573,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testGetRpcManager(SecureCache<String, String> cache) {
       cache.getRpcManager();
+   }
+
+   @TestCachePermission(AuthorizationPermission.ADMIN)
+   public void testGetConflictResolutionManager(SecureCache<String, String> cache) {
+      ConflictManagerFactory.get(cache);
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)

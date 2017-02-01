@@ -1,7 +1,7 @@
 package org.infinispan.partitionhandling.impl;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -40,8 +40,7 @@ public interface AvailabilityStrategy {
     * Called when two or more partitions merge, to compute the stable and current cache topologies for the merged
     * cluster.
     */
-   void onPartitionMerge(AvailabilityStrategyContext context,
-         Collection<CacheStatusResponse> statusResponses);
+   void onPartitionMerge(AvailabilityStrategyContext context, Map<Address, CacheStatusResponse> statusResponseMap);
 
    /**
     * Called when a rebalance ends. Can be used to re-assess the state of the cache and apply pending changes.

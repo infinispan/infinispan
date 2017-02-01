@@ -118,4 +118,6 @@ public interface DistributionManager {
     */
    @Deprecated
    void setCacheTopology(CacheTopology cacheTopology);
+
+   LocalizedCacheTopology createLocalizedCacheTopology(CacheTopology cacheTopology);
 }

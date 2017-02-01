@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
@@ -341,6 +342,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       versionGenerator = getOrCreateComponent(VersionGenerator.class);
       getOrCreateComponent(ClusterCacheStats.class);  //no need to save ref to a field, just initialize component
       getOrCreateComponent(CacheConfigurationMBean.class);
+      getOrCreateComponent(InternalConflictManager.class);
    }
 
    @Override
