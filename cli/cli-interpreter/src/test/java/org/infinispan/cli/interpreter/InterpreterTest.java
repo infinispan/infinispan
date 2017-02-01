@@ -196,8 +196,14 @@ public class InterpreterTest extends SingleCacheManagerTest {
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Map<String, String> response = interpreter.execute(sessionId, "stats;");
       assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
+      String output = response.get(ResultKeys.OUTPUT.toString());
+      assertTrue(output.contains("Statistics: {"));
+      assertTrue(output.contains("Transactions: {"));
+      assertTrue(output.contains("LockManager: {"));
       response = interpreter.execute(sessionId, "stats --container;");
       assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
+      output = response.get(ResultKeys.OUTPUT.toString());
+      assertTrue(output.startsWith(String.format("%s: {", cacheManager.getClusterName())));
    }
 
    public void testParserErrors() throws Exception {
