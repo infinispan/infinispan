@@ -11,6 +11,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -176,7 +177,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000436:.*")
    public void testMissingDefaultConfiguration() {
-      EmbeddedCacheManager cm = new DefaultCacheManager();
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
       try {
          cm.getCache("someCache");
       } finally {
