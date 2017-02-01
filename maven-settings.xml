@@ -42,33 +42,10 @@
                 </pluginRepository>
             </pluginRepositories>
         </profile>
-
-        <!-- Include early access of application server and other products -->
-        <profile>
-            <id>redhat-earlyaccess-repository</id>
-            <repositories>
-                <repository>
-                    <id>redhat-earlyaccess-repository-group</id>
-                    <name>Red Hat early access repository</name>
-                    <url>http://maven.repository.redhat.com/earlyaccess/all/</url>
-                    <layout>default</layout>
-                    <releases>
-                        <enabled>true</enabled>
-                        <updatePolicy>never</updatePolicy>
-                    </releases>
-                    <snapshots>
-                        <enabled>true</enabled>
-                        <updatePolicy>never</updatePolicy>
-                    </snapshots>
-                </repository>
-            </repositories>
-        </profile>
-
     </profiles>
 
     <activeProfiles>
         <activeProfile>jboss-public-repository</activeProfile>
-        <activeProfile>redhat-earlyaccess-repository</activeProfile>
     </activeProfiles>
 
 </settings>
