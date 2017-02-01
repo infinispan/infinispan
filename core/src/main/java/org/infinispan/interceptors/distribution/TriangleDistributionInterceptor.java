@@ -153,7 +153,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private void sendToBackups(PutMapCommand command, Map<Object, Object> entries, ConsistentHash ch) {
-      BackupOwnerClassifier filter = new BackupOwnerClassifier(ch);
+      BackupOwnerClassifier filter = new BackupOwnerClassifier(ch, entries.size());
       entries.entrySet().forEach(filter::add);
       int topologyId = command.getTopologyId();
       for (Map.Entry<Integer, Map<Object, Object>> entry : filter.perSegmentKeyValue.entrySet()) {
@@ -180,7 +180,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       //local command. we need to split by primary owner to send the command to them
       final CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash consistentHash = cacheTopology.getWriteConsistentHash();
-      final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(consistentHash);
+      final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(consistentHash, command.getMap().size());
       final boolean sync = isSynchronous(command);
       final VisitableCommand.LoadType loadType = command.loadType();
 
@@ -380,22 +380,27 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
     * The second map is used to initialize the {@link CommandAckCollector} to wait for the backups acknowledges.
     */
    private static class PrimaryOwnerClassifier {
-      private final Map<Address, Collection<Integer>> backups = new HashMap<>();
-      private final Map<Address, Map<Object, Object>> primaries = new HashMap<>();
+      private final Map<Address, Collection<Integer>> backups;
+      private final Map<Address, Map<Object, Object>> primaries;
       private final ConsistentHash consistentHash;
+      private final int entryCount;
 
-      private PrimaryOwnerClassifier(ConsistentHash consistentHash) {
+      private PrimaryOwnerClassifier(ConsistentHash consistentHash, int entryCount) {
          this.consistentHash = consistentHash;
+         int memberSize = consistentHash.getMembers().size();
+         this.backups = new HashMap<>(memberSize);
+         this.primaries = new HashMap<>(memberSize);
+         this.entryCount = entryCount;
       }
 
       public void add(Map.Entry<Object, Object> entry) {
          final int segment = consistentHash.getSegment(entry.getKey());
          final Iterator<Address> iterator = consistentHash.locateOwnersForSegment(segment).iterator();
          final Address primaryOwner = iterator.next();
-         primaries.computeIfAbsent(primaryOwner, address -> new HashMap<>()).put(entry.getKey(), entry.getValue());
+         primaries.computeIfAbsent(primaryOwner, address -> new HashMap<>(entryCount)).put(entry.getKey(), entry.getValue());
          while (iterator.hasNext()) {
             Address backup = iterator.next();
-            backups.computeIfAbsent(backup, address -> new HashSet<>()).add(segment);
+            backups.computeIfAbsent(backup, address -> new HashSet<>(entryCount)).add(segment);
          }
       }
 
@@ -407,15 +412,18 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
     * It maps the backup owner address to the subset of keys.
     */
    private static class BackupOwnerClassifier {
-      private final Map<Integer, Map<Object, Object>> perSegmentKeyValue = new HashMap<>();
+      private final Map<Integer, Map<Object, Object>> perSegmentKeyValue;
       private final ConsistentHash consistentHash;
+      private final int entryCount;
 
-      private BackupOwnerClassifier(ConsistentHash consistentHash) {
+      private BackupOwnerClassifier(ConsistentHash consistentHash, int entryCount) {
          this.consistentHash = consistentHash;
+         this.perSegmentKeyValue = new HashMap<>(consistentHash.getNumSegments());
+         this.entryCount = entryCount;
       }
 
       public void add(Map.Entry<Object, Object> entry) {
-         perSegmentKeyValue.computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>())
+         perSegmentKeyValue.computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>(entryCount))
                .put(entry.getKey(), entry.getValue());
       }
    }
