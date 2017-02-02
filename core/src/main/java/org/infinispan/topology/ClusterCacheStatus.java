@@ -439,7 +439,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
 
       List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
-      ConsistentHash newCurrentCH;
+      ConsistentHash newCurrentCH, newPendingCH = null;
+      CacheTopology.Phase newPhase = CacheTopology.Phase.NO_REBALANCE;
       List<Address> actualMembers;
       if (newCurrentMembers.isEmpty()) {
          // All the current members left, try to replace them with the joiners
@@ -456,14 +457,16 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
          actualMembers = newCurrentMembers;
          if (pendingCH != null) {
-            // Sending topology update with pendingCH != null could trigger a rebalance on the other node,
-            // while if this is called due to a lost member during ST we'll start a rebalance right away
-            // StateRequests from the rebalance caused by this CH_UPDATE would be ignored on this node.
+            newPhase = currentTopology.getPhase();
+            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newCurrentMembers, getCapacityFactors());
             actualMembers = pruneInvalidMembers(pendingCH.getMembers());
          }
       }
-      CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, null,
-            CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+      // Losing members during state transfer could lead to a state where we have more than two topologies
+      // concurrently in the cluster. We need to make sure that all the topologies are compatible (properties set
+      // in CacheTopology docs hold) - we just remove lost members.
+      CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH,
+            newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
       setCurrentTopology(newTopology);
 
       if (rebalanceConfirmationCollector != null) {
@@ -471,9 +474,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          log.debugf("Cancelling topology confirmation %s because of another topology update", rebalanceConfirmationCollector);
          rebalanceConfirmationCollector = null;
       }
-      // TODO: losing members during state transfer could lead to a state where we have more than two topologies
-      // concurrently in the cluster. We need to make sure that all the topologies are compatible (properties set
-      // in CacheTopology docs hold).
 
       clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
             isTotalOrder(), isDistributed());
@@ -748,19 +748,27 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
       if (balancedCH.equals(currentCH)) {
          log.tracef("The balanced CH is the same as the current CH, not rebalancing");
-         return;
+         if (cacheTopology.getPendingCH() != null) {
+            CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(), currentCH, null,
+                  CacheTopology.Phase.NO_REBALANCE, currentCH.getMembers(), persistentUUIDManager.mapAddresses(currentCH.getMembers()));
+            log.tracef("Updating cache %s topology without rebalance: %s", cacheName, newTopology);
+            setCurrentTopology(newTopology);
+
+            clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode(), isTotalOrder(), isDistributed());
+         }
+      } else {
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
+               CacheTopology.Phase.READ_OLD_WRITE_ALL, balancedCH.getMembers(), persistentUUIDManager.mapAddresses(balancedCH.getMembers()));
+         log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
+         setCurrentTopology(newTopology);
+
+         rebalanceInProgress = true;
+         assert rebalanceConfirmationCollector == null;
+         rebalanceConfirmationCollector = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
+               newTopology.getMembers(), this::endRebalance);
+
+         clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, isTotalOrder(), isDistributed());
       }
-      CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
-            CacheTopology.Phase.READ_OLD_WRITE_ALL, balancedCH.getMembers(), persistentUUIDManager.mapAddresses(balancedCH.getMembers()));
-      log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
-      setCurrentTopology(newTopology);
-
-      rebalanceInProgress = true;
-      assert rebalanceConfirmationCollector == null;
-      rebalanceConfirmationCollector = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
-            newTopology.getMembers(), this::endRebalance);
-
-      clusterTopologyManager.broadcastRebalanceStart(cacheName, this.getCurrentTopology(), this.isTotalOrder(), this.isDistributed());
    }
 
    public boolean isRebalanceEnabled() {
