@@ -556,11 +556,7 @@ To find an example on how to bind Cache or CacheManager to the java: namespace, 
 
 === Hibernate 2nd Level Cache questions
 ==== Can I use Infinispan as a remote JPA or Hibernate second level cache?
-See link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[Using Infinispan as JPA/Hibernate Second Level Cache Provider] .
-
-==== I'm adding the Infinispan 2nd level cache provider to existing servers that already use JGroups. Should I set Infinispan to use the same JGroups cluster, or should I use two separate cluster names?
-
-*TODO*
+See link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan-remote[Remote Infinispan Caching] section in Hibernate documentation.
 
 ==== Is it possible to use the Infinispan 2nd level cache outside of a J2EE server, and if so how do I set up the transaction manager lookup?
 The User Guide provides link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[details] on configuring a transaction manager outside of Java EE. The User Guide also provides link:../user_guide/user_guide.html#implementing_standalone_jpa_jta_hibernate_application_outside_j2ee_server_using_infinispan_2nd_level_cache[details] on how to use Atomikos, JTOM and Bitronix.
