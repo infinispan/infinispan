@@ -21,7 +21,7 @@
                 <protocol type="pbcast.GMS" />
                 <protocol type="UFC" />
                 <protocol type="MFC" />
-                <protocol type="FRAG2" />
+                <protocol type="FRAG3" />
                 <?RELAY?>
                 <?AUTH?>
             </stack>
@@ -97,7 +97,7 @@
             <relay site="LON">
                 <remote-site name="NYC" channel="xsite" />
                 <remote-site name="SFO" channel="xsite" />
-                <!-- property name="can_become_site_master">true</property> 
+                <!-- property name="can_become_site_master">true</property>
                 <property name="max_site_masters">2</property -->
             </relay>
         </replacement>

@@ -23,24 +23,24 @@
 <!-- N.B. This is *not* a usable protocol stack -->
 <!-- This file supplies the internal defaults per protocol -->
 <config xmlns="urn:org:jgroups">
-   <UDP 
-      ucast_send_buf_size="1m"
+   <UDP
+      ucast_send_buf_size="2m"
       mcast_send_buf_size="1m"
-      ucast_recv_buf_size="20m"
-      mcast_recv_buf_size="25m"
+      ucast_recv_buf_size="2m"
+      mcast_recv_buf_size="5m"
       ip_ttl="${jgroups.ip_ttl:2}"
       thread_naming_pattern="pl"
       enable_diagnostics="false"
       bundler_type="no-bundler"
-      max_bundle_size="8500"/>
-   <TCP 
+      max_bundle_size="8700"/>
+   <TCP
       enable_diagnostics="false"
       thread_naming_pattern="pl"
       send_buf_size="640k"
       sock_conn_timeout="300"
       bundler_type="no-bundler"/>
    <PING />
-   <MPING 
+   <MPING
       ip_ttl="${jgroups.udp.ip_ttl:2}"/>
    <MERGE3
       min_interval="10000"
@@ -48,11 +48,11 @@
    <FD_SOCK/>
    <FD timeout="6000" max_tries="5" msg_counts_as_heartbeat="false"/>
    <FD_ALL2 interval="3000" timeout="15000"/>
-   <FD_ALL 
-      timeout="60000" 
-      interval="15000" 
+   <FD_ALL
+      timeout="60000"
+      interval="15000"
       timeout_check_interval="5000"/>
-   <VERIFY_SUSPECT 
+   <VERIFY_SUSPECT
       timeout="5000"/>
    <BARRIER/>
    <pbcast.NAKACK2
@@ -67,20 +67,21 @@
       xmit_table_msgs_per_row="1024"
       xmit_table_max_compaction_time="30000"
       conn_expiry_timeout="0"/>
-   <pbcast.STABLE 
+   <pbcast.STABLE
       stability_delay="500"
       desired_avg_gossip="5000"
       max_bytes="1M"/>
-   <pbcast.GMS 
+   <pbcast.GMS
       print_local_addr="false"
       join_timeout="${jgroups.join_timeout:5000}"/>
-   <UFC 
-      max_credits="2m" 
+   <UFC
+      max_credits="2m"
       min_threshold="0.40"/>
-   <MFC 
-      max_credits="2m" 
+   <MFC
+      max_credits="2m"
       min_threshold="0.40"/>
    <FRAG2 frag_size="8000"/>
+   <FRAG3 frag_size="8000"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false"/>
    <pbcast.STATE_TRANSFER/>
    <pbcast.FLUSH timeout="0" start_flush_timeout="10000"/>
