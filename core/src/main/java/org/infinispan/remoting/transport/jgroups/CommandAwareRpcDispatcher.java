@@ -240,7 +240,13 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
          Message rsp = req.makeReply().setFlag(flags).setBuffer(rsp_buf);
 
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
-         response.send(rsp, is_exception);
+         try {
+            response.send(rsp, is_exception);
+         } catch (Throwable t) {
+            if (channel.isConnected()) {
+               log.errorSendingResponse(command);
+            }
+         }
       }
    }
 
