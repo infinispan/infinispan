@@ -72,7 +72,7 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       String cacheContainerName = config.hasDefined(ModelKeys.CACHE_CONTAINER) ? config.get(ModelKeys.CACHE_CONTAINER).asString() : null;
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
-      EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
+      EndpointUtils.addSocketBindingDependency(context, builder, getSocketBindingName(operation), service.getSocketBinding());
 
       builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
 

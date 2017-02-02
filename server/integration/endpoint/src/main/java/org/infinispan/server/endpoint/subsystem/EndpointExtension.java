@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.infinispan.server.endpoint.Constants;
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
+import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
@@ -35,7 +36,6 @@ public class EndpointExtension implements Extension {
 
    private static final int MANAGEMENT_API_MAJOR_VERSION = 1;
    private static final int MANAGEMENT_API_MINOR_VERSION = 2;
-   private static final int MANAGEMENT_API_MICRO_VERSION = 0;
    private static final String RESOURCE_NAME = EndpointExtension.class.getPackage().getName() + ".LocalDescriptions";
 
    static ResourceDescriptionResolver getResourceDescriptionResolver(String keyPrefix) {
@@ -47,7 +47,8 @@ public class EndpointExtension implements Extension {
    public final void initialize(ExtensionContext context) {
       final boolean registerRuntimeOnly = context.isRuntimeOnlyRegistrationValid();
 
-      final SubsystemRegistration subsystem = context.registerSubsystem(Constants.SUBSYSTEM_NAME, MANAGEMENT_API_MAJOR_VERSION, MANAGEMENT_API_MINOR_VERSION, MANAGEMENT_API_MICRO_VERSION);
+      final SubsystemRegistration subsystem = context.registerSubsystem(Constants.SUBSYSTEM_NAME,
+            ModelVersion.create(MANAGEMENT_API_MAJOR_VERSION, MANAGEMENT_API_MINOR_VERSION));
       subsystem.registerSubsystemModel(new EndpointSubsystemRootResource(registerRuntimeOnly));
       subsystem.registerXMLElementWriter(new EndpointSubsystemWriter());
    }

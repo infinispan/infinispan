@@ -69,7 +69,8 @@ class MemcachedSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addCacheDependency(builder, cacheContainerName, cacheName);
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
-      EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
+      EndpointUtils.addSocketBindingDependency(context, builder, getSocketBindingName(operation), service.getSocketBinding());
+
       builder.install();
    }
 
