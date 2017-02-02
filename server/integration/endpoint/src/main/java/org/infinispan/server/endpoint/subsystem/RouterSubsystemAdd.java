@@ -52,8 +52,8 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
 
       final ServiceName MultitenantRouterServiceName = EndpointUtils.getServiceName(operation, "router");
       ServiceBuilder<?> builder = context.getServiceTarget().addService(MultitenantRouterServiceName, routerService);
-      EndpointUtils.addSocketBindingDependency(builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding());
-      EndpointUtils.addSocketBindingDependency(builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding());
+      EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding());
+      EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding());
 
       ModelNode multiTenancyInnerConfiguration = config.get(ModelKeys.MULTI_TENANCY, ModelKeys.MULTI_TENANCY_NAME);
 

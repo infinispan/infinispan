@@ -78,7 +78,7 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheContainerConfigurationDependency(builder, cacheContainerName, service.getCacheManagerConfiguration());
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
-      EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
+      EndpointUtils.addSocketBindingDependency(context, builder, getSocketBindingName(operation), service.getSocketBinding());
 
       EncryptableSubsystemHelper.processEncryption(context, config, service, builder);
       processAuthentication(context, configurationBuilder, service, builder, config);
