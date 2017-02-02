@@ -393,7 +393,7 @@ public class StateConsumerImpl implements StateConsumer {
          int rebalanceTopologyId = stateTransferTopologyId.get();
          if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
                (Object)rebalanceTopologyId, startRebalance, cacheTopology.getPendingCH());
-         if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS && !startRebalance) {
+         if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS && !startRebalance && cacheTopology.getPhase() != CacheTopology.Phase.READ_OLD_WRITE_ALL) {
             // we have received a topology update without a pending CH, signalling the end of the rebalance
             boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
             if (changed) {

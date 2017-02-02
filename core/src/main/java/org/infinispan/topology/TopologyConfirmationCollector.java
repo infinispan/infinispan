@@ -77,7 +77,7 @@ class TopologyConfirmationCollector {
       synchronized (this) {
          return "TopologyConfirmationCollector{" +
                "cacheName=" + cacheName +
-               "topologyId=" + topologyId +
+               ", topologyId=" + topologyId +
                ", confirmationsNeeded=" + confirmationsNeeded +
                '}';
       }

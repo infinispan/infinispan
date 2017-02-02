@@ -90,7 +90,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       // Block the remote lock command on cache 1
       advanceOnInboundRpc(sequencer, cache(1, CACHE_NAME),
-            matchCommand(LockControlCommand.class).withCache(CACHE_NAME).build())
+            matchCommand(LockControlCommand.class).matchCount(0).withCache(CACHE_NAME).build())
             .before("tx:block_remote_lock", "tx:resume_remote_lock");
 
 
