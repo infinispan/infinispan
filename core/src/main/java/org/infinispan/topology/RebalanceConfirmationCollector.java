@@ -77,7 +77,7 @@ class RebalanceConfirmationCollector {
       synchronized (this) {
          return "RebalanceConfirmationCollector{" +
                "cacheName=" + cacheName +
-               "topologyId=" + topologyId +
+               ", topologyId=" + topologyId +
                ", confirmationsNeeded=" + confirmationsNeeded +
                '}';
       }
