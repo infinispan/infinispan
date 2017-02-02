@@ -68,11 +68,6 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public String toString() {
       return new StringBuilder()
          .append("ClearCommand{flags=")

@@ -99,18 +99,6 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      if (ctx.isOriginLocal()) return true;
-      for (Object k : getKeys()) {
-         // If any key in the set of keys to invalidate is not local, or we are uncertain due to a rehash, then we
-         // process this command.
-         DataLocality locality = dm.getLocality(k);
-         if (!locality.isLocal() || locality.isUncertain()) return true;
-      }
-      return false;
-   }
-
-   @Override
    public Collection<?> getKeysToLock() {
       //no keys to lock
       return Collections.emptyList();

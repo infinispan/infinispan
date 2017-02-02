@@ -3,7 +3,6 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -62,11 +61,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    @Override
    public boolean isConditional() {
       return false;
-   }
-
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
    }
 
    @Override

@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
 /**
@@ -55,11 +54,6 @@ public abstract class AbstractDataCommand implements DataCommand {
 
    public void setKey(Object key) {
       this.key = key;
-   }
-
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
    }
 
    @Override
