@@ -12,7 +12,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
@@ -114,11 +113,6 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    @Override
    public boolean canBlock() {
       return true;
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

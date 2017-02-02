@@ -17,7 +17,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
@@ -175,18 +174,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public boolean hasSkipLocking() {
       return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      switch (status) {
-         case FAILED:
-         case STOPPING:
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-         }
    }
 
    @Override

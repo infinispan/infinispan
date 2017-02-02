@@ -17,7 +17,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.lifecycle.ComponentStatus;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
@@ -97,11 +96,6 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadOnlyManyCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

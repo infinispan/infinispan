@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -54,11 +53,6 @@ public abstract class AbstractDataCommand implements DataCommand {
 
    public void setKey(Object key) {
       this.key = key;
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

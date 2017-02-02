@@ -1049,7 +1049,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                throw log.cacheIsStopping(name);
             case TERMINATED:
             case FAILED:
-               throw log.cacheIsTerminated(name);
+               throw log.cacheIsTerminated(name, status.toString());
             default:
                throw new IllegalStateException("Status: " + status);
          }

@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
-import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * Abstract class
@@ -27,10 +26,6 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
 
    public final void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       //no-op
-   }
-
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    public boolean isReturnValueExpected() {

@@ -8,7 +8,6 @@ import java.io.Serializable;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * @author anistor@redhat.com
@@ -68,11 +67,6 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitUnknownCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

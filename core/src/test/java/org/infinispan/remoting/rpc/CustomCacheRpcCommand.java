@@ -9,7 +9,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.ByteString;
 
 /**
@@ -70,11 +69,6 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitUnknownCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

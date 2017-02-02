@@ -17,7 +17,6 @@ import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 
 
 /**
@@ -110,19 +109,6 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
          compositeKeys[i++] = new DeltaCompositeKey(key, k);
       }
       return compositeKeys;
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      switch (status) {
-         case FAILED:
-         case INITIALIZING:
-         case STOPPING:
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-         }
    }
 
    @Override
