@@ -44,14 +44,8 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
          if (cacheCommand instanceof RemoteLockCommand) {
             ctx.setLockOwner(((RemoteLockCommand) cacheCommand).getKeyLockOwner());
          }
-         if (vc.shouldInvoke(ctx)) {
-            if (trace) log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx.isOriginLocal());
-            return interceptorChain.invoke(ctx, vc);
-         } else {
-            if (trace) log.tracef("Not invoking command %s since shouldInvoke() returned false with context %s", cacheCommand, ctx);
-            return null;
-         }
-         // we only need to return values for a set of remote calls; not every call.
+         if (trace) log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx.isOriginLocal());
+         return interceptorChain.invoke(ctx, vc);
       } else {
          throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
       }
@@ -64,22 +58,13 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
          if (cacheCommand instanceof RemoteLockCommand) {
             ctx.setLockOwner(((RemoteLockCommand) cacheCommand).getKeyLockOwner());
          }
-         if (vc.shouldInvoke(ctx)) {
-            if (trace)
-               log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx
-                     .isOriginLocal());
-            return interceptorChain.invokeAsync(ctx, vc);
-         } else {
-            if (trace)
-               log.tracef("Not invoking command %s since shouldInvoke() returned false with context %s",
-                     cacheCommand, ctx);
-            return CompletableFutures.completedNull();
-         }
-         // we only need to return values for a set of remote calls; not every call.
+         if (trace)
+            log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx
+                  .isOriginLocal());
+         return interceptorChain.invokeAsync(ctx, vc);
       } else {
          throw new RuntimeException(
-               "Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() +
-                     ")");
+               "Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
       }
    }
 }

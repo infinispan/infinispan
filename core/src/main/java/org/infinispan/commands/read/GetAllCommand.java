@@ -7,10 +7,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
@@ -53,11 +51,6 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitGetAllCommand(ctx, this);
-   }
-
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
    }
 
    @Override
@@ -153,12 +146,6 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
 
    public <V> Map<Object, V> createMap() {
       return new LinkedHashMap<>();
-   }
-
-   private Set<Object> createSet(Object[] elements) {
-      HashSet<Object> set = new HashSet<>(elements.length);
-      for (Object element : elements) set.add(element);
-      return set;
    }
 
    public Collection<?> getKeys() {

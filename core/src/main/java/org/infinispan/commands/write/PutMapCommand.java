@@ -222,11 +222,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public boolean isSuccessful() {
       return true;
    }

@@ -71,11 +71,6 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

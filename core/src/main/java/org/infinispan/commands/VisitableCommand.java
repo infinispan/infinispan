@@ -36,12 +36,17 @@ public interface VisitableCommand extends ReplicableCommand {
 
    /**
     * Used by the InboundInvocationHandler to determine whether the command should be invoked or not.
+    *
     * @return true if the command should be invoked, false otherwise.
+    * @deprecated Since 9.0, no longer used.
     */
-   boolean shouldInvoke(InvocationContext ctx);
+   @Deprecated
+   default boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }
 
    /**
-    * Similar to {@link #shouldInvoke(InvocationContext)} but checks only the cache lifecycle state.
+    * Used to determine whether the command should be invoked or not.
     * Commands can opt to be discarded in case the cache status is not suited (as {@link InvalidateCommand})
     * @return true if the command should NOT be invoked.
     */

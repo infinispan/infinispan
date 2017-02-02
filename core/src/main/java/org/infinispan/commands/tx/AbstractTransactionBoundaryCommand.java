@@ -124,11 +124,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

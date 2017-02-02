@@ -73,11 +73,6 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

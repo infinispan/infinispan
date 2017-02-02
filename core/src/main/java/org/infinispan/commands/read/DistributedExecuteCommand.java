@@ -83,11 +83,6 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       throw new UnsupportedOperationException();
    }

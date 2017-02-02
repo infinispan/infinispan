@@ -125,11 +125,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
       return visitor.visitInvalidateCommand(ctx, this);
    }
 
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
    public Object[] getKeys() {
       return keys;
    }
