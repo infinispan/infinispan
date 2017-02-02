@@ -316,8 +316,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
          ConsistentHash unionCH = null;
          if (cacheTopology.getPendingCH() != null) {
-            unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),
-                  cacheTopology.getPendingCH());
+            if (cacheTopology.getPhase() == CacheTopology.Phase.READ_NEW_WRITE_ALL) {
+               // When removing members from topology, we have to make sure that the unionCH has
+               // owners from pendingCH (which is used as the readCH in this phase) before
+               // owners from currentCH, as primary owners must match in readCH and writeCH.
+               unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
+                     cacheTopology.getPendingCH(), cacheTopology.getCurrentCH());
+            } else {
+               unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
+                     cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+            }
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
