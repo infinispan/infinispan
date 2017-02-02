@@ -48,9 +48,14 @@ public interface VisitableCommand extends ReplicableCommand {
    /**
     * Used to determine whether the command should be invoked or not.
     * Commands can opt to be discarded in case the cache status is not suited (as {@link InvalidateCommand})
+    *
     * @return true if the command should NOT be invoked.
+    * @deprecated Since 9.0, no longer used.
     */
-   boolean ignoreCommandOnStatus(ComponentStatus status);
+   @Deprecated
+   default boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
 
    /**
     * @return Nodes on which the command needs to read the previous values of the keys it acts on.

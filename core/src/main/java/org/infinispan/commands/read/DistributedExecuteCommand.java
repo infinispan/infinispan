@@ -20,7 +20,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.ByteString;
 
 /**
@@ -70,11 +69,6 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitDistributedExecuteCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

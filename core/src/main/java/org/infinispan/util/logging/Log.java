@@ -1135,9 +1135,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to re-start x-site state transfer to site %s", id = 322)
    void failedToRestartXSiteStateTransfer(String siteName, @Cause Throwable cause);
 
-   @Message(value = "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
+   @Message(value = "%s is in '%s' state and so it does not accept new invocations. " +
          "Either restart it or recreate the cache container.", id = 323)
-   IllegalLifecycleStateException cacheIsTerminated(String cacheName);
+   IllegalLifecycleStateException cacheIsTerminated(String cacheName, String state);
 
    @Message(value = "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
          "Either restart it or recreate the cache container.", id = 324)
@@ -1512,4 +1512,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Received new x-site view: %s", id = 439)
    void receivedXSiteClusterView(Set<String> view);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error sending response for command %s", id = 440)
+   void errorSendingResponse(ReplicableCommand command);
 }

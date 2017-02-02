@@ -12,7 +12,6 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
@@ -138,18 +137,6 @@ public class RemoveExpiredCommand extends RemoveCommand {
       } else {
          lifespan = null;
       }
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      switch (status) {
-         case FAILED:
-         case STOPPING:
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-         }
    }
 
    @Override

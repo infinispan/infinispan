@@ -17,7 +17,6 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,12 +50,6 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitGetAllCommand(ctx, this);
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      // TODO: this should only be ignored when it is ran in a remote context
-      return status != ComponentStatus.RUNNING && status != ComponentStatus.INITIALIZING;
    }
 
    @Override

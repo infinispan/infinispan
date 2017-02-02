@@ -5,7 +5,6 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
@@ -66,11 +65,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    @Override
    public boolean canBlock() {
       return true;
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override

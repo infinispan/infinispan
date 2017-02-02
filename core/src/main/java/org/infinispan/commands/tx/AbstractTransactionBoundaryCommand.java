@@ -9,7 +9,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -121,11 +120,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       globalTx = (GlobalTransaction) input.readObject();
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
    }
 
    @Override
