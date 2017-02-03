@@ -173,9 +173,6 @@ public class RemoteCacheManager implements RemoteCacheContainer {
 
    @Override
    public void start() {
-      // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
-      SecurityActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
-
       transportFactory = Util.getInstance(configuration.transportFactory());
 
       if (marshaller == null) {
