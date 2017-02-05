@@ -46,7 +46,7 @@
           min_threshold="0.40"/>
     <MFC max_credits="2M"
           min_threshold="0.40"/>
-    <FRAG2 frag_size="8000"/>
+    <FRAG3 frag_size="8000"/>
     <RELAY site="nyc" bridge_props="config-samples/jgroups-tcp.xml" />
 
 </config>

@@ -303,7 +303,7 @@ public class JGroupsConfigBuilder {
       STABLE,
       GMS,
       UFC, MFC, FC,
-      FRAG2,
+      FRAG2, FRAG3,
       STREAMING_STATE_TRANSFER,
       RELAY2,
       TOA

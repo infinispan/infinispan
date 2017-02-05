@@ -173,7 +173,7 @@
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>
-                <protocol type="FRAG2">
+                <protocol type="FRAG3">
                     <property name="frag_size">8000</property>
                 </protocol>
                 <protocol type="RSVP">

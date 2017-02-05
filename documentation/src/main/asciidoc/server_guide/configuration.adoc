@@ -48,7 +48,7 @@ The following are the default stacks:
     <protocol type="pbcast.GMS"/>
     <protocol type="UFC"/>
     <protocol type="MFC"/>
-    <protocol type="FRAG2"/>
+    <protocol type="FRAG3"/>
 </stack>
 <stack name="tcp">
     <transport type="TCP" socket-binding="jgroups-tcp"/>
