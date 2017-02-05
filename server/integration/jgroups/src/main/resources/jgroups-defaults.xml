@@ -81,6 +81,7 @@
       max_credits="2m" 
       min_threshold="0.40"/>
    <FRAG2 frag_size="8000"/>
+   <FRAG3 frag_size="8000"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false"/>
    <pbcast.STATE_TRANSFER/>
    <pbcast.FLUSH timeout="0" start_flush_timeout="10000"/>

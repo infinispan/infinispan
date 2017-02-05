@@ -21,7 +21,7 @@
         <protocol type="pbcast.GMS"/>
         <protocol type="UFC"/>
         <protocol type="MFC"/>
-        <protocol type="FRAG2"/>
+        <protocol type="FRAG3"/>
         <protocol type="RSVP"/>
         <relay site="LONDON">
             <remote-site name="SFO" stack="minimal" cluster="bridge"/>

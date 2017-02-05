@@ -116,7 +116,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     protected Set<PathAddress> getIgnoredChildResourcesForRemovalTest() {
         String[] protocols = { "UDP", "TCP", "MPING", "MERGE2", "FD_SOCK", "FD", "VERIFY_SUSPECT", "BARRIER",
                 "pbcast.NAKACK", "pbcast.NAKACK2", "UNICAST2", "pbcast.STABLE", "pbcast.GMS", "UFC",
-                "MFC", "FRAG2", "pbcast.STATE_TRANSFER", "pbcast.FLUSH",  "RSVP", "relay.RELAY2" };
+                "MFC", "FRAG3", "pbcast.STATE_TRANSFER", "pbcast.FLUSH",  "RSVP", "relay.RELAY2" };
 
         Set<PathAddress> addresses = new HashSet<>();
 
@@ -190,7 +190,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
         ///subsystem=jgroups:add(default-stack=udp)
         op.get("default-stack").set("udp");
         ops.add(op);
-        //subsystem=jgroups/stack=udp:add(transport={"type"=>"UDP","socket-binding"=>"jgroups-udp"},protocols=["PING","MERGE3","FD_SOCK","FD","VERIFY_SUSPECT","BARRIER","pbcast.NAKACK2","UNICAST2","pbcast.STABLE","pbcast.GMS","UFC","MFC","FRAG2","RSVP"])
+        //subsystem=jgroups/stack=udp:add(transport={"type"=>"UDP","socket-binding"=>"jgroups-udp"},protocols=["PING","MERGE3","FD_SOCK","FD","VERIFY_SUSPECT","BARRIER","pbcast.NAKACK2","UNICAST2","pbcast.STABLE","pbcast.GMS","UFC","MFC","FRAG3","RSVP"])
         op = Util.createAddOperation(udpAddress);
         ModelNode transport = new ModelNode();
         transport.get("type").set("UDP");
@@ -198,7 +198,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
         ModelNode protocols = new ModelNode();
         String[] protocolList = {"PING", "MERGE3", "FD_SOCK", "FD", "VERIFY_SUSPECT", "BARRIER", "pbcast.NAKACK2", "UNICAST2",
-                          "pbcast.STABLE", "pbcast.GMS", "UFC", "MFC", "FRAG2", "RSVP"} ;
+                          "pbcast.STABLE", "pbcast.GMS", "UFC", "MFC", "FRAG3", "RSVP"} ;
 
         for (int i = 0; i < protocolList.length; i++) {
             ModelNode protocol = new ModelNode();
