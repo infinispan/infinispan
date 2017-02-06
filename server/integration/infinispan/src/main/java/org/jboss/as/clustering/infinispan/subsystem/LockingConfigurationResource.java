@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.LockingConfiguration;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
@@ -50,7 +51,7 @@ public class LockingConfigurationResource extends CacheConfigurationChildResourc
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(10000))
+                    .setDefaultValue(new ModelNode().set(LockingConfiguration.LOCK_ACQUISITION_TIMEOUT.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition CONCURRENCY_LEVEL =
@@ -58,7 +59,7 @@ public class LockingConfigurationResource extends CacheConfigurationChildResourc
                     .setXmlName(Attribute.CONCURRENCY_LEVEL.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(32))
+                    .setDefaultValue(new ModelNode().set(LockingConfiguration.CONCURRENCY_LEVEL.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition ISOLATION =
@@ -67,7 +68,7 @@ public class LockingConfigurationResource extends CacheConfigurationChildResourc
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(IsolationLevel.class, true, false))
-                    .setDefaultValue(new ModelNode().set(IsolationLevel.READ_COMMITTED.name()))
+                    .setDefaultValue(new ModelNode().set(LockingConfiguration.ISOLATION_LEVEL.getDefaultValue().name()))
                     .build();
 
     static final SimpleAttributeDefinition STRIPING =
@@ -75,7 +76,7 @@ public class LockingConfigurationResource extends CacheConfigurationChildResourc
                     .setXmlName(Attribute.STRIPING.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(LockingConfiguration.USE_LOCK_STRIPING.getDefaultValue()))
                     .build();
 
     static final AttributeDefinition[] ATTRIBUTES = { ACQUIRE_TIMEOUT, CONCURRENCY_LEVEL, ISOLATION, STRIPING };

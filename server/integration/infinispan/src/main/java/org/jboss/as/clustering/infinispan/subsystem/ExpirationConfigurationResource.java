@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -48,7 +49,7 @@ public class ExpirationConfigurationResource extends CacheConfigurationChildReso
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(60000))
+                    .setDefaultValue(new ModelNode().set(ExpirationConfiguration.WAKEUP_INTERVAL.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition LIFESPAN =
@@ -57,7 +58,7 @@ public class ExpirationConfigurationResource extends CacheConfigurationChildReso
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(-1))
+                    .setDefaultValue(new ModelNode().set(ExpirationConfiguration.LIFESPAN.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition MAX_IDLE =
@@ -66,7 +67,7 @@ public class ExpirationConfigurationResource extends CacheConfigurationChildReso
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(-1))
+                    .setDefaultValue(new ModelNode().set(ExpirationConfiguration.MAX_IDLE.getDefaultValue()))
                     .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {MAX_IDLE, LIFESPAN, INTERVAL};

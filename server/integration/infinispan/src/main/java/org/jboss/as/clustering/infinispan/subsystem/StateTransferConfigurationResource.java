@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.StateTransferConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -47,7 +48,7 @@ public class StateTransferConfigurationResource extends CacheConfigurationChildR
                     .setXmlName(Attribute.ENABLED.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(StateTransferConfiguration.AWAIT_INITIAL_TRANSFER.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition CHUNK_SIZE =
@@ -55,7 +56,7 @@ public class StateTransferConfigurationResource extends CacheConfigurationChildR
                     .setXmlName(Attribute.CHUNK_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(512))
+                    .setDefaultValue(new ModelNode().set(StateTransferConfiguration.CHUNK_SIZE.getDefaultValue()))
                     .build();
 
     // enabled (used in state transfer, rehashing)
@@ -74,7 +75,7 @@ public class StateTransferConfigurationResource extends CacheConfigurationChildR
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(240000))
+                    .setDefaultValue(new ModelNode().set(StateTransferConfiguration.TIMEOUT.getDefaultValue()))
                     .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {AWAIT_INITIAL_TRANSFER, ENABLED, TIMEOUT, CHUNK_SIZE};

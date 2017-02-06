@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.InvocationBatchingConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -49,7 +50,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setXmlName(Attribute.BATCHING.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(InvocationBatchingConfiguration.ENABLED.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition CACHE_MODULE =

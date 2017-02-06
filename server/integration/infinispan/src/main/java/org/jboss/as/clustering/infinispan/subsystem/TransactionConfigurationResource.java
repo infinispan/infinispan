@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
@@ -51,7 +52,7 @@ public class TransactionConfigurationResource extends CacheConfigurationChildRes
                     .setAllowExpression(true)
                     .setValidator(new EnumValidator<>(LockingMode.class, true, false))
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(LockingMode.OPTIMISTIC.name()))
+                    .setDefaultValue(new ModelNode().set(TransactionConfiguration.LOCKING_MODE.getDefaultValue().name()))
                     .build();
     static final SimpleAttributeDefinition MODE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, true)
@@ -67,14 +68,14 @@ public class TransactionConfigurationResource extends CacheConfigurationChildRes
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(30000))
+                    .setDefaultValue(new ModelNode().set(TransactionConfiguration.CACHE_STOP_TIMEOUT.getDefaultValue()))
                     .build();
    static final SimpleAttributeDefinition NOTIFICATIONS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.NOTIFICATIONS, ModelType.BOOLEAN, true)
                    .setXmlName(Attribute.NOTIFICATIONS.getLocalName())
                    .setAllowExpression(false)
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                   .setDefaultValue(new ModelNode().set(true))
+                   .setDefaultValue(new ModelNode().set(TransactionConfiguration.NOTIFICATIONS.getDefaultValue()))
                    .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {MODE, STOP_TIMEOUT, LOCKING, NOTIFICATIONS};

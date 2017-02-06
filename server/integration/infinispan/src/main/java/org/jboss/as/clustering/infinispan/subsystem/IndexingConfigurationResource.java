@@ -3,6 +3,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.AttributeMarshaller;
 import org.jboss.as.controller.PathElement;
@@ -40,7 +41,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
                 .setXmlName(Attribute.AUTO_CONFIG.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                .setDefaultValue(new ModelNode().set(false))
+                .setDefaultValue(new ModelNode().set(IndexingConfiguration.AUTO_CONFIG.getDefaultValue()))
                 .build();
 
     static final StringListAttributeDefinition INDEXED_ENTITIES = new StringListAttributeDefinition.Builder(ModelKeys.INDEXED_ENTITIES)

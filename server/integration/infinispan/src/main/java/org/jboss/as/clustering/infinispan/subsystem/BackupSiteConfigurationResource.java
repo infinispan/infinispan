@@ -22,8 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -47,7 +49,7 @@ public class BackupSiteConfigurationResource extends CacheChildResource {
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .setValidator(new EnumValidator<>(BackupFailurePolicy.class, true, true))
-            .setDefaultValue(new ModelNode().set(BackupFailurePolicy.WARN.name()))
+            .setDefaultValue(new ModelNode().set(BackupConfiguration.FAILURE_POLICY.getDefaultValue().name()))
             .build()
     ;
     static final SimpleAttributeDefinition STRATEGY = new SimpleAttributeDefinitionBuilder(ModelKeys.BACKUP_STRATEGY, ModelType.STRING, true)
@@ -55,35 +57,35 @@ public class BackupSiteConfigurationResource extends CacheChildResource {
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .setValidator(new EnumValidator<>(BackupStrategy.class, true, true))
-            .setDefaultValue(new ModelNode().set(BackupStrategy.ASYNC.name()))
+            .setDefaultValue(new ModelNode().set(BackupConfiguration.STRATEGY.getDefaultValue().name()))
             .build()
     ;
     static final SimpleAttributeDefinition REPLICATION_TIMEOUT = new SimpleAttributeDefinitionBuilder(ModelKeys.TIMEOUT, ModelType.STRING, true)
             .setXmlName(Attribute.TIMEOUT.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(10000L))
+            .setDefaultValue(new ModelNode().set(BackupConfiguration.REPLICATION_TIMEOUT.getDefaultValue()))
             .build()
     ;
     static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
             .setXmlName(Attribute.ENABLED.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(true))
+            .setDefaultValue(new ModelNode().set(BackupConfiguration.ENABLED.getDefaultValue()))
             .build()
     ;
     static final SimpleAttributeDefinition TAKE_OFFLINE_AFTER_FAILURES = new SimpleAttributeDefinitionBuilder(ModelKeys.TAKE_BACKUP_OFFLINE_AFTER_FAILURES, ModelType.INT, true)
             .setXmlName(Attribute.TAKE_BACKUP_OFFLINE_AFTER_FAILURES.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(0))
+            .setDefaultValue(new ModelNode().set(TakeOfflineConfiguration.AFTER_FAILURES.getDefaultValue()))
             .build()
     ;
     static final SimpleAttributeDefinition TAKE_OFFLINE_MIN_WAIT = new SimpleAttributeDefinitionBuilder(ModelKeys.TAKE_BACKUP_OFFLINE_MIN_WAIT, ModelType.INT, true)
             .setXmlName(Attribute.TAKE_BACKUP_OFFLINE_MIN_WAIT.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(0))
+            .setDefaultValue(new ModelNode().set(TakeOfflineConfiguration.MIN_TIME_TO_WAIT.getDefaultValue()))
             .build()
     ;
 

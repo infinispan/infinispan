@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -59,7 +60,7 @@ public class DistributedCacheConfigurationResource extends SharedCacheConfigurat
                     .setXmlName(Attribute.OWNERS.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(2))
+                    .setDefaultValue(new ModelNode().set(HashConfiguration.NUM_OWNERS.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition SEGMENTS =
@@ -67,7 +68,7 @@ public class DistributedCacheConfigurationResource extends SharedCacheConfigurat
                     .setXmlName(Attribute.SEGMENTS.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(80)) // Recommended value is 10 * max_cluster_size.
+                    .setDefaultValue(new ModelNode().set(HashConfiguration.NUM_SEGMENTS.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition CAPACITY_FACTOR =
@@ -75,7 +76,7 @@ public class DistributedCacheConfigurationResource extends SharedCacheConfigurat
                     .setXmlName(Attribute.CAPACITY_FACTOR.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(1.0))
+                    .setDefaultValue(new ModelNode().set(HashConfiguration.CAPACITY_FACTOR.getDefaultValue()))
                     .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {OWNERS, SEGMENTS, CAPACITY_FACTOR, L1_LIFESPAN};
