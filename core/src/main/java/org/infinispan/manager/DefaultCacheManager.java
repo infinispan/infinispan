@@ -369,13 +369,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (existing != null)
             builder.read(existing);
       }
+      boolean template = true;
       for (Configuration configuration : configurations) {
          if (configuration != null) {
             builder.read(configuration);
+            template = template && configuration.isTemplate();
          } else {
             throw new NullPointerException("Null arguments not allowed");
          }
       }
+      builder.template(template);
       return configurationManager.putConfiguration(name, builder);
    }
 
