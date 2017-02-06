@@ -10,15 +10,9 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default" statistics="true">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
-            </local-cache>
-            <local-cache name="memcachedCache" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
-            </local-cache>
-            <local-cache name="namedCache" start="EAGER" />
+            <local-cache name="default" />
+            <local-cache name="memcachedCache"/>
+            <local-cache name="namedCache" />
          </cache-container>
       </replacement>
    </supplement>
@@ -29,27 +23,27 @@
             <transport lock-timeout="60000" />
             <global-state />
 
-            <distributed-cache-configuration name="transactional" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="transactional" mode="SYNC">
                <transaction mode="NON_XA" locking="PESSIMISTIC"/>
             </distributed-cache-configuration>
 
-            <replicated-cache-configuration name="replicated" mode="SYNC" start="EAGER" />
+            <replicated-cache-configuration name="replicated" mode="SYNC" />
 
-            <distributed-cache-configuration name="persistent-file-store" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="persistent-file-store" mode="SYNC">
                <file-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="indexed" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="indexed" mode="SYNC">
                <indexing index="LOCAL" auto-config="true"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="memory-bounded" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="memory-bounded" mode="SYNC">
                <memory>
                   <binary size="10000000" eviction="MEMORY"/>
                </memory>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC">
                <memory>
                   <object size="10000"/>
                </memory>
@@ -58,17 +52,17 @@
                </file-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-file-store-write-behind" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="persistent-file-store-write-behind" mode="SYNC">
                <file-store shared="false" fetch-state="true" passivation="false">
                   <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-rocksdb-store" mode="SYNC" start="EAGER">
+            <distributed-cache-configuration name="persistent-rocksdb-store" mode="SYNC">
                <rocksdb-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-jdbc-string-keyed" mode="SYNC" owners="2" start="EAGER">
+            <distributed-cache-configuration name="persistent-jdbc-string-keyed" mode="SYNC">
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="false" purge="false" shared="false" passivation="false">
                   <string-keyed-table prefix="ISPN">
                      <id-column name="id" type="VARCHAR" />
@@ -79,15 +73,11 @@
                </string-keyed-jdbc-store>
             </distributed-cache-configuration>
 
-            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
-            </distributed-cache>
+            <distributed-cache name="default" mode="SYNC" />
 
-            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
-            </distributed-cache>
+            <replicated-cache name="repl" configuration="replicated"/>
+
+            <distributed-cache name="memcachedCache" mode="SYNC" />
 
          </cache-container>
       </replacement>
@@ -98,18 +88,17 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
+            <local-cache name="default">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <memory>
                   <object size="1000"/>
                </memory>
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
-            <local-cache name="memcachedCache" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="memcachedCache">
                <file-store passivation="false" path="mc" purge="true" shared="false" />
             </local-cache>
-            <local-cache name="namedCache" start="EAGER">
+            <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <file-store passivation="false" path="nc" purge="true" shared="false">
                   <write-behind modification-queue-size="1024" thread-pool-size="1" />
@@ -123,20 +112,18 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <memory>
                   <object size="1000"/>
                </memory>
                <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
             </local-cache>
-            <local-cache name="memcachedCache" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="memcachedCache">
                <rocksdb-store passivation="false" path="rocksdb-mc" purge="true" shared="false">
                   <expiration path="rocksdb-mc-expired"/>
                </rocksdb-store>
             </local-cache>
-            <local-cache name="namedCache" start="EAGER">
+            <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <rocksdb-store path="rocksdb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
                   <expiration path="rocksdb-nc-expired" queue-size="2000"/>
@@ -151,8 +138,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
@@ -166,7 +152,7 @@
          <cache-container name="clustered" default-cache="default" >
             <transport lock-timeout="60000" />
             <global-state />
-            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+            <distributed-cache name="default" mode="SYNC" remote-timeout="30000">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                 <memory>
                     <object size="1000"/>
@@ -180,7 +166,7 @@
                </string-keyed-jdbc-store>
             </distributed-cache>
 
-            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+            <distributed-cache name="memcachedCache" mode="SYNC" remote-timeout="30000">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <memory>
                   <object size="1000"/>
@@ -195,7 +181,7 @@
                </string-keyed-jdbc-store>
             </distributed-cache>
 
-            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
+            <distributed-cache name="namedCache" mode="SYNC">
                <expiration lifespan="2000" max-idle="1000" />
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_NC_SK">
@@ -213,8 +199,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <memory>
                   <object size="1000"/>
                </memory>
@@ -222,7 +207,7 @@
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
-            <local-cache name="memcachedCache" start="EAGER">
+            <local-cache name="memcachedCache">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <memory>
                   <object size="1000"/>
@@ -231,7 +216,7 @@
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
-            <local-cache name="namedCache" start="EAGER">
+            <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <remote-store cache="namedCache" socket-timeout="60000" tcp-no-delay="true" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
@@ -245,13 +230,12 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <memory>
                   <object size="1000"/>
                </memory>
             </local-cache>
-            <local-cache name="namedCache" start="EAGER">
+            <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
             </local-cache>
          </cache-container>
@@ -262,8 +246,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
                   <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
                   <remote-server outbound-socket-binding="remote-store-rest-server" />
@@ -278,23 +261,21 @@
          <cache-container name="clustered" default-cache="default" >
             <global-state />
             <transport lock-timeout="60000"/>
-            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <distributed-cache name="default" mode="SYNC" remote-timeout="30000">
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
                </backups>
             </distributed-cache>
 
-            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <distributed-cache name="memcachedCache" mode="SYNC" remote-timeout="30000">
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
                </backups>
             </distributed-cache>
 
-            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
+            <distributed-cache name="namedCache" mode="SYNC">
                <expiration lifespan="2000" max-idle="1000" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
@@ -309,8 +290,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+            <local-cache name="default">
                <compatibility enabled="true" />
             </local-cache>
          </cache-container>
@@ -330,9 +310,7 @@
                     <role name="supervisor" permissions="ALL_READ ALL_WRITE"/>
                 </authorization>
             </security>
-            <local-cache name="default" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-            </local-cache>
+            <local-cache name="default" />
             <local-cache name="secured">
                 <security>
                     <authorization roles="admin reader writer supervisor" />
@@ -347,22 +325,22 @@
          <cache-container name="clustered" default-cache="default" statistics="true">
             <transport lock-timeout="60000"/>
             <global-state />
-            <distributed-cache name="default" mode="SYNC" start="EAGER"/>
+            <distributed-cache name="default" mode="SYNC"/>
             <!-- Indexes are local to each node, stored on the filesystem -->
-            <replicated-cache name="OnDiskNonSharedIndex" mode="SYNC" start="EAGER">
+            <replicated-cache name="OnDiskNonSharedIndex" mode="SYNC">
                <indexing index="ALL">
                   <property name="default.indexmanager">near-real-time</property>
                   <property name="default.indexBase">${java.io.tmpdir}/OnDiskNonSharedIndex</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored in memory -->
-            <replicated-cache name="InMemoryNonSharedIndex" mode="SYNC" start="EAGER">
+            <replicated-cache name="InMemoryNonSharedIndex" mode="SYNC">
                <indexing index="ALL">
                   <property name="default.directory_provider">ram</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->
-            <replicated-cache name="InfinispanCustomNonSharedIndex" mode="SYNC" start="EAGER">
+            <replicated-cache name="InfinispanCustomNonSharedIndex" mode="SYNC">
                <indexing index="ALL">
                   <property name="default.directory_provider">infinispan</property>
                   <property name="default.metadata_cachename">indexMetadata</property>
@@ -370,26 +348,23 @@
                   <property name="default.locking_cachename">indexLocking</property>
                </indexing>
             </replicated-cache>
-            <local-cache name="indexMetadata" start="EAGER">
-               <indexing index="NONE"/>
+            <local-cache name="indexMetadata">
             </local-cache>
-            <local-cache name="indexData" start="EAGER">
-               <indexing index="NONE"/>
+            <local-cache name="indexData">
             </local-cache>
-            <local-cache name="indexLocking" start="EAGER">
-               <indexing index="NONE"/>
+            <local-cache name="indexLocking">
             </local-cache>
             <!-- Indexes are shared between all nodes, stored on infinispan itself -->
-            <distributed-cache name="InfinispanSharedIndex" mode="SYNC" start="EAGER">
+            <distributed-cache name="InfinispanSharedIndex" mode="SYNC">
                <indexing index="LOCAL">
                   <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                </indexing>
             </distributed-cache>
             <!-- Auto config based on cache type -->
-            <distributed-cache name="sharedIndexInfinispanDirectory" mode="SYNC" start="EAGER">
+            <distributed-cache name="sharedIndexInfinispanDirectory" mode="SYNC">
                <indexing index="LOCAL" auto-config="true"/>
             </distributed-cache>
-            <replicated-cache name="nearRealtimeFileSystemIndex" mode="SYNC" start="EAGER">
+            <replicated-cache name="nearRealtimeFileSystemIndex" mode="SYNC">
                <indexing index="ALL" auto-config="true"/>
             </replicated-cache>
          </cache-container>
@@ -402,4 +377,3 @@
       <remote-destination host="remote-host" port="8080" />
    </outbound-socket-binding>
 </config>
-
