@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder;
+import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
@@ -50,25 +50,25 @@ static final SimpleAttributeDefinition STATE_TRANSFER_CHUNK_SIZE = new SimpleAtt
          .setXmlName(Attribute.CHUNK_SIZE.getLocalName())
          .setAllowExpression(true)
          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfigurationBuilder.DEFAULT_CHUNK_SIZE))
+         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfiguration.DEFAULT_CHUNK_SIZE))
          .build();
    static final SimpleAttributeDefinition STATE_TRANSFER_TIMEOUT = new SimpleAttributeDefinitionBuilder(ModelKeys.TIMEOUT, ModelType.LONG, true)
          .setXmlName(Attribute.TIMEOUT.getLocalName())
          .setAllowExpression(true)
          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfigurationBuilder.DEFAULT_TIMEOUT))
+         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfiguration.DEFAULT_TIMEOUT))
          .build();
    static final SimpleAttributeDefinition STATE_TRANSFER_WAIT_TIME = new SimpleAttributeDefinitionBuilder(ModelKeys.WAIT_TIME, ModelType.LONG, true)
          .setXmlName(Attribute.WAIT_TIME.getLocalName())
          .setAllowExpression(true)
          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfigurationBuilder.DEFAULT_WAIT_TIME))
+         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfiguration.DEFAULT_WAIT_TIME))
          .build();
    static final SimpleAttributeDefinition STATE_TRANSFER_MAX_RETRIES = new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_RETRIES, ModelType.INT, true)
          .setXmlName(Attribute.MAX_RETRIES.getLocalName())
          .setAllowExpression(true)
          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfigurationBuilder.DEFAULT_MAX_RETRIES))
+         .setDefaultValue(new ModelNode().set(XSiteStateTransferConfiguration.DEFAULT_MAX_RETRIES))
          .build();
 
    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[]{STATE_TRANSFER_CHUNK_SIZE, STATE_TRANSFER_MAX_RETRIES, STATE_TRANSFER_TIMEOUT, STATE_TRANSFER_WAIT_TIME};

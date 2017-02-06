@@ -22,13 +22,13 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.eviction.EvictionType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -50,7 +50,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
                 .setXmlName(Attribute.SIZE.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(-1))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.SIZE.getDefaultValue()))
                 .build();
 
     static final SimpleAttributeDefinition EVICTION =
@@ -59,7 +59,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setValidator(new EnumValidator<>(EvictionType.class, true, false))
-                .setDefaultValue(new ModelNode().set(EvictionType.COUNT.name()))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.EVICTION_TYPE.getDefaultValue().name()))
                 .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {SIZE, EVICTION};

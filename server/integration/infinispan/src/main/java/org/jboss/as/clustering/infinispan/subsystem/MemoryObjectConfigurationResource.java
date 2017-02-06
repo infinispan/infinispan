@@ -22,13 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.eviction.EvictionType;
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
@@ -49,7 +47,7 @@ public class MemoryObjectConfigurationResource extends CacheConfigurationChildRe
                 .setXmlName(Attribute.SIZE.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(-1))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.SIZE.getDefaultValue()))
                 .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {SIZE};

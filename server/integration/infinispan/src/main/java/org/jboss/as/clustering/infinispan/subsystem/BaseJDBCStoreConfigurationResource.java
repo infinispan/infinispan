@@ -24,6 +24,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.PathElement;
@@ -75,14 +76,14 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setXmlName(Attribute.BATCH_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(100))
+                    .setDefaultValue(new ModelNode().set(TableManipulationConfiguration.BATCH_SIZE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition FETCH_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.FETCH_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.FETCH_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(100))
+                    .setDefaultValue(new ModelNode().set(TableManipulationConfiguration.FETCH_SIZE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition PREFIX =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PREFIX, ModelType.STRING, true)
@@ -95,14 +96,14 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setXmlName(Attribute.CREATE_ON_START.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(TableManipulationConfiguration.CREATE_ON_START.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition DROP_ON_EXIT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.DROP_ON_EXIT, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.DROP_ON_EXIT.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(TableManipulationConfiguration.DROP_ON_EXIT.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition COLUMN_NAME =

@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.eviction.EvictionType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
@@ -49,7 +50,7 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
                 .setXmlName(Attribute.SIZE.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(-1))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.SIZE.getDefaultValue()))
                 .build();
 
     static final SimpleAttributeDefinition EVICTION =
@@ -58,7 +59,7 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setValidator(new EnumValidator<>(EvictionType.class, true, false))
-                .setDefaultValue(new ModelNode().set(EvictionType.COUNT.name()))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.EVICTION_TYPE.getDefaultValue().name()))
                 .build();
 
     static final SimpleAttributeDefinition ADDRESS_COUNT =
@@ -66,7 +67,7 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
                 .setXmlName(Attribute.ADDRESS_COUNT.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(-1))
+                .setDefaultValue(new ModelNode().set(MemoryConfiguration.ADDRESS_COUNT.getDefaultValue()))
                 .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {ADDRESS_COUNT, SIZE, EVICTION};

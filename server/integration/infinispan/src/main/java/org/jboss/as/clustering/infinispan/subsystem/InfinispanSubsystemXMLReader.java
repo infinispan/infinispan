@@ -1130,7 +1130,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     throw ParseUtils.unexpectedElement(reader);
             }
             if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-                ParseUtils.unexpectedElement(reader);
+                throw ParseUtils.unexpectedElement(reader);
             }
         }
     }
