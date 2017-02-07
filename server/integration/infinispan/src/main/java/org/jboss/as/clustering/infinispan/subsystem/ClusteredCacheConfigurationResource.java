@@ -51,6 +51,7 @@ public class ClusteredCacheConfigurationResource extends CacheConfigurationResou
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(Mode.class, false, true))
                     .setAlternatives(ModelKeys.CONFIGURATION)
+                    .setDefaultValue(new ModelNode().set(Mode.SYNC.toString()))
                     .build();
 
     static final SimpleAttributeDefinition REMOTE_TIMEOUT =

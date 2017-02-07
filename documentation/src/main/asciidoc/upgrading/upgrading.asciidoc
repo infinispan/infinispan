@@ -9,6 +9,9 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
 
+=== Clustering configuration changes
+The `mode` attribute in the XML declaration of clustered caches is no longer mandatory. It defaults to SYNC.
+
 === Default Cache changes
 Up to Infinispan 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
 Additionally, the default cache configuration affected all other cache configurations, acting as some kind of base template.
@@ -108,7 +111,7 @@ annotations are present on the store or configuration class, then a your store w
 with a warning that additional store validation cannot be completed.
 
 === Server authentication changes
-The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified. 
+The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified.
 
 
 == Upgrading from 8.1 to 8.2

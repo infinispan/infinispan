@@ -23,27 +23,29 @@
             <transport lock-timeout="60000" />
             <global-state />
 
-            <distributed-cache-configuration name="transactional" mode="SYNC">
+            <distributed-cache-configuration name="transactional">
                <transaction mode="NON_XA" locking="PESSIMISTIC"/>
             </distributed-cache-configuration>
 
-            <replicated-cache-configuration name="replicated" mode="SYNC" />
+            <distributed-cache-configuration name="async" mode="ASYNC" />
 
-            <distributed-cache-configuration name="persistent-file-store" mode="SYNC">
+            <replicated-cache-configuration name="replicated" />
+
+            <distributed-cache-configuration name="persistent-file-store">
                <file-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="indexed" mode="SYNC">
+            <distributed-cache-configuration name="indexed">
                <indexing index="LOCAL" auto-config="true"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="memory-bounded" mode="SYNC">
+            <distributed-cache-configuration name="memory-bounded">
                <memory>
                   <binary size="10000000" eviction="MEMORY"/>
                </memory>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC">
+            <distributed-cache-configuration name="persistent-file-store-passivation">
                <memory>
                   <object size="10000"/>
                </memory>
@@ -52,17 +54,17 @@
                </file-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-file-store-write-behind" mode="SYNC">
+            <distributed-cache-configuration name="persistent-file-store-write-behind">
                <file-store shared="false" fetch-state="true" passivation="false">
                   <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-rocksdb-store" mode="SYNC">
+            <distributed-cache-configuration name="persistent-rocksdb-store">
                <rocksdb-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
 
-            <distributed-cache-configuration name="persistent-jdbc-string-keyed" mode="SYNC">
+            <distributed-cache-configuration name="persistent-jdbc-string-keyed">
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="false" purge="false" shared="false" passivation="false">
                   <string-keyed-table prefix="ISPN">
                      <id-column name="id" type="VARCHAR" />
@@ -73,11 +75,11 @@
                </string-keyed-jdbc-store>
             </distributed-cache-configuration>
 
-            <distributed-cache name="default" mode="SYNC" />
+            <distributed-cache name="default" />
 
             <replicated-cache name="repl" configuration="replicated"/>
 
-            <distributed-cache name="memcachedCache" mode="SYNC" />
+            <distributed-cache name="memcachedCache" />
 
          </cache-container>
       </replacement>
@@ -152,7 +154,7 @@
          <cache-container name="clustered" default-cache="default" >
             <transport lock-timeout="60000" />
             <global-state />
-            <distributed-cache name="default" mode="SYNC" remote-timeout="30000">
+            <distributed-cache name="default" remote-timeout="30000">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                 <memory>
                     <object size="1000"/>
@@ -166,7 +168,7 @@
                </string-keyed-jdbc-store>
             </distributed-cache>
 
-            <distributed-cache name="memcachedCache" mode="SYNC" remote-timeout="30000">
+            <distributed-cache name="memcachedCache" remote-timeout="30000">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <memory>
                   <object size="1000"/>
@@ -181,7 +183,7 @@
                </string-keyed-jdbc-store>
             </distributed-cache>
 
-            <distributed-cache name="namedCache" mode="SYNC">
+            <distributed-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_NC_SK">
@@ -261,21 +263,21 @@
          <cache-container name="clustered" default-cache="default" >
             <global-state />
             <transport lock-timeout="60000"/>
-            <distributed-cache name="default" mode="SYNC" remote-timeout="30000">
+            <distributed-cache name="default" remote-timeout="30000">
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
                </backups>
             </distributed-cache>
 
-            <distributed-cache name="memcachedCache" mode="SYNC" remote-timeout="30000">
+            <distributed-cache name="memcachedCache" remote-timeout="30000">
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
                </backups>
             </distributed-cache>
 
-            <distributed-cache name="namedCache" mode="SYNC">
+            <distributed-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
@@ -325,22 +327,22 @@
          <cache-container name="clustered" default-cache="default" statistics="true">
             <transport lock-timeout="60000"/>
             <global-state />
-            <distributed-cache name="default" mode="SYNC"/>
+            <distributed-cache name="default"/>
             <!-- Indexes are local to each node, stored on the filesystem -->
-            <replicated-cache name="OnDiskNonSharedIndex" mode="SYNC">
+            <replicated-cache name="OnDiskNonSharedIndex">
                <indexing index="ALL">
                   <property name="default.indexmanager">near-real-time</property>
                   <property name="default.indexBase">${java.io.tmpdir}/OnDiskNonSharedIndex</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored in memory -->
-            <replicated-cache name="InMemoryNonSharedIndex" mode="SYNC">
+            <replicated-cache name="InMemoryNonSharedIndex">
                <indexing index="ALL">
                   <property name="default.directory_provider">ram</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->
-            <replicated-cache name="InfinispanCustomNonSharedIndex" mode="SYNC">
+            <replicated-cache name="InfinispanCustomNonSharedIndex">
                <indexing index="ALL">
                   <property name="default.directory_provider">infinispan</property>
                   <property name="default.metadata_cachename">indexMetadata</property>
@@ -355,16 +357,16 @@
             <local-cache name="indexLocking">
             </local-cache>
             <!-- Indexes are shared between all nodes, stored on infinispan itself -->
-            <distributed-cache name="InfinispanSharedIndex" mode="SYNC">
+            <distributed-cache name="InfinispanSharedIndex">
                <indexing index="LOCAL">
                   <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                </indexing>
             </distributed-cache>
             <!-- Auto config based on cache type -->
-            <distributed-cache name="sharedIndexInfinispanDirectory" mode="SYNC">
+            <distributed-cache name="sharedIndexInfinispanDirectory">
                <indexing index="LOCAL" auto-config="true"/>
             </distributed-cache>
-            <replicated-cache name="nearRealtimeFileSystemIndex" mode="SYNC">
+            <replicated-cache name="nearRealtimeFileSystemIndex">
                <indexing index="ALL" auto-config="true"/>
             </replicated-cache>
          </cache-container>

@@ -32,7 +32,8 @@ public enum Mode {
     ASYNC(false),
     ;
     private final boolean sync;
-    private Mode(boolean sync) {
+
+    Mode(boolean sync) {
         this.sync = sync;
     }
 
