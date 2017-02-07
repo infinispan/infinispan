@@ -360,11 +360,7 @@ public class TcpTransport extends AbstractTransport {
       } catch (IOException e) {
          // Ignore
       } finally {
-         try {
-            socket.close();
-         } catch (IOException e) {
-            // Ignore
-         }
+        Util.close(socket);
       }
       return os.toByteArray();
    }
