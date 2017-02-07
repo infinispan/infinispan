@@ -1,19 +1,19 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0">
             <cache-container name="clustered" default-cache="numOwners1">
                 <transport lock-timeout="240000"/>
-                <replicated-cache name="memcachedCache" start="EAGER" mode="ASYNC"/>
-                <distributed-cache name="numOwners1" start="EAGER" mode="SYNC" owners="1" remote-timeout="30000">
+                <replicated-cache name="memcachedCache"  mode="ASYNC"/>
+                <distributed-cache name="numOwners1" owners="1" remote-timeout="30000">
                     <partition-handling enabled="true"/>
                 </distributed-cache>
-                <distributed-cache name="remoteTimeoutCache" start="EAGER" mode="SYNC" remote-timeout="1" />
-                <replicated-cache name="customTaskRepl" start="EAGER" mode="SYNC">
+                <distributed-cache name="remoteTimeoutCache" remote-timeout="1" />
+                <replicated-cache name="customTaskRepl">
                     <compatibility enabled="true"/>
                 </replicated-cache>
-                <replicated-cache name="customTaskReplTx" start="EAGER" mode="SYNC">
+                <replicated-cache name="customTaskReplTx">
                     <transaction mode="NON_XA" locking="PESSIMISTIC"/>
                     <compatibility enabled="true"/>
                 </replicated-cache>
-                <distributed-cache name="customTaskDist" start="EAGER" mode="SYNC" remote-timeout="30000" owners="1">
+                <distributed-cache name="customTaskDist" remote-timeout="30000" owners="1">
                     <compatibility enabled="true" />
                 </distributed-cache>
             </cache-container>

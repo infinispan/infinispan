@@ -1,7 +1,7 @@
        <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container name="local" default-cache="stringWithPassivation" start="EAGER">
+            <cache-container name="local" default-cache="stringWithPassivation" >
 
-                <local-cache name="stringWithPassivation" start="EAGER" >
+                <local-cache name="stringWithPassivation"  >
                     <memory>
                         <object size="2"/>
                     </memory>
@@ -16,7 +16,7 @@
                 </local-cache>
 
                 <!-- TODO mising databaseType -->
-                <local-cache name="stringNoPassivation" start="EAGER">
+                <local-cache name="stringNoPassivation" >
                     <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="STRING_NO_PASSIVATION_STORE">
                         <string-keyed-table prefix="STRING_NO_PASSIVATION">
                             <id-column name="id" type="${id.column.type}"/>
@@ -26,7 +26,7 @@
                     </string-keyed-jdbc-store>
                 </local-cache>
 
-                <local-cache name="memcachedCache" start="EAGER" >
+                <local-cache name="memcachedCache"  >
                     <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="false" purge="false" name="STRING_ASYNC">
                         <property name="databaseType">${database.type}</property>
                         <!--<write-behind modification-queue-size="2048" thread-pool-size="15" />-->

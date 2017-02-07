@@ -1,21 +1,21 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0">
              <cache-container name="local" default-cache="none">
-                 <local-cache name="none" start="EAGER">
+                 <local-cache name="none" >
                      <memory>
                          <object/>
                      </memory>
                  </local-cache>
-                 <local-cache name="unordered" start="EAGER">
+                 <local-cache name="unordered" >
                      <memory>
                          <object size="3"/>
                      </memory>
                  </local-cache>
-                 <local-cache name="lirs" start="EAGER">
+                 <local-cache name="lirs" >
                      <memory>
                          <object size="5"/>
                      </memory>
                  </local-cache>
-                 <local-cache name="lru" start="EAGER">
+                 <local-cache name="lru" >
                      <memory>
                          <object size="3"/>
                      </memory>

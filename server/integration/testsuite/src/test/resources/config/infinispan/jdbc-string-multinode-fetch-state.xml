@@ -1,16 +1,12 @@
        <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container name="clustered" default-cache="memcachedCache" start="EAGER">
+            <cache-container name="clustered" default-cache="memcachedCache" >
                 <transport
                         lock-timeout="240000"/>
-                <replicated-cache 
-                    name="memcachedCache" 
-                    start="EAGER"
-                    mode="SYNC"
+                <replicated-cache
+                    name="memcachedCache"
                     batching="false"
-                    
                     remote-timeout="60000">
-                    <transaction mode="NONE" />
-                    <state-transfer 
+                    <state-transfer
                         enabled="true"
                         timeout="60000" />
                     <memory>
@@ -19,11 +15,11 @@
                     <string-keyed-jdbc-store
                         datasource="${jndi.name}"
                         dialect="${database.type}"
-                        fetch-state="true"                        
+                        fetch-state="true"
                         passivation="true"
-                        preload="false" 
-                        purge="false" 
-                        shared="false" 
+                        preload="false"
+                        purge="false"
+                        shared="false"
                         singleton="false" name="FETCH_STATE">
                         <string-keyed-table prefix="${table.prefix}">
                             <id-column name="id" type="${id.column.type}"/>

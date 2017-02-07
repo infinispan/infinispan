@@ -1,27 +1,21 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container 
+            <cache-container
                 name="clustered"
                 default-cache="testCache">
                 <transport
                     lock-timeout="240000"/>
-                <replicated-cache 
+                <replicated-cache
                     name="testCache"
-                    start="EAGER" 
-                    mode="SYNC"
                     batching="false"
                     remote-timeout="60000">
-                    <transaction mode="NONE" />
                     <state-transfer
                         enabled="true"
                         timeout="60000" />
                 </replicated-cache>
                 <replicated-cache-configuration
                         name="compatibilityCacheConfiguration"
-                        start="EAGER"
-                        mode="SYNC"
                         batching="false"
                         remote-timeout="60000">
-                    <transaction mode="NONE"/>
                     <state-transfer
                             enabled="true"
                             timeout="60000"/>
@@ -29,21 +23,15 @@
                 </replicated-cache-configuration>
                 <replicated-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
-                <replicated-cache 
+                <replicated-cache
                     name="memcachedCache"
-                    start="EAGER" 
-                    mode="SYNC"
                     batching="false"
                     remote-timeout="60000">
-                    <transaction mode="NONE" />
-                    <state-transfer 
+                    <state-transfer
                         enabled="true"
                         timeout="60000" />
                 </replicated-cache>
-                <replicated-cache
-                    name="namedCache"
-                    start="EAGER"
-                    mode="SYNC" />
+                <replicated-cache name="namedCache"/>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

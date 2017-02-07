@@ -4,12 +4,8 @@
                         lock-timeout="240000"/>
                 <invalidation-cache
                     name="memcachedCache"
-                    start="EAGER"
-                    mode="SYNC"
                     batching="false"
-
                     remote-timeout="60000">
-                    <transaction mode="NONE" />
                     <string-keyed-jdbc-store
                         datasource="${jndi.name}"
                         dialect="${database.type}"

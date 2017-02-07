@@ -1,40 +1,27 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container 
+            <cache-container
                 name="local"
                 default-cache="testCache">
                 <local-cache
                     name="testCache"
-                    start="EAGER"
                     batching="false"
                     >
-                    <transaction mode="NONE" />
                 </local-cache>
-                <local-cache-configuration
-                        name="compatibilityCacheConfiguration"
-                        start="EAGER">
-                    <transaction mode="NONE"/>
+                <local-cache-configuration name="compatibilityCacheConfiguration">
                     <compatibility enabled="true"/>
                 </local-cache-configuration>
                 <local-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache
                     name="memcachedCache"
-                    start="EAGER"
                     batching="false"
                     >
-                    <transaction mode="NONE" />
                 </local-cache>
-                <local-cache
-                    name="namedCache"
-                    start="EAGER" />
-                <local-cache
-                        name="restNamedCache"
-                        start="EAGER" />
-                <local-cache
-                        name="compatibilityCache"
-                        start="EAGER" >
+                <local-cache name="namedCache" />
+                <local-cache name="restNamedCache" />
+                <local-cache name="compatibilityCache">
                     <compatibility enabled="true"/>
-                        </local-cache>
+                </local-cache>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

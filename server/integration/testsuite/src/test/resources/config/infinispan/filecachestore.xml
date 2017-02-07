@@ -1,6 +1,6 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0">
             <cache-container name="local" default-cache="default">
-                <local-cache name="default" start="EAGER">
+                <local-cache name="default" >
                     <file-store name="myFileStore" passivation="false" purge="false" max-entries="2" />
                 </local-cache>
                 <local-cache name="memcachedCache"/>
