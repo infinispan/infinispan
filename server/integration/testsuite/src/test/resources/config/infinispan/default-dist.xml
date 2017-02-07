@@ -1,33 +1,27 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container 
+            <cache-container
                 name="clustered"
                 default-cache="testCache">
                 <transport
                     lock-timeout="240000"/>
-                <distributed-cache 
+                <distributed-cache
                     name="testCache"
-                    start="EAGER"
-                    mode="SYNC" 
-                    segments="1" 
-                    owners="2" 
+                    segments="1"
+                    owners="2"
                     batching="false"
-                    l1-lifespan="0" 
+                    l1-lifespan="0"
                     remote-timeout="60000" >
-                    <transaction mode="NONE" />
-                    <state-transfer 
-                        enabled="true" 
+                    <state-transfer
+                        enabled="true"
                         timeout="600000" />
                 </distributed-cache>
                 <distributed-cache-configuration
                         name="compatibilityCacheConfiguration"
-                        start="EAGER"
-                        mode="SYNC"
                         segments="1"
                         owners="2"
                         batching="false"
                         l1-lifespan="0"
                         remote-timeout="60000" >
-                    <transaction mode="NONE" />
                     <state-transfer
                             enabled="true"
                             timeout="600000" />
@@ -35,28 +29,19 @@
                 </distributed-cache-configuration>
                 <distributed-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
-                <distributed-cache 
-                    name="memcachedCache" 
-                    start="EAGER"
-                    mode="SYNC" 
-                    segments="1" 
-                    owners="2" 
+                <distributed-cache
+                    name="memcachedCache"
+                    segments="1"
+                    owners="2"
                     batching="false"
-                    l1-lifespan="0" 
+                    l1-lifespan="0"
                     remote-timeout="60000" >
-                    <transaction mode="NONE" />
-                    <state-transfer 
-                        enabled="true" 
+                    <state-transfer
+                        enabled="true"
                         timeout="600000" />
                 </distributed-cache>
-                <distributed-cache
-                    name="namedCache"
-                    start="EAGER"
-                    mode="SYNC" />
-                <distributed-cache
-                    name="streamingTestCache"
-                    start="EAGER"
-                    mode="SYNC" />
+                <distributed-cache name="namedCache" />
+                <distributed-cache name="streamingTestCache" />
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

@@ -1,13 +1,11 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container name="multi-tenancy-1" default-cache="cache-1">
-                <local-cache name="cache-1" start="EAGER">
-                    <transaction mode="NONE"/>
+                <local-cache name="cache-1" >
                     <compatibility enabled="true" />
                 </local-cache>
             </cache-container>
             <cache-container name="multi-tenancy-2" default-cache="cache-2">
-                <local-cache name="cache-2" start="EAGER">
-                    <transaction mode="NONE"/>
+                <local-cache name="cache-2" >
                     <compatibility enabled="true" />
                 </local-cache>
             </cache-container>

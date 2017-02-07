@@ -3,8 +3,6 @@
         <transport lock-timeout="240000"/>
         <distributed-cache
                 name="default"
-                start="EAGER"
-                mode="SYNC"
                 segments="1"
                 owners="2"
                 batching="false"
@@ -15,12 +13,11 @@
                     acquire-timeout="30000"
                     concurrency-level="1000"
                     striping="false"/>
-            <transaction mode="NONE"/>
             <state-transfer
                     enabled="true"
                     timeout="600000"/>
         </distributed-cache>
-        <distributed-cache name="memcachedCache" start="EAGER" mode="SYNC">
+        <distributed-cache name="memcachedCache">
           <memory>
             <object size="1"/>
           </memory>

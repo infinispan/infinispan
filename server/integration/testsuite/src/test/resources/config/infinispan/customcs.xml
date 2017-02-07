@@ -1,6 +1,6 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0">
             <cache-container name="local" default-cache="default">
-                <local-cache name="default" start="EAGER">
+                <local-cache name="default" >
                     <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">
                         <property name="customProperty">10</property>
                     </store>

@@ -10,24 +10,20 @@
                         <role name="executor" permissions="READ WRITE EXEC ADMIN"/>
                     </authorization>
                 </security>
-                <local-cache name="testcache" start="EAGER" batching="false">
-                    <transaction mode="NONE" />
+                <local-cache name="testcache"  batching="false">
                     <security>
                         <authorization roles="admin reader writer supervisor" enabled="true" />
                     </security>
                 </local-cache>
-                <local-cache name="customTaskCache" start="EAGER" batching="false">
-                    <transaction mode="NONE" />
+                <local-cache name="customTaskCache"  batching="false">
                     <compatibility enabled="true" />
                     <security>
                         <authorization roles="admin reader writer supervisor executor" enabled="true" />
                     </security>
                 </local-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
-                <local-cache name="memcachedCache" start="EAGER" batching="false">
-                    <transaction mode="NONE" />
-                </local-cache>
-                <local-cache name="namedCache" start="EAGER" />
+                <local-cache name="memcachedCache"  batching="false" />
+                <local-cache name="namedCache"  />
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

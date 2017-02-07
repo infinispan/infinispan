@@ -1,42 +1,38 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
-            <cache-container 
+            <cache-container
                 name="local"
                 default-cache="memcachedCache">
                 <local-cache
                     name="memcachedCache"
-                    start="EAGER"
                     batching="false"
                     >
-                    <locking 
-                        acquire-timeout="20000" 
-                        concurrency-level="500" 
+                    <locking
+                        acquire-timeout="20000"
+                        concurrency-level="500"
                         striping="false" />
-                    <transaction mode="NONE" />
                     <memory>
                         <object size="2"/>
                     </memory>
                     <remote-store
                         cache="default"
-                        socket-timeout="60000" 
-                        tcp-no-delay="true" 
-                        fetch-state="false" 
-                        passivation="true" 
-                        preload="true" 
+                        socket-timeout="60000"
+                        tcp-no-delay="true"
+                        fetch-state="false"
+                        passivation="true"
+                        preload="true"
                         purge="false" name="MEMCACHED">
                         <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-                    </remote-store>                  
+                    </remote-store>
                 </local-cache>
 
                 <local-cache
                         name="readOnlyCache"
-                        start="EAGER"
                         batching="false"
                         >
                     <locking
                             acquire-timeout="20000"
                             concurrency-level="500"
                             striping="false" />
-                    <transaction mode="NONE" />
                     <memory>
                         <object size="2"/>
                     </memory>
