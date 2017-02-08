@@ -39,6 +39,11 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
 
    @Override
    public void removePersistentAddressMapping(PersistentUUID persistentUUID) {
+      if (persistentUUID == null) {
+         //A null would be invalid here, but letting it proceed would trigger an NPE
+         //which would hide the real issue.
+         return;
+      }
       Address address = uuid2address.get(persistentUUID);
       if (address != null) {
          address2uuid.remove(address);
