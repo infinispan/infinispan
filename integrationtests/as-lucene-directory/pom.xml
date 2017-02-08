@@ -187,6 +187,45 @@
                            <outputDirectory>${project.build.directory}/node2</outputDirectory>
                         </artifactItem>
                         <artifactItem>
+                            <groupId>org.hibernate</groupId>
+                            <artifactId>hibernate-search-modules</artifactId>
+                            <version>${version.hibernate.search}</version>
+                            <classifier>wildfly-10-dist</classifier>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>org.hibernate</groupId>
+                            <artifactId>hibernate-search-modules</artifactId>
+                            <version>${version.hibernate.search}</version>
+                            <classifier>wildfly-10-dist</classifier>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>org.hibernate</groupId>
+                            <artifactId>hibernate-orm-modules</artifactId>
+                            <version>${version.hibernate.core}</version>
+                            <classifier>wildfly-10-dist</classifier>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>org.hibernate</groupId>
+                            <artifactId>hibernate-orm-modules</artifactId>
+                            <version>${version.hibernate.core}</version>
+                            <classifier>wildfly-10-dist</classifier>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <!-- Order matters: it might happen that both the Infinispan and the Hibernate Search modules
+                            contain the same org.apache.lucene modules. The Infinispan "edition" contains a superset of the Lucene libraries,
+                            so make sure these overwrite the other one. See also HSEARCH-2578 -->
+                        <artifactItem>
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-wildfly-modules</artifactId>
                            <version>${project.version}</version>
@@ -199,7 +238,7 @@
                            <artifactId>infinispan-wildfly-modules</artifactId>
                            <version>${project.version}</version>
                            <type>zip</type>
-                           <overWrite>false</overWrite>
+                           <overWrite>true</overWrite>
                            <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
