@@ -61,7 +61,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       store.start();
 
       assertNotNull(store.getEntityManagerFactory());
-      assertTrue(store.getEntityManagerFactory() instanceof org.hibernate.internal.SessionFactoryImpl);
+      assertTrue(store.getEntityManagerFactory() instanceof HibernateEntityManagerFactory);
 
       return store;
    }
