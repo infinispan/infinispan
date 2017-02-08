@@ -1,5 +1,8 @@
 package org.infinispan.test.integration.as.jms;
 
+import static org.infinispan.test.integration.as.VersionTestHelper.hibernateOrmModuleName;
+import static org.infinispan.test.integration.as.VersionTestHelper.hibernateSearchModuleName;
+
 import javax.persistence.SharedCacheMode;
 
 import org.infinispan.test.integration.as.jms.controller.RegistrationController;
@@ -99,9 +102,14 @@ public final class DeploymentJmsMasterSlaveAndInfinispanAs2ndLevelCache {
             .value("create-drop")
             .up()
             .createProperty()
-            // Disable the automatically enabled Hibernate Search instance which is included in WildFly
+            // Override the version of Hibernate Search module to use
             .name( "wildfly.jpa.hibernate.search.module" )
-            .value( "none" )
+            .value(hibernateSearchModuleName())
+            .up()
+            .createProperty()
+            // Override the version of Hibernate ORM module to use
+            .name("jboss.as.jpa.providerModule")
+            .value(hibernateOrmModuleName())
             .up()
             .createProperty()
             .name("hibernate.search.default.lucene_version")

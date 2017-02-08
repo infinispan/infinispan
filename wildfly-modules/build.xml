@@ -9,7 +9,9 @@
     <major-minor version="${version.lucene}" property="lucene.slot"/>
     <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
     <property name="hibernate-search-directory-provider-ref" value="for-hibernatesearch-${hibernate.search.slot}"/>
-    <property name="hibernate-search-directory-wildfly-ref" value="for-hibernatesearch-5.5"/>
+    <property name="hibernate-search-directory-wildfly-ref" value="for-hibernatesearch-5.7"/>
+    <property name="lucene.slot.for-hibernate-search-orm" value="5.5"/>
+    <property name="hibernate-search.slot.for-hibernate-search-orm" value="5.7"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -45,7 +47,6 @@
 
     </target>
 
-    <!-- These modules are for JDG-specific functionality -->
     <target name="modules">
 
         <filterset id="module-filter">
@@ -53,7 +54,8 @@
             <filter token="lucene.slot" value="${lucene.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
             <filter token="hibernate-search-directory-wildfly-ref" value="${hibernate-search-directory-wildfly-ref}" />
-
+            <filter token="lucene.slot.for-hibernate-search-orm" value="${lucene.slot.for-hibernate-search-orm}" />
+            <filter token="hibernate-search.slot.for-hibernate-search-orm" value="${hibernate-search.slot.for-hibernate-search-orm}" />
         </filterset>
 
         <module-def name="com.github.ben-manes.caffeine" slot="${infinispan.slot}">
