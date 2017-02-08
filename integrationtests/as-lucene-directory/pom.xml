@@ -32,7 +32,7 @@
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search</artifactId>
+         <artifactId>hibernate-search-orm</artifactId>
          <version>${version.hibernate.search}</version>
          <scope>test</scope>
       </dependency>
