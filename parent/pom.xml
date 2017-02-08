@@ -486,11 +486,6 @@
             <version>${version.hibernate.core}</version>
          </dependency>
          <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>${version.hibernate.entitymanager}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-bom</artifactId>
             <version>${version.shrinkwrapResolver}</version>
