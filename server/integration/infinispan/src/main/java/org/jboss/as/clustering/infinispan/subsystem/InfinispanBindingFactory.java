@@ -21,21 +21,20 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.server.commons.naming.JndiNameFactory;
 import org.jboss.as.naming.deployment.ContextNames;
 
 /**
  * Factory for creating JNDI bindings.
  * @author Paul Ferraro
  */
-public final class InfinispanBindingFactory {
+final class InfinispanBindingFactory {
 
-    public static ContextNames.BindInfo createCacheContainerBinding(String containerName) {
-        return ContextNames.bindInfoFor(JndiNameFactory.createJndiName(JndiNameFactory.DEFAULT_JNDI_NAMESPACE, InfinispanExtension.SUBSYSTEM_NAME, "container", containerName).getAbsoluteName());
+    static ContextNames.BindInfo createCacheContainerBinding(String containerName) {
+        return ContextNames.bindInfoFor(InfinispanJndiName.createCacheContainerJndiName(containerName));
     }
 
-    public static ContextNames.BindInfo createCacheBinding(String containerName, String cacheName) {
-        return ContextNames.bindInfoFor(JndiNameFactory.createJndiName(JndiNameFactory.DEFAULT_JNDI_NAMESPACE, InfinispanExtension.SUBSYSTEM_NAME, "cache", containerName, cacheName).getAbsoluteName());
+    static ContextNames.BindInfo createCacheBinding(String containerName, String cacheName) {
+        return ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(null, containerName, cacheName));
     }
 
     private InfinispanBindingFactory() {

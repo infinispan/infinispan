@@ -26,29 +26,29 @@ import org.jboss.as.naming.deployment.JndiName;
 /**
  * @author Paul Ferraro
  */
-public class InfinispanJndiName {
+class InfinispanJndiName {
 
     private static final String DEFAULT_JNDI_NAMESPACE = "java:jboss";
 
-    public static JndiName defaultCacheContainerJndiName(String containerName) {
+    private static JndiName defaultCacheContainerJndiName(String containerName) {
         return JndiName.of(DEFAULT_JNDI_NAMESPACE).append(InfinispanExtension.SUBSYSTEM_NAME).append("container").append(containerName);
     }
 
-    public static JndiName defaultCacheJndiName(String containerName, String cacheName) {
-        return JndiName.of(DEFAULT_JNDI_NAMESPACE).append(InfinispanExtension.SUBSYSTEM_NAME).append("cache").append(containerName).append(cacheName);
+    private static JndiName defaultCacheJndiName(String containerName, String cacheName) {
+        // Append to container jdni, as cache names only have to be unique per container
+        return defaultCacheContainerJndiName(containerName).append("cache").append(cacheName);
     }
 
-    public static JndiName toJndiName(String value) {
+    private static JndiName toJndiName(String value) {
         return value.startsWith("java:") ? JndiName.of(value) : JndiName.of(DEFAULT_JNDI_NAMESPACE).append(value.startsWith("/") ? value.substring(1) : value);
     }
 
-    public static String createCacheJndiName(String jndiNameString, String containerName, String cacheName) {
+    static String createCacheJndiName(String jndiNameString, String containerName, String cacheName) {
         JndiName jndiName = (jndiNameString != null) ? InfinispanJndiName.toJndiName(jndiNameString) : InfinispanJndiName.defaultCacheJndiName(containerName, cacheName);
         return jndiName.getAbsoluteName();
     }
 
-    public static String createCacheContainerJndiName(String jndiNameString, String containerName) {
-        JndiName jndiName = (jndiNameString != null) ? InfinispanJndiName.toJndiName(jndiNameString) : InfinispanJndiName.defaultCacheContainerJndiName(containerName);
-        return jndiName.getAbsoluteName();
+    static String createCacheContainerJndiName(String containerName) {
+        return InfinispanJndiName.defaultCacheContainerJndiName(containerName).getAbsoluteName();
     }
 }
