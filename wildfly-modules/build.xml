@@ -61,7 +61,6 @@
                 <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
                 <maven-resource group="org.infinispan" artifact="infinispan-commons"/>
                 <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
-                <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine"/>
             </module-def>
         </sequential>
     </macrodef>
