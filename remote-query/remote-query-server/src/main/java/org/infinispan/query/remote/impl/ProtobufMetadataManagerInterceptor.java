@@ -149,7 +149,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
-            serializationContext.unregisterProtoFile(key);
+            if (serializationContext.getFileDescriptors().containsKey(key)) {
+               serializationContext.unregisterProtoFile(key);
+            }
          }
          return null;
       }
@@ -297,12 +299,13 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
             invoker.invoke(ctx.clone(), cmd);
 
-            serializationContext.unregisterProtoFile(key);
-            Map<String, FileDescriptor> fileDescriptors = serializationContext.getFileDescriptors();
+            if (serializationContext.getFileDescriptors().containsKey(key)) {
+               serializationContext.unregisterProtoFile(key);
+            }
 
             // put error key for all unresolved files and remove error key for all resolved files
             StringBuilder sb = new StringBuilder();
-            for (FileDescriptor fd : fileDescriptors.values()) {
+            for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
                if (fd.isResolved()) {
                   cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
                   invoker.invoke(ctx.clone(), cmd);

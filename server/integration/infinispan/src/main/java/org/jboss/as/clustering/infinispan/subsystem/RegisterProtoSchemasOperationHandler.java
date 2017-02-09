@@ -55,28 +55,30 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
       final ServiceController<?> controller = context.getServiceRegistry(false).getService(
               CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-      ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      if (protoManager != null) {
-         try {
-            String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
-            String contentsParameter = CacheContainerResource.PROTO_CONTENTS.getName();
-            ModelNode names = operation.require(namesParameter);
-            ModelNode contents = operation.require(contentsParameter);
-            validateParameters(names, contents);
-            List<ModelNode> descriptorsNames = names.asList();
-            List<ModelNode> descriptorsContents = contents.asList();
-            String[] nameArray = new String[descriptorsNames.size()];
-            String[] contentArray = new String[descriptorsNames.size()];
-            int i = 0;
-            for (ModelNode modelNode : descriptorsNames) {
-               nameArray[i] = modelNode.asString();
-               contentArray[i] = descriptorsContents.get(i).asString();
-               i++;
+      if (controller != null) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         if (protoManager != null) {
+            try {
+               String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
+               String contentsParameter = CacheContainerResource.PROTO_CONTENTS.getName();
+               ModelNode names = operation.require(namesParameter);
+               ModelNode contents = operation.require(contentsParameter);
+               validateParameters(names, contents);
+               List<ModelNode> descriptorsNames = names.asList();
+               List<ModelNode> descriptorsContents = contents.asList();
+               String[] nameArray = new String[descriptorsNames.size()];
+               String[] contentArray = new String[descriptorsNames.size()];
+               int i = 0;
+               for (ModelNode modelNode : descriptorsNames) {
+                  nameArray[i] = modelNode.asString();
+                  contentArray[i] = descriptorsContents.get(i).asString();
+                  i++;
+               }
+               protoManager.registerProtofiles(nameArray, contentArray);
+            } catch (Exception e) {
+               throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
             }
-            protoManager.registerProtofiles(nameArray, contentArray);
-         } catch (Exception e) {
-            throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
          }
       }
       context.stepCompleted();

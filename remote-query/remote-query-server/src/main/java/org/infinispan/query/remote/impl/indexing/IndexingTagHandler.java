@@ -90,6 +90,8 @@ final class IndexingTagHandler implements TagHandler {
          }
       }
 
+      // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
+      // different entity types to have different field types or different indexing options.
       String fn = getFullFieldName(fieldName);
       //todo [anistor] string vs numeric. use a proper way to transform to string
       switch (type) {

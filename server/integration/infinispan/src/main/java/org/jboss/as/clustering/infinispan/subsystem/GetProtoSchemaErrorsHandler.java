@@ -15,14 +15,14 @@ import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * Handler to get the contents of a protobuf schema file by name.
+ * Handler to get the errors messages attached to a protobuf schema file (by name).
  *
  * @author anistor@redhat.com
- * @since 8.2
+ * @since 9.0
  */
-public class GetProtobufSchemaHandler extends AbstractRuntimeOnlyHandler {
+public class GetProtoSchemaErrorsHandler extends AbstractRuntimeOnlyHandler {
 
-   public static final GetProtobufSchemaHandler INSTANCE = new GetProtobufSchemaHandler();
+   public static final GetProtoSchemaErrorsHandler INSTANCE = new GetProtoSchemaErrorsHandler();
 
    @Override
    public void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
@@ -36,12 +36,12 @@ public class GetProtobufSchemaHandler extends AbstractRuntimeOnlyHandler {
 
          if (protoManager != null) {
             try {
-               ModelNode fileName = operation.require(CacheContainerResource.PROTO_NAME.getName());
-               validateParameters(fileName);
+               ModelNode name = operation.require(CacheContainerResource.PROTO_NAME.getName());
+               validateParameters(name);
+               String fileErrors = protoManager.getFileErrors(name.asString());
                ModelNode result = new ModelNode();
-               String fileContents = protoManager.getProtofile(fileName.asString());
-               if (fileContents != null) {
-                  result.set(fileContents);
+               if (fileErrors != null) {
+                  result.set(fileErrors);
                }
                context.getResult().set(result);
             } catch (Exception e) {

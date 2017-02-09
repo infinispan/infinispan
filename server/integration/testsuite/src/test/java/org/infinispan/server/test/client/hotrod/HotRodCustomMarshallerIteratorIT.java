@@ -48,7 +48,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for remote iteration using a custom filter with custom classes marshalled with a custom marshaller
+ * Tests for remote iteration using a custom filter with custom classes marshalled with a custom Protobuf based marshaller.
  *
  * @author gustavonalle
  * @since 8.0

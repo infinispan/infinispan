@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  *
  * @author Adrian Nistor
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "remote-query-2")})
 public class RemoteQueryIspnDirIT extends RemoteQueryIT {

@@ -217,7 +217,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    private ConcurrentMap<String, AtomicInteger> newStatsMap() {
-      ConcurrentMap<String, AtomicInteger> m = new ConcurrentHashMap<String, AtomicInteger>();
+      ConcurrentMap<String, AtomicInteger> m = new ConcurrentHashMap<>();
       for (Method method: AdvancedCacheLoader.class.getMethods()) {
          m.put(method.getName(), new AtomicInteger(0));
       }
@@ -247,7 +247,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    public Map<String, Integer> stats() {
-      Map<String, Integer> copy = new HashMap<String, Integer>(stats.size());
+      Map<String, Integer> copy = new HashMap<>(stats.size());
       for (String k: stats.keySet()) copy.put(k, stats.get(k).get());
       return copy;
    }
