@@ -123,6 +123,7 @@
                </systemPropertyVariables>
                <groups combine.self="override"/>
                <excludedGroups combine.self="override"/>
+               <disableXmlReport>false</disableXmlReport>
                <properties>
                   <property>
                      <name>usedefaultlisteners</name>
