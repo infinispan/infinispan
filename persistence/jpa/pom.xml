@@ -101,7 +101,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-
+               <trimStackTrace>false</trimStackTrace>
                <threadCount>1</threadCount>
             </configuration>
          </plugin>
@@ -181,6 +181,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
+                     <trimStackTrace>false</trimStackTrace>
                      <systemPropertyVariables>
                         <connection.url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection.url>
                         <driver.class>org.h2.Driver</driver.class>
@@ -205,6 +206,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
+                     <trimStackTrace>false</trimStackTrace>
                      <systemPropertyVariables>
                         <connection.url>jdbc:mysql://localhost:3306/ispn_jpa_test</connection.url>
                         <driver.class>com.mysql.jdbc.Driver</driver.class>
@@ -230,6 +232,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
+                     <trimStackTrace>false</trimStackTrace>
                      <systemPropertyVariables>
                         <connection.url>jdbc:postgresql://localhost:5432/ispn_jpa_test</connection.url>
                         <driver.class>org.postgresql.Driver</driver.class>

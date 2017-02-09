@@ -79,7 +79,8 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>2.18.1</version>
                         <configuration>
-                            <systemPropertyVariables>
+                           <trimStackTrace>false</trimStackTrace>
+                           <systemPropertyVariables>
                                 <connection.url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection.url>
                                 <driver.class>org.h2.Driver</driver.class>
                                 <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>

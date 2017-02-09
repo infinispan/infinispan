@@ -51,6 +51,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <trimStackTrace>false</trimStackTrace>
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>

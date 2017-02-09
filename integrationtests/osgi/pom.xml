@@ -244,6 +244,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <trimStackTrace>false</trimStackTrace>
                <threadCount>1</threadCount>
                <parallel>classes</parallel>
                <systemPropertyVariables>

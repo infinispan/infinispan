@@ -240,6 +240,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <trimStackTrace>false</trimStackTrace>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <useManifestOnlyJar>false</useManifestOnlyJar>
                     <parallel>none</parallel>
@@ -257,6 +258,9 @@
                 <plugin>
                    <groupId>org.apache.maven.plugins</groupId>
                    <artifactId>maven-surefire-plugin</artifactId>
+                   <configuration>
+                      <trimStackTrace>false</trimStackTrace>
+                   </configuration>
                    <executions>
                       <execution>
                          <id>default-test</id>

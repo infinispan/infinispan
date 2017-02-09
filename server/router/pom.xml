@@ -81,6 +81,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration combine.self="override">
+                    <trimStackTrace>false</trimStackTrace>
                     <parallel>suitesAndClasses</parallel>
                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
                     <excludedGroups>${suite.exclude.groups}</excludedGroups>
