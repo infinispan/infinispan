@@ -14,15 +14,15 @@ and obviously needs to avoid dependencies to different versions of Hibernate Sea
 
 -->
 <module xmlns="urn:jboss:module:1.3" name="org.infinispan.hibernate-search.directory-provider"
-        slot="${hibernate-search-directory-wildfly-ref}">
+        slot="${override.hibernate-search-directory-wildfly-ref}">
 
     <resources>
         <!-- Insert resources here -->
     </resources>
 
     <dependencies>
-        <module name="org.apache.lucene" slot="${lucene.slot.for-hibernate-search-orm}" />
-        <module name="org.hibernate.search.engine" slot="${hibernate-search.slot.for-hibernate-search-orm}" />
+        <module name="org.apache.lucene" slot="${override.lucene.slot}" />
+        <module name="org.hibernate.search.engine" slot="${override.hibernate-search.slot}" />
         <!-- Next dependencies are essentially a copy of those from module org.infinispan,
              but filtering out the ones related to Apache Lucene, Infinispan Query and Hibernate Search. -->
         <module name="javax.api"/>

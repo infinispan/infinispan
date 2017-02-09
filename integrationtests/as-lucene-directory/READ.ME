@@ -1,0 +1,47 @@
+##                                                                           ##
+#  Integration tests for the Infinispan Lucene Directory modules for WildFly  #
+##                                                                           ##
+
+The `Infinispan Lucene Directory` is used in a variety of contexts,
+in combination with different versions of other frameworks.
+
+Some of these integration tests will look very similar to each other,
+but pay attention to the actual versions / module slots being used
+which will likely differ.
+
+Not all combinations are valid. For example using the Infinispan 2nd
+Level Cache for Hibernate ORM within WildFly currently only works
+if you use Hibernate ORM's "main" slot.
+
+# org.infinispan.test.integration.as.InfinispanLuceneDirectoryIT
+
+  Is meant to test for "native" usage of the Directory in a modular
+  environment. This will use Apache Lucene APIs and not depend on
+  any Hibernate Search version.
+  Covers for the presence of the Lucene libraries we intent to bundle;
+  for example it verifies that the `lucene-grouping` jar is available.
+
+# org.infinispan.test.integration.as.jms.SearchNewEntityJmsMasterSlaveUsingInfinispanAs2ndCacheAndModulesIT
+
+  This test is exercising the combination of Hibernate ORM "main" module
+  (as included in WildFly), with the matching "main" module of Hibernate
+  Search.
+  These are typically NOT the versions used to compile the Infinispan
+  integration points, but we still expect the DirectoryProvider to be
+  usable, thanks to the isolation of the modular system the Directory
+  should link to the current build of Infinispan, while the 2LC
+  feature will use the Infinispan version included within WilFly.
+
+# org.infinispan.test.integration.as.jms.infinispan.DeploymentJmsMasterSlaveAndInfinispan
+
+  Another clustered test using both the Infinispan Directory and JMS
+  backends to forward write operations to a selected master node.
+  In this case we override the WildFly built-in versions to use the
+  latest Hibernate ORM and Hibernate Search versions.
+
+# org.infinispan.test.integration.as.wildfly.DirectoryProviderModuleMemberRegistrationIT
+
+  A more comprehensive query test, using again the latest versions of
+  Hibernate Search and Hibernate ORM.
+  A characteristic of this test is that it enabled also a CacheStore,
+  for permanent storage of the distributed index.
