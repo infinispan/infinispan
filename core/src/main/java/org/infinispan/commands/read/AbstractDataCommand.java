@@ -1,11 +1,12 @@
 package org.infinispan.commands.read;
 
+import static org.infinispan.commons.util.EnumUtil.prettyPrintBitSet;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Objects;
 
-import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.DataCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
@@ -14,9 +15,10 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand extends AbstractTopologyAffectedCommand implements DataCommand {
+public abstract class AbstractDataCommand implements DataCommand {
    protected Object key;
    private long flags;
+   private int topologyId = -1;
 
    protected AbstractDataCommand(Object key, long flagsBitSet) {
       this.key = key;
@@ -24,6 +26,16 @@ public abstract class AbstractDataCommand extends AbstractTopologyAffectedComman
    }
 
    protected AbstractDataCommand() {
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 
    @Override
@@ -91,5 +103,9 @@ public abstract class AbstractDataCommand extends AbstractTopologyAffectedComman
    @Override
    public boolean canBlock() {
       return false;
+   }
+
+   protected final String printFlags() {
+      return prettyPrintBitSet(flags, Flag.class);
    }
 }
