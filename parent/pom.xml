@@ -1407,6 +1407,8 @@
                <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
                <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
+               <disableXmlReport>true</disableXmlReport>
+               <useFile>false</useFile>
                <systemPropertyVariables>
                   <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>

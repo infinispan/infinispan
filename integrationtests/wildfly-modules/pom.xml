@@ -200,6 +200,7 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
                <testNGArtifactName>none:none</testNGArtifactName>
+               <disableXmlReport>false</disableXmlReport>
                <properties>
                   <property>
                      <name>listener</name>

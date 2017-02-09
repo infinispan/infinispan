@@ -252,10 +252,11 @@
                <runOrder>alphabetical</runOrder>
                <skipTests>${skipOSGiTests}</skipTests>
                <testNGArtifactName>none:none</testNGArtifactName>
+               <disableXmlReport>false</disableXmlReport>
                <properties>
                   <property>
                      <name>listener</name>
-                     <value>org.junit.runner.notification.RunListener</value>
+                     <value>${junitListener}</value>
                   </property>
                </properties>
             </configuration>

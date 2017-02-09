@@ -1,5 +1,6 @@
 package org.infinispan.commons.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +17,6 @@ import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 import org.testng.collections.Maps;
 import org.testng.internal.IResultListener2;
 import org.testng.internal.Utils;
@@ -48,7 +48,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    private AtomicInteger m_numFailed = new AtomicInteger(0);
    private AtomicInteger m_numSkipped = new AtomicInteger(0);
-   private List<ITestResult> m_allTests = Collections.synchronizedList(Lists.<ITestResult>newArrayList());
+   private Map<String, List<ITestResult>> m_allTests = Collections.synchronizedMap(Maps.newHashMap());
 
    /**
     * @see org.testng.IConfigurationListener2#beforeConfiguration(ITestResult)
@@ -69,7 +69,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onTestSuccess(ITestResult tr) {
-      m_allTests.add(tr);
+      checkDuplicatesAndAdd(tr);
    }
 
    /**
@@ -77,7 +77,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onTestFailure(ITestResult tr) {
-      m_allTests.add(tr);
+      checkDuplicatesAndAdd(tr);
       m_numFailed.incrementAndGet();
    }
 
@@ -86,7 +86,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onTestFailedButWithinSuccessPercentage(ITestResult tr) {
-      m_allTests.add(tr);
+      checkDuplicatesAndAdd(tr);
       m_numFailed.incrementAndGet();
    }
 
@@ -95,7 +95,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onTestSkipped(ITestResult tr) {
-      m_allTests.add(tr);
+      checkDuplicatesAndAdd(tr);
       m_numSkipped.incrementAndGet();
    }
 
@@ -159,11 +159,20 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
 
       // Get elapsed time for testsuite element
       long elapsedTime = 0;
-      for (ITestResult tr : m_allTests) {
-         elapsedTime += (tr.getEndMillis() - tr.getStartMillis());
+      long testCount = 0;
+      for (List<ITestResult> testResults : m_allTests.values()) {
+         for (ITestResult tr : testResults) {
+            elapsedTime += (tr.getEndMillis() - tr.getStartMillis());
+            //            if (tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class) != null) {
+            //               testCount += tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
+            //                     .invocationCount();
+            //            } else {
+            testCount++;
+            //            }
+         }
       }
       Properties attrs = new Properties();
-      attrs.setProperty(XMLConstants.ATTR_TESTS, "" + m_allTests.size());
+      attrs.setProperty(XMLConstants.ATTR_TESTS, "" + testCount);
       attrs.setProperty(XMLConstants.ATTR_TIME, "" + elapsedTime / 1000.0);
       attrs.setProperty(XMLConstants.ATTR_NAME, getModuleSuffix());
       attrs.setProperty("skipped", "" + m_numSkipped);
@@ -173,7 +182,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       showProperties(document);
 
       document.addComment("Tests results");
-      createElementFromTestResults(document, m_allTests);
+      createElementFromTestResults(document, m_allTests.values());
 
       document.pop();
 
@@ -182,10 +191,25 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
             generateFileName(suite) + ".xml", document.toXML());
    }
 
-   private void createElementFromTestResults(XMLStringBuffer document, List<ITestResult> results) {
+   private void createElementFromTestResults(XMLStringBuffer document, Collection<List<ITestResult>> results) {
       synchronized (results) {
-         for (ITestResult tr : results) {
-            createElement(document, tr);
+         for (List<ITestResult> testResults : results) {
+            if (testResults.size() == 1) {
+               createElement(document, testResults.get(0));
+            } else {
+               boolean hasFailures = false;
+               for (ITestResult tr : testResults) {
+                  if (!tr.isSuccess()) {
+                     hasFailures = true;
+                     // Report all failures
+                     createElement(document, tr);
+                  }
+               }
+               if (!hasFailures) {
+                  // If there were no failures, report a single success
+                  createElement(document, testResults.get(0));
+               }
+            }
          }
       }
    }
@@ -268,7 +292,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     * Reset all member variables for next test.
     */
    private void resetAll() {
-      m_allTests = Collections.synchronizedList(Lists.<ITestResult>newArrayList());
+      m_allTests = Collections.synchronizedMap(Maps.newHashMap());
       m_numFailed.set(0);
       m_numSkipped.set(0);
    }
@@ -302,22 +326,48 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                }
             }
          } else {
-            System.out.println("[" + this.getClass().getSimpleName() + "] " + "Test suite '" + name
-                  + "' results have no test methods");
+            System.out.println(
+                  "[" + this.getClass().getSimpleName() + "] Test suite '" + name + "' results have no test methods");
          }
       }
-      return String.format("POLARION-%s", name);
+      return String.format("TEST-%s", name);
    }
 
    private String testName(ITestResult res) {
-      StringBuilder result = new StringBuilder();
-      result.append(res.getTestClass().getRealClass().getName() + "." + res.getMethod().getMethodName());
+      StringBuilder result = new StringBuilder(res.getMethod().getMethodName());
       if (res.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
          String dataProviderName = res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
                .dataProvider();
          // Add parameters for methods that use a data provider only
          if (res.getParameters().length != 0 && (dataProviderName != null && !dataProviderName.isEmpty())) {
-            result.append("(").append(Arrays.deepToString(res.getParameters())).append(")");
+            result.append("(").append(Arrays.deepToString(res.getParameters()));
+         }
+         // Add number of invocations to method name
+         if (res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount() > 1) {
+            if (result.indexOf("(") == -1) {
+               result.append("(");
+            } else {
+               result.append(", ");
+            }
+            result.append("invoked ").append(
+                  res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount())
+                  .append(" times");
+         }
+         // JCache tests are a special case
+         if (getModuleSuffix().contains("jcache")) {
+            if (result.indexOf("(") == -1) {
+               result.append("(");
+            } else {
+               result.append(", ");
+            }
+            if (getModuleSuffix().contains("infinispan-jcache-remote")) {
+               result.append("remote");
+            } else {
+               result.append("embedded");
+            }
+         }
+         if (result.indexOf("(") != -1) {
+            result.append(")");
          }
       }
       return result.toString();
@@ -350,5 +400,24 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    private String getModuleSuffix() {
       // Remove the "-" from the beginning of the string
       return System.getProperty("infinispan.module-suffix").substring(1);
+   }
+
+   private void checkDuplicatesAndAdd(ITestResult tr) {
+      // Need fully qualified name to guarantee uniqueness in the results map
+      String key = tr.getTestClass().getRealClass().getName() + "." + testName(tr);
+      if (m_allTests.containsKey(key)) {
+         if (tr.getMethod().getCurrentInvocationCount() == 1) {
+            System.out.println("[" + this.getClass().getSimpleName() + "] Test case '" + testName(tr)
+                  + "' already exists in the results");
+         } else {
+            List<ITestResult> itrList = m_allTests.get(key);
+            itrList.add(tr);
+            m_allTests.put(key, itrList);
+         }
+      } else {
+         ArrayList<ITestResult> itrList = new ArrayList<ITestResult>();
+         itrList.add(tr);
+         m_allTests.put(key, itrList);
+      }
    }
 }
