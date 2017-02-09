@@ -107,7 +107,6 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
-               <trimStackTrace combine.self="override">false</trimStackTrace>
                <argLine combine.self="override">-Xmx768m</argLine>
                <properties combine.self="override">
                   <property>
