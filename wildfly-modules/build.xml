@@ -74,6 +74,10 @@
             <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine" />
         </module-def>
 
+        <module-def name="com.thoughtworks.xstream" slot="${infinispan.slot}">
+            <maven-resource group="com.thoughtworks.xstream" artifact="xstream" />
+        </module-def>
+
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
             <maven-resource group="org.antlr" artifact="antlr-runtime" />
         </module-def>
@@ -173,15 +177,23 @@
             <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
         </module-def>
 
+        <module-def name="org.jboss.resteasy.resteasy-netty4" slot="${infinispan.slot}">
+            <maven-resource group="org.jboss.resteasy" artifact="resteasy-netty4" />
+        </module-def>
+
         <module-def name="org.jgroups" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups" artifact="jgroups" />
         </module-def>
 
-        <module-def name="org.jgroups.kubernetes" slot="${infinispan.slot}">
+        <module-def name="org.jgroups.kubernetes.kubernetes" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups.kubernetes" artifact="kubernetes" />
             <maven-resource group="org.jgroups.kubernetes" artifact="common" />
             <maven-resource group="org.jgroups.kubernetes" artifact="dns" />
             <maven-resource group="net.oauth.core" artifact="oauth" />
+        </module-def>
+
+        <module-def name="org.jgroups.extension" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan.server" artifact="infinispan-server-jgroups" />
         </module-def>
 
         <module-def name="org.rocksdb.rocksdbjni" slot="${infinispan.slot}">
@@ -204,6 +216,62 @@
         </module-def>
 
         <module-def name="org.infinispan.remote" slot="${infinispan.slot}"/>
+
+        <module-def name="org.infinispan.extension" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan.server" artifact="infinispan-server-infinispan"/>
+        </module-def>
+
+        <module-def name="org.infinispan.cli.interpreter" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-cli-interpreter"/>
+        </module-def>
+
+        <module-def name="org.infinispan.scripting" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-scripting"/>
+        </module-def>
+
+        <module-def name="org.infinispan.tasks" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-tasks"/>
+        </module-def>
+
+        <module-def name="org.infinispan.tasks.api" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-tasks-api"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-server-core"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.commons" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan.server" artifact="infinispan-server-commons"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.endpoint" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan.server" artifact="infinispan-server-endpoints"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.event-logger" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan.server" artifact="infinispan-server-event-logger"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.hotrod" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-server-hotrod"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.memcached" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-server-memcached"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.rest" slot="${infinispan.slot}">
+            <maven-resource-with-classifier group="org.infinispan" artifact="infinispan-server-rest" classifier="classes"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.router" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-server-router"/>
+        </module-def>
+
+        <module-def name="org.infinispan.server.websocket" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-server-websocket"/>
+        </module-def>
 
         <!-- ORDER MATTERS - following tasks apper to mess with global properties, so run them last -->
 
