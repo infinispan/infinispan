@@ -113,6 +113,15 @@ with a warning that additional store validation cannot be completed.
 === Server authentication changes
 The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified.
 
+=== Package org.infinispan.util.concurrent.jdk8backported has been removed
+==== Moved classes
+Classes regarding EntrySizeCalculator have now been moved down to the org.infinispan.util package.
+
+==== Removed classes
+The *ConcurrentHashMapV8 classes and their supporting classes have all been removed. The
+CollectionFactory#makeBoundedConcurrentMap method should be used if you desire to have a
+bounded ConcurrentMap.
+
 
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated

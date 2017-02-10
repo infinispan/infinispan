@@ -1,6 +1,4 @@
-package org.infinispan.commons.util.concurrent.jdk8backported;
-
-import org.infinispan.commons.util.EntrySizeCalculator;
+package org.infinispan.commons.util;
 
 /**
  * Abstract class that provides a method to round up to the nearest value of 8 which is important for most jvm when
