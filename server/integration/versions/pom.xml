@@ -753,11 +753,6 @@
                </executions>
              </plugin>
             <plugin>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-defaults-maven-plugin</artifactId>
-               <version>${project.version}</version>
-            </plugin>
-            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
                <configuration>
