@@ -2,6 +2,7 @@ package org.infinispan.server.infinispan.actions;
 
 import java.util.Set;
 
+import org.infinispan.remoting.transport.Transport;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 
 public class GetSitesViewAction extends AbstractDefaultCacheContainerAction<Set<String>> {
@@ -12,7 +13,8 @@ public class GetSitesViewAction extends AbstractDefaultCacheContainerAction<Set<
 
    @Override
    public Set<String> run() {
-      return cacheManager.getTransport().getSitesView();
+      Transport t = cacheManager.getTransport();
+      return t == null ? null : t.getSitesView();
    }
 
 }
