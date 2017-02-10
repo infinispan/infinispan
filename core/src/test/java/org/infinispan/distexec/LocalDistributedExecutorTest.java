@@ -90,6 +90,18 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       assert r == 1;
    }
 
+   /**
+    * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method
+    *
+    * @param call
+    * @throws Exception
+    */
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   public void basicInvocation(Runnable call) throws Exception {
+      DistributedExecutorService des = createDES(getCache());
+      des.submit(call).get();
+   }
+
    protected DistributedExecutorService createDES(Cache<?,?> cache){
       ExecutorService executorService = Executors.newCachedThreadPool(getTestThreadFactory("DistributedExecutorZ"));
       DistributedExecutorService des = new DefaultExecutorService(cache, executorService);
