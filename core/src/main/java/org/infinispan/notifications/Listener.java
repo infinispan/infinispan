@@ -241,22 +241,44 @@ public @interface Listener {
     **/
    boolean includeCurrentState() default false;
 
+   /**
+    * Returns the type of observation level this listener defines.
+    * @return the observation level of this listener
+    * @see Observation
+    * @since 7.2
+    */
    Observation observation() default Observation.BOTH;
 
 
+   /**
+    * Enumeration that defines when a listener event can be observed. A listener can receive an event before and/or
+    * after an operation has occurred.  If the user wishes to be notified just before the operation completes
+    * the listener should observe using {@link Observation#PRE} level.  If the user wishes to be notified only
+    * after the operation completes the listener should observe using {@link Observation#POST} level.  If the user
+    * wishes to have an event before and after they should observe using {@link Observation#BOTH} level.
+    */
    enum Observation {
+      /**
+       * Observation level used to only be notified of an operation before it completes
+       */
       PRE() {
          @Override
          public boolean shouldInvoke(boolean pre) {
             return pre;
          }
       },
+      /**
+       * Observation level used to only be notified of an operation after it has completed
+       */
       POST() {
          @Override
          public boolean shouldInvoke(boolean pre) {
             return !pre;
          }
       },
+      /**
+       * Observation level used to be notified of an operation before and after it occurs
+       */
       BOTH() {
          @Override
          public boolean shouldInvoke(boolean pre) {
