@@ -30,6 +30,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -45,7 +46,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
     private final String defaultCache;
 
     public DefaultCacheContainer(GlobalConfiguration global, String defaultCache) {
-        this(new DefaultCacheManager(global, null, false), defaultCache);
+        this(new DefaultCacheManager(global, new ConfigurationBuilder().build(), false), defaultCache);
     }
 
     public DefaultCacheContainer(GlobalConfiguration global, Configuration config, String defaultCache) {
