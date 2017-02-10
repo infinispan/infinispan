@@ -138,9 +138,11 @@
          <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <version>${project.version}</version>
             <executions>
                <execution>
                   <id>extract-defaults</id>
+                  <phase>process-classes</phase>
                   <goals>
                      <goal>extract-defaults</goal>
                   </goals>
