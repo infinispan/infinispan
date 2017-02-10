@@ -19,11 +19,10 @@ public class ByteString {
    private static final ByteString EMPTY = new ByteString(new byte[0]);
    private final byte[] b;
    private String s;
-   private final transient int hash;
+   private transient int hash;
 
    ByteString(byte[] b) {
       this.b = b;
-      this.hash = Arrays.hashCode(b);
    }
 
    public static ByteString fromString(String s) {
@@ -39,7 +38,7 @@ public class ByteString {
 
    @Override
    public int hashCode() {
-      return hash;
+      return hash == 0 ? (hash = Arrays.hashCode(b)) : hash;
    }
 
    @Override
