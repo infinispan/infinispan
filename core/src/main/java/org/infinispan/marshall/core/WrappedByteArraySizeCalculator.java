@@ -1,7 +1,7 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
+import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
 
 /**
