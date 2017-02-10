@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.0.0.CR1</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -492,8 +492,8 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
-         <!-- This is a work around for https://issues.jboss.org/browse/SHRINKRES-238 -->
-         <!-- After fixing the issue above, the dependency below can be safely removed -->
+         
+         
          <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-aether-provider</artifactId>
@@ -1628,7 +1628,7 @@
                      <groupId>org.apache.maven.plugins</groupId>
                      <artifactId>maven-compiler-plugin</artifactId>
                      <configuration>
-                        <!-- fork is needed so compiler args can be used -->
+                        
                         <fork>true</fork>
                         <compilerArgs>
                            <arg>-J-addmods</arg>
@@ -1927,13 +1927,13 @@
                         </goals>
                         <configuration>
                            <target>
-                              <ac:if xmlns:ac="antlib:net.sf.antcontrib">
-                                 <ac:available file="${project.build.directory}/classes" type="dir"/>
-                                 <ac:then>
+                              <ns2:if xmlns:ns2="antlib:net.sf.antcontrib">
+                                 <ns2:available file="${project.build.directory}/classes" type="dir" />
+                                 <ns2:then>
                               <echo>Copying test classes to jacoco folder.</echo>
                               <copydir dest="${jacoco.reportPath}/classes" src="${project.build.directory}/classes" />
-                                 </ac:then>
-                              </ac:if>
+                                 </ns2:then>
+                              </ns2:if>
                            </target>
                         </configuration>
                      </execution>
