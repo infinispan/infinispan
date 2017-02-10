@@ -159,14 +159,6 @@
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
         </module-def>
 
-        <!-- Infinispan/Lucene targeting the latest community release of Hibernate Search which we support -->
-        <hibernatesearch-directoryprovide-module
-            slot="for-hibernatesearch-5.7" hibernatesearch.slot="5.7" lucene.slot="5.5" />
-
-        <!-- Infinispan/Lucene targeting the version of Hibernate Search included in WildFly -->
-        <hibernatesearch-directoryprovide-module
-            slot="for-hibernatesearch-5.5" hibernatesearch.slot="main" lucene.slot="main" />
-
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
         </module-def>
@@ -214,6 +206,17 @@
         </module-def>
 
         <module-def name="org.infinispan.remote" slot="${infinispan.slot}"/>
+
+        <!-- ORDER MATTERS - following tasks apper to mess with global properties, so run them last -->
+
+        <!-- Infinispan/Lucene targeting the latest community release of Hibernate Search which we support -->
+        <hibernatesearch-directoryprovide-module
+            slot="for-hibernatesearch-5.7" hibernatesearch.slot="5.7" lucene.slot="5.5" />
+
+        <!-- Infinispan/Lucene targeting the version of Hibernate Search included in WildFly -->
+        <hibernatesearch-directoryprovide-module
+            slot="for-hibernatesearch-5.5" hibernatesearch.slot="main" lucene.slot="main" />
+
     </target>
 
     <target name="all" depends="clean, prepare-hibernate-search-module, copy-files, modules"/>
