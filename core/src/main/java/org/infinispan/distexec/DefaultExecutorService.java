@@ -459,17 +459,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    public <T, K> CompletableFuture<T> submit(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
 
+      Address me = getAddress();
       if(inputKeysSpecified(input)){
          Map<Address, List<K>> nodesKeysMap = keysToExecutionNodes(task.getTaskExecutionPolicy(), input);
          checkExecutionPolicy(task, nodesKeysMap, input);
-         Address me = getAddress();
-         DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task.getCallable(), me, Arrays.asList(input));
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, Arrays.asList(input), selectExecutionNode(nodes), 0);
+         Address target = selectExecutionNode(nodes);
+         DistributedExecuteCommand<T> c = null;
+         if (target.equals(me)) {
+            c = factory.buildDistributedExecuteCommand(clone(task.getCallable()), me, Arrays.asList(input));
+         } else {
+            c = factory.buildDistributedExecuteCommand(task.getCallable(), me, Arrays.asList(input));
+         }
+         DistributedTaskPart<T> part = createDistributedTaskPart(task, c, Arrays.asList(input), target, 0);
          part.execute();
          return part;
       } else {
-         return submit(task.getCallable());
+         return submit(me, task);
       }
    }
 
