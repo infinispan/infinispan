@@ -48,7 +48,7 @@ final class ExternallyMarshallable {
             || className.equals("java.lang.Class")
             || className.equals("java.time.Instant") // prod
             || className.equals("org.hibernate.search.query.engine.impl.LuceneHSQuery") // prod
-            || className.equals("org.infinispan.distexec.DefaultExecutorService$RunnableAdapter") // prod
+            || className.equals("org.infinispan.distexec.RunnableAdapter") // prod
             || className.equals("org.infinispan.jcache.annotation.DefaultCacheKey") // prod
             || className.equals("org.infinispan.query.clustered.QueryResponse") // prod
             || className.equals("org.infinispan.server.core.transport.NettyTransport$ConnectionAdderTask") // prod
