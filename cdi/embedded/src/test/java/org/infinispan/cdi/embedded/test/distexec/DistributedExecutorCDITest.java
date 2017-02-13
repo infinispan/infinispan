@@ -51,6 +51,14 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       delegate.basicInvocation(new ImpliedInputCacheCallable());
    }
 
+   public void testBasicInvocationRunnable() throws Exception {
+      delegate.basicInvocation(new SimpleRunnable());
+   }
+
+   public void testInvocationUsingImpliedInputCacheRunnable() throws Exception {
+      delegate.basicInvocation(new ImpliedInputCacheRunnable());
+   }
+
 
    static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
@@ -64,6 +72,20 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       public Integer call() throws Exception {
          Assert.assertNotNull(cache, "Cache not injected into " + this);
          return 1;
+      }
+   }
+
+   static class SimpleRunnable implements Runnable, Serializable, ExternalPojo {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -8589149500259272402L;
+
+      @Inject
+      private Cache<String, String> cache;
+
+      @Override
+      public void run() {
+         Assert.assertNotNull(cache, "Cache not injected into " + this);
       }
    }
 
@@ -83,6 +105,24 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
          //verify the right cache injected
          Assert.assertTrue(cache.getName().equals("DistributedExecutorTest-DIST_SYNC"));
          return 1;
+      }
+   }
+
+   static class ImpliedInputCacheRunnable implements Runnable, Serializable {
+
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 5770069398989111268L;
+
+      @Input
+      @Inject
+      private Cache<String, String> cache;
+
+      @Override
+      public void run() {
+         Assert.assertNotNull(cache, "Cache not injected into " + this);
+         //verify the right cache injected
+         Assert.assertTrue(cache.getName().equals("DistributedExecutorTest-DIST_SYNC"));
       }
    }
 }
