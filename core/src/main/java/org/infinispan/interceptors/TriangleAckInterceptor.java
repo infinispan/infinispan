@@ -132,12 +132,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       if (ctx.isOriginLocal()) {
          return invokeNextAndHandle(ctx, command, onLocalWriteCommand);
       } else {
-         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         if (command.getTopologyId() != cacheTopology.getTopologyId()) {
-            sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(),
-                  OutdatedTopologyException.getCachedInstance());
-            throw OutdatedTopologyException.getCachedInstance();
-         }
+         CacheTopology cacheTopology = checkTopologyId(command);
          DistributionInfo distributionInfo = new DistributionInfo(command.getKey(),
                cacheTopology.getWriteConsistentHash(), localAddress);
          switch (distributionInfo.ownership()) {
@@ -149,6 +144,16 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
                throw new IllegalStateException();
          }
       }
+   }
+
+   private CacheTopology checkTopologyId(DataWriteCommand command) {
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      if (command.getTopologyId() != cacheTopology.getTopologyId()) {
+         sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(),
+               OutdatedTopologyException.getCachedInstance());
+         throw OutdatedTopologyException.getCachedInstance();
+      }
+      return cacheTopology;
    }
 
    @SuppressWarnings("unused")

@@ -84,15 +84,17 @@ public class CommandAckCollector {
     * It should be used when the primary owner is the local node and the return value and its acknowledge is already
     * known.
     *
-    * @param id          the {@link CommandInvocationId}.
-    * @param returnValue the primary owner result.
-    * @param owners      the owners of the key. It assumes the first element as primary owner.
-    * @param topologyId  the current topology id.
+    * @param id           the {@link CommandInvocationId}.
+    * @param returnValue  the primary owner result.
+    * @param primaryOwner the primary owner's {@link Address}
+    * @param backupOwner  the backup owners of the key. It assumes the first element as primary owner.
+    * @param topologyId   the current topology id.
     */
-   public void create(CommandInvocationId id, Object returnValue, Collection<Address> owners, int topologyId) {
-      collectorMap.putIfAbsent(id, new SingleKeyCollector(id, returnValue, owners, topologyId));
+   public void create(CommandInvocationId id, Object returnValue, Address primaryOwner, Collection<Address> backupOwner,
+         int topologyId) {
+      collectorMap.putIfAbsent(id, new SingleKeyCollector(id, returnValue, primaryOwner, backupOwner, topologyId));
       if (trace) {
-         log.tracef("Created new collector for %s. ReturnValue=%s. Owners=%s", id, returnValue, owners);
+         log.tracef("Created new collector for %s. ReturnValue=%s. Backup owners=%s", id, returnValue, backupOwner);
       }
    }
 
@@ -130,9 +132,10 @@ public class CommandAckCollector {
 
    /**
     * Acknowledges a {@link org.infinispan.commands.write.PutMapCommand} completion in the backup owner.
+    *
     * @param id         the {@link CommandInvocationId}.
     * @param from       the backup owner.
-    * @param segment   the segments affected and acknowledged.
+    * @param segment    the segments affected and acknowledged.
     * @param topologyId the topology id.
     */
    public void multiKeyBackupAck(CommandInvocationId id, Address from, int segment, int topologyId) {
@@ -350,18 +353,16 @@ public class CommandAckCollector {
          this.owners = new HashSet<>(owners); //removal is fast
       }
 
-      private SingleKeyCollector(CommandInvocationId id, Object returnValue, Collection<Address> owners,
-            int topologyId) {
+      private SingleKeyCollector(CommandInvocationId id, Object returnValue, Address primaryOwner,
+            Collection<Address> backupOwner, int topologyId) {
          super(id, topologyId);
          this.returnValue = returnValue;
-         this.primaryOwner = owners.iterator().next();
-         Collection<Address> tmpOwners = new HashSet<>(owners);
-         tmpOwners.remove(primaryOwner);
-         if (tmpOwners.isEmpty()) { //num owners is 1 or single member in cluster
-            this.owners = Collections.emptyList();
+         this.primaryOwner = primaryOwner;
+         if (backupOwner.isEmpty()) {
+            this.owners = Collections.emptySet();
             this.future.complete(returnValue);
          } else {
-            this.owners = tmpOwners;
+            owners = new HashSet<>(backupOwner);
          }
       }
 
