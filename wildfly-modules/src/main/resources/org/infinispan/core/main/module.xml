@@ -12,6 +12,7 @@
         <module name="javax.transaction.api"/>
         <module name="org.apache.xerces" services="import"/>
         <module name="org.infinispan.commons" slot="${slot}" />
+        <module name="com.github.ben-manes.caffeine" slot="${slot}"/>
         <module name="org.infinispan.query" slot="${slot}" services="import" />
         <module name="org.infinispan.lucene-directory" slot="${slot}" services="import" />
         <module name="org.jboss.jandex"/>
