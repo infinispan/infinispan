@@ -436,12 +436,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                         return unwrapFunctionalResultOnOrigin(ctx, command.getKey(), responseValue);
                      }
                   }
-                  // If this node has topology higher than some of the nodes and the nodes could not respond
-                  // with the remote entry, these nodes are blocking the response and therefore we can get only timeouts.
-                  // Therefore, if we got here it means that we have lower topology than some other nodes and we can wait
-                  // for it in StateTransferInterceptor and retry the read later.
-                  // TODO: These situations won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
-                  throw new OutdatedTopologyException("Did not get any successful response, got " + responses);
+                  // We got only unsuccessful responses, as all nodes that were read-owners at the time when we've sent
+                  // the request have progressed to newer topology. However we are guaranteed to progress to a topology
+                  // at most one older, and can immediately retry.
+                  throw new OutdatedTopologyException(command.getTopologyId());
                }));
             }
          }
@@ -453,7 +451,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
-            return handleMissingEntryOnRead(command);
+            return UnsureResponse.INSTANCE;
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
                wrapFunctionalResultOnNonOriginOnReturn(rv, entry));

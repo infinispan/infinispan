@@ -133,8 +133,8 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
 
       waitForClusterToForm(CACHE_NAME);
 
-      // Adding a node requires 2 topologies x2 for pre/post = 4
-      assertEquals(4, listener.topologyEvents.size());
+      // Adding a node requires 4 topologies x2 for pre/post = 8
+      assertEquals(8, listener.topologyEvents.size());
    }
 
    @Test

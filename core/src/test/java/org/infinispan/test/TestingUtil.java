@@ -222,9 +222,14 @@ public class TestingUtil {
             .findInterceptorExtending(interceptorToFind);
    }
 
-   public static void waitForRehashToComplete(Cache... caches) {
-      final int REHASH_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
-      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
+   /**
+    * Waits until pendingCH() is null on all caches, currentCH.getMembers() contains all caches provided as the param
+    * and all segments have numOwners owners.
+    * @param caches
+    */
+   public static void waitForStateTransferToComplete(Cache... caches) {
+      final int STATE_TRANSFER_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
+      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(STATE_TRANSFER_TIMEOUT_SECONDS);
       for (Cache c : caches) {
          if (c instanceof SecureCacheImpl) {
             c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
@@ -233,11 +238,11 @@ public class TestingUtil {
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-            boolean rebalanceInProgress;
+            boolean stateTransferInProgress;
             boolean chContainsAllMembers;
             boolean currentChIsBalanced;
             if (cacheTopology != null) {
-               rebalanceInProgress = cacheTopology.getPendingCH() != null;
+               stateTransferInProgress = cacheTopology.getPendingCH() != null;
                ConsistentHash currentCH = cacheTopology.getCurrentCH();
 
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
@@ -250,15 +255,15 @@ public class TestingUtil {
                      break;
                   }
                }
-               if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)
+               if (chContainsAllMembers && !stateTransferInProgress && currentChIsBalanced)
                   break;
             } else {
-               rebalanceInProgress = false;
+               stateTransferInProgress = false;
                chContainsAllMembers = false;
                currentChIsBalanced = true;
             }
 
-            //System.out.printf("Cache %s Address %s cacheTopology %s rebalanceInProgress %s chContainsAllMembers %s, currentChIsBalanced %s\n", c.getName(), cacheAddress, cacheTopology, rebalanceInProgress, chContainsAllMembers, currentChIsBalanced);
+            //System.out.printf("Cache %s Address %s cacheTopology %s stateTransferInProgress %s chContainsAllMembers %s, currentChIsBalanced %s\n", c.getName(), cacheAddress, cacheTopology, stateTransferInProgress, chContainsAllMembers, currentChIsBalanced);
 
             if (System.nanoTime() - giveup > 0) {
                String message;
@@ -272,8 +277,8 @@ public class TestingUtil {
                         cacheAddress, Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
                } else {
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
-                        "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
-                                          cacheTopology, rebalanceInProgress, currentChIsBalanced);
+                        "current topology is %s. stateTransferInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
+                                          cacheTopology, stateTransferInProgress, currentChIsBalanced);
                }
                log.error(message);
                throw new RuntimeException(message);
@@ -285,8 +290,8 @@ public class TestingUtil {
       }
    }
 
-   public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
-      waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
+   public static void waitForStateTransferToComplete(Collection<? extends Cache> caches) {
+      waitForStateTransferToComplete(caches.toArray(new Cache[caches.size()]));
    }
 
    /**

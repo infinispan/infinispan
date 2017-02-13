@@ -114,7 +114,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
 
       // lets make sure any rehashing work has completed
       TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
-      TestingUtil.waitForRehashToComplete(cacheMap.values());
+      TestingUtil.waitForStateTransferToComplete(cacheMap.values());
       ConsistentHash hash = cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
 
       for (int i = 0; i < NUM_NODES; i++) {

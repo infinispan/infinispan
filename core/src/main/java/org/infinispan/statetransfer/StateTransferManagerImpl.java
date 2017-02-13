@@ -175,7 +175,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          unionCH = new PartitionerConsistentHash(unionCH, keyPartitioner);
       }
       return new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), currentCH, pendingCH,
-            unionCH, cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
+            unionCH, cacheTopology.getPhase(), cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
@@ -206,7 +206,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
       cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), false);
 
       if (initialStateTransferComplete.getCount() > 0) {
-         boolean isJoined = stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
+         assert stateConsumer.getCacheTopology() == newCacheTopology;
+         boolean isJoined = newCacheTopology.getPhase() == CacheTopology.Phase.STABLE
+               && newCacheTopology.getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
          if (isJoined) {
             initialStateTransferComplete.countDown();
             log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
@@ -312,7 +314,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public void notifyEndOfRebalance(int topologyId, int rebalanceId) {
-      localTopologyManager.confirmRebalance(cacheName, topologyId, rebalanceId, null);
+      localTopologyManager.confirmTopology(cacheName, topologyId, rebalanceId, null);
    }
 
    // TODO Investigate merging ownsData() and getFirstTopologyAsMember(), as they serve a similar purpose

@@ -32,7 +32,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
@@ -147,7 +147,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             } else {
                // If all owners left and we still haven't received the availability update yet,
                // we get OutdatedTopologyException from BaseDistributionInterceptor.retrieveFromProperSource
-               if (t instanceof OutdatedTopologyException && performPartitionCheck(rCtx, dataCommand)) {
+               if (t instanceof AllOwnersLostException && performPartitionCheck(rCtx, dataCommand)) {
                   // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
                   // and we only fail the operation if _all_ owners have left the cluster.
                   // TODO Move this to the availability strategy when implementing ISPN-4624

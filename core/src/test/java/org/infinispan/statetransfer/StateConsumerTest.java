@@ -56,6 +56,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
@@ -135,6 +136,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                                                      new ThreadPoolExecutor.CallerRunsPolicy());
 
       StateTransferManager stateTransferManager = mock(StateTransferManager.class);
+      LocalTopologyManager localTopologyManager = mock(LocalTopologyManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       RpcManager rpcManager = mock(RpcManager.class);
       Transport transport = mock(Transport.class);
@@ -192,7 +194,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icf, configuration, rpcManager, null,
+      stateConsumer.init(cache, pooledExecutorService, stateTransferManager, localTopologyManager, interceptorChain, icf, configuration, rpcManager, null,
             commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
             totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0));
       stateConsumer.start();
@@ -209,11 +211,12 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // node 4 leaves
-      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, CacheTopology.Phase.STABLE, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // start a rebalance
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+            ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
       assertTrue(stateConsumer.hasActiveTransfers());
 
       // check that all segments have been requested
@@ -227,18 +230,19 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
+            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, CacheTopology.Phase.STABLE, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
             return null;
          }
       });
-      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, CacheTopology.Phase.STABLE, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
       future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
 
       // restart the rebalance
       requestedSegments.clear();
-      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+            ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 

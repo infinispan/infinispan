@@ -139,8 +139,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       CacheTopology mergedTopology = null;
       if (maxTopology != null) {
+         // There's no pendingCH, therefore the topology is in stable phase
          mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1,
-               maxTopology.getCurrentCH(), null, maxTopology.getActualMembers(), persistentUUIDManager.mapAddresses(maxTopology.getActualMembers()));
+               maxTopology.getCurrentCH(), null, CacheTopology.Phase.STABLE, maxTopology.getActualMembers(),
+               persistentUUIDManager.mapAddresses(maxTopology.getActualMembers()));
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, null);

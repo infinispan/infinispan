@@ -37,7 +37,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       // A member is signaling that it wants to leave the cluster.
       LEAVE,
       // A member is confirming that it finished the rebalance operation.
-      REBALANCE_CONFIRM,
+      TOPOLOGY_CONFIRM,
       // A member is requesting a cache shutdown
       SHUTDOWN_REQUEST,
 
@@ -83,6 +83,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private int rebalanceId;
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
+   private CacheTopology.Phase phase;
    private AvailabilityMode availabilityMode;
    private List<Address> actualMembers;
    private List<PersistentUUID> persistentUUIDs;
@@ -139,6 +140,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.rebalanceId = cacheTopology.getRebalanceId();
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
+      this.phase = cacheTopology.getPhase();
       this.availabilityMode = availabilityMode;
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
@@ -178,8 +180,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          case LEAVE:
             clusterTopologyManager.handleLeave(cacheName, sender, viewId);
             return null;
-         case REBALANCE_CONFIRM:
-            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable, viewId);
+         case TOPOLOGY_CONFIRM:
+            clusterTopologyManager.handleTopologyConfirm(cacheName, sender, topologyId, throwable, viewId);
             return null;
          case SHUTDOWN_REQUEST:
             clusterTopologyManager.handleShutdownRequest(cacheName);
@@ -188,15 +190,15 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          // coordinator to member
          case CH_UPDATE:
             localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers, persistentUUIDs), availabilityMode, viewId, sender);
+                  pendingCH, phase, actualMembers, persistentUUIDs), availabilityMode, viewId, sender);
             return null;
          case STABLE_TOPOLOGY_UPDATE:
             localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
-                  currentCH, pendingCH, actualMembers, persistentUUIDs), sender, viewId);
+                  currentCH, pendingCH, CacheTopology.Phase.STABLE, actualMembers, persistentUUIDs), sender, viewId);
             return null;
          case REBALANCE_START:
             localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers, persistentUUIDs), viewId, sender);
+                  pendingCH, phase, actualMembers, persistentUUIDs), viewId, sender);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
@@ -278,7 +280,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(sender);
             output.writeInt(viewId);
             return;
-         case REBALANCE_CONFIRM:
+         case TOPOLOGY_CONFIRM:
             output.writeObject(sender);
             output.writeObject(throwable);
             output.writeInt(viewId);
@@ -288,6 +290,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(sender);
             output.writeObject(currentCH);
             output.writeObject(pendingCH);
+            MarshallUtil.marshallEnum(phase, output);
             MarshallUtil.marshallCollection(actualMembers, output);
             MarshallUtil.marshallCollection(persistentUUIDs, output);
             MarshallUtil.marshallEnum(availabilityMode, output);
@@ -309,6 +312,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(sender);
             output.writeObject(currentCH);
             output.writeObject(pendingCH);
+            MarshallUtil.marshallEnum(phase, output);
             MarshallUtil.marshallCollection(actualMembers, output);
             MarshallUtil.marshallCollection(persistentUUIDs, output);
             output.writeInt(topologyId);
@@ -343,7 +347,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             sender = (Address) input.readObject();
             viewId = input.readInt();
             return;
-         case REBALANCE_CONFIRM:
+         case TOPOLOGY_CONFIRM:
             sender = (Address) input.readObject();
             throwable = (Throwable) input.readObject();
             viewId = input.readInt();
@@ -353,6 +357,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             sender = (Address) input.readObject();
             currentCH = (ConsistentHash) input.readObject();
             pendingCH = (ConsistentHash) input.readObject();
+            phase = MarshallUtil.unmarshallEnum(input, CacheTopology.Phase::valueOf);
             actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             availabilityMode = MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
@@ -374,6 +379,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             sender = (Address) input.readObject();
             currentCH = (ConsistentHash) input.readObject();
             pendingCH = (ConsistentHash) input.readObject();
+            phase = MarshallUtil.unmarshallEnum(input, CacheTopology.Phase::valueOf);
             actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             topologyId = input.readInt();
@@ -406,6 +412,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", availabilityMode=" + availabilityMode +
+            ", phase=" + phase +
             ", actualMembers=" + actualMembers +
             ", throwable=" + throwable +
             ", viewId=" + viewId +

@@ -187,8 +187,9 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
       // The entry was lost, so we'll get null
       assertNull(future.get());
-      assertEquals(1, thrown.get());
-      assertEquals(1, retried.get());
+      // Since we've lost all owners
+      assertEquals(1, thrown.get()); // OwnersLostException
+      assertEquals(0, retried.get());
       release.countDown();
    }
 

@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStateTransferToComplete;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -92,7 +92,7 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
 
       // Kill c3
       killMember(2);
-      waitForRehashToComplete(c1, c2);
+      waitForStateTransferToComplete(c1, c2);
 
       // Check that the lock succeeded
       f.get(10, SECONDS);
