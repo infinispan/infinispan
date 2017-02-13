@@ -19,6 +19,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -141,7 +143,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final ConfigurationManager configurationManager;
    private final String defaultCacheName;
 
-   @GuardedBy("this")
+   private final ReadWriteLock stoppingLock = new ReentrantReadWriteLock();
+   @GuardedBy("stoppingLock")
    private boolean stopping;
 
    /**
@@ -604,6 +607,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       Configuration c;
       boolean needToNotifyCacheStarted = false;
       try {
+         stoppingLock.readLock().lock();
+         if (stopping) {
+            throw new IllegalStateException("cache manager is being stopped, cannot create new cache now");
+         }
          synchronized (caches) {
             //fetch it again with the lock held
             CacheWrapper existingCacheWrapper = caches.get(cacheName);
@@ -642,6 +649,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          needToNotifyCacheStarted = notStartedYet && cr.getStatus() == ComponentStatus.RUNNING;
          return cache;
       } finally {
+         stoppingLock.readLock().unlock();
          // allow other threads to access the cache
          if (createdCacheWrapper != null) {
             log.tracef("Closing latch for cache %s", cacheName);
@@ -691,7 +699,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public void stop() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
 
-      synchronized (this) {
+      stoppingLock.writeLock().lock();
+      try {
          if (stopping) {
             log.trace("Ignore call to stop as the cache manager is stopping");
             return;
@@ -699,6 +708,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
          stopping = true;
+      } finally {
+         stoppingLock.writeLock().unlock();
+      }
+
+      synchronized (this) {
          stopCaches();
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
          globalComponentRegistry.stop();
