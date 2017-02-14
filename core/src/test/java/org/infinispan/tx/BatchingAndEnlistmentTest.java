@@ -12,7 +12,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -45,7 +45,7 @@ public class BatchingAndEnlistmentTest extends SingleCacheManagerTest {
       assert getBatchTx(bc) == null;
    }
 
-   private DummyTransaction getBatchTx(BatchContainer bc) {
-      return (DummyTransaction) bc.getBatchTransaction();
+   private EmbeddedTransaction getBatchTx(BatchContainer bc) {
+      return (EmbeddedTransaction) bc.getBatchTransaction();
    }
 }

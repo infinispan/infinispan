@@ -28,7 +28,7 @@ where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api
    <cache-container default-cache="default">
       <transport stack="tcpStack" cluster="sampleCluster"/>
       <local-cache name="LocalTX">
-         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" />
+         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup" />
       </local-cache>
       <local-cache name="CacheStore">
          <persistence>
@@ -199,7 +199,7 @@ scala> val localTxCache = manager.getCache[String, String]("LocalTX")
 localTxCache: org.infinispan.Cache[String,String] = Cache 'LocalTX'@955386212
 
 scala> val tm = localTxCache.getAdvancedCache().getTransactionManager()
-tm: javax.transaction.TransactionManager = org.infinispan.transaction.tm.DummyTransactionManager@81ee8c1
+tm: javax.transaction.TransactionManager = org.infinispan.transaction.tm.EmbeddedTransactionManager@81ee8c1
 
 scala> tm.begin
 
@@ -210,7 +210,7 @@ scala> localTxCache.size
 res2: Int = 1
 
 scala> val tx = tm.suspend
-res3: javax.transaction.Transaction = DummyTransaction{xid=DummyXid{id=1}, status=0}
+res3: javax.transaction.Transaction = EmbeddedTransaction{xid=DummyXid{id=1}, status=0}
 
 scala> localTxCache.size
 res4: Int = 0

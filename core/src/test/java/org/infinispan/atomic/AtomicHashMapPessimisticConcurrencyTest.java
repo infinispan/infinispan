@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -20,7 +19,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ValueFuture;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +44,7 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       builder.invocationBatching().enable();
-      builder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(lockingMode);
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).lockingMode(lockingMode);
 
       return TestCacheManagerFactory.createCacheManager(builder);
    }
@@ -55,23 +54,20 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       AtomicMapLookup.getAtomicMap(cache, KEY);
 
       final AtomicBoolean gotTimeoutException = new AtomicBoolean();
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm().begin();
+      fork(() -> {
+         try {
+            tm().begin();
 
-               try {
-                  AtomicMapLookup.getAtomicMap(cache, KEY);
-               } catch (TimeoutException e) {
-                  // this is the exception we were expecting
-                  gotTimeoutException.set(true);
-               } finally {
-                  tm().rollback();
-               }
-            } catch (Exception e) {
-               log.error("Unexpected error performing transaction", e);
+            try {
+               AtomicMapLookup.getAtomicMap(cache, KEY);
+            } catch (TimeoutException e) {
+               // this is the exception we were expecting
+               gotTimeoutException.set(true);
+            } finally {
+               tm().rollback();
             }
+         } catch (Exception e) {
+            log.error("Unexpected error performing transaction", e);
          }
       }).get(10, TimeUnit.SECONDS);
 
@@ -83,19 +79,16 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       tm().begin();
       atomicMap.put(1, "");
 
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            tm().begin();
+      Future<Object> future = fork(() -> {
+         tm().begin();
 
-            try {
-               AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-               otMap.put(1, "val");
-            } finally {
-               tm().rollback();
-            }
-            return null;
+         try {
+            AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+            otMap.put(1, "val");
+         } finally {
+            tm().rollback();
          }
+         return null;
       });
 
       try {
@@ -114,26 +107,23 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       tm().begin();
       atomicMap.put(1, "value1");
 
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               tm().begin();
-               AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+      Future<Object> future = fork(() -> {
+         try {
+            tm().begin();
+            AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
 
-               assertEquals(0, otMap.size());
-               readLatch.countDown();
+            assertEquals(0, otMap.size());
+            readLatch.countDown();
 
-               otMap.put(2, "value2");
-               commitLatch.await(10, TimeUnit.SECONDS);
+            otMap.put(2, "value2");
+            commitLatch.await(10, TimeUnit.SECONDS);
 
-               tm().commit();
-            } catch (Exception e) {
-               tm().rollback();
-               throw e;
-            }
-            return null;
+            tm().commit();
+         } catch (Exception e) {
+            tm().rollback();
+            throw e;
          }
+         return null;
       });
 
       readLatch.await(10, TimeUnit.SECONDS);
@@ -141,7 +131,7 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       commitLatch.countDown();
 
       future.get(10, TimeUnit.SECONDS);
-      assertEquals(new HashSet<Integer>(Arrays.asList(1, 2)), atomicMap.keySet());
+      assertEquals(new HashSet<>(Arrays.asList(1, 2)), atomicMap.keySet());
    }
 
    public void testConcurrentRemove() throws Exception {
@@ -158,26 +148,23 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       tm().begin();
       atomicMap.remove(1);
 
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               tm().begin();
-               AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+      Future<Object> future = fork(() -> {
+         try {
+            tm().begin();
+            AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
 
-               assertEquals(3, otMap.size());
-               readLatch.countDown();
+            assertEquals(3, otMap.size());
+            readLatch.countDown();
 
-               otMap.remove(2);
-               commitLatch.await(10, TimeUnit.SECONDS);
+            otMap.remove(2);
+            commitLatch.await(10, TimeUnit.SECONDS);
 
-               tm().commit();
-            } catch (Exception e) {
-               tm().rollback();
-               throw e;
-            }
-            return null;
+            tm().commit();
+         } catch (Exception e) {
+            tm().rollback();
+            throw e;
          }
+         return null;
       });
 
       readLatch.await(10, TimeUnit.SECONDS);
@@ -185,7 +172,7 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       commitLatch.countDown();
 
       future.get(10, TimeUnit.SECONDS);
-      assertEquals(new HashSet<Integer>(Arrays.asList(3)), atomicMap.keySet());
+      assertEquals(new HashSet<>(Arrays.asList(3)), atomicMap.keySet());
    }
 
    public void testReadAfterTxStarted() throws Exception {
@@ -198,25 +185,22 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
       final ValueFuture responseAfterCommit = new ValueFuture();
       final CountDownLatch commitLatch = new CountDownLatch(1);
 
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            tm().begin();
+      Future<Object> future = fork(() -> {
+         tm().begin();
 
-            try {
-               AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+         try {
+            AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
 
-               responseBeforeCommit.set(otMap.get(1));
+            responseBeforeCommit.set(otMap.get(1));
 
-               // wait until the main thread commits the transaction
-               commitLatch.await();
+            // wait until the main thread commits the transaction
+            commitLatch.await();
 
-               responseAfterCommit.set(otMap.get(1));
-            } finally {
-               tm().rollback();
-            }
-            return null;
+            responseAfterCommit.set(otMap.get(1));
+         } finally {
+            tm().rollback();
          }
+         return null;
       });
 
       assertEquals("existing", responseBeforeCommit.get());

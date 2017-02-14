@@ -15,9 +15,9 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -37,7 +37,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
    protected static final class LockTestData {
       public Cache<String, String> cache;
-      public TransactionManager tm;
+      public EmbeddedTransactionManager tm;
       public LockManager lockManager;
    }
 
@@ -54,11 +54,11 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
             .isolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED)
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .transaction()
-               .transactionManagerLookup(new DummyTransactionManagerLookup());
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       ltd.cache = cm.getCache();
       ltd.lockManager = TestingUtil.extractComponentRegistry(ltd.cache).getComponent(LockManager.class);
-      ltd.tm = TestingUtil.extractComponentRegistry(ltd.cache).getComponent(TransactionManager.class);
+      ltd.tm = (EmbeddedTransactionManager) TestingUtil.extractComponentRegistry(ltd.cache).getComponent(TransactionManager.class);
       lockTestData = ltd;
    }
 
@@ -83,7 +83,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
    public void testLocksOnPutKeyVal() throws Exception {
       Cache<String, String> cache = lockTestData.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) lockTestData.tm;
+      EmbeddedTransactionManager tm = lockTestData.tm;
       tm.begin();
       cache.put("k", "v");
       assertTrue(tm.getTransaction().runPrepare());
@@ -115,7 +115,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       tm.begin();
       cache.putAll(Collections.singletonMap("k", "v"));
       assertEquals("v", cache.get("k"));
-      final DummyTransaction tx = ((DummyTransactionManager) tm).getTransaction();
+      final EmbeddedTransaction tx = ((EmbeddedTransactionManager) tm).getTransaction();
       assertTrue(tx.runPrepare());
       assertLocked("k");
       tx.runCommit(false);
@@ -149,7 +149,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    public void testLocksOnRemoveNonexistent() throws Exception {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
+      EmbeddedTransactionManager tm = tl.tm;
       assert !cache.containsKey("k") : "Should not exist";
 
       tm.begin();
@@ -179,7 +179,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    public void testLocksOnRemoveData() throws Exception {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
+      EmbeddedTransactionManager tm = tl.tm;
       // init some data
       cache.put("k", "v");
       cache.put("k2", "v2");
@@ -303,10 +303,10 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    public void testConcurrentWriters() throws Exception {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
+      EmbeddedTransactionManager tm = tl.tm;
       tm.begin();
       cache.put("k", "v");
-      final DummyTransaction transaction = tm.getTransaction();
+      final EmbeddedTransaction transaction = tm.getTransaction();
       assertTrue(transaction.runPrepare());
       tm.suspend();
 

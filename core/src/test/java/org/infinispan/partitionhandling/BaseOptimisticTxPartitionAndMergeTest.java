@@ -15,9 +15,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 
 /**
  * It tests multiple scenarios where a split can happen during a transaction.
@@ -27,14 +27,14 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
  */
 public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartitionAndMergeTest {
 
-   protected static final String OPTIMISTIC_TX_CACHE_NAME = "opt-cache";
+   static final String OPTIMISTIC_TX_CACHE_NAME = "opt-cache";
 
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().partitionHandling().enabled(true);
-      builder.transaction().lockingMode(LockingMode.OPTIMISTIC).transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup());
+      builder.transaction().lockingMode(LockingMode.OPTIMISTIC).transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       defineConfigurationOnAllManagers(OPTIMISTIC_TX_CACHE_NAME, builder);
    }
 
@@ -52,10 +52,10 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
       final FilterCollection filterCollection = createFilters(OPTIMISTIC_TX_CACHE_NAME, discard, getCommandClass(), splitMode);
 
       Future<Integer> put = fork(() -> {
-         final DummyTransactionManager transactionManager = (DummyTransactionManager) originator.getAdvancedCache().getTransactionManager();
+         final EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) originator.getAdvancedCache().getTransactionManager();
          transactionManager.begin();
          keyInfo.putFinalValue(originator);
-         final DummyTransaction transaction = transactionManager.getTransaction();
+         final EmbeddedTransaction transaction = transactionManager.getTransaction();
          transaction.runPrepare();
          transaction.runCommit(forceRollback());
          return transaction.getStatus();

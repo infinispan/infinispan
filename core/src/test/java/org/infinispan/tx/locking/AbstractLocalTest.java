@@ -12,8 +12,8 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.context.Flag;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -61,7 +61,7 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
    protected abstract void assertLocking();
 
    protected void commit() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm();
       try {
          dtm.firstEnlistedResource().commit(getXid(), true);
       } catch (Throwable e) {
@@ -70,7 +70,7 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
    }
 
    protected void prepare() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm();
       try {
          dtm.firstEnlistedResource().prepare(getXid());
       } catch (Throwable e) {
@@ -79,7 +79,7 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
    }
 
    protected void rollback() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm();
       try {
          dtm.getTransaction().rollback();
       } catch (SystemException e) {
@@ -88,7 +88,8 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
    }
 
    private Xid getXid() throws SystemException {
-      Xid xid;DummyTransaction dummyTransaction = (DummyTransaction) tm().getTransaction();
+      Xid xid;
+      EmbeddedTransaction dummyTransaction = (EmbeddedTransaction) tm().getTransaction();
       xid = dummyTransaction.getXid();
       return xid;
    }

@@ -11,8 +11,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithCustomTMTest")
 public class BatchWithCustomTMTest extends AbstractBatchTest {
 
-   EmbeddedCacheManager cm;
+   private EmbeddedCacheManager cm;
 
    @BeforeClass
    public void createCacheManager() {
@@ -35,8 +35,7 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
    }
 
    public void testBatchWithOngoingTM() throws Exception {
-      Cache<String, String> cache = null;
-      cache = createCache("testBatchWithOngoingTM");
+      Cache<String, String> cache =createCache("testBatchWithOngoingTM");
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       assertEquals(MyDummyTransactionManager.class, tm.getClass());
       tm.begin();
@@ -109,7 +108,7 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
       return cm.getCache(name);
    }
 
-   static class MyDummyTransactionManagerLookup extends DummyTransactionManagerLookup {
+   static class MyDummyTransactionManagerLookup extends EmbeddedTransactionManagerLookup {
       MyDummyTransactionManager tm = new MyDummyTransactionManager();
 
       @Override
@@ -118,7 +117,7 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
       }
    }
 
-   static class MyDummyTransactionManager extends DummyTransactionManager {
+   static class MyDummyTransactionManager extends EmbeddedBaseTransactionManager {
 
    }
 }

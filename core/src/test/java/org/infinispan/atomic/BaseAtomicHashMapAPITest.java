@@ -30,7 +30,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
@@ -51,7 +51,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.clustering().hash().numSegments(60);
       configurationBuilder.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "atomic", configurationBuilder);
@@ -163,14 +163,11 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(expectedMap, map);
       map.put("the-2", "a minor");
 
-      Future<Void> f = fork(TestingUtil.withTxCallable(tm(0, "atomic"), new Callable<Void>() {
-         @Override
-         public Void call() {
-            Map<String, String> map = createAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
-            assertMap(expectedMap, map);
-            assertNotContainsKey(map, "the-2");
-            return null;
-         }
+      Future<Void> f = fork(TestingUtil.withTxCallable(tm(0, "atomic"), (Callable<Void>) () -> {
+         Map<String, String> map1 = createAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
+         assertMap(expectedMap, map1);
+         assertNotContainsKey(map1, "the-2");
+         return null;
       }));
 
       f.get(10, TimeUnit.SECONDS);
@@ -189,15 +186,12 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(expectedMap, map);
       map.put("the-2", "a minor");
 
-      Future<Void> f = fork(TestingUtil.withTxCallable(tm(0, "atomic"), new Callable<Void>() {
-         @Override
-         public Void call() {
-            Map<String, String> map = createAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
-            assertMap(expectedMap, map);
-            assertNotContainsKey(map, "the-2");
-            map.put("the-2", "a minor-different"); // We're in pessimistic locking, so this put is going to block
-            return null;
-         }
+      Future<Void> f = fork(TestingUtil.withTxCallable(tm(0, "atomic"), (Callable<Void>) () -> {
+         Map<String, String> map1 = createAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
+         assertMap(expectedMap, map1);
+         assertNotContainsKey(map1, "the-2");
+         map1.put("the-2", "a minor-different"); // We're in pessimistic locking, so this put is going to block
+         return null;
       }));
 
       try {
@@ -222,26 +216,20 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertSize(cache1, 0);
       final Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
       assertSize(map, 0);
-      Callable<Void> c1 = new Callable() {
-         @Override
-         public Void call() throws Exception {
-            Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-            for (int i = 0; i < 250; i++) {
-               map.put("key-" + i, "value-" + i);
-            }
-            return null;
+      Callable<Void> c1 = () -> {
+         Map<String, String> map1 = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+         for (int i = 0; i < 250; i++) {
+            map1.put("key-" + i, "value-" + i);
          }
+         return null;
       };
 
-      Callable<Void> c2 = new Callable() {
-         @Override
-         public Void call() throws Exception {
-            Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-            for (int i = 0; i < 250; i++) {
-               map.keySet();
-            }
-            return null;
+      Callable<Void> c2 = () -> {
+         Map<String, String> map12 = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+         for (int i = 0; i < 250; i++) {
+            map12.keySet();
          }
+         return null;
       };
       CompletionService<Void> cs = runConcurrentlyWithCompletionService(c1, c2);
 
@@ -457,20 +445,14 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(expectedMap, map1);
       assertMap(expectedMap, map2);
 
-      Future<Void> t1 = fork(TestingUtil.withTxCallable(tm1, new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            map1.put("k1", "tx1Value");
-            return null;
-         }
+      Future<Void> t1 = fork(TestingUtil.withTxCallable(tm1, (Callable<Void>) () -> {
+         map1.put("k1", "tx1Value");
+         return null;
       }));
 
-      Future<Void> t2 = fork(TestingUtil.withTxCallable(tm2, new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            map2.put("k2", "tx2Value");
-            return null;
-         }
+      Future<Void> t2 = fork(TestingUtil.withTxCallable(tm2, (Callable<Void>) () -> {
+         map2.put("k2", "tx2Value");
+         return null;
       }));
 
       t2.get();
@@ -777,7 +759,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
     */
    protected Map<Object, Object> createMap(Object... keysAndValues) {
       assertEquals("Wrong parameters in createMap() method.", 0, keysAndValues.length % 2);
-      Map<Object, Object> map = new HashMap<Object, Object>();
+      Map<Object, Object> map = new HashMap<>();
       for (int i = 0; i < keysAndValues.length; i += 2) {
          map.put(keysAndValues[i], keysAndValues[i + 1]);
       }

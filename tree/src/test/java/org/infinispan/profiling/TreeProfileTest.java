@@ -15,7 +15,7 @@ import org.infinispan.profiling.testinternals.TaskRunner;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TreeTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.impl.TreeCacheImpl;
@@ -69,7 +69,7 @@ public class TreeProfileTest {
             .isolationLevel(IsolationLevel.READ_COMMITTED);
       cacheContainer = TestCacheManagerFactory.createCacheManager(cb);
       Cache c = cacheContainer.getCache();
-      cache = new TreeCacheImpl<String, Object>(c);
+      cache = new TreeCacheImpl<>(c);
    }
 
    @AfterMethod
@@ -79,7 +79,7 @@ public class TreeProfileTest {
    }
 
 
-   private List<Fqn> fqns = new ArrayList<Fqn>(MAX_OVERALL_NODES);
+   private List<Fqn> fqns = new ArrayList<>(MAX_OVERALL_NODES);
 
    public void testLocalMode() throws Exception {
       runCompleteTest();
@@ -135,40 +135,35 @@ public class TreeProfileTest {
       log.warn("Starting warmup");
       // creates all the Fqns since this can be expensive and we don't really want to measure this (for now)
       for (final Fqn fqn : fqns) {
-         runner.execute(new Runnable() {
-            public void run() {
-               try {
-                  // this will create the necessary nodes.
-                  cache.put(fqn, "key", Collections.emptyMap());
-               }
-               catch (Exception e) {
-                  log.warn("Caught Exception", e);
-               }
+         runner.execute(() -> {
+            try {
+               // this will create the necessary nodes.
+               cache.put(fqn, "key", Collections.emptyMap());
+            }
+            catch (Exception e) {
+               log.warn("Caught Exception", e);
             }
          });
       }
 
       // loop through WARMUP_LOOPS gets and puts for JVM optimisation
       for (int i = 0; i < WARMUP_LOOPS; i++) {
-         runner.execute(new Runnable() {
-            public void run() {
-               try {
-                  Fqn fqn = Generator.getRandomElement(fqns);
-                  DummyTransactionManager.getInstance().begin();
-                  cache.get(fqn, "key");
-                  DummyTransactionManager.getInstance().commit();
-                  DummyTransactionManager.getInstance().begin();
-                  cache.put(fqn, "key", "Value");
-                  DummyTransactionManager.getInstance().commit();
-                  DummyTransactionManager.getInstance().begin();
-                  cache.remove(fqn, "key");
-                  DummyTransactionManager.getInstance().commit();
-               }
-               catch (Exception e) {
-                  log.warn("Caught Exception", e);
-               }
+         runner.execute(() -> {
+            try {
+               Fqn fqn = Generator.getRandomElement(fqns);
+               EmbeddedTransactionManager.getInstance().begin();
+               cache.get(fqn, "key");
+               EmbeddedTransactionManager.getInstance().commit();
+               EmbeddedTransactionManager.getInstance().begin();
+               cache.put(fqn, "key", "Value");
+               EmbeddedTransactionManager.getInstance().commit();
+               EmbeddedTransactionManager.getInstance().begin();
+               cache.remove(fqn, "key");
+               EmbeddedTransactionManager.getInstance().commit();
             }
-
+            catch (Exception e) {
+               log.warn("Caught Exception", e);
+            }
          });
       }
 

@@ -9,6 +9,16 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
 
+=== Deprecated all the dummy related transaction classes.
+The following classes has been deprecated and they will be removed in the future:
+
+* `DummyBaseTransactionManager`: replaced by `EmbeddedBasedTransactionManager`;
+* `DummyNoXaXid` and `DummyXid`: replaced by `EmbeddedXid`;
+* `DummyTransaction`: replaced by `EmbeddedTransaction`;
+* `DummyTransactionManager`: replaced by `EmbeddedTransactionManager`;
+* `DummyTransactionManagerLookup` and `RecoveryDummyTransactionManagerLookup`: replaced by `EmbeddedTransactionManagerLookup`;
+* `DummyUserTransaction`: replaced by `EmbeddedUserTransaction`;
+
 === Clustering configuration changes
 The `mode` attribute in the XML declaration of clustered caches is no longer mandatory. It defaults to SYNC.
 

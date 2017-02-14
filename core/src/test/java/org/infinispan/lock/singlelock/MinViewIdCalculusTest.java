@@ -11,8 +11,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 
@@ -32,7 +32,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       c
          .transaction()
                .lockingMode(LockingMode.PESSIMISTIC)
-               .transactionManagerLookup(new DummyTransactionManagerLookup())
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
          .clustering()
             .hash().numOwners(3);
       createCluster(c, 2);
@@ -59,14 +59,9 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       assertTrue(topologyId2 > topologyId);
 
       final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(2));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return tt0.getMinTopologyId() == topologyId2
-                  && tt1.getMinTopologyId() == topologyId2
-                  && tt2.getMinTopologyId() == topologyId2;
-         }
-      });
+      eventually(() -> tt0.getMinTopologyId() == topologyId2
+            && tt1.getMinTopologyId() == topologyId2
+            && tt2.getMinTopologyId() == topologyId2);
    }
 
    public void testMinViewId2() throws Exception {
@@ -78,16 +73,11 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
 
       tm(1).begin();
       cache(1).put(getKeyForCache(0),"v");
-      final DummyTransaction t = (DummyTransaction) tm(1).getTransaction();
+      final EmbeddedTransaction t = (EmbeddedTransaction) tm(1).getTransaction();
       t.runPrepare();
       tm(1).suspend();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1));
 
       log.trace("Adding new node ..");
       //add a new cache and check that min view is updated
@@ -104,11 +94,6 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       tm(1).resume(t);
       t.runCommit(false);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return tt0.getMinTopologyId() == topologyId2 && tt1.getMinTopologyId() == topologyId2;
-         }
-      });
+      eventually(() -> tt0.getMinTopologyId() == topologyId2 && tt1.getMinTopologyId() == topologyId2);
    }
 }

@@ -25,7 +25,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -44,7 +44,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
    protected void createCacheManagers() throws Throwable {
       cacheConfigBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .syncCommitPhase(true).syncRollbackPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .clustering().hash().numOwners(10)  // a number bigger than actual number of nodes will make this distributed cluster behave as if fully replicated

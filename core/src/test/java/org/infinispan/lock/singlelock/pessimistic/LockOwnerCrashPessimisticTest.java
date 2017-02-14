@@ -12,10 +12,9 @@ import javax.transaction.SystemException;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 
@@ -33,32 +32,19 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);
-      inNewThread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(1).begin();
-               cache(1).put(k, "v");
-               transaction = (DummyTransaction) tm(1).getTransaction();
-            } catch (Throwable e) {
-               log.errorf(e, "Error starting transaction for key %s", k);
-            }
+      inNewThread(() -> {
+         try {
+            tm(1).begin();
+            cache(1).put(k, "v");
+            transaction = (EmbeddedTransaction) tm(1).getTransaction();
+         } catch (Throwable e) {
+            log.errorf(e, "Error starting transaction for key %s", k);
          }
       });
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k);
-         }
-      });
+      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
       killMember(2);
       assert caches().size() == 2;
@@ -70,35 +56,22 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
    public void testLockOwnerCrashesBeforePrepareAndLockIsStillHeld() throws Exception {
       final Object k = getKeyForCache(2);
-      inNewThread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(1).begin();
-               cache(1).put(k, "v");
-               transaction = (DummyTransaction) tm(1).getTransaction();
-            } catch (Throwable e) {
-               log.errorf(e, "Error starting transaction for key %s", k);
-            }
+      inNewThread(() -> {
+         try {
+            tm(1).begin();
+            cache(1).put(k, "v");
+            transaction = (EmbeddedTransaction) tm(1).getTransaction();
+         } catch (Throwable e) {
+            log.errorf(e, "Error starting transaction for key %s", k);
          }
       });
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k);
-         }
-      });
+      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
       killMember(2);
       assert caches().size() == 2;
@@ -118,12 +91,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
    public void lockOwnerCrasherBetweenPrepareAndCommit1() throws Exception {
@@ -136,36 +104,23 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    private void testCrashBeforeCommit(final boolean crashBeforePrepare) throws NotSupportedException, SystemException, InvalidTransactionException, HeuristicMixedException, RollbackException, HeuristicRollbackException {
       final Object k = getKeyForCache(2);
-      inNewThread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(1).begin();
-               cache(1).put(k, "v");
-               transaction = (DummyTransaction) tm(1).getTransaction();
-               if (!crashBeforePrepare) {
-                  transaction.runPrepare();
-               }
-            } catch (Throwable e) {
-               log.errorf(e, "Error preparing transaction for key %s", k);
+      inNewThread(() -> {
+         try {
+            tm(1).begin();
+            cache(1).put(k, "v");
+            transaction = (EmbeddedTransaction) tm(1).getTransaction();
+            if (!crashBeforePrepare) {
+               transaction.runPrepare();
             }
+         } catch (Throwable e) {
+            log.errorf(e, "Error preparing transaction for key %s", k);
          }
       });
 
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k);
-         }
-      });
+      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
 
       killMember(2);

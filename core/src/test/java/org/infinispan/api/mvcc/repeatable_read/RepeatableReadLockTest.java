@@ -9,7 +9,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
@@ -126,7 +126,7 @@ public class RepeatableReadLockTest extends LockTestBase {
    public void testLocksOnPutKeyVal() throws Exception {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
-      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
+      EmbeddedTransactionManager tm = tl.tm;
       tm.begin();
       cache.put("k", "v");
       tm.getTransaction().runPrepare();

@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeTest;
@@ -189,7 +189,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder configuration = new ConfigurationBuilder();
-      configuration.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).deadlockDetection().enabled(USE_DLD).locking().useLockStriping(false);
+      configuration.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).deadlockDetection().enabled(USE_DLD).locking().useLockStriping(false);
       return configuration;
    }
 

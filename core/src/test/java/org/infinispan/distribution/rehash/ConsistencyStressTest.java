@@ -32,7 +32,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -64,7 +64,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                .replTimeout(30000)
          .transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .syncCommitPhase(true)
             .syncRollbackPhase(true);
 
@@ -79,7 +79,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
    }
 
-   public void testConsistency() throws Throwable, InterruptedException {
+   public void testConsistency() throws Throwable {
       Set<Future<Void>> futures = new HashSet<Future<Void>>(NUM_NODES * WORKERS_PER_NODE);
       Set<String> keysToIgnore = new HashSet<String>();
 

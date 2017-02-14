@@ -15,8 +15,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
    protected void createCacheManagers() throws Throwable {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction()
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true)
@@ -97,7 +97,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
             migratedKey = key;
             migratedTransaction = key2Tx.get(key);
             log.trace("Migrated key = " + migratedKey);
-            log.trace("Migrated transaction = " + ((DummyTransaction) migratedTransaction).getEnlistedResources());
+            log.trace("Migrated transaction = " + ((EmbeddedTransaction) migratedTransaction).getEnlistedResources());
             break;
          }
       }

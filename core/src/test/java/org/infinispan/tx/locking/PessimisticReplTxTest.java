@@ -13,7 +13,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -37,7 +37,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       final ConfigurationBuilder conf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       conf.transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
          .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       return conf;
    }

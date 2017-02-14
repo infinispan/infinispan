@@ -4,7 +4,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -37,12 +37,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
       killMember(1);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked(k);
    }
 
@@ -52,7 +47,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
       tm(1).begin();
       cache(1).put(k,"v");
-      final DummyTransaction transaction = (DummyTransaction) tm(1).getTransaction();
+      final EmbeddedTransaction transaction = (EmbeddedTransaction) tm(1).getTransaction();
       transaction.runPrepare();
       tm(1).suspend();
 
@@ -67,11 +62,6 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       killMember(1);
 
       assertNotLocked(k);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 }

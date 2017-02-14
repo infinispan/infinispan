@@ -20,10 +20,12 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * @author bela
  * @since 4.0
+ * @deprecated use {@link EmbeddedBaseTransactionManager}
  */
+@Deprecated
 public class DummyBaseTransactionManager implements TransactionManager, Serializable {
-   static ThreadLocal<DummyTransaction> thread_local = new ThreadLocal<DummyTransaction>();
-   private static final long serialVersionUID = -6716097342564237376l;
+   static ThreadLocal<DummyTransaction> thread_local = new ThreadLocal<>();
+   private static final long serialVersionUID = -6716097342564237376L;
    private static final Log log = LogFactory.getLog(DummyBaseTransactionManager.class);
    private static final boolean trace = log.isTraceEnabled();
    final UUID transactionManagerId = UUID.randomUUID();

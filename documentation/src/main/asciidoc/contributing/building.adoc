@@ -207,7 +207,7 @@ The profiles available in the generated sample project are:
 
 * udp: use UDP for network communications rather than TCP
 * tcp: use TCP for network communications rather than UDP
-* jbosstm: Use the embedded link:http://www.jboss.org/jbosstm[JBoss Transaction Manager] rather than Infinispan's dummy test transaction manager 
+* jbosstm: Use the embedded link:http://www.jboss.org/jbosstm[JBoss Transaction Manager] rather than Infinispan's embedded transaction manager
 
 ===== Contributing tests back to Infinispan
 If you have written a functional, unit or stress test for Infinispan and want to contribute this back to Infinispan, your best bet is to link:https://github.com/infinispan/infinispan[fork the Infinispan sources on GitHub].

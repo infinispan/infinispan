@@ -3,9 +3,8 @@ package org.infinispan.lock.singlelock;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -19,7 +18,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       super(cacheMode, lockingMode, useSynchronization);
    }
 
-   protected DummyTransaction transaction;
+   protected EmbeddedTransaction transaction;
 
    public void testOwnerChangesAfterPrepare1() throws Exception {
       testOwnerChangesAfterPrepare(0);
@@ -31,29 +30,21 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
 
    private void testOwnerChangesAfterPrepare(final int secondTxNode) throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(1).begin();
-               cache(1).put(k, "v");
-               transaction = (DummyTransaction) tm(1).getTransaction();
-               log.trace("Before preparing");
-               transaction.runPrepare();
-               tm(1).suspend();
-            } catch (Throwable e) {
-               log.errorf(e, "Error preparing transaction for key %s", k);
-            }
+      fork(() -> {
+         try {
+            tm(1).begin();
+            cache(1).put(k, "v");
+            transaction = (EmbeddedTransaction) tm(1).getTransaction();
+            log.trace("Before preparing");
+            transaction.runPrepare();
+            tm(1).suspend();
+         } catch (Throwable e) {
+            log.errorf(e, "Error preparing transaction for key %s", k);
          }
       });
 
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1));
 
       killMember(2);
       assert caches().size() == 2;
@@ -61,17 +52,14 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
 
       tm(secondTxNode).begin();
       final Transaction suspend = tm(secondTxNode).suspend();
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               log.trace("This thread runs a different tx");
-               tm(secondTxNode).resume(suspend);
-               cache(secondTxNode).put(k, "v2");
-               tm(secondTxNode).commit();
-            } catch (Exception e) {
-               log.errorf(e, "Error committing transaction for key %s", k);
-            }
+      fork(() -> {
+         try {
+            log.trace("This thread runs a different tx");
+            tm(secondTxNode).resume(suspend);
+            cache(secondTxNode).put(k, "v2");
+            tm(secondTxNode).commit();
+         } catch (Exception e) {
+            log.errorf(e, "Error committing transaction for key %s", k);
          }
       });
 
@@ -83,20 +71,10 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       transaction.runCommit(false);
 
       //make sure the 2nd transaction succeeds as well eventually
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2");
-         }
-      }, 15000);
+      eventually(() -> cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2"), 15000);
       assertNotLocked(k);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
 }

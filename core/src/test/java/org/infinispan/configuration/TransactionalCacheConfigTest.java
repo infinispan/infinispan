@@ -12,7 +12,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -66,7 +66,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       Configuration c = cb.build();
       assert !c.transaction().transactionMode().isTransactional();
 
-      c = cb.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
+      c = cb.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).build();
       assert c.transaction().transactionMode().isTransactional();
 
       cb = new ConfigurationBuilder();
@@ -89,7 +89,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
    public void testOverride() {
       final ConfigurationBuilder c = new ConfigurationBuilder();
       c.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new DummyTransactionManagerLookup());
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
          @Override
@@ -121,9 +121,5 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
             assert a.getCacheConfiguration().transaction().transactionMode().isTransactional();
          }
       });
-   }
-
-   private void assertTmLookupSet(Configuration c, boolean b) {
-      assert b == (c.transaction().transactionManagerLookup() != null);
    }
 }

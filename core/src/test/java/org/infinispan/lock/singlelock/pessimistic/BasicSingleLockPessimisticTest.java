@@ -4,9 +4,8 @@ import static org.testng.Assert.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -74,7 +73,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
 
       tm(0).begin();
       cache(0).put(k, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       tm(0).suspend();
 
       assert checkTxCount(0, 1, 0);
@@ -92,12 +91,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       }
 
       assertNotLocked(k1);
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
 
 
       log.info("Before second failure");
@@ -113,12 +107,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       }
       assertNotLocked(k1);
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(1, 0, 0));
 
 
       log.trace("about to commit transaction.");
@@ -127,11 +116,6 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
 
       assertValue(k, false);
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 }

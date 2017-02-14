@@ -10,9 +10,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -31,7 +31,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
-      c.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).useSynchronization(false).recovery().disable();
+      c.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).useSynchronization(false).recovery().disable();
       return TestCacheManagerFactory.createCacheManager(c);
    }
 
@@ -46,10 +46,10 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
 //      lockManager.lockAndRecord(k, ctx);
 //      ctx.putLookedUpEntry(k, null);
 
-      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm();
       tm().begin();
       cache.put(k, "some");
-      final DummyTransaction transaction = dtm.getTransaction();
+      final EmbeddedTransaction transaction = dtm.getTransaction();
       transaction.runPrepare();
       tm().suspend();
 

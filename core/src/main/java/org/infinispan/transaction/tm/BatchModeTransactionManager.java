@@ -7,23 +7,26 @@ package org.infinispan.transaction.tm;
  * @author bela
  * @since 4.0
  */
-public class BatchModeTransactionManager extends DummyBaseTransactionManager {
+public class BatchModeTransactionManager extends EmbeddedBaseTransactionManager {
 
-   private static final long serialVersionUID = 5656602677430350961L;
+   private static BatchModeTransactionManager INSTANCE = null;
 
-   static BatchModeTransactionManager instance = null;
+   private BatchModeTransactionManager() {
+   }
 
    public static BatchModeTransactionManager getInstance() {
-      if (instance == null) {
-         instance = new BatchModeTransactionManager();
+      if (INSTANCE == null) {
+         INSTANCE = new BatchModeTransactionManager();
       }
-      return instance;
+      return INSTANCE;
    }
 
    public static void destroy() {
-      if (instance == null) return;
-      instance.setTransaction(null);
-      instance = null;
+      if (INSTANCE == null) {
+         return;
+      }
+      dissociateTransaction();
+      INSTANCE = null;
    }
 
 }
