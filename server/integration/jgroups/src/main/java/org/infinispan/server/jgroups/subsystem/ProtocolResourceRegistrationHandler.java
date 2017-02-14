@@ -88,6 +88,10 @@ public class ProtocolResourceRegistrationHandler implements OperationStepHandler
                 ChannelFactory factory = (ChannelFactory) controller.getValue();
                 if (factory != null) {
                     ProtocolStackConfiguration configuration = factory.getProtocolStackConfiguration();
+                    if (configuration.getTransport().getName().equals(protocolName)) {
+                        Class<? extends Protocol> protocolClass = configuration.getModuleLoader().loadModule(configuration.getTransport().getModule()).getClassLoader().loadClass(configuration.getTransport().getProtocolClassName()).asSubclass(Protocol.class);
+                        return channel.getProtocolStack().findProtocol(protocolClass);
+                    }
                     for (ProtocolConfiguration protocol : configuration.getProtocols()) {
                         if (protocol.getName().equals(protocolName)) {
                             Class<? extends Protocol> protocolClass = configuration.getModuleLoader().loadModule(protocol.getModule()).getClassLoader().loadClass(protocol.getProtocolClassName()).asSubclass(Protocol.class);
@@ -129,7 +133,7 @@ public class ProtocolResourceRegistrationHandler implements OperationStepHandler
             ModelNode transport = context.readResourceFromRoot(transportAddress, false).getModel();
             ModuleIdentifier module = ModelNodes.asModuleIdentifier(ProtocolResourceDefinition.MODULE.resolveModelAttribute(context, transport));
             Class<? extends Protocol> transportClass = findProtocolClass(context, name, module);
-            registration.registerSubModel(this.createProtocolResourceDefinition(name, transportClass)).setRuntimeOnly(true);
+            registration.registerSubModel(this.createProtocolResourceDefinition(name, transportClass));
             resource.registerChild(ProtocolResourceDefinition.pathElement(name), PlaceholderResource.INSTANCE);
         }
 
@@ -137,17 +141,17 @@ public class ProtocolResourceRegistrationHandler implements OperationStepHandler
             Resource protocolResource = context.readResourceFromRoot(this.stackAddress.append(ProtocolResourceDefinition.pathElement(name)), false);
             ModuleIdentifier module = ModelNodes.asModuleIdentifier(ProtocolResourceDefinition.MODULE.resolveModelAttribute(context, protocolResource.getModel()));
             Class<? extends Protocol> protocolClass = findProtocolClass(context, name, module);
-            registration.registerSubModel(this.createProtocolResourceDefinition(name, protocolClass)).setRuntimeOnly(true);
+            registration.registerSubModel(this.createProtocolResourceDefinition(name, protocolClass));
             resource.registerChild(ProtocolResourceDefinition.pathElement(name), PlaceholderResource.INSTANCE);
         }
 
         if (stackResource.hasChild(RelayResourceDefinition.PATH)) {
-            registration.registerSubModel(this.createProtocolResourceDefinition(RelayConfiguration.PROTOCOL_NAME, RELAY2.class)).setRuntimeOnly(true);
+            registration.registerSubModel(this.createProtocolResourceDefinition(RelayConfiguration.PROTOCOL_NAME, RELAY2.class));
             resource.registerChild(ProtocolResourceDefinition.pathElement(RelayConfiguration.PROTOCOL_NAME), PlaceholderResource.INSTANCE);
         }
 
         if (stackResource.hasChild(SaslResourceDefinition.PATH)) {
-            registration.registerSubModel(this.createProtocolResourceDefinition(SaslConfiguration.PROTOCOL_NAME, SASL.class)).setRuntimeOnly(true);
+            registration.registerSubModel(this.createProtocolResourceDefinition(SaslConfiguration.PROTOCOL_NAME, SASL.class));
             resource.registerChild(ProtocolResourceDefinition.pathElement(SaslConfiguration.PROTOCOL_NAME), PlaceholderResource.INSTANCE);
         }
     }
@@ -171,7 +175,7 @@ public class ProtocolResourceRegistrationHandler implements OperationStepHandler
 
     static Class<? extends Protocol> findProtocolClass(OperationContext context, String protocolName, ModuleIdentifier module) throws OperationFailedException {
         String className = protocolName;
-        if (module.equals(ProtocolConfiguration.DEFAULT_MODULE) && !protocolName.startsWith(org.jgroups.conf.ProtocolConfiguration.protocol_prefix)) {
+        if (module.getName().equals(ProtocolConfiguration.DEFAULT_MODULE.getName()) && !protocolName.startsWith(org.jgroups.conf.ProtocolConfiguration.protocol_prefix)) {
             className = org.jgroups.conf.ProtocolConfiguration.protocol_prefix + "." + protocolName;
         }
 

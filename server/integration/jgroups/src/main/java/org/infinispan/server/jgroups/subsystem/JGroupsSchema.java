@@ -25,12 +25,7 @@ package org.infinispan.server.jgroups.subsystem;
  * Enumeration of the supported subsystem xml schemas.
  * @author Paul Ferraro
  */
-public enum JGroupsSchema {
-
-    VERSION_1_0("jboss:domain:jgroups", 1, 0),
-    VERSION_1_1("jboss:domain:jgroups", 1, 1),
-    VERSION_2_0("jboss:domain:jgroups", 2, 0),
-    VERSION_3_0("jboss:domain:jgroups", 3, 0),
+enum JGroupsSchema {
 
     INFINISPAN_SERVER_JGROUPS_7_0("infinispan:server:jgroups", 7, 0),
     INFINISPAN_SERVER_JGROUPS_8_0("infinispan:server:jgroups", 8, 0),
@@ -44,7 +39,7 @@ public enum JGroupsSchema {
     private final int major;
     private final int minor;
 
-    private JGroupsSchema(String domain, int major, int minor) {
+    JGroupsSchema(String domain, int major, int minor) {
         this.domain = domain;
         this.major = major;
         this.minor = minor;

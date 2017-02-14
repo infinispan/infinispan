@@ -21,6 +21,7 @@
  */
 package org.infinispan.server.jgroups.spi.service;
 
+import org.infinispan.server.jgroups.subsystem.JGroupsExtension;
 import org.jboss.msc.service.ServiceName;
 
 public enum ProtocolStackServiceName implements ProtocolStackServiceNameFactory {
@@ -33,7 +34,7 @@ public enum ProtocolStackServiceName implements ProtocolStackServiceNameFactory 
     },
     ;
 
-    static final ServiceName BASE_NAME = ServiceName.JBOSS.append("jgroups");
+    static final ServiceName BASE_NAME = ServiceName.JBOSS.append(JGroupsExtension.SUBSYSTEM_NAME);
 
     @Override
     public ServiceName getServiceName() {

@@ -22,7 +22,6 @@
 package org.infinispan.server.jgroups.subsystem;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
@@ -33,11 +32,6 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.DiscardAttributeChecker;
-import org.jboss.as.controller.transform.description.RejectAttributeChecker;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
-import org.jboss.as.controller.transform.description.TransformationDescription;
-import org.jboss.as.controller.transform.description.TransformationDescriptionBuilder;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -67,26 +61,6 @@ public class JGroupsSubsystemResourceDefinition extends SimpleResourceDefinition
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { DEFAULT_CHANNEL, DEFAULT_STACK };
 
     private final boolean allowRuntimeOnlyRegistration;
-
-    static TransformationDescription buildTransformers(ModelVersion version) {
-        ResourceTransformationDescriptionBuilder builder = TransformationDescriptionBuilder.Factory.createSubsystemInstance();
-
-        if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
-            builder.getAttributeBuilder()
-                    .setDiscard(DiscardAttributeChecker.UNDEFINED, DEFAULT_CHANNEL)
-                    .addRejectCheck(RejectAttributeChecker.DEFINED, DEFAULT_CHANNEL)
-                    .addRejectCheck(RejectAttributeChecker.UNDEFINED, DEFAULT_STACK)
-                    .end();
-
-            builder.rejectChildResource(ChannelResourceDefinition.WILDCARD_PATH);
-        } else {
-            ChannelResourceDefinition.buildTransformation(version, builder);
-        }
-
-        StackResourceDefinition.buildTransformation(version, builder);
-
-        return builder.build();
-    }
 
     JGroupsSubsystemResourceDefinition(boolean allowRuntimeOnlyRegistration) {
         super(PATH, new JGroupsResourceDescriptionResolver(), new JGroupsSubsystemAddHandler(), new JGroupsSubsystemRemoveHandler(allowRuntimeOnlyRegistration));

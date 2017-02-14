@@ -72,9 +72,6 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     @Parameters
     public static Collection<Object[]> data() {
         Object[][] data = new Object[][] {
-                { JGroupsSchema.VERSION_1_1, 20, "schema/jboss-as-jgroups_1_1.xsd", null },
-                { JGroupsSchema.VERSION_2_0, 22, "schema/jboss-as-jgroups_2_0.xsd", null },
-                { JGroupsSchema.VERSION_3_0, 26, "schema/jboss-as-jgroups_3_0.xsd", null },
                 { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0, 25, "schema/jboss-infinispan-jgroups_7_0.xsd", null },
                 { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0, 27, "schema/jboss-infinispan-jgroups_8_0.xsd", null },
                 { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0, 27, "schema/jboss-infinispan-jgroups_9_0.xsd", new String[] { "/subsystem-templates/infinispan-jgroups.xml", "/subsystem-templates/cloud-jgroups.xml" } },

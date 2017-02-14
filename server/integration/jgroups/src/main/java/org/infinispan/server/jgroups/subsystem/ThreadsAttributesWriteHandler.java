@@ -52,18 +52,14 @@ public class ThreadsAttributesWriteHandler extends ReloadRequiredWriteAttributeH
         // This allows a composite op to change both attributes and then the
         // validation occurs after both have done their work.
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-
-                final ModelNode conf = context.readResource(PathAddress.EMPTY_ADDRESS).getModel();
-                // TODO doesn't cover the admin-only modes
-                if (context.getProcessType().isServer() && (
-                        conf.hasDefined(ModelKeys.DEFAULT_EXECUTOR) ||
-                                conf.hasDefined(ModelKeys.THREAD_FACTORY))) {
-                    // That is not supported.
-                    throw new OperationFailedException(JGroupsLogger.ROOT_LOGGER.threadsAttributesUsedInRuntime());
-                }
+        context.addStep((ctx, operation) -> {
+            final ModelNode conf = ctx.readResource(PathAddress.EMPTY_ADDRESS).getModel();
+            // TODO doesn't cover the admin-only modes
+            if (ctx.getProcessType().isServer() && (
+                  conf.hasDefined(ModelKeys.DEFAULT_EXECUTOR) ||
+                        conf.hasDefined(ModelKeys.THREAD_FACTORY))) {
+                // That is not supported.
+                throw new OperationFailedException(JGroupsLogger.ROOT_LOGGER.threadsAttributesUsedInRuntime());
             }
         }, OperationContext.Stage.MODEL);
     }

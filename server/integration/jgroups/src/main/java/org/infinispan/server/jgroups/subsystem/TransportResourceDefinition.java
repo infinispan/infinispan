@@ -23,19 +23,8 @@
 package org.infinispan.server.jgroups.subsystem;
 
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
-import org.infinispan.server.commons.controller.transform.DefaultValueAttributeConverter;
-import org.infinispan.server.commons.controller.transform.PathAddressTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleAddOperationTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleDescribeOperationTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleReadAttributeOperationTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleRemoveOperationTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleResourceTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleUndefineAttributeOperationTransformer;
-import org.infinispan.server.commons.controller.transform.SimpleWriteAttributeOperationTransformer;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
@@ -43,10 +32,8 @@ import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.access.management.SensitiveTargetAccessConstraintDefinition;
-import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -131,41 +118,6 @@ public class TransportResourceDefinition extends SimpleResourceDefinition {
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] {
             ProtocolResourceDefinition.TYPE, ProtocolResourceDefinition.MODULE, SHARED, ProtocolResourceDefinition.SOCKET_BINDING, DIAGNOSTICS_SOCKET_BINDING,
             ProtocolResourceDefinition.PROPERTIES, DEFAULT_EXECUTOR, OOB_EXECUTOR, TIMER_EXECUTOR, THREAD_FACTORY, SITE, RACK, MACHINE
-    };
-
-    static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        ResourceTransformationDescriptionBuilder builder = parent.addChildResource(WILDCARD_PATH);
-
-        ProtocolResourceDefinition.addTransformations(version, builder);
-
-        if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
-            builder.getAttributeBuilder().setValueConverter(new DefaultValueAttributeConverter(SHARED), SHARED);
-
-            builder.setCustomResourceTransformer(new SimpleResourceTransformer(LEGACY_ADDRESS_TRANSFORMER));
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.ADD).setCustomOperationTransformer(new SimpleAddOperationTransformer(LEGACY_ADDRESS_TRANSFORMER, ATTRIBUTES)).inheritResourceAttributeDefinitions();
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.REMOVE).setCustomOperationTransformer(new SimpleRemoveOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION).setCustomOperationTransformer(new SimpleReadAttributeOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.WRITE_ATTRIBUTE_OPERATION).setCustomOperationTransformer(new SimpleWriteAttributeOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.UNDEFINE_ATTRIBUTE_OPERATION).setCustomOperationTransformer(new SimpleUndefineAttributeOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.DESCRIBE).setCustomOperationTransformer(new SimpleDescribeOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
-
-            // Reject thread pool configuration, support EAP 6.x slaves using deprecated attributes
-            builder.rejectChildResource(ThreadPoolResourceDefinition.WILDCARD_PATH);
-        } else {
-            for (ThreadPoolResourceDefinition pool : ThreadPoolResourceDefinition.values()) {
-                pool.buildTransformation(version, parent);
-            }
-        }
-
-        PropertyResourceDefinition.buildTransformation(version, builder);
-    }
-
-    // Transform /subsystem=jgroups/stack=*/transport=* -> /subsystem=jgroups/stack=*/transport=TRANSPORT
-    static final PathAddressTransformer LEGACY_ADDRESS_TRANSFORMER = new PathAddressTransformer() {
-        @Override
-        public PathAddress transform(PathAddress address) {
-            return address.subAddress(0, address.size() - 1).append(pathElement(ModelKeys.TRANSPORT_NAME));
-        }
     };
 
     TransportResourceDefinition() {
