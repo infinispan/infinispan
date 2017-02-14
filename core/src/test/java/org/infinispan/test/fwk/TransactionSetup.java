@@ -4,7 +4,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.tx.lookup.GeronimoTransactionManagerLookup;
@@ -49,17 +49,17 @@ public class TransactionSetup {
       String property = JTA;
        if (DUMMY_TM.equalsIgnoreCase(property)) {
          System.out.println("Transaction manager used: Dummy");
-         final String lookup = DummyTransactionManagerLookup.class.getName();
-         final DummyTransactionManagerLookup instance = new DummyTransactionManagerLookup();
+         final String lookup = EmbeddedTransactionManagerLookup.class.getName();
+         final EmbeddedTransactionManagerLookup instance = new EmbeddedTransactionManagerLookup();
          operations = new Operations() {
             @Override
             public UserTransaction getUserTransaction() {
-               return instance.getUserTransaction();
+               return EmbeddedTransactionManagerLookup.getUserTransaction();
             }
 
             @Override
             public void cleanup() {
-               instance.cleanup();
+               EmbeddedTransactionManagerLookup.cleanup();
             }
 
             @Override

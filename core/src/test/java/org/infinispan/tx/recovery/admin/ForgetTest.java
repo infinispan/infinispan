@@ -11,7 +11,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 public class ForgetTest extends AbstractRecoveryTest {
 
    private PostCommitRecoveryStateTest.RecoveryManagerDelegate recoveryManager;
-   private DummyTransaction tx;
+   private EmbeddedTransaction tx;
 
    @Override
    protected void createCacheManagers() throws Throwable {

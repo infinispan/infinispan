@@ -409,8 +409,8 @@ public interface Log extends BasicLogger {
 //   void remoteTxAlreadyRegistered();
 
    @LogMessage(level = WARN)
-   @Message(value = "Falling back to DummyTransactionManager from Infinispan", id = 104)
-   void fallingBackToDummyTm();
+   @Message(value = "Falling back to EmbeddedTransactionManager from Infinispan", id = 104)
+   void fallingBackToEmbeddedTm();
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed creating initial JNDI context", id = 105)

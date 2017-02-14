@@ -14,8 +14,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
@@ -37,16 +37,16 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
 
       tm(0).begin();
       cache(0).put("k", "v1");
-      DummyTransaction tx1 = (DummyTransaction) tm(0).suspend();
+      EmbeddedTransaction tx1 = (EmbeddedTransaction) tm(0).suspend();
       tx1.runPrepare();
 
       advanceOnInboundRpc(ss, cache(1), matchCommand(PrepareCommand.class).build())
             .before("block_prepare", "resume_prepare");
 
-      Future<DummyTransaction> tx2Future = fork(() -> {
+      Future<EmbeddedTransaction> tx2Future = fork(() -> {
          tm(0).begin();
          cache(0).put("k", "v2");
-         DummyTransaction tx2 = (DummyTransaction) tm(0).suspend();
+         EmbeddedTransaction tx2 = (EmbeddedTransaction) tm(0).suspend();
          tx2.runPrepare();
          return tx2;
       });
@@ -55,7 +55,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       killMember(1);
       ss.exit("crash_primary");
 
-      DummyTransaction tx2 = tx2Future.get(10, SECONDS);
+      EmbeddedTransaction tx2 = tx2Future.get(10, SECONDS);
       try {
          tx2.runCommit(false);
          fail("tx2 should not be able to commit");
@@ -73,7 +73,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       config.transaction().lockingMode(LockingMode.OPTIMISTIC);
       config.clustering().hash().numSegments(1)
             .consistentHashFactory(new ControlledConsistentHashFactory(1, 0));
-      config.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+      config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .cacheStopTimeout(1, SECONDS);
       createCluster(config, 2);
       waitForClusterToForm();

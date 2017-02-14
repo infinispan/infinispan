@@ -22,7 +22,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
@@ -47,7 +47,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cfgBuilder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      cfgBuilder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);

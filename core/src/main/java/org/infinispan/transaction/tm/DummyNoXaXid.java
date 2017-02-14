@@ -10,7 +10,9 @@ import javax.transaction.xa.Xid;
  *
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
  * @since 5.1
+ * @deprecated it will be removed and {@link EmbeddedXid} would be used instead.
  */
+@Deprecated
 public final class DummyNoXaXid implements Xid {
 
    private static final AtomicInteger txIdCounter = new AtomicInteger(0);

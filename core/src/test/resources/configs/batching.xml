@@ -9,7 +9,7 @@
          <transaction mode="BATCH" stop-timeout="2"/>
       </local-cache>
       <local-cache name="tml">
-         <transaction mode="NON_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" stop-timeout="2"/>
+         <transaction mode="NON_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup" stop-timeout="2"/>
       </local-cache>
    </cache-container>
 

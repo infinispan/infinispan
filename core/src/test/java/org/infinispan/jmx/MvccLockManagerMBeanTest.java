@@ -12,8 +12,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "jmx.MvccLockManagerMBeanTest")
 public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
-   public static final int CONCURRENCY_LEVEL = 129;
+   private static final int CONCURRENCY_LEVEL = 129;
 
    private ObjectName lockManagerObjName;
    private MBeanServer threadMBeanServer;
@@ -42,7 +42,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
                .concurrencyLevel(CONCURRENCY_LEVEL)
                .useLockStriping(true)
             .transaction()
-               .transactionManagerLookup(new DummyTransactionManagerLookup());
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
@@ -61,7 +61,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testNumberOfLocksHeld() throws Exception {
-      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
+      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
       tm.begin();
       cache.put("key", "value");
       tm.getTransaction().runPrepare();
@@ -71,7 +71,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testNumberOfLocksAvailable() throws Exception {
-      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
+      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
       int initialAvailable = getAttrValue("NumberOfLocksAvailable");
       tm.begin();
       cache.put("key", "value");

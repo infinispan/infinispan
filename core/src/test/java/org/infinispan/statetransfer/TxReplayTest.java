@@ -24,9 +24,9 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -46,10 +46,10 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       final Cache<Object, Object> newBackupOwnerCache = cache(2);
       final TxCommandInterceptor interceptor = TxCommandInterceptor.inject(newBackupOwnerCache);
 
-      DummyTransactionManager transactionManager = (DummyTransactionManager) tm(0);
+      EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) tm(0);
       transactionManager.begin();
       cache(0).put(key, VALUE);
-      final DummyTransaction transaction = transactionManager.getTransaction();
+      final EmbeddedTransaction transaction = transactionManager.getTransaction();
       transaction.runPrepare();
       assertEquals("Wrong transaction status before killing backup owner.",
                    Status.STATUS_PREPARED, transaction.getStatus());
@@ -76,7 +76,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction()
             .useSynchronization(false)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().disable();
       builder.clustering()
             .hash().numOwners(2)

@@ -16,9 +16,9 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -36,7 +36,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
-      dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      dccc.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
@@ -52,16 +52,16 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigration(int nodeThatPuts) throws Exception {
-      Map<Object, DummyTransaction> key2Tx = new HashMap<Object, DummyTransaction>();
+      Map<Object, EmbeddedTransaction> key2Tx = new HashMap<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
          if (key2Tx.containsKey(key)) continue;
 
-         dummyTm(nodeThatPuts).begin();
+         embeddedTm(nodeThatPuts).begin();
          cache(nodeThatPuts).put(key, key);
-         DummyTransaction tx = dummyTm(nodeThatPuts).getTransaction();
+         EmbeddedTransaction tx = embeddedTm(nodeThatPuts).getTransaction();
          tx.runPrepare();
-         dummyTm(nodeThatPuts).suspend();
+         embeddedTm(nodeThatPuts).suspend();
          key2Tx.put(key, tx);
 
          assertLocked(0, key);
@@ -84,10 +84,10 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
          log.trace("No key migrated to new owner.");
       } else {
          log.trace("migratedKey = " + migratedKey);
-         dummyTm(2).begin();
+         embeddedTm(2).begin();
          cache(2).put(migratedKey, "someValue");
          try {
-            dummyTm(2).commit();
+            embeddedTm(2).commit();
             fail("RollbackException should have been thrown here.");
          } catch (RollbackException e) {
             //expected
@@ -99,7 +99,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       log.trace("Committing the tx to the new node.");
       for (Transaction tx : key2Tx.values()) {
          tm(nodeThatPuts).resume(tx);
-         dummyTm(nodeThatPuts).getTransaction().runCommit(false);
+         embeddedTm(nodeThatPuts).getTransaction().runCommit(false);
       }
 
       for (Object key : key2Tx.keySet()) {
@@ -130,7 +130,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       return d1.getValue().equals(d2.getValue());
    }
 
-   private DummyTransactionManager dummyTm(int cacheIndex) {
-      return (DummyTransactionManager) tm(cacheIndex);
+   private EmbeddedTransactionManager embeddedTm(int cacheIndex) {
+      return (EmbeddedTransactionManager) tm(cacheIndex);
    }
 }

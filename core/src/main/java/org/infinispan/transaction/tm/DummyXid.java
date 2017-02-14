@@ -13,7 +13,9 @@ import org.infinispan.commons.util.Util;
  * Implementation of Xid.
  * @author Mircea.Markus@jboss.com
  * @since 4.0
+ * @deprecated use {@link EmbeddedXid}.
  */
+@Deprecated
 public final class DummyXid implements Xid {
 
    private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);

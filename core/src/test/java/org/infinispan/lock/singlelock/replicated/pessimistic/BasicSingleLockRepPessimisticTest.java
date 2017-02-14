@@ -3,9 +3,8 @@ package org.infinispan.lock.singlelock.replicated.pessimistic;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -79,7 +78,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       Object k0 = new MagicKey("k0", cache(0));
       tm(0).begin();
       cache(0).put(k0, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).suspend();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).suspend();
 
       assert checkTxCount(0, 1, 0);
       assert checkTxCount(1, 0, 0);
@@ -93,12 +92,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
 
 
       tm(1).begin();
@@ -109,12 +103,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
 
 
       tm(0).resume(dtm);
@@ -122,19 +111,14 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
 
       assertValue(k0, false);
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 
    public void testSecondTxCannotPrepare2() throws Exception {
       Object k0 = new MagicKey("k0", cache(0));
       tm(1).begin();
       cache(1).put(k0, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(1).suspend();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(1).suspend();
 
       assert checkTxCount(0, 0, 1);
       assert checkTxCount(1, 1, 0);
@@ -148,12 +132,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
 
       tm(1).begin();
@@ -164,12 +143,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
 
       tm(0).resume(dtm);
@@ -177,11 +151,6 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
 
       assertValue(k0, false);
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 }

@@ -22,7 +22,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -44,7 +44,7 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(cacheMode, true);
-      cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+      cfg.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "testcache", cfg);

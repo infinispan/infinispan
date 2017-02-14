@@ -19,7 +19,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.testng.annotations.Test;
@@ -47,7 +48,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    protected ConfigurationBuilder configure() {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       configuration.locking().useLockStriping(false)
-            .transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
             .clustering().stateTransfer().fetchInMemoryState(false);
@@ -62,8 +63,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    }
 
    public void testLocalAndRemoteTransaction() throws Exception {
-      DummyTransaction t0 = beginAndSuspendTx(cache(0));
-      DummyTransaction t1 = beginAndSuspendTx(cache(1));
+      EmbeddedTransaction t0 = beginAndSuspendTx(cache(0));
+      EmbeddedTransaction t1 = beginAndSuspendTx(cache(1));
       assertPrepared(0, t0, t1);
 
       prepareTransaction(t0);
@@ -82,41 +83,32 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assertPrepared(0, t0);
       assertPrepared(0, t1);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            boolean noPrepTxOnFirstNode = cache(0, getRecoveryCacheName()).size() == 0;
-            boolean noPrepTxOnSecondNode = cache(1, getRecoveryCacheName()).size() == 0;
-            return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
-         }
+      eventually(() -> {
+         boolean noPrepTxOnFirstNode = cache(0, getRecoveryCacheName()).size() == 0;
+         boolean noPrepTxOnSecondNode = cache(1, getRecoveryCacheName()).size() == 0;
+         return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
       });
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
-            return inDoubt.size() == 0;
-         }
+      eventually(() -> {
+         final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
+         return inDoubt.size() == 0;
       });
    }
 
    public void testNodeCrashesAfterPrepare() throws Exception {
-      DummyTransaction t1_1 = beginAndSuspendTx(cache(1));
+      EmbeddedTransaction t1_1 = beginAndSuspendTx(cache(1));
       prepareTransaction(t1_1);
-      DummyTransaction t1_2 = beginAndSuspendTx(cache(1));
+      EmbeddedTransaction t1_2 = beginAndSuspendTx(cache(1));
       prepareTransaction(t1_2);
-      DummyTransaction t1_3 = beginAndSuspendTx(cache(1));
+      EmbeddedTransaction t1_3 = beginAndSuspendTx(cache(1));
       prepareTransaction(t1_3);
 
       manager(1).stop();
       super.cacheManagers.remove(1);
       TestingUtil.blockUntilViewReceived(cache(0), 1, 60000, false);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int size = rm(cache(0)).getInDoubtTransactionInfo().size();
-            return size == 3;
-         }
+      eventually(() -> {
+         int size = rm(cache(0)).getInDoubtTransactionInfo().size();
+         return size == 3;
       });
 
       List<Xid> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
@@ -129,7 +121,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       addClusterEnabledCacheManager(configuration);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
-      DummyTransaction t1_4 = beginAndSuspendTx(cache(1));
+      EmbeddedTransaction t1_4 = beginAndSuspendTx(cache(1));
       prepareTransaction(t1_4);
       log.trace("Before main recovery call.");
       assertPrepared(4, t1_4);
@@ -150,12 +142,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       //now let's start to forget transactions
       t1_4.firstEnlistedResource().forget(t1_1.getXid());
       log.info("returned");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return rm(cache(0)).getInDoubtTransactionInfo().size() == 2;
-         }
-      });
+      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 2);
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(2, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
@@ -163,12 +150,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       t1_4.firstEnlistedResource().forget(t1_2.getXid());
       t1_4.firstEnlistedResource().forget(t1_3.getXid());
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return rm(cache(0)).getInDoubtTransactionInfo().size() == 0;
-         }
-      });
+      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 0);
       assertEquals(0, rm(cache(0)).getInDoubtTransactionInfo().size());
    }
 

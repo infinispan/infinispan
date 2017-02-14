@@ -13,7 +13,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
             .locking().lockAcquisitionTimeout(LOCK_TIMEOUT)
             .clustering().remoteTimeout(REPL_TIMEOUT)
             .clustering().hash().numOwners(numOwners)
-            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .transaction().completedTxTimeout(3600000);
 
       createCluster(config, 3);

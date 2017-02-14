@@ -12,7 +12,9 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
  *
  * @author Bela Ban Sept 5 2003
  * @since 4.0
+ * @deprecated use {@link EmbeddedTransactionManagerLookup}
  */
+@Deprecated
 public class DummyTransactionManagerLookup implements TransactionManagerLookup {
 
    @Override

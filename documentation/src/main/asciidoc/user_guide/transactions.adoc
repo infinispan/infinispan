@@ -14,17 +14,20 @@ When the cache starts, it will create an instance of this class and invoke its `
 Infinispan ships with several transaction manager lookup classes:
 
 .Transaction manager lookup implementations
-*  link:{javadocroot}/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html[DummyTransactionManagerLookup]:
-This provides with a dummy transaction manager which should only be used for testing.
-Being a dummy, this is not recommended for production use a it has some severe limitations to do with concurrent transactions and recovery.
+*  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManagerLookup.html[EmbeddedTransactionManagerLookup]:
+This provides with a basic transaction manager which should only be used for embedded mode when no other implementation is available.
+This implementation has some severe limitations to do with concurrent transactions and recovery.
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]:
 If you're running Infinispan in a standalone environment, this should be your default choice for transaction manager.
-It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the dummy transaction manager.
+It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]:
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
-If no transaction manager can be found, it defaults on the dummy transaction manager.
+If no transaction manager can be found, it defaults on the `EmbeddedTransactionManager`.
+
+WARN: `DummyTransactionManagerLookup` has been deprecated in 9.0 and it will be removed in the future.
+Use `EmbeddedTransactionManagerLookup` instead.
 
 Once initialized, the `TransactionManager` can also be obtained from the `Cache` itself:
 

@@ -20,8 +20,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -31,8 +31,8 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.2
  */
-@Test(groups = "functional", testName = "tx.DummyTransactionTest")
-public class DummyTransactionTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "tx.EmbeddedTransactionTest")
+public class EmbeddedTransactionTest extends SingleCacheManagerTest {
 
    private static final String SYNC_CACHE_NAME = "sync-cache";
    private static final String XA_CACHE_NAME = "xa-cache";
@@ -43,95 +43,95 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
    public void testFailBeforeWithMarkRollbackFirstSync() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
             new RegisterFailSynchronization(FailMode.BEFORE_MARK_ROLLBACK),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testFailBeforeWithExceptionFirstSync() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
             new RegisterFailSynchronization(FailMode.BEFORE_THROW_EXCEPTION),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testFailBeforeWithMarkRollbackSecondSync() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailSynchronization(FailMode.BEFORE_MARK_ROLLBACK),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testFailBeforeWithExceptionSecondSync() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailSynchronization(FailMode.BEFORE_THROW_EXCEPTION),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testEndFailFirstXa() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_END),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testEndFailSecondXa() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_END)
       ));
    }
 
    public void testPrepareFailFirstXa() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_PREPARE),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testPrepareFailSecondXa() throws Exception {
       doCommitWithRollbackExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_PREPARE)
       ));
    }
 
    public void testCommitFailFirstXa() throws Exception {
       doCommitWithHeuristicExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_COMMIT),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testCommitFailSecondXa() throws Exception {
       doCommitWithHeuristicExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_COMMIT)
       ));
    }
 
    public void testRollbackFailFirstXa() throws Exception {
       doRollbackWithHeuristicExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_ROLLBACK),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testRollbackFailSecondXa() throws Exception {
       doRollbackWithHeuristicExceptionTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_ROLLBACK)
       ));
    }
@@ -139,22 +139,22 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
    public void testFailAfterFirstSync() throws Exception {
       doAfterCompletionFailTest(Arrays.asList(
             new RegisterFailSynchronization(FailMode.AFTER_THROW_EXCEPTION),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testFailAfterSecondSync() throws Exception {
       doAfterCompletionFailTest(Arrays.asList(
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailSynchronization(FailMode.AFTER_THROW_EXCEPTION),
-            new RegisterCacheTransaction(cacheManager.<String, String>getCache(XA_CACHE_NAME))
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
       ));
    }
 
    public void testReadOnlyResource() throws Exception {
       //test for ISPN-2813
-      DummyTransactionManager transactionManager = DummyTransactionManager.getInstance();
+      EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       cacheManager.<String, String>getCache(SYNC_CACHE_NAME).put(KEY, VALUE);
       cacheManager.<String, String>getCache(XA_CACHE_NAME).put(KEY, VALUE);
@@ -172,18 +172,18 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.transaction().useSynchronization(true);
-      builder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cacheManager.defineConfiguration(SYNC_CACHE_NAME, builder.build());
 
       builder = getDefaultStandaloneCacheConfig(true);
       builder.transaction().useSynchronization(false);
-      builder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cacheManager.defineConfiguration(XA_CACHE_NAME, builder.build());
       return cacheManager;
    }
 
    private void doCommitWithRollbackExceptionTest(Collection<RegisterTransaction> registerTransactionCollection) throws Exception {
-      DummyTransactionManager transactionManager = DummyTransactionManager.getInstance();
+      EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       for (RegisterTransaction registerTransaction : registerTransactionCollection) {
          registerTransaction.register(transactionManager);
@@ -201,7 +201,7 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
    }
 
    private void doCommitWithHeuristicExceptionTest(Collection<RegisterTransaction> registerTransactionCollection) throws Exception {
-      DummyTransactionManager transactionManager = DummyTransactionManager.getInstance();
+      EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       for (RegisterTransaction registerTransaction : registerTransactionCollection) {
          registerTransaction.register(transactionManager);
@@ -219,7 +219,7 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
    }
 
    private void doRollbackWithHeuristicExceptionTest(Collection<RegisterTransaction> registerTransactionCollection) throws Exception {
-      DummyTransactionManager transactionManager = DummyTransactionManager.getInstance();
+      EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       for (RegisterTransaction registerTransaction : registerTransactionCollection) {
          registerTransaction.register(transactionManager);
@@ -237,7 +237,7 @@ public class DummyTransactionTest extends SingleCacheManagerTest {
    }
 
    private void doAfterCompletionFailTest(Collection<RegisterTransaction> registerTransactionCollection) throws Exception {
-      DummyTransactionManager transactionManager = DummyTransactionManager.getInstance();
+      EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       for (RegisterTransaction registerTransaction : registerTransactionCollection) {
          registerTransaction.register(transactionManager);

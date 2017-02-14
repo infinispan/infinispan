@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -27,9 +26,9 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -60,7 +59,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
-      configurationBuilder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      configurationBuilder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       configurationBuilder.clustering().remoteTimeout(30000, TimeUnit.MILLISECONDS);
       configurationBuilder.clustering().hash().l1().disable();
       configurationBuilder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
@@ -95,20 +94,17 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringPrepare(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = installControlledRpcManager(PrepareCommand.class);
-      final DummyTransactionManager tm = dummyTm(ORIGINATOR_INDEX);
+      final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
-      Future<DummyTransaction> f = fork(new Callable<DummyTransaction>() {
-         @Override
-         public DummyTransaction call() throws Exception {
-            tm.begin();
-            originatorCache.put(key, "value");
-            DummyTransaction tx = tm.getTransaction();
+      Future<EmbeddedTransaction> f = fork(() -> {
+         tm.begin();
+         originatorCache.put(key, "value");
+         EmbeddedTransaction tx = tm.getTransaction();
 
-            boolean success = tx.runPrepare();
-            assertTrue(success);
-            tm.suspend();
-            return tx;
-         }
+         boolean success = tx.runPrepare();
+         assertTrue(success);
+         tm.suspend();
+         return tx;
       });
 
       // Allow the tx thread to send the prepare command to the owners
@@ -120,7 +116,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       log.trace("Allow the prepare RPC to proceed");
       controlledRpcManager.stopBlocking();
       // Ensure the prepare finished on the other node
-      DummyTransaction tx = f.get();
+      EmbeddedTransaction tx = f.get();
       log.tracef("Prepare finished");
 
       checkNewTransactionFails(key);
@@ -145,11 +141,11 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigrationAfterPrepare(Object key) throws Exception {
-      final DummyTransactionManager tm = dummyTm(ORIGINATOR_INDEX);
+      final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       tm.begin();
       originatorCache.put(key, "value");
-      DummyTransaction tx = tm.getTransaction();
+      EmbeddedTransaction tx = tm.getTransaction();
 
       boolean prepareSuccess = tx.runPrepare();
       assert prepareSuccess;
@@ -182,21 +178,18 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringCommit(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = installControlledRpcManager(CommitCommand.class);
-      final DummyTransactionManager tm = dummyTm(ORIGINATOR_INDEX);
+      final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
-      Future<DummyTransaction> f = fork(new Callable<DummyTransaction>() {
-         @Override
-         public DummyTransaction call() throws Exception {
-            tm.begin();
-            originatorCache.put(key, "value");
-            final DummyTransaction tx = tm.getTransaction();
-            final boolean success = tx.runPrepare();
-            assert success;
+      Future<EmbeddedTransaction> f = fork(() -> {
+         tm.begin();
+         originatorCache.put(key, "value");
+         final EmbeddedTransaction tx = tm.getTransaction();
+         final boolean success = tx.runPrepare();
+         assert success;
 
-            log.trace("About to commit transaction.");
-            tx.runCommit(false);
-            return null;
-         }
+         log.trace("About to commit transaction.");
+         tx.runCommit(false);
+         return null;
       });
 
       // Allow the tx thread to send the commit to the owners
@@ -263,7 +256,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void checkNewTransactionFails(Object key) throws NotSupportedException, SystemException, HeuristicMixedException, HeuristicRollbackException {
-      DummyTransactionManager otherTM = dummyTm(OTHER_INDEX);
+      EmbeddedTransactionManager otherTM = embeddedTm(OTHER_INDEX);
       otherTM.begin();
       otherCache.put(key, "should fail");
       try {
@@ -275,7 +268,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
 
-   private DummyTransactionManager dummyTm(int cacheIndex) {
-      return (DummyTransactionManager) tm(cacheIndex);
+   private EmbeddedTransactionManager embeddedTm(int cacheIndex) {
+      return (EmbeddedTransactionManager) tm(cacheIndex);
    }
 }

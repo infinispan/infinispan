@@ -14,7 +14,9 @@ import javax.transaction.UserTransaction;
  *         <p/>
  *         Date: May 15, 2003 Time: 4:20:17 PM
  * @since 4.0
+ * @deprecated use {@link EmbeddedUserTransaction}
  */
+@Deprecated
 public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
    DummyTransactionManager tm;
    private static final long serialVersionUID = -6568400755677046127L;

@@ -15,9 +15,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -61,7 +61,7 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction()
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().disable();
       builder.clustering()
@@ -76,10 +76,10 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
       //init
       operation.init(cache(0), key);
 
-      final DummyTransactionManager transactionManager = (DummyTransactionManager) tm(0);
+      final EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) tm(0);
       transactionManager.begin();
       operation.perform(cache(0), key);
-      final DummyTransaction transaction = transactionManager.getTransaction();
+      final EmbeddedTransaction transaction = transactionManager.getTransaction();
       transaction.runPrepare();
       assertEquals("Wrong transaction status before killing backup owner.",
                    Status.STATUS_PREPARED, transaction.getStatus());

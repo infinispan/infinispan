@@ -4,7 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -27,7 +27,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
       tm(0).begin();
       operation.perform(k, 0);
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
       assert lockManager(0).isLocked(k);
@@ -48,7 +48,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       tm(0).begin();
       cache(0).put(k1, "v");
       cache(0).put(k2, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
       assert lockManager(0).isLocked(k1);
@@ -71,7 +71,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
       tm(0).begin();
       cache(0).put(k0, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
 
       dtm.runPrepare();
 
@@ -90,7 +90,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
       tm(0).begin();
       cache(0).put(k0, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
       tm(0).suspend();
 
@@ -107,12 +107,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
          //ignore
       }
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       tm(1).begin();
@@ -124,12 +119,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
          //expected
       }
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       tm(0).resume(dtm);
@@ -137,11 +127,6 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
       assertValue(k0, false);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 }

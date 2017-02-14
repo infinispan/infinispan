@@ -22,9 +22,9 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -37,12 +37,12 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    private MBeanServer threadMBeanServer;
    private static final String JMX_DOMAIN = "tx.recovery.admin.LocalCacheRecoveryAdminTest";
-   private DummyTransaction tx1;
+   private EmbeddedTransaction tx1;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      configuration.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+      configuration.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
             .jmxStatistics().enable()
@@ -155,32 +155,12 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    @Override
    protected void checkProperlyCleanup(final int managerIndex) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0;
-         }
-      });
+      eventually(() -> TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0);
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex, "test"), TransactionTable.class);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0);
-         }
-      });
+      eventually(() -> (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0));
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return rm.getInDoubtTransactions().size() == 0;
-         }
-      });
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return rm.getPreparedTransactionsFromCluster().all().length == 0;
-         }
-      });
+      eventually(() -> rm.getInDoubtTransactions().size() == 0);
+      eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);
    }
 
 

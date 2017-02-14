@@ -1,6 +1,7 @@
 package org.infinispan.replication;
 
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
@@ -21,8 +22,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -35,7 +36,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       configuration.locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .lockAcquisitionTimeout(60000l)
-            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+            .transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       createClusteredCaches(2, "syncReplCache", configuration);
       waitForClusterToForm("syncReplCache");
 
@@ -137,10 +138,10 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       // get a lock on cache 2 and hold on to it.
-      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.getTransactionManager(cache2);
+      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) TestingUtil.getTransactionManager(cache2);
       tm.begin();
       cache2.put("block", "block");
-      assert tm.getTransaction().runPrepare();
+      assertTrue(tm.getTransaction().runPrepare());
       tm.suspend();
       cache1.put("block", "v");
    }

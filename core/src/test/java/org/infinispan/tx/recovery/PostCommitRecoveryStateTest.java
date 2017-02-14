@@ -18,7 +18,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -45,7 +46,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       configuration
          .locking().useLockStriping(false)
          .transaction()
-            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
          .clustering().stateTransfer().fetchInMemoryState(false);
@@ -66,7 +67,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       assertEquals(rm1.getInDoubtTransactionsMap().size(), 0);
       assertEquals(tt1.getRemoteTxCount(), 0);
 
-      DummyTransaction t0 = beginAndSuspendTx(cache(0));
+      EmbeddedTransaction t0 = beginAndSuspendTx(cache(0));
       assertEquals(rm1.getInDoubtTransactionsMap().size(),0);
       assertEquals(tt1.getRemoteTxCount(), 0);
 

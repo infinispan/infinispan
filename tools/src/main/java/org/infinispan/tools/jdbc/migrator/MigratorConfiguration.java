@@ -41,7 +41,7 @@ import org.infinispan.persistence.jdbc.table.management.DbMetaData;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 
 /**
  * @author Ryan Emerson
@@ -97,7 +97,7 @@ class MigratorConfiguration {
          stringTable = createTableConfig(STRING, builder);
          builder.transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL)
-               .transactionManagerLookup(new DummyTransactionManagerLookup());
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       }
       builder.validate();
       jdbcConfigBuilder = builder;

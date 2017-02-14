@@ -9,15 +9,15 @@ import javax.transaction.TransactionManager;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * A transaction manager lookup class that attempts to locate a TransactionManager. A variety of different classes and
  * JNDI locations are tried, for servers such as: <ul> <li> JBoss <li> JRun4 <li> Resin <li> Orion <li> JOnAS <li> BEA
- * Weblogic <li> Websphere 4.0, 5.0, 5.1, 6.0 <li> Sun, Glassfish </ul> If a transaction manager is not found, returns a
- * {@link org.infinispan.transaction.tm.DummyTransactionManager}.
+ * Weblogic <li> Websphere 4.0, 5.0, 5.1, 6.0 <li> Sun, Glassfish </ul> If a transaction manager is not found, returns
+ * an {@link org.infinispan.transaction.tm.EmbeddedTransactionManager}.
  *
  * @author Markus Plesser
  * @since 4.0
@@ -86,7 +86,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    }
 
    /**
-    * Get the systemwide used TransactionManager
+    * Get the system-wide used TransactionManager
     *
     * @return TransactionManager
     */
@@ -112,8 +112,8 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    }
 
    private void useDummyTM() {
-      tm = DummyTransactionManager.getInstance();
-      log.fallingBackToDummyTm();
+      tm = EmbeddedTransactionManager.getInstance();
+      log.fallingBackToEmbeddedTm();
    }
 
    private void tryEmbeddedJBossTM() {
@@ -132,14 +132,13 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    private void doLookups(ClassLoader cl) {
       if (lookupFailed)
          return;
-      InitialContext ctx = null;
+      InitialContext ctx;
       try {
          ctx = new InitialContext();
       }
       catch (NamingException e) {
          log.failedToCreateInitialCtx(e);
          lookupFailed = true;
-         Util.close(ctx);
          return;
       }
 

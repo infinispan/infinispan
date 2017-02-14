@@ -34,9 +34,9 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.ControlledConsistentHashFactory;
@@ -81,11 +81,11 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       advanceOnInboundRpc(sequencer, newBackupOwnerCache, matchCommand(TxCompletionNotificationCommand.class).build())
             .before("tx:mark_tx_completed");
 
-      final DummyTransactionManager transactionManager = (DummyTransactionManager) tm(0);
+      final EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) tm(0);
       transactionManager.begin();
       primaryOwnerCache.put(key, VALUE);
 
-      final DummyTransaction transaction = transactionManager.getTransaction();
+      final EmbeddedTransaction transaction = transactionManager.getTransaction();
       TransactionTable transactionTable0 = TestingUtil.getTransactionTable(primaryOwnerCache);
       final GlobalTransaction gtx = transactionTable0.getLocalTransaction(transaction).getGlobalTransaction();
       transaction.runPrepare();
@@ -147,7 +147,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction()
             .useSynchronization(false)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().disable();
       builder.clustering()
             .hash().numOwners(3).numSegments(1).consistentHashFactory(consistentHashFactory)

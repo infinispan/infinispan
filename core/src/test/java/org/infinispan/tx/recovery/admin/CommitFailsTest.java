@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -52,7 +52,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       tm(2).begin();
       cache(2).put(this.key, "newValue");
-      DummyTransaction tx = (DummyTransaction) tm(2).suspend();
+      EmbeddedTransaction tx = (EmbeddedTransaction) tm(2).suspend();
       prepareTransaction(tx);
       try {
          commitTransaction(tx);

@@ -14,8 +14,9 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
       cb.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .useSynchronization(false)
-            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().enable();
       return TestCacheManagerFactory.createCacheManager(cb);
    }
@@ -43,13 +44,13 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
    }
 
    public void testOneTx() throws Exception {
-      dummyTm().begin();
+      embeddedTm().begin();
       cache.put("k", "v");
-      TransactionXaAdapter xaRes = (TransactionXaAdapter) dummyTm().firstEnlistedResource();
-      assertPrepared(0, dummyTm().getTransaction());
+      TransactionXaAdapter xaRes = (TransactionXaAdapter) embeddedTm().firstEnlistedResource();
+      assertPrepared(0, embeddedTm().getTransaction());
       xaRes.prepare(xaRes.getLocalTransaction().getXid());
-      assertPrepared(1, dummyTm().getTransaction());
-      final DummyTransaction suspend = (DummyTransaction) dummyTm().suspend();
+      assertPrepared(1, embeddedTm().getTransaction());
+      final EmbeddedTransaction suspend = (EmbeddedTransaction) embeddedTm().suspend();
 
       xaRes.commit(xaRes.getLocalTransaction().getXid(), false);
       assertPrepared(0, suspend);
@@ -57,10 +58,10 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
    }
 
    public void testMultipleTransactions() throws Exception {
-      DummyTransaction suspend1 = beginTx();
-      DummyTransaction suspend2 = beginTx();
-      DummyTransaction suspend3 = beginTx();
-      DummyTransaction suspend4 = beginTx();
+      EmbeddedTransaction suspend1 = beginTx();
+      EmbeddedTransaction suspend2 = beginTx();
+      EmbeddedTransaction suspend3 = beginTx();
+      EmbeddedTransaction suspend4 = beginTx();
 
       assertPrepared(0, suspend1, suspend2, suspend3, suspend4);
 
@@ -91,12 +92,12 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
       assertEquals(0, TestingUtil.getTransactionTable(cache).getLocalTxCount());
    }
 
-   private DummyTransaction beginTx() {
+   private EmbeddedTransaction beginTx() {
       return beginAndSuspendTx(cache);
    }
 
 
-   private DummyTransactionManager dummyTm() {
-      return (DummyTransactionManager) tm();
+   private EmbeddedTransactionManager embeddedTm() {
+      return (EmbeddedTransactionManager) tm();
    }
 }
