@@ -23,7 +23,6 @@ package org.infinispan.server.jgroups.subsystem;
 
 import org.infinispan.server.commons.controller.MetricHandler;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
@@ -32,7 +31,6 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -64,10 +62,6 @@ public class ChannelResourceDefinition extends SimpleResourceDefinition {
             .build();
 
     static AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { STACK, MODULE };
-
-    static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        // Nothing to transform yet
-    }
 
     private final boolean allowRuntimeOnlyRegistration;
 

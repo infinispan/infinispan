@@ -25,22 +25,12 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         super(JGroupsExtension.SUBSYSTEM_NAME, new JGroupsExtension());
     }
 
-    protected static ModelNode getSubsystemAddOperation(String defaultStack) {
-        ModelNode operation = Util.createAddOperation(getSubsystemAddress());
-        operation.get(JGroupsSubsystemResourceDefinition.DEFAULT_STACK.getName()).set(defaultStack);
-        return operation;
-    }
-
     protected static ModelNode getSubsystemReadOperation(String name) {
         return Operations.createReadAttributeOperation(getSubsystemAddress(), name);
     }
 
     protected static ModelNode getSubsystemWriteOperation(String name, String value) {
         return Operations.createWriteAttributeOperation(getSubsystemAddress(), name, new ModelNode(value));
-    }
-
-    protected static ModelNode getSubsystemRemoveOperation() {
-        return Util.createRemoveOperation(getSubsystemAddress());
     }
 
     protected static ModelNode getProtocolStackAddOperation(String stackName) {
