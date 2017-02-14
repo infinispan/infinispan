@@ -63,12 +63,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
                  .timeout(taskTimeout, TimeUnit.MILLISECONDS);
 
          CompletableFuture<Void> future = des.submit(builder.build());
-         future.whenComplete((aVoid,throwable) -> {
-            Executors.newSingleThreadExecutor().submit((Callable<Void>)() -> {
-                future.get();
-                return null;
-            });
-         });
+         try {future.get(10, TimeUnit.SECONDS);} catch(Exception e) {}
          eventuallyEquals(3, () -> sameNodeTaskFailoverPolicy.failoverCount);
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
