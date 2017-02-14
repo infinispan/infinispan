@@ -56,7 +56,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
          // initiate task from cache1 and execute on same node
          des = new DefaultExecutorService(cache1);
 
-         SameNodeTaskFailoverPolicy sameNodeTaskFailoverPolicy = new SameNodeTaskFailoverPolicy(2);
+         SameNodeTaskFailoverPolicy sameNodeTaskFailoverPolicy = new SameNodeTaskFailoverPolicy(3);
          DistributedTaskBuilder<Void> builder = des
                  .createDistributedTaskBuilder(new TestCallable())
                  .failoverPolicy(sameNodeTaskFailoverPolicy)
@@ -69,8 +69,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
                 return null;
             });
          });
-         Thread.sleep(1000);
-         AssertJUnit.assertEquals(sameNodeTaskFailoverPolicy.failoverCount, 2);
+         eventuallyEquals(3, () -> sameNodeTaskFailoverPolicy.failoverCount);
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
       } finally {
