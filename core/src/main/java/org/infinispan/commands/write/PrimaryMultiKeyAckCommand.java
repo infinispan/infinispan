@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.util.ByteString;
@@ -27,7 +26,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 31;
    private static final Type[] CACHED_TYPE = Type.values();
-   private CommandInvocationId commandInvocationId;
+   private long id;
    private Map<Object, Object> returnValue = null;
    private Type type;
    private CommandAckCollector commandAckCollector;
@@ -41,9 +40,9 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public PrimaryMultiKeyAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId) {
+   public PrimaryMultiKeyAckCommand(ByteString cacheName, long id, int topologyId) {
       super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+      this.id = id;
       this.topologyId = topologyId;
    }
 
@@ -53,7 +52,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.multiKeyPrimaryAck(commandInvocationId, getOrigin(), returnValue, topologyId);
+      commandAckCollector.multiKeyPrimaryAck(id, getOrigin(), returnValue, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -68,8 +67,13 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       MarshallUtil.marshallEnum(type, output);
       output.writeInt(topologyId);
       if (type == Type.SUCCESS_WITH_RETURN_VALUE) {
@@ -79,7 +83,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       type = MarshallUtil.unmarshallEnum(input, PrimaryMultiKeyAckCommand::valueOf);
       topologyId = input.readInt();
       assert type != null;
@@ -104,7 +108,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "PrimaryMultiKeyAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
             ", returnValue=" + returnValue +
             ", type=" + type +
             ", topologyId=" + topologyId +

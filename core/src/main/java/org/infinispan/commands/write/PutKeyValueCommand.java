@@ -187,6 +187,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
             .append(", successful=").append(successful)
+            .append(", topologyId=").append(getTopologyId())
             .append("}")
             .toString();
    }
@@ -226,7 +227,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
-      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId.getId(), getTopologyId());
       if (isConditional() || isReturnValueExpected()) {
          command.initWithReturnValue(successful, localReturnValue);
       } else {

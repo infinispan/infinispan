@@ -1,15 +1,14 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an exception acknowledge sent by any owner.
@@ -22,9 +21,9 @@ import java.util.concurrent.CompletableFuture;
 public class ExceptionAckCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 42;
-   private CommandInvocationId commandInvocationId;
    private CommandAckCollector commandAckCollector;
    private Throwable throwable;
+   private long id;
    private int topologyId;
 
    public ExceptionAckCommand() {
@@ -35,16 +34,16 @@ public class ExceptionAckCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public ExceptionAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, Throwable throwable, int topologyId) {
+   public ExceptionAckCommand(ByteString cacheName, long id, Throwable throwable, int topologyId) {
       super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+      this.id = id;
       this.throwable = throwable;
       this.topologyId = topologyId;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.completeExceptionally(commandInvocationId, throwable, topologyId);
+      commandAckCollector.completeExceptionally(id, throwable, topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -59,15 +58,20 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       output.writeObject(throwable);
       output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       throwable = (Throwable) input.readObject();
       topologyId = input.readInt();
    }
@@ -79,7 +83,7 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "ExceptionAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
             ", throwable=" + throwable +
             ", topologyId=" + topologyId +
             '}';

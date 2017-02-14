@@ -28,7 +28,6 @@ import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 
 import org.infinispan.IllegalLifecycleStateException;
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -1469,7 +1468,7 @@ public interface Log extends BasicLogger {
    //removed unused message (id=426)
 
    @Message(value = "Timeout after %s waiting for acks. Id=%s", id = 427)
-   TimeoutException timeoutWaitingForAcks(String timeout, CommandInvocationId id);
+   TimeoutException timeoutWaitingForAcks(String timeout, long id);
 
    @LogMessage(level = WARN)
    @Message(value = "The eviction element has been deprecated. Please use the memory element instead", id = 428)

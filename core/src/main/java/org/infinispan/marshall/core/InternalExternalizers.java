@@ -240,7 +240,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new VersionedResults.Externalizer(), exts);
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
-      addInternalExternalizer(new TriangleAckExternalizer(cmdFactory), exts);
+      addInternalExternalizer(new TriangleAckExternalizer(), exts);
 
       return exts;
    }

@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -20,7 +21,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public interface ReplicableCommand {
    /**
     * Invoke the command asynchronously.
-    *
+    * <p>
     * <p>This method replaces {@link #perform(InvocationContext)} for remote execution.
     * The default implementation and {@link #perform(InvocationContext)} will be removed in future versions.
     * </p>
@@ -33,7 +34,7 @@ public interface ReplicableCommand {
 
    /**
     * Invoke the command synchronously.
-    *
+    * <p>
     * <p>This method is optional. Unless your command never blocks, please implement {@link #invokeAsync()} instead.</p>
     *
     * @since 9.0
@@ -69,8 +70,10 @@ public interface ReplicableCommand {
    byte getCommandId();
 
    /**
-    * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link org.infinispan.remoting.responses.ResponseGenerator}
-    * may choose to simply return null to save on marshalling costs.
+    * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link
+    * org.infinispan.remoting.responses.ResponseGenerator} may choose to simply return null to save on marshalling
+    * costs.
+    *
     * @return true or false
     */
    boolean isReturnValueExpected();
@@ -83,7 +86,7 @@ public interface ReplicableCommand {
     * retransmissions. So, the commands that can block (waiting for some state, acquiring locks, etc.) should return
     * true.
     *
-    * @return  {@code true} if the command can block/wait, {@code false} otherwise
+    * @return {@code true} if the command can block/wait, {@code false} otherwise
     */
    boolean canBlock();
 
@@ -103,4 +106,15 @@ public interface ReplicableCommand {
     * @throws ClassNotFoundException if it tries to load an undefined class.
     */
    void readFrom(ObjectInput input) throws IOException, ClassNotFoundException;
+
+   /**
+    * Sets the sender's {@link Address}.
+    * <p>
+    * By default, it doesn't set anything. Implement this method if the sender's {@link Address} is needed.
+    *
+    * @param origin the sender's {@link Address}
+    */
+   default void setOrigin(Address origin) {
+      //no-op by default
+   }
 }

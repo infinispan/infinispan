@@ -759,7 +759,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId) {
+   public BackupAckCommand buildBackupAckCommand(long id, int topologyId) {
       return new BackupAckCommand(cacheName, id, topologyId);
    }
 
@@ -769,17 +769,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId) {
       return new BackupMultiKeyAckCommand(cacheName, id, segment, topologyId);
    }
 
    @Override
-   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId) {
+   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(long id, int topologyId) {
       return new PrimaryMultiKeyAckCommand(cacheName, id, topologyId);
    }
 
    @Override
-   public ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId) {
+   public ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId) {
       return new ExceptionAckCommand(cacheName, id, throwable, topologyId);
    }
 

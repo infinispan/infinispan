@@ -62,7 +62,7 @@ import org.infinispan.util.logging.LogFactory;
 public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
-   private static boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    private StateTransferManager stateTransferManager;
 
@@ -425,10 +425,10 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // OutdatedTopologyException again.
       int currentTopologyId = currentTopologyId();
       WriteCommand writeCommand = (WriteCommand) rCommand;
-      if (trace)
-         log.tracef("Retrying command because of topology change, current topology is %d: %s",
-               currentTopologyId, writeCommand);
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
+      if (trace)
+         log.tracef("Retrying command because of topology change, current topology is %d (requested: %d): %s",
+               currentTopologyId, newTopologyId, writeCommand);
       writeCommand.setTopologyId(newTopologyId);
       writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology
