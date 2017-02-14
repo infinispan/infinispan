@@ -10,9 +10,9 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * Represents an unique identified for non-transaction write commands.
- *
+ * <p>
  * It is used to lock the key for a specific command.
- *
+ * <p>
  * This class is final to prevent issues as it is usually not marshalled
  * as polymorphic object but directly using {@link #writeTo(ObjectOutput, CommandInvocationId)}
  * and {@link #readFrom(ObjectInput)}.
@@ -41,11 +41,29 @@ public final class CommandInvocationId {
       return new CommandInvocationId(commandInvocationId.address, nextId.getAndIncrement());
    }
 
+   public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
+      output.writeObject(commandInvocationId.address);
+      output.writeLong(commandInvocationId.id);
+   }
+
+   public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
+      Address address = (Address) input.readObject();
+      long id = input.readLong();
+      return new CommandInvocationId(address, id);
+   }
+
+   public long getId() {
+      return id;
+   }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
 
       CommandInvocationId that = (CommandInvocationId) o;
 
@@ -67,17 +85,6 @@ public final class CommandInvocationId {
    @Override
    public String toString() {
       return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
-   }
-
-   public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
-      output.writeObject(commandInvocationId.address);
-      output.writeLong(commandInvocationId.id);
-   }
-
-   public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
-      Address address = (Address) input.readObject();
-      long id = input.readLong();
-      return new CommandInvocationId(address, id);
    }
 
 }

@@ -1,15 +1,14 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
@@ -22,8 +21,8 @@ import java.util.concurrent.CompletableFuture;
 public class BackupAckCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 2;
-   private CommandInvocationId commandInvocationId;
    private CommandAckCollector commandAckCollector;
+   private long id;
    private int topologyId;
 
    public BackupAckCommand() {
@@ -34,15 +33,15 @@ public class BackupAckCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public BackupAckCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId) {
+   public BackupAckCommand(ByteString cacheName, long id, int topologyId) {
       super(cacheName);
-      this.commandInvocationId = commandInvocationId;
+      this.id = id;
       this.topologyId = topologyId;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.backupAck(commandInvocationId, getOrigin(), topologyId);
+      commandAckCollector.backupAck(id, getOrigin(), topologyId);
       return CompletableFutures.completedNull();
    }
 
@@ -57,14 +56,19 @@ public class BackupAckCommand extends BaseRpcCommand {
    }
 
    @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(id);
       output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      id = input.readLong();
       topologyId = input.readInt();
    }
 
@@ -75,7 +79,7 @@ public class BackupAckCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "BackupAckCommand{" +
-            "commandInvocationId=" + commandInvocationId +
+            "id=" + id +
             ", topologyId=" + topologyId +
             '}';
    }

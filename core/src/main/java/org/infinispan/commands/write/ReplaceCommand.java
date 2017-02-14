@@ -79,17 +79,17 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
          Object old = e.setValue(newValue);
          Metadatas.updateMetadata(e, metadata);
          if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-            return returnValue(e, old, e.getMetadata(), true, ctx);
+            return returnValue(old, e.getMetadata(), true, ctx);
          } else {
             // Return the expected value when retrying
-            return returnValue(e, oldValue, e.getMetadata(), true, ctx);
+            return returnValue(oldValue, e.getMetadata(), true, ctx);
          }
       }
 
-      return returnValue(null, null, null, false, ctx);
+      return returnValue(null, null, false, ctx);
    }
 
-   private Object returnValue(MVCCEntry e, Object beingReplaced, Metadata previousMetadata, boolean successful,
+   private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
          InvocationContext ctx) {
       this.successful = successful;
 
@@ -226,6 +226,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             ", flags=" + printFlags() +
             ", successful=" + successful +
             ", valueMatcher=" + valueMatcher +
+            ", topologyId=" + getTopologyId() +
             '}';
    }
 
@@ -236,7 +237,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
-      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId.getId(), getTopologyId());
       if (oldValue == null) {
          command.initWithReturnValue(successful, localReturnValue);
       } else {

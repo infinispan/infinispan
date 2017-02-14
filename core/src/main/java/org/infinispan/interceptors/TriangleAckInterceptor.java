@@ -50,11 +50,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
    private CommandAckCollector commandAckCollector;
+   private final InvocationFinallyFunction onLocalWriteCommand = this::onLocalWriteCommand;
    private DistributionManager distributionManager;
    private StateTransferManager stateTransferManager;
    private Address localAddress;
-
-   private final InvocationFinallyFunction onLocalWriteCommand = this::onLocalWriteCommand;
    private final InvocationFinallyAction onRemotePrimaryOwner = this::onRemotePrimaryOwner;
    private final InvocationFinallyAction onRemoteBackupOwner = this::onRemoteBackupOwner;
 
@@ -128,7 +127,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
 
-   private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) {
+   private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Exception {
       if (ctx.isOriginLocal()) {
          return invokeNextAndHandle(ctx, command, onLocalWriteCommand);
       } else {
@@ -152,7 +151,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private void onRemotePrimaryOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private void onRemotePrimaryOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable)
+         throws Exception {
       DataWriteCommand command = (DataWriteCommand) rCommand;
       if (throwable != null) {
          sendExceptionAck(command.getCommandInvocationId(), command.getTopologyId(), throwable);
@@ -162,7 +162,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
    }
 
    @SuppressWarnings("unused")
-   private void onRemoteBackupOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
+   private void onRemoteBackupOwner(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable)
+         throws Exception {
       DataWriteCommand cmd = (DataWriteCommand) rCommand;
       if (throwable != null) {
          sendExceptionAck(cmd.getCommandInvocationId(), cmd.getTopologyId(), throwable);
@@ -184,12 +185,12 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
 
    private void disposeCollectorOnException(CommandInvocationId id) {
       //a local exception occur. No need to wait for acknowledges.
-      commandAckCollector.dispose(id);
+      commandAckCollector.dispose(id.getId());
    }
 
    private Object waitCollectorAsync(CommandInvocationId id, Object rv) {
       //waiting for acknowledges based on default rpc timeout.
-      CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFutureToWait(id);
+      CompletableFuture<Object> collectorFuture = commandAckCollector.getCollectorCompletableFutureToWait(id.getId());
       if (collectorFuture == null) {
          //no collector, return immediately.
          return rv;
@@ -215,10 +216,11 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       if (origin.equals(localAddress)) {
-         commandAckCollector.backupAck(id, origin, command.getTopologyId());
+         commandAckCollector.backupAck(id.getId(), origin, command.getTopologyId());
       } else {
          rpcManager
-               .sendTo(origin, commandsFactory.buildBackupAckCommand(id, command.getTopologyId()), DeliverOrder.NONE);
+               .sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), command.getTopologyId()),
+                     DeliverOrder.NONE);
       }
    }
 
@@ -229,22 +231,22 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       if (id.getAddress().equals(localAddress)) {
-         commandAckCollector.multiKeyBackupAck(id, localAddress, segment, command.getTopologyId());
+         commandAckCollector.multiKeyBackupAck(id.getId(), localAddress, segment, command.getTopologyId());
       } else {
          rpcManager.sendTo(id.getAddress(),
-               commandsFactory.buildBackupMultiKeyAckCommand(id, segment, command.getTopologyId()), DeliverOrder.NONE);
+               commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, command.getTopologyId()),
+               DeliverOrder.NONE);
       }
    }
 
-   private void sendPrimaryPutMapAck(PutMapCommand command,
-         Map<Object, Object> returnValue) {
+   private void sendPrimaryPutMapAck(PutMapCommand command, Map<Object, Object> returnValue) {
       final CommandInvocationId id = command.getCommandInvocationId();
       final Address origin = id.getAddress();
       if (trace) {
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       PrimaryMultiKeyAckCommand ack = commandsFactory.buildPrimaryMultiKeyAckCommand(
-            command.getCommandInvocationId(),
+            command.getCommandInvocationId().getId(),
             command.getTopologyId());
       if (command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
          ack.initWithoutReturnValue();
@@ -260,10 +262,10 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
          log.tracef("Sending exception ack for command %s. Originator=%s.", id, origin);
       }
       if (origin.equals(localAddress)) {
-         commandAckCollector.completeExceptionally(id, throwable, topologyId);
+         commandAckCollector.completeExceptionally(id.getId(), throwable, topologyId);
       } else {
-         rpcManager
-               .sendTo(origin, commandsFactory.buildExceptionAckCommand(id, throwable, topologyId), DeliverOrder.NONE);
+         rpcManager.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId),
+               DeliverOrder.NONE);
       }
    }
 }

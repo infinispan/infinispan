@@ -22,7 +22,6 @@ import javax.transaction.xa.Xid;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -452,7 +451,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId) {
+   public BackupAckCommand buildBackupAckCommand(long id, int topologyId) {
       return actual.buildBackupAckCommand(id, topologyId);
    }
 
@@ -462,17 +461,17 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId) {
       return actual.buildBackupMultiKeyAckCommand(id, segment, topologyId);
    }
 
    @Override
-   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId) {
+   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(long id, int topologyId) {
       return actual.buildPrimaryMultiKeyAckCommand(id, topologyId);
    }
 
    @Override
-   public ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId) {
+   public ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId) {
       return actual.buildExceptionAckCommand(id, throwable, topologyId);
    }
 

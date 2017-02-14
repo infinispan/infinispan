@@ -84,7 +84,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final Collection<ModuleLifecycle> moduleLifecycles;
 
-   final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<ByteString, ComponentRegistry>(4);
+   final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
    protected final WeakReference<ClassLoader> defaultClassLoader;
 
@@ -97,14 +97,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
       ClassLoader configuredClassLoader = configuration.classLoader();
-      moduleLifecycles = moduleProperties.resolveModuleLifecycles(configuredClassLoader);
+      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(configuredClassLoader);
 
       componentMetadataRepo = new ComponentMetadataRepo();
 
       // Load up the component metadata
-      componentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
+      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
 
-      defaultClassLoader = new WeakReference<ClassLoader>(registerDefaultClassLoader(configuredClassLoader));
+      defaultClassLoader = new WeakReference<>(registerDefaultClassLoader(configuredClassLoader));
 
       try {
          // this order is important ...
@@ -124,8 +124,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
-            registerNonVolatileComponent(
-                  Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
+            registerNonVolatileComponent(Collections.emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
 
          getOrCreateComponent(EventLogManager.class);
@@ -176,17 +175,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
       if (registerShutdownHook) {
          log.tracef("Registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
-         shutdownHook = new Thread() {
-            @Override
-            public void run() {
-               try {
-                  invokedFromShutdownHook = true;
-                  GlobalComponentRegistry.this.stop();
-               } finally {
-                  invokedFromShutdownHook = false;
-               }
+         shutdownHook = new Thread(() -> {
+            try {
+               invokedFromShutdownHook = true;
+               GlobalComponentRegistry.this.stop();
+            } finally {
+               invokedFromShutdownHook = false;
             }
-         };
+         });
 
          Runtime.getRuntime().addShutdownHook(shutdownHook);
       } else {
@@ -261,7 +257,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
-   private final void warnAboutUberJarDuplicates() {
+   private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
               .thenAcceptAsync(isClasspathCorrect -> {

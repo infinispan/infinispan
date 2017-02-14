@@ -170,7 +170,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          backupPutMapRcpCommand.setMap(map);
          backupPutMapRcpCommand.setSequence(sequence);
          if (trace) {
-            logCommandSequence(command.getCommandInvocationId(), segmentId, sequence);
+            log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
+                  sequence);
          }
          rpcManager.sendToMany(owners.subList(1, size), backupPutMapRcpCommand, DeliverOrder.NONE);
       }
@@ -188,14 +189,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
       if (sync) {
          commandAckCollector
-               .createMultiKeyCollector(command.getCommandInvocationId(), filter.primaries.keySet(), filter.backups,
-                     command.getTopologyId());
+               .createMultiKeyCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
+                     filter.backups, command.getTopologyId());
          final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
          forwardToPrimaryOwners(command, filter);
          if (localEntries != null) {
             sendToBackups(command, localEntries, consistentHash);
             CompletableFuture<?> remoteGet = checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
-                                                                loadType == PRIMARY || loadType == OWNER);
+                  loadType == PRIMARY || loadType == OWNER);
             return makeStage(asyncInvokeNext(ctx, command, remoteGet))
                   .andFinally(ctx, command, onPutMapWithLocalEntries);
          }
@@ -213,20 +214,23 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       return invokeNext(ctx, command);
    }
 
-   private void afterPutMapCommand(InvocationContext ctx, VisitableCommand rCommand, Object rv, Throwable t) {
+   private void afterPutMapCommand(@SuppressWarnings("unused") InvocationContext ignored, VisitableCommand rCommand,
+         Object rv, Throwable t) {
       PutMapCommand cmd = (PutMapCommand) rCommand;
       if (t != null) {
-         commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+         commandAckCollector.completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
       } else {
          //noinspection unchecked
-         commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId(), localAddress,
-                                                (Map<Object, Object>) rv, cmd.getTopologyId());
+         commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId().getId(), localAddress,
+               (Map<Object, Object>) rv, cmd.getTopologyId());
       }
    }
 
-   private Object onPutMapNoLocalEntriesException(InvocationContext ctx, VisitableCommand rCommand, Throwable t) throws Throwable {
+   private Object onPutMapNoLocalEntriesException(@SuppressWarnings("unused") InvocationContext ignored,
+         VisitableCommand rCommand, Throwable t)
+         throws Throwable {
       PutMapCommand cmd = (PutMapCommand) rCommand;
-      commandAckCollector.completeExceptionally(cmd.getCommandInvocationId(), t, cmd.getTopologyId());
+      commandAckCollector.completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
       assert t != null;
       throw t;
    }
@@ -295,7 +299,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             return primaryOwnerWrite(context, command, distributionInfo);
          case BACKUP:
             if (context.isOriginLocal()) {
-               return localWriteInvocation(context, command, distributionInfo);
+               localWriteInvocation(context, command, distributionInfo);
+               return null;
             } else {
                CacheEntry entry = context.lookupEntry(command.getKey());
                if (entry == null) {
@@ -309,7 +314,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          case NON_OWNER:
             //always local!
             assert context.isOriginLocal();
-            return localWriteInvocation(context, command, distributionInfo);
+            localWriteInvocation(context, command, distributionInfo);
+            return null;
       }
       throw new IllegalStateException();
    }
@@ -330,10 +336,10 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             }
             return;
          }
-         if (distributionInfo.owners().size() > 1) {
-            Collection<Address> backupOwners = distributionInfo.backups();
+         Collection<Address> backupOwners = distributionInfo.backups();
+         if (!backupOwners.isEmpty()) {
             if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
-               commandAckCollector.create(id, rv, distributionInfo.owners(), dwCommand.getTopologyId());
+               commandAckCollector.create(id.getId(), rv, localAddress, backupOwners, dwCommand.getTopologyId());
                //check the topology after registering the collector.
                //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
                checkTopologyId(dwCommand);
@@ -345,7 +351,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
             backupWriteRcpCommand.setSequence(sequenceNumber);
             if (trace) {
-               logCommandSequence(id, distributionInfo.getSegmentId(), sequenceNumber);
+               log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber,
+                     distributionInfo.getSegmentId());
             }
             // we must send the message only after the collector is registered in the map
             rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
@@ -353,23 +360,18 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       });
    }
 
-   private void logCommandSequence(CommandInvocationId id, int segment, long sequence) {
-         log.tracef("Command %s got sequence %s for segment %s", id, sequence, segment);
-   }
-
-   private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
+   private void localWriteInvocation(InvocationContext context, DataWriteCommand command,
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&
             !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId, distributionInfo.owners(), command.getTopologyId());
+         commandAckCollector.create(invocationId.getId(), distributionInfo.owners(), command.getTopologyId());
       }
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
       rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
-      return null;
    }
 
    /**
@@ -397,7 +399,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          final int segment = consistentHash.getSegment(entry.getKey());
          final Iterator<Address> iterator = consistentHash.locateOwnersForSegment(segment).iterator();
          final Address primaryOwner = iterator.next();
-         primaries.computeIfAbsent(primaryOwner, address -> new HashMap<>(entryCount)).put(entry.getKey(), entry.getValue());
+         primaries.computeIfAbsent(primaryOwner, address -> new HashMap<>(entryCount))
+               .put(entry.getKey(), entry.getValue());
          while (iterator.hasNext()) {
             Address backup = iterator.next();
             backups.computeIfAbsent(backup, address -> new HashSet<>(entryCount)).add(segment);
@@ -423,7 +426,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
 
       public void add(Map.Entry<Object, Object> entry) {
-         perSegmentKeyValue.computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>(entryCount))
+         perSegmentKeyValue
+               .computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>(entryCount))
                .put(entry.getKey(), entry.getValue());
       }
    }

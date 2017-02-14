@@ -14,25 +14,17 @@ public class DistributionInfo {
 
    public DistributionInfo(Object key, ConsistentHash ch, Address self) {
       segmentId = ch.getSegment(key);
-      if (ch.isReplicated()) {
-         owners = ch.getMembers();
-         primary = ch.locatePrimaryOwnerForSegment(segmentId);
-         // Even in replicated mode a node may be non-owner during state transfer
-         ownership = primary.equals(self) ? Ownership.PRIMARY :
-                     owners.contains(self) ? Ownership.BACKUP : Ownership.NON_OWNER;
+      owners = ch.locateOwnersForSegment(segmentId);
+      int index = owners.indexOf(self);
+      if (index == 0) {
+         ownership = Ownership.PRIMARY;
+         primary = self;
+      } else if (index > 0) {
+         ownership = Ownership.BACKUP;
+         primary = owners.get(0);
       } else {
-         owners = ch.locateOwnersForSegment(segmentId);
-         int index = owners.indexOf(self);
-         if (index == 0) {
-            ownership = Ownership.PRIMARY;
-            primary = self;
-         } else if (index > 0) {
-            ownership = Ownership.BACKUP;
-            primary = owners.get(0);
-         } else {
-            ownership = Ownership.NON_OWNER;
-            primary = owners.get(0);
-         }
+         ownership = Ownership.NON_OWNER;
+         primary = owners.get(0);
       }
    }
 

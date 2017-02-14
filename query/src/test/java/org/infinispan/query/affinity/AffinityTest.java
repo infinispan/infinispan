@@ -49,23 +49,23 @@ public class AffinityTest extends BaseAffinityTest {
       ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
       List<Cache<String, Entity>> cacheList = caches();
 
-      List<Future<?>> futures = rangeClosed(1, numThreads).boxed().map(tid -> {
-         return executorService.submit(() -> {
+      log.info("Starting threads");
+      List<Future<?>> futures = rangeClosed(1, numThreads).boxed().map(tid -> executorService.submit(() ->
             rangeClosed(1, getNumEntries()).forEach(entry -> {
                int id = counter.incrementAndGet();
                pickCache().put(String.valueOf(id), new Entity(id));
-            });
-         });
-      }).collect(Collectors.toList());
+            }))).collect(Collectors.toList());
 
+      log.info("Waiting for threads");
       futures.forEach(f -> {
          try {
             f.get();
          } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            log.error("Error while waiting for thread.", e);
          }
       });
 
+      log.info("Checking cache size");
       assertEquals(pickCache().size(), numThreads * getNumEntries());
       cacheList.forEach(c -> {
          CacheQuery<Entity> q = Search.getSearchManager(c).getQuery(new MatchAllDocsQuery(), Entity.class);

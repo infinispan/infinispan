@@ -217,7 +217,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<Object> keys = command.getMap().keySet();
-      Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+      Set<Object> toInvalidate = new HashSet<>(keys.size());
       for (Object k : keys) {
          if (cdl.localNodeIsOwner(k)) {
             toInvalidate.add(k);
@@ -303,7 +303,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private Object removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
-         CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(command.getCommandInvocationId());
+         CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(
+               command.getCommandInvocationId().getId());
          VisitableCommand removeFromL1Command = removeFromL1Command(ctx, command.getKey());
          if (pendingAcks == null) {
             return invokeNextThenApply(ctx, removeFromL1Command, (rCtx, rCommand, rv) -> returnValue);
