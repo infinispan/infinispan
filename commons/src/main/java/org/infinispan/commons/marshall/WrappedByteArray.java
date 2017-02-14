@@ -16,16 +16,9 @@ import org.infinispan.commons.util.Util;
  */
 public class WrappedByteArray implements WrappedBytes {
    private final byte[] bytes;
-   private transient int hashCode;
 
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;
-      this.hashCode = Arrays.hashCode(bytes);
-   }
-
-   public WrappedByteArray(byte[] bytes, int hashCode) {
-      this.bytes = bytes;
-      this.hashCode = hashCode;
    }
 
    @Override
@@ -63,25 +56,19 @@ public class WrappedByteArray implements WrappedBytes {
    }
 
    public boolean equalsWrappedBytes(WrappedBytes other) {
-      int length = getLength();
-      if (other.getLength() != length) return false;
-      if (other.hashCode() != hashCode()) return false;
-      for (int i = 0; i < length; ++i) {
-         if (getByte(i) != other.getByte(i)) return false;
-      }
-      return true;
+      //Array.equals already checks the length and hashcode is lazy now
+      return Arrays.equals(bytes, other.getBytes());
    }
 
    @Override
    public int hashCode() {
-      return hashCode;
+      return Arrays.hashCode(bytes);
    }
 
    @Override
    public String toString() {
       return "WrappedByteArray{" +
-            "bytes=0x" + Util.toHexString(bytes) +
-            ", hashCode=" + hashCode +
+            "bytes=" + Util.printArray(bytes) +
             '}';
    }
 

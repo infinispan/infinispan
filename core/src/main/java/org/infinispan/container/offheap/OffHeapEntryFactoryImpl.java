@@ -281,13 +281,13 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             try {
                EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset,
                      metadataBytes.length - offset);
-               return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+               return internalEntryFactory.create(new WrappedByteArray(keyBytes),
                      new WrappedByteArray(valueBytes), version, created, lifespan, lastUsed, maxIdle);
             } catch (IOException | ClassNotFoundException e) {
                throw new CacheException(e);
             }
          } else {
-            return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+            return internalEntryFactory.create(new WrappedByteArray(keyBytes),
                   new WrappedByteArray(valueBytes), (Metadata) null, created, lifespan, lastUsed, maxIdle);
          }
       }
@@ -329,6 +329,6 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       UNSAFE.copyMemory(null, address + HEADER_LENGTH, keyBytes,
             BYTE_ARRAY_BASE_OFFSET, keyLength);
 
-      return new WrappedByteArray(keyBytes, hashCode).equalsWrappedBytes(wrappedBytes);
+      return new WrappedByteArray(keyBytes).equalsWrappedBytes(wrappedBytes);
    }
 }
