@@ -3,6 +3,7 @@ package org.infinispan.distexec;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.*;
 
 import org.infinispan.Cache;
@@ -65,11 +66,11 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
          future.whenComplete((aVoid,throwable) -> {
             Executors.newSingleThreadExecutor().submit((Callable<Void>)() -> {
                 future.get();
-
-                AssertJUnit.assertEquals(sameNodeTaskFailoverPolicy.failoverCount, 2);
                 return null;
             });
          });
+         Thread.sleep(1000);
+         AssertJUnit.assertEquals(sameNodeTaskFailoverPolicy.failoverCount, 2);
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
       } finally {
