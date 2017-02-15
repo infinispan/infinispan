@@ -36,8 +36,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       JOIN,
       // A member is signaling that it wants to leave the cluster.
       LEAVE,
-      // A member is confirming that it finished the rebalance operation.
-      REBALANCE_CONFIRM,
+      // A member is confirming that it has finished the topology change during rebalance.
+      REBALANCE_PHASE_CONFIRM,
       // A member is requesting a cache shutdown
       SHUTDOWN_REQUEST,
 
@@ -178,8 +178,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          case LEAVE:
             clusterTopologyManager.handleLeave(cacheName, sender, viewId);
             return null;
-         case REBALANCE_CONFIRM:
-            clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable, viewId);
+         case REBALANCE_PHASE_CONFIRM:
+            clusterTopologyManager.handleRebalancePhaseConfirm(cacheName, sender, topologyId, throwable, viewId);
             return null;
          case SHUTDOWN_REQUEST:
             clusterTopologyManager.handleShutdownRequest(cacheName);
@@ -278,7 +278,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(sender);
             output.writeInt(viewId);
             return;
-         case REBALANCE_CONFIRM:
+         case REBALANCE_PHASE_CONFIRM:
             output.writeObject(sender);
             output.writeObject(throwable);
             output.writeInt(viewId);
@@ -343,7 +343,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             sender = (Address) input.readObject();
             viewId = input.readInt();
             return;
-         case REBALANCE_CONFIRM:
+         case REBALANCE_PHASE_CONFIRM:
             sender = (Address) input.readObject();
             throwable = (Throwable) input.readObject();
             viewId = input.readInt();

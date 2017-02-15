@@ -318,7 +318,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public void notifyEndOfRebalance(int topologyId, int rebalanceId) {
-      localTopologyManager.confirmRebalance(cacheName, topologyId, rebalanceId, null);
+      localTopologyManager.confirmRebalancePhase(cacheName, topologyId, rebalanceId, null);
    }
 
    // TODO Investigate merging ownsData() and getFirstTopologyAsMember(), as they serve a similar purpose

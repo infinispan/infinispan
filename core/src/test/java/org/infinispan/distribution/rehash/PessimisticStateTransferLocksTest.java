@@ -155,7 +155,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    }
 
    private void startRebalance() throws Exception {
-      InvocationMatcher rebalanceCompletedMatcher = matchMethodCall("handleRebalanceCompleted")
+      InvocationMatcher rebalanceCompletedMatcher = matchMethodCall("handleRebalancePhaseConfirm")
             .withParam(1, address(2)).build();
       advanceOnGlobalComponentMethod(sequencer, manager(0), ClusterTopologyManager.class,
             rebalanceCompletedMatcher).before("rebalance:before_confirm");

@@ -33,7 +33,7 @@ class RebalanceConfirmationCollector {
    /**
     * @return {@code true} if everyone has confirmed
     */
-   public boolean confirmRebalance(Address node, int receivedTopologyId) {
+   public boolean confirmPhase(Address node, int receivedTopologyId) {
       synchronized (this) {
          if (topologyId > receivedTopologyId) {
             throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +

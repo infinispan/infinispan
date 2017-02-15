@@ -20,7 +20,7 @@ public interface CacheTopologyHandler {
     * Invoked when state transfer has to be started.
     *
     * The caller will not consider the local rebalance done when this method returns. Instead, the handler
-    * will have to call {@link LocalTopologyManager#confirmRebalance(String, int, int, Throwable)}
+    * will have to call {@link LocalTopologyManager#confirmRebalancePhase(String, int, int, Throwable)}
     */
    void rebalance(CacheTopology cacheTopology);
 }

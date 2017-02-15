@@ -152,14 +152,14 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager0.blockBefore(ClusteredGetCommand.class);
-      topologyManager0.startBlocking(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.startBlocking(LatchType.CONFIRM_REBALANCE_PHASE);
 
       //the remote get is triggered in the current topology id.
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager0.waitForCommandToBlock();
 
       NewNode joiner = addNode();
-      topologyManager0.waitToBlock(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.waitToBlock(LatchType.CONFIRM_REBALANCE_PHASE);
 
       //wait until the rebalance start arrives in old owner and in the requestor. then let the remote get go.
       awaitForTopology(currentTopologyId + 1, cache(1));
@@ -170,7 +170,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
       assertTopologyId(currentTopologyId + 1, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.stopBlocking(LatchType.CONFIRM_REBALANCE_PHASE);
       joiner.joinerFuture.get();
    }
 
@@ -187,10 +187,10 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager0.blockBefore(ClusteredGetCommand.class);
-      topologyManager0.startBlocking(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.startBlocking(LatchType.CONFIRM_REBALANCE_PHASE);
 
       NewNode joiner = addNode();
-      topologyManager0.waitToBlock(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.waitToBlock(LatchType.CONFIRM_REBALANCE_PHASE);
 
       //consistency check
       awaitForTopology(currentTopologyId + 1, cache(0));
@@ -207,7 +207,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
       assertTopologyId(currentTopologyId + 1, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONFIRM_REBALANCE);
+      topologyManager0.stopBlocking(LatchType.CONFIRM_REBALANCE_PHASE);
       joiner.joinerFuture.get();
    }
 

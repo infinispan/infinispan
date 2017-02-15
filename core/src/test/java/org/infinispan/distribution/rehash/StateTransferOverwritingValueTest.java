@@ -201,7 +201,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
          checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
          return invocation.callRealMethod();
-      }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
+      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }

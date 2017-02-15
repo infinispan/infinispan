@@ -519,7 +519,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
             return forwardedAnswer.answer(invocation);
          }
-      }).when(mockManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
+      }).when(mockManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
                                                    anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
    }
