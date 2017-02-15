@@ -40,7 +40,6 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
    private Metadata metadata;
    private int topologyId;
    private long flags;
-   private long sequence;
 
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;
@@ -161,7 +160,6 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
          default:
       }
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
-      output.writeLong(sequence);
    }
 
    @Override
@@ -181,7 +179,6 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
          default:
       }
       this.flags = input.readLong();
-      this.sequence = input.readLong();
    }
 
    @Override
@@ -194,7 +191,6 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
             ", metadata=" + metadata +
             ", topologyId=" + topologyId +
             ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
-            ", sequence=" + sequence +
             '}';
    }
 
@@ -206,14 +202,6 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   public long getSequence() {
-      return sequence;
-   }
-
-   public void setSequence(long sequence) {
-      this.sequence = sequence;
    }
 
    private void setCommonAttributes(CommandInvocationId commandInvocationId, Object key, long flags, int topologyId) {

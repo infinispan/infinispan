@@ -44,10 +44,8 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
       this.topologyId = topologyId;
    }
 
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public void ack() {
       commandAckCollector.multiKeyBackupAck(commandInvocationId, getOrigin(), segment, topologyId);
-      return CompletableFutures.completedNull();
    }
 
    @Override
