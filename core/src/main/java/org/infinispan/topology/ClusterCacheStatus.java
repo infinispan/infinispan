@@ -329,14 +329,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public void doConfirmRebalance(Address member, int receivedTopologyId) throws Exception {
+   public void confirmRebalancePhase(Address member, int receivedTopologyId) throws Exception {
       synchronized (this) {
          if (rebalanceConfirmationCollector == null) {
             throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
                   "for cache %s, we don't have a rebalance in progress", member, cacheName));
          }
 
-         boolean rebalanceCompleted = rebalanceConfirmationCollector.confirmRebalance(member, receivedTopologyId);
+         boolean rebalanceCompleted = rebalanceConfirmationCollector.confirmPhase(member, receivedTopologyId);
          if (rebalanceCompleted) {
             endRebalance();
          }
