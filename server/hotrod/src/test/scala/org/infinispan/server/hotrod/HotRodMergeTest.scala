@@ -41,7 +41,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
       }
 
       client = new HotRodClient("127.0.0.1", servers.head.getPort, "", 60, 21)
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1))
+      TestingUtil.waitForRebalanceToComplete(cache(0), cache(1))
    }
 
    @AfterClass(alwaysRun = true)
@@ -63,27 +63,27 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
    }
 
    def testNewTopologySentAfterCleanMerge(m: Method) {
-      TestingUtil.waitForRehashToComplete(caches())
+      TestingUtil.waitForRebalanceToComplete(caches())
       val initialTopology = advancedCache(0).getRpcManager.getTopologyId
 
       expectCompleteTopology(client, initialTopology)
       val p0 = new PartitionDescriptor(0)
       val p1 = new PartitionDescriptor(1)
       splitCluster(p0.getNodes, p1.getNodes)
-      TestingUtil.waitForRehashToComplete(cache(p1.node(0)))
-      TestingUtil.waitForRehashToComplete(cache(p0.node(0)))
+      TestingUtil.waitForRebalanceToComplete(cache(p1.node(0)))
+      TestingUtil.waitForRebalanceToComplete(cache(p0.node(0)))
       expectPartialTopology(client, initialTopology + 1)
       partition(0).merge(partition(1))
       eventuallyExpectCompleteTopology(client, initialTopology + 6)
    }
 
    def testNewTopologySentAfterOverlappingMerge(m: Method) {
-      TestingUtil.waitForRehashToComplete(caches())
+      TestingUtil.waitForRebalanceToComplete(caches())
       val initialTopology = advancedCache(0).getRpcManager.getTopologyId
       expectCompleteTopology(client, initialTopology)
       val p1 = new PartitionDescriptor(0)
       isolatePartition(p1.getNodes)
-      TestingUtil.waitForRehashToComplete(cache(p1.node(0)))
+      TestingUtil.waitForRebalanceToComplete(cache(p1.node(0)))
       eventuallyExpectPartialTopology(client, initialTopology + 1)
 
       partition(0).merge(partition(1))

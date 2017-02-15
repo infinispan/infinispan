@@ -133,7 +133,7 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
 
       // Let cache 1 receive the tx from cache 0.
       checkpoint.trigger("resume_get_transactions_" + rebalanceTopologyId + "_from_" + address(1));
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForRebalanceToComplete(caches(CACHE_NAME));
 
       // Wait for the tx finish
       future.get(10, SECONDS);

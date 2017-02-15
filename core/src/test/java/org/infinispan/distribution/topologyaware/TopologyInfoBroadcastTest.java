@@ -78,7 +78,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
    public void testNodeLeaves() {
       TestingUtil.killCacheManagers(manager(1));
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0), cache(2));
-      TestingUtil.waitForRehashToComplete(cache(0), cache(2));
+      TestingUtil.waitForRebalanceToComplete(cache(0), cache(2));
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
       assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());

@@ -96,10 +96,10 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       }
 
       killMember(4);
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForRebalanceToComplete(caches());
 
       killMember(3);
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForRebalanceToComplete(caches());
 
       stop.set(true);
 

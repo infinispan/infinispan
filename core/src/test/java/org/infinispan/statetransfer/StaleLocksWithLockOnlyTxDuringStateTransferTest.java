@@ -107,7 +107,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       // Let the rebalance finish
       sequencer.advance("tx:after_commit");
 
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForRebalanceToComplete(caches(CACHE_NAME));
       assertEquals(finalTopologyId, stm0.getCacheTopology().getTopologyId());
 
       // Check for stale locks

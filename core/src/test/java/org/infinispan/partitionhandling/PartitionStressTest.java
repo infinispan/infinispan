@@ -155,7 +155,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
                      AvailabilityMode.AVAILABLE;
             }
          });
-         TestingUtil.waitForRehashToComplete(caches());
+         TestingUtil.waitForRebalanceToComplete(caches());
 
          assertFuturesRunning(futures);
          splitIndex++;

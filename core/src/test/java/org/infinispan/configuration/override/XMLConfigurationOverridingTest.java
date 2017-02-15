@@ -1,6 +1,6 @@
 package org.infinispan.configuration.override;
 
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForRebalanceToComplete;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -357,7 +357,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cm1.defineConfiguration(distCacheToChange, conf);
 
                AdvancedCache cache2 = cm1.getCache(distCacheToChange).getAdvancedCache();
-               waitForRehashToComplete(cache1, cache2);
+               waitForRebalanceToComplete(cache1, cache2);
 
                assertTrue(cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() > 0);
                // Stale entries on cache1 are not removed immediately

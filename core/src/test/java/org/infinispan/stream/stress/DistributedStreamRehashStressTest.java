@@ -235,7 +235,7 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
                   List<Cache<Object, Object>> caches = caches(CACHE_NAME);
                   if (caches.size() > 0) {
                      TestingUtil.blockUntilViewsReceived(60000, false, caches);
-                     TestingUtil.waitForRehashToComplete(caches);
+                     TestingUtil.waitForRebalanceToComplete(caches);
                   }
                } else {
                   throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() +
