@@ -97,7 +97,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
          public void call() throws Exception {
             // New node joining
             Cache<String, Person> newCache = cm.getCache();
-            TestingUtil.waitForRehashToComplete(caches().get(0), caches().get(1), newCache);
+            TestingUtil.waitForNoRebalance(caches().get(0), caches().get(1), newCache);
 
             // Verify state transfer
             int size = newCache.size();

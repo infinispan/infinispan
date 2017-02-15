@@ -220,7 +220,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       applyStateProceedLatch.countDown();
 
       // wait for apply state to end
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
+      TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));
 
       // at this point state transfer is fully done
       log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());

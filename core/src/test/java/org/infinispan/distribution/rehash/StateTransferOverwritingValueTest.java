@@ -175,7 +175,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Allow the rebalance confirmation to proceed and wait for the topology to change everywhere
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(0));
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(1));
-      TestingUtil.waitForRehashToComplete(cache0, cache1);
+      TestingUtil.waitForNoRebalance(cache0, cache1);
 
       // Check the value on all the nodes
       assertEquals(op.getValue(), cache0.get(key));
