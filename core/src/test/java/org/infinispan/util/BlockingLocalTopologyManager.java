@@ -65,7 +65,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    @Override
-   protected final void beforeConfirmRebalance(String cacheName, int topologyId, Throwable throwable) {
+   protected final void beforeConfirmTopology(String cacheName, int topologyId, Throwable throwable) {
       getLatch(LatchType.CONFIRM_REBALANCE).blockIfNeeded();
    }
 

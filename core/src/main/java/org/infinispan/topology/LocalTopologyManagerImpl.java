@@ -194,11 +194,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    @Override
-   public void confirmRebalance(String cacheName, int topologyId, int rebalanceId, Throwable throwable) {
+   public void confirmTopology(String cacheName, int topologyId, int rebalanceId, Throwable throwable) {
       // Note that if the coordinator changes again after we sent the command, we will get another
       // query for the status of our running caches. So we don't need to retry if the command failed.
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCE_CONFIRM, transport.getAddress(),
+            CacheTopologyControlCommand.Type.TOPOLOGY_CONFIRM, transport.getAddress(),
             topologyId, rebalanceId, throwable, transport.getViewId());
       try {
          executeOnCoordinatorAsync(command);

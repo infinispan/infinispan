@@ -64,7 +64,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile List<Address> queuedRebalanceMembers;
    private volatile boolean rebalancingEnabled = true;
 
-   private volatile RebalanceConfirmationCollector rebalanceConfirmationCollector;
+   private volatile TopologyConfirmationCollector topologyConfirmationCollector;
    private ComponentStatus status;
 
    public ClusterCacheStatus(String cacheName, AvailabilityStrategy availabilityStrategy,
@@ -300,7 +300,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public boolean isRebalanceInProgress() {
-      return rebalanceConfirmationCollector != null;
+      return topologyConfirmationCollector != null;
    }
 
    public RebalancingStatus getRebalancingStatus() {
@@ -320,23 +320,23 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
     */
    private boolean initRebalanceConfirmationCollector(CacheTopology newTopology) {
       synchronized (this) {
-         if (rebalanceConfirmationCollector != null)
+         if (topologyConfirmationCollector != null)
             return false;
 
-         rebalanceConfirmationCollector = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
+         topologyConfirmationCollector = new TopologyConfirmationCollector(cacheName, newTopology.getTopologyId(),
                newTopology.getMembers());
          return true;
       }
    }
 
-   public void doConfirmRebalance(Address member, int receivedTopologyId) throws Exception {
+   public void doTopologyConfirm(Address member, int receivedTopologyId) throws Exception {
       synchronized (this) {
-         if (rebalanceConfirmationCollector == null) {
+         if (topologyConfirmationCollector == null) {
             throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
                   "for cache %s, we don't have a rebalance in progress", member, cacheName));
          }
 
-         boolean rebalanceCompleted = rebalanceConfirmationCollector.confirmRebalance(member, receivedTopologyId);
+         boolean rebalanceCompleted = topologyConfirmationCollector.confirmTopologyUpdate(member, receivedTopologyId);
          if (rebalanceCompleted) {
             endRebalance();
          }
@@ -352,11 +352,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
     */
    private boolean updateRebalanceMembers() {
       synchronized (this) {
-         if (rebalanceConfirmationCollector == null)
+         if (topologyConfirmationCollector == null)
             return false;
 
          // We rely on the AvailabilityStrategy updating the current topology beforehand.
-         return rebalanceConfirmationCollector.updateMembers(currentTopology.getMembers());
+         return topologyConfirmationCollector.updateMembers(currentTopology.getMembers());
       }
    }
 
@@ -407,10 +407,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    private void removeRebalanceConfirmationCollector() {
       synchronized (this) {
-         if (rebalanceConfirmationCollector == null) {
+         if (topologyConfirmationCollector == null) {
             throw new IllegalStateException("Can't end rebalance, there is no rebalance in progress");
          }
-         rebalanceConfirmationCollector = null;
+         topologyConfirmationCollector = null;
       }
    }
 
@@ -519,7 +519,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             ", members=" + expectedMembers +
             ", joiners=" + joiners +
             ", currentTopology=" + currentTopology +
-            ", rebalanceConfirmationCollector=" + rebalanceConfirmationCollector +
+            ", rebalanceConfirmationCollector=" + topologyConfirmationCollector +
             '}';
    }
 
@@ -714,7 +714,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
          if (isRebalanceInProgress()) {
             log.tracef("Postponing rebalance for cache %s, there's already a rebalance in progress: %s",
-                  cacheName, rebalanceConfirmationCollector);
+                  cacheName, topologyConfirmationCollector);
             return;
          }
 
