@@ -41,9 +41,9 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final void confirmRebalance(String cacheName, int topologyId, int rebalanceId, Throwable throwable) {
-      beforeConfirmRebalance(cacheName, topologyId, throwable);
-      delegate.confirmRebalance(cacheName, topologyId, rebalanceId, throwable);
+   public final void confirmRebalancePhase(String cacheName, int topologyId, int rebalanceId, Throwable throwable) {
+      beforeConfirmRebalancePhase(cacheName, topologyId, throwable);
+      delegate.confirmRebalancePhase(cacheName, topologyId, rebalanceId, throwable);
    }
 
    @Override
@@ -145,7 +145,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       //no-op by default
    }
 
-   protected void beforeConfirmRebalance(String cacheName, int topologyId, Throwable throwable) {
+   protected void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
       //no-op by default
    }
 

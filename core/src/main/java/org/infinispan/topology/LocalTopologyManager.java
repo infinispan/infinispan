@@ -37,7 +37,7 @@ public interface LocalTopologyManager {
     * @param rebalanceId
     * @param throwable {@code null} unless local rebalance ended because of an error.
     */
-   void confirmRebalance(String cacheName, int topologyId, int rebalanceId, Throwable throwable);
+   void confirmRebalancePhase(String cacheName, int topologyId, int rebalanceId, Throwable throwable);
 
    /**
     * Recovers the current topology information for all running caches and returns it to the coordinator.

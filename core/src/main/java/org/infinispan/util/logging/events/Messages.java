@@ -29,8 +29,8 @@ public interface Messages {
    @Message(value = "Started local rebalance", id = 100002)
    String rebalanceStarted();
 
-   @Message(value = "Finished local rebalance", id = 100003)
-   String rebalanceCompleted();
+   @Message(value = "Finished local rebalance phase", id = 100003)
+   String rebalancePhaseConfirmed();
 
    @Message(value = "Lost data because of graceful leaver %s", id = 312)
    String lostDataBecauseOfGracefulLeaver(Address leaver);

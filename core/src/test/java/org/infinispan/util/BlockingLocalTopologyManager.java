@@ -65,15 +65,15 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    @Override
-   protected final void beforeConfirmRebalance(String cacheName, int topologyId, Throwable throwable) {
-      getLatch(LatchType.CONFIRM_REBALANCE).blockIfNeeded();
+   protected final void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
+      getLatch(LatchType.CONFIRM_REBALANCE_PHASE).blockIfNeeded();
    }
 
    private NotifierLatch getLatch(LatchType type) {
       switch (type) {
          case CONSISTENT_HASH_UPDATE:
             return blockConsistentHashUpdate;
-         case CONFIRM_REBALANCE:
+         case CONFIRM_REBALANCE_PHASE:
             return blockConfirmRebalance;
          case REBALANCE:
             return blockRebalanceStart;
@@ -83,7 +83,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    public static enum LatchType {
       CONSISTENT_HASH_UPDATE,
-      CONFIRM_REBALANCE,
+      CONFIRM_REBALANCE_PHASE,
       REBALANCE
    }
 
