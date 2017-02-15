@@ -2,7 +2,7 @@ package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractLockManager;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
 
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    protected void mergeCluster(String cacheName) {
       getLog().debugf("Merging cluster");
       partition(0).merge(partition(1));
-      waitForRehashToComplete(caches(cacheName));
+      waitForStableTopology(caches(cacheName));
       for (int i = 0; i < numMembersInCluster; i++) {
          PartitionHandlingManager phmI = partitionHandlingManager(cache(i, cacheName));
          eventuallyEquals(AvailabilityMode.AVAILABLE, phmI::getAvailabilityMode);

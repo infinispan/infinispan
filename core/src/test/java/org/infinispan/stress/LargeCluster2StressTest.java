@@ -200,8 +200,8 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
          if (cacheManagers.size() > 0) {
             TestingUtil.blockUntilViewsReceived(60000, false, cacheManagers);
             for (int j = 0; j < NUM_CACHES/2; j++) {
-               TestingUtil.waitForRehashToComplete(caches("repl-cache-" + j));
-               TestingUtil.waitForRehashToComplete(caches("dist-cache-" + j));
+               TestingUtil.waitForStableTopology(caches("repl-cache-" + j));
+               TestingUtil.waitForStableTopology(caches("dist-cache-" + j));
             }
          }
       }

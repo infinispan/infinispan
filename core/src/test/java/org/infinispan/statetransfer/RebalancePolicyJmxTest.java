@@ -113,7 +113,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
 
       // Check that the cache now has 4 nodes, and the CH is balanced
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
+      TestingUtil.waitForStableTopology(cache(0), cache(1), cache(2), cache(3));
       assertNull(stm0.getCacheTopology().getPendingCH());
       assertEquals(RebalancingStatus.COMPLETE.toString(), stm0.getRebalancingStatus());
       ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
@@ -157,7 +157,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName3, REBALANCING_ENABLED));
 
       // Check that the CH is now balanced (and every segment has 2 copies)
-      TestingUtil.waitForRehashToComplete(cache(2), cache(3));
+      TestingUtil.waitForStableTopology(cache(2), cache(3));
       assertEquals(RebalancingStatus.COMPLETE.toString(), stm2.getRebalancingStatus());
       assertNull(stm2.getCacheTopology().getPendingCH());
       ch = stm2.getCacheTopology().getCurrentCH();

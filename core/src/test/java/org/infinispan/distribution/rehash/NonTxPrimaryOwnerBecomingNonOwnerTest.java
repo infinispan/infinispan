@@ -181,7 +181,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(2));
 
       // Wait for the topology to change everywhere
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       // Check that the put command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);

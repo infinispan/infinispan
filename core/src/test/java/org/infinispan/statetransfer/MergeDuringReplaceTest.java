@@ -77,8 +77,8 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       // wait for the partitions to form
       TestingUtil.blockUntilViewsReceived(30000, false, partition1.get(0), partition1.get(1));
       TestingUtil.blockUntilViewsReceived(30000, false, c);
-      TestingUtil.waitForRehashToComplete(partition1.get(0), partition1.get(1));
-      TestingUtil.waitForRehashToComplete(c);
+      TestingUtil.waitForStableTopology(partition1.get(0), partition1.get(1));
+      TestingUtil.waitForStableTopology(c);
 
       controlledRpcManager.stopBlocking();
 

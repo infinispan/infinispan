@@ -96,7 +96,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       for (int k = 0; k < numKeys; k++) {
          c0.put(k, k);
       }
-      TestingUtil.waitForRehashToComplete(c0, c1);
+      TestingUtil.waitForStableTopology(c0, c1);
 
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());

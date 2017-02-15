@@ -231,7 +231,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
          if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
-            TestingUtil.waitForRehashToComplete(caches);
+            TestingUtil.waitForStableTopology(caches);
          }
       }
 
@@ -240,7 +240,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived((int) timeUnit.toMillis(timeout), false, caches);
          if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
-            TestingUtil.waitForRehashToComplete(caches);
+            TestingUtil.waitForStableTopology(caches);
          }
       }
 

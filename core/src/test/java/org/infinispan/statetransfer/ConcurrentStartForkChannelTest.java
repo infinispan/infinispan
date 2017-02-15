@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 
 import java.io.ByteArrayInputStream;
 import java.util.concurrent.Future;
@@ -84,7 +84,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
          Cache<String, String> c1r = c1rFuture.get(10, TimeUnit.SECONDS);
 
          blockUntilViewsReceived(10000, cm1, cm2);
-         waitForRehashToComplete(c1r, c2r);
+         waitForStableTopology(c1r, c2r);
       } finally {
          // Stopping the cache managers isn't enough, because it will only close the ForkChannels
          cm1.stop();

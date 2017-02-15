@@ -114,7 +114,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
 
       EmbeddedCacheManager node3 = addClusterEnabledCacheManager(dccc);
       Cache<Object, Object> node3Cache = node3.getCache();
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForStableTopology(caches());
       log.info("Node 3 started");
       latch.countDown();
 

@@ -128,7 +128,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
          c1r.put("key", "value");
          Cache<String, String> c2r = startCache(cm2, "r", false).get();
          TestingUtil.blockUntilViewsReceived(10000, c1r, c2r);
-         TestingUtil.waitForRehashToComplete(c1r, c2r);
+         TestingUtil.waitForStableTopology(c1r, c2r);
          assert "value".equals(c2r.get("key"));
 
          // now the dist ones

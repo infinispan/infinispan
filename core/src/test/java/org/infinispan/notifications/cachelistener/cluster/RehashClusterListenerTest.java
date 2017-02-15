@@ -70,7 +70,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
          }
       });
 
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       assertEquals(listener.events.size(), 0);
    }
@@ -96,7 +96,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
          }
       });
 
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       assertEquals(listener.events.size(), 0);
    }
@@ -122,7 +122,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
          }
       });
 
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       assertEquals(listener.events.size(), 0);
    }
@@ -148,7 +148,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
          }
       });
 
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       assertEquals(listener.events.size(), 0);
    }

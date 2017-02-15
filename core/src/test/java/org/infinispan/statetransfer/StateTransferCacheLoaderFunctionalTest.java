@@ -90,7 +90,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          // starting the second cache would initialize an in-memory state transfer but not a persistent one since the loader is shared
          Cache<Object, Object> c2 = createCacheManager(cacheName).getCache(cacheName);
          TestingUtil.blockUntilViewsReceived(60000, c1, c2);
-         TestingUtil.waitForRehashToComplete(c1, c2);
+         TestingUtil.waitForStableTopology(c1, c2);
 
          verifyInitialDataOnLoader(c1);
          verifyInitialData(c1);

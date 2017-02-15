@@ -230,7 +230,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
          if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
-            TestingUtil.waitForRehashToComplete(caches);
+            TestingUtil.waitForStableTopology(caches);
          }
       }
 

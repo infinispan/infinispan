@@ -169,7 +169,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
    private void waitRebalanceEnd() throws Exception {
       sequencer.advance("rebalance:end");
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForStableTopology(caches());
    }
 
    private void endTx() throws Exception {

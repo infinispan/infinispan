@@ -144,7 +144,7 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
    }
 
    private void checkRehashed(StateTransferManager stm, List<Cache<Object,Object>> caches, List<Address> addresses) {
-      TestingUtil.waitForRehashToComplete(caches);
+      TestingUtil.waitForStableTopology(caches);
       assertNull(stm.getCacheTopology().getPendingCH());
       ConsistentHash ch = stm.getCacheTopology().getCurrentCH();
       assertEquals(addresses, ch.getMembers());

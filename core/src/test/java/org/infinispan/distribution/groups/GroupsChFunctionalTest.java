@@ -88,7 +88,7 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
       TestingUtil.killCacheManagers(manager(ownerIndex));
       caches.remove(ownerIndex);
       cacheManagers.remove(ownerIndex);
-      TestingUtil.waitForRehashToComplete(caches);
+      TestingUtil.waitForStableTopology(caches);
 
       Assert.assertNotSame(getOwners(k1), owners1);
       Assert.assertNotSame(getOwners(k2), owners2);

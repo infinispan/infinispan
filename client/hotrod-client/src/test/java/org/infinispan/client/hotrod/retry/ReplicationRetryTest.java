@@ -138,7 +138,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       for (Iterator<EmbeddedCacheManager> ecmIt = cacheManagers.iterator(); ecmIt.hasNext();) {
          if (ecmIt.next().getAddress().equals(expectedServer)) ecmIt.remove();
       }
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForStableTopology(caches());
    }
 
    @Override

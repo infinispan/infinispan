@@ -47,7 +47,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       // start a second node and wait for the rebalance to end
       addClusterEnabledCacheManager(defaultConfig);
       cache(1);
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+      TestingUtil.waitForStableTopology(cache(0), cache(1));
 
       ConsistentHash ch2Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
       rehashListener.waitForEvents(2);
@@ -69,7 +69,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       // start a third node and wait for the rebalance to end
       addClusterEnabledCacheManager(defaultConfig);
       cache(2);
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
+      TestingUtil.waitForStableTopology(cache(0), cache(1), cache(2));
 
       ConsistentHash ch3Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
       rehashListener.waitForEvents(2);
@@ -128,7 +128,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       // start a second node and wait for the rebalance to end
       addClusterEnabledCacheManager(defaultConfig);
       cache(1);
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+      TestingUtil.waitForStableTopology(cache(0), cache(1));
 
       rehashListener.waitForEvents(1);
    }

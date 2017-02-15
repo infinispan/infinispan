@@ -105,6 +105,6 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       });
 
       // Check that the cache now has 4 nodes, and the CH is balanced
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
+      TestingUtil.waitForStableTopology(cache(0), cache(1), cache(2), cache(3));
    }
 }

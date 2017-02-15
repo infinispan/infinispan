@@ -268,7 +268,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
          // let state transfer go
          checkPoint.trigger("pre_state_apply_release_for_" + nonOwnerCache);
-         TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
+         TestingUtil.waitForStableTopology(primaryOwnerCache, nonOwnerCache);
 
          switch (op) {
             case REMOVE:
@@ -393,7 +393,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       // Allow the rebalance confirmation to proceed and wait for the topology to change everywhere
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + primaryOwnerCache.getCacheManager().getAddress());
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + nonOwnerCache.getCacheManager().getAddress());
-      TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
+      TestingUtil.waitForStableTopology(primaryOwnerCache, nonOwnerCache);
 
       switch (op) {
          case REMOVE:
@@ -471,7 +471,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          }
       });
 
-      TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
+      TestingUtil.waitForStableTopology(primaryOwnerCache, nonOwnerCache);
 
       // Now let the update go through
       beforeCommitCache1Barrier.await(10, SECONDS);

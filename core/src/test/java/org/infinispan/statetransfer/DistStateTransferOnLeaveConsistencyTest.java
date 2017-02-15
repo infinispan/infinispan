@@ -246,7 +246,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       applyStateProceedLatch.countDown();
 
       // wait for apply state to end
-      TestingUtil.waitForRehashToComplete(cache(0), cache(2));
+      TestingUtil.waitForStableTopology(cache(0), cache(2));
 
       // at this point state transfer is fully done
       log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());

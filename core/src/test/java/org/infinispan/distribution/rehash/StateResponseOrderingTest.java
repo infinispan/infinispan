@@ -1,6 +1,6 @@
 package org.infinispan.distribution.rehash;
 
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnOutboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
@@ -124,7 +124,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
       sequencer.exit("st:simulate_old_response");
 
-      waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
+      waitForStableTopology(cache(0), cache(1), cache(2), cache(3));
 
       // Check that state wasn't lost
       assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), "k1"));
@@ -141,7 +141,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       // The initial topology is different from the other method's
       consistentHashFactory.setOwnerIndexes(new int[]{1, 2, 3}, new int[]{2, 1, 3});
       consistentHashFactory.triggerRebalance(cache(0));
-      // waitForRehashToComplete doesn't work here, since the cache looks already "balanced"
+      // waitForStableTopology doesn't work here, since the cache looks already "balanced"
       // So we wait for the primary owner of segment 1 to change
       eventually(new Condition() {
          @Override
@@ -239,7 +239,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       sequencer.exit("st:check_incomplete");
 
       // Only the 3 live caches are in the collection, wait for the rehash to end
-      waitForRehashToComplete(cache(0), cache(nodeToKeep), cache(3));
+      TestingUtil.waitForStableTopology(cache(0), cache(nodeToKeep), cache(3));
 
       assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), k1));
       assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), k2));

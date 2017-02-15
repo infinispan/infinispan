@@ -5,7 +5,7 @@ import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
@@ -92,8 +92,8 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       Cache<String, String> c2d = cm2.getCache("dist");
 
       blockUntilViewsReceived(10000, cm1, cm2);
-      waitForRehashToComplete(c1r, c2r);
-      waitForRehashToComplete(c1d, c2d);
+      waitForStableTopology(c1r, c2r);
+      waitForStableTopology(c1d, c2d);
 
       c1r.put("key", "value");
       assertEquals("value", c2r.get("key"));

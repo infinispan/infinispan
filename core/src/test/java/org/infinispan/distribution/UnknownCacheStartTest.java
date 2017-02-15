@@ -65,7 +65,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
       assertEquals("v", c2_new.get("k"));
 
       TestingUtil.blockUntilViewsReceived(60000, false, c2, c2_new);
-      TestingUtil.waitForRehashToComplete(c2, c2_new);
+      TestingUtil.waitForStableTopology(c2, c2_new);
 
       fail("Should have thrown an exception!");
    }
