@@ -26,7 +26,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
@@ -100,7 +100,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction()
             .useSynchronization(false)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().disable();
       builder.locking().lockAcquisitionTimeout(1, TimeUnit.MINUTES);
       builder.clustering()

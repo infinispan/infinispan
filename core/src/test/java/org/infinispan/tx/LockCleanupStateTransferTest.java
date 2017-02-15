@@ -22,7 +22,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
@@ -46,7 +46,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      dcc.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       dcc.clustering().hash().numOwners(1);
       dcc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dcc, 2);

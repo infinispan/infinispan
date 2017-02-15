@@ -3,6 +3,7 @@ package org.infinispan.tx.recovery;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -15,7 +16,7 @@ public class RecoveryWithDefaultCacheReplTest extends RecoveryWithDefaultCacheDi
    @Override
    protected ConfigurationBuilder configure() {
       ConfigurationBuilder config = super.configure();
-      config.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+      config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .clustering().cacheMode(CacheMode.REPL_SYNC);
       return config;
    }

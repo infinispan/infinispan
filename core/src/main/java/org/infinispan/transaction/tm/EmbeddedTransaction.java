@@ -26,12 +26,16 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * @author bela
- * @since 4.0
- * @deprecated use {@link EmbeddedTransaction}
+ * A {@link Transaction} implementation used by {@link EmbeddedBaseTransactionManager}.
+ * <p>
+ * See {@link EmbeddedBaseTransactionManager} for more details.
+ *
+ * @author Bela Ban
+ * @author Pedro Ruivo
+ * @since 9.0
+ * @see EmbeddedBaseTransactionManager
  */
-@Deprecated
-public class DummyTransaction implements Transaction {
+public final class EmbeddedTransaction implements Transaction {
    /*
     * Developer notes:
     *
@@ -45,22 +49,18 @@ public class DummyTransaction implements Transaction {
     * //note// both optimization not supported since we split the commit in 2 phases for debugging
     */
 
-   private static final Log log = LogFactory.getLog(DummyTransaction.class);
+   private static final Log log = LogFactory.getLog(EmbeddedTransaction.class);
+   private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
    private static boolean trace = log.isTraceEnabled();
-   public static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
    private final Xid xid;
-   private volatile int status = Status.STATUS_UNKNOWN;
    private final List<Synchronization> syncs;
    private final List<Map.Entry<XAResource, Integer>> resources;
+   private volatile int status = Status.STATUS_UNKNOWN;
    private RollbackException firstRollbackException;
 
-   public DummyTransaction(DummyBaseTransactionManager tm) {
+   public EmbeddedTransaction(EmbeddedBaseTransactionManager tm) {
       status = Status.STATUS_ACTIVE;
-      if (tm.isUseXaXid()) {
-         xid = new DummyXid(tm.transactionManagerId);
-      } else {
-         xid = new DummyNoXaXid();
-      }
+      xid = new EmbeddedXid(tm.transactionManagerId);
       if (trace) {
          log.tracef("Created new transaction with Xid=%s", xid);
       }
@@ -102,7 +102,9 @@ public class DummyTransaction implements Transaction {
     * @throws SecurityException          If the caller is not allowed to commit this transaction.
     */
    @Override
-   public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
+   public void commit()
+         throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException,
+         SystemException {
       if (trace) {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
@@ -212,7 +214,8 @@ public class DummyTransaction implements Transaction {
          resource.start(xid, XAResource.TMNOFLAGS);
       } catch (XAException e) {
          if (isRollbackCode(e)) {
-            RollbackException exception = newRollbackException(format("Resource %s rolled back the transaction while XaResource.start()", resource), e);
+            RollbackException exception = newRollbackException(
+                  format("Resource %s rolled back the transaction while XaResource.start()", resource), e);
             markRollbackOnly(exception);
             log.errorEnlistingResource(e);
             throw exception;
@@ -247,7 +250,8 @@ public class DummyTransaction implements Transaction {
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    @Override
-   public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
+   public void registerSynchronization(Synchronization sync)
+         throws RollbackException, IllegalStateException, SystemException {
       if (trace) {
          log.tracef("Transaction.registerSynchronization(%s) invoked in transaction with Xid=%s", sync, xid);
       }
@@ -294,7 +298,8 @@ public class DummyTransaction implements Transaction {
             markRollbackOnly(newRollbackException(format("XaResource.prepare() for %s wants to rollback.", res), e));
             return false;
          } catch (Throwable th) {
-            markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.", res), th));
+            markRollbackOnly(newRollbackException(
+                  format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.", res), th));
             log.unexpectedErrorFromResourceManager(th);
             return false;
          }
@@ -305,13 +310,14 @@ public class DummyTransaction implements Transaction {
 
    /**
     * Runs the second phase of two-phase-commit protocol.
-    *
-    * If {@code forceRollback} is {@code true}, then a {@link RollbackException} is thrown with the message {@link #FORCE_ROLLBACK_MESSAGE}.
-    *
+    * <p>
+    * If {@code forceRollback} is {@code true}, then a {@link RollbackException} is thrown with the message {@link
+    * #FORCE_ROLLBACK_MESSAGE}.
     *
     * @param forceRollback force the transaction to rollback.
     */
-   public void runCommit(boolean forceRollback) throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
+   public void runCommit(boolean forceRollback)
+         throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
       if (trace) {
          log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);
       }
@@ -331,14 +337,14 @@ public class DummyTransaction implements Transaction {
          }
       } finally {
          notifyAfterCompletion(notifyAfterStatus);
-         DummyBaseTransactionManager.setTransaction(null);
+         EmbeddedBaseTransactionManager.dissociateTransaction();
       }
       throwRollbackExceptionIfAny(forceRollback);
    }
 
    @Override
    public String toString() {
-      return "DummyTransaction{" +
+      return "EmbeddedTransaction{" +
             "xid=" + xid +
             ", status=" + status +
             '}';
@@ -481,7 +487,8 @@ public class DummyTransaction implements Transaction {
          try {
             s.beforeCompletion();
          } catch (Throwable t) {
-            markRollbackOnly(newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
+            markRollbackOnly(
+                  newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
             log.beforeCompletionFailed(s, t);
          }
       }
@@ -512,7 +519,8 @@ public class DummyTransaction implements Transaction {
             markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.", resource), e));
             log.xaResourceEndFailed(resource, e);
          } catch (Throwable t) {
-            markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource), t));
+            markRollbackOnly(newRollbackException(
+                  format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource), t));
             log.xaResourceEndFailed(resource, t);
          }
       }

@@ -16,8 +16,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -33,7 +33,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      configuration.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+      configuration.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
             .locking().useLockStriping(false)
@@ -56,7 +56,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
       assert recoveryOps(0).showInDoubtTransactions().isEmpty();
       TransactionTable tt0 = cache(0).getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
 
-      DummyTransaction dummyTransaction = beginAndSuspendTx(cache(0));
+      EmbeddedTransaction dummyTransaction = beginAndSuspendTx(cache(0));
       prepareTransaction(dummyTransaction);
       assert tt0.getLocalTxCount() == 1;
 

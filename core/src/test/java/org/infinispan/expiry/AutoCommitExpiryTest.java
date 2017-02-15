@@ -22,12 +22,10 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "expiry.AutoCommitExpiryTest")
 public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
@@ -76,7 +74,7 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
             .jmxStatistics().enable()
             .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .autoCommit(autoCommit);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
 

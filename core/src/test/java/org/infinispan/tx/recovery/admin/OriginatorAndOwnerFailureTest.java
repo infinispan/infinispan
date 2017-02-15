@@ -8,7 +8,7 @@ import java.util.List;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -34,7 +34,7 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
       tm(2).begin();
       cache(2).put(this.key, "newValue");
-      DummyTransaction tx = (DummyTransaction) tm(2).suspend();
+      EmbeddedTransaction tx = (EmbeddedTransaction) tm(2).suspend();
       prepareTransaction(tx);
 
       killMember(2);

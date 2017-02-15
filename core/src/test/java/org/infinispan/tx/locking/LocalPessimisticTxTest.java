@@ -8,7 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ public class LocalPessimisticTxTest extends AbstractLocalTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
       config.transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().disable();
       return TestCacheManagerFactory.createCacheManager(config);

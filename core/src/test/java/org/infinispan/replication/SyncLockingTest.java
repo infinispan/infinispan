@@ -15,8 +15,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -40,7 +40,7 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(cacheMode, true);
-      cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+      cfg.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "testcache", cfg);
@@ -135,10 +135,10 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
                   + (sameNode ? "on same node..." : "on a different node..."));
-            DummyTransactionManager mgr = null;
+            EmbeddedTransactionManager mgr = null;
             try {
                if (useTx) {
-                  mgr = (DummyTransactionManager) TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
+                  mgr = (EmbeddedTransactionManager) TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
                   mgr.begin();
                }
                if (sameNode) {

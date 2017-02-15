@@ -10,8 +10,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
@@ -37,7 +37,7 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(cacheMode, true);
       config.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(lockingMode)
             .useSynchronization(useSynchronization);
       config.clustering().hash().numOwners(3)
@@ -51,39 +51,19 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
    }
 
    public void testTxAndLockOnDifferentNodesPut() throws Exception {
-      testTxAndLockOnDifferentNodes(new Operation() {
-         @Override
-         public void perform(Object key, int cacheIndex) {
-            cache(cacheIndex).put(key, "v");
-         }
-      }, false, false);
+      testTxAndLockOnDifferentNodes((key, cacheIndex) -> cache(cacheIndex).put(key, "v"), false, false);
    }
 
    public void testTxAndLockOnDifferentNodesPutAll() throws Exception {
-      testTxAndLockOnDifferentNodes(new Operation() {
-         @Override
-         public void perform(Object key, int cacheIndex) {
-            cache(cacheIndex).putAll(Collections.singletonMap(key, "v"));
-         }
-      }, false, false);
+      testTxAndLockOnDifferentNodes((key, cacheIndex) -> cache(cacheIndex).putAll(Collections.singletonMap(key, "v")), false, false);
    }
 
    public void testTxAndLockOnDifferentNodesReplace() throws Exception {
-      testTxAndLockOnDifferentNodes(new Operation() {
-         @Override
-         public void perform(Object key, int cacheIndex) {
-            cache(cacheIndex).replace(key, "v");
-         }
-      }, true, false);
+      testTxAndLockOnDifferentNodes((key, cacheIndex) -> cache(cacheIndex).replace(key, "v"), true, false);
    }
 
    public void testTxAndLockOnDifferentNodesRemove() throws Exception {
-      testTxAndLockOnDifferentNodes(new Operation() {
-         @Override
-         public void perform(Object key, int cacheIndex) {
-            cache(cacheIndex).remove(key);
-         }
-      }, true, true);
+      testTxAndLockOnDifferentNodes((key, cacheIndex) -> cache(cacheIndex).remove(key), true, true);
    }
 
    public void testTxAndLockOnSameNode() throws Exception {
@@ -91,7 +71,7 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
 
       tm(0).begin();
       cache(0).put(k, "v");
-      DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
+      EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
 
       dtm.runPrepare();
 
@@ -112,20 +92,10 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
    }
 
    protected void assertValue(Object k, boolean isRemove) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
       final String expected = isRemove ? null : "v";
       assertEquals(cache(0).get(k), expected);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2);
-         }
-      });
+      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
 
 
       assertEquals(cache(1).get(k), expected);

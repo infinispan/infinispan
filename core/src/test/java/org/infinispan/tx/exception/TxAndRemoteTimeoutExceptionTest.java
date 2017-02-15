@@ -20,8 +20,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -47,7 +47,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = getDefaultConfig();
-      defaultConfig.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+      defaultConfig.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .useLockStriping(false);
       addClusterEnabledCacheManager(defaultConfig);
@@ -65,47 +65,27 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testPutTimeoutsInTx() throws Exception {
-      runAssertion(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).put("k1", "v2222");
-         }
-      });
+      runAssertion(() -> cache(0).put("k1", "v2222"));
    }
 
    public void testRemoveTimeoutsInTx() throws Exception {
-      runAssertion(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).remove("k1");
-         }
-      });
+      runAssertion(() -> cache(0).remove("k1"));
    }
 
    public void testReplaceTimeoutsInTx() throws Exception {
       cache(1).put("k1", "value");
-      runAssertion(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).replace("k1", "newValue");
-         }
-      });
+      runAssertion(() -> cache(0).replace("k1", "newValue"));
    }
 
    public void testPutAllTimeoutsInTx() throws Exception {
-      runAssertion(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).putAll(Collections.singletonMap("k1", "v22222"));
-         }
-      });
+      runAssertion(() -> cache(0).putAll(Collections.singletonMap("k1", "v22222")));
    }
 
 
    private void runAssertion(CacheOperation operation) throws NotSupportedException, SystemException, HeuristicMixedException, HeuristicRollbackException, InvalidTransactionException, RollbackException {
       tm.begin();
       cache(1).put("k1", "v1");
-      DummyTransaction k1LockOwner = (DummyTransaction) tm.suspend();
+      EmbeddedTransaction k1LockOwner = (EmbeddedTransaction) tm.suspend();
       assertFalse(lm1.isLocked("k1"));
 
       assertEquals(1, txTable1.getLocalTxCount());

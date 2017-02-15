@@ -222,7 +222,7 @@ Thats all related to the use of the Infinispan API, now lets check some differen
 You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. Infinispan implements a couple TransactionManagerLookup classes.
 
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html[org.infinispan.transaction.lookup.DummyTransactionManagerLookup]
+*  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManager.html[org.infinispan.transaction.lookup.EmbeddedTransactionManager]
 
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[org.infinispan.transaction.lookup.GenericTransactionManagerLookup]
@@ -237,7 +237,7 @@ For the tutorial its enough to use:
 [source,xml]
 ----
 <namedCache name="LocalTX">
-    <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup"/>
+    <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup"/>
 </namedCache>
 
 ----
@@ -255,7 +255,7 @@ groovy:000> cr = localTxCache.getComponentRegistry()
 === > org.infinispan.factories.ComponentRegistry@87e9bf
 //GET A REFERENCE TO THE TRANSACTION MANAGER
 groovy:000> tm = cr.getComponent(TransactionManager.class)
-=== > org.infinispan.transaction.tm.DummyTransactionManager@b5d05b
+=== > org.infinispan.transaction.tm.EmbeddedTransactionManager@b5d05b
 //STARTING A NEW TRANSACTION
 groovy:000> tm.begin()
 === > null

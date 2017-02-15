@@ -11,7 +11,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -73,7 +73,7 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
    }
 
    protected void commit() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm(0);
       try {
          dtm.getTransaction().runCommit(false);
       } catch (HeuristicMixedException | HeuristicRollbackException | RollbackException e) {
@@ -82,12 +82,12 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
    }
 
    protected void prepare() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm(0);
       dtm.getTransaction().runPrepare();
    }
 
    protected void rollback() {
-      DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
+      EmbeddedTransactionManager dtm = (EmbeddedTransactionManager) tm(0);
       try {
          dtm.getTransaction().rollback();
       } catch (SystemException e) {

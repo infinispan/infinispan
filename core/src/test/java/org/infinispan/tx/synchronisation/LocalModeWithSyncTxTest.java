@@ -8,8 +8,8 @@ import javax.transaction.SystemException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.tx.LocalModeTxTest;
 import org.testng.annotations.Test;
 
@@ -23,12 +23,12 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
-      config.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).useSynchronization(true);
+      config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).useSynchronization(true);
       return TestCacheManagerFactory.createCacheManager(config);
    }
 
    public void testSyncRegisteredWithCommit() throws Exception {
-      DummyTransaction dt = startTx();
+      EmbeddedTransaction dt = startTx();
       tm().commit();
       assertEquals(0, dt.getEnlistedResources().size());
       assertEquals(0, dt.getEnlistedSynchronization().size());
@@ -36,17 +36,17 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
    }
 
    public void testSyncRegisteredWithRollback() throws Exception {
-      DummyTransaction dt = startTx();
+      EmbeddedTransaction dt = startTx();
       tm().rollback();
       assertEquals(null, cache.get("k"));
       assertEquals(0, dt.getEnlistedResources().size());
       assertEquals(0, dt.getEnlistedSynchronization().size());
    }
 
-   private DummyTransaction startTx() throws NotSupportedException, SystemException {
+   private EmbeddedTransaction startTx() throws NotSupportedException, SystemException {
       tm().begin();
       cache.put("k","v");
-      DummyTransaction dt = (DummyTransaction) tm().getTransaction();
+      EmbeddedTransaction dt = (EmbeddedTransaction) tm().getTransaction();
       assertEquals(0, dt.getEnlistedResources().size());
       assertEquals(1, dt.getEnlistedSynchronization().size());
       cache.put("k2","v2");

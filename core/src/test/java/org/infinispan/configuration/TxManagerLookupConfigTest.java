@@ -12,7 +12,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
 import org.testng.annotations.Test;
 
 /**
@@ -43,9 +43,9 @@ public class TxManagerLookupConfigTest extends AbstractInfinispanTest {
       });
    }
 
-   public static class TmA extends DummyTransactionManager {}
+   private static class TmA extends EmbeddedBaseTransactionManager {}
 
-   public static class TmB extends DummyTransactionManager {}
+   private static class TmB extends EmbeddedBaseTransactionManager {}
 
    public static class TxManagerLookupA implements TransactionManagerLookup {
 

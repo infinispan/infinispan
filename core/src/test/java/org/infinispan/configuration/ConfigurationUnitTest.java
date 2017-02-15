@@ -35,7 +35,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
@@ -78,7 +78,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    public void testDummyTMGetCache() throws Exception {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().use1PcForAutoCommitTransactions(true)
-            .transactionManagerLookup(new DummyTransactionManagerLookup());
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {

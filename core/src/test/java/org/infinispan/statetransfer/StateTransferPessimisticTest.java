@@ -13,7 +13,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -34,7 +34,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true);

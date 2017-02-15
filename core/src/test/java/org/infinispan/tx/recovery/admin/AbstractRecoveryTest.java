@@ -10,10 +10,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -25,7 +25,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder defaultRecoveryConfig() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      builder.transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
             .locking().useLockStriping(false)

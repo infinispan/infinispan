@@ -3,8 +3,8 @@ package org.infinispan.partitionhandling;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
@@ -51,9 +51,9 @@ public class OptimisticTxPartitionAndMergeDuringCommitTest extends BaseOptimisti
       final KeyInfo keyInfo = createKeys(OPTIMISTIC_TX_CACHE_NAME);
       final Cache<Object, String> originator = cache(0, OPTIMISTIC_TX_CACHE_NAME);
 
-      final DummyTransactionManager transactionManager = (DummyTransactionManager) originator.getAdvancedCache().getTransactionManager();
+      final EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) originator.getAdvancedCache().getTransactionManager();
       transactionManager.begin();
-      final DummyTransaction transaction = transactionManager.getTransaction();
+      final EmbeddedTransaction transaction = transactionManager.getTransaction();
       keyInfo.putFinalValue(originator);
       AssertJUnit.assertTrue(transaction.runPrepare());
       transactionManager.suspend();

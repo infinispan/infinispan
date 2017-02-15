@@ -20,8 +20,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.tx.dld.ControlledRpcManager;
 
 /**
@@ -49,7 +49,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, true);
-      c.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+      c.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(useSynchronization)
             .lockingMode(lockingMode)
             .recovery().disable()
@@ -61,33 +61,27 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
    }
 
    protected Object beginAndPrepareTx(final Object k, final int cacheIndex) {
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(cacheIndex).begin();
-               cache(cacheIndex).put(k,"v");
-               final DummyTransaction transaction = (DummyTransaction) tm(cacheIndex).getTransaction();
-               transaction.runPrepare();
-            } catch (Throwable e) {
-               log.errorf(e, "Error preparing transaction for key %s on cache %s", k, cache(cacheIndex));
-            }
+      fork(() -> {
+         try {
+            tm(cacheIndex).begin();
+            cache(cacheIndex).put(k,"v");
+            final EmbeddedTransaction transaction = (EmbeddedTransaction) tm(cacheIndex).getTransaction();
+            transaction.runPrepare();
+         } catch (Throwable e) {
+            log.errorf(e, "Error preparing transaction for key %s on cache %s", k, cache(cacheIndex));
          }
       });
       return k;
    }
 
    protected Object beginAndCommitTx(final Object k, final int cacheIndex) {
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(cacheIndex).begin();
-               cache(cacheIndex).put(k, "v");
-               tm(cacheIndex).commit();
-            } catch (Throwable e) {
-               log.errorf(e, "Error committing transaction for key %s on cache %s", k, cache(cacheIndex));
-            }
+      fork(() -> {
+         try {
+            tm(cacheIndex).begin();
+            cache(cacheIndex).put(k, "v");
+            tm(cacheIndex).commit();
+         } catch (Throwable e) {
+            log.errorf(e, "Error committing transaction for key %s on cache %s", k, cache(cacheIndex));
          }
       });
       return k;

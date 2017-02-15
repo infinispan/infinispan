@@ -35,7 +35,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -70,7 +70,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cacheConfigBuilder = getDefaultClusteredCacheConfig(cacheMode, transactional, true);
       if (transactional) {
          cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-               .transactionManagerLookup(new DummyTransactionManagerLookup())
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
                .syncCommitPhase(true).syncRollbackPhase(true);
 
          cacheConfigBuilder.transaction().lockingMode(lockingMode);

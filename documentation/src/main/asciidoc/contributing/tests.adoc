@@ -118,10 +118,10 @@ Note that due to the way Maven operates, only one permutation can be executed pe
 So automating multiple runs requires shell scripting, or some other execution framework to make multiple calls to Maven.
 
 ==== Running permutations manually or in an IDE
-Sometimes you want to run a test using settings other than the defaults (such as UDP for `jgroups` group tests or the DummyTransactionManager for `transaction` group tests).
+Sometimes you want to run a test using settings other than the defaults (such as UDP for `jgroups` group tests or the EmbeddedTransactionManager for `transaction` group tests).
 This can be achieved by referring to the Maven POM file to figure out which system properties are passed in to the test when doing something different.
 For example to run a `jgroups` group test in your IDE using TCP instead of the default UDP, set `-Dinfinispan.test.jgroups.protocol=tcp`.
-Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a `transaction` group test, set `-Dinfinispan.test.jta.tm=jbosstm`.
+Or, to use JBoss JTA (Arjuna TM) instead of the EmbeddedTransactionManager in a `transaction` group test, set `-Dinfinispan.test.jta.tm=jbosstm`.
 Please refer to the POM file for more properties and permutations. 
 
 === The Parallel Test Suite
