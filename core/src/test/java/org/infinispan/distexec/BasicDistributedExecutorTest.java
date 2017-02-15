@@ -557,7 +557,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
 
    static class SimpleDistributedCallable implements DistributedCallable<String, String, Boolean>,
-            Serializable {
+            Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 623845442163221832L;
@@ -599,7 +599,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class FailOnlyOnceCallable implements Callable<Integer>, Serializable {
+   static class FailOnlyOnceCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 3961940091247573385L;

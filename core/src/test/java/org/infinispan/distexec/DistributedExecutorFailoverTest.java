@@ -48,10 +48,6 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
    public void testBasicLocalDistributedCallable() throws Exception {
       long taskTimeout = TimeUnit.SECONDS.toMillis(15);
       EmbeddedCacheManager cacheManager1 = manager(0);
-      final EmbeddedCacheManager cacheManager2 = manager(1);
-      final EmbeddedCacheManager cacheManager3 = manager(2);
-      TestingUtil.killCacheManagers(cacheManager2);
-      TestingUtil.killCacheManagers(cacheManager3);
       Cache<Object, Object> cache1 = cacheManager1.getCache();
       DistributedExecutorService des = null;
 
