@@ -165,7 +165,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(2));
 
       // Wait for the topology to change everywhere
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
 
       // Allow the put command to throw an OutdatedTopologyException on cache1
       log.tracef("Unblocking the put command on node " + address(1));

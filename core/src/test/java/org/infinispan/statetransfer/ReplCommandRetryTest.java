@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -234,7 +234,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
    }
 
    private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
-      waitForRehashToComplete(caches);
+      waitForNoRebalance(caches);
       for (Cache c : caches) {
          CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
          assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId, cacheTopology),

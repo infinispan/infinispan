@@ -82,7 +82,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       manager(3).stop();
       // Eliminate the dead cache from the caches collection, cache4 now becomes cache(3)
       cacheManagers.remove(3);
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForNoRebalance(caches());
 
       log.debugf("Leaver stopped, checking transferred data");
       checkStateTransfer(keys, values);

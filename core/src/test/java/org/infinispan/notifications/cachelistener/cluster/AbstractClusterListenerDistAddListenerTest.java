@@ -184,7 +184,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
 
       // Now wait for cache3 to come up fully
       TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
 
       Cache<Object, String> cache3 = future.get(10, TimeUnit.SECONDS);
 
@@ -248,7 +248,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       log.info("Node 0 killed");
 
       TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
 
       checkPoint.triggerForever("pre_cluster_listeners_invoked_" + cache0);
 
@@ -337,7 +337,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
 
       // Now wait for cache3 to come up fully
       TestingUtil.blockUntilViewsReceived(60000, false, cache1, cache2);
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
 
       MagicKey key = new MagicKey(cache3);
       cache3.put(key, FIRST_VALUE);

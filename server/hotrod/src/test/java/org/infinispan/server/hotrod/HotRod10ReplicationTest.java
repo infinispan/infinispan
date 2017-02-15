@@ -140,7 +140,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v4-"));
       } finally {
          stopClusteredServer(newServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForNoRebalance(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v5-"), INTELLIGENCE_TOPOLOGY_AWARE,
@@ -169,7 +169,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v6-"));
       } finally {
          stopClusteredServer(crashingServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForNoRebalance(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v7-"), INTELLIGENCE_TOPOLOGY_AWARE,

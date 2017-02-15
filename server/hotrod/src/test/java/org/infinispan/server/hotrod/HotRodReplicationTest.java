@@ -134,7 +134,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v4-"));
       } finally {
          stopClusteredServer(newServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForNoRebalance(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0)
@@ -162,7 +162,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v6-"));
       } finally {
          stopClusteredServer(crashingServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForNoRebalance(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0)
