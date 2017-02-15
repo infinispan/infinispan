@@ -3,8 +3,11 @@ package org.infinispan.distexec;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -43,7 +46,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
    }
 
    public void testBasicLocalDistributedCallable() throws Exception {
-       long taskTimeout = TimeUnit.SECONDS.toMillis(15);
+      long taskTimeout = TimeUnit.SECONDS.toMillis(15);
       EmbeddedCacheManager cacheManager1 = manager(0);
       final EmbeddedCacheManager cacheManager2 = manager(1);
       final EmbeddedCacheManager cacheManager3 = manager(2);
@@ -58,17 +61,24 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
          SameNodeTaskFailoverPolicy sameNodeTaskFailoverPolicy = new SameNodeTaskFailoverPolicy(3);
          DistributedTaskBuilder<Void> builder = des
-                 .createDistributedTaskBuilder(new TestCallable())
-                 .failoverPolicy(sameNodeTaskFailoverPolicy)
-                 .timeout(taskTimeout, TimeUnit.MILLISECONDS);
+               .createDistributedTaskBuilder(new TestCallable())
+               .failoverPolicy(sameNodeTaskFailoverPolicy)
+               .timeout(taskTimeout, TimeUnit.MILLISECONDS);
 
          CompletableFuture<Void> future = des.submit(builder.build());
-         try {future.get(10, TimeUnit.SECONDS);} catch(Exception e) {}
+         TriggerFailover(future);
          eventuallyEquals(3, () -> sameNodeTaskFailoverPolicy.failoverCount);
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
       } finally {
          des.shutdown();
+      }
+   }
+
+   private void TriggerFailover(CompletableFuture<Void> future) {
+      try {
+         future.get(10, TimeUnit.SECONDS);
+      } catch (Exception e) {
       }
    }
 
@@ -163,7 +173,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
    static class SameNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
       private final int maxFailoverCount;
-      private int failoverCount = 0;
+      private volatile int failoverCount = 0;
 
       public SameNodeTaskFailoverPolicy(int maxFailoverCount) {
          super();
