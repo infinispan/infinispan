@@ -13,8 +13,9 @@ import org.infinispan.container.DataContainer;
  * Controls the data container for the cache.
  *
  * @author pmuir
- * @Deprecated Please use {@link MemoryConfiguration}
+ * @deprecated Please use {@link MemoryConfiguration}
  */
+@Deprecated
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
    public static final AttributeDefinition<DataContainer> DATA_CONTAINER = AttributeDefinition
          .builder("dataContainer", null, DataContainer.class).xmlName("class").copier(IdentityAttributeCopier.INSTANCE).immutable().build();
@@ -37,20 +38,23 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
     * @return
     * @deprecated data container is no longer to exposed via configuration at a later point
     */
+   @Deprecated
    public DataContainer dataContainer() {
       return dataContainer.get();
    }
 
    /**
-    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    * @deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
     */
+   @Deprecated
    public <K> Equivalence<K> keyEquivalence() {
       return AnyEquivalence.getInstance();
    }
 
    /**
-    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    * @deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
     */
+   @Deprecated
    public <V> Equivalence<V> valueEquivalence() {
       return AnyEquivalence.getInstance();
    }

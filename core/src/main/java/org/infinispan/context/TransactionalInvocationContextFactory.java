@@ -23,6 +23,7 @@ import org.infinispan.transaction.impl.TransactionTable;
  * @author Mircea.Markus@jboss.com
  * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
+@Deprecated
 public class TransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
    private TransactionManager tm;

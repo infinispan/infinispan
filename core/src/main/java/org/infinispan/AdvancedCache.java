@@ -77,6 +77,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param position the position to add the interceptor
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    void addInterceptor(CommandInterceptor i, int position);
 
    /**
@@ -88,6 +89,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return true if successful, false otherwise.
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
 
    /**
@@ -99,6 +101,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return true if successful, false otherwise.
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
 
    /**
@@ -108,6 +111,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param position the position at which to remove an interceptor
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    void removeInterceptor(int position);
 
    /**
@@ -116,11 +120,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param interceptorType type of interceptor to remove
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
 
    /**
     * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
+   @Deprecated
    List<CommandInterceptor> getInterceptorChain();
 
    /**
@@ -314,6 +320,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * one classloader associated to it, so it's no longer possible to read
     * cached data with a different classloader.
     */
+   @Deprecated
    AdvancedCache<K, V> with(ClassLoader classLoader);
 
    /**

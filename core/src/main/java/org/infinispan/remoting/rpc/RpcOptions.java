@@ -19,7 +19,7 @@ public class RpcOptions {
    private final DeliverOrder deliverOrder;
 
    /**
-    * @deprecated Since 8.3, use {@link #RpcOptions(long, TimeUnit, ResponseFilter, ResponseMode, DeliverOrder)} instead.
+    * @deprecated Since 9.0, use {@link #RpcOptions(long, TimeUnit, ResponseFilter, ResponseMode, DeliverOrder)} instead.
     */
    @Deprecated
    public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter, ResponseMode responseMode,
@@ -80,8 +80,9 @@ public class RpcOptions {
    }
 
    /**
-    * @deprecated Since 8.3, always returns {@code false}.
+    * @deprecated Since 9.0, always returns {@code false}.
     */
+   @Deprecated
    public boolean skipReplicationQueue() {
       return false;
    }

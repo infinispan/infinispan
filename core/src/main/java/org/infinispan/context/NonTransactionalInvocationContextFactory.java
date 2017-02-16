@@ -19,6 +19,7 @@ import org.infinispan.transaction.impl.RemoteTransaction;
  * @author Mircea Markus
  * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
+@Deprecated
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
