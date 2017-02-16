@@ -28,7 +28,7 @@ class SybaseTableManager extends AbstractTableManager {
    @Override
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         selectRowSql = String.format("SELECT %s, %s, FROM %s WHERE %s = convert(%s,?)",
+         selectRowSql = String.format("SELECT %s, %s FROM %s WHERE %s = convert(%s,?)",
                                       config.idColumnName(), config.dataColumnName(), getTableName(),
                                       config.idColumnName(), config.idColumnType());
       }
