@@ -1,7 +1,11 @@
 package org.infinispan.invalidation;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyCollectionOf;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -46,11 +50,13 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, false);
-      c.clustering().stateTransfer().timeout(10000).locking().lockAcquisitionTimeout(500);
+      c.clustering().stateTransfer().timeout(10000)
+       .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "invalidation", c);
 
       c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, true);
-      c.clustering().stateTransfer().timeout(10000).locking().lockAcquisitionTimeout(500);
+      c.clustering().stateTransfer().timeout(10000)
+       .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       defineConfigurationOnAllManagers("invalidationTx", c);
 
       waitForClusterToForm("invalidationTx");
@@ -201,7 +207,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
          when(mockTransport.getMembers()).thenReturn(members);
          when(mockTransport.getAddress()).thenReturn(addressOne);
          when(mockTransport.invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
-               eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS), anyLong(), any(
+               eq(isSync ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS), anyLong(), any(
                ResponseFilter.class), any(DeliverOrder.class), anyBoolean()))
                .thenReturn(CompletableFuture.completedFuture(Collections.emptyMap()));
 

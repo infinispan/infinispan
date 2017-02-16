@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.exceptions.ParallelOperationException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -24,14 +25,13 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public abstract class ParallelHotRodOperation<T, SUBOP extends HotRodOperation> extends HotRodOperation {
 
    private static final Log log = LogFactory.getLog(ParallelHotRodOperation.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    protected final TransportFactory transportFactory;
    protected final CompletionService<T> completionService;
 
    protected ParallelHotRodOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger
-         topologyId, int flags, ExecutorService executorService) {
-      super(codec, flags, cacheName, topologyId);
+         topologyId, int flags, ClientIntelligence clientIntelligence, ExecutorService executorService) {
+      super(codec, flags, clientIntelligence, cacheName, topologyId);
       this.transportFactory = transportFactory;
       this.completionService = new ExecutorCompletionService<>(executorService);
    }

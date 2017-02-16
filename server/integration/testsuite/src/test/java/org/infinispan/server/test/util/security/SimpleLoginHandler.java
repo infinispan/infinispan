@@ -10,9 +10,9 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 
 /**
- * 
+ *
  * SimpleLoginHandler which pass login and password for authorization.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */

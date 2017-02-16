@@ -1,15 +1,15 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * Encapsulates a chunk of cache entries that belong to the same segment. This representation is suitable for sending it

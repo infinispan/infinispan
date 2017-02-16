@@ -1,5 +1,10 @@
 package org.infinispan.tx.recovery;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -7,11 +12,6 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-
-import static org.testng.Assert.assertEquals;
 
 public class RecoveryTestUtil {
 

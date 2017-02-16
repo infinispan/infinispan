@@ -1,5 +1,10 @@
 package org.infinispan.tx.recovery.admin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -8,14 +13,8 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Mircea Markus
@@ -100,8 +99,8 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected RecoveryManagerImpl recoveryManager(int cacheIndex) {
-      return (RecoveryManagerImpl) TestingUtil.extractComponent(cache(cacheIndex), RecoveryManager.class);
+   protected RecoveryManager recoveryManager(int cacheIndex) {
+      return TestingUtil.extractComponent(cache(cacheIndex), RecoveryManager.class);
    }
 
    protected int getTxParticipant(boolean txParticipant) {
@@ -109,7 +108,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
       int index = -1;
       for (int i = 0; i < 2; i++) {
-         if (recoveryManager(i).getInDoubtTransactionsMap().size() == expectedNumber) {
+         if (recoveryManager(i).getInDoubtTransactions().size() == expectedNumber) {
             index = i;
             break;
          }

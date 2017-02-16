@@ -1,10 +1,26 @@
 package org.infinispan.server.websocket;
 
-import net.jcip.annotations.NotThreadSafe;
+import static org.infinispan.server.websocket.OpHandler.CACHE_NAME;
+import static org.infinispan.server.websocket.OpHandler.ERROR;
+import static org.infinispan.server.websocket.OpHandler.KEY;
+import static org.infinispan.server.websocket.OpHandler.MIME;
+import static org.infinispan.server.websocket.OpHandler.OP_CODE;
+import static org.infinispan.server.websocket.OpHandler.VALUE;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketClient;
 import org.eclipse.jetty.websocket.WebSocketClientFactory;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.websocket.configuration.WebSocketServerConfigurationBuilder;
 import org.infinispan.server.websocket.json.JsonObject;
@@ -14,15 +30,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.server.websocket.OpHandler.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * @author gustavonalle
@@ -167,6 +175,6 @@ public class WebSocketServerIntegrationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().defaultCacheName(cacheName), new ConfigurationBuilder());
    }
 }

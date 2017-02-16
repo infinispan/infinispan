@@ -1,5 +1,10 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.IOException;
+
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.store.Directory;
@@ -17,11 +22,6 @@ import org.infinispan.query.Search;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests to verify if unnecessary index operations are sent
@@ -150,7 +150,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private int countIndexedDocuments(Class<?> clazz) {
-      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
+      CacheQuery<?> query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
       return query.list().size();
    }
 

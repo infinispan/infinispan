@@ -1,17 +1,8 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableLongBinaryOperator;
-import org.infinispan.util.function.SerializableLongConsumer;
-import org.infinispan.util.function.SerializableLongFunction;
-import org.infinispan.util.function.SerializableLongPredicate;
-import org.infinispan.util.function.SerializableLongToDoubleFunction;
-import org.infinispan.util.function.SerializableLongToIntFunction;
-import org.infinispan.util.function.SerializableLongUnaryOperator;
-import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.OptionalLong;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongConsumer;
@@ -24,6 +15,17 @@ import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableLongBinaryOperator;
+import org.infinispan.util.function.SerializableLongConsumer;
+import org.infinispan.util.function.SerializableLongFunction;
+import org.infinispan.util.function.SerializableLongPredicate;
+import org.infinispan.util.function.SerializableLongToDoubleFunction;
+import org.infinispan.util.function.SerializableLongToIntFunction;
+import org.infinispan.util.function.SerializableLongUnaryOperator;
+import org.infinispan.util.function.SerializableObjLongConsumer;
+import org.infinispan.util.function.SerializableSupplier;
+
 /**
  * A {@link LongStream} that has additional methods to allow for Serializable instances.  Please see
  * {@link CacheStream} for additional details about various methods.
@@ -31,7 +33,56 @@ import java.util.stream.LongStream;
  * @author wburns
  * @since 9.0
  */
-public interface LongCacheStream extends LongStream {
+public interface LongCacheStream extends LongStream, BaseCacheStream<Long, LongStream> {
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with parallel distribution disabled.
+    */
+   LongCacheStream sequentialDistribution();
+
+   /**
+    * @inheritDoc
+    * @return a stream with parallel distribution enabled.
+    */
+   LongCacheStream parallelDistribution();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the segments filtered.
+    */
+   LongCacheStream filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the keys filtered.
+    */
+   LongCacheStream filterKeys(Set<?> keys);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the batch size updated
+    */
+   LongCacheStream distributedBatchSize(int batchSize);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the listener registered.
+    */
+   LongCacheStream segmentCompletionListener(SegmentCompletionListener listener);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with rehash awareness disabled.
+    */
+   LongCacheStream disableRehashAware();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the timeout set
+    */
+   LongCacheStream timeout(long timeout, TimeUnit unit);
+
    /**
     * {@inheritDoc}
     * @return the new cache long stream

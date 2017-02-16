@@ -1,17 +1,18 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Clustered cache manager MBean test

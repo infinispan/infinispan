@@ -1,5 +1,29 @@
 package org.infinispan.distribution;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -9,53 +33,43 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.testng.AssertJUnit.*;
-
-import static org.mockito.Mockito.*;
-
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
 public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.READ_COMMITTED),
+         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.REPEATABLE_READ)
+      };
+   }
+
    public DistSyncTxL1FuncTest() {
-      sync = true;
-      tx = true;
+      transactional = true;
       testRetVals = true;
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getDistributionInterceptorClass() {
+   protected Class<? extends AsyncInterceptor> getDistributionInterceptorClass() {
       return TxDistributionInterceptor.class;
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getL1InterceptorClass() {
+   protected Class<? extends AsyncInterceptor> getL1InterceptorClass() {
       return L1TxInterceptor.class;
    }
 
@@ -163,13 +177,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          barrier.await(5, TimeUnit.SECONDS);
 
          Future<String> futureGet = nonOwnerCache.getAsync(key);
-
-         try {
-            futureGet.get(100, TimeUnit.MILLISECONDS);
-            fail("Get shouldn't return until after the replace completes");
-         } catch (TimeoutException e) {
-
-         }
+         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);
@@ -200,7 +208,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
             throw new RemoteException("FAIL", new TimeoutException());
          }
          // Only throw exception on the first call just in case if test calls it more than once to fail properly
-      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager).invokeRemotely(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
+      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager)
+            .invokeRemotelyAsync(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
 
       TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
       try {
@@ -211,12 +220,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          Future<String> futureGet = nonOwnerCache.getAsync(key);
 
-         try {
-            futureGet.get(100, TimeUnit.MILLISECONDS);
-            fail("Get shouldn't return until after the replace completes");
-         } catch (TimeoutException e) {
-
-         }
+         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);

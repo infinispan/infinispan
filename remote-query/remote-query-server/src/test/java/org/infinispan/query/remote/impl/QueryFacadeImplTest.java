@@ -1,13 +1,13 @@
 package org.infinispan.query.remote.impl;
 
-import org.infinispan.server.core.QueryFacade;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import static org.junit.Assert.assertEquals;
+import org.infinispan.server.core.QueryFacade;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com

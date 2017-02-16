@@ -1,22 +1,23 @@
 package org.infinispan.commons.test;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.jboss.logging.Logger;
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
+import org.testng.IConfigurationListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import org.testng.annotations.Test;
 
 /**
  * Logs TestNG test progress.
  */
-public class TestNGTestListener implements ITestListener, IInvokedMethodListener, ISuiteListener {
+public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener {
    private static final Logger log = Logger.getLogger(TestNGTestListener.class);
    private Set<String> startupThreads;
 
@@ -54,18 +55,17 @@ public class TestNGTestListener implements ITestListener, IInvokedMethodListener
    }
 
    private String testName(ITestResult res) {
-      return res.getTestClass().getName() + "." + res.getMethod().getMethodName();
-   }
-
-   @Override
-   public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-   }
-
-   @Override
-   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-      if (testResult.getThrowable() != null && method.isConfigurationMethod()) {
-         TestSuiteProgress.setupFailed(testName(testResult), testResult.getThrowable());
+      StringBuilder result = new StringBuilder();
+      result.append(res.getTestClass().getRealClass().getName() + "." + res.getMethod().getMethodName());
+      if (res.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
+         String dataProviderName = res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
+               .dataProvider();
+         // Add parameters for methods that use a data provider only
+         if (res.getParameters().length != 0 && (dataProviderName != null && !dataProviderName.isEmpty())) {
+            result.append("(").append(Arrays.deepToString(res.getParameters())).append(")");
+         }
       }
+      return result.toString();
    }
 
    @Override
@@ -108,5 +108,29 @@ public class TestNGTestListener implements ITestListener, IInvokedMethodListener
    private boolean ignoreThread(Thread thread) {
       String threadName = thread.getName();
       return threadName.startsWith("testng-") || startupThreads.contains(threadName + "@" + thread.getId());
+   }
+
+   @Override
+   public void beforeConfiguration(ITestResult testResult) {
+      log.debugf("Before setup %s", testResult.getMethod().getMethodName());
+   }
+
+   @Override
+   public void onConfigurationSuccess(ITestResult testResult) {
+      log.debugf("After setup %s", testResult.getMethod().getMethodName());
+   }
+
+   @Override
+   public void onConfigurationFailure(ITestResult testResult) {
+      if (testResult.getThrowable() != null) {
+         TestSuiteProgress.setupFailed(testName(testResult), testResult.getThrowable());
+      }
+   }
+
+   @Override
+   public void onConfigurationSkip(ITestResult testResult) {
+      if (testResult.getThrowable() != null) {
+         TestSuiteProgress.testIgnored(testName(testResult));
+      }
    }
 }

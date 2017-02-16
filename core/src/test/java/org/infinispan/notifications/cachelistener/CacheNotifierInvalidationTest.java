@@ -20,13 +20,12 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivate
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event.Type;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
- * Simple test class that tests to make sure invalidation events are raised on remote 
+ * Simple test class that tests to make sure invalidation events are raised on remote
  * nodes
  *
  * @author wburns
@@ -86,7 +85,7 @@ public class CacheNotifierInvalidationTest extends MultipleCacheManagersTest {
       assertEquals(value, event.getValue());
       assertTrue(event.isPre());
       assertFalse(event.isOriginLocal());
-      
+
       event = listener.events.get(1);
       assertEquals(Type.CACHE_ENTRY_INVALIDATED, event.getType());
       assertEquals(key, event.getKey());

@@ -1,14 +1,15 @@
 package org.infinispan.xsite;
 
+import java.util.Map;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.BackupResponse;
-
-import javax.transaction.Transaction;
-import java.util.Map;
 
 /**
  * Component responsible with sending backup data to remote sites. The send operation is executed async, it's up to the
@@ -47,7 +48,7 @@ public interface BackupSender {
     */
    Map<String, Boolean> status();
 
-   public enum BringSiteOnlineResponse {
+   enum BringSiteOnlineResponse {
       NO_SUCH_SITE,
       ALREADY_ONLINE,
       BROUGHT_ONLINE
@@ -58,7 +59,7 @@ public interface BackupSender {
     */
    BringSiteOnlineResponse bringSiteOnline(String siteName);
 
-   public enum TakeSiteOfflineResponse {
+   enum TakeSiteOfflineResponse {
       NO_SUCH_SITE,
       ALREADY_OFFLINE,
       TAKEN_OFFLINE

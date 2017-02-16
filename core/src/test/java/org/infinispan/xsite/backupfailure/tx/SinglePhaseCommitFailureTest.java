@@ -1,13 +1,13 @@
 package org.infinispan.xsite.backupfailure.tx;
 
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "xsite", testName = "xsite.backupfailure.tx.SinglePhaseCommitFailureTest")
 public class SinglePhaseCommitFailureTest extends AbstractTwoSitesTest {

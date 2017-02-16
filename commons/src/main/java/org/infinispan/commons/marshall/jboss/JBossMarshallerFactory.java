@@ -1,14 +1,14 @@
 package org.infinispan.commons.marshall.jboss;
 
+import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import org.jboss.marshalling.AbstractMarshallerFactory;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
-
-import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * A JBoss Marshalling factory class for retrieving marshaller/unmarshaller

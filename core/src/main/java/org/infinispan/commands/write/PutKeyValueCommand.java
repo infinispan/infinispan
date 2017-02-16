@@ -1,26 +1,24 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.atomic.CopyableDeltaAware;
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.commands.MetadataAwareCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import static org.infinispan.commons.util.Util.toStr;
+import org.infinispan.atomic.CopyableDeltaAware;
+import org.infinispan.atomic.Delta;
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.MetadataAwareCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.Metadatas;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -32,36 +30,35 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public static final byte COMMAND_ID = 8;
 
-   Object value;
-   boolean putIfAbsent;
-   CacheNotifier notifier;
-   boolean successful = true;
-   Metadata metadata;
+   private Object value;
+   private boolean putIfAbsent;
+   private CacheNotifier<Object, Object> notifier;
+   private boolean successful = true;
+   private Metadata metadata;
    private ValueMatcher valueMatcher;
-   private Equivalence valueEquivalence;
 
    public PutKeyValueCommand() {
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
                              CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                             Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+                             CommandInvocationId commandInvocationId) {
       super(key, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
+      //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
-      this.valueEquivalence = valueEquivalence;
 
       if (value instanceof DeltaAware) {
-         addFlag(Flag.DELTA_WRITE);
+         addFlags(FlagBitSets.DELTA_WRITE);
       }
    }
 
-   public void init(CacheNotifier notifier, Configuration cfg) {
+   public void init(CacheNotifier notifier) {
+      //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
 
    public Object getValue() {
@@ -78,13 +75,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return putIfAbsent || !hasFlag(Flag.IGNORE_RETURN_VALUES);
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return hasFlag(Flag.DELTA_WRITE);
+   public LoadType loadType() {
+      if (hasAnyFlag(FlagBitSets.DELTA_WRITE)) {
+         return LoadType.OWNER;
+      } else if (isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
+         return LoadType.PRIMARY;
+      } else {
+         return LoadType.DONT_LOAD;
+      }
    }
 
    @Override
@@ -94,15 +92,17 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          successful = false;
          return null;
       }
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      //noinspection unchecked
+      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
 
-      //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
-      if (e == null) return null;
+      if (e == null) {
+         throw new IllegalStateException("Not wrapped");
+      }
 
-      Object entryValue = e.getValue();
-      if (!valueMatcher.matches(e, null, value, valueEquivalence)) {
+      Object prevValue = e.getValue();
+      if (!valueMatcher.matches(prevValue, null, value)) {
          successful = false;
-         return entryValue;
+         return prevValue;
       }
 
       return performPut(e, ctx);
@@ -119,8 +119,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       output.writeObject(value);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(commandInvocationId);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
    }
 
@@ -130,7 +130,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       value = input.readObject();
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
    }
@@ -163,9 +163,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
       if (putIfAbsent != that.putIfAbsent) return false;
       if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
+      return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
 
-      return true;
    }
 
    @Override
@@ -220,16 +219,29 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
    }
 
-   private Object performPut(MVCCEntry e, InvocationContext ctx) {
+   @Override
+   public void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
+      command.setWrite(commandInvocationId, key, value, metadata, getFlagsBitSet(), getTopologyId());
+   }
+
+   @Override
+   public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      if (isConditional() || isReturnValueExpected()) {
+         command.initWithReturnValue(successful, localReturnValue);
+      } else {
+         command.initWithoutReturnValue(successful);
+      }
+   }
+
+   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;
 
       if (e.isCreated()) {
-         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, 
-                                           this);
+         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
       } else {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, 
-                                           this);
+         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
       }
 
       if (value instanceof Delta) {

@@ -1,5 +1,11 @@
 package org.infinispan.distribution.ch;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
@@ -7,12 +13,6 @@ import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Test even distribution after membership change

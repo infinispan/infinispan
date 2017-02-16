@@ -51,6 +51,7 @@ public class ClusterWideMetricKeys {
    public static final String HITS = "clusterwide-hits";
    public static final String MISSES = "clusterwide-misses";
    public static final String NUMBER_OF_ENTRIES = "clusterwide-number-of-entries";
+   public static final String OFF_HEAP_MEMORY_USED = "clusterwide-off-heap-memory-used";
    public static final String READ_WRITE_RATIO = "clusterwide-read-write-ratio";
    public static final String REMOVE_HITS = "clusterwide-remove-hits";
    public static final String REMOVE_MISSES = "clusterwide-remove-misses";

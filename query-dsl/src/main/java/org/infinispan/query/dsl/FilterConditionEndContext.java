@@ -17,7 +17,7 @@ public interface FilterConditionEndContext {
     * @param values the list of values
     * @return the completed context
     */
-   FilterConditionContext in(Object... values);
+   FilterConditionContextQueryBuilder in(Object... values);
 
    /**
     * Checks that the left operand is equal to one of the elements from the Collection of values given as argument.
@@ -25,7 +25,7 @@ public interface FilterConditionEndContext {
     * @param values the collection of values
     * @return the completed context
     */
-   FilterConditionContext in(Collection values);
+   FilterConditionContextQueryBuilder in(Collection values);
 
    /**
     * Checks that the left argument (which is expected to be a String) matches a wildcard pattern that follows the JPA
@@ -34,7 +34,7 @@ public interface FilterConditionEndContext {
     * @param pattern the wildcard pattern
     * @return the completed context
     */
-   FilterConditionContext like(String pattern);
+   FilterConditionContextQueryBuilder like(String pattern);
 
    /**
     * Checks that the left argument (which is expected to be an array or a Collection) contains the given element.
@@ -42,7 +42,7 @@ public interface FilterConditionEndContext {
     * @param value the value to check
     * @return the completed context
     */
-   FilterConditionContext contains(Object value);
+   FilterConditionContextQueryBuilder contains(Object value);
 
    /**
     * Checks that the left argument (which is expected to be an array or a Collection) contains all of the the given
@@ -51,7 +51,7 @@ public interface FilterConditionEndContext {
     * @param values the list of elements to check
     * @return the completed context
     */
-   FilterConditionContext containsAll(Object... values);
+   FilterConditionContextQueryBuilder containsAll(Object... values);
 
    /**
     * Checks that the left argument (which is expected to be an array or a Collection) contains all the elements of the
@@ -60,7 +60,7 @@ public interface FilterConditionEndContext {
     * @param values the Collection of elements to check
     * @return the completed context
     */
-   FilterConditionContext containsAll(Collection values);
+   FilterConditionContextQueryBuilder containsAll(Collection values);
 
    /**
     * Checks that the left argument (which is expected to be an array or a Collection) contains any of the the given
@@ -69,7 +69,7 @@ public interface FilterConditionEndContext {
     * @param values the list of elements to check
     * @return the completed context
     */
-   FilterConditionContext containsAny(Object... values);
+   FilterConditionContextQueryBuilder containsAny(Object... values);
 
    /**
     * Checks that the left argument (which is expected to be an array or a Collection) contains any of the elements of
@@ -78,14 +78,14 @@ public interface FilterConditionEndContext {
     * @param values the Collection of elements to check
     * @return the completed context
     */
-   FilterConditionContext containsAny(Collection values);
+   FilterConditionContextQueryBuilder containsAny(Collection values);
 
    /**
     * Checks that the left argument is null.
     *
     * @return the completed context
     */
-   FilterConditionContext isNull();
+   FilterConditionContextQueryBuilder isNull();
 
    /**
     * Checks that the left argument is equal to the given value.
@@ -93,12 +93,12 @@ public interface FilterConditionEndContext {
     * @param value the value to compare with
     * @return the completed context
     */
-   FilterConditionContext eq(Object value);
+   <T extends QueryBuilder & FilterConditionContext> T eq(Object value);
 
    /**
     * Alias for {@link #eq(Object)}
     */
-   FilterConditionContext equal(Object value);
+   FilterConditionContextQueryBuilder equal(Object value);
 
    /**
     * Checks that the left argument is less than the given value.
@@ -106,7 +106,7 @@ public interface FilterConditionEndContext {
     * @param value the value to compare with
     * @return the completed context
     */
-   FilterConditionContext lt(Object value);
+   FilterConditionContextQueryBuilder lt(Object value);
 
    /**
     * Checks that the left argument is less than or equal to the given value.
@@ -114,7 +114,7 @@ public interface FilterConditionEndContext {
     * @param value the value to compare with
     * @return the completed context
     */
-   FilterConditionContext lte(Object value);
+   FilterConditionContextQueryBuilder lte(Object value);
 
    /**
     * Checks that the left argument is greater than the given value.
@@ -122,7 +122,7 @@ public interface FilterConditionEndContext {
     * @param value the value to compare with
     * @return the completed context
     */
-   FilterConditionContext gt(Object value);
+   FilterConditionContextQueryBuilder gt(Object value);
 
    /**
     * Checks that the left argument is greater than or equal to the given value.
@@ -130,7 +130,7 @@ public interface FilterConditionEndContext {
     * @param value the value to compare with
     * @return the completed context
     */
-   FilterConditionContext gte(Object value);
+   FilterConditionContextQueryBuilder gte(Object value);
 
    /**
     * Checks that the left argument is between the given range limits. The limits are inclusive by default, but this can
@@ -140,5 +140,5 @@ public interface FilterConditionEndContext {
     * @param to   the end of the range
     * @return the RangeConditionContext context
     */
-   RangeConditionContext between(Object from, Object to);
+   RangeConditionContextQueryBuilder between(Object from, Object to);
 }

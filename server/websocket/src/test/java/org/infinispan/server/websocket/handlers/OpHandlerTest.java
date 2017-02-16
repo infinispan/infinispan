@@ -1,15 +1,15 @@
 package org.infinispan.server.websocket.handlers;
 
-import org.infinispan.server.websocket.json.JsonObject;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.websocket.MockChannel;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
 import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
+
+import org.infinispan.server.websocket.json.JsonObject;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.websocket.MockChannel;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Tests Operation handlers.
@@ -24,13 +24,13 @@ public class OpHandlerTest extends AbstractInfinispanTest {
    private MockChannel serverChannel;
    private MockClient cacheClient;
 
-   @BeforeTest
+   @BeforeClass
    public void beforeTest() {
       serverChannel = new MockChannel();
       cacheClient = new MockClient(CACHE_NAME, serverChannel);
    }
 
-   @AfterTest
+   @AfterClass
    public void afterTest() {
       if(cacheClient != null) {
          cacheClient.stop();

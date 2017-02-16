@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;

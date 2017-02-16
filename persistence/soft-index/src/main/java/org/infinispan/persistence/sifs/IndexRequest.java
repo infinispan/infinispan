@@ -1,8 +1,8 @@
 package org.infinispan.persistence.sifs;
 
-import org.infinispan.commons.util.Util;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.Util;
 
 /**
  * Request for some change to be persisted in the Index or operation executed by index updater thread.

@@ -1,18 +1,19 @@
 package org.infinispan.query.continuous;
 
-import static org.infinispan.query.dsl.Expression.*;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -40,14 +41,25 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
    }
 
    /**
+    * Fulltext continuous queries are not allowed.
+    */
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028521:.*")
+   public void testDisallowFullTextQuery() {
+      Query query = Search.getQueryFactory(cache()).create("from org.infinispan.query.test.Person where name : 'john'");
+
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
+      cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
+   }
+
+   /**
     * Using grouping and aggregation with continuous query is not allowed.
     */
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
             .select(max("age"))
             .having("age").gte(20)
-            .toBuilder().build();
+            .build();
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
@@ -68,15 +80,17 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query = qf.from(Person.class)
             .select("age")
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 30);
+            .build().setParameter("ageParam", 30);
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       cq.addContinuousQueryListener(query, listener);
 
       final Map<Object, Integer> joined = listener.getJoined();
+      final Map<Object, Integer> updated = listener.getUpdated();
       final Map<Object, Integer> left = listener.getLeft();
 
       assertEquals(1, joined.size());
+      assertEquals(0, updated.size());
       assertEquals(0, left.size());
       joined.clear();
 
@@ -88,6 +102,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(5, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
       joined.clear();
 
@@ -99,6 +114,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(2, left.size());
       left.clear();
 
@@ -107,12 +123,14 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(2, left.size());
       left.clear();
 
       cache().clear(); //todo [anistor] Does this generate MODIFY instead of REMOVE ???
 
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(2, left.size());
       left.clear();
 
@@ -124,6 +142,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(2, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
       joined.clear();
 
@@ -132,6 +151,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       assertEquals(0, cache().size());
 
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(2, left.size());
       left.clear();
 
@@ -145,6 +165,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
    }
 
@@ -163,7 +184,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query = qf.from(Person.class)
             .select("age")
             .having("age").lte(param("ageParam"))
-            .toBuilder().build();
+            .build();
 
       query.setParameter("ageParam", 30);
 
@@ -171,9 +192,11 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       cq.addContinuousQueryListener(query, listener);
 
       Map<Object, Integer> joined = listener.getJoined();
+      Map<Object, Integer> updated = listener.getUpdated();
       Map<Object, Integer> left = listener.getLeft();
 
       assertEquals(1, joined.size());
+      assertEquals(0, updated.size());
       assertEquals(0, left.size());
       joined.clear();
 
@@ -188,7 +211,10 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       left = listener.getLeft();
 
       assertEquals(2, joined.size());
+      assertEquals(0, updated.size());
       assertEquals(0, left.size());
+
+      cq.removeContinuousQueryListener(listener);
    }
 
    public void testTwoSimilarCQ() {
@@ -198,20 +224,22 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       Query query1 = qf.from(Person.class)
             .having("age").lte(30)
             .and().having("name").eq("John").or().having("name").eq("Johny")
-            .toBuilder().build();
+            .build();
       ContinuousQuery<Object, Object> cq1 = Search.getContinuousQuery(cache());
       cq1.addContinuousQueryListener(query1, listener);
 
       Query query2 = qf.from(Person.class)
             .having("age").lte(30).or().having("name").eq("Joe")
-            .toBuilder().build();
+            .build();
       ContinuousQuery<Object, Object> cq2 = Search.getContinuousQuery(cache());
       cq2.addContinuousQueryListener(query2, listener);
 
       final Map<Object, Integer> joined = listener.getJoined();
+      final Map<Object, Integer> updated = listener.getUpdated();
       final Map<Object, Integer> left = listener.getLeft();
 
       assertEquals(0, joined.size());
+      assertEquals(0, updated.size());
       assertEquals(0, left.size());
 
       Person value = new Person();
@@ -221,6 +249,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       assertEquals(1, joined.size());
       assertEquals(2, joined.get(1).intValue());
+      assertEquals(0, updated.size());
       assertEquals(0, left.size());
       joined.clear();
 
@@ -228,6 +257,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       value.setName("Joe");
       cache().replace(1, value);
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(1, left.size());
       joined.clear();
       left.clear();
@@ -237,6 +267,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       value.setAge(31);
       cache().replace(1, value);
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
       joined.clear();
       left.clear();
@@ -247,6 +278,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       cache().put(1, value);
       assertEquals(1, joined.size());
       assertEquals(1, joined.get(1).intValue());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
       joined.clear();
       left.clear();
@@ -256,6 +288,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       value.setAge(29);
       cache().put(1, value);
       assertEquals(0, joined.size());
+      assertEquals(1, updated.size());
       assertEquals(0, left.size());
       joined.clear();
       left.clear();
@@ -264,6 +297,6 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       assertEquals(0, joined.size());
       assertEquals(1, left.size());
       assertEquals(2, left.get(1).intValue());
+      assertEquals(1, updated.size());
    }
-
 }

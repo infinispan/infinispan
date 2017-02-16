@@ -1,18 +1,24 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.beans.IntrospectionException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
 import org.apache.lucene.document.DateTools;
-import org.hibernate.hql.ParsingException;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.TwoWayStringBridge;
+import org.hibernate.search.bridge.builtin.BooleanBridge;
 import org.hibernate.search.bridge.builtin.NumericEncodingCalendarBridge;
 import org.hibernate.search.bridge.builtin.NumericEncodingDateBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.StringEncodingCalendarBridge;
 import org.hibernate.search.bridge.builtin.StringEncodingDateBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
-import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
+import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
+import org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.metadata.impl.EmbeddedTypeMetadata;
 import org.hibernate.search.engine.metadata.impl.PropertyMetadata;
@@ -20,23 +26,21 @@ import org.hibernate.search.engine.metadata.impl.TypeMetadata;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
-import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
+import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
-import java.beans.IntrospectionException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-
 /**
- * Use the Hibernate Search metadata to resolve property paths. This relies on the Hibernate Search annotations.
- * If resolution fails (due to unindexed fields) the we delegate the process to the base class which works exclusively
+ * Uses the Hibernate Search metadata to resolve property paths. This relies on the Hibernate Search annotations. If
+ * resolution fails (due to not annotated fields) the we delegate the process to the base class which works exclusively
  * with java-bean like reflection without relying on annotations.
+ * <p>
+ * Stateless and inherently threadsafe.
  *
  * @author anistor@redhat.com
  * @since 9.0
@@ -47,8 +51,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    private final SearchIntegrator searchFactory;
 
-   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNamesResolver entityNamesResolver) {
-      super(entityNamesResolver);
+   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver) {
+      super(entityNameResolver);
       this.searchFactory = searchFactory;
    }
 
@@ -60,7 +64,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (resolvedProperty != null) {
             List<String> translatedPropertyPath = new ArrayList<>(propertyPath.length);
             for (EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
-               translatedPropertyPath.add(embeddedTypeMetadata.getEmbeddedFieldName());
+               translatedPropertyPath.add(embeddedTypeMetadata.getEmbeddedPropertyName());
             }
             if (resolvedProperty.propertyMetadata != null) {
                translatedPropertyPath.add(resolvedProperty.propertyMetadata.getPropertyAccessorName());
@@ -81,11 +85,10 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
     * @return the given value converted into the type of the given property
     */
    @Override
-   public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+   public Object convertToPropertyType(Class<?> entityType, String[] propertyPath, String value) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
       if (indexBinding != null) {
-         String[] path = propertyPath.toArray(new String[propertyPath.size()]);
-         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, path);
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
          if (fieldMetadata != null) {
             FieldBridge bridge = fieldMetadata.getFieldBridge();
             return convertToPropertyType(value, bridge);
@@ -97,9 +100,15 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private Object convertToPropertyType(String value, FieldBridge bridge) {
       try {
          if (bridge instanceof NullEncodingTwoWayFieldBridge) {
-            return convertToPropertyType(value, ((NullEncodingTwoWayFieldBridge) bridge).unwrap());
+            return convertToPropertyType(value, ((NullEncodingTwoWayFieldBridge) bridge).unwrap(FieldBridge.class));
          } else if (bridge instanceof TwoWayString2FieldBridgeAdaptor) {
-            return ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap().stringToObject(value);
+            TwoWayStringBridge unwrapped = ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap(TwoWayStringBridge.class);
+            if (unwrapped instanceof BooleanBridge) {
+               if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
+                  throw log.getInvalidBooleanLiteralException(value);
+               }
+            }
+            return unwrapped.stringToObject(value);
          } else if (bridge instanceof TwoWayStringBridge) {
             return ((TwoWayStringBridge) bridge).stringToObject(value);
          } else if (bridge instanceof NumericFieldBridge) {
@@ -119,7 +128,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(DateTools.stringToDate(value));
             return calendar;
-         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge) {
+         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge || bridge instanceof ElasticsearchDateBridge ) {
             return DateTools.stringToDate(value);
          } else {
             return value;
@@ -130,8 +139,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    @Override
-   public Class<?> getPrimitivePropertyType(String entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+   public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -156,14 +165,14 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    @Override
-   public boolean isRepeatedProperty(String entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+   public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
             TypeMetadata typeMetadata = resolvedProperty.rootTypeMetadata;
             for (EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
-               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), embeddedTypeMetadata.getEmbeddedFieldName());
+               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), embeddedTypeMetadata.getEmbeddedPropertyName());
                if (accessor.isMultiple()) {
                   return true;
                }
@@ -179,12 +188,12 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       return super.isRepeatedProperty(entityType, propertyPath);
    }
 
-   private EntityIndexBinding getEntityIndexBinding(String entityType) {
-      Class<?> entityMetadata = getEntityMetadata(entityType);
-      if (entityMetadata == null) {
-         throw log.getNoIndexedEntityException(entityType);
+   private EntityIndexBinding getEntityIndexBinding(Class<?> entityType) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      if (indexBinding == null) {
+         throw log.getNoIndexedEntityException(entityType.getCanonicalName());
       }
-      return searchFactory.getIndexBinding(entityMetadata);
+      return indexBinding;
    }
 
    private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> type, String propertyName) {
@@ -195,7 +204,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       }
    }
 
-   public FieldBridge getDefaultFieldBridge(String entityType, String[] propertyPath) {
+   public FieldBridge getDefaultFieldBridge(Class<?> entityType, String[] propertyPath) {
       EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
       if (indexBinding != null) {
          DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
@@ -207,8 +216,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    @Override
-   public boolean hasProperty(String entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+   public boolean hasProperty(Class<?> entityType, String[] propertyPath) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -227,8 +236,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
     * otherwise.
     */
    @Override
-   public boolean hasEmbeddedProperty(String entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+   public boolean hasEmbeddedProperty(Class<?> entityType, String[] propertyPath) {
+      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -236,23 +245,6 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          }
       }
       return super.hasEmbeddedProperty(entityType, propertyPath);
-   }
-
-   /**
-    * Checks if the property of the indexed entity is analyzed.
-    *
-    * @param propertyPath the path of the property
-    * @return {@code true} if the property is analyzed, {@code false} otherwise.
-    */
-   public boolean hasAnalyzedProperty(String entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
-      if (indexBinding != null) {
-         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
-         if (fieldMetadata != null) {
-            return fieldMetadata.getIndex().isAnalyzed();
-         }
-      }
-      return false;
    }
 
    private DocumentFieldMetadata getDocumentFieldMetadata(EntityIndexBinding indexBinding, String[] propertyPath) {
@@ -264,28 +256,36 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    @Override
-   public BooleShannonExpansion.IndexedFieldProvider getIndexedFieldProvider(Class<?> type) {
-      EntityIndexBinding entityIndexBinding = searchFactory.getIndexBinding(type);
-      if (entityIndexBinding == null) {
-         return BooleShannonExpansion.IndexedFieldProvider.NO_INDEXING;
-      }
-
-      return new BooleShannonExpansion.IndexedFieldProvider() {
-         @Override
-         public boolean isIndexed(String[] propertyPath) {
-            DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-            return fieldMetadata != null && fieldMetadata.getIndex().isIndexed();
+   public IndexedFieldProvider<Class<?>> getIndexedFieldProvider() {
+      return type -> {
+         EntityIndexBinding entityIndexBinding = searchFactory.getIndexBinding(type);
+         if (entityIndexBinding == null) {
+            return IndexedFieldProvider.NO_INDEXING;
          }
+         return new IndexedFieldProvider.FieldIndexingMetadata() {
 
-         @Override
-         public boolean isStored(String[] propertyPath) {
-            DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-            return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
-         }
+            @Override
+            public boolean isIndexed(String[] propertyPath) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+               return fieldMetadata != null && fieldMetadata.getIndex().isIndexed();
+            }
+
+            @Override
+            public boolean isAnalyzed(String[] propertyPath) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+               return fieldMetadata != null && fieldMetadata.getIndex().isAnalyzed();
+            }
+
+            @Override
+            public boolean isStored(String[] propertyPath) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+               return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
+            }
+         };
       };
    }
 
-   private static class ResolvedProperty {
+   private static final class ResolvedProperty {
 
       final TypeMetadata rootTypeMetadata;
 
@@ -328,7 +328,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
          boolean found = false;
          for (EmbeddedTypeMetadata embeddedTypeMetadata : typeMetadata.getEmbeddedTypeMetadata()) {
-            if (embeddedTypeMetadata.getEmbeddedFieldName().equals(propertyPath[i])) {
+            if (embeddedTypeMetadata.getEmbeddedPropertyName().equals(propertyPath[i])) {
                embeddedTypeMetadataList.add(embeddedTypeMetadata);
                if (i == propertyPath.length - 1) {
                   return new ResolvedProperty(rootTypeMetadata, embeddedTypeMetadataList, null, null);

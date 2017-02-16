@@ -1,10 +1,16 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
@@ -14,15 +20,9 @@ import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -33,7 +33,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterImpl.class.getName());
 
-   private static final FilterCallback emptyCallback = (isDelta, userContext, eventType, instance, projection, sortProjection) -> {
+   private static final FilterCallback emptyCallback = (userContext, eventType, instance, projection, sortProjection) -> {
       // do nothing
    };
 
@@ -103,7 +103,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          // translate sort field paths
          translatedSortFields = new ArrayList<>(sortFields.length);
          for (SortField sortField : sortFields) {
-            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().getPath()));
+            translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().asArrayPath()));
          }
       } else {
          translatedSortFields = null;
@@ -140,8 +140,8 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       PredicateIndex<AttributeMetadata, AttributeId> predicateIndex = new PredicateIndex<>(metadataAdapter);
       root = predicateIndex.getRoot();
 
-      filterSubscription = new FilterSubscriptionImpl<>(parsingResult.getJpaQuery(), namedParameters, false, metadataAdapter, beTree,
-            emptyCallback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, null);
+      filterSubscription = new FilterSubscriptionImpl<>(parsingResult.getQueryString(), namedParameters, false, metadataAdapter, beTree,
+            emptyCallback, false, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, null);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = 0;

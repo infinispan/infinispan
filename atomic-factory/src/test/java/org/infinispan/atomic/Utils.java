@@ -1,11 +1,11 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
-import org.infinispan.test.TestingUtil;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collection;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.test.TestingUtil;
 
 /**
  * @author Pierre Sutra
@@ -25,5 +25,5 @@ public class Utils {
       // Allow some time for all ClusteredGetCommands to finish executing
       TestingUtil.sleepThread(1000);
    }
-   
+
 }

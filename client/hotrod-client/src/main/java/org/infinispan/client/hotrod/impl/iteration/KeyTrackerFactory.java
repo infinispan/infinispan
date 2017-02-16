@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import java.util.Set;
+
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.commons.marshall.Marshaller;
-
-import java.util.Set;
 
 /**
  * @author gustavonalle

@@ -1,19 +1,18 @@
 package org.infinispan.persistence.jdbc.table.management;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.Arrays;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration;
-import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * @author Ryan Emerson
@@ -21,24 +20,23 @@ import java.util.Arrays;
 public class TableManagerFactory {
 
    private static final Log LOG = LogFactory.getLog(TableManagerFactory.class, Log.class);
-   private static final String UPSERT_DISABLED = "jdbc.upsert.disabled";
+   private static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
+   private static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
    public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
-      return getManager(connectionFactory, config.table(), config);
+      DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
+            config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
+            isPropertyDisabled(config, INDEXING_DISABLED));
+
+      return getManager(metaData, connectionFactory, config.table());
    }
 
-   public static TableManager getManager(ConnectionFactory connectionFactory, JdbcBinaryStoreConfiguration config) {
-      return getManager(connectionFactory, config.table(), config);
-   }
-
-   private static TableManager getManager(ConnectionFactory connectionFactory, TableManipulationConfiguration tableConfig,
-                                          AbstractJdbcStoreConfiguration storeConfig) {
-      DbMetaData metaData = getDbMetaData(connectionFactory, storeConfig.dialect(), storeConfig.dbMajorVersion(),
-                                          storeConfig.dbMajorVersion(), isUpsertDisabled(storeConfig));
-
+   public static TableManager getManager(DbMetaData metaData, ConnectionFactory connectionFactory,
+                                         TableManipulationConfiguration tableConfig) {
       switch (metaData.getType()) {
          case H2:
             return new H2TableManager(connectionFactory, tableConfig, metaData);
+         case MARIA_DB:
          case MYSQL:
             return new MySQLTableManager(connectionFactory, tableConfig, metaData);
          case ORACLE:
@@ -49,15 +47,18 @@ public class TableManagerFactory {
             return new SQLiteTableManager(connectionFactory, tableConfig, metaData);
          case SYBASE:
             return new SybaseTableManager(connectionFactory, tableConfig, metaData);
+         case SQL_SERVER:
+            return new SQLServerTableManager(connectionFactory, tableConfig, metaData);
          default:
             return new GenericTableManager(connectionFactory, tableConfig, metaData);
       }
    }
 
    private static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, DatabaseType databaseType,
-                                           Integer majorVersion, Integer minorVersion, boolean disableUpsert) {
+                                           Integer majorVersion, Integer minorVersion, boolean disableUpsert,
+                                           boolean disableIndexing) {
       if (databaseType != null && majorVersion != null && minorVersion != null)
-         return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert);
+         return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
 
       Connection connection = null;
       if (majorVersion == null || minorVersion == null) {
@@ -77,7 +78,7 @@ public class TableManagerFactory {
 
             // If we already know the DatabaseType via User, then don't check
             if (databaseType != null)
-               return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert);
+               return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
          } catch (SQLException e) {
             if (LOG.isDebugEnabled())
                LOG.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.", e);
@@ -89,7 +90,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connection.getMetaData().getDatabaseProductName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert);
+         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing);
       } catch (Exception e) {
          if (LOG.isDebugEnabled())
             LOG.debug("Unable to guess dialect from JDBC metadata.", e);
@@ -102,7 +103,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert);
+         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing);
       } catch (Exception e) {
          if (LOG.isDebugEnabled())
             LOG.debug("Unable to guess database dialect from JDBC driver name.", e);
@@ -116,7 +117,7 @@ public class TableManagerFactory {
 
       if (LOG.isDebugEnabled())
          LOG.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
-      return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert);
+      return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
    }
 
    private static DatabaseType guessDialect(String name) {
@@ -157,8 +158,8 @@ public class TableManagerFactory {
       return type;
    }
 
-   private static boolean isUpsertDisabled(AbstractJdbcStoreConfiguration config) {
-      String property = config.properties().getProperty(UPSERT_DISABLED);
+   private static boolean isPropertyDisabled(AbstractJdbcStoreConfiguration config, String propertyName) {
+      String property = config.properties().getProperty(propertyName);
       return property != null && Boolean.parseBoolean(property);
    }
 }

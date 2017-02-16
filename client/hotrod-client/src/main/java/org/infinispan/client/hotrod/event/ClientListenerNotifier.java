@@ -1,25 +1,10 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
-import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
-
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
@@ -30,11 +15,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
+import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.Util;
 
 /**
  * @author Galder Zamarreño
@@ -53,22 +56,27 @@ public class ClientListenerNotifier {
       allowedListeners.put(ClientCacheFailover.class, new Class[]{ClientCacheFailoverEvent.class});
    }
 
-   private final ConcurrentMap<byte[], EventDispatcher> clientListeners = CollectionFactory.makeConcurrentMap(
-         ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+   private final ConcurrentMap<WrappedByteArray, EventDispatcher> clientListeners = new ConcurrentHashMap<>();
 
    private final ExecutorService executor;
    private final Codec codec;
    private final Marshaller marshaller;
+   private final TransportFactory transportFactory;
 
-   protected ClientListenerNotifier(ExecutorService executor, Codec codec, Marshaller marshaller) {
+   private final Consumer<WrappedByteArray> failoverClientListener = this::failoverClientListener;
+
+   protected ClientListenerNotifier(
+         ExecutorService executor, Codec codec,
+         Marshaller marshaller, TransportFactory transportFactory) {
       this.executor = executor;
       this.codec = codec;
       this.marshaller = marshaller;
+      this.transportFactory = transportFactory;
    }
 
-   public static ClientListenerNotifier create(Codec codec, Marshaller marshaller) {
+   public static ClientListenerNotifier create(Codec codec, Marshaller marshaller, TransportFactory transportFactory) {
       ExecutorService executor = Executors.newCachedThreadPool(getRestoreThreadNameThreadFactory());
-      return new ClientListenerNotifier(executor, codec, marshaller);
+      return new ClientListenerNotifier(executor, codec, marshaller, transportFactory);
    }
 
    private static ThreadFactory getRestoreThreadNameThreadFactory() {
@@ -89,7 +97,7 @@ public class ClientListenerNotifier {
    public void addClientListener(AddClientListenerOperation op) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(op.listener);
       EventDispatcher eventDispatcher = new EventDispatcher(op, invocables, op.getCacheName());
-      clientListeners.put(op.listenerId, eventDispatcher);
+      clientListeners.put(new WrappedByteArray(op.listenerId), eventDispatcher);
       if (trace)
          log.tracef("Add client listener with id %s, for listener %s and invocable methods %s",
                Util.printArray(op.listenerId), op.listener, invocables);
@@ -97,8 +105,8 @@ public class ClientListenerNotifier {
 
    public void failoverClientListeners(Set<SocketAddress> failedServers) {
       // Compile all listener ids that need failing over
-      List<byte[]> failoverListenerIds = new ArrayList<>();
-      for (Map.Entry<byte[], EventDispatcher> entry : clientListeners.entrySet()) {
+      List<WrappedByteArray> failoverListenerIds = new ArrayList<>();
+      for (Map.Entry<WrappedByteArray, EventDispatcher> entry : clientListeners.entrySet()) {
          EventDispatcher dispatcher = entry.getValue();
          if (failedServers.contains(dispatcher.transport.getRemoteSocketAddress()))
             failoverListenerIds.add(entry.getKey());
@@ -107,19 +115,25 @@ public class ClientListenerNotifier {
          log.tracef("No event listeners registered in faild servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
-      for (byte[] listenerId : failoverListenerIds) {
-         EventDispatcher dispatcher = clientListeners.get(listenerId);
-         removeClientListener(listenerId);
-         // Invoke failover event callback, if presents
-         invokeFailoverEvent(dispatcher);
-         // Re-execute adding client listener in one of the remaining nodes
-         dispatcher.op.execute();
-         if (trace) {
-            SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
-            log.tracef("Fallback listener id %s from a failed server %s to %s",
-                  Util.printArray(listenerId), failedServerAddress,
-                  dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
-         }
+      failoverListenerIds.forEach(failoverClientListener);
+   }
+
+   public void failoverClientListener(byte[] listenerId) {
+      failoverClientListener(new WrappedByteArray(listenerId));
+   }
+
+   private void failoverClientListener(WrappedByteArray listenerId) {
+      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      removeClientListener(listenerId);
+      // Invoke failover event callback, if presents
+      invokeFailoverEvent(dispatcher);
+      // Re-execute adding client listener in one of the remaining nodes
+      dispatcher.op.execute();
+      if (trace) {
+         SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
+         log.tracef("Fallback listener id %s from a failed server %s to %s",
+               Util.printArray(listenerId.getBytes()), failedServerAddress,
+               dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
       }
    }
 
@@ -132,15 +146,19 @@ public class ClientListenerNotifier {
    }
 
    public void startClientListener(byte[] listenerId) {
-      EventDispatcher eventDispatcher = clientListeners.get(listenerId);
+      EventDispatcher eventDispatcher = clientListeners.get(new WrappedByteArray(listenerId));
       executor.submit(eventDispatcher);
    }
 
    public void removeClientListener(byte[] listenerId) {
+      removeClientListener(new WrappedByteArray(listenerId));
+   }
+
+   private void removeClientListener(WrappedByteArray listenerId) {
       EventDispatcher dispatcher = clientListeners.remove(listenerId);
       dispatcher.transport.release(); // force shutting it
       if (trace)
-         log.tracef("Remove client listener with id %s", Util.printArray(listenerId));
+         log.tracef("Remove client listener with id %s", Util.printArray(listenerId.getBytes()));
    }
 
    public byte[] findListenerId(Object listener) {
@@ -152,20 +170,20 @@ public class ClientListenerNotifier {
    }
 
    public boolean isListenerConnected(byte[] listenerId) {
-      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      EventDispatcher dispatcher = clientListeners.get(new WrappedByteArray(listenerId));
       // If listener not present, is not active
       return dispatcher != null && !dispatcher.stopped;
    }
 
    public Transport findTransport(byte[] listenerId) {
-      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      EventDispatcher dispatcher = clientListeners.get(new WrappedByteArray(listenerId));
       if (dispatcher != null)
          return dispatcher.transport;
 
       return null;
    }
 
-   private Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
+   public Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap = new HashMap<>(4, 0.99f);
 
       for (Method m : listener.getClass().getMethods()) {
@@ -217,9 +235,9 @@ public class ClientListenerNotifier {
    }
 
    public void stop() {
-      for (byte[] listenerId : clientListeners.keySet()) {
+      for (WrappedByteArray listenerId : clientListeners.keySet()) {
          if (trace)
-            log.tracef("Remote cache manager stopping, remove client listener id %s", Util.printArray(listenerId));
+            log.tracef("Remote cache manager stopping, remove client listener id %s", Util.printArray(listenerId.getBytes()));
 
          removeClientListener(listenerId);
       }
@@ -233,7 +251,7 @@ public class ClientListenerNotifier {
    }
 
    public void invokeEvent(byte[] listenerId, ClientEvent clientEvent) {
-      EventDispatcher eventDispatcher = clientListeners.get(listenerId);
+      EventDispatcher eventDispatcher = clientListeners.get(new WrappedByteArray(listenerId));
       eventDispatcher.invokeClientEvent(clientEvent);
    }
 
@@ -265,7 +283,7 @@ public class ClientListenerNotifier {
                clientEvent = null;
             } catch (TransportException e) {
                Throwable cause = e.getCause();
-               if (cause instanceof ClosedChannelException) {
+               if (cause instanceof ClosedChannelException || (cause instanceof SocketException && !transport.isValid())) {
                   // Channel closed, ignore and exit
                   log.debug("Channel closed, exiting event reader thread");
                   stopped = true;
@@ -274,7 +292,11 @@ public class ClientListenerNotifier {
                   log.debug("Timed out reading event, retry");
                } else if (clientEvent != null) {
                   log.unexpectedErrorConsumingEvent(clientEvent, e);
-               }  else {
+               } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset by peer")) {
+                  tryFailoverClientListener();
+                  stopped = true;
+                  return;
+               } else {
                   log.unrecoverableErrorReadingEvent(e, transport.getRemoteSocketAddress());
                   stopped = true;
                   return; // Server is likely gone!
@@ -293,6 +315,20 @@ public class ClientListenerNotifier {
                   stopped = true;
                   return;
                }
+            }
+         }
+      }
+
+      private void tryFailoverClientListener() {
+         try {
+            log.debug("Connection reset by peer, so failover client listener");
+            failoverClientListener(op.listenerId);
+         } catch (TransportException e) {
+            log.debug("Unable to failover client listener, so ignore connection reset");
+            try {
+               transportFactory.addDisconnectedListener(op);
+            } catch (InterruptedException e1) {
+               Thread.currentThread().interrupt();
             }
          }
       }

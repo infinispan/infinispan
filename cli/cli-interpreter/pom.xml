@@ -13,7 +13,7 @@
    <name>Infinispan CLI Interpreter</name>
    <description>Infinispan CLI Interpreter module</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -88,19 +88,19 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>spy</groupId>
-         <artifactId>memcached</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
+         <groupId>net.spy</groupId>
+         <artifactId>spymemcached</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

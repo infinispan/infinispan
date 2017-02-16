@@ -1,13 +1,16 @@
 package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
+import java.util.{Collections, Optional, List => JList}
+
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
-import org.infinispan.notifications.cachelistener.filter.{CacheEventConverter, EventType, CacheEventConverterFactory}
+import org.infinispan.notifications.cachelistener.filter.{CacheEventConverter, CacheEventConverterFactory, EventType}
+import org.infinispan.util.KeyValuePair
 
 /**
  * @author Galder Zamarreño
@@ -24,7 +27,7 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
 
    def testCustomEvents(m: Method) {
       implicit val eventListener = new EventLogListener
-      withClientListener(converterFactory = Some(("static-converter-factory", List.empty))) { () =>
+      withClientListener(converterFactory = Optional.of(new KeyValuePair[String, JList[Bytes]]("static-converter-factory", Collections.emptyList()))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
          client.remove(key)
@@ -47,7 +50,7 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       implicit val eventListener = new EventLogListener
       val customConvertKey = Array[Byte](4, 5, 6)
       val customConvertKeyLength = customConvertKey.length.toByte
-      withClientListener(converterFactory = Some(("dynamic-converter-factory", List(Array[Byte](4, 5, 6))))) { () =>
+      withClientListener(converterFactory = Optional.of(new KeyValuePair[String, JList[Bytes]]("dynamic-converter-factory", Collections.singletonList(Array[Byte](4, 5, 6))))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
          val keyLength = key.length.toByte
@@ -71,7 +74,7 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       val key = Array[Byte](1)
       val value = Array[Byte](2)
       client.put(key, 0, 0, value)
-      withClientListener(converterFactory = Some(("static-converter-factory", List.empty))) { () =>
+      withClientListener(converterFactory = Optional.of(new KeyValuePair[String, JList[Bytes]]("static-converter-factory", Collections.emptyList()))) { () =>
          eventListener.expectNoEvents()
       }
    }
@@ -83,7 +86,7 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       val value = Array[Byte](2)
       val valueLength = value.length.toByte
       client.put(key, 0, 0, value)
-      withClientListener(converterFactory = Some(("static-converter-factory", List.empty)), includeState = true) { () =>
+      withClientListener(converterFactory = Optional.of(new KeyValuePair[String, JList[Bytes]]("static-converter-factory", Collections.emptyList())), includeState = true) { () =>
          eventListener.expectSingleCustomEvent(Array(keyLength) ++ key ++ Array(valueLength) ++ value)
       }
    }

@@ -1,5 +1,8 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -11,9 +14,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus

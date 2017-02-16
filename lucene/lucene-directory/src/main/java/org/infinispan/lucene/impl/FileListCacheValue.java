@@ -1,12 +1,5 @@
 package org.infinispan.lucene.impl;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.lucene.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +10,13 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.lucene.ExternalizerIds;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Maintains a Set of filenames contained in the index. Does not implement Set for simplicity, and does internal locking
@@ -226,7 +226,7 @@ public final class FileListCacheValue implements DeltaAware {
 
       @Override
       public Set<Class<? extends FileListCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends FileListCacheValue>>asSet(FileListCacheValue.class);
+         return Collections.singleton(FileListCacheValue.class);
       }
 
    }

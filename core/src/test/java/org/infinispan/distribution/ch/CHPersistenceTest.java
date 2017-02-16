@@ -10,8 +10,6 @@ import java.util.Map;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;

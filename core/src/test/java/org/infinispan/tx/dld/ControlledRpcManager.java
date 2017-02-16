@@ -1,5 +1,12 @@
 package org.infinispan.tx.dld;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.remoting.responses.Response;
@@ -7,13 +14,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.ReclosableLatch;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -105,13 +105,14 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
+   protected Object beforeInvokeRemotely(ReplicableCommand command) {
       failIfNeeded(command);
       waitBefore(command);
+      return null;
    }
 
    @Override
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
+   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
       waitAfter(command);
       return responseMap;
    }

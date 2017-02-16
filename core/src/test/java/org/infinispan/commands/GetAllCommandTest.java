@@ -1,8 +1,8 @@
 package org.infinispan.commands;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,24 +15,54 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  * @author William Burns
  */
-@Test(groups = "functional")
-public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "commands.GetAllCommandTest")
+public class GetAllCommandTest extends MultipleCacheManagersTest {
 
-   private final CacheMode cacheMode;
-   private final boolean transactional;
    private final int numNodes = 4;
    private final int numEntries = 100;
+   private boolean compatibility = false;
 
-   protected GetAllCommandTest(CacheMode cacheMode, boolean transactional) {
-      this.cacheMode = cacheMode;
-      this.transactional = transactional;
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.DIST_SYNC),
+         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.DIST_SYNC),
+         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.REPL_SYNC),
+         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.REPL_SYNC),
+         new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.DIST_SYNC),
+         new GetAllCommandTest(true) .transactional(true).cacheMode(CacheMode.DIST_SYNC),
+         new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.REPL_SYNC),
+         new GetAllCommandTest(true) .transactional(true).cacheMode(CacheMode.REPL_SYNC),
+      };
+   }
+
+   public GetAllCommandTest() {
+      this(false);
+   }
+
+   public GetAllCommandTest(boolean compatibility) {
       this.cleanup = CleanupPhase.AFTER_METHOD;
+      this.compatibility = compatibility;
+   }
+
+   public GetAllCommandTest compatibility(boolean enabled) {
+      compatibility = enabled;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return new StringBuilder().append('[')
+         .append(cacheMode)
+         .append(", tx=").append(transactional)
+         .append(", compatibility=").append(compatibility).append("]").toString();
    }
 
    public void testGetAllKeyNotPresent() {
@@ -46,17 +76,15 @@ public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void amendConfiguration(ConfigurationBuilder builder) {
-   }
-
-   static void enableCompatibility(ConfigurationBuilder builder) {
-      builder.compatibility().enable();
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
-      amendConfiguration(dcc);
+      if (compatibility) {
+         dcc.compatibility().enable();
+      }
+      if (transactional) {
+         dcc.transaction().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+      }
       createCluster(dcc, numNodes);
       waitForClusterToForm();
    }

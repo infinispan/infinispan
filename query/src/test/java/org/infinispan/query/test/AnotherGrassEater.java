@@ -1,18 +1,15 @@
 package org.infinispan.query.test;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.builtin.StringBridge;
-
 import java.io.Serializable;
 
-@ProvidedId(bridge = @FieldBridge(impl = StringBridge.class))
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.SortableField;
+import org.hibernate.search.annotations.Store;
+import org.infinispan.marshall.core.ExternalPojo;
+
 @Indexed(index = "anotherclass")
-public class AnotherGrassEater implements Serializable {
+public class AnotherGrassEater implements Serializable, ExternalPojo {
    private static final long serialVersionUID = -5685487467005726138L;
    @Field(store = Store.YES)
    private String name;

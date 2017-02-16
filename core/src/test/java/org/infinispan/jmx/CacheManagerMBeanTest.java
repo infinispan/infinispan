@@ -1,27 +1,31 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.regex.Pattern;
-
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import static org.infinispan.test.TestingUtil.*;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * Tests whether the attributes defined by DefaultCacheManager work correct.
@@ -129,12 +133,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    @Test(dependsOnMethods="testJmxOperations")
    public void testCacheMBeanUnregisterOnRemove() throws Exception {
-      Cache<Object, Object> testCache = cacheManager.getCache("test");
+      cacheManager.defineConfiguration("test", new ConfigurationBuilder().build());
+      assertNotNull(cacheManager.getCache("test"));
       ObjectName cacheMBean = getCacheObjectName(JMX_DOMAIN, "test(local)");
       assertTrue(existsObject(cacheMBean));
       cacheManager.removeCache("test");
       assertFalse(existsObject(cacheMBean));
-      cacheManager.getCache("test");
    }
 
 }

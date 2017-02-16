@@ -1,10 +1,10 @@
 package org.infinispan.globalstate;
 
-import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
-import org.testng.annotations.Test;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+
+import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
+import org.testng.annotations.Test;
 
 @Test(testName = "globalstate.ScopedPersistentStateTest", groups = "functional")
 public class ScopedPersistentStateTest {

@@ -1,5 +1,12 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
@@ -7,15 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.DistTopologyChangeUnderLoadSingleOwnerTest")
 public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServersTest {
@@ -54,11 +53,7 @@ public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServe
       TestingUtil.waitForRehashToComplete(cache(0));
 
       // Start server
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
-      registerCacheManager(cm);
-      HotRodClientTestingUtil.startHotRodServer(cm);
-      waitForClusterToForm();
-      TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
+      addHotRodServer(getCacheConfiguration());
 
       putHammer.stop = true;
       putHammerFuture.get();

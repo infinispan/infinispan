@@ -1,5 +1,7 @@
 package org.infinispan.distribution.rehash;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -7,8 +9,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 @Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {

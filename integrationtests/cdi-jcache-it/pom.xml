@@ -66,11 +66,16 @@
          <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
-   
+
    <build>
       <plugins>
-         
+
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

@@ -1,12 +1,14 @@
 package org.infinispan.query.programmaticmapping;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
 import java.lang.annotation.ElementType;
 import java.util.Properties;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
@@ -20,8 +22,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Verify programmatic configuration of indexing properties via SearchMapping
@@ -68,7 +68,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
             final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
             final Query q = qb.keyword().onField("name").matching("Test")
                   .createQuery();
-            final CacheQuery cq = sm.getQuery(q, BondPVO.class);
+            final CacheQuery<?> cq = sm.getQuery(q, BondPVO.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -136,7 +136,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
                   .get();
             final Query q = qb.keyword().onField("name").matching("Test")
                   .createQuery();
-            final CacheQuery cq = sm.getQuery(q, BondPVO2.class);
+            final CacheQuery<?> cq = sm.getQuery(q, BondPVO2.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });

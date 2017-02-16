@@ -15,6 +15,11 @@
 
    <dependencies>
       <dependency>
+         <groupId>com.github.ben-manes.caffeine</groupId>
+         <artifactId>caffeine</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
       </dependency>
@@ -71,6 +76,8 @@
             <configuration>
                <compilerArgument combine.children="append">-XDignore.symbol.file</compilerArgument>
                <fork combine.children="append">true</fork>
+               <source>1.8</source>
+               <target>1.8</target>
             </configuration>
          </plugin>
          <plugin>
@@ -100,7 +107,6 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
-               <trimStackTrace combine.self="override">false</trimStackTrace>
                <argLine combine.self="override">-Xmx768m</argLine>
                <properties combine.self="override">
                   <property>

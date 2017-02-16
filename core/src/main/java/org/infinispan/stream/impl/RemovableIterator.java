@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+
+import org.infinispan.Cache;
 
 /**
  * An Iterator implementation that allows for a Iterator that doesn't allow remove operations to

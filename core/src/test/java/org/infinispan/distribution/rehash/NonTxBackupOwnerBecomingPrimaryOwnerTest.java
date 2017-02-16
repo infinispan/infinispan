@@ -1,11 +1,26 @@
 package org.infinispan.distribution.rehash;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -20,22 +35,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests data loss during state transfer a backup owner of a key becomes the primary owner
@@ -126,14 +126,9 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(2));
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache0.getRpcManager().getMembers().size() == 3 &&
-                  cache1.getRpcManager().getMembers().size() == 3 &&
-                  cache2.getRpcManager().getMembers().size() == 3;
-         }
-      });
+      eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
+            cache1.getRpcManager().getMembers().size() == 3 &&
+            cache2.getRpcManager().getMembers().size() == 3);
 
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
       assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
@@ -145,21 +140,16 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
             op.getCommandClass(), false, false);
-      cache1.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor1, NonTxDistributionInterceptor.class);
+      cache1.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor1, TriangleDistributionInterceptor.class);
 
       // Every operation command will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
             op.getCommandClass(), true, false);
-      cache2.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
+      cache2.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return perform(op, cache0, key);
-         }
-      });
+      Future<Object> future = fork(() -> perform(op, cache0, key));
 
       // Wait for the command to be executed on cache2 and unblock it
       afterCache2Barrier.await(10, TimeUnit.SECONDS);
@@ -218,7 +208,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          assertEquals(2, numberOfOwners);
          if (members.size() == 1)
-            return Arrays.asList(members.get(0));
+            return Collections.singletonList(members.get(0));
          else if (members.size() == 2)
             return Arrays.asList(members.get(0), members.get(1));
          else
@@ -231,20 +221,17 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
          throws InterruptedException {
       LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
       LocalTopologyManager spyLtm = Mockito.spy(component);
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            // Ignore the first topology update on the joiner, which is with the topology before the join
-            if (topology.getTopologyId() != currentTopologyId) {
-               checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-               checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                     10, TimeUnit.SECONDS);
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         // Ignore the first topology update on the joiner, which is with the topology before the join
+         if (topology.getTopologyId() != currentTopologyId) {
+            checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
+            checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
+                  10, TimeUnit.SECONDS);
          }
+         return invocation.callRealMethod();
       }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+                                           any(AvailabilityMode.class), anyInt(), any(Address.class));
       TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
    }
 }

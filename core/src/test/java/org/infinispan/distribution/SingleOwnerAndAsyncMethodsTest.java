@@ -1,16 +1,16 @@
 package org.infinispan.distribution;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.context.Flag;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.Assert.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.context.Flag;
+import org.testng.annotations.Test;
 
 /**
  * Non-transactional tests for asynchronous methods in a distributed
@@ -26,8 +26,6 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
    public SingleOwnerAndAsyncMethodsTest() {
       INIT_CLUSTER_SIZE = 2;
       numOwners = 1;
-      sync = true;
-      tx = false;
       l1CacheEnabled = false;
    }
 

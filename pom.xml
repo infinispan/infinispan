@@ -21,7 +21,9 @@
       <module>parent</module>
       <module>commons</module>
       <module>commons-test</module>
+      <module>plugins/infinispan-defaults-maven-plugin</module>
       <module>core</module>
+      <module>cloud</module>
       <module>extended-statistics</module>
       <module>tools</module>
       <module>query</module>
@@ -40,6 +42,7 @@
       <module>persistence/cli</module>
       <module>persistence/leveldb</module>
       <module>persistence/rest</module>
+      <module>persistence/rocksdb</module>
       <module>persistence/soft-index</module>
       <module>server</module>
       <module>server/core</module>
@@ -47,6 +50,7 @@
       <module>server/hotrod</module>
       <module>server/websocket</module>
       <module>server/rest</module>
+      <module>server/router</module>
       <module>client/hotrod-client</module>
       <module>atomic-factory</module>
       <module>all</module>
@@ -74,11 +78,9 @@
       <module>cdi/remote</module>
       <module>server/integration</module>
       <module>jcache</module>
-      <module>as-modules/embedded</module>
-      <module>as-modules/client</module>
+      <module>wildfly-modules</module>
       <module>integrationtests</module>
-      <module>integrationtests/as-integration-embedded</module>
-      <module>integrationtests/as-integration-client</module>
+      <module>integrationtests/wildfly-modules</module>
       <module>integrationtests/as-lucene-directory</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
@@ -89,13 +91,18 @@
       <module>integrationtests/all-embedded-it</module>
       <module>integrationtests/all-embedded-query-it</module>
       <module>integrationtests/all-remote-it</module>
+      <module>integrationtests/spring-boot-it</module>
+      <module>client/marshaller</module>
    </modules>
 
    <profiles>
      <profile>
         <id>distribution</id>
         <modules>
-           <module>javadoc</module>
+           <module>documentation</module>
+           <module>javadoc/javadoc-embedded</module>
+           <module>javadoc/javadoc-remote</module>
+           <module>javadoc/javadoc-all</module>
            <module>distribution</module>
         </modules>
      </profile>

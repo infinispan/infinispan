@@ -1,5 +1,7 @@
 package org.infinispan.expiry;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,8 +11,6 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Test(groups = "functional", testName = "expiry.ReplicatedExpiryTest")
 public class ReplicatedExpiryTest extends MultipleCacheManagersTest {

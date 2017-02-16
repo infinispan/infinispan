@@ -1,5 +1,8 @@
 package org.infinispan.test.integration.as.jms.infinispan;
 
+import static org.infinispan.test.integration.as.VersionTestHelper.hibernateOrmModuleName;
+import static org.infinispan.test.integration.as.VersionTestHelper.hibernateSearchModuleName;
+
 import org.infinispan.test.integration.as.jms.controller.RegistrationController;
 import org.infinispan.test.integration.as.jms.controller.RegistrationMdb;
 import org.infinispan.test.integration.as.jms.infinispan.controller.MembersCache;
@@ -45,6 +48,8 @@ public final class DeploymentJmsMasterSlaveAndInfinispan {
             .create(WebArchive.class, name + ".war")
             .addClasses(RegistrationController.class, RegisteredMember.class, RegistrationConfiguration.class, SearchNewEntityJmsMasterSlaveAndInfinispan.class, MembersCache.class)
             .addAsResource(new StringAsset(unitDef.exportAsString()), "META-INF/persistence.xml")
+            .addAsResource("default-jgroups4-udp.xml")
+            .addAsWebInfResource("jboss-deployment-structure-excludejavassist.xml", "jboss-deployment-structure.xml")
             .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
       return webArchive;
    }
@@ -103,15 +108,27 @@ public final class DeploymentJmsMasterSlaveAndInfinispan {
             .name("hibernate.search.default.directory_provider")
             .value("infinispan")
             .up()
+            //ISPN-7227: SearchNewEntityJmsMasterSlaveUsingInfinispanAndModulesIT intentionally uses main slot of WF modules
+            //which causes that default ISPN config loads old JGroups config. Once WF uses JGroups4, this option can be removed (and default-jgroups4-udp.xml as well)
+            .createProperty()
+            .name("hibernate.search.infinispan.configuration.transport_override_resourcename")
+            .value("default-jgroups4-udp.xml")
+            .up()
             .createProperty()
             .name("hibernate.search.default.worker.execution")
             .value("sync")
             .up()
-            // Disable the automatically enabled Hibernate Search instance which is included in WildFly
             .createProperty()
+            // Override the version of Hibernate Search module to use
             .name( "wildfly.jpa.hibernate.search.module" )
-            .value( "none" )
-            .up();
+            .value(hibernateSearchModuleName())
+            .up()
+            .createProperty()
+            // Override the version of Hibernate ORM module to use
+            .name("jboss.as.jpa.providerModule")
+            .value(hibernateOrmModuleName())
+            .up()
+            ;
    }
 
    private static Asset activeMqJmsXml() {

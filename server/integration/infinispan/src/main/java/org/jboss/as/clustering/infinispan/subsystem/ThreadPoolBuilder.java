@@ -65,4 +65,3 @@ public class ThreadPoolBuilder extends ComponentConfigurationBuilder<ThreadPoolC
     }
 
 }
-

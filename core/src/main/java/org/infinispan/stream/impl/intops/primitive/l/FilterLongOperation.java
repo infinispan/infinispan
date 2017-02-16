@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.l;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.LongPredicate;
 import java.util.stream.LongStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs filter operation on a {@link LongStream}

@@ -28,6 +28,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
+import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.kohsuke.MetaInfServices;
 
@@ -54,16 +55,19 @@ public class InfinispanExtension implements Extension {
         SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, Namespace.CURRENT.getVersion());
         // Create the path resolver handler
         final ResolvePathHandler resolvePathHandler;
+        final PathManager pathManager;
         if (context.getProcessType().isServer()) {
             resolvePathHandler = ResolvePathHandler.Builder.of(context.getPathManager())
                     .setPathAttribute(FileStoreResource.PATH)
                     .setRelativeToAttribute(FileStoreResource.RELATIVE_TO)
                     .build();
+            pathManager = context.getPathManager();
         } else {
             resolvePathHandler = null;
+            pathManager = null;
         }
 
-        subsystem.registerSubsystemModel(new InfinispanSubsystemRootResource(resolvePathHandler, context.isRuntimeOnlyRegistrationValid()));
+        subsystem.registerSubsystemModel(new InfinispanSubsystemRootResource(resolvePathHandler, pathManager, context.isRuntimeOnlyRegistrationValid()));
         subsystem.registerXMLElementWriter(new InfinispanSubsystemXMLWriter());
     }
 

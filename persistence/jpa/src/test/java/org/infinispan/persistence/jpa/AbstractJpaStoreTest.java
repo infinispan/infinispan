@@ -32,7 +32,7 @@ import org.testng.annotations.BeforeMethod;
 public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    protected static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa";
-   
+
    protected EmbeddedCacheManager cm;
 
    protected AdvancedLoadWriteStore cs;
@@ -61,7 +61,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       store.start();
 
       assertNotNull(store.getEntityManagerFactory());
-      assertTrue(store.getEntityManagerFactory() instanceof HibernateEntityManagerFactory);
+      assertTrue(store.getEntityManagerFactory() instanceof org.hibernate.internal.SessionFactoryImpl);
 
       return store;
    }
@@ -84,8 +84,8 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    @AfterMethod(alwaysRun = true)
    public void stopMarshaller() {
       //marshaller.stop();
-      cs.stop();
-      cm.stop();
+      if (cs != null) cs.stop();
+      if (cm != null) cm.stop();
    }
 
    /**

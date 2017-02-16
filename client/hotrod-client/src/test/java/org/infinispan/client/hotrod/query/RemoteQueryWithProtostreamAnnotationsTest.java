@@ -1,5 +1,12 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -20,13 +27,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
-
-import java.io.IOException;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for remote queries over HotRod on a local cache using RAM directory.
@@ -195,7 +195,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       // get memo1 back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(Memo.class)
-            .having("text").like("%ipsum%").toBuilder()
+            .having("text").like("%ipsum%")
             .build();
       List<Memo> list = query.list();
       assertNotNull(list);
@@ -205,7 +205,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
       // get memo2 back from remote cache via query and check its attributes
       query = qf.from(Memo.class)
-            .having("author.name").eq("Adrian").toBuilder()
+            .having("author.name").eq("Adrian")
             .build();
       list = query.list();
       assertNotNull(list);

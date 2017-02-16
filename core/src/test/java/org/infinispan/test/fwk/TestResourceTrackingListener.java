@@ -1,23 +1,9 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.Security;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
-import org.testng.ITestNGListener;
 import org.testng.ITestResult;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * TestNG listener to call {@link TestResourceTracker#testStarted(String)} and

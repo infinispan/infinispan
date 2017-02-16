@@ -1,9 +1,5 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.Traversable;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +12,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.api.functional.Traversable;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 
 public final class Traversables {
 

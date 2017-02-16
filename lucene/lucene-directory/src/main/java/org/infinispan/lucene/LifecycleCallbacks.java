@@ -1,15 +1,15 @@
 package org.infinispan.lucene;
 
+import java.util.Map;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lucene.impl.AddOperation;
 import org.infinispan.lucene.impl.DeleteOperation;
 import org.infinispan.lucene.impl.FileListCacheValue;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.lucene.impl.FileListCacheValueDelta;
-
-import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific

@@ -1,12 +1,12 @@
 package org.infinispan.distribution;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 /**
  * @author Mircea.Markus@jboss.com

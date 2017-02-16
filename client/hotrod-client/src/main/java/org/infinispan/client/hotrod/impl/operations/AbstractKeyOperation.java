@@ -4,15 +4,15 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.jboss.logging.BasicLogger;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Basic class for all hot rod operations that manipulate a key.
@@ -22,15 +22,12 @@ import org.jboss.logging.BasicLogger;
  */
 @Immutable
 public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T> {
-
-   private static final BasicLogger log = LogFactory.getLog(AbstractKeyOperation.class);
-
    protected final Object key;
    protected final byte[] keyBytes;
 
    protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
       this.key = key;
       this.keyBytes = keyBytes;
    }

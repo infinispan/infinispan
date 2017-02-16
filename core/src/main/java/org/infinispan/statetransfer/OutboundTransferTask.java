@@ -1,5 +1,15 @@
 package org.infinispan.statetransfer;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -10,7 +20,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -20,12 +29,6 @@ import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -47,7 +50,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final Address destination;
 
-   private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
+   private final Set<Integer> segments = new CopyOnWriteArraySet<>();
 
    private final int stateTransferChunkSize;
 
@@ -144,7 +147,7 @@ public class OutboundTransferTask implements Runnable {
          for (InternalCacheEntry ice : dataContainer) {
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
             int segmentId = readCh.getSegment(key);
-            if (segments.contains(segmentId)) {
+            if (segments.contains(segmentId) && !ice.isL1Entry()) {
                sendEntry(ice, segmentId);
             }
          }
@@ -153,20 +156,17 @@ public class OutboundTransferTask implements Runnable {
          if (stProvider != null) {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               AdvancedCacheLoader.CacheLoaderTask task = new AdvancedCacheLoader.CacheLoaderTask() {
-                  @Override
-                  public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-                        int segmentId = readCh.getSegment(me.getKey());
-                        if (segments.contains(segmentId)) {
-                           try {
-                              InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
-                              sendEntry(icv, segmentId);
-                           } catch (CacheException e) {
-                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                           }
-                        }
+               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
+                  int segmentId = readCh.getSegment(me.getKey());
+                  if (segments.contains(segmentId)) {
+                     try {
+                        InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
+                        sendEntry(icv, segmentId);
+                     } catch (CacheException e) {
+                        log.failedLoadingValueFromCacheStore(me.getKey(), e);
                      }
-                  };
+                  }
+               };
                stProvider.process(filter, task, new WithinThreadExecutor(), true, true);
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
@@ -178,13 +178,16 @@ public class OutboundTransferTask implements Runnable {
       } catch (Throwable t) {
          // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
          if (isCancelled()) {
-            log.debugf("Transfer of segments %s of cache %s to node %s cancelled", segments, cacheName, destination);
+            if (trace) {
+               log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s", destination,
+                          segments);
+            }
          } else {
             log.failedOutBoundTransferExecution(t);
          }
       }
       if (trace) {
-         log.tracef("Outbound transfer of segments %s of cache %s to node %s is complete", segments, cacheName, destination);
+         log.tracef("Completed outbound transfer to node %s, segments %s", destination, segments);
       }
    }
 
@@ -195,21 +198,17 @@ public class OutboundTransferTask implements Runnable {
          accumulatedEntries = 0;
       }
 
-      List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
-      if (entries == null) {
-         entries = new ArrayList<InternalCacheEntry>();
-         entriesBySegment.put(segmentId, entries);
-      }
+      List<InternalCacheEntry> entries = entriesBySegment.computeIfAbsent(segmentId, k -> new ArrayList<>());
       entries.add(ice);
       accumulatedEntries++;
    }
 
    private void sendEntries(boolean isLast) {
-      List<StateChunk> chunks = new ArrayList<StateChunk>();
+      List<StateChunk> chunks = new ArrayList<>();
       for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
          List<InternalCacheEntry> entries = e.getValue();
          if (!entries.isEmpty() || isLast) {
-            chunks.add(new StateChunk(e.getKey(), new ArrayList<InternalCacheEntry>(entries), isLast));
+            chunks.add(new StateChunk(e.getKey(), new ArrayList<>(entries), isLast));
             entries.clear();
          }
       }
@@ -218,7 +217,7 @@ public class OutboundTransferTask implements Runnable {
          for (int segmentId : segments) {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
-               chunks.add(new StateChunk(segmentId, Collections.<InternalCacheEntry>emptyList(), true));
+               chunks.add(new StateChunk(segmentId, Collections.emptyList(), true));
             }
          }
       }
@@ -226,9 +225,9 @@ public class OutboundTransferTask implements Runnable {
       if (!chunks.isEmpty()) {
          if (trace) {
             if (isLast) {
-               log.tracef("Sending last chunk containing %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, segments, cacheName, destination);
+               log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination, accumulatedEntries, segments);
             } else {
-               log.tracef("Sending %d cache entries from segments %s of cache %s to node %s", accumulatedEntries, entriesBySegment.keySet(), cacheName, destination);
+               log.tracef("Sending to node %s %d cache entries from segments %s", destination, accumulatedEntries, entriesBySegment.keySet());
             }
          }
 
@@ -241,9 +240,9 @@ public class OutboundTransferTask implements Runnable {
             cancel();
          } catch (Exception e) {
             if (isCancelled()) {
-               log.debugf("Stopping cancelled transfer of segments %s of cache %s to node %s", segments, cacheName, destination);
+               log.debugf("Stopping cancelled transfer to node %s, segments %s", destination, segments);
             } else {
-               log.errorf(e, "Failed to send entries to node %s : %s", destination, e.getMessage());
+               log.errorf(e, "Failed to send entries to node %s: %s", destination, e.getMessage());
             }
          }
       }
@@ -257,8 +256,8 @@ public class OutboundTransferTask implements Runnable {
    public void cancelSegments(Set<Integer> cancelledSegments) {
       if (segments.removeAll(cancelledSegments)) {
          if (trace) {
-            log.tracef("Cancelling outbound transfer of segments %s of cache %s to node %s (remaining segments %s)",
-                  cancelledSegments, cacheName, destination, segments);
+            log.tracef("Cancelling outbound transfer to node %s, segments %s (remaining segments %s)",
+                       destination, cancelledSegments, segments);
          }
          entriesBySegment.keySet().removeAll(cancelledSegments);  // here we do not update accumulatedEntries but this inaccuracy does not cause any harm
          if (segments.isEmpty()) {
@@ -272,7 +271,7 @@ public class OutboundTransferTask implements Runnable {
     */
    public void cancel() {
       if (runnableFuture != null && !runnableFuture.isCancelled()) {
-         log.debugf("Cancelling outbound transfer of segments %s of cache %s to node %s", segments, cacheName, destination);
+         log.debugf("Cancelling outbound transfer to node %s, segments %s", destination, segments);
          runnableFuture.cancel(true);
       }
    }

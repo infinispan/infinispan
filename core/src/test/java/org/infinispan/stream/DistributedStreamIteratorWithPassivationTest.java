@@ -1,5 +1,21 @@
 package org.infinispan.stream;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.cache.CacheMode;
@@ -24,20 +40,6 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Test to verify distributed stream behavior when a loader with passivation is present
  *
@@ -53,7 +55,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
    protected DistributedStreamIteratorWithPassivationTest(boolean tx, CacheMode mode) {
       super(tx, mode);
    }
-   
+
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       builder.clustering().hash().numOwners(1);
@@ -122,7 +124,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          sm.stop();
       }
    }
-   
+
    @Test
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
@@ -136,7 +138,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
       final MagicKey loaderKey = new MagicKey(cache0);
       final String loaderValue = "loader0";
-      
+
       cache0.putAll(originalValues);
 
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
@@ -199,9 +201,9 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
       final MagicKey loaderKey = new MagicKey(cache0);
       final String loaderValue = "loader0";
-      
+
       cache0.putAll(originalValues);
-      
+
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 
@@ -335,4 +337,3 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       }
    }
 }
-

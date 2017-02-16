@@ -1,5 +1,13 @@
 package org.infinispan.transaction.impl;
 
+import static javax.transaction.xa.XAResource.XA_OK;
+import static javax.transaction.xa.XAResource.XA_RDONLY;
+
+import java.util.List;
+
+import javax.transaction.Transaction;
+import javax.transaction.xa.XAException;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -18,13 +26,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
-import javax.transaction.xa.XAException;
-import java.util.List;
-
-import static javax.transaction.xa.XAResource.XA_OK;
-import static javax.transaction.xa.XAResource.XA_RDONLY;
-
 /**
  * Coordinates transaction prepare/commits as received from the {@link javax.transaction.TransactionManager}.
  * Integrates with the TM through either {@link org.infinispan.transaction.xa.TransactionXaAdapter} or
@@ -35,8 +36,9 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
  * @since 5.0
  */
 public class TransactionCoordinator {
-
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private CommandsFactory commandsFactory;
    private InvocationContextFactory icf;
    private InterceptorChain invoker;
@@ -46,7 +48,9 @@ public class TransactionCoordinator {
    private CommandCreator commandCreator;
    private volatile boolean shuttingDown = false;
 
-   boolean trace;
+   private boolean totalOrder;
+   private boolean defaultOnePhaseCommit;
+   private boolean use1PcForAutoCommitTransactions;
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextFactory icf, InterceptorChain invoker,
@@ -57,7 +61,12 @@ public class TransactionCoordinator {
       this.txTable = txTable;
       this.recoveryManager = recoveryManager;
       this.configuration = configuration;
-      trace = log.isTraceEnabled();
+
+      use1PcForAutoCommitTransactions = configuration.transaction().use1PcForAutoCommitTransactions();
+      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      defaultOnePhaseCommit = Configurations.isOnePhaseCommit(configuration) ||
+            Configurations.isOnePhaseTotalOrderCommit(configuration);
+
    }
 
    @Start(priority = 1)
@@ -194,7 +203,7 @@ public class TransactionCoordinator {
       }
       try {
          boolean isRecoveryEnabled = recoveryManager != null;
-         boolean isTotalOrder = onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder();
+         boolean isTotalOrder = onePhaseCommit && totalOrder;
          if (!isRecoveryEnabled && !isTotalOrder) {
             //we cannot send the rollback in Total Order because it will create a new remote transaction.
             //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
@@ -241,7 +250,7 @@ public class TransactionCoordinator {
    }
 
    public boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
-      return configuration.transaction().use1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
+      return use1PcForAutoCommitTransactions && localTransaction.isImplicitTransaction();
    }
 
    private static interface CommandCreator {
@@ -250,7 +259,6 @@ public class TransactionCoordinator {
    }
 
    private boolean isOnePhaseCommit(LocalTransaction localTransaction) {
-      return Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction) ||
-            Configurations.isOnePhaseTotalOrderCommit(configuration);
+      return defaultOnePhaseCommit || is1PcForAutoCommitTransaction(localTransaction);
    }
 }

@@ -1,18 +1,18 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * This DistributedCallable is used to remove registered {@link RemoteClusterListener} on each of the various nodes
@@ -59,7 +59,7 @@ public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<
    public static class Externalizer extends AbstractExternalizer<ClusterListenerRemoveCallable> {
       @Override
       public Set<Class<? extends ClusterListenerRemoveCallable>> getTypeClasses() {
-         return Util.<Class<? extends ClusterListenerRemoveCallable>>asSet(ClusterListenerRemoveCallable.class);
+         return Collections.singleton(ClusterListenerRemoveCallable.class);
       }
 
       @Override

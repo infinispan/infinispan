@@ -1,5 +1,9 @@
 package org.infinispan.lock.singlelock;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -19,10 +23,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.dld.ControlledRpcManager;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Mircea Markus

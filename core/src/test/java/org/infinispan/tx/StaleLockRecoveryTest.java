@@ -1,5 +1,11 @@
 package org.infinispan.tx;
 
+import java.util.List;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,11 +16,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import java.util.List;
 
 /**
  * Tests what happens when a member acquires locks and then dies.
@@ -30,7 +31,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(500);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
       c1 = caches.get(0);
       c2 = caches.get(1);

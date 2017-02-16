@@ -7,9 +7,9 @@ import org.infinispan.arquillian.model.RemoteInfinispanCacheManager;
 
 /**
  * A tuple-style object holder containing references to Remote interfaces for JMX statistics access.
- * 
+ *
  * @author Michal Linhard (mlinhard@redhat.com)
- * 
+ *
  */
 public class RemoteInfinispanMBeans {
     public String serverName;

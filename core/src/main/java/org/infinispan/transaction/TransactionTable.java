@@ -1,9 +1,10 @@
 package org.infinispan.transaction;
 
-import org.infinispan.transaction.xa.GlobalTransaction;
+import java.util.Collection;
 
 import javax.transaction.Transaction;
-import java.util.Collection;
+
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Interface that allows to fetch the {@link org.infinispan.transaction.xa.GlobalTransaction} associated to local or

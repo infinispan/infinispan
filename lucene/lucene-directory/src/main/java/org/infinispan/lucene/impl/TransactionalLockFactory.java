@@ -1,14 +1,14 @@
 package org.infinispan.lucene.impl;
 
+import java.io.IOException;
+
+import javax.transaction.TransactionManager;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import java.io.IOException;
-
-import javax.transaction.TransactionManager;
 
 /**
  * <p>Factory for locks obtained in <code>InfinispanDirectory</code>, this factory produces instances of

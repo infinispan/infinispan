@@ -1,16 +1,17 @@
 package org.infinispan.test.integration.as.jms.controller;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.Search;
-import org.infinispan.test.integration.as.jms.model.RegisteredMember;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.List;
+
+import org.apache.lucene.search.Query;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
+import org.infinispan.test.integration.as.jms.model.RegisteredMember;
 
 @Stateful
 public class RegistrationController {

@@ -1,25 +1,24 @@
 package org.infinispan.distribution.rehash;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
@@ -61,17 +60,12 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
       // Every PutKeyValueCommand will be blocked before reaching the distribution interceptor
       CyclicBarrier distInterceptorBarrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(distInterceptorBarrier, PutKeyValueCommand.class, false, false);
-      cache0.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor, NonTxDistributionInterceptor.class);
+      cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor, TriangleDistributionInterceptor.class);
 
       for (int i = 0; i < NUM_KEYS; i++) {
          // Try to put a key/value from cache0 with cache1 the primary owner
          final MagicKey key = new MagicKey("key" + i, cache1);
-         Future<Object> future = fork(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-               return conditional ? cache0.putIfAbsent(key, "v") : cache0.put(key, "v");
-            }
-         });
+         Future<Object> future = fork(() -> conditional ? cache0.putIfAbsent(key, "v") : cache0.put(key, "v"));
 
          // Wait for the put command to pass through EntryWrappingInterceptor
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);

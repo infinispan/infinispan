@@ -1,5 +1,9 @@
 package org.infinispan.query.searchmanager;
 
+import static org.testng.Assert.fail;
+
+import java.util.concurrent.TimeUnit;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -13,10 +17,6 @@ import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.Assert.fail;
 
 /**
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
@@ -44,7 +44,7 @@ public class TimeoutTest extends SingleCacheManagerTest {
             .keyword().onField("bar").matching("1")
             .createQuery();
 
-      CacheQuery cacheQuery = searchManager.getQuery(query);
+      CacheQuery<?> cacheQuery = searchManager.getQuery(query);
       cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {

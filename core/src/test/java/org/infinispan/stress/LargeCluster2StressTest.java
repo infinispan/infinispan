@@ -1,5 +1,15 @@
 package org.infinispan.stress;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -21,16 +31,6 @@ import org.jgroups.conf.ProtocolStackConfigurator;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Test that we're able to start a cluster with lots of caches in a single JVM.
  *
@@ -47,7 +47,7 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
    private static final int NUM_SEGMENTS = 1000;
    private static final int TIMEOUT_SECONDS = 180;
 
-   public static final int OOB_MAX_THREADS = 50;
+   public static final int JGROUPS_MAX_THREADS = 50;
    public static final int TRANSPORT_MAX_THREADS = 10;
    public static final int TRANSPORT_QUEUE_SIZE = 1000;
    public static final int REMOTE_MAX_THREADS = 50;
@@ -68,8 +68,8 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       ProtocolConfiguration udpConfiguration = configurator.getProtocolStack().get(0);
       assertEquals("UDP", udpConfiguration.getProtocolName());
       udpConfiguration.getProperties().put("mcast_addr", "224.0.0.15");
-      udpConfiguration.getProperties().put("oob_thread_pool.min_threads", "1");
-      udpConfiguration.getProperties().put("oob_thread_pool.max_threads", String.valueOf(OOB_MAX_THREADS));
+      udpConfiguration.getProperties().put("thread_pool.min_threads", "0");
+      udpConfiguration.getProperties().put("thread_pool.max_threads", String.valueOf(JGROUPS_MAX_THREADS));
       ProtocolConfiguration gmsConfiguration = configurator.getProtocolStack().get(9);
       assertEquals("pbcast.GMS", gmsConfiguration.getProtocolName());
       gmsConfiguration.getProperties().put("join_timeout", "5000");

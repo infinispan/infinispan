@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
@@ -8,13 +10,11 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-@Test(testName = "xsite.XSiteCacheConfigurationTest", groups = "functional, xsite")
+@Test(groups = "functional, xsite", testName = "xsite.XSiteCacheConfigurationTest")
 public class XSiteCacheConfigurationTest {
 
    public void testApi() {

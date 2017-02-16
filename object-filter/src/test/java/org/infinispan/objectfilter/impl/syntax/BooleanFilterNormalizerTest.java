@@ -1,13 +1,12 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
-import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -15,13 +14,12 @@ import static org.junit.Assert.assertEquals;
  */
 public class BooleanFilterNormalizerTest {
 
-   private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
-   private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-   private final JPQLParser<Class<?>> parser = new JPQLParser<>();
+   private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));
+
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   private void assertExpectedTree(String jpaQuery, String expectedExprStr) {
-      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery, propertyHelper);
+   private void assertExpectedTree(String queryString, String expectedExprStr) {
+      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse(queryString, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       assertEquals(expectedExprStr, expr.toString());
    }
@@ -30,31 +28,31 @@ public class BooleanFilterNormalizerTest {
    public void testRepeatedPredicateDuplication1() throws Exception {
       // predicates on repeated attributes do not get optimized
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where p.phoneNumbers.number = '1234' and p.phoneNumbers.number = '1234'",
-                         "AND(EQUAL(PROP(phoneNumbers,number*), CONST(1234)), EQUAL(PROP(phoneNumbers,number*), CONST(1234)))");
+                         "AND(EQUAL(PROP(phoneNumbers.number*), CONST(\"1234\")), EQUAL(PROP(phoneNumbers.number*), CONST(\"1234\")))");
    }
 
    @Test
    public void testPredicateDuplication1() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person where name = 'John' or name = 'John'",
-                         "EQUAL(PROP(name), CONST(John))");
+                         "EQUAL(PROP(name), CONST(\"John\"))");
    }
 
    @Test
    public void testPredicateDuplication2() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person where name = 'John' and name = 'John'",
-                         "EQUAL(PROP(name), CONST(John))");
+                         "EQUAL(PROP(name), CONST(\"John\"))");
    }
 
    @Test
    public void testPredicateDuplication3() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' or name != 'Johnny'",
-                         "NOT_EQUAL(PROP(name), CONST(Johnny))");
+                         "NOT_EQUAL(PROP(name), CONST(\"Johnny\"))");
    }
 
    @Test
    public void testPredicateDuplication4() throws Exception {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' and name != 'Johnny'",
-                         "NOT_EQUAL(PROP(name), CONST(Johnny))");
+                         "NOT_EQUAL(PROP(name), CONST(\"Johnny\"))");
    }
 
    @Test
@@ -103,7 +101,7 @@ public class BooleanFilterNormalizerTest {
    public void testRepeatedIntervalOverlap1() throws Exception {
       // predicates on repeated attributes do not get optimized
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where p.phoneNumbers.number <= '4567' and p.phoneNumbers.number <= '5678'",
-                         "AND(LESS_OR_EQUAL(PROP(phoneNumbers,number*), CONST(4567)), LESS_OR_EQUAL(PROP(phoneNumbers,number*), CONST(5678)))");
+                         "AND(LESS_OR_EQUAL(PROP(phoneNumbers.number*), CONST(\"4567\")), LESS_OR_EQUAL(PROP(phoneNumbers.number*), CONST(\"5678\")))");
    }
 
    @Test

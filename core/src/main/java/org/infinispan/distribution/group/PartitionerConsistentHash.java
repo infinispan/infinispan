@@ -1,17 +1,15 @@
 package org.infinispan.distribution.group;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUIDManager;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * {@link ConsistentHash} wrapper that uses a {@link KeyPartitioner} instead of a {@link Hash}.

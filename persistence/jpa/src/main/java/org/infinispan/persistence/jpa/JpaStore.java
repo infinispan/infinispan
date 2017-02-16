@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.EntityTransaction;
 import javax.persistence.GeneratedValue;
-import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -29,6 +29,7 @@ import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -51,6 +52,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
+@Store(shared = true)
 @ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore implements AdvancedLoadWriteStore {
    private static final Log log = LogFactory.getLog(JpaStore.class);
@@ -76,11 +78,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
 
    @Override
    public void start() {
-      try {
-         this.emf = emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
-      } catch (PersistenceException e) {
-         throw new JpaStoreException("Persistence Unit [" + this.configuration.persistenceUnitName() + "] not found", e);
-      }
+      this.emf = emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
 
       ManagedType<?> mt;
       try {

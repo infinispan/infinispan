@@ -1,13 +1,5 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -15,6 +7,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This DistributedCallable is used to invoke a raised notification on the cluster listener that registered to listen
@@ -59,10 +58,19 @@ public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Voi
       }
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("ClusterEventCallable{");
+      sb.append("identifier=").append(identifier);
+      sb.append(", events=").append(events);
+      sb.append('}');
+      return sb.toString();
+   }
+
    public static class Externalizer extends AbstractExternalizer<ClusterEventCallable> {
       @Override
       public Set<Class<? extends ClusterEventCallable>> getTypeClasses() {
-         return Util.<Class<? extends ClusterEventCallable>>asSet(ClusterEventCallable.class);
+         return Collections.singleton(ClusterEventCallable.class);
       }
 
       @Override

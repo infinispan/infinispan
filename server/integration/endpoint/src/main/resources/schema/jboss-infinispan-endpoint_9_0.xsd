@@ -9,13 +9,14 @@
             <xs:element name="memcached-connector" type="tns:memcached-connector" />
             <xs:element name="rest-connector" type="tns:rest-connector" />
             <xs:element name="websocket-connector" type="tns:websocket-connector" />
+            <xs:element name="router-connector" type="tns:router-connector" />
         </xs:choice>
     </xs:complexType>
 
     <xs:complexType name="protocol-connector" abstract="true">
-        <xs:attribute name="socket-binding" type="xs:string" use="required">
+        <xs:attribute name="socket-binding" type="xs:string" use="optional">
             <xs:annotation>
-                <xs:documentation>The socket on which this connector will bind itself</xs:documentation>
+                <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not listen to TCP connections</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="ignored-caches" type="tns:ignored-caches">
@@ -72,6 +73,57 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="router-connector">
+        <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="multi-tenancy">
+                <xs:annotation>
+                    <xs:documentation>Multi-tenancy settings for the router</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:choice maxOccurs="unbounded">
+                        <xs:element name="hotrod" type="tns:router-hotrod" maxOccurs="unbounded"/>
+                        <xs:element name="rest" type="tns:router-rest" maxOccurs="unbounded"/>
+                    </xs:choice>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="hotrod-socket-binding" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The socket on which HotRod router will bind itself</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="rest-socket-binding" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The socket on which REST router will bind itself</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="name" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The logical name to give to this connector. This attribute is required when there are more connectors of the same type defined.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="tcp-nodelay" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="keep-alive" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>Affects TCP KEEP-ALIVE on the TCP stack. Defaults to disabled</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="send-buffer-size" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the size of the send buffer.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="receive-buffer-size" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the size of the receive buffer.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
     <xs:complexType name="memcached-connector">
         <xs:complexContent>
             <xs:extension base="tns:protocol-connector">
@@ -85,9 +137,22 @@
     </xs:complexType>
 
     <xs:complexType name="rest-connector">
+        <xs:all>
+            <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1" />
+        </xs:all>
+        <xs:attribute name="name" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The logical name to give to this connector. This attribute is required when there are more connectors of the same type defined.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="cache-container" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="socket-binding" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not listen to TCP connections</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="virtual-host" type="xs:string" use="optional">
@@ -118,6 +183,11 @@
         <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional">
             <xs:annotation>
                 <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="ignored-caches" type="tns:ignored-caches">
+            <xs:annotation>
+                <xs:documentation>The list of ignored caches for this connector</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
@@ -165,9 +235,31 @@
                     other nodes. Defaults to true.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="await-initial-transfer" type="xs:boolean" use="optional" default="true">
+        <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional" default="${Server.TopologyStateTransfer.await-initial-retrieval}">
             <xs:annotation>
                 <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only applies when lazy-retrieval is false. Defaults to true.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="router-hotrod">
+        <xs:sequence>
+            <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>HotRod connector name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="router-rest">
+        <xs:sequence>
+            <xs:element name="prefix" type="tns:prefix" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>REST connector name</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
@@ -209,9 +301,14 @@
             <xs:element name="policy" type="tns:policy" minOccurs="0" />
             <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="security-context-name" type="xs:string">
+        <xs:attribute name="server-context-name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>The name of the login context to be used to retrieve a server subject for certain SASL mechs (i.e. GSSAPI)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="server-name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The name the server which is exposed to clients</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="mechanisms" type="tns:name-list" />
@@ -354,9 +451,9 @@
 
     <xs:complexType name="encryption">
         <xs:sequence>
-            <xs:element name="sni" type="tns:sni" minOccurs="0" />
+            <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="false">
+        <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="${Server.Encryption.require-ssl-client-auth}">
             <xs:annotation>
                 <xs:documentation>Whether to require client certificate authentication. Defaults to false.</xs:documentation>
             </xs:annotation>
@@ -384,6 +481,21 @@
         <xs:attribute name="security-realm" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>A corresponding security realm. If none is specified, the default will be used.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="prefix">
+        <xs:annotation>
+            <xs:documentation>
+                <![CDATA[
+                An element specifying REST prefix.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="path" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>Path for REST prefix</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

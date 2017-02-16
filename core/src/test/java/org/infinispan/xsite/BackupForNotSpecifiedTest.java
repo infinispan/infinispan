@@ -1,14 +1,14 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author Mircea Markus
@@ -79,9 +79,5 @@ public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
 
       cache("NYC", "someCacheBackup", 0).put("k_lon_sb", "v_lon_sb");
       assertEquals("v_lon_sb", cache("NYC", "someCacheBackup", 1).get("k_lon_sb"));
-      assertNull(cache("LON", "someCacheBackup", 0).get("k_lon_sb"));
-      assertNull(cache("LON", "someCacheBackup", 1).get("k_lon_sb"));
-      assertNull(cache("LON", "cacheBackup", 0).get("k_lon_sb"));
-      assertNull(cache("LON", "cacheBackup", 1).get("k_lon_sb"));
    }
 }

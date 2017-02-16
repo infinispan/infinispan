@@ -13,7 +13,7 @@ import org.infinispan.distexec.DistributedExecutorService;
  * @since 5.2
  * @see InfinispanExtensionEmbedded#registerInputCacheCustomBean(javax.enterprise.inject.spi.AfterBeanDiscovery,
  *      javax.enterprise.inject.spi.BeanManager)
- * 
+ *
  */
 public class ContextInputCache {
 

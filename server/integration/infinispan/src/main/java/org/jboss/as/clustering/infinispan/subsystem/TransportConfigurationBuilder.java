@@ -14,10 +14,10 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 public class TransportConfigurationBuilder implements Builder<TransportConfiguration>, Value<TransportConfiguration>, TransportConfiguration {
-    private final InjectedValue<Channel> channel = new InjectedValue<>();
+    private final InjectedValue<JChannel> channel = new InjectedValue<>();
     private final InjectedValue<ChannelFactory> factory = new InjectedValue<>();
     private final String name;
 
@@ -56,7 +56,7 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
     }
 
     @Override
-    public Channel getChannel() {
+    public JChannel getChannel() {
         return this.channel.getValue();
     }
 
@@ -93,7 +93,7 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
     @Override
     public ServiceBuilder<TransportConfiguration> build(ServiceTarget target) {
         ServiceBuilder<TransportConfiguration> builder = target.addService(this.getServiceName(), new ValueService<>(this))
-                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.name), Channel.class, this.channel)
+                .addDependency(ChannelServiceName.CHANNEL.getServiceName(this.name), JChannel.class, this.channel)
                 .addDependency(ChannelServiceName.FACTORY.getServiceName(this.name), ChannelFactory.class, this.factory)
         ;
         return builder.setInitialMode(ServiceController.Mode.ON_DEMAND);

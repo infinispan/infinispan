@@ -1,5 +1,18 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -20,7 +33,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -29,8 +42,10 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.affinity.ShardAllocationManagerImpl;
+import org.infinispan.query.affinity.ShardAllocatorManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.QueryKnownClasses;
@@ -66,18 +81,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
-
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.
@@ -108,6 +111,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          SearchIntegrator searchFactory = null;
          if (isIndexed) {
             log.registeringQueryInterceptor(cacheName);
+            cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = getSearchFactory(cacheName, cfg.indexing(), cr);
             createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
@@ -124,7 +128,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          registerMatcher(cr, searchFactory);
 
-         QueryEngine queryEngine = new QueryEngine(cache, isIndexed);
+         QueryEngine<Class<?>> queryEngine = new QueryEngine<>(cache, isIndexed);
          cr.registerComponent(queryEngine, QueryEngine.class);
       }
    }
@@ -166,7 +170,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
+         AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
          InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
@@ -286,7 +290,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
-      SequentialInterceptorChain interceptorChain = cr.getComponent(SequentialInterceptorChain.class);
+      AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
@@ -375,7 +379,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
 
       for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.sequentialInterceptor() instanceof QueryInterceptor)) {
+         if (!(interceptorConfig.asyncInterceptor() instanceof QueryInterceptor)) {
             customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
          }
       }

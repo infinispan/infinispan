@@ -1,9 +1,10 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
+import java.util.Collection;
 
-import java.util.Set;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 
 /**
  * A command that modifies the cache in some way
@@ -11,7 +12,7 @@ import java.util.Set;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
+public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, TopologyAffectedCommand {
    /**
     * Some commands may want to provide information on whether the command was successful or not.  This is different
     * from a failure, which usually would result in an exception being thrown.  An example is a putIfAbsent() not doing
@@ -45,7 +46,7 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
     * @return a collection of keys affected by this write command.  Some commands - such as ClearCommand - may return
     * an empty collection for this method.
     */
-   Set<Object> getAffectedKeys();
+   Collection<?> getAffectedKeys();
 
    /**
     * Used for conditional commands, to update the status of the command on the originator

@@ -1,10 +1,10 @@
 package org.infinispan.remoting.inboundhandler.action;
 
-import org.infinispan.commons.util.InfinispanCollections;
-
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * A list of {@link Action} to be executed to check when it is ready.
@@ -58,8 +58,8 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
    }
 
    @Override
-   public void cleanup() {
-      InfinispanCollections.forEach(actions, action -> action.cleanup(state));
+   public void onException() {
+      InfinispanCollections.forEach(actions, action -> action.onException(state));
    }
 
    @Override
@@ -67,5 +67,10 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
       if (isReady()) {
          notifier.complete(null);
       }
+   }
+
+   @Override
+   public void onFinally() {
+      InfinispanCollections.forEach(actions, action -> action.onFinally(state));
    }
 }

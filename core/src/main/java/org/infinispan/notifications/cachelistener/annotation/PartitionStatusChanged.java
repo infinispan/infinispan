@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.configuration.cache.CacheMode;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.infinispan.configuration.cache.CacheMode;
 
 /**
  * This annotation should be used on methods that need to be notified when the

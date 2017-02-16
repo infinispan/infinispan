@@ -1,6 +1,9 @@
 package org.infinispan.query.queries.spatial;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -18,8 +21,6 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Testing and verifying that Spatial queries work properly. The information on the coordinates was taken from the
@@ -55,8 +56,8 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
          .onField("city_location")
          .within(50, Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<?> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 

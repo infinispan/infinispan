@@ -1,8 +1,8 @@
 package org.infinispan.metadata;
 
-import org.infinispan.container.versioning.EntryVersion;
-
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * This interface encapsulates metadata information that can be stored

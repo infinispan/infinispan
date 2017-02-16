@@ -1,9 +1,24 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -18,21 +33,12 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
+import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests if the entry version is lost during the state transfer in which the primary owner changes.
@@ -200,6 +206,8 @@ rebalance_start
                                                                                                          10, TimeUnit.SECONDS);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
+               } catch (TimeoutException e) {
+                  throw log.failedWaitingForTopology(currentTopologyId + 2);
                }
             }
          }
@@ -267,10 +275,11 @@ rebalance_start
          @Override
          public void before(InvocationContext context, VisitableCommand command, Cache cache) {
             try {
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1,
-                                                                                                      10, TimeUnit.SECONDS);
+               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1, 10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
+            } catch (TimeoutException e) {
+               throw LogFactory.getLog(getClass()).failedWaitingForTopology(currentTopology + 1);
             }
          }
 
@@ -298,6 +307,8 @@ rebalance_start
                                                                                                       10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
+            } catch (TimeoutException e) {
+               throw LogFactory.getLog(getClass()).failedWaitingForTopology(currentTopology + 2);
             }
          }
 

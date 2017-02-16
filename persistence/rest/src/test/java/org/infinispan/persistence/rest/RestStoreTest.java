@@ -1,5 +1,8 @@
 package org.infinispan.persistence.rest;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -16,9 +19,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author Tristan Tarrant
@@ -40,6 +40,7 @@ public class RestStoreTest extends BaseStoreTest {
       globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, localBuilder);
+      localCacheManager.defineConfiguration(REMOTE_CACHE, localCacheManager.getDefaultCacheConfiguration());
       localCacheManager.getCache(REMOTE_CACHE);
       GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
       gcr.registerComponent(timeService, TimeService.class);

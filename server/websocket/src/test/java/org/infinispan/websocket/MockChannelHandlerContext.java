@@ -1,12 +1,13 @@
 package org.infinispan.websocket;
 
 
+import java.net.SocketAddress;
+
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelHandlerInvoker;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelProgressivePromise;
 import io.netty.channel.ChannelPromise;
@@ -14,15 +15,13 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutor;
 
-import java.net.SocketAddress;
-
 /**
  * Mock Server Handler Context.
- * 
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MockChannelHandlerContext implements ChannelHandlerContext {
-   
+
    private final Channel channel;
 
    public MockChannelHandlerContext(MockChannel channel) {
@@ -36,11 +35,6 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
 
     @Override
     public EventExecutor executor() {
-        return null;
-    }
-
-    @Override
-    public ChannelHandlerInvoker invoker() {
         return null;
     }
 

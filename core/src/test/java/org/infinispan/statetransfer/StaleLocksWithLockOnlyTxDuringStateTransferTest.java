@@ -1,5 +1,14 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.transaction.TransactionManager;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.infinispan.AdvancedCache;
@@ -17,11 +26,6 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "lock.StaleLocksWithLockOnlyTxDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod

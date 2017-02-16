@@ -1,5 +1,10 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.SortField;
@@ -9,11 +14,6 @@ import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 import org.infinispan.objectfilter.impl.util.ComparableArrayComparator;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -37,6 +37,8 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final FilterCallback callback;
 
+   private final boolean isDeltaFilter;
+
    private final String[] projection;
 
    private final Class<?>[] projectionTypes;
@@ -52,7 +54,8 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
    private Comparator<Comparable[]> comparator;
 
    protected FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
-                                    boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
+                                    boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
+                                    BETree beTree, FilterCallback callback, boolean isDeltaFilter,
                                     String[] projection, Class<?>[] projectionTypes, List<List<AttributeId>> translatedProjection,
                                     SortField[] sortFields, List<List<AttributeId>> translatedSortProjection,
                                     Object[] eventTypes) {
@@ -62,6 +65,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
       this.metadataAdapter = metadataAdapter;
       this.beTree = beTree;
       this.callback = callback;
+      this.isDeltaFilter = isDeltaFilter;
       this.projection = projection;
       this.projectionTypes = projectionTypes;
       this.sortFields = sortFields;
@@ -78,7 +82,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
       return namedParameters;
    }
 
-   public boolean isUseIntervals() {
+   public boolean useIntervals() {
       return useIntervals;
    }
 
@@ -98,6 +102,11 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
    @Override
    public FilterCallback getCallback() {
       return callback;
+   }
+
+   @Override
+   public boolean isDeltaFilter() {
+      return isDeltaFilter;
    }
 
    @Override

@@ -1,5 +1,27 @@
 package org.infinispan.cache.impl;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -8,8 +30,6 @@ import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
@@ -34,8 +54,8 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.EmptySequentialInterceptorChain;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -63,31 +83,12 @@ import org.infinispan.stats.Stats;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Simple local cache without interceptor stack.
@@ -116,8 +117,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private InternalEntryFactory entryFactory;
 
    private Metadata defaultMetadata;
-   private Equivalence<Object> keyEquivalence;
-   private Equivalence<Object> valueEquivalence;
 
    private boolean hasListeners = false;
 
@@ -151,8 +150,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       this.defaultMetadata = new EmbeddedMetadata.Builder()
             .lifespan(configuration.expiration().lifespan())
             .maxIdle(configuration.expiration().maxIdle()).build();
-      this.keyEquivalence = configuration.dataContainer().keyEquivalence();
-      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
       componentRegistry.start();
    }
 
@@ -224,7 +221,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Map<K, V> getAll(Set<?> keys) {
       Map<K, V> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence, valueEquivalence);
+            .makeMap(CollectionFactory.computeCapacity(keys.size()));
       for (Object k : keys) {
          Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(k);
@@ -258,8 +255,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
       Map<K, CacheEntry<K, V>> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence,
-                  AnyEquivalence.getInstance());
+            .makeMap(CollectionFactory.computeCapacity(keys.size()));
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(key);
@@ -404,7 +400,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public boolean containsValue(Object value) {
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
       for (V v : getDataContainer().values()) {
-         if (valueEquivalence.equals(v, value)) return true;
+         if (Objects.equals(v, value)) return true;
       }
       return false;
    }
@@ -671,7 +667,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V prevValue = getValue(oldEntry);
-         if (valueEquivalence.equals(prevValue, oldValue)) {
+         if (Objects.equals(prevValue, oldValue)) {
             oldRef.set(prevValue, oldEntry.getMetadata());
             if (hasListeners) {
                cacheNotifier.notifyCacheEntryModified(key, value, metadata, prevValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
@@ -739,25 +735,25 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       putAll(data);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       putAll(data, lifespan, unit);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
       clear();
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -845,7 +841,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute((K) key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
-         if (valueEquivalence.equals(oldValue, value)) {
+         if (Objects.equals(oldValue, value)) {
             if (hasListeners) {
                cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
             }
@@ -910,6 +906,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return cacheNotifier.getListeners();
    }
 
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      cacheNotifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+      if (!hasListeners && canFire(listener)) {
+         hasListeners = true;
+      }
+   }
+
    private boolean canFire(Object listener) {
       for (Method m : listener.getClass().getMethods()) {
          for (Class<? extends Annotation> annotation : FIRED_EVENTS) {
@@ -949,8 +955,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
-      return EmptySequentialInterceptorChain.INSTANCE;
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
+      return EmptyAsyncInterceptorChain.INSTANCE;
    }
 
    @Override
@@ -1043,7 +1049,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                throw log.cacheIsStopping(name);
             case TERMINATED:
             case FAILED:
-               throw log.cacheIsTerminated(name);
+               throw log.cacheIsTerminated(name, status.toString());
             default:
                throw new IllegalStateException("Status: " + status);
          }
@@ -1245,7 +1251,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          }
          ref.set(k, newValue, null, null);
          return factory.create(k, newValue, defaultMetadata);
-      } else if (valueEquivalence.equals(oldValue, newValue)) {
+      } else if (Objects.equals(oldValue, newValue)) {
          return oldEntry;
       } else {
          if (hasListeners) {
@@ -1397,12 +1403,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class EntrySet extends EntrySetBase<Entry<K, V>> implements CacheSet<Entry<K, V>> {
       @Override
       public CloseableIterator<Entry<K, V>> iterator() {
-         return Closeables.iterator(dataContainer.iterator());
+         return Closeables.iterator(new DataContainerRemoveIterator<>(SimpleCacheImpl.this));
       }
 
       @Override
       public CloseableSpliterator<Entry<K, V>> spliterator() {
-         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+         return Closeables.spliterator(iterator(), dataContainer.size(),
                Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
@@ -1437,12 +1443,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class CacheEntrySet extends EntrySetBase<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return Closeables.iterator(dataContainer.iterator());
+         return Closeables.iterator(new DataContainerRemoveIterator<>(SimpleCacheImpl.this));
       }
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+         return Closeables.spliterator(iterator(), dataContainer.size(),
                Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
@@ -1476,7 +1482,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size(), valueEquivalence);
+         Set<Object> retained = CollectionFactory.makeSet(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1495,7 +1501,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          } else if (removeSize == 1) {
             return remove(c.iterator().next());
          }
-         Set<Object> removed = CollectionFactory.makeSet(removeSize, valueEquivalence);
+         Set<Object> removed = CollectionFactory.makeSet(removeSize);
          removed.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1509,7 +1515,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public boolean remove(Object o) {
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
-            if (valueEquivalence.equals(entry.getValue(), o)) {
+            if (Objects.equals(entry.getValue(), o)) {
                if (SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue())) {
                   return true;
                }
@@ -1560,7 +1566,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size(), keyEquivalence);
+         Set<Object> retained = CollectionFactory.makeSet(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1592,7 +1598,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return Closeables.iterator(new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getKey));
+         return Closeables.iterator(new IteratorMapper<>(new DataContainerRemoveIterator<>(SimpleCacheImpl.this), Map.Entry::getKey));
       }
 
       @Override

@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 
 /**
  * The projections of an attribute across multiple filters.

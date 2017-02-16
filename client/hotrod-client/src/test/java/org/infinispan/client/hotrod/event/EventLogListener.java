@@ -1,43 +1,37 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.test.TestingUtil.assertAnyEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.filter.NamedFactory;
-import org.junit.Assert;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.assertAnyEquals;
-import static org.testng.AssertJUnit.*;
 
 @ClientListener
 public class EventLogListener<K> implements RemoteCacheSupplier<K> {
-
-   public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents =
-         new ArrayBlockingQueue<ClientCacheEntryCreatedEvent>(128);
-   public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents =
-         new ArrayBlockingQueue<ClientCacheEntryModifiedEvent>(128);
-   public BlockingQueue<ClientCacheEntryRemovedEvent> removedEvents =
-         new ArrayBlockingQueue<ClientCacheEntryRemovedEvent>(128);
+   public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents = new ArrayBlockingQueue<>(128);
+   public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents = new ArrayBlockingQueue<>(128);
+   public BlockingQueue<ClientCacheEntryRemovedEvent> removedEvents = new ArrayBlockingQueue<>(128);
    public BlockingQueue<ClientCacheEntryExpiredEvent> expiredEvents = new ArrayBlockingQueue<>(128);
-
-   Optional<Marshaller> marshaller;
 
    private final RemoteCache<K, ?> remote;
 
@@ -167,7 +161,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
             assertAnyEquals(key, expiredEvent.getKey());
             break;
       }
-      Assert.assertEquals(0, queue(type).size());
+      assertEquals(0, queue(type).size());
    }
 
    private long serverDataVersion(RemoteCache<K, ?> cache, K key) {
@@ -256,7 +250,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
          return new StaticCacheEventFilter(staticKey);
       }
 
-      static class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
+      static class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable, ExternalPojo {
          final Integer staticKey;
 
          StaticCacheEventFilter(Integer staticKey) {

@@ -1,5 +1,11 @@
 package org.infinispan.it.compatibility;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -12,19 +18,16 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEv
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener;
-import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
-import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Test compatibility between embedded caches and Hot Rod endpoints.

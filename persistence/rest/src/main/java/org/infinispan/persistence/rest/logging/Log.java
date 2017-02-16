@@ -22,13 +22,9 @@
 
 package org.infinispan.persistence.rest.logging;
 
-import static org.jboss.logging.Logger.Level.WARN;
-
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 

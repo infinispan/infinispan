@@ -1,5 +1,22 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.query.dsl.Expression.avg;
+import static org.infinispan.query.dsl.Expression.count;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.min;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.query.dsl.Expression.sum;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -28,23 +45,6 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.List;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.query.dsl.Expression.avg;
-import static org.infinispan.query.dsl.Expression.count;
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.min;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.infinispan.query.dsl.Expression.sum;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
@@ -105,8 +105,8 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
@@ -142,14 +142,14 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(RemoteQueryFactory.class, getQueryFactory().getClass());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405:.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503:.*")
    @Override
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       // the original exception gets wrapped in HotRodClientException
       super.testInvalidEmbeddedAttributeQuery();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
    @Override
    public void testRejectProjectionOfRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
@@ -168,7 +168,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
-            .toBuilder().build();
+            .build();
 
       List<Object[]> list = q.list();
       assertEquals(4, list.size());
@@ -194,21 +194,20 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals("Checking account", list.get(0).getDescription());
    }
 
-   //todo [anistor] null numbers do not seem to work in remote mode
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-6713")
    @Override
    public void testIsNullNumericWithProjection1() throws Exception {
       super.testIsNullNumericWithProjection1();
    }
 
    @Override
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupBy3();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014021: Queries containing grouping and aggregation functions must use projections.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014021: Queries containing grouping and aggregation functions must use projections.")
    @Override
    public void testGroupBy5() {
       // the original exception gets wrapped in HotRodClientException
@@ -221,7 +220,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testGroupBy6();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : SUM.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028515: Cannot have aggregate functions in the WHERE clause : SUM.")
    public void testGroupBy7() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupBy7();
@@ -236,7 +235,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
-            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15"))
             .groupBy("date")
             .build();
 
@@ -255,7 +254,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(count("date"), min("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
 
@@ -275,7 +274,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(min("date"), count("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
 
@@ -297,7 +296,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "date", "date")
             .having("description").eq("Hotel")
-            .toBuilder().build();
+            .build();
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());
@@ -307,14 +306,14 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[2]);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN004060: Query parameter 'param2' was not set")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
    @Override
    public void testMissingParamWithParameterMap() throws Exception {
       // exception message code is different because it is generated by a different logger
       super.testMissingParamWithParameterMap();
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN004060: Query parameter 'param2' was not set")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
    @Override
    public void testMissingParam() throws Exception {
       // exception message code is different because it is generated by a different logger
@@ -330,7 +329,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(avg("amount"), sum("amount"), count("date"), min("date"), max("accountId"))
-            .having("isDebit").eq(param("param")).toBuilder()
+            .having("isDebit").eq(param("param"))
             .orderBy(avg("amount"), SortOrder.DESC).orderBy(count("date"), SortOrder.DESC)
             .orderBy(max("amount"), SortOrder.ASC)
             .build();
@@ -357,7 +356,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select("date")
-            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15"))
             .groupBy("date")
             .build();
       List<Object[]> list = q.list();
@@ -377,7 +376,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(count("date"), min("date"))
-            .having("description").eq("Hotel").toBuilder()
+            .having("description").eq("Hotel")
             .groupBy("id")
             .build();
       List<Object[]> list = q.list();
@@ -389,21 +388,21 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[1]);
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
    @Override
    public void testGroupByMustNotAcceptRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
       super.testGroupByMustNotAcceptRepeatedProperty();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
    @Override
    public void testOrderByMustNotAcceptRepeatedProperty() {
       // the original exception gets wrapped in HotRodClientException
       super.testOrderByMustNotAcceptRepeatedProperty();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : MIN.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028515: Cannot have aggregate functions in the WHERE clause : MIN.")
    @Override
    public void testRejectAggregationsInWhereClause() {
       // the original exception gets wrapped in HotRodClientException

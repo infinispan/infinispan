@@ -16,31 +16,7 @@
    </description>
 
    <build>
-      <sourceDirectory>src/main/scala</sourceDirectory>
-      <testSourceDirectory>src/test/scala</testSourceDirectory>
-
       <plugins>
-         <plugin>
-            <groupId>org.scala-tools</groupId>
-            <artifactId>maven-scala-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>compile</id>
-                  <phase>compile</phase>
-               </execution>
-               <execution>
-                  <id>test-compile</id>
-                  <phase>test-compile</phase>
-               </execution>
-               <execution>
-                  <phase>process-resources</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
-         </plugin>
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
@@ -71,7 +47,7 @@
          <artifactId>xstream</artifactId>
       </dependency>
 
-      
+
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
@@ -84,14 +60,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.scala-lang.modules</groupId>
-         <artifactId>scala-xml_${version.scala.major}</artifactId>
-      </dependency>
-
-      
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-embedded</artifactId>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
 

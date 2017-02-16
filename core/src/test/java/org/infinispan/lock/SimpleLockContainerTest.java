@@ -1,19 +1,19 @@
 package org.infinispan.lock;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 @Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
-   PerKeyLockContainer lc = new PerKeyLockContainer(1000, AnyEquivalence.getInstance());
+   PerKeyLockContainer lc = new PerKeyLockContainer();
 
    public void simpleTest() throws Exception {
       lc.inject(TIME_SERVICE);

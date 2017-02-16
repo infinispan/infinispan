@@ -1,41 +1,42 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.BitSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executor;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
-import org.infinispan.server.hotrod.logging.JavaLog;
+import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.util.BulkUtil;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
-import scala.None$;
-import scala.Option;
-import scala.Tuple2;
-import scala.Tuple4;
+import org.infinispan.util.KeyValuePair;
 
-import javax.security.auth.Subject;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.BitSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executor;
-
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
- * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than
- * the decoder.
+ * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than the
+ * decoder.
  *
  * @author wburns
  * @since 9.0
  */
 public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeContext> {
-   private final static JavaLog log = LogFactory.getLog(ContextHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(ContextHandler.class, Log.class);
 
    private final HotRodServer server;
    private final NettyTransport transport;
@@ -51,7 +52,7 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
       executor.execute(() -> {
          try {
-            Subject subject = msg.getSubject();
+            Subject subject = msg.subject;
             if (subject == null)
                realRead(ctx, msg);
             else Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
@@ -67,140 +68,157 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    }
 
    protected void realRead(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
-      HotRodHeader h = msg.header();
-      switch (h.op()) {
-         case PutRequest:
+      HotRodHeader h = msg.header;
+      switch (h.op) {
+         case PUT:
             writeResponse(msg, ctx.channel(), msg.put());
             break;
-         case PutIfAbsentRequest:
+         case PUT_IF_ABSENT:
             writeResponse(msg, ctx.channel(), msg.putIfAbsent());
             break;
-         case ReplaceRequest:
+         case REPLACE:
             writeResponse(msg, ctx.channel(), msg.replace());
             break;
-         case ReplaceIfUnmodifiedRequest:
+         case REPLACE_IF_UNMODIFIED:
             writeResponse(msg, ctx.channel(), msg.replaceIfUnmodified());
             break;
-         case ContainsKeyRequest:
+         case CONTAINS_KEY:
             writeResponse(msg, ctx.channel(), msg.containsKey());
             break;
-         case GetRequest:
-         case GetWithVersionRequest:
+         case GET:
+         case GET_WITH_VERSION:
             writeResponse(msg, ctx.channel(), msg.get());
             break;
-         case GetWithMetadataRequest:
+         case GET_STREAM:
+         case GET_WITH_METADATA:
             writeResponse(msg, ctx.channel(), msg.getKeyMetadata());
             break;
-         case RemoveRequest:
+         case REMOVE:
             writeResponse(msg, ctx.channel(), msg.remove());
             break;
-         case RemoveIfUnmodifiedRequest:
+         case REMOVE_IF_UNMODIFIED:
             writeResponse(msg, ctx.channel(), msg.removeIfUnmodified());
             break;
-         case PingRequest:
-            writeResponse(msg, ctx.channel(), new Response(h.version(), h.messageId(), h.cacheName(),
-                    h.clientIntel(), OperationResponse.PingResponse(), OperationStatus.Success(), h.topologyId()));
+         case PING:
+            writeResponse(msg, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, HotRodOperation.PING, OperationStatus.Success, h.topologyId));
             break;
-         case StatsRequest:
-            writeResponse(msg, ctx.channel(), msg.decoder().createStatsResponse(msg, transport));
+         case STATS:
+            writeResponse(msg, ctx.channel(), msg.decoder.createStatsResponse(msg, transport));
             break;
-         case ClearRequest:
+         case CLEAR:
             writeResponse(msg, ctx.channel(), msg.clear());
             break;
-         case SizeRequest:
-            writeResponse(msg, ctx.channel(), new SizeResponse(h.version(), h.messageId(), h.cacheName(),
-                    h.clientIntel(), h.topologyId(), msg.cache().size()));
+         case SIZE:
+            writeResponse(msg, ctx.channel(), new SizeResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, h.topologyId, msg.cache.size()));
             break;
-         case ExecRequest:
-            ExecRequestContext execContext = (ExecRequestContext) msg.operationDecodeContext();
-            TaskManager taskManager = SecurityActions.getCacheGlobalComponentRegistry(msg.cache()).getComponent(TaskManager.class);
+         case EXEC:
+            ExecRequestContext execContext = (ExecRequestContext) msg.operationDecodeContext;
+            TaskManager taskManager = SecurityActions.getCacheGlobalComponentRegistry(msg.cache).getComponent(TaskManager.class);
             Marshaller marshaller;
             if (server.getMarshaller() != null) {
                marshaller = server.getMarshaller();
             } else {
                marshaller = new GenericJBossMarshaller();
             }
-            byte[] result = (byte[]) taskManager.runTask(execContext.name(),
-                    new TaskContext().marshaller(marshaller).cache(msg.cache()).parameters(execContext.params())).get();
+            byte[] result = (byte[]) taskManager.runTask(execContext.getName(),
+                  new TaskContext().marshaller(marshaller).cache(msg.cache).parameters(execContext.getParams())).get();
             writeResponse(msg, ctx.channel(),
-                    new ExecResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(), h.topologyId(),
-                          result == null ? new byte[]{} : result));
+                  new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId,
+                        result == null ? new byte[]{} : result));
             break;
-         case BulkGetRequest:
-            int size = (int) msg.operationDecodeContext();
-            if (msg.isTrace()) {
+         case BULK_GET:
+            int size = (int) msg.operationDecodeContext;
+            if (CacheDecodeContext.isTrace) {
                log.tracef("About to create bulk response count = %d", size);
             }
-            writeResponse(msg, ctx.channel(), new BulkGetResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(),
-                    h.topologyId(), size, msg.cache().entrySet()));
+            writeResponse(msg, ctx.channel(), new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                  h.topologyId, size, msg.cache.entrySet()));
             break;
-         case BulkGetKeysRequest:
-            int scope = (int) msg.operationDecodeContext();
-            if (msg.isTrace()) {
+         case BULK_GET_KEYS:
+            int scope = (int) msg.operationDecodeContext;
+            if (CacheDecodeContext.isTrace) {
                log.tracef("About to create bulk get keys response scope = %d", scope);
             }
-            writeResponse(msg, ctx.channel(), new BulkGetKeysResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(),
-                    h.topologyId(), scope, BulkUtil.getAllKeys(msg.cache(), scope)));
+            writeResponse(msg, ctx.channel(), new BulkGetKeysResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                  h.topologyId, scope, BulkUtil.getAllKeys(msg.cache, scope)));
             break;
-         case QueryRequest:
-            byte[] queryResult = server.query(msg.cache(), (byte[]) msg.operationDecodeContext());
+         case QUERY:
+            byte[] queryResult = server.query(msg.cache, (byte[]) msg.operationDecodeContext);
             writeResponse(msg, ctx.channel(),
-                    new QueryResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(), h.topologyId(), queryResult));
+                  new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, queryResult));
             break;
-         case AddClientListenerRequest:
-            ClientListenerRequestContext clientContext = (ClientListenerRequestContext) msg.operationDecodeContext();
-            server.getClientListenerRegistry().addClientListener(msg.decoder(), ctx.channel(), h, clientContext.listenerId(),
-                    msg.cache(), clientContext.includeCurrentState(), new Tuple2<>(clientContext.filterFactoryInfo(),
-                            clientContext.converterFactoryInfo()), clientContext.useRawData());
+         case ADD_CLIENT_LISTENER:
+            ClientListenerRequestContext clientContext = (ClientListenerRequestContext) msg.operationDecodeContext;
+            server.getClientListenerRegistry().addClientListener(msg.decoder, ctx.channel(), h, clientContext.getListenerId(),
+                  msg.cache, clientContext.isIncludeCurrentState(), new KeyValuePair<>(clientContext.getFilterFactoryInfo(),
+                        clientContext.getConverterFactoryInfo()), clientContext.isUseRawData(), clientContext.getListenerInterests());
             break;
-         case RemoveClientListenerRequest:
-            byte[] listenerId = (byte[]) msg.operationDecodeContext();
-            if (server.getClientListenerRegistry().removeClientListener(listenerId, msg.cache())) {
-               writeResponse(msg, ctx.channel(), msg.decoder().createSuccessResponse(h, null));
+         case REMOVE_CLIENT_LISTENER:
+            byte[] listenerId = (byte[]) msg.operationDecodeContext;
+            if (server.getClientListenerRegistry().removeClientListener(listenerId, msg.cache)) {
+               writeResponse(msg, ctx.channel(), msg.decoder.createSuccessResponse(h, null));
             } else {
-               writeResponse(msg, ctx.channel(), msg.decoder().createNotExecutedResponse(h, null));
+               writeResponse(msg, ctx.channel(), msg.decoder.createNotExecutedResponse(h, null));
             }
             break;
-         case IterationStartRequest:
-            Tuple4<Option<byte[]>, Option<Tuple2<String, scala.collection.immutable.List<byte[]>>>, Integer, Boolean> iterationStart =
-                    (Tuple4<Option<byte[]>, Option<Tuple2<String, scala.collection.immutable.List<byte[]>>>, Integer, Boolean>) msg.operationDecodeContext();
+         case ITERATION_START:
+            IterationStartRequest iterationStart = (IterationStartRequest) msg.operationDecodeContext;
 
-            Option<BitSet> optionBitSet;
-            if (iterationStart._1().isDefined()) {
-               optionBitSet = Option.apply(BitSet.valueOf(iterationStart._1().get()));
+            Optional<BitSet> optionBitSet;
+            if (iterationStart.getOptionBitSet().isPresent()) {
+               optionBitSet = Optional.of(BitSet.valueOf(iterationStart.getOptionBitSet().get()));
             } else {
-               optionBitSet = None$.empty();
+               optionBitSet = Optional.empty();
             }
-            Option<Tuple2<String, scala.collection.immutable.List<byte[]>>> factoryName = iterationStart._2();
-            String iterationId = server.iterationManager().start(msg.cache().getName(), optionBitSet,
-                    iterationStart._2(), iterationStart._3(), iterationStart._4());
-            writeResponse(msg, ctx.channel(), new IterationStartResponse(h.version(), h.messageId(), h.cacheName(),
-                    h.clientIntel(), h.topologyId(), iterationId));
+            String iterationId = server.getIterationManager().start(msg.cache.getName(), optionBitSet,
+                  iterationStart.getFactory(), iterationStart.getBatch(), iterationStart.isMetadata());
+            writeResponse(msg, ctx.channel(), new IterationStartResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, h.topologyId, iterationId));
             break;
-         case IterationNextRequest:
-            iterationId = (String) msg.operationDecodeContext();
-            IterableIterationResult iterationResult = server.iterationManager().next(msg.cache().getName(), iterationId);
-            writeResponse(msg, ctx.channel(), new IterationNextResponse(h.version(), h.messageId(), h.cacheName(),
-                    h.clientIntel(), h.topologyId(), iterationResult));
+         case ITERATION_NEXT:
+            iterationId = (String) msg.operationDecodeContext;
+            IterableIterationResult iterationResult = server.getIterationManager().next(msg.cache.getName(), iterationId);
+            writeResponse(msg, ctx.channel(), new IterationNextResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, h.topologyId, iterationResult));
             break;
-         case IterationEndRequest:
-            iterationId = (String) msg.operationDecodeContext();
-            boolean removed = server.iterationManager().close(msg.cache().getName(), iterationId);
-            writeResponse(msg, ctx.channel(), new Response(h.version(), h.messageId(), h.cacheName(), h.clientIntel(),
-                    OperationResponse.IterationEndResponse(),
-                    removed ? OperationStatus.Success() : OperationStatus.InvalidIteration(), h.topologyId()));
+         case ITERATION_END:
+            iterationId = (String) msg.operationDecodeContext;
+            boolean removed = server.getIterationManager().close(msg.cache.getName(), iterationId);
+            writeResponse(msg, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                  HotRodOperation.ITERATION_END,
+                  removed ? OperationStatus.Success : OperationStatus.InvalidIteration, h.topologyId));
             break;
-         case PutAllRequest:
-            msg.cache().putAll((Map<byte[], byte[]>) msg.operationDecodeContext(), msg.buildMetadata());
-            writeResponse(msg, ctx.channel(), msg.decoder().createSuccessResponse(h, null));
+         case PUT_ALL:
+            msg.cache.putAll((Map<byte[], byte[]>) msg.operationDecodeContext, msg.buildMetadata());
+            writeResponse(msg, ctx.channel(), msg.decoder.createSuccessResponse(h, null));
             break;
-         case GetAllRequest:
-            Map<byte[], byte[]> map = msg.cache().getAll((Set<byte[]>) msg.operationDecodeContext());
-            writeResponse(msg, ctx.channel(), new GetAllResponse(h.version(), h.messageId(), h.cacheName(),
-                    h.clientIntel(), h.topologyId(), map));
+         case GET_ALL:
+            Map<byte[], byte[]> map = msg.cache.getAll((Set<byte[]>) msg.operationDecodeContext);
+            writeResponse(msg, ctx.channel(), new GetAllResponse(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, h.topologyId, map));
+            break;
+         case PUT_STREAM:
+            ByteBuf buf = (ByteBuf) msg.operationDecodeContext;
+            try {
+               byte[] bytes = new byte[buf.readableBytes()];
+               buf.readBytes(bytes);
+               msg.operationDecodeContext = bytes;
+               long version = msg.params.streamVersion;
+               if (version == 0) { // Normal put
+                  writeResponse(msg, ctx.channel(), msg.put());
+               } else if (version < 0) { // putIfAbsent
+                  writeResponse(msg, ctx.channel(), msg.putIfAbsent());
+               } else { // versioned replace
+                  writeResponse(msg, ctx.channel(), msg.replaceIfUnmodified());
+               }
+            } finally {
+               buf.release();
+            }
             break;
          default:
-            throw new IllegalArgumentException("Unsupported operation invoked: " + msg.header().op());
+            throw new IllegalArgumentException("Unsupported operation invoked: " + msg.header.op);
       }
    }
 
@@ -221,6 +239,6 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    @Override
    public boolean acceptInboundMessage(Object msg) throws Exception {
       // Faster than netty matcher
-      return msg instanceof CacheDecodeContext;
+      return msg.getClass() == CacheDecodeContext.class;
    }
 }

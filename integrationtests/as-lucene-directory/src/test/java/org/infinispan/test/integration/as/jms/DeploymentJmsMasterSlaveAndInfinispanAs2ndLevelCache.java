@@ -1,5 +1,7 @@
 package org.infinispan.test.integration.as.jms;
 
+import javax.persistence.SharedCacheMode;
+
 import org.infinispan.test.integration.as.jms.controller.RegistrationController;
 import org.infinispan.test.integration.as.jms.controller.RegistrationMdb;
 import org.infinispan.test.integration.as.jms.controller.StatisticsController;
@@ -16,11 +18,12 @@ import org.jboss.shrinkwrap.descriptor.api.persistence20.PersistenceDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.PersistenceUnit;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.Properties;
 
-import javax.persistence.SharedCacheMode;
-
 /**
  * Create deployments for JMS Master/Slave configuration integration tests using infinispan as index storage. Make sure
  * to test for a secured JMS environment.
+ *
+ * This test does NOT override the versions of Hibernate ORM and Hibernate Search: this is intentional,
+ * to test integration with the versions normally used by the application server.
  *
  * @author Davide D'Alto
  * @author Sanne Grinovero
@@ -97,11 +100,6 @@ public final class DeploymentJmsMasterSlaveAndInfinispanAs2ndLevelCache {
             .createProperty()
             .name("hibernate.hbm2ddl.auto")
             .value("create-drop")
-            .up()
-            .createProperty()
-            // Disable the automatically enabled Hibernate Search instance which is included in WildFly
-            .name( "wildfly.jpa.hibernate.search.module" )
-            .value( "none" )
             .up()
             .createProperty()
             .name("hibernate.search.default.lucene_version")

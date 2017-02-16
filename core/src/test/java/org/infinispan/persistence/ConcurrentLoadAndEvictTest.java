@@ -1,22 +1,6 @@
 package org.infinispan.persistence;
 
-import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.Test;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -25,7 +9,23 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
+import org.testng.annotations.Test;
 
 /**
  * Tests a thread going past the cache loader interceptor and the interceptor deciding that loading is not necessary,

@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.Collections;
+
 import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
@@ -8,7 +10,6 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -41,12 +42,16 @@ public class IndexUpdater {
 
    public void flush(Class<?> entityType) {
       LOG.flushingIndex(entityType.getName());
-      defaultBatchBackend.flush(Util.<Class<?>>asSet(entityType));
+      defaultBatchBackend.flush(Collections.singleton(entityType));
    }
 
    public void purge(Class<?> entityType) {
       LOG.purgingIndex(entityType.getName());
-      defaultBatchBackend.purge(Util.<Class<?>>asSet(entityType));
+      defaultBatchBackend.purge(Collections.singleton(entityType));
+   }
+
+   public void waitForAsyncCompletion() {
+      defaultBatchBackend.awaitAsyncProcessingCompletion();
    }
 
    public void updateIndex(Object key, Object value) {

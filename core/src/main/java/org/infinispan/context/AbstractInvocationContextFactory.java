@@ -1,11 +1,15 @@
 package org.infinispan.context;
 
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ClearInvocationContext;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 
@@ -14,16 +18,16 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Mircea Markus
  * @author Dan Berindei
- * @since 7.0
+ * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 public abstract class AbstractInvocationContextFactory implements InvocationContextFactory {
 
    protected Configuration config;
-   protected SequentialInterceptorChain interceptorChain;
+   protected AsyncInterceptorChain interceptorChain;
    protected Equivalence keyEq;
 
    // Derived classes must call init() in their @Inject methods, to keep only one @Inject method per class.
-   public void init(Configuration config, SequentialInterceptorChain interceptorChain) {
+   public void init(Configuration config, AsyncInterceptorChain interceptorChain) {
       this.config = config;
       this.interceptorChain = interceptorChain;
       keyEq = config.dataContainer().keyEquivalence();
@@ -32,8 +36,15 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    @Override
    public InvocationContext createRemoteInvocationContextForCommand(
          VisitableCommand cacheCommand, Address origin) {
-      return cacheCommand instanceof ClearCommand ? createClearInvocationContext(origin) :
-            createRemoteInvocationContext(origin);
+      if (cacheCommand instanceof DataCommand && !(cacheCommand instanceof InvalidateCommand)) {
+         return new SingleKeyNonTxInvocationContext(origin);
+      } else if (cacheCommand instanceof PutMapCommand) {
+         return new NonTxInvocationContext(((PutMapCommand) cacheCommand).getMap().size(), origin);
+      } else if (cacheCommand instanceof ClearCommand) {
+         return createClearInvocationContext(origin);
+      } else {
+         return createRemoteInvocationContext(origin);
+      }
    }
 
    @Override

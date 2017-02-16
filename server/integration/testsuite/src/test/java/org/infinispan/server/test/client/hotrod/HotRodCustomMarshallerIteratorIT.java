@@ -1,5 +1,8 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -32,7 +35,6 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.OverProtocol;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -40,15 +42,13 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for remote iteration using a custom filter with custom classes marshalled with a custom marshaller
+ * Tests for remote iteration using a custom filter with custom classes marshalled with a custom Protobuf based marshaller.
  *
  * @author gustavonalle
  * @since 8.0
@@ -202,5 +202,3 @@ public class HotRodCustomMarshallerIteratorIT {
       }
    }
 }
-
-

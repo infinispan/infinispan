@@ -1,12 +1,12 @@
 package org.infinispan.query.remote.impl;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * SecurityActions for the org.infinispan.query.remote package. Do not move and do not change class and method

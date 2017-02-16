@@ -1,16 +1,18 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.transaction.xa.GlobalTransaction;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * A representation of a transaction that is suitable for transferring between a StateProvider and a StateConsumer
@@ -78,8 +80,8 @@ public class TransactionInfo {
       public void writeObject(ObjectOutput output, TransactionInfo object) throws IOException {
          output.writeObject(object.globalTransaction);
          output.writeInt(object.topologyId);
-         output.writeObject(object.modifications);
-         output.writeObject(object.lockedKeys);
+         MarshallUtil.marshallArray(object.modifications, output);
+         MarshallUtil.marshallCollection(object.lockedKeys, output);
       }
 
       @Override
@@ -87,8 +89,8 @@ public class TransactionInfo {
       public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          int topologyId = input.readInt();
-         WriteCommand[] modifications = (WriteCommand[]) input.readObject();
-         Set<Object> lockedKeys = (Set<Object>) input.readObject();
+         WriteCommand[] modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);
+         Set<Object> lockedKeys = MarshallUtil.unmarshallCollection(input, HashSet::new);
          return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys);
       }
    }

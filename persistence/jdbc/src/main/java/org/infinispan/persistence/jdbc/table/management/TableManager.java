@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.table.management;
 
-import org.infinispan.persistence.spi.PersistenceException;
-
 import java.sql.Connection;
+
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * @author Ryan Emerson
@@ -43,6 +43,8 @@ public interface TableManager {
 
    String getSelectRowSql();
 
+   String getSelectMultipleRowSql(int numberOfParams);
+
    String getSelectIdRowSql();
 
    String getCountRowsSql();
@@ -55,7 +57,11 @@ public interface TableManager {
 
    String getDeleteAllRowsSql();
 
-   String getSelectExpiredRowsSql();
+   String getSelectExpiredBucketsSql();
 
-   String getDeleteExpiredRowsSql();
+   String getSelectOnlyExpiredRowsSql();
+
+   boolean isStringEncodingRequired();
+
+   String encodeString(String stringToEncode);
 }

@@ -1,7 +1,21 @@
 package org.infinispan.manager;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
+import java.util.Set;
+import java.util.UUID;
+
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -26,29 +40,12 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
-import static org.testng.AssertJUnit.*;
 
 /**
  * @author Manik Surtani
@@ -101,8 +98,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testStartAndStop() {
-      CacheContainer cm = createCacheManager(false);
+      EmbeddedCacheManager cm = createCacheManager(false);
       try {
+         cm.defineConfiguration("cache1", new ConfigurationBuilder().build());
+         cm.defineConfiguration("cache2", new ConfigurationBuilder().build());
+         cm.defineConfiguration("cache3", new ConfigurationBuilder().build());
          Cache<?, ?> c1 = cm.getCache("cache1");
          Cache<?, ?> c2 = cm.getCache("cache2");
          Cache<?, ?> c3 = cm.getCache("cache3");
@@ -175,6 +175,18 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000436:.*")
+   public void testMissingDefaultConfiguration() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
+      try {
+         cm.getCache("someCache");
+      } finally {
+         cm.stop();
+      }
+   }
+
    public void testGetCacheConfigurationAfterDefiningSameOldConfigurationTwice() {
       withCacheManager(new CacheManagerCallable(createCacheManager(false)) {
          @Override
@@ -216,6 +228,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       try {
          cm.defineConfiguration("one", new ConfigurationBuilder().build());
          cm.defineConfiguration("two", new ConfigurationBuilder().build());
+         cm.defineConfiguration("three", new ConfigurationBuilder().build());
          cm.getCache("three");
          Set<String> cacheNames = cm.getCacheNames();
          assertEquals(3, cacheNames.size());
@@ -403,7 +416,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().clusteredDefault();
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      return TestCacheManagerFactory.createClusteredCacheManager(gcb, c);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, c);
+      cm.defineConfiguration("cache", c.build());
+
+      return cm;
    }
 
    private void doTestRemoveCacheClustered(final Method m, final boolean isStoreShared) {
@@ -414,6 +430,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          public void call() {
             EmbeddedCacheManager manager1 = cms[0];
             EmbeddedCacheManager manager2 = cms[0];
+
             Cache<String, String> cache1 = manager1.getCache("cache", true);
             Cache<String, String> cache2 = manager2.getCache("cache", true);
             assert cache1 != null;

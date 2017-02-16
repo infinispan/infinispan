@@ -85,4 +85,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "startOffset cannot be less than 0", id = 14824)
    IllegalArgumentException startOffsetCannotBeLessThanZero();
+
+   @Message(value = "Query parameter '%s' was not set", id = 14825)
+   IllegalStateException queryParameterNotSet(String paramName);
 }

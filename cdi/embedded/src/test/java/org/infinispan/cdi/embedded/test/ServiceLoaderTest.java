@@ -1,12 +1,13 @@
 package org.infinispan.cdi.embedded.test;
 
-import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.fail;
 
-import javax.enterprise.inject.spi.Extension;
 import java.util.ServiceLoader;
 
-import static org.testng.AssertJUnit.fail;
+import javax.enterprise.inject.spi.Extension;
+
+import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
+import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="cdi.test.ServiceLoaderTest")
 public class ServiceLoaderTest {

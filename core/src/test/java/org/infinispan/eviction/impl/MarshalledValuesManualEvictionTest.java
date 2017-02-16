@@ -1,19 +1,18 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.impl.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesManualEvictionTest")
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
@@ -21,13 +20,9 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.locking().useLockStriping(false); // to minimise chances of deadlock in the unit test
       cfg.storeAsBinary().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
-      MockMarshalledValueInterceptor interceptor = new MockMarshalledValueInterceptor(marshaller);
-      assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
       return cm;
    }
 
@@ -43,10 +38,10 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
       cache.put(p1, p2);
       cache.put(p3, p4);
+      assertEquals(2, cache.size());
       cache.evict(p1);
-
-      MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert interceptor.marshalledValueCreated;
+      assertEquals(1, cache.size());
+      assertEquals(p4, cache.get(p3));
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
@@ -57,13 +52,13 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
       cache.put("key-isoprene", p1);
       cache.put("key-hexastyle", p2);
+      assertEquals(2, cache.size());
       cache.evict("key-isoprene");
-
-      MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
+      assertEquals(1, cache.size());
+      assertEquals(p2, cache.get("key-hexastyle"));
    }
 
-   static class ManualEvictionPojo implements Externalizable {
+   public static class ManualEvictionPojo implements Externalizable, ExternalPojo {
       int i;
 
       @Override

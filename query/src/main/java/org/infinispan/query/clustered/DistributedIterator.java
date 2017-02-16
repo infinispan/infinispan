@@ -1,5 +1,11 @@
 package org.infinispan.query.clustered;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
@@ -8,12 +14,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * DistributedIterator.
@@ -25,7 +25,7 @@ import java.util.UUID;
  * @author Sanne Grinovero
  * @since 5.1
  */
-public class DistributedIterator implements ResultIterator {
+public class DistributedIterator<E> implements ResultIterator<E> {
 
    private static final Log log = LogFactory.getLog(DistributedIterator.class, Log.class);
 
@@ -74,7 +74,7 @@ public class DistributedIterator implements ResultIterator {
    }
 
    @Override
-   public Object next() {
+   public E next() {
       if (!hasNext())
          throw new NoSuchElementException("Out of boundaries");
       currentIndex++;
@@ -86,9 +86,9 @@ public class DistributedIterator implements ResultIterator {
       return fetchValue(specificPosition, partialResults[index]);
    }
 
-   public Object fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
-      NodeTopDocs eagerTopDocs = (NodeTopDocs) topDoc.getNodeTopDocs();
-      return cache.get(eagerTopDocs.keys[scoreIndex]);
+   protected E fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
+      NodeTopDocs eagerTopDocs = topDoc.getNodeTopDocs();
+      return (E) cache.get(eagerTopDocs.keys[scoreIndex]);
    }
 
    @Override

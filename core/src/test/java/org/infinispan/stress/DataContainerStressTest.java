@@ -1,6 +1,17 @@
 package org.infinispan.stress;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.DefaultDataContainer;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -11,7 +22,6 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.container.*;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.DefaultTimeService;
@@ -19,14 +29,6 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Stress test different data containers
@@ -48,14 +50,14 @@ public class DataContainerStressTest {
    private static final Log log = LogFactory.getLog(DataContainerStressTest.class);
 
    public void testSimpleDataContainer() throws InterruptedException {
-      DefaultDataContainer dc = DefaultDataContainer.unBoundedDataContainer(5000, ByteArrayEquivalence.INSTANCE);
+      DefaultDataContainer dc = DefaultDataContainer.unBoundedDataContainer(5000);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }
 
    public void testEntryBoundedDataContainer() throws InterruptedException {
-      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, NUM_KEYS - NUM_KEYS / 4, EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, ByteArrayEquivalence.INSTANCE, EvictionType.COUNT);
+      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, NUM_KEYS - NUM_KEYS / 4,
+            EvictionType.COUNT);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }
@@ -63,8 +65,8 @@ public class DataContainerStressTest {
    public void testMemoryBoundedDataContainer() throws InterruptedException {
       // The key length could be 4 or 5 (90% of the time it will be 5)
       // The value length could be 6 or 7 (90% of the time it will be 7)
-      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, threeQuarterMemorySize(NUM_KEYS, 5, 20), EvictionStrategy.LRU,
-              EvictionThreadPolicy.PIGGYBACK, ByteArrayEquivalence.INSTANCE, EvictionType.MEMORY);
+      DefaultDataContainer dc = DefaultDataContainer.boundedDataContainer(5000, threeQuarterMemorySize(NUM_KEYS, 5, 20),
+            EvictionType.MEMORY);
       initializeDefaultDataContainer(dc);
       doTest(dc);
    }

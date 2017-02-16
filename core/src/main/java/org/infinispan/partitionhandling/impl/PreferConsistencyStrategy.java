@@ -1,5 +1,13 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -11,14 +19,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
-
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class PreferConsistencyStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferConsistencyStrategy.class);

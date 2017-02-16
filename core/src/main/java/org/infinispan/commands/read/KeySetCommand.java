@@ -1,5 +1,10 @@
 package org.infinispan.commands.read;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.stream.StreamSupport;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -8,7 +13,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.container.DataContainer;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -16,12 +21,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
-
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -35,10 +34,10 @@ import java.util.stream.StreamSupport;
 public class KeySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
 
-   public KeySetCommand(Cache<K, V> cache, Set<Flag> flags) {
-      setFlags(flags);
-      if (flags != null) {
-         this.cache = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   public KeySetCommand(Cache<K, V> cache, long flagsBitSet) {
+      setFlagsBitSet(flagsBitSet);
+      if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
+         this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagsBitSet, Flag.class));
       } else {
          this.cache = cache;
       }
@@ -50,8 +49,8 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

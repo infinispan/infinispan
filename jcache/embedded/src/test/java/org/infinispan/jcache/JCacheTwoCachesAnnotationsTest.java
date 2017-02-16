@@ -1,5 +1,13 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
+
+import java.lang.reflect.Method;
+import java.net.URI;
+
+import javax.cache.Cache;
+import javax.inject.Inject;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jcache.annotation.InjectedCachePutInterceptor;
 import org.infinispan.jcache.embedded.JCache;
@@ -14,13 +22,6 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.cache.Cache;
-import javax.inject.Inject;
-import java.lang.reflect.Method;
-import java.net.URI;
-
-import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
 
 /**
  * @author Matej Cimbora

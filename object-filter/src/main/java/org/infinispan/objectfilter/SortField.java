@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter;
 
+import org.infinispan.objectfilter.impl.ql.PropertyPath;
+
 /**
  * Sort specification for a field.
  *
@@ -11,7 +13,7 @@ public interface SortField {
    /**
     * The field path.
     */
-   PropertyPath getPath();
+   PropertyPath<?> getPath();
 
    /**
     * Indicates if sorting is ascending or descending.

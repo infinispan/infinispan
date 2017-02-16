@@ -1,5 +1,9 @@
 package org.infinispan.atomic;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
@@ -12,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ValueFuture;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -20,10 +25,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 
 /**
@@ -42,7 +43,7 @@ public class AtomicHashMapPessimisticConcurrencyTest extends SingleCacheManagerT
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      builder.locking().lockAcquisitionTimeout(1000);
+      builder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       builder.invocationBatching().enable();
       builder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(lockingMode);
 

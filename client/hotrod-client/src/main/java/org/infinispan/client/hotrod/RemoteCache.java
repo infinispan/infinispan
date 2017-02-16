@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.dsl.Query;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.dsl.Query;
 
 /**
  * Provides remote reference to a Hot Rod server/cluster. It implements {@link org.infinispan.Cache}, but given its
@@ -383,4 +383,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * Returns {@link CacheTopologyInfo} for this cache.
     */
    CacheTopologyInfo getCacheTopologyInfo();
+
+   /**
+    * Returns a cache where values are manipulated using {@link java.io.InputStream} and {@link java.io.OutputStream}
+    */
+   StreamingRemoteCache<K> streaming();
 }

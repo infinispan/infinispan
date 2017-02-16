@@ -22,11 +22,12 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.AttributeDefinition;
-
-import javax.xml.XMLConstants;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.XMLConstants;
+
+import org.jboss.as.controller.AttributeDefinition;
 
 /**
  * Enumerates the attributes used in the Infinispan subsystem schema.
@@ -38,6 +39,7 @@ public enum Attribute {
     // must be first
     UNKNOWN((String) null),
     ACQUIRE_TIMEOUT(ModelKeys.ACQUIRE_TIMEOUT),
+    ADDRESS_COUNT(ModelKeys.ADDRESS_COUNT),
     ALIASES(ModelKeys.ALIASES),
     APPEND_CACHE_NAME_TO_PATH(ModelKeys.APPEND_CACHE_NAME_TO_PATH),
     @Deprecated
@@ -73,6 +75,7 @@ public enum Attribute {
     DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
     @Deprecated EAGER_LOCKING("eager-locking"),
     ENABLED(ModelKeys.ENABLED),
+    EVICTION(ModelKeys.EVICTION),
     @Deprecated
     EVICTION_EXECUTOR(ModelKeys.EVICTION_EXECUTOR),
     @Deprecated
@@ -143,6 +146,7 @@ public enum Attribute {
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
     SIMPLE_CACHE(ModelKeys.SIMPLE_CACHE),
+    @Deprecated
     SINGLETON(ModelKeys.SINGLETON),
     SITE(ModelKeys.SITE),
     SIZE(ModelKeys.SIZE),

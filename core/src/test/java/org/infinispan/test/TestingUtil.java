@@ -1,12 +1,62 @@
 package org.infinispan.test;
 
+import static java.io.File.separator;
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.management.MBeanInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.MBeanParameterInfo;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.security.auth.Subject;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -17,16 +67,15 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -53,44 +102,13 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
-
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.security.auth.Subject;
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.security.Principal;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static java.io.File.separator;
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.fail;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -99,6 +117,16 @@ public class TestingUtil {
    public static final String JGROUPS_CONFIG = "<jgroups>\n" +
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
+   private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
+
+   /**
+    * Should be used by tests for a timeout when they need to wait for that timeout to expire.
+    *
+    * <p>Can be changed with the {@code org.infinispan.test.shortTimeoutMillis} system property.</p>
+    */
+   public static long shortTimeoutMillis() {
+      return SHORT_TIMEOUT_MILLIS;
+   }
 
    public enum InfinispanStartTag {
       START_40(4, 0),
@@ -112,9 +140,12 @@ public class TestingUtil {
       START_70(7, 0),
       START_71(7, 1),
       START_72(7, 2),
-      START_80(8, 0);
+      START_80(8, 0),
+      START_81(8, 1),
+      START_82(8, 2),
+      START_90(9, 0);
 
-      public static final InfinispanStartTag LATEST = START_80;
+      public static final InfinispanStartTag LATEST = START_90;
       private final String tag;
       private final String majorMinor;
 
@@ -185,9 +216,9 @@ public class TestingUtil {
       }
    }
 
-   public static <T extends SequentialInterceptor> T findInterceptor(Cache<?, ?> cache,
+   public static <T extends AsyncInterceptor> T findInterceptor(Cache<?, ?> cache,
          Class<T> interceptorToFind) {
-      return cache.getAdvancedCache().getSequentialInterceptorChain()
+      return cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorExtending(interceptorToFind);
    }
 
@@ -554,10 +585,7 @@ public class TestingUtil {
    }
 
    private static boolean isCacheViewChanged(List members, int finalViewSize) {
-      if (members == null || finalViewSize != members.size())
-         return false;
-      else
-         return true;
+      return !(members == null || finalViewSize != members.size());
    }
 
 
@@ -724,9 +752,8 @@ public class TestingUtil {
          str = "a cache manager at address " + a;
       log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerBefore == %s", dataContainer.entrySet());
+      if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.size());
       dataContainer.clear();
-      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerAfter == %s", dataContainer.entrySet());
    }
 
    /**
@@ -759,11 +786,12 @@ public class TestingUtil {
                      // don't care
                   }
                }
+               // retrieve the size before calling log, as evaluating the set may cause recursive log calls
+               long size = log.isTraceEnabled() ? c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size() : 0;
                if (c.getAdvancedCache().getRpcManager() != null) {
-                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(),
-                             c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
+                  log.tracef("Local size on %s before stopping: %d", c.getAdvancedCache().getRpcManager().getAddress(), size);
                } else {
-                  log.tracef("Cache contents before stopping: %s", c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
+                  log.tracef("Local size before stopping: %d", size);
                }
                if (clear) {
                   try {
@@ -835,21 +863,9 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
-      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
-      StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
-      return (AbstractDelegatingMarshaller) marshaller;
-   }
-
-   public static AbstractDelegatingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
-      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cm, "globalComponentRegistry");
-      return (AbstractDelegatingMarshaller)
-            gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
-   }
-
-   public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
-      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
-      return gcr.getComponent(ExternalizerTable.class);
+   public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+      GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
+      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class);
    }
 
    /**
@@ -869,7 +885,7 @@ public class TestingUtil {
          cr.wireDependencies(i);
       }
       while ((i = i.getNext()) != null);
-      SequentialInterceptorChain inch = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain inch = cache.getAdvancedCache().getAsyncInterceptorChain();
       return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }
 
@@ -882,11 +898,11 @@ public class TestingUtil {
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
     * @return true if the interceptor was replaced
     */
-   public static boolean replaceInterceptor(Cache cache, SequentialInterceptor replacingInterceptor, Class<? extends SequentialInterceptor> toBeReplacedInterceptorType) {
+   public static boolean replaceInterceptor(Cache cache, AsyncInterceptor replacingInterceptor, Class<? extends AsyncInterceptor> toBeReplacedInterceptorType) {
       ComponentRegistry cr = extractComponentRegistry(cache);
       // make sure all interceptors here are wired.
       cr.wireDependencies(replacingInterceptor);
-      SequentialInterceptorChain inch = cr.getComponent(SequentialInterceptorChain.class);
+      AsyncInterceptorChain inch = cr.getComponent(AsyncInterceptorChain.class);
       return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }
 
@@ -921,7 +937,7 @@ public class TestingUtil {
 
    public static void replicateCommand(Cache cache, VisitableCommand command) throws Throwable {
       ComponentRegistry cr = extractComponentRegistry(cache);
-      SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
+      AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
       InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
       InvocationContext ctxt = icf.createInvocationContext(true, -1);
       ic.invoke(ctxt, command);
@@ -946,6 +962,10 @@ public class TestingUtil {
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<?, ?> cache) {
+      if (cache instanceof AbstractDelegatingCache) {
+         // Need to unwrap to the base cache
+         return extractCommandsFactory(extractField(cache, "cache"));
+      }
       return (CommandsFactory) extractField(cache, "commandsFactory");
    }
 
@@ -1069,10 +1089,10 @@ public class TestingUtil {
 
    public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
-      Channel ch = jgt.getChannel();
+      JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DISCARD discard = new DISCARD();
-      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      ps.insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
       return discard;
    }
 
@@ -1088,12 +1108,12 @@ public class TestingUtil {
     */
    public static DELAY setDelayForCache(Cache<?, ?> cache, int in_delay_millis, int out_delay_millis) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
-      Channel ch = jgt.getChannel();
+      JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
-      DELAY delay = (DELAY) ps.findProtocol(DELAY.class);
+      DELAY delay = ps.findProtocol(DELAY.class);
       if (delay==null) {
          delay = new DELAY();
-         ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
+         ps.insertProtocol(delay, ProtocolStack.Position.ABOVE, TP.class);
       }
       delay.setInDelay(in_delay_millis);
       delay.setOutDelay(out_delay_millis);
@@ -1303,6 +1323,25 @@ public class TestingUtil {
    }
 
    /**
+    * Invoke a task using a cache manager created by given supplier function.
+    * This method guarantees that the cache manager created in the task will
+    * be cleaned up after the task has completed, regardless of the task outcome.
+    *
+    * @param s cache manager supplier function
+    * @param c consumer function to execute with cache manager
+    */
+   public static void withCacheManager(Supplier<EmbeddedCacheManager> s,
+         Consumer<EmbeddedCacheManager> c) {
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = s.get();
+         c.accept(cm);
+      } finally {
+         if (cm != null) TestingUtil.killCacheManagers(false, cm);
+      }
+   }
+
+   /**
     * Invoke a task using a several cache managers. This method guarantees
     * that the cache managers used in the task will be cleaned up after the
     * task has completed, regardless of the task outcome.
@@ -1363,8 +1402,10 @@ public class TestingUtil {
       return (T) persistenceManager.getAllWriters().get(0);
    }
 
-   public static StreamingMarshaller marshaller(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   @SuppressWarnings("unchecked")
+   public static <T extends CacheWriter<K, V>, K, V> T getFirstTxWriter(Cache<K, V> cache) {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      return (T) persistenceManager.getAllTxWriters().get(0);
    }
 
    public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, KeyFilter filter) {
@@ -1419,8 +1460,8 @@ public class TestingUtil {
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      StreamingMarshaller marshaller = advCache.getComponentRegistry().getCacheMarshaller();
-      pm.writeToAllStores(new MarshalledEntryImpl(key, value, null, marshaller), BOTH);
+      StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
+      pm.writeToAllNonTxStores(new MarshalledEntryImpl(key, value, null, marshaller), BOTH);
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
@@ -1528,7 +1569,7 @@ public class TestingUtil {
       return wrap;
    }
 
-   public static interface WrapFactory<T, W, C> {
+   public interface WrapFactory<T, W, C> {
       W wrap(C wrapOn, T current);
    }
 
@@ -1560,4 +1601,7 @@ public class TestingUtil {
          throw new AssertionError("Leaked threads: " + leakedThreads);
    }
 
+   public static boolean isTriangleAlgorithm(CacheMode cacheMode, boolean transactional) {
+      return cacheMode.isDistributed() && !transactional;
+   }
 }

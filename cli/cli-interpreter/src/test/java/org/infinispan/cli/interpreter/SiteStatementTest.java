@@ -1,5 +1,15 @@
 package org.infinispan.cli.interpreter;
 
+import static java.lang.String.format;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -14,16 +24,6 @@ import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Tristan Tarrant

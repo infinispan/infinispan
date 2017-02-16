@@ -3,54 +3,48 @@ package org.infinispan.query.backend;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * Transaction related helper
  *
  * @author gustavonalle
  * @since 7.0
  */
-class TransactionHelper {
+public final class TransactionHelper {
+
+   private static final Log LOGGER = LogFactory.getLog(TransactionHelper.class, Log.class);
 
    private final TransactionManager transactionManager;
 
-   TransactionHelper(final TransactionManager transactionManager) {
+   public TransactionHelper(final TransactionManager transactionManager) {
       this.transactionManager = transactionManager;
    }
 
-   void runSuspendingTx(Operation op) {
-      final Transaction transaction = suspend();
-      try {
-         op.execute();
-      } finally {
-         resume(transaction);
+   public void resume(final Transaction transaction) {
+      if (transaction != null) {
+         try {
+            transactionManager.resume(transaction);
+         } catch (Exception e) {
+            throw LOGGER.unableToResumeSuspendedTx(transaction, e);
+         }
       }
    }
 
-   Transaction suspend() {
+   public Transaction suspendTxIfExists() {
       if (transactionManager == null) {
          return null;
       }
       try {
-         return transactionManager.suspend();
+         Transaction tx;
+         if ((tx = transactionManager.getTransaction()) != null) {
+            transactionManager.suspend();
+         }
+         return tx;
       } catch (Exception e) {
-         //ignored
+         throw LOGGER.unableToSuspendTx(e);
       }
-      return null;
-   }
-
-   void resume(Transaction transaction) {
-      if (transaction == null || transactionManager == null) {
-         return;
-      }
-      try {
-         transactionManager.resume(transaction);
-      } catch (Exception e) {
-         //ignored;
-      }
-   }
-
-   interface Operation {
-      void execute();
    }
 
 }

@@ -1,5 +1,19 @@
 package org.infinispan.lock;
 
+import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -18,19 +32,6 @@ import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-
-import static org.infinispan.context.Flag.FAIL_SILENTLY;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 
 @Test(testName = "lock.APITest", groups = "functional")
 @CleanupAfterMethod
@@ -44,7 +45,7 @@ public class APITest extends MultipleCacheManagersTest {
             .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       cfg.transaction().lockingMode(LockingMode.PESSIMISTIC)
             .cacheStopTimeout(0)
-            .locking().lockAcquisitionTimeout(100);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
 
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);

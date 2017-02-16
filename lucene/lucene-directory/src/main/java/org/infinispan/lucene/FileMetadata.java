@@ -3,11 +3,11 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
@@ -100,7 +100,7 @@ public final class FileMetadata {
 
       @Override
       public Set<Class<? extends FileMetadata>> getTypeClasses() {
-         return Util.<Class<? extends FileMetadata>>asSet(FileMetadata.class);
+         return Collections.singleton(FileMetadata.class);
       }
 
    }

@@ -10,15 +10,23 @@ public interface ModelFactory {
 
    Class<?> getAccountImplClass();
 
+   String getAccountTypeName();
+
    User makeUser();
 
    Class<?> getUserImplClass();
+
+   String getUserTypeName();
 
    Address makeAddress();
 
    Class<?> getAddressImplClass();
 
+   String getAddressTypeName();
+
    Transaction makeTransaction();
 
    Class<?> getTransactionImplClass();
+
+   String getTransactionTypeName();
 }

@@ -1,6 +1,9 @@
 package org.infinispan.lock.singlelock;
 
-import java.util.Arrays;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -31,10 +34,6 @@ import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
 
 /**
  * Test what happens if the originator becomes an owner during a prepare or commit RPC.
@@ -63,7 +62,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       configurationBuilder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       configurationBuilder.clustering().remoteTimeout(30000, TimeUnit.MILLISECONDS);
-      configurationBuilder.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000);
+      configurationBuilder.clustering().hash().l1().disable();
+      configurationBuilder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       ControlledConsistentHashFactory consistentHashFactory =
             new ControlledConsistentHashFactory(new int[]{KILLED_INDEX, ORIGINATOR_INDEX},

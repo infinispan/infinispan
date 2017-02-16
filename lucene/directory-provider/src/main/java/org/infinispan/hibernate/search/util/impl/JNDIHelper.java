@@ -1,8 +1,9 @@
 package org.infinispan.hibernate.search.util.impl;
 
-import javax.naming.Context;
 import java.util.HashSet;
 import java.util.Properties;
+
+import javax.naming.Context;
 
 /**
  * Helper class for creating an JNDI {@code InitialContext}.

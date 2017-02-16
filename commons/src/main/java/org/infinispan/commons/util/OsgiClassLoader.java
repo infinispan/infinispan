@@ -12,7 +12,6 @@ import java.util.NoSuchElementException;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleReference;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -61,7 +60,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the class and break on first found match.
-    * 
+    *
     * TODO: Should this throw a different exception or warn if multiple classes were found? Naming
     * collisions can and do happen in OSGi...
     */
@@ -93,7 +92,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the resource and break on first found match.
-    * 
+    *
     * TODO: Should this throw a different exception or warn if multiple resources were found? Naming
     * collisions can and do happen in OSGi...
     */
@@ -102,10 +101,10 @@ public class OsgiClassLoader extends ClassLoader {
       if (resourceCache.containsKey(name)) {
          return resourceCache.get(name);
       }
-      
+
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
-         if (bundle.getState() == Bundle.ACTIVE) {
+         if (bundle != null && bundle.getState() == Bundle.ACTIVE) {
             try {
                final URL resource = bundle.getResource(name);
                if (resource != null) {
@@ -123,7 +122,7 @@ public class OsgiClassLoader extends ClassLoader {
 
    /**
     * Load the resources and return an Enumeration
-    * 
+    *
     * Note: Since they're Enumerations, do not cache these results!
     */
    @Override
@@ -133,7 +132,7 @@ public class OsgiClassLoader extends ClassLoader {
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
-         if (bundle.getState() == Bundle.ACTIVE) {
+         if (bundle != null && bundle.getState() == Bundle.ACTIVE) {
             try {
                final Enumeration<URL> resources = bundle.getResources(name);
                if (resources != null) {

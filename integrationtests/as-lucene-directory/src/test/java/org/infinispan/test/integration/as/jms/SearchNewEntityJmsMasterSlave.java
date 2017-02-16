@@ -6,18 +6,19 @@
  */
 package org.infinispan.test.integration.as.jms;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.infinispan.test.integration.as.jms.controller.RegistrationController;
 import org.infinispan.test.integration.as.jms.model.RegisteredMember;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.junit.InSequence;
 import org.junit.Test;
-
-import javax.inject.Inject;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * In a JMS Master/Slave configuration, every node should be able to find entities created by some other nodes after the

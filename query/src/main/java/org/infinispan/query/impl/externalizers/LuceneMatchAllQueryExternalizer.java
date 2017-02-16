@@ -1,24 +1,23 @@
 package org.infinispan.query.impl.externalizers;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
+
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.infinispan.commons.marshall.AbstractExternalizer;
 
 /**
  *
  * @author gustavonalle
  * @since 7.1
  */
-@SuppressWarnings("unchecked")
 public class LuceneMatchAllQueryExternalizer extends AbstractExternalizer<MatchAllDocsQuery> {
    @Override
    public Set<Class<? extends MatchAllDocsQuery>> getTypeClasses() {
-      return Util.<Class<? extends MatchAllDocsQuery>>asSet(MatchAllDocsQuery.class);
+      return Collections.singleton(MatchAllDocsQuery.class);
    }
 
    @Override

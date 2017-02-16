@@ -57,24 +57,18 @@
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
-
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
-      
       <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-controller-client</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
-      <dependency>
-         <groupId>org.jboss.modules</groupId>
-         <artifactId>jboss-modules</artifactId>
-         <optional>${uberjar.deps.optional}</optional>
-      </dependency>
+
       <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-controller</artifactId>
@@ -100,6 +94,12 @@
       </resources>
       <plugins>
          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <executions>
@@ -113,8 +113,8 @@
                      <finalName>${intermediary_jar_name}</finalName>
                      <artifactSet>
                         <excludes>
-                           <exclude>org.apache.logging.log4j:log4j-core:jar:*</exclude>
-                           <exclude>log4j:log4j:jar:*</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-core:jar:</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-api:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:*</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:*</exclude>
                            <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:*</exclude>
@@ -144,12 +144,6 @@
                            <artifact>org.jboss.marshalling:jboss-marshalling</artifact>
                            <excludes>
                               <exclude>org/jboss/marshalling/ModularClassTable*.class</exclude>
-                           </excludes>
-                        </filter>
-                        <filter>
-                           <artifact>org.apache.logging.log4j:log4j-api</artifact>
-                           <excludes>
-                              <exclude>org/apache/logging/log4j/util/Activator*.class</exclude>
                            </excludes>
                         </filter>
                         <filter>
@@ -199,14 +193,6 @@
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
-                        
-                        
-                        
-                        
-                        
-                           
-                           
-                        
                         <relocation>
                            <pattern>org.jboss.threads</pattern>
                            <shadedPattern>infinispan.org.jboss.threads</shadedPattern>
@@ -220,10 +206,6 @@
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
                         </relocation>
                         <relocation>
-                           <pattern>org.jboss.modules</pattern>
-                           <shadedPattern>infinispan.org.jboss.modules</shadedPattern>
-                        </relocation>
-                        <relocation>
                            <pattern>org.jboss.dmr</pattern>
                            <shadedPattern>infinispan.org.jboss.dmr</shadedPattern>
                         </relocation>
@@ -235,12 +217,6 @@
                            <pattern>com.squareup</pattern>
                            <shadedPattern>infinispan.com.squareup</shadedPattern>
                         </relocation>
-                        
-                        
-                        
-                           
-                           
-                        
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">

@@ -1,5 +1,19 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
@@ -12,20 +26,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import static org.infinispan.scripting.utils.ScriptingUtils.*;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
 @Test(groups = "functional", testName = "scripting.ClusteredScriptingTest")
 public class ClusteredScriptingTest extends AbstractInfinispanTest {
+
+   public static final int EXPECTED_WORDS = 3202;
 
    @Test(dataProvider = "cacheModeProvider")
    public void testLocalScriptExecutionWithCache(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
@@ -35,6 +39,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
          @Override
          public void call() throws IOException, ExecutionException, InterruptedException {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
+            for(EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            }
             Cache cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             loadScript(scriptingManager, "/test.js");
             executeScriptOnManager("test.js", cms[0]);
@@ -50,7 +57,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
          @Override
          public void call() throws Exception {
-            Cache cache = cms[0].getCache();
+            for(EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            }
+            Cache<Object, Object> cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             loadScript(scriptingManager, "/test1.js");
 
@@ -83,7 +93,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test(enabled = false, dataProvider = "cacheModeProvider", description = "Enable as soon as ISPN-6300 is fixed.")
+   @Test(dataProvider = "cacheModeProvider")
    public void testDistExecScriptWithCacheManagerAndParams(final CacheMode cacheMode) throws IOException, InterruptedException, ExecutionException {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
               TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
@@ -137,12 +147,12 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
             Map<String, Long> resultsFuture = (Map<String, Long>) scriptingManager.runScript(
                     "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
-            assertEquals(3209, resultsFuture.size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
 
             resultsFuture = (Map<String, Long>) scriptingManager.runScript(
                     "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
-            assertEquals(3209, resultsFuture.size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
          }
       });
@@ -165,8 +175,8 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
                     "wordCountStream_serializable.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
-            assertEquals(3209, resultsFuture.get(0).size());
-            assertEquals(3209, resultsFuture.get(1).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
             assertEquals(resultsFuture.get(0).get("macbeth"), Long.valueOf(287));
             assertEquals(resultsFuture.get(1).get("macbeth"), Long.valueOf(287));
          }
@@ -189,8 +199,8 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
                     "wordCountStream_Exec.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
-            assertEquals(3209, resultsFuture.get(0).size());
-            assertEquals(3209, resultsFuture.get(1).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
             assertEquals(resultsFuture.get(0).get("macbeth"), Long.valueOf(287));
             assertEquals(resultsFuture.get(1).get("macbeth"), Long.valueOf(287));
          }
@@ -213,8 +223,8 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
                     "wordCountStream_dist.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
-            assertEquals(3209, resultsFuture.get(0).size());
-            assertEquals(3209, resultsFuture.get(1).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
+            assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
             assertEquals(resultsFuture.get(0).get("macbeth"), Long.valueOf(287));
             assertEquals(resultsFuture.get(1).get("macbeth"), Long.valueOf(287));
          }

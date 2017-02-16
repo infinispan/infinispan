@@ -1,5 +1,11 @@
 package org.infinispan.persistence.cli;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -7,23 +13,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.cli.configuration.CLInterfaceLoaderConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.MultiCacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * // TODO: Document this

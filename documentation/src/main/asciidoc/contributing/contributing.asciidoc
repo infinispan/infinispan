@@ -1,0 +1,20 @@
+= Contributing to Infinispan
+The Infinispan community
+:toc2:
+:icons: font
+:toclevels: 2
+:numbered:
+
+Feel like contributing to Infinispan?  This guide will help you set up your
+environment, walk you through best practices, and help you debug, improve
+and add features to Infinispan.
+
+include::basics.adoc[]
+include::source_control.adoc[]
+include::building.adoc[]
+include::api.adoc[]
+include::tests.adoc[]
+include::help.adoc[]
+include::configuration.adoc[]
+include::docs.adoc[]
+

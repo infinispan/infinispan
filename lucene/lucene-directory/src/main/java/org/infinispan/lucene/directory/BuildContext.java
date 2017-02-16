@@ -1,10 +1,10 @@
 package org.infinispan.lucene.directory;
 
+import java.util.concurrent.Executor;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
-
-import java.util.concurrent.Executor;
 
 /**
  * Building context to set construction parameters of Infinispan Directory instances

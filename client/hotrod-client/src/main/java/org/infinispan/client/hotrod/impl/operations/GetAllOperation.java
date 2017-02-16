@@ -6,12 +6,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
-
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Implements "getAll" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -24,8 +25,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public GetAllOperation(Codec codec, TransportFactory transportFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
-                          int flags) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                          int flags, ClientIntelligence clientIntelligence) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
       this.keys = keys;
    }
 

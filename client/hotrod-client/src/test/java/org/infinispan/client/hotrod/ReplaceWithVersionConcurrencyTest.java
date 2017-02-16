@@ -1,11 +1,8 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +13,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest")
 public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
@@ -35,8 +35,8 @@ public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
 //            .transaction()
 //            .lockingMode(LockingMode.PESSIMISTIC)
-//            .transactionMode(TransactionMode.TRANSACTIONAL)
-      ;
+//            .transactionMode(TransactionMode.TRANSACTIONAL);
+
       createHotRodServers(2, builder);
    }
 

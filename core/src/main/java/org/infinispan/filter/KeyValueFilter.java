@@ -1,7 +1,8 @@
 package org.infinispan.filter;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.metadata.Metadata;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A filter for keys with their values.  This class is complemented by the {@link org.infinispan.filter.KeyFilter}

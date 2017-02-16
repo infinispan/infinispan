@@ -1,17 +1,17 @@
 package org.infinispan.transaction.xa;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.KeyValuePair;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -59,7 +59,7 @@ public interface CacheTransaction {
    void clearLookedUpEntries();
 
    boolean ownsLock(Object key);
-   
+
    void clearLockedKeys();
 
    Set<Object> getLockedKeys();
@@ -102,9 +102,17 @@ public interface CacheTransaction {
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
 
-   void putLookedUpRemoteVersion(Object key, EntryVersion version);
+   /**
+    * @deprecated since 9.0
+    */
+   @Deprecated
+   default void putLookedUpRemoteVersion(Object key, EntryVersion version) {}
 
-   EntryVersion getLookedUpRemoteVersion(Object key);
+   /**
+    * @deprecated since 9.0
+    */
+   @Deprecated
+   default EntryVersion getLookedUpRemoteVersion(Object key) { return null; }
 
    boolean keyRead(Object key);
 
@@ -127,8 +135,10 @@ public interface CacheTransaction {
     * of the key. This method is used when a remote get is performed for the key.
     * <p/>
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+    * @deprecated since 9.0
     */
-   void replaceVersionRead(Object key, EntryVersion version);
+   @Deprecated
+   default void replaceVersionRead(Object key, EntryVersion version) { addVersionRead(key, version);}
 
    /**
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.

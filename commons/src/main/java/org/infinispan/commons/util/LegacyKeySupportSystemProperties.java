@@ -38,5 +38,5 @@ public class LegacyKeySupportSystemProperties {
             val = defaultValue;
       }
       return val;
-   }   
+   }
 }

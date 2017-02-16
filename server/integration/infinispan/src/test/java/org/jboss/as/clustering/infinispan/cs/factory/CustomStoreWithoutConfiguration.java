@@ -1,11 +1,11 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
+import java.util.concurrent.Executor;
+
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-
-import java.util.concurrent.Executor;
 
 public class CustomStoreWithoutConfiguration implements AdvancedCacheLoader<Object,Object> {
 

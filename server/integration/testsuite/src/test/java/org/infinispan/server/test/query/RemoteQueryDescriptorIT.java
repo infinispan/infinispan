@@ -1,5 +1,17 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.commons.util.Util.read;
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.management.ObjectName;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -21,24 +33,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.util.Arrays;
-
-import static org.infinispan.commons.util.Util.read;
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Tests for Remote Query descriptors propagation across nodes.
  *
  * @author gustavonalle
  */
 
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "remote-query-2")})
 public class RemoteQueryDescriptorIT {

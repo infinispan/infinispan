@@ -1,20 +1,19 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
-
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.IntStream;
+
+import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.Util;
 
 /**
  * @author gustavonalle
@@ -24,7 +23,7 @@ class SegmentKeyTracker implements KeyTracker {
 
    private static final Log log = LogFactory.getLog(SegmentKeyTracker.class);
 
-   private final AtomicReferenceArray<Set<byte[]>> keysPerSegment;
+   private final AtomicReferenceArray<Set<WrappedByteArray>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
    private final Marshaller marshaller;
 
@@ -36,14 +35,14 @@ class SegmentKeyTracker implements KeyTracker {
       this.segmentConsistentHash = segmentConsistentHash;
       IntStream segmentStream = segments == null ?
               IntStream.range(0, segmentConsistentHash.getNumSegments()) : segments.stream().mapToInt(i -> i);
-      segmentStream.forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
+      segmentStream.forEach(i -> keysPerSegment.set(i, new HashSet<>()));
    }
 
    public boolean track(byte[] key, short status) {
       int segment = HotRodConstants.hasCompatibility(status) ?
               segmentConsistentHash.getSegment(MarshallerUtil.bytes2obj(marshaller, key, status)) :
               segmentConsistentHash.getSegment(key);
-      boolean result = keysPerSegment.get(segment).add(key);
+      boolean result = keysPerSegment.get(segment).add(new WrappedByteArray(key));
       if (log.isTraceEnabled())
          log.trackingSegmentKey(Util.printArray(key), segment, !result);
       return result;

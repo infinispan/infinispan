@@ -1,14 +1,15 @@
 package org.infinispan.interceptors.totalorder;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationExceptionFunction;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Synchronizes the incoming totally ordered transactions with the state transfer.
@@ -16,19 +17,20 @@ import java.util.concurrent.CompletableFuture;
  * @author Pedro Ruivo
  */
 public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
-
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private final InvocationExceptionFunction handleLocalPrepareReturn = this::handleLocalPrepareReturn;
+
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return localPrepare(ctx, command);
       }
       return remotePrepare(ctx, command);
    }
 
-   private CompletableFuture<Void> remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private Object remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final int topologyId = currentTopologyId();
       ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
@@ -47,41 +49,39 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
          throw new IllegalStateException("This should never happen");
       }
 
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
-   private CompletableFuture<Void> localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      boolean needsToPrepare = true;
-      Object retVal = null;
-      while (needsToPrepare) {
-         try {
-            command.setTopologyId(currentTopologyId());
+   private Object localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      command.setTopologyId(currentTopologyId());
 
-            if (trace) {
-               log.tracef("Local transaction received %s. setting topology Id to %s",
-                          command.getGlobalTransaction().globalId(), command.getTopologyId());
-            }
-
-            retVal = ctx.forkInvocationSync(command);
-            needsToPrepare = false;
-         } catch (Throwable throwable) {
-            //if we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
-            //Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the prepares are
-            //unblocked after the rebalance has finished.
-            needsToPrepare = needsToRePrepare(throwable);
-            if (log.isDebugEnabled()) {
-               log.tracef("Exception caught while preparing transaction %s (cause = %s). Needs to retransmit? %s",
-                          command.getGlobalTransaction().globalId(), throwable.getCause(), needsToPrepare);
-            }
-
-            if (!needsToPrepare) {
-               throw throwable;
-            } else {
-               logRetry(command);
-            }
-         }
+      if (trace) {
+         log.tracef("Local transaction received %s. setting topology Id to %s",
+               command.getGlobalTransaction().globalId(), command.getTopologyId());
       }
-      return ctx.shortCircuit(retVal);
+
+      return invokeNextAndExceptionally(ctx, command, handleLocalPrepareReturn);
+   }
+
+   private Object handleLocalPrepareReturn(InvocationContext ctx, VisitableCommand command, Throwable t)
+         throws Throwable {
+      // If we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
+      // Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the
+      // prepares are unblocked after the rebalance has finished.
+      boolean needsToPrepare = needsToRePrepare(t);
+      PrepareCommand prepareCommand = (PrepareCommand) command;
+      if (log.isDebugEnabled()) {
+         log.tracef("Exception caught while preparing transaction %s (cause = %s). Needs to retransmit? %s",
+               prepareCommand.getGlobalTransaction().globalId(), t.getCause(), needsToPrepare);
+      }
+
+      if (!needsToPrepare) {
+         throw t;
+      } else {
+         logRetry(command);
+         prepareCommand.setTopologyId(currentTopologyId());
+         return invokeNextAndExceptionally(ctx, command, handleLocalPrepareReturn);
+      }
    }
 
    private boolean needsToRePrepare(Throwable throwable) {

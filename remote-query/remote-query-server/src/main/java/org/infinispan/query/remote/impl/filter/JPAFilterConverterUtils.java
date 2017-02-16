@@ -1,14 +1,14 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author gustavonalle
@@ -17,7 +17,7 @@ class JPAFilterConverterUtils {
 
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
-      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(Configuration.builder().build());
 
       @Override
       protected SerializationContext getSerializationContext() {
@@ -28,7 +28,7 @@ class JPAFilterConverterUtils {
    private JPAFilterConverterUtils() {
    }
 
-   static String unmarshallJPQL(Object[] params) {
+   static String unmarshallQueryString(Object[] params) {
       try {
          return (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
       } catch (IOException | ClassNotFoundException e) {

@@ -1,19 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.filter.NamedFactory;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
-import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.lang.management.BufferPoolMXBean;
@@ -24,8 +12,21 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
@@ -39,11 +40,9 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
    private static final int NUM_NODES = 2;
 
-   private static final int NUM_OWNERS = 1;
-
    private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
-   private RemoteCache remoteCache;
+   private RemoteCache<Integer, byte[]> remoteCache;
 
    // There is only one Godzilla in heap, but we can use Netty's off-heap pools to multiply them and destroy the world
    private static final byte[] GODZILLA = makeGodzilla();
@@ -63,8 +62,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    private ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash().numOwners(NUM_OWNERS);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       //playing with OOM - weird things might happen when JVM will struggle for life
       builder.clustering().remoteTimeout(5, TimeUnit.MINUTES);
       return hotRodCacheConfiguration(builder);
@@ -90,7 +88,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          log.debugf("ADDED LISTENER");
          logDirectMemory(log);
 
-         latch.await();
+         latch.await(1, TimeUnit.MINUTES);
 
          remoteCache.removeClientListener(listener);
          assertEquals(NUM_ENTRIES, listener.eventCount);
@@ -128,7 +126,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
       }
    }
 
-   public static String humanReadableByteCount(long bytes, boolean si) {
+   private static String humanReadableByteCount(long bytes, boolean si) {
       int unit = si ? 1000 : 1024;
       if (bytes < unit) return bytes + " B";
       int exp = (int) (Math.log(bytes) / Math.log(unit));
@@ -137,12 +135,12 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    @ClientListener(converterFactoryName = "godzilla-growing-converter-factory", useRawData = true, includeCurrentState = true)
-   static class ClientEntryListener {
+   private static class ClientEntryListener {
       private static final Log log = LogFactory.getLog(ClientEntryListener.class);
       private final CountDownLatch latch;
       int eventCount = 0;
 
-      public ClientEntryListener(CountDownLatch latch) {
+      ClientEntryListener(CountDownLatch latch) {
          this.latch = latch;
       }
 
@@ -163,17 +161,17 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    @NamedFactory(name = "godzilla-growing-converter-factory")
-   static class CustomConverterFactory implements CacheEventConverterFactory {
+   private static class CustomConverterFactory implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<Object, Object, Object> getConverter(Object[] params) {
-         return new CustomConverter();
+      public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
+         return new CustomConverter<K, V, C>();
       }
 
-      static class CustomConverter implements CacheEventConverter<Object, Object, Object>, Serializable {
+      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable, ExternalPojo {
          @Override
-         public Object convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
+         public C convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
             // all baby godzillas get converted to full grown godzillas
-            return GODZILLA;
+            return (C) GODZILLA;
          }
       }
    }

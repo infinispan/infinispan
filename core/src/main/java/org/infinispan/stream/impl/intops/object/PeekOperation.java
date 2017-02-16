@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.object;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs peek operation on a regular {@link Stream}

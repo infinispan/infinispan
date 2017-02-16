@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertFalse;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import static org.testng.AssertJUnit.assertFalse;
 import org.testng.annotations.Test;
 
 /**

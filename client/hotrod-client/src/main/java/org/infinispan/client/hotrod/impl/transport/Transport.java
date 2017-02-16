@@ -14,6 +14,8 @@ public interface Transport {
 
    void writeArray(byte[] toAppend);
 
+   void writeArray(byte[] toAppend, int offset, int count);
+
    void writeOptionalArray(byte[] toAppend);
 
    void writeByte(short toWrite);
@@ -40,6 +42,8 @@ public interface Transport {
    byte[] readArray();
 
    String readString();
+
+   void readByteArray(byte[] buffer, int size);
 
    byte[] readByteArray(int size);
 
@@ -74,4 +78,7 @@ public interface Transport {
 
    boolean isValid();
 
+   void setBusy(boolean busy);
+
+   boolean isBusy();
 }

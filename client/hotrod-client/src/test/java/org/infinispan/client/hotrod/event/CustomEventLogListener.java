@@ -17,6 +17,8 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.filter.NamedFactory;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -24,7 +26,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.filter.NamedFactory;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplier<K> {
@@ -80,7 +81,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       E event = pollEvent(type);
       assertAnyEquals(expected, event);
    }
-   
+
    public void expectCreatedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -192,12 +193,12 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          assertNotNull(event.timestamp); // check only custom field, value can be null
          assertAnyEquals(expected, event);
       }
-      
+
       public void expectOrderedEventQueue(ClientEvent.Type type) {
          BlockingQueue<CustomEvent> queue = queue(type);
-         if (queue.size() < 2) 
+         if (queue.size() < 2)
             return;
-         
+
          try {
             CustomEvent before = queue.poll(10, TimeUnit.SECONDS);
             Iterator<CustomEvent> iter = queue.iterator();
@@ -210,7 +211,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
             throw new AssertionError(e);
          }
       }
-      
+
       private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
          assertTrue("Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp,
             before.timestamp < after.timestamp);
@@ -244,7 +245,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new StaticConverter();
       }
 
-      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
+      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable, ExternalPojo {
          @Override
          public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
@@ -328,11 +329,11 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       }
 
       static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
-         implements Serializable {
+         implements Serializable, ExternalPojo {
          private final Object[] params;
          private final CallbackCounter counter = new NumericCallbackCounter();
 
-         public FilterConverter(Object[] params) {
+         FilterConverter(Object[] params) {
             this.params = params;
          }
 

@@ -22,6 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.util.List;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
@@ -32,11 +37,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceController;
-
-import java.util.List;
-
-import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Handler to register the proto file(s) contents via DMR/CLI
@@ -55,28 +55,30 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
       final ServiceController<?> controller = context.getServiceRegistry(false).getService(
               CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-      ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      if (protoManager != null) {
-         try {
-            String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
-            String contentsParameter = CacheContainerResource.PROTO_CONTENTS.getName();
-            ModelNode names = operation.require(namesParameter);
-            ModelNode contents = operation.require(contentsParameter);
-            validateParameters(names, contents);
-            List<ModelNode> descriptorsNames = names.asList();
-            List<ModelNode> descriptorsContents = contents.asList();
-            String[] nameArray = new String[descriptorsNames.size()];
-            String[] contentArray = new String[descriptorsNames.size()];
-            int i = 0;
-            for (ModelNode modelNode : descriptorsNames) {
-               nameArray[i] = modelNode.asString();
-               contentArray[i] = descriptorsContents.get(i).asString();
-               i++;
+      if (controller != null) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         if (protoManager != null) {
+            try {
+               String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
+               String contentsParameter = CacheContainerResource.PROTO_CONTENTS.getName();
+               ModelNode names = operation.require(namesParameter);
+               ModelNode contents = operation.require(contentsParameter);
+               validateParameters(names, contents);
+               List<ModelNode> descriptorsNames = names.asList();
+               List<ModelNode> descriptorsContents = contents.asList();
+               String[] nameArray = new String[descriptorsNames.size()];
+               String[] contentArray = new String[descriptorsNames.size()];
+               int i = 0;
+               for (ModelNode modelNode : descriptorsNames) {
+                  nameArray[i] = modelNode.asString();
+                  contentArray[i] = descriptorsContents.get(i).asString();
+                  i++;
+               }
+               protoManager.registerProtofiles(nameArray, contentArray);
+            } catch (Exception e) {
+               throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
             }
-            protoManager.registerProtofiles(nameArray, contentArray);
-         } catch (Exception e) {
-            throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
          }
       }
       context.stepCompleted();

@@ -8,12 +8,12 @@ package org.infinispan.query.remote.client;
 message QueryRequest {
 
    /**
-    * The query string, expressed in JPA query language.
+    * The query string, expressed in Infinispan's query language (a JPA subset with full-text enhancements).
     * NOTE: currently only a limited subset of the JPA query language is supported.
     */
-   required string jpqlString = 1;
+   required string queryString = 1;
 
-   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the jpqlString
+   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the query string
 
    /**
     * The number of matching results to skip before the first returned result.
@@ -90,13 +90,20 @@ message FilterResult {
  */
 message ContinuousQueryResult {
 
-   required bool isJoining = 1;
+   /* @TypeId(1000105) */
+   enum ResultType {
+      JOINING = 1;
+      LEAVING = 0;
+      UPDATED = 2;
+   }
+
+   required ResultType resultType = 1;
 
    required bytes key = 2;
 
-   /* Only present if joining == true and projection is missing */
+   /* Only present if resultType is JOINING or UPDATED and projection is missing */
    optional bytes value = 3;
 
-   /* Only present if joining == true and value is missing */
+   /* Only present if resultType is JOINING or UPDATED and value is missing */
    repeated org.infinispan.protostream.WrappedMessage projection = 4;
 }

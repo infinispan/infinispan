@@ -1,37 +1,31 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.remoting.responses.Response;
-import org.jgroups.blocks.GroupRequest;
-import org.jgroups.util.FutureListener;
-import org.jgroups.util.RspList;
-
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
+
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.jgroups.Address;
+import org.jgroups.blocks.GroupRequest;
+import org.jgroups.util.RspList;
 
 /**
  * @author Dan Berindei
  * @since 8.0
  */
-public class RspListFuture extends CompletableFuture<RspList<Response>> implements FutureListener<RspList<Response>>,
-      Callable<Void> {
+public class RspListFuture extends CompletableFuture<Responses>
+      implements Callable<Void>, BiConsumer<RspList<Response>, Throwable> {
+   private final Collection<Address> addresses;
    private final GroupRequest<Response> request;
    private volatile Future<?> timeoutFuture = null;
 
-   RspListFuture(GroupRequest<Response> request) {
+   RspListFuture(Collection<Address> addresses, GroupRequest<Response> request) {
+      this.addresses = addresses;
       this.request = request;
-      if (request != null) {
-         request.setListener(this);
-      }
-   }
-
-   @Override
-   public void futureDone(Future<RspList<Response>> future) {
-      RspList<Response> responses = request.getResults();
-      complete(responses);
-      if (timeoutFuture != null) {
-         timeoutFuture.cancel(false);
-      }
+      request.whenComplete(this);
    }
 
    public void setTimeoutFuture(Future<?> timeoutFuture) {
@@ -44,8 +38,24 @@ public class RspListFuture extends CompletableFuture<RspList<Response>> implemen
    @Override
    public Void call() throws Exception {
       // The request timed out
-      complete(request.getResults());
+      completeExceptionally(new TimeoutException("Timed out waiting for responses"));
       request.cancel(true);
       return null;
+   }
+
+   @Override
+   public void accept(RspList<Response> rsps, Throwable throwable) {
+      requestDone(rsps, throwable);
+   }
+
+   private void requestDone(RspList<Response> rsps, Throwable throwable) {
+      if (throwable == null) {
+         complete(new Responses(addresses, rsps));
+      } else {
+         completeExceptionally(throwable);
+      }
+      if (timeoutFuture != null) {
+         timeoutFuture.cancel(false);
+      }
    }
 }

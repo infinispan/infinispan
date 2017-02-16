@@ -20,7 +20,7 @@ public class SuiteResourcesAndLogTest {
    @BeforeSuite
    @AfterSuite
    public void printEnvInformation() {
-      log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");      
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       log("jgroups.bind_addr = " + System.getProperty("jgroups.bind_addr"));
       log("java.runtime.version = " + System.getProperty("java.runtime.version"));
       log("java.runtime.name =" + System.getProperty("java.runtime.name"));

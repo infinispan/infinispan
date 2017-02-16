@@ -1,5 +1,10 @@
 package org.infinispan.spring.support.remote;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -11,9 +16,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -37,7 +39,9 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      cacheManager.defineConfiguration(TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
+      cacheManager.defineConfiguration(TEST_BEAN_NAME, cacheManager.getDefaultCacheConfiguration());
       cache = cacheManager.getCache(TEST_BEAN_NAME);
 
       return cacheManager;

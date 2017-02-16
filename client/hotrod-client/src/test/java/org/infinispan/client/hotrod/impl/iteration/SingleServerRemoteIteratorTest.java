@@ -1,5 +1,15 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.testng.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -9,21 +19,11 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
-import static org.testng.Assert.assertFalse;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * @author gustavonalle
  * @since 8.0
  */
-@Test(groups = "functional", testName = "client.hotrod.iteration.RemoteIteratorTest")
+@Test(groups = "functional", testName = "client.hotrod.iteration.SingleServerRemoteIteratorTest")
 public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest implements AbstractRemoteIteratorTest {
 
    public static final String FILTER_CONVERTER_FACTORY_NAME = "even-accounts-descriptions";

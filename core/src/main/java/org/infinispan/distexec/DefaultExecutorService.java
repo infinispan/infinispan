@@ -1,13 +1,33 @@
 package org.infinispan.distexec;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
 import java.io.Externalizable;
 import java.io.NotSerializableException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.Random;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,8 +44,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.Response;
@@ -65,28 +85,28 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameMachine(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter SAME_RACK_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameRack(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter SAME_SITE_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameSite(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter ALL_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return true;
-      };
+      }
    };
 
    public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
@@ -97,7 +117,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
    protected final AdvancedCache cache;
    protected final RpcManager rpc;
-   protected final InterceptorChain invoker;
+   protected final AsyncInterceptorChain invoker;
    protected final CommandsFactory factory;
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
@@ -181,9 +201,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
 
       this.rpc = SecurityActions.getCacheRpcManager(cache);
-      this.invoker = registry.getComponent(InterceptorChain.class);
+      this.invoker = registry.getComponent(AsyncInterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
-      this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
+      this.marshaller = registry.getComponent(StreamingMarshaller.class);
       this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
       this.takeExecutorOwnership = takeExecutorOwnership;
@@ -551,8 +571,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       return list.get(0);
    }
 
-   protected <T> Address selectExecutionNode(DistributedTask <T> task) {
-     return selectExecutionNode(executionCandidates(task));
+   protected <T> Address selectExecutionNode(DistributedTask<T> task) {
+      return selectExecutionNode(executionCandidates(task));
    }
 
    protected List<Address> randomClusterMembers(final List<Address> members, int numNeeded) {
@@ -657,7 +677,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    private void ensureFullCache(AdvancedCache<?, ?> cache) {
-      List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(cache);
+      List<AsyncInterceptor> interceptors = SecurityActions.getInterceptorChain(cache);
       if (interceptors == null || interceptors.isEmpty()) {
          throw log.distributedExecutorsNotSupported();
       }
@@ -713,7 +733,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
    }
 
-   private class DefaultDistributedTaskBuilder<T> implements DistributedTaskBuilder<T>, DistributedTask<T>{
+   private class DefaultDistributedTaskBuilder<T> implements DistributedTaskBuilder<T>, DistributedTask<T> {
 
       private Callable<T> callable;
       private long timeout;
@@ -1027,9 +1047,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             ccc.init(cancellationService);
             try {
-               ccc.perform(null);
-            } catch (Throwable e) {
-               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+               ccc.invoke();
+            } catch (Throwable t) {
+               log.couldNotExecuteCancellationLocally(t);
             }
             return true;
          } else {
@@ -1047,56 +1067,37 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          log.debugf("Sending %s to self", this);
          try {
-            Callable<V> call = new Callable<V>() {
+            Runnable call = () -> {
+               getCommand().init(cache);
+               DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
+               try {
+                  // hook into lifecycle
+                  lifecycle.onPreExecute(getCommand().getCallable(), cache);
+                  cancellationService.register(Thread.currentThread(), getCommand().getUUID());
+                  getCommand().invokeAsync().whenComplete((rv, t) -> {
+                     if (t != null) {
+                        completeExceptionally(t);
+                     } else {
+                        complete((V) rv);
+                     }
 
-               @Override
-               public V call() throws Exception {
-                  getCommand().init(cache);
-                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
-                  try {
-                     // hook into lifecycle
-                     lifecycle.onPreExecute(getCommand().getCallable(), cache);
-                     cancellationService.register(Thread.currentThread(), getCommand().getUUID());
-                     V result = getCommand().perform(null);
-                     complete(result);
-                     return result;
-                  } catch (Exception e) {
-                     completeExceptionally(e);
-                     throw e;
-                  } finally {
                      // hook into lifecycle
                      lifecycle.onPostExecute(getCommand().getCallable());
                      cancellationService.unregister(getCommand().getUUID());
-                  }
+                  });
+               } catch (Throwable t) {
+                  completeExceptionally(t);
+
+                  // hook into lifecycle
+                  lifecycle.onPostExecute(getCommand().getCallable());
+                  cancellationService.unregister(getCommand().getUUID());
                }
             };
-            localExecutorService.submit(call);
+            localExecutorService.execute(call);
          } catch (Throwable e1) {
             log.localExecutionFailed(e1);
          }
       }
    }
 
-   private static final class RunnableAdapter<T> implements Callable<T>, Serializable {
-
-      /** The serialVersionUID */
-      private static final long serialVersionUID = 6629286923873531028L;
-
-      protected Runnable task;
-      protected T result;
-
-      protected RunnableAdapter() {
-      }
-
-      protected RunnableAdapter(Runnable task, T result) {
-         this.task = task;
-         this.result = result;
-      }
-
-      @Override
-      public T call() {
-         task.run();
-         return result;
-      }
-   }
 }

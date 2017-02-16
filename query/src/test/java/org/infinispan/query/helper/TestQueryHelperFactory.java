@@ -1,6 +1,9 @@
 package org.infinispan.query.helper;
 
-import static org.junit.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -24,9 +27,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Creates a test query helper
  *
@@ -46,12 +46,11 @@ public class TestQueryHelperFactory {
       return Version.LATEST; //Change as needed
    }
 
-   public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
+   public static <E> CacheQuery<E> createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
       QueryParser qp = createQueryParser(fieldName);
       Query parsedQuery = qp.parse(searchString);
       SearchManager queryFactory = Search.getSearchManager(m_cache);
-      CacheQuery cacheQuery = queryFactory.getQuery(parsedQuery);
-      return cacheQuery;
+      return queryFactory.getQuery(parsedQuery);
    }
 
    public static SearchIntegrator extractSearchFactory(Cache cache) {
@@ -62,7 +61,7 @@ public class TestQueryHelperFactory {
    }
 
    public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider) {
+                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName) {
       List caches = new ArrayList();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
@@ -91,7 +90,7 @@ public class TestQueryHelperFactory {
       for (int i = 0; i < numberOfNodes; i++) {
          GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder
                .defaultClusteredBuilder();
-         globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i);
+         globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i).defaultCacheName(defaultCacheName);
 
          EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(
                globalConfigurationBuilder, builder);

@@ -1,15 +1,22 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -17,23 +24,18 @@ import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.logging.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Base class for transaction based locking interceptors.
  *
  * @author Mircea.Markus@jboss.com
  */
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
-   private boolean trace = getLog().isTraceEnabled();
+   protected boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
    private PartitionHandlingManager partitionHandlingManager;
    private PendingLockManager pendingLockManager;
+   private boolean secondPhaseAsync;
 
    @Inject
    public void setDependencies(RpcManager rpcManager,
@@ -44,18 +46,19 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       this.pendingLockManager = pendingLockManager;
    }
 
-   @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         lockManager.unlockAll(ctx);
-      }
+   @Start
+   public void start() {
+      secondPhaseAsync = Configurations.isSecondPhaseAsync(cacheConfiguration);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
       }
@@ -63,35 +66,21 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
-         //locks need to be released in this situation as they might have been acquired from L1.
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
-      }
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      if (ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      boolean releaseLocks = releaseLockOnTxCompletion(ctx);
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (OutdatedTopologyException e) {
-         releaseLocks = false;
-         throw e;
-      } finally {
-         if (releaseLocks) lockManager.unlockAll(ctx);
-      }
-   }
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         if (t instanceof OutdatedTopologyException)
+            throw t;
 
-   protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object result = ctx.forkInvocationSync(command);
-      if (command.isOnePhaseCommit() && releaseLockOnTxCompletion(ctx)) {
-         lockManager.unlockAll(ctx);
-      }
-      return result;
+         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
+      });
    }
 
    /**
@@ -108,7 +97,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       switch (LockUtil.getLockOwnership(key, cdl)) {
          case PRIMARY:
             if (trace) {
-               getLog().tracef("Acquiring locks on %s.", key);
+               getLog().tracef("Acquiring locks on %s.", toStr(key));
             }
             checkPendingAndLockKey(ctx, key, lockTimeout);
             return true;
@@ -128,28 +117,26 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     *
     * @return a collection with the keys locked.
     */
-   protected final Collection<Object> lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<Object> keys,
+   protected final Collection<Object> lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<?> keys,
                                                                   long lockTimeout) throws InterruptedException {
       if (keys.isEmpty()) {
          return Collections.emptyList();
       }
 
       final Log log = getLog();
-      final boolean trace = log.isTraceEnabled();
-
       Collection<Object> keysToLock = new ArrayList<>(keys.size());
 
       for (Object key : keys) {
          switch (LockUtil.getLockOwnership(key, cdl)) {
             case PRIMARY:
                if (trace) {
-                  log.tracef("Acquiring locks on %s.", key);
+                  log.tracef("Acquiring locks on %s.", toStr(key));
                }
                keysToLock.add(key);
                break;
             case BACKUP:
                if (trace) {
-                  log.tracef("Acquiring backup locks on %s.", key);
+                  log.tracef("Acquiring backup locks on %s.", toStr(key));
                }
                ctx.getCacheTransaction().addBackupLockForKey(key);
                break;
@@ -199,8 +186,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       lockAllAndRecord(ctx, keys, remaining);
    }
 
-   private boolean releaseLockOnTxCompletion(TxInvocationContext ctx) {
-      return (ctx.isOriginLocal() && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) ||
-                    (!ctx.isOriginLocal() && Configurations.isSecondPhaseAsync(cacheConfiguration)));
+   protected void releaseLockOnTxCompletion(TxInvocationContext ctx) {
+      boolean shouldReleaseLocks = ctx.isOriginLocal() &&
+            !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) ||
+            (!ctx.isOriginLocal() && secondPhaseAsync);
+      if (shouldReleaseLocks) {
+         lockManager.unlockAll(ctx);
+      }
    }
 }

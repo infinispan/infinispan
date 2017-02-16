@@ -1,16 +1,14 @@
 package org.infinispan.topology;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-import org.infinispan.distribution.ch.ConsistentHash;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.UnaryOperator;
+
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.UnaryOperator;
 
 /**
  * Implementation of the {@link PersistentUUIDManager} interface
@@ -20,10 +18,8 @@ import java.util.function.UnaryOperator;
  */
 public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
    private static final Log log = LogFactory.getLog(PersistentUUIDManagerImpl.class);
-   private final EquivalentConcurrentHashMapV8<Address, PersistentUUID> address2uuid =
-         new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
-   private final EquivalentConcurrentHashMapV8<PersistentUUID, Address> uuid2address =
-         new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+   private final ConcurrentMap<Address, PersistentUUID> address2uuid = new ConcurrentHashMap<>();
+   private final ConcurrentMap<PersistentUUID, Address> uuid2address = new ConcurrentHashMap<>();
 
    @Override
    public void addPersistentAddressMapping(Address address, PersistentUUID persistentUUID) {
@@ -43,6 +39,11 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
 
    @Override
    public void removePersistentAddressMapping(PersistentUUID persistentUUID) {
+      if (persistentUUID == null) {
+         //A null would be invalid here, but letting it proceed would trigger an NPE
+         //which would hide the real issue.
+         return;
+      }
       Address address = uuid2address.get(persistentUUID);
       if (address != null) {
          address2uuid.remove(address);

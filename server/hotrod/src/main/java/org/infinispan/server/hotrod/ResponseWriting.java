@@ -1,15 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.hotrod.logging.Log;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
 import io.netty.util.CharsetUtil;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.hotrod.logging.JavaLog;
-import scala.Tuple2;
-
-import java.security.PrivilegedActionException;
 
 /**
  * Static helper to provide common way of writing response to channel
@@ -18,19 +15,21 @@ import java.security.PrivilegedActionException;
  * @since 9.0
  */
 public class ResponseWriting {
-   private ResponseWriting() { }
+   private ResponseWriting() {
+   }
 
-   private final static JavaLog log = LogFactory.getLog(ContextHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(ContextHandler.class, Log.class);
 
    /**
     * Writes the response to the channel
+    *
     * @param ctx
     * @param ch
     * @param response
     */
    public static void writeResponse(CacheDecodeContext ctx, Channel ch, Object response) {
       if (response != null) {
-         if (ctx.isTrace()) {
+         if (CacheDecodeContext.isTrace) {
             log.tracef("Write response %s", response);
          }
          if (response instanceof Response) {

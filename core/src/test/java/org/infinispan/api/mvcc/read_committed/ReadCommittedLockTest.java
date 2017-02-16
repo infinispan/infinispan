@@ -1,10 +1,12 @@
 package org.infinispan.api.mvcc.read_committed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 @Test(groups = "functional", testName = "api.mvcc.read_committed.ReadCommittedLockTest")
 public class ReadCommittedLockTest extends LockTestBase {
@@ -13,59 +15,59 @@ public class ReadCommittedLockTest extends LockTestBase {
    }
 
    public void testVisibilityOfCommittedDataPut() throws Exception {
-      Cache<String, String> c = threadLocal.get().cache;
+      Cache<String, String> c = lockTestData.cache;
       c.put("k", "v");
 
-      assert "v".equals(c.get("k"));
+      assertEquals("v", c.get("k"));
 
       // start a tx and read K
-      threadLocal.get().tm.begin();
-      assert "v".equals(c.get("k"));
-      assert "v".equals(c.get("k"));
-      Transaction reader = threadLocal.get().tm.suspend();
+      lockTestData.tm.begin();
+      assertEquals("v", c.get("k"));
+      assertEquals("v", c.get("k"));
+      Transaction reader = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.begin();
+      lockTestData.tm.begin();
       c.put("k", "v2");
-      Transaction writer = threadLocal.get().tm.suspend();
+      Transaction writer = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.resume(reader);
-      assert "v".equals(c.get("k")) : "Should not read uncommitted data";
-      reader = threadLocal.get().tm.suspend();
+      lockTestData.tm.resume(reader);
+      assertEquals("Should not read uncommitted data", "v", c.get("k"));
+      reader = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.resume(writer);
-      threadLocal.get().tm.commit();
+      lockTestData.tm.resume(writer);
+      lockTestData.tm.commit();
 
-      threadLocal.get().tm.resume(reader);
-      assert "v2".equals(c.get("k")) : "Should read committed data";
-      threadLocal.get().tm.commit();
+      lockTestData.tm.resume(reader);
+      assertEquals("Should read committed data", "v2", c.get("k"));
+      lockTestData.tm.commit();
    }
 
    public void testVisibilityOfCommittedDataReplace() throws Exception {
-      Cache<String, String> c = threadLocal.get().cache;
+      Cache<String, String> c = lockTestData.cache;
       c.put("k", "v");
 
-      assert "v".equals(c.get("k"));
+      assertEquals("v", c.get("k"));
 
       // start a tx and read K
-      threadLocal.get().tm.begin();
-      assert "v".equals(c.get("k"));
-      assert "v".equals(c.get("k"));
-      Transaction reader = threadLocal.get().tm.suspend();
+      lockTestData.tm.begin();
+      assertEquals("v", c.get("k"));
+      assertEquals("v", c.get("k"));
+      Transaction reader = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.begin();
+      lockTestData.tm.begin();
       c.replace("k", "v2");
-      Transaction writer = threadLocal.get().tm.suspend();
+      Transaction writer = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.resume(reader);
-      assert "v".equals(c.get("k")) : "Should not read uncommitted data";
-      reader = threadLocal.get().tm.suspend();
+      lockTestData.tm.resume(reader);
+      assertEquals("Should not read uncommitted data", "v", c.get("k"));
+      reader = lockTestData.tm.suspend();
 
-      threadLocal.get().tm.resume(writer);
-      threadLocal.get().tm.commit();
+      lockTestData.tm.resume(writer);
+      lockTestData.tm.commit();
 
-      threadLocal.get().tm.resume(reader);
-      assert "v2".equals(c.get("k")) : "Should read committed data";
-      threadLocal.get().tm.commit();
+      lockTestData.tm.resume(reader);
+      assertEquals("Should read committed data", "v2", c.get("k"));
+      lockTestData.tm.commit();
    }
 
    @Override

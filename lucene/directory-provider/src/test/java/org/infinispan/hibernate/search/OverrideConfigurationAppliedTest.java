@@ -1,9 +1,10 @@
 package org.infinispan.hibernate.search;
 
+import java.io.IOException;
+
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.cfg.spi.DirectoryProviderService;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.testsupport.setup.SearchConfigurationForTest;
@@ -11,8 +12,6 @@ import org.infinispan.hibernate.search.impl.DefaultCacheManagerService;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.io.IOException;
 
 
 /**

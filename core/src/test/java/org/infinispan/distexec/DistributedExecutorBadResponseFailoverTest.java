@@ -3,7 +3,6 @@ package org.infinispan.distexec;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -17,6 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -24,14 +24,9 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -62,6 +57,7 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
 
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
+      defineConfigurationOnAllManagers(cacheName(), builder);
       waitForClusterToForm(cacheName());
    }
 
@@ -95,7 +91,7 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
       }
    }
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /**
        *

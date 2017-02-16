@@ -1,15 +1,50 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.Collector;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
-import org.infinispan.stream.impl.intops.object.*;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.object.DistinctOperation;
+import org.infinispan.stream.impl.intops.object.FilterOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToIntOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToLongOperation;
+import org.infinispan.stream.impl.intops.object.LimitOperation;
+import org.infinispan.stream.impl.intops.object.MapOperation;
+import org.infinispan.stream.impl.intops.object.MapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.MapToIntOperation;
+import org.infinispan.stream.impl.intops.object.MapToLongOperation;
+import org.infinispan.stream.impl.intops.object.PeekOperation;
+import org.infinispan.stream.impl.intops.object.SkipOperation;
+import org.infinispan.stream.impl.intops.object.SortedComparatorOperation;
+import org.infinispan.stream.impl.intops.object.SortedOperation;
+import org.infinispan.util.function.RemovableFunction;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -23,18 +58,6 @@ import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
 
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.concurrent.TimeUnit;
-import java.util.function.*;
-import java.util.stream.Collector;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
-
 /**
  * CacheStream that is to be used locally.  This allows for full functionality of a regular stream but also has options
  * to filter by keys and other functionality.
@@ -42,7 +65,7 @@ import java.util.stream.Stream;
  */
 public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, CacheStream<R>> implements CacheStream<R> {
 
-   public LocalCacheStream(StreamSupplier<R> streamSupplier, boolean parallel, ComponentRegistry registry) {
+   public LocalCacheStream(StreamSupplier<R, Stream<R>> streamSupplier, boolean parallel, ComponentRegistry registry) {
       super(streamSupplier, parallel, registry);
    }
 
@@ -51,188 +74,188 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    }
 
    @Override
-   public CacheStream<R> sequentialDistribution() {
+   public LocalCacheStream<R> sequentialDistribution() {
       return this;
    }
 
    @Override
-   public CacheStream<R> parallelDistribution() {
+   public LocalCacheStream<R> parallelDistribution() {
       return this;
    }
 
    @Override
-   public CacheStream<R> filterKeySegments(Set<Integer> segments) {
+   public LocalCacheStream<R> filterKeySegments(Set<Integer> segments) {
       segmentsToFilter = segments;
       return this;
    }
 
    @Override
-   public CacheStream<R> filterKeys(Set<?> keys) {
+   public LocalCacheStream<R> filterKeys(Set<?> keys) {
       keysToFilter = keys;
       return this;
    }
 
    @Override
-   public CacheStream<R> distributedBatchSize(int batchSize) {
+   public LocalCacheStream<R> distributedBatchSize(int batchSize) {
       // TODO: Does this change cache loader?
       return this;
    }
 
    @Override
-   public CacheStream<R> segmentCompletionListener(SegmentCompletionListener listener) {
+   public LocalCacheStream<R> segmentCompletionListener(SegmentCompletionListener listener) {
       // All segments are completed when the getStream() is completed so we don't track them
       return this;
    }
 
    @Override
-   public CacheStream<R> disableRehashAware() {
+   public LocalCacheStream<R> disableRehashAware() {
       // Local stream doesn't matter for rehash
       return this;
    }
 
    @Override
-   public CacheStream<R> filter(Predicate<? super R> predicate) {
+   public LocalCacheStream<R> filter(Predicate<? super R> predicate) {
       registry.wireDependencies(predicate);
       intermediateOperations.add(new FilterOperation<>(predicate));
       return this;
    }
 
    @Override
-   public CacheStream<R> filter(SerializablePredicate<? super R> predicate) {
+   public LocalCacheStream<R> filter(SerializablePredicate<? super R> predicate) {
       return filter((Predicate<? super R>) predicate);
    }
 
    @Override
-   public <R1> CacheStream<R1> map(Function<? super R, ? extends R1> mapper) {
+   public <R1> LocalCacheStream<R1> map(Function<? super R, ? extends R1> mapper) {
       registry.wireDependencies(mapper);
       intermediateOperations.add(new MapOperation<>(mapper));
-      return (CacheStream<R1>) this;
+      return (LocalCacheStream<R1>) this;
    }
 
    @Override
-   public <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
+   public <R1> LocalCacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
       return map((Function<? super R, ? extends R1>) mapper);
    }
 
    @Override
-   public IntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
+   public LocalIntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
       intermediateOperations.add(new MapToIntOperation<>(mapper));
       return new LocalIntCacheStream(this);
    }
 
    @Override
-   public IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
+   public LocalIntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
       return mapToInt((ToIntFunction<? super R>) mapper);
    }
 
    @Override
-   public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
+   public LocalLongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
       intermediateOperations.add(new MapToLongOperation<>(mapper));
       return new LocalLongCacheStream(this);
    }
 
    @Override
-   public LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
+   public LocalLongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
       return mapToLong((ToLongFunction<? super R>) mapper);
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
+   public LocalDoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
       intermediateOperations.add(new MapToDoubleOperation<>(mapper));
       return new LocalDoubleCacheStream(this);
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
+   public LocalDoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
       return mapToDouble((ToDoubleFunction<? super R>) mapper);
    }
 
    @Override
-   public <R1> CacheStream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
+   public <R1> LocalCacheStream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
       intermediateOperations.add(new FlatMapOperation<>(mapper));
-      return (CacheStream<R1>) this;
+      return (LocalCacheStream<R1>) this;
    }
 
    @Override
-   public <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
+   public <R1> LocalCacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
       return flatMap((Function<? super R, ? extends Stream<? extends R1>>) mapper);
    }
 
    @Override
-   public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
+   public LocalIntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
       intermediateOperations.add(new FlatMapToIntOperation<>(mapper));
       return new LocalIntCacheStream(this);
    }
 
    @Override
-   public IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
+   public LocalIntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
       return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
    }
 
    @Override
-   public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
+   public LocalLongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
       intermediateOperations.add(new FlatMapToLongOperation<>(mapper));
       return new LocalLongCacheStream(this);
    }
 
    @Override
-   public LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
+   public LocalLongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
       return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
    }
 
    @Override
-   public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
+   public LocalDoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
       intermediateOperations.add(new FlatMapToDoubleOperation<>(mapper));
       return new LocalDoubleCacheStream(this);
    }
 
    @Override
-   public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
+   public LocalDoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
       return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
 
    @Override
-   public CacheStream<R> distinct() {
+   public LocalCacheStream<R> distinct() {
       intermediateOperations.add(DistinctOperation.getInstance());
       return this;
    }
 
    @Override
-   public CacheStream<R> sorted() {
+   public LocalCacheStream<R> sorted() {
       intermediateOperations.add(SortedOperation.getInstance());
       return this;
    }
 
    @Override
-   public CacheStream<R> sorted(Comparator<? super R> comparator) {
+   public LocalCacheStream<R> sorted(Comparator<? super R> comparator) {
       intermediateOperations.add(new SortedComparatorOperation<>(comparator));
       return this;
    }
 
    @Override
-   public CacheStream<R> sorted(SerializableComparator<? super R> comparator) {
+   public LocalCacheStream<R> sorted(SerializableComparator<? super R> comparator) {
       return sorted((Comparator<? super R>) comparator);
    }
 
    @Override
-   public CacheStream<R> peek(Consumer<? super R> action) {
+   public LocalCacheStream<R> peek(Consumer<? super R> action) {
       intermediateOperations.add(new PeekOperation<>(action));
       return this;
    }
 
    @Override
-   public CacheStream<R> peek(SerializableConsumer<? super R> action) {
+   public LocalCacheStream<R> peek(SerializableConsumer<? super R> action) {
       return peek((Consumer<? super R>) action);
    }
 
    @Override
-   public CacheStream<R> limit(long maxSize) {
+   public LocalCacheStream<R> limit(long maxSize) {
       intermediateOperations.add(new LimitOperation<>(maxSize));
       return this;
    }
 
    @Override
-   public CacheStream<R> skip(long n) {
+   public LocalCacheStream<R> skip(long n) {
       intermediateOperations.add(new SkipOperation<>(n));
       return this;
    }
@@ -403,12 +426,22 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
 
    @Override
    public CloseableIterator<R> iterator() {
-      // If the stream is null we can assume no intermediate operations and thus we can support remove
-      if (intermediateOperations.isEmpty()) {
+      int size = intermediateOperations.size();
+      if (size == 0) {
+         // If no intermediate operations we can support remove
          return streamSupplier.removableIterator(Closeables.iterator(createStream()));
-      } else {
-         return Closeables.iterator(createStream());
       }
+      else if (size == 1) {
+         IntermediateOperation intOp = intermediateOperations.peek();
+         if (intOp instanceof MapOperation) {
+            MapOperation map = (MapOperation) intOp;
+            if (map.getFunction() instanceof RemovableFunction) {
+               // If function was removable means we can just use remove as is
+               return streamSupplier.removableIterator(Closeables.iterator(createStream()));
+            }
+         }
+      }
+      return Closeables.iterator(createStream());
    }
 
    @Override
@@ -417,7 +450,7 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    }
 
    @Override
-   public CacheStream<R> timeout(long timeout, TimeUnit unit) {
+   public LocalCacheStream<R> timeout(long timeout, TimeUnit unit) {
       // Timeout does nothing for a local cache stream
       return this;
    }

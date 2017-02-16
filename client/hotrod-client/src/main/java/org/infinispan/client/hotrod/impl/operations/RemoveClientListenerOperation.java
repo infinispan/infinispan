@@ -1,14 +1,15 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import java.net.SocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Remove client listener operation. In order to avoid issues with concurrent
@@ -28,8 +29,9 @@ public class RemoveClientListenerOperation extends HotRodOperation {
 
    protected RemoveClientListenerOperation(Codec codec, TransportFactory transportFactory,
                                            byte[] cacheName, AtomicInteger topologyId, int flags,
+                                           ClientIntelligence clientIntelligence,
                                            ClientListenerNotifier listenerNotifier, Object listener) {
-      super(codec, flags, cacheName, topologyId);
+      super(codec, flags, clientIntelligence, cacheName, topologyId);
       this.transportFactory = transportFactory;
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;

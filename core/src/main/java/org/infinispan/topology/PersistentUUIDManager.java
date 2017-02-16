@@ -1,12 +1,11 @@
 package org.infinispan.topology;
 
-import org.infinispan.distribution.ch.ConsistentHash;
+import java.util.List;
+import java.util.function.UnaryOperator;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.List;
-import java.util.function.UnaryOperator;
 
 /**
  * PersistentUUIDManager maintains a mapping of {@link PersistentUUID}s present in the cluster

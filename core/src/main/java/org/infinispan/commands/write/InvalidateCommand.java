@@ -1,23 +1,26 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
+
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -26,31 +29,29 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class InvalidateCommand extends RemoveCommand {
+public class InvalidateCommand extends AbstractTopologyAffectedCommand implements WriteCommand, RemoteLockCommand {
    public static final int COMMAND_ID = 6;
    private static final Log log = LogFactory.getLog(InvalidateCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    protected Object[] keys;
+   protected CommandInvocationId commandInvocationId;
+   protected CacheNotifier notifier;
 
    public InvalidateCommand() {
-      // The value matcher will always be the same, so we don't need to serialize it like we do for the other commands
-      this.valueMatcher = ValueMatcher.MATCH_ALWAYS;
    }
 
    public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
-      //valueEquivalence can be null because this command never compares values.
-      super(null, null, notifier, flagsBitSet, null, commandInvocationId);
       this.keys = keys;
       this.notifier = notifier;
+      this.commandInvocationId = commandInvocationId;
+      setFlagsBitSet(flagsBitSet);
    }
 
    public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      //valueEquivalence can be null because this command never compares values.
-      super(null, null, notifier, flagsBitSet, null, commandInvocationId);
-      if (keys == null || keys.isEmpty())
-         this.keys = Util.EMPTY_OBJECT_ARRAY;
-      else
-         this.keys = keys.toArray(new Object[keys.size()]);
+      this(notifier, flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray(new Object[keys.size()]));
+   }
+
+   public void init(CacheNotifier notifier) {
       this.notifier = notifier;
    }
 
@@ -63,23 +64,23 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.tracef("Invalidating keys %s", Arrays.toString(keys));
+         log.tracef("Invalidating keys %s", toStr(Arrays.asList(keys)));
       }
-      for (Object k : keys) {
-         invalidate(ctx, k);
+      for (Object key : keys) {
+         MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+         if (e != null) {
+            notify(ctx, e, true);
+            e.setChanged(true);
+            e.setRemoved(true);
+            e.setCreated(false);
+            e.setValid(false);
+         }
       }
       return null;
    }
 
-   protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
-      key = keyToInvalidate; // so that the superclass can see it
-      super.perform(ctx);
-   }
-
-   @Override
-   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata,
-         boolean isPre) {
-      notifier.notifyCacheEntryInvalidated(key, removedValue, removedMetadata, isPre, ctx, this);
+   protected void notify(InvocationContext ctx, MVCCEntry e, boolean pre) {
+      notifier.notifyCacheEntryInvalidated(e.getKey(), e.getValue(), e.getMetadata(), pre, ctx, this);
    }
 
    @Override
@@ -88,22 +89,34 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
+
+   @Override
+   public boolean canBlock() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return "InvalidateCommand{keys=" +
-            Arrays.toString(keys) +
+            toStr(Arrays.asList(keys)) +
             '}';
    }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallArray(keys, output);
+      output.writeLong(getFlagsBitSet());
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
       keys = MarshallUtil.unmarshallArray(input, Object[]::new);
+      setFlagsBitSet(input.readLong());
    }
 
    @Override
@@ -111,61 +124,80 @@ public class InvalidateCommand extends RemoveCommand {
       return visitor.visitInvalidateCommand(ctx, this);
    }
 
-   @Override
-   public Object getKey() {
-      throw new UnsupportedOperationException("Not supported.  Use getKeys() instead.");
-   }
-
    public Object[] getKeys() {
       return keys;
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
+   public boolean isSuccessful() {
+      return true;
+   }
+
+   @Override
+   public boolean isConditional() {
+      return false;
+   }
+
+   @Override
+   public ValueMatcher getValueMatcher() {
+      return ValueMatcher.MATCH_ALWAYS;
+   }
+
+   @Override
+   public void setValueMatcher(ValueMatcher valueMatcher) {
+   }
+
+   @Override
+   public Collection<?> getAffectedKeys() {
       return CollectionFactory.makeSet(keys);
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+   }
+
+   @Override
+   public Collection<?> getKeysToLock() {
       return Arrays.asList(keys);
    }
 
    @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      switch (status) {
-         case FAILED:
-         case STOPPING:
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-         }
+   public Object getKeyLockOwner() {
+      return commandInvocationId;
    }
 
    @Override
-   public boolean readsExistingValues() {
-      // TODO Return true only if there are invalidation listeners registered
-      return true;
+   public boolean hasZeroLockAcquisition() {
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (!super.equals(o)) {
-         return false;
-      }
+   public boolean hasSkipLocking() {
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
+   }
 
-      InvalidateCommand that = (InvalidateCommand) o;
+   @Override
+   public LoadType loadType() {
+      // TODO Return LoadType.OWNER only if there are invalidation listeners registered
+      return LoadType.OWNER;
+   }
 
-      if (!Arrays.equals(keys, that.keys)) {
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-      }
-      return true;
+      if (getClass() != obj.getClass())
+         return false;
+      InvalidateCommand that = (InvalidateCommand) obj;
+      if (!hasSameFlags(that))
+         return false;
+      return Arrays.equals(keys, that.keys);
    }
 
    @Override
    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (keys != null ? Arrays.hashCode(keys) : 0);
-      return result;
+      return keys != null ? Arrays.hashCode(keys) : 0;
    }
 }

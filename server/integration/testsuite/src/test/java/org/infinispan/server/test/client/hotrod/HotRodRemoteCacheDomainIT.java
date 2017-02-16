@@ -1,5 +1,12 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClusteredDomain;
@@ -13,13 +20,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
-import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 
 /**
  * Tests for the HotRod client RemoteCache class in domain mode.
@@ -69,6 +69,7 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
         client.enableJmx();
         if (isDistributedMode()) {
             testCache = "distTestCache";
+            client.addDistributedCacheConfiguration("distCacheConfiguration", "clustered");
             client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
         } else if (isLocalMode()) {
             final String targetContainer = "local";

@@ -1,13 +1,13 @@
 package org.infinispan.api;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
 
 /**
  * Tests {@link Flag#SKIP_LOCKING} logic

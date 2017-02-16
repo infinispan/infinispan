@@ -1,5 +1,8 @@
 package org.infinispan.commons.util;
 
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,9 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import static java.util.Collections.singletonMap;
-import static java.util.Collections.unmodifiableMap;
 
 /**
  * Static helpers for Infinispan-specific collections

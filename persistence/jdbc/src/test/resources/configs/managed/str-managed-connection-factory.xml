@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan>
 
-   <cache-container default-cache="default">
-      <local-cache name="default">
+   <cache-container default-cache="first">
+      <local-cache-configuration name="default">
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0" fetch-state="false" read-only="false" purge="false">
                <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
@@ -13,9 +13,9 @@
                </string-keyed-table>
             </string-keyed-jdbc-store>
          </persistence>
-      </local-cache>
-      <local-cache name="first"/>
-      <local-cache name="second"/>
+      </local-cache-configuration>
+      <local-cache name="first" configuration="default"/>
+      <local-cache name="second" configuration="default"/>
    </cache-container>
 
 </infinispan>

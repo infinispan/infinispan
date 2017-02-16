@@ -1,5 +1,7 @@
 package org.infinispan.server.test.client.hotrod;
 
+import java.io.Serializable;
+
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
@@ -8,8 +10,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Id;
 import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Person;
-
-import java.io.Serializable;
 
 @NamedFactory(name = "pojo-filter-converter-factory")
 public class CustomPojoFilterConverterFactory implements CacheEventFilterConverterFactory {

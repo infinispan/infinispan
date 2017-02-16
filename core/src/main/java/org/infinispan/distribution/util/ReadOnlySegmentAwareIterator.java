@@ -11,8 +11,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * allowing values that map to a given segment using the provided consistent hash.
  * <p>
  * This iterator is used with the other various SegmentAware Collections such as
- * {@link ReadOnlySegmentAwareSet}
- * 
+ * {@link ReadOnlySegmentAwareCollection}
+ *
  * @author wburns
  * @since 7.2
  */

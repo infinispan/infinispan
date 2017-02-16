@@ -1,14 +1,15 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.MetaParam;
-
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.api.functional.MetaParam;
 
 public final class MarshallableFunctions {
 
@@ -98,6 +99,18 @@ public final class MarshallableFunctions {
 
    public static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> returnReadWriteView() {
       return ReturnReadWriteView.getInstance();
+   }
+
+   public static <K, V> Function<ReadEntryView<K, V>, V> returnReadOnlyFindOrNull() {
+      return ReturnReadOnlyFindOrNull.getInstance();
+   }
+
+   public static <K, V> Function<ReadEntryView<K, V>, Boolean> returnReadOnlyFindIsPresent() {
+      return ReturnReadOnlyFindIsPresent.getInstance();
+   }
+
+   public static <T> Function<T, T> identity() {
+      return Identity.getInstance();
    }
 
    private static abstract class AbstractSetValueReturnPrevOrNull<K, V>
@@ -526,6 +539,47 @@ public final class MarshallableFunctions {
       @SuppressWarnings("unchecked")
       private static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> getInstance() {
          return ReturnReadWriteView.INSTANCE;
+      }
+   }
+
+   private static final class ReturnReadOnlyFindOrNull<K, V>
+      implements Function<ReadEntryView<K, V>, V> {
+      @Override
+      public V apply(ReadEntryView<K, V> ro) {
+         return ro.find().orElse(null);
+      }
+
+      private static final ReturnReadOnlyFindOrNull INSTANCE = new ReturnReadOnlyFindOrNull<>();
+
+      private static <K, V> Function<ReadEntryView<K, V>, V> getInstance() {
+         return INSTANCE;
+      }
+   }
+
+   private static final class ReturnReadOnlyFindIsPresent<K, V>
+      implements Function<ReadEntryView<K, V>, Boolean> {
+      @Override
+      public Boolean apply(ReadEntryView<K, V> ro) {
+         return ro.find().isPresent();
+      }
+
+      private static final ReturnReadOnlyFindIsPresent INSTANCE = new ReturnReadOnlyFindIsPresent<>();
+
+      private static <K, V> Function<ReadEntryView<K, V>, Boolean> getInstance() {
+         return INSTANCE;
+      }
+   }
+
+   private static final class Identity<T> implements Function<T, T> {
+      @Override
+      public T apply(T o) {
+         return o;
+      }
+
+      private static final Identity INSTANCE = new Identity<>();
+
+      private static <T> Function<T, T> getInstance() {
+         return INSTANCE;
       }
    }
 

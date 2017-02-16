@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.InvocationBatchingConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -49,7 +50,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setXmlName(Attribute.BATCHING.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(InvocationBatchingConfiguration.ENABLED.getDefaultValue()))
                     .build();
 
     static final SimpleAttributeDefinition CACHE_MODULE =
@@ -175,8 +176,10 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
 
         resourceRegistration.registerSubModel(new LockingConfigurationResource(this));
         resourceRegistration.registerSubModel(new TransactionConfigurationResource(this));
-        resourceRegistration.registerSubModel(new EvictionConfigurationResource(this));
         resourceRegistration.registerSubModel(new ExpirationConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryBinaryConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryObjectConfigurationResource(this));
+        resourceRegistration.registerSubModel(new MemoryOffHeapConfigurationResource(this));
         resourceRegistration.registerSubModel(new CompatibilityConfigurationResource(this));
         resourceRegistration.registerSubModel(new IndexingConfigurationResource(this));
         resourceRegistration.registerSubModel(new LoaderConfigurationResource(this));
@@ -185,10 +188,8 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
         resourceRegistration.registerSubModel(new StoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new FileStoreResource(this));
         resourceRegistration.registerSubModel(new StringKeyedJDBCStoreResource(this));
-        resourceRegistration.registerSubModel(new BinaryKeyedJDBCStoreConfigurationResource(this));
-        resourceRegistration.registerSubModel(new MixedKeyedJDBCStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new RemoteStoreConfigurationResource(this));
-        resourceRegistration.registerSubModel(new LevelDBStoreConfigurationResource(this));
+        resourceRegistration.registerSubModel(new RocksDBStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new RestStoreConfigurationResource(this));
         resourceRegistration.registerSubModel(new CacheSecurityConfigurationResource(this));
     }

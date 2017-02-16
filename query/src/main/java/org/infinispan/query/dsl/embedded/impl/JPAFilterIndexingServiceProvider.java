@@ -1,13 +1,14 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.Map;
+
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -26,8 +27,8 @@ public class JPAFilterIndexingServiceProvider extends BaseJPAFilterIndexingServi
       return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getMatcher();
    }
 
-   protected String getJPAQuery(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getJPAQuery();
+   protected String getQueryString(IndexedFilter<?, ?, ?> indexedFilter) {
+      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getQueryString();
    }
 
    protected Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter) {
@@ -40,8 +41,12 @@ public class JPAFilterIndexingServiceProvider extends BaseJPAFilterIndexingServi
    }
 
    protected void matchEvent(CacheEntryEvent event, Matcher matcher) {
-      if (event.getValue() != null) {
-         matcher.match(event, event.getType(), event.getValue());
+      Object instance = event.getValue();
+      if (instance != null) {
+         if (instance.getClass() == WrappedByteArray.class) {
+            instance = ((WrappedByteArray) instance).getBytes();
+         }
+         matcher.match(event, event.getType(), instance);
       }
    }
 

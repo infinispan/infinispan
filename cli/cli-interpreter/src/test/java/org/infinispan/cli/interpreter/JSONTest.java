@@ -1,5 +1,7 @@
 package org.infinispan.cli.interpreter;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.io.IOException;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -8,8 +10,6 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName="cli.interpreter.JSONTest")
 public class JSONTest {

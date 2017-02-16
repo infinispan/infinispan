@@ -1,21 +1,21 @@
 package org.infinispan.query.clustered;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.util.ByteString;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
 
 /**
  * Encapsulates all rpc calls for distributed queries actions
@@ -102,13 +102,11 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    /**
     * Invokes a query on a (remote) cache and returns results (list of keys).
     *
-    * @param context
-    *           invocation context, ignored.
-    * @return returns an <code>List<Object></code>.
+    * @return returns a <code>CompletableFuture</code> with a <code>List<Object></code>.
     */
    @Override
-   public Object perform(InvocationContext context) throws Throwable {
-      return perform(cache);
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      return CompletableFuture.completedFuture(perform(cache));
    }
 
    public QueryResponse perform(Cache<?, ?> cache) {

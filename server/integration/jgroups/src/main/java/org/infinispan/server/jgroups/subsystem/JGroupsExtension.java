@@ -25,14 +25,12 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.EnumSet;
 
-import org.infinispan.server.jgroups.LogFactory;
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.as.controller.transform.description.TransformationDescription;
-import org.jgroups.Global;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -52,8 +50,8 @@ public class JGroupsExtension implements Extension {
         PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
             @Override
             public Void run() {
-                if (System.getProperty(Global.CUSTOM_LOG_FACTORY) == null) {
-                    System.setProperty(Global.CUSTOM_LOG_FACTORY, LogFactory.class.getName());
+                if (org.jgroups.logging.LogFactory.getCustomLogFactory() == null) {
+                    org.jgroups.logging.LogFactory.setCustomLogFactory(new org.infinispan.server.jgroups.LogFactory());
                 }
                 return null;
             }

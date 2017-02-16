@@ -1,5 +1,16 @@
 package org.infinispan.statetransfer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -10,6 +21,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
@@ -20,16 +32,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test that commands are properly retried during/after state transfer.
@@ -127,7 +129,7 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
             throws Throwable {
          Object result = super.visitPutKeyValueCommand(ctx, command);
-         if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+         if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             doBlock(ctx, command);
          }
          return result;

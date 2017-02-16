@@ -19,7 +19,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    @Before
    public void setUp() throws Exception {
-      serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
       queryFactory = new FilterQueryFactory(serCtx);
    }
@@ -41,6 +41,6 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    @Override
    protected ProtobufMatcher createMatcher() {
-      return new ProtobufMatcher(serCtx);
+      return new ProtobufMatcher(serCtx, null);
    }
 }

@@ -1,16 +1,16 @@
 package org.infinispan.stream;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Test to verify stream iterator exception propagation behavior for a distributed cache.
@@ -23,7 +23,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
    public DistributedStreamIteratorExceptionTest() {
       super(false, CacheMode.DIST_SYNC);
    }
-   
+
    public void ensureDataContainerRemoteExceptionPropagated() {
       Cache cache0 = cache(0, CACHE_NAME);
       Cache cache1 = cache(1, CACHE_NAME);
@@ -33,7 +33,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
          Throwable t = new AssertionError();
          DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache1, DataContainer.class, mockContainer, true);
-         
+
          try {
             cache0.entrySet().stream().iterator().hasNext();
             fail("We should have gotten a CacheException");

@@ -1,8 +1,9 @@
 package org.infinispan.batch;
 
-import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
+
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Enables for automatic batching.

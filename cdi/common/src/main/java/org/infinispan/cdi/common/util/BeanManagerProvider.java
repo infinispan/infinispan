@@ -1,5 +1,11 @@
 package org.infinispan.cdi.common.util;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
@@ -8,11 +14,6 @@ import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.enterprise.inject.spi.Extension;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 
 /**
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * <p>Usage:<p/>
  * <pre>
  * BeanManager bm = BeanManagerProvider.getInstance().getBeanManager();
- * 
+ *
  * </pre>
  *
  * <p><b>Attention:</b> This method is intended for being used in user code at runtime.
@@ -207,7 +208,7 @@ public class BeanManagerProvider implements Extension
         {
             return getClassLoaderInternal(o);
         }
-    }   
+    }
     static class GetClassLoaderAction implements PrivilegedAction<ClassLoader>
     {
         private Object object;

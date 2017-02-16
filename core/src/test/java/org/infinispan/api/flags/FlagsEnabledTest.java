@@ -2,9 +2,14 @@ package org.infinispan.api.flags;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotSame;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -22,9 +27,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
 
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
@@ -91,6 +93,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             cache1LocalOnly.withFlags(SKIP_CACHE_LOAD);
       MagicKey localKey2 = new MagicKey("local2", cache1);
       cache1SkipRemoteAndStores.put(localKey2, "value");
+      // CACHE_MODE_LOCAL operation is not replicated with the PrepareCommand and WSC is not executed,
+      // but the entry is committed on the origin
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       assertCacheValue(cache1, localKey2, "value");
@@ -204,8 +208,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    private void assertLoadsAndReset(Cache<?, ?> cache1, int expected1, Cache<?, ?> cache2, int expected2) {
       DummyInMemoryStore store1 = getCacheStore(cache1);
       DummyInMemoryStore store2 = getCacheStore(cache2);
-      assertEquals(cache1 + ": " + expected1 + ", " + cache2 + ": " + expected2,
-                   cache1 + ": " + store1.stats().get("load") + ", " + cache2 + ": " + store2.stats().get("load"));
+      assertEquals(expected1, (int) store1.stats().get("load"));
+      assertEquals(expected2, (int) store2.stats().get("load"));
       store1.clearStats();
       store2.clearStats();
    }

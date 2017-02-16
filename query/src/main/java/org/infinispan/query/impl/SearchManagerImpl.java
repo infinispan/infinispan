@@ -45,9 +45,9 @@ public class SearchManagerImpl implements SearchManagerImplementor {
     * @see org.infinispan.query.SearchManager#getQuery(org.apache.lucene.search.Query, java.lang.Class)
     */
    @Override
-   public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
+   public <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
-      return new CacheQueryImpl(luceneQuery, searchFactory, cache,
+      return new CacheQueryImpl<>(luceneQuery, searchFactory, cache,
          queryInterceptor.getKeyTransformationHandler(), timeoutExceptionFactory, classes);
    }
 
@@ -60,10 +60,10 @@ public class SearchManagerImpl implements SearchManagerImplementor {
     * @return
     */
    @Override
-   public CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes) {
+   public <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, asyncExecutor, cache, queryInterceptor.getKeyTransformationHandler(), classes);
+      return new ClusteredCacheQueryImpl<>(luceneQuery, searchFactory, asyncExecutor, cache, queryInterceptor.getKeyTransformationHandler(), classes);
    }
 
    @Override

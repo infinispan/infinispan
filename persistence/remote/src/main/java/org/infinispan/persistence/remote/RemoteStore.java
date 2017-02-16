@@ -1,40 +1,42 @@
 package org.infinispan.persistence.remote;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.TaskContextImpl;
-import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -51,6 +53,7 @@ import java.util.concurrent.TimeUnit;
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  * @since 4.1
  */
+@Store(shared = true)
 @ThreadSafe
 @ConfiguredBy(RemoteStoreConfiguration.class)
 public class RemoteStore implements AdvancedLoadWriteStore {
@@ -106,7 +109,13 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
-         MetadataValue<?> value = remoteCache.getWithMetadata(key);
+         Object unwrappedKey;
+         if (key instanceof WrappedByteArray) {
+            unwrappedKey = ((WrappedByteArray) key).getBytes();
+         } else {
+            unwrappedKey = key;
+         }
+         MetadataValue<?> value = remoteCache.getWithMetadata(unwrappedKey);
          if (value != null) {
             Metadata metadata = new EmbeddedMetadata.Builder()
                   .version(new NumericVersion(value.getVersion()))
@@ -114,18 +123,28 @@ public class RemoteStore implements AdvancedLoadWriteStore {
                   .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
             long created = value.getCreated();
             long lastUsed = value.getLastUsed();
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(),
+            Object realValue = value.getValue();
+            if (realValue instanceof byte[]) {
+               realValue = new WrappedByteArray((byte[]) realValue);
+            }
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, realValue,
                                     new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
          }
       } else {
+         if (key instanceof WrappedByteArray) {
+            key = ((WrappedByteArray) key).getBytes();
+         }
          return (MarshalledEntry) remoteCache.get(key);
       }
    }
 
    @Override
    public boolean contains(Object key) throws PersistenceException {
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
       return remoteCache.containsKey(key);
    }
 
@@ -133,6 +152,9 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       TaskContextImpl taskContext = new TaskContextImpl();
       for (Object key : remoteCache.keySet()) {
+         if (key instanceof byte[]) {
+            key = new WrappedByteArray((byte[]) key);
+         }
          if (taskContext.isStopped())
             break;
          if (filter == null || filter.accept(key)) {
@@ -167,7 +189,21 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       InternalMetadata metadata = entry.getMetadata();
       long lifespan = metadata != null ? metadata.lifespan() : -1;
       long maxIdle = metadata != null ? metadata.maxIdle() : -1;
-      remoteCache.put(entry.getKey(), configuration.rawValues() ? entry.getValue() : entry, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS, toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+      Object key = entry.getKey();
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
+      Object value;
+      if (configuration.rawValues()) {
+         value = entry.getValue();
+         if (value instanceof WrappedByteArray) {
+            value = ((WrappedByteArray) value).getBytes();
+         }
+      } else {
+         value = entry;
+      }
+      remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
+            toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
    }
 
    @Override
@@ -177,6 +213,9 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    @Override
    public boolean delete(Object key) throws PersistenceException {
+      if (key instanceof WrappedByteArray) {
+         key = ((WrappedByteArray) key).getBytes();
+      }
       // Less than ideal, but RemoteCache, since it extends Cache, can only
       // know whether the operation succeeded based on whether the previous
       // value is null or not.
@@ -240,7 +279,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       if (configuration.protocolVersion() != null)
          builder.protocolVersion(configuration.protocolVersion());
       else
-         builder.protocolVersion(ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+         builder.version(ProtocolVersion.DEFAULT_PROTOCOL_VERSION);
       if (configuration.transportFactory() != null)
          builder.transportFactory(configuration.transportFactory());
 

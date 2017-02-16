@@ -1,12 +1,14 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import net.jcip.annotations.Immutable;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.Immutable;
 
 /**
  * Implements "containsKey" operation as described in <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -17,9 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
 
-   public ContainsKeyOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, keyBytes,cacheName, topologyId, flags);
+   public ContainsKeyOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes,
+                               byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
+      super(codec, transportFactory, key, keyBytes,cacheName, topologyId, flags, clientIntelligence);
    }
 
    @Override

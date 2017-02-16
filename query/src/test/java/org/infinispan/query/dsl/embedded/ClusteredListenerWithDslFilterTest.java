@@ -1,6 +1,12 @@
 package org.infinispan.query.dsl.embedded;
 
-import org.hibernate.hql.ParsingException;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,19 +17,13 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.query.dsl.Expression.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -46,7 +46,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
       Query query = qf.from(org.infinispan.query.test.Person.class)
             .having("age").lte(31)
-            .toBuilder().build();
+            .build();
 
       EntryListener listener = new EntryListener();
 
@@ -97,7 +97,6 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
       Query query = qf.from(org.infinispan.query.test.Person.class)
             .having("age").lte(31)
-            .toBuilder()
             .select("name", "age")
             .build();
 
@@ -137,11 +136,11 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache(0)).from(Person.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       cache(0).addListener(new EntryListener(), Search.makeFilter(query), null);
@@ -151,7 +150,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    private static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> results = new ArrayList<ObjectFilter.FilterResult>();
+      public final List<ObjectFilter.FilterResult> results = new ArrayList<>();
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {

@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.marshall.core.Ids;
 
 /**

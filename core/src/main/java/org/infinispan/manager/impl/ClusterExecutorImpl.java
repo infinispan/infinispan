@@ -1,5 +1,16 @@
 package org.infinispan.manager.impl;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,25 +25,14 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.SingleResponseFuture;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.function.SerializableRunnable;
 import org.infinispan.util.function.TriConsumer;
-import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.blocks.ResponseMode;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Cluster executor implementation
@@ -71,8 +71,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
    }
 
    /**
-    * Returns the targets we should use for JGroups.  This excludes the local node if it is a target.
-    * @return
+    * @return the targets we should use for JGroups. This excludes the local node if it is a target.
     */
    private List<org.jgroups.Address> getJGroupsTargets() {
       List<org.jgroups.Address> list;
@@ -250,25 +249,25 @@ public class ClusterExecutorImpl implements ClusterExecutor {
                     ResponseMode.GET_ALL, unit.toMillis(time), DeliverOrder.NONE);
             futures[i] = srf.handle((r, t) -> {
                if (t != null) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null, t);
+                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, t);
                } else if (r.wasReceived()) {
                   if (r.hasException()) {
-                     triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null, r.getException());
+                     triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, r.getException());
                   } else {
                      Response response = r.getValue();
                      if (response instanceof SuccessfulResponse) {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 (V) ((SuccessfulResponse) response).getResponseValue(), null);
                      } else if (response instanceof ExceptionResponse) {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 null, ((ExceptionResponse) response).getException());
                      } else {
-                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()),
+                        triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target),
                                 null, new IllegalStateException("Response was neither successful or an exception!"));
                      }
                   }
                } else if (r.wasSuspected()) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(r.getSender()), null,
+                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null,
                           new SuspectException());
                } else {
                   // We throw it so it is propagated to the parent CompletableFuture
@@ -282,7 +281,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
       } else if (localFuture != null) {
          return localFuture.handle((r, t) -> null);
       } else {
-         return CompletableFuture.completedFuture(null);
+         return CompletableFutures.completedNull();
       }
    }
 

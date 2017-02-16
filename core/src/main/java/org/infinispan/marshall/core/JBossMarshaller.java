@@ -1,17 +1,16 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.util.function.BiConsumer;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
@@ -36,22 +35,17 @@ import org.jboss.marshalling.Unmarshaller;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   final ExternalizerTable externalizerTable;
-   ExternalizerTableProxy proxy;
    final GlobalConfiguration globalCfg;
-   final InvocationContextContainer icc;
+   final GlobalMarshaller marshaller;
 
    public JBossMarshaller() {
-      this.externalizerTable = null;
       this.globalCfg = null;
-      this.icc = null;
+      this.marshaller = null;
    }
 
-   public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
-         InvocationContextContainer icc, GlobalConfiguration globalCfg) {
-      this.externalizerTable = externalizerTable;
+   public JBossMarshaller(GlobalMarshaller marshaller, GlobalConfiguration globalCfg) {
       this.globalCfg = globalCfg;
-      this.icc = icc;
+      this.marshaller = marshaller;
    }
 
    @Override
@@ -60,15 +54,26 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
 
-      proxy = new ExternalizerTableProxy(externalizerTable);
-      baseCfg.setObjectTable(proxy);
+      baseCfg.setObjectTable(new ObjectTable() {
+         @Override
+         public Writer getObjectWriter(Object object) throws IOException {
+            BiConsumer<ObjectOutput, Object> writer = marshaller.findWriter(object);
+            return writer != null ? writer::accept : null;
+         }
+
+         @Override
+         public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
+            AdvancedExternalizer<Object> ext = marshaller.findExternalizerIn(unmarshaller);
+            return ext.readObject(unmarshaller);
+         }
+      });
 
       ClassResolver classResolver = globalCfg.serialization().classResolver();
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
          ClassLoader cl = globalCfg.classLoader();
-         classResolver = new EmbeddedContextClassResolver(cl, icc);
+         classResolver = new DefaultContextClassResolver(cl);
       }
 
       baseCfg.setClassResolver(classResolver);
@@ -79,82 +84,13 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       super.stop();
       // Just in case, to avoid leaking class resolver which references classloader
       baseCfg.setClassResolver(null);
-      // Remove the ExternalizerTable reference from all the threads.
-      // Don't need to re-populate the proxy on start, as the component is volatile.
-      proxy.clear();
    }
 
    @Override
    public boolean isMarshallableCandidate(Object o) {
       return super.isMarshallableCandidate(o)
-            || externalizerTable.isMarshallableCandidate(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || o.getClass().getAnnotation(Externalize.class) != null;
    }
 
-   /**
-    * An embedded context class resolver that is able to retrieve a class
-    * loader from the embedded Infinispan call context. This might happen when
-    * {@link org.infinispan.AdvancedCache#with(ClassLoader)} is used.
-    */
-   public static final class EmbeddedContextClassResolver extends DefaultContextClassResolver {
-
-      private final InvocationContextContainer icc;
-
-      public EmbeddedContextClassResolver(ClassLoader defaultClassLoader, InvocationContextContainer icc) {
-         super(defaultClassLoader);
-         this.icc = icc;
-      }
-
-      @Override
-      protected ClassLoader getClassLoader() {
-         if (icc != null) {
-            InvocationContext ctx = icc.getInvocationContext(true);
-            if (ctx != null) {
-               ClassLoader cl = ctx.getClassLoader();
-               if (cl != null) return cl;
-            }
-         }
-         return super.getClassLoader();
-      }
-   }
-
-   /**
-    * Proxy for {@code ExternalizerTable}, used to remove the references to the real {@code ExternalizerTable}
-    * from all the threads that have a {@code PerThreadInstanceHolder}.
-    *
-    * This is useful because {@code ExternalizerTable} can keep lots of other objects alive through its
-    * {@code GlobalComponentRegistry} and {@code RemoteCommandsFactory} fields.
-    */
-   private static final class ExternalizerTableProxy implements ObjectTable {
-      private ExternalizerTable externalizerTable;
-
-      public ExternalizerTableProxy(ExternalizerTable externalizerTable) {
-         this.externalizerTable = externalizerTable;
-         log.tracef("Initialized proxy %s with table %s", this, externalizerTable);
-      }
-
-      public void clear() {
-         externalizerTable = null;
-         log.tracef("Cleared proxy %s", this);
-      }
-
-      @Override
-      public Writer getObjectWriter(Object o) throws IOException {
-         return getExternalizerTable().getObjectWriter(o);
-      }
-
-      @Override
-      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-         return getExternalizerTable().readObject(input);
-      }
-
-      private ExternalizerTable getExternalizerTable() {
-         ExternalizerTable table = this.externalizerTable;
-         if (table == null) {
-            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
-         }
-         return table;
-      }
-   }
 }

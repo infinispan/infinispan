@@ -1,15 +1,15 @@
 package org.infinispan.server.test.client.rest;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClustered;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Test asynchronous REST operations through a custom REST client.

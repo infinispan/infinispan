@@ -1,5 +1,14 @@
 package org.infinispan.persistence.file;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -10,13 +19,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-
-import static org.infinispan.test.TestingUtil.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Single file cache store functional test.

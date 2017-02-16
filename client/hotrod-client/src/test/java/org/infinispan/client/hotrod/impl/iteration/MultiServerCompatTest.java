@@ -1,19 +1,18 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
 import java.util.Set;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.iteration.DistFailOverRemoteIteratorTest")
+@Test(groups = "functional", testName = "client.hotrod.iteration.MultiServerCompatTest")
 public class MultiServerCompatTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
 
    private static final int NUM_SERVERS = 2;
@@ -28,7 +27,6 @@ public class MultiServerCompatTest extends MultiHotRodServersTest implements Abs
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numSegments(60).numOwners(1);
       builder.compatibility().enable();
-      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
       return builder;
    }
 
@@ -41,4 +39,3 @@ public class MultiServerCompatTest extends MultiHotRodServersTest implements Abs
       assertEquals(CACHE_SIZE, entries.size());
    }
 }
-

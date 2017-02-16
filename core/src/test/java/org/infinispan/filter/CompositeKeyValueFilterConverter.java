@@ -1,8 +1,9 @@
 package org.infinispan.filter;
 
-import org.infinispan.metadata.Metadata;
-
 import java.io.Serializable;
+
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Allows to composite a KeyValueFilter and a Converter together to form a KeyValueFilterConverter.  There are no
@@ -14,7 +15,7 @@ import java.io.Serializable;
  * @author wburns
  * @since 7.0
  */
-public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilterConverter<K, V, C>, Serializable {
+public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilterConverter<K, V, C>, Serializable, ExternalPojo {
    private final KeyValueFilter<? super K, ? super V> filter;
    private final Converter<? super K, ? super V, ? extends C> converter;
 

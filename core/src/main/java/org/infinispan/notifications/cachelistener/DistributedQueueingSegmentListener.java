@@ -1,6 +1,12 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.commons.equivalence.Equivalence;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
@@ -8,12 +14,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
-
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.stream.Stream;
 
 /**
  * This handler is to be used with a clustered distributed cache.  This handler does special optimizations to
@@ -31,9 +31,9 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    private Stream<Integer> justCompletedSegments = Stream.empty();
 
-   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager,
-           Equivalence<? super K> keyEquivalence) {
-      super(keyEquivalence);
+   private final Consumer<Integer> completeSegment = this::completeSegment;
+
+   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
       this.entryFactory = entryFactory;
       this.distributionManager = distributionManager;
       // we assume the # of segments won't change between different consistent hashes
@@ -45,10 +45,11 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    @Override
-   public boolean handleEvent(CacheEntryEvent<K, V> event, ListenerInvocation<Event<K, V>> invocation) {
-      K key = event.getKey();
+   public boolean handleEvent(EventWrapper<K, V, CacheEntryEvent<K, V>> wrapped, ListenerInvocation<Event<K, V>> invocation) {
+      K key = wrapped.getKey();
       // If we already completed, don't enqueue
       boolean enqueued = !completed.get();
+      CacheEntryEvent<K, V> event = wrapped.getEvent();
       CacheEntry<K, V> cacheEntry = entryFactory.create(event.getKey(), event.getValue(), event.getMetadata());
       if (enqueued && !addEvent(key, cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
          // If it wasn't added it means we haven't processed this value yet, so add it to the queue for this segment
@@ -76,7 +77,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    @Override
    public void transferComplete() {
-      justCompletedSegments.forEach(this::completeSegment);
+      justCompletedSegments.forEach(completeSegment);
       completed.set(true);
       notifiedKeys.clear();
       for (int i = 0; i < queues.length(); ++i) {
@@ -93,7 +94,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    @Override
    public void notifiedKey(K key) {
       // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-      justCompletedSegments.forEach(this::completeSegment);
+      justCompletedSegments.forEach(completeSegment);
       justCompletedSegments = Stream.empty();
    }
 

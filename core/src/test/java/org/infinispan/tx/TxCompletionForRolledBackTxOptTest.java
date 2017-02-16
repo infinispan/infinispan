@@ -1,5 +1,9 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
+
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -9,10 +13,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
 
 @Test(groups = "functional", testName = "tx.TxCompletionForRolledBackTxOptTest")
 public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTest {

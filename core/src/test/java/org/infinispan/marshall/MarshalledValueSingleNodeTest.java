@@ -1,12 +1,13 @@
 package org.infinispan.marshall;
 
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "marshall.MarshalledValueSingleNodeTest")
 public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {

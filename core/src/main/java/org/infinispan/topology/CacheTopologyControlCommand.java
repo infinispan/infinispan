@@ -1,9 +1,15 @@
 package org.infinispan.topology;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -13,12 +19,6 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A control command for all cache membership/rebalance operations.
@@ -73,7 +73,6 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
-   private transient PersistentUUIDManager persistentUUIDManager;
 
    private String cacheName;
    private Type type;
@@ -147,26 +146,25 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager, PersistentUUIDManager persistentUUIDManager) {
+   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
       this.localTopologyManager = localTopologyManager;
       this.clusterTopologyManager = clusterTopologyManager;
-      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
          Object responseValue = doPerform();
-         return SuccessfulResponse.create(responseValue);
+         return CompletableFuture.completedFuture(SuccessfulResponse.create(responseValue));
       } catch (InterruptedException e) {
          log.tracef("Command execution %s was interrupted because the cache manager is shutting down", this);
-         return UnsuccessfulResponse.INSTANCE;
+         return CompletableFuture.completedFuture(UnsuccessfulResponse.INSTANCE);
       } catch (Exception t) {
          log.exceptionHandlingCommand(this, t);
          // todo [anistor] CommandAwareRequestDispatcher does not wrap our exceptions so we have to do it instead
-         return new ExceptionResponse(t);
+         return CompletableFuture.completedFuture(new ExceptionResponse(t));
       } finally {
          LogFactory.popNDC(trace);
       }

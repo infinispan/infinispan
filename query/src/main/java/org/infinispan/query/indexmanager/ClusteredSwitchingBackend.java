@@ -1,6 +1,9 @@
 package org.infinispan.query.indexmanager;
 
-import net.jcip.annotations.GuardedBy;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.hibernate.search.backend.BackendFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.Listener;
@@ -11,9 +14,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Manages the current state of being a "master" node or a node delegating index
@@ -146,13 +147,18 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    }
 
    private synchronized void applyViewChangedEvent(ViewChangedEvent e) {
-      assert e != null;
-      assert e.getNewMembers().size() > 0;
-      assert e.getNewMembers().get(0) != null;
+      List<Address> newMembers = e.getNewMembers();
       if (log.isDebugEnabled()) {
-         log.debug("Notified of new View! Members: " + e.getNewMembers());
+         log.debug("Notified of new View! Members: " + newMembers);
       }
-      final Address newmaster = e.getNewMembers().get(0);
+      handleTopologyChange(newMembers);
+   }
+
+   private synchronized void handleTopologyChange(List<Address> newMembers) {
+      assert newMembers != null;
+      assert newMembers.size() > 0;
+      assert newMembers.get(0) != null;
+      final Address newmaster = newMembers.get(0);
       if (masterDidChange(newmaster)) {
          if (thisIsMaster()) {
             if (log.isDebugEnabled()) {
@@ -220,6 +226,11 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    @Override
    public IndexingBackend getCurrentIndexingBackend() {
       return currentBackend;
+   }
+
+   @Override
+   public void refresh() {
+      handleTopologyChange(rpcManager.getMembers());
    }
 
    private static void closeBackend(final IndexingBackend oldOne, final IndexingBackend replacement) {

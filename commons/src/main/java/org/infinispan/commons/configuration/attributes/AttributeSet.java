@@ -21,12 +21,13 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class AttributeSet implements AttributeListener<Object> {
    private static final Log log = LogFactory.getLog(AttributeSet.class);
+   private final Class<?> klass;
    private final String name;
    private final Map<String, Attribute<?>> attributes;
    private boolean protect;
 
    public AttributeSet(Class<?> klass, AttributeDefinition<?>... attributeDefinitions) {
-      this(klass.getSimpleName(), attributeDefinitions);
+      this(klass, klass.getSimpleName(), null, attributeDefinitions);
    }
 
    public AttributeSet(String name, AttributeDefinition<?>... attributeDefinitions) {
@@ -34,10 +35,15 @@ public class AttributeSet implements AttributeListener<Object> {
    }
 
    public AttributeSet(Class<?> klass, AttributeSet attributeSet, AttributeDefinition<?>... attributeDefinitions) {
-      this(klass.getSimpleName(), attributeSet, attributeDefinitions);
+      this(klass, klass.getSimpleName(), attributeSet, attributeDefinitions);
    }
 
    public AttributeSet(String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions) {
+      this(null, name, attributeSet, attributeDefinitions);
+   }
+
+   private AttributeSet(Class<?> klass, String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions) {
+      this.klass = klass;
       this.name = name;
       if (attributeSet != null) {
          this.attributes = new LinkedHashMap<>(attributeDefinitions.length + attributeSet.attributes.size());
@@ -56,6 +62,10 @@ public class AttributeSet implements AttributeListener<Object> {
             attribute.addListener(this);
          this.attributes.put(def.name(), attribute);
       }
+   }
+
+   public Class<?> getKlass() {
+      return klass;
    }
 
    public String getName() {
@@ -130,7 +140,7 @@ public class AttributeSet implements AttributeListener<Object> {
       for (Attribute<?> attribute : attributes.values()) {
          attrDefs[i++] = attribute.getAttributeDefinition();
       }
-      AttributeSet protectedSet = new AttributeSet(name, attrDefs);
+      AttributeSet protectedSet = new AttributeSet(klass, name, null, attrDefs);
       for (Attribute<?> attribute : protectedSet.attributes.values()) {
          Attribute<?> localAttr = this.attributes.get(attribute.name());
          attribute.read((Attribute)localAttr);

@@ -1,14 +1,7 @@
 package org.infinispan.util.concurrent.locks.impl;
 
-import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.DeadlockChecker;
-import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
-import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
-import org.infinispan.util.concurrent.locks.LockListener;
-import org.infinispan.util.concurrent.locks.LockState;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import static org.infinispan.util.concurrent.CompletableFutures.await;
 
 import java.util.Objects;
 import java.util.Queue;
@@ -19,8 +12,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
-import static org.infinispan.util.concurrent.CompletableFutures.await;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.DeadlockChecker;
+import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
+import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
+import org.infinispan.util.concurrent.locks.LockListener;
+import org.infinispan.util.concurrent.locks.LockState;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A special lock for Infinispan cache.

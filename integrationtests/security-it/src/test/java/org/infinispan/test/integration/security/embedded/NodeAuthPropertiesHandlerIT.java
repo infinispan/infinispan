@@ -20,11 +20,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * Tests properties based auth callback handler, which is build-in in JGroups.
  * Handler checks provided auth information against configured properties file.
  * For test is used SASL MD5 authentication.
- * 
+ *
  * @author vjuranek
  * @since 8.0
  */
@@ -35,7 +35,7 @@ public class NodeAuthPropertiesHandlerIT extends AbstractNodeAuthentication {
    protected static final String JOINING_NODE_JGROUSP_CONFIG_MD5 = "jgroups-tcp-sasl-prop-handler-node1.xml";
    protected static final String COORDINATOR_NODE = "simple-auth-node0";
    protected static final String JOINING_NODE = "simple-auth-node1";
-   
+
    private static final Log LOG = LogFactory.getLog(NodeAuthPropertiesHandlerIT.class);
 
    public NodeAuthPropertiesHandlerIT() {
@@ -62,14 +62,14 @@ public class NodeAuthPropertiesHandlerIT extends AbstractNodeAuthentication {
    public static WebArchive getCoordinatorDeployment() {
       return Deployments.createNodeAuthTestDeployment(COORDINATOR_JGROUSP_CONFIG_MD5);
    }
-   
+
    @Deployment(name = JOINING_NODE, managed = false)
    @TargetsContainer(JOINING_NODE)
    public static WebArchive getJoiningNodeDeployment() {
       return Deployments.createNodeAuthTestDeployment(JOINING_NODE_JGROUSP_CONFIG_MD5);
    }
 
-   
+
    @Test
    @InSequence(1)
    public void startNodes() throws Exception {
@@ -94,7 +94,7 @@ public class NodeAuthPropertiesHandlerIT extends AbstractNodeAuthentication {
    @OperateOnDeployment(JOINING_NODE)
    @InSequence(3)
    public void testReadItemOnJoiningNode() throws Exception {
-      EmbeddedCacheManager manager = getCacheManager(getJoiningNodeConfig());  
+      EmbeddedCacheManager manager = getCacheManager(getJoiningNodeConfig());
       Cache<String, String> cache = getReplicatedCache(manager);
       assertEquals("Insufficient number of cluster members", 2, manager.getMembers().size());
       assertEquals(TEST_ITEM_VALUE, cache.get(TEST_ITEM_KEY));

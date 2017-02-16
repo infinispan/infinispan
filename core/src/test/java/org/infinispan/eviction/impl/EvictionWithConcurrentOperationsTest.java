@@ -1,5 +1,19 @@
 package org.infinispan.eviction.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -12,11 +26,12 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -28,16 +43,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests size-based eviction with concurrent read and/or write operation. In this test, we have no passivation.
@@ -69,14 +74,17 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
-      Future<Object> put = cache.putAsync(key2, "v2");
-      latch.waitToBlock(30, TimeUnit.SECONDS);
+      Future<Object> put;
+      try {
+         put = cache.putAsync(key2, "v2");
+         latch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and it blocked before passivation
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
-
-      //let the eviction continue and wait for put
-      latch.disable();
+         //the eviction was trigger and it blocked before passivation
+         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      } finally {
+         //let the eviction continue and wait for put
+         latch.disable();
+      }
       put.get();
 
       assertInMemory(key2, "v2");
@@ -98,14 +106,17 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
-      Future<Object> put = cache.putAsync(key2, "v2");
-      latch.waitToBlock(30, TimeUnit.SECONDS);
+      Future<Object> put;
+      try {
+         put = cache.putAsync(key2, "v2");
+         latch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and it blocked before passivation
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
-
-      //let the eviction continue and wait for put
-      latch.disable();
+         //the eviction was trigger and it blocked before passivation
+         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      } finally {
+         //let the eviction continue and wait for put
+         latch.disable();
+      }
       put.get();
 
       assertInMemory(key2, "v2");
@@ -136,11 +147,14 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
-      Future<Object> put = cache.putAsync(key2, "v2");
-      latch.waitToBlock(30, TimeUnit.SECONDS);
-
-      //let the eviction continue and wait for put
-      latch.disable();
+      Future<Object> put;
+      try {
+         put = cache.putAsync(key2, "v2");
+         latch.waitToBlock(30, TimeUnit.SECONDS);
+      } finally {
+         //let the eviction continue and wait for put
+         latch.disable();
+      }
       put.get();
 
       //the eviction was trigger and the key is no longer in the map
@@ -250,24 +264,28 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       readLatch.enable();
-      Future<Object> put = cache.putAsync(key2, "v2");
-      writeLatch.waitToBlock(30, TimeUnit.SECONDS);
+      Future<Object> get;
+      try {
+         Future<Object> put = cache.putAsync(key2, "v2");
+         writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
-      readLatch.waitToBlock(30, TimeUnit.SECONDS);
+         //the eviction was trigger and the key is no longer in the map
+         get = cache.getAsync(key1);
+         readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //let the eviction continue
-      writeLatch.disable();
+         //let the eviction continue
+         writeLatch.disable();
 
-      //the first read is blocked. it has check the data container and it didn't found any value
-      //this second get should not block anywhere and it should fetch the value from persistence
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.put(key1, "v3"));
+         //the first read is blocked. it has check the data container and it didn't found any value
+         //this second get should not block anywhere and it should fetch the value from persistence
+         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.put(key1, "v3"));
 
-      put.get();
+         put.get();
+      } finally {
 
-      //let the get continue
-      readLatch.disable();
+         //let the get continue
+         readLatch.disable();
+      }
       assertEquals("Wrong value for key " + key1 + " in get operation.", "v3", get.get());
 
       assertInMemory(key1, "v3");
@@ -323,25 +341,29 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       readLatch.enable();
-      Future<Object> put = cache.putAsync(key2, "v2");
-      writeLatch.waitToBlock(30, TimeUnit.SECONDS);
+      Future<Object> get;
+      Future<Object> put2;
+      try {
+         Future<Object> put = cache.putAsync(key2, "v2");
+         writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
-      readLatch.waitToBlock(30, TimeUnit.SECONDS);
+         //the eviction was trigger and the key is no longer in the map
+         get = cache.getAsync(key1);
+         readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //let the eviction continue
-      writeLatch.disable();
+         //let the eviction continue
+         writeLatch.disable();
 
-      Future<Object> put2 = cache.putAsync(key1, "v3");
+         put2 = cache.putAsync(key1, "v3");
 
-      put.get();
+         put.get();
 
-      //wait until the 2nd put writes to persistence
-      writeLatch2.waitToBlock(30, TimeUnit.SECONDS);
-
-      //let the get continue
-      readLatch.disable();
+         //wait until the 2nd put writes to persistence
+         writeLatch2.waitToBlock(30, TimeUnit.SECONDS);
+      } finally {
+         //let the get continue
+         readLatch.disable();
+      }
       assertPossibleValues(key1, get.get(), "v1", "v3");
 
       writeLatch2.disable();
@@ -377,14 +399,17 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //perform the get. it will load the entry from cache loader.
       readLatch.enable();
-      Future<Object> get = cache.getAsync(key1);
-      readLatch.waitToBlock(30, TimeUnit.SECONDS);
+      Future<Object> get;
+      try {
+         get = cache.getAsync(key1);
+         readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //now, we perform a put.
-      assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", cache.put(key1, "v2"));
-
-      //we let the get go...
-      readLatch.disable();
+         //now, we perform a put.
+         assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", cache.put(key1, "v2"));
+      } finally {
+         //we let the get go...
+         readLatch.disable();
+      }
       assertPossibleValues(key1, get.get(), "v1");
 
       assertInMemory(key1, "v2");
@@ -469,7 +494,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
                  Arrays.toString(expectedValues));
    }
 
-   public static class SameHashCodeKey implements Serializable {
+   public static class SameHashCodeKey implements Serializable, ExternalPojo {
 
       private final String name;
 
@@ -600,7 +625,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected class AfterEntryWrappingInterceptor extends ControlledCommandInterceptor {
 
       public AfterEntryWrappingInterceptor injectThis(Cache<Object, Object> injectInCache) {
-         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
+         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
          return this;
       }
 
@@ -609,11 +634,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    private class AfterActivationOrCacheLoader extends ControlledCommandInterceptor {
 
       public AfterActivationOrCacheLoader injectThis(Cache<Object, Object> injectInCache) {
-         SequentialInterceptorChain chain =
-               TestingUtil.extractComponent(injectInCache, SequentialInterceptorChain.class);
-         SequentialInterceptor loaderInterceptor =
+         AsyncInterceptorChain chain =
+               TestingUtil.extractComponent(injectInCache, AsyncInterceptorChain.class);
+         AsyncInterceptor loaderInterceptor =
                chain.findInterceptorExtending(org.infinispan.interceptors.impl.CacheLoaderInterceptor.class);
-         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
+         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
          return this;
       }
 
@@ -638,7 +663,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          notifyAll();
          while (enabled) {
             try {
-               wait();
+               wait(TimeUnit.SECONDS.toMillis(10));
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
                return;

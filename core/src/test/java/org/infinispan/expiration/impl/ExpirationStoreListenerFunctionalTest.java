@@ -1,5 +1,12 @@
 package org.infinispan.expiration.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
@@ -9,11 +16,7 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.*;
-
-@Test(groups = "functional", testName = "expiration.impl.ExpirationStoreFunctionalTest")
+@Test(groups = "functional", testName = "expiration.impl.ExpirationStoreListenerFunctionalTest")
 public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFunctionalTest {
    protected ExpiredCacheListener listener = new ExpiredCacheListener();
    protected ExpirationManager manager;
@@ -76,6 +79,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    private void assertExpiredEvents(int count) {
       eventuallyEquals(count, () -> listener.getInvocationCount());
       listener.getEvents().forEach(event -> {
+         log.tracef("Checking event %s", event);
          assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
          assertEquals(cache, event.getCache());
          assertFalse(event.isPre());

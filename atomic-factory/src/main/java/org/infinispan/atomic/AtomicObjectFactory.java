@@ -1,19 +1,25 @@
 package org.infinispan.atomic;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.infinispan.Cache;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.atomic.container.Container;
 import org.infinispan.atomic.container.ContainerSignature;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 /**
@@ -26,29 +32,29 @@ public class AtomicObjectFactory {
    // CLASS FIELDS
    //
    private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
-   private static Map<Cache<?, ?>,AtomicObjectFactory> factories = new HashMap<>();
-   public synchronized static AtomicObjectFactory forCache(Cache<?, ?> cache){
+   private static Map<Cache<?, ?>, AtomicObjectFactory> factories = new HashMap<>();
+   public synchronized static AtomicObjectFactory forCache(Cache<?, ?> cache) {
       if(!factories.containsKey(cache))
          factories.put(cache, new AtomicObjectFactory(cache));
       return factories.get(cache);
    }
-   protected static final int MAX_CONTAINERS=1000;// 0 means no limit
-   public static final Map<Class<?>,List<String>> updateMethods;
+   protected static final int MAX_CONTAINERS = 1000;// 0 means no limit
+   public static final Map<Class<?>, List<String>> updateMethods;
    static{
       updateMethods = new HashMap<>();
 
-      updateMethods.put(List.class, new ArrayList<String>());
+      updateMethods.put(List.class, new ArrayList<>());
       updateMethods.get(List.class).add("add");
       updateMethods.get(List.class).add("addAll");
 
-      updateMethods.put(Set.class, new ArrayList<String>());
+      updateMethods.put(Set.class, new ArrayList<>());
       updateMethods.get(Set.class).add("add");
       updateMethods.get(Set.class).add("addAll");
 
-      updateMethods.put(Map.class, new ArrayList<String>());
+      updateMethods.put(Map.class, new ArrayList<>());
       updateMethods.get(Map.class).add("put");
       updateMethods.get(Map.class).add("putAll");
-   };
+   }
 
 
 
@@ -76,7 +82,7 @@ public class AtomicObjectFactory {
       registeredContainers= new LinkedHashMap<ContainerSignature,Container>() {
          @Override
          protected boolean removeEldestEntry(final java.util.Map.Entry<ContainerSignature,Container> eldest) {
-            if(maxSize!=0 && this.size() >= maxSize){
+            if (maxSize != 0 && this.size() >= maxSize) {
                evictionExecutor.submit(new Callable<Void>() {
                   @Override
                   public Void call() throws IOException {
@@ -103,7 +109,7 @@ public class AtomicObjectFactory {
     *
     * @param c a cache,  it must be synchronous.and transactional (with autoCommit set to true, its default value).
     */
-   public AtomicObjectFactory(Cache<?, ?> c) throws InvalidCacheUsageException{
+   public AtomicObjectFactory(Cache<?, ?> c) throws InvalidCacheUsageException {
       this(c,MAX_CONTAINERS);
    }
 
@@ -120,7 +126,7 @@ public class AtomicObjectFactory {
     * @throws InvalidCacheUsageException
     */
    public synchronized <T> T getInstanceOf(Class<T> clazz, Object key)
-         throws InvalidCacheUsageException{
+         throws InvalidCacheUsageException {
       return getInstanceOf(clazz, key, false);
    }
 
@@ -141,7 +147,7 @@ public class AtomicObjectFactory {
     * @throws InvalidCacheUsageException
     */
    public <T> T getInstanceOf(Class<T> clazz, Object key, boolean withReadOptimization)
-         throws InvalidCacheUsageException{
+         throws InvalidCacheUsageException {
       return getInstanceOf(clazz, key, withReadOptimization, null, true);
    }
 
@@ -166,36 +172,36 @@ public class AtomicObjectFactory {
     * @throws InvalidCacheUsageException
     */
    public <T> T getInstanceOf(Class<T> clazz, Object key, boolean withReadOptimization, Method equalsMethod, boolean forceNew, Object ... initArgs)
-         throws InvalidCacheUsageException{
+         throws InvalidCacheUsageException {
 
-      if( !(Serializable.class.isAssignableFrom(clazz))){
+      if (!(Serializable.class.isAssignableFrom(clazz))) {
          throw new InvalidCacheUsageException("The object must be serializable.");
       }
 
       ContainerSignature signature = new ContainerSignature(clazz,key);
       Container container;
 
-      try{
+      try {
 
-         synchronized (registeredContainers){
+         synchronized (registeredContainers) {
             container = registeredContainers.get(signature);
          }
 
-         if( container==null){
+         if (container == null) {
 
             List<String> methods = Collections.emptyList();
 
             if (Updatable.class.isAssignableFrom(clazz)) {
 
-               methods = new ArrayList<String>();
-               for(Method m : clazz.getDeclaredMethods()){
+               methods = new ArrayList<>();
+               for (Method m : clazz.getDeclaredMethods()) {
                   if (m.isAnnotationPresent(Update.class))
                      methods.add(m.getName());
                }
 
-            }else{
+            } else {
 
-               for(Class<?> c : updateMethods.keySet()){
+               for (Class<?> c : updateMethods.keySet()) {
                   if (c.isAssignableFrom(clazz)) {
                      methods = updateMethods.get(c);
                      break;
@@ -203,24 +209,24 @@ public class AtomicObjectFactory {
                }
 
                if (methods.isEmpty()) {
-                  methods = new ArrayList<String>();
-                  for(Method m : clazz.getDeclaredMethods()){
+                  methods = new ArrayList<>();
+                  for (Method m : clazz.getDeclaredMethods()) {
                      methods.add(m.getName());
                   }
                }
 
             }
             container = new Container(cache, clazz, key, withReadOptimization, forceNew,methods, initArgs);
-            synchronized (registeredContainers){
-               if(registeredContainers.containsKey(signature)){
+            synchronized (registeredContainers) {
+               if (registeredContainers.containsKey(signature)) {
                   container.dispose(false);
-               }else{
+               } else {
                   registeredContainers.put(signature, container);
                }
             }
          }
 
-      } catch (Exception e){
+      } catch (Exception e) {
          e.printStackTrace();
          throw new InvalidCacheUsageException(e.getCause());
       }
@@ -243,7 +249,7 @@ public class AtomicObjectFactory {
       ContainerSignature signature = new ContainerSignature(clazz,key);
       if (log.isDebugEnabled()) log.debugf("Disposing %s",signature.toString());
       Container container;
-      synchronized (registeredContainers){
+      synchronized (registeredContainers) {
          container = registeredContainers.get(signature);
          if( container == null )
             return;
@@ -252,11 +258,11 @@ public class AtomicObjectFactory {
          registeredContainers.remove(signature);
       }
 
-      try{
+      try {
          container.dispose(keepPersistent);
-      }catch (Exception e){
+      } catch (Exception e) {
          e.printStackTrace();
-         throw new InvalidCacheUsageException("Error while disposing object "+key);
+         throw new InvalidCacheUsageException("Error while disposing object " + key);
       }
 
    }

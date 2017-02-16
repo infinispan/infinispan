@@ -18,6 +18,12 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.net.URL;
+import java.util.List;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -28,12 +34,6 @@ import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
-
-import java.net.URL;
-import java.util.List;
-
-import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Handler that performs the operation of uploading a protobuf file to be used.
@@ -58,28 +58,30 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(
               CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
-        EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-        ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-        if (protoManager != null) {
-           try {
-              List<ModelNode> descriptorsNames = names.asList();
-              List<ModelNode> descriptorsUrls = urls.asList();
-              if (descriptorsNames.size() != descriptorsUrls.size()) {
-                 throw MESSAGES.invalidParameterSizes(namesParameter, urlsParameter);
-              }
-              String[] nameArray = new String[descriptorsNames.size()];
-              String[] contentArray = new String[descriptorsUrls.size()];
-              int i = 0;
-              for (ModelNode modelNode : descriptorsNames) {
-                 nameArray[i] = modelNode.asString();
-                 String urlString = descriptorsUrls.get(i).asString();
-                 contentArray[i] = Util.read(new URL(urlString).openStream());
-                 i++;
-              }
-              protoManager.registerProtofiles(nameArray, contentArray);
-           } catch (Exception e) {
-              throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
-           }
-        }
+       if (controller != null) {
+          EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+          ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+          if (protoManager != null) {
+             try {
+                List<ModelNode> descriptorsNames = names.asList();
+                List<ModelNode> descriptorsUrls = urls.asList();
+                if (descriptorsNames.size() != descriptorsUrls.size()) {
+                   throw MESSAGES.invalidParameterSizes(namesParameter, urlsParameter);
+                }
+                String[] nameArray = new String[descriptorsNames.size()];
+                String[] contentArray = new String[descriptorsUrls.size()];
+                int i = 0;
+                for (ModelNode modelNode : descriptorsNames) {
+                   nameArray[i] = modelNode.asString();
+                   String urlString = descriptorsUrls.get(i).asString();
+                   contentArray[i] = Util.read(new URL(urlString).openStream());
+                   i++;
+                }
+                protoManager.registerProtofiles(nameArray, contentArray);
+             } catch (Exception e) {
+                throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+             }
+          }
+       }
     }
 }

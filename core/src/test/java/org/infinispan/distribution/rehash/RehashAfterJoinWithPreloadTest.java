@@ -1,24 +1,21 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Set;
 
-import static org.junit.Assert.assertTrue;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 /**
  * Test with a distributed cache (numOwners=1), a shared cache store and 'preload' enabled
@@ -33,8 +30,6 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    public static final int NUM_KEYS = 20;
    private final String testCacheName = "testCache" + getClass().getSimpleName();
-
-   private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected void createCacheManagers() {
@@ -52,11 +47,12 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
    private Configuration buildCfg(boolean clustered) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
 
-      SingleFileStoreConfigurationBuilder fileStoreCB = cb.persistence()
-            .addSingleFileStore()
-              .location(fileCacheStoreTmpDir)
-              .preload(true).shared(true);
-      fileStoreCB.purgeOnStartup(false);
+      cb.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .storeName(testCacheName)
+            .preload(true)
+            .shared(true)
+            .purgeOnStartup(false);
 
       cb.persistence().passivation(false);
 
@@ -110,7 +106,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
             String key = "key" + j;
             // each key must only occur once (numOwners is one)
             if (dm.getLocality(key).isLocal()) {
-               assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it doesn't appears there",
+               assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it doesn't appear there",
                      dataContainer.containsKey(key));
             } else {
                assertTrue("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
@@ -141,10 +137,5 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
             log.debugf("  key: %s  value: %s", key, testCache.get(key));
          }
       }
-   }
-
-   @AfterClass
-   protected void clearTempDir() {
-      Util.recursiveFileRemove(fileCacheStoreTmpDir);
    }
 }

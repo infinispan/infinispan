@@ -15,7 +15,6 @@
 
    <build>
       <plugins>
-         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
@@ -90,6 +89,23 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+                  <configuration>
+                     <attributeDefType>SERVER</attributeDefType>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
@@ -117,8 +133,19 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-commons</artifactId>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-router</artifactId>
       </dependency>
 
       <dependency>

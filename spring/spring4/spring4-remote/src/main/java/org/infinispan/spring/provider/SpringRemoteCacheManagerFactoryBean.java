@@ -1,12 +1,12 @@
 package org.infinispan.spring.provider;
 
+import java.util.Properties;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.Properties;
 
 /**
  * <p>

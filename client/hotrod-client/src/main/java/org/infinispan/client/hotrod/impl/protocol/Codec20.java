@@ -1,6 +1,23 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.commons.util.Util.hexDump;
+import static org.infinispan.commons.util.Util.printArray;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
@@ -17,17 +34,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
-
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.commons.util.Util.hexDump;
-import static org.infinispan.commons.util.Util.printArray;
 
 /**
  * A Hot Rod encoder/decoder for version 2.0 of the protocol.
@@ -46,6 +52,20 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public <T> T readUnmarshallByteArray(Transport transport, short status) {
       return CodecUtils.readUnmarshallByteArray(transport, status);
+   }
+
+   @Override
+   public <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose) {
+      return (T)new TransportInputStream(transport, versionedMetadata, afterClose);
+   }
+
+   @Override
+   public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
+      return new TransportOutputStream(transport, afterClose);
+   }
+
+   public void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes) {
+      // No-op
    }
 
    @Override
@@ -383,26 +403,28 @@ public class Codec20 implements Codec, HotRodConstants {
       final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
 
-      int clusterSize = transport.readVInt();
-      SocketAddress[] addresses = new SocketAddress[clusterSize];
-      for (int i = 0; i < clusterSize; i++) {
-         String host = transport.readString();
-         int port = transport.readUnsignedShort();
-         addresses[i] = new InetSocketAddress(host, port);
-      }
+      SocketAddress[] addresses = readTopology(transport);
 
-      short hashFunctionVersion = transport.readByte();
-      int numSegments = transport.readVInt();
-      SocketAddress[][] segmentOwners = new SocketAddress[numSegments][];
-      if (hashFunctionVersion > 0) {
-         for (int i = 0; i < numSegments; i++) {
-            short numOwners = transport.readByte();
-            segmentOwners[i] = new SocketAddress[numOwners];
-            for (int j = 0; j < numOwners; j++) {
-               int memberIndex = transport.readVInt();
-               segmentOwners[i][j] = addresses[memberIndex];
+      final short hashFunctionVersion;
+      final SocketAddress[][] segmentOwners;
+      if (params.clientIntel == ClientIntelligence.HASH_DISTRIBUTION_AWARE.getValue()) {
+         // Only read the hash if we asked for it
+         hashFunctionVersion = transport.readByte();
+         int numSegments = transport.readVInt();
+         segmentOwners = new SocketAddress[numSegments][];
+         if (hashFunctionVersion > 0) {
+            for (int i = 0; i < numSegments; i++) {
+               short numOwners = transport.readByte();
+               segmentOwners[i] = new SocketAddress[numOwners];
+               for (int j = 0; j < numOwners; j++) {
+                  int memberIndex = transport.readVInt();
+                  segmentOwners[i][j] = addresses[memberIndex];
+               }
             }
          }
+      } else {
+         hashFunctionVersion = -1;
+         segmentOwners = null;
       }
 
       TransportFactory transportFactory = transport.getTransportFactory();
@@ -413,24 +435,35 @@ public class Codec20 implements Codec, HotRodConstants {
          List<SocketAddress> addressList = Arrays.asList(addresses);
          if (localLog.isInfoEnabled()) {
             localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId, topologyAge,
-               addresses.length, new HashSet<SocketAddress>(addressList));
+               addresses.length, new HashSet<>(addressList));
          }
          transportFactory.updateServers(addressList, params.cacheName, false);
-         if (hashFunctionVersion == 0) {
-            if (trace)
-               localLog.trace("Not using a consistent hash function (hash function version == 0).");
-         } else {
-            if (trace)
-               localLog.tracef("Updating client hash function with %s number of segments", numSegments);
-
+         if (hashFunctionVersion >= 0) {
+            if (trace) {
+               if (hashFunctionVersion == 0)
+                  localLog.trace("Not using a consistent hash function (hash function version == 0).");
+               else
+                  localLog.tracef("Updating client hash function with %s number of segments", segmentOwners.length);
+            }
+            transportFactory.updateHashFunction(segmentOwners,
+                  segmentOwners.length, hashFunctionVersion, params.cacheName, params.topologyId);
          }
-         transportFactory.updateHashFunction(segmentOwners,
-            numSegments, hashFunctionVersion, params.cacheName, params.topologyId);
       } else {
          if (trace)
-            log.tracef("Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
+            localLog.tracef("Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
                newTopologyId, topologyAge, Arrays.toString(addresses));
       }
+   }
+
+   private SocketAddress[] readTopology(Transport transport) {
+      int clusterSize = transport.readVInt();
+      SocketAddress[] addresses = new SocketAddress[clusterSize];
+      for (int i = 0; i < clusterSize; i++) {
+         String host = transport.readString();
+         int port = transport.readUnsignedShort();
+         addresses[i] = new InetSocketAddress(host, port);
+      }
+      return addresses;
    }
 
 }

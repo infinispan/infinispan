@@ -1,5 +1,11 @@
 package org.infinispan.query.statetransfer;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -12,12 +18,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-
-import java.util.List;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Base class for state transfer and query related tests
@@ -52,8 +52,8 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void executeSimpleQuery(Cache<String, Person> cache) throws ParseException {
-      CacheQuery cacheQuery = createCacheQuery(cache, "blurb", "playing");
-      List<Object> found = cacheQuery.list();
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
+      List<?> found = cacheQuery.list();
       int elems = found.size();
       assertEquals(1, elems);
       Object val = found.get(0);

@@ -27,14 +27,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.JGroupsModel;
-import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.RelayResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.RemoteSiteResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.StackResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.ThreadPoolResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.TransportResourceDefinition;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.model.test.FailedOperationTransformationConfig;
@@ -159,7 +151,7 @@ public class TransformersTestCase extends OperationTestCaseBase {
         // set a property to have an expression and let Byteman intercept the performRuntime call
 
         // build an ADD command to add a transport property using expression value
-        ModelNode operation = getTransportPropertyAddOperation("maximal", "TCP", "bundler_type", "${the_bundler_type:new}");
+        ModelNode operation = getTransportPropertyAddOperation("maximal", "TCP", "bundler_type", "${the_bundler_type:no-bundler}");
 
         // perform operation on the 1.1.1 model
         ModelNode mainResult = services.executeOperation(operation);

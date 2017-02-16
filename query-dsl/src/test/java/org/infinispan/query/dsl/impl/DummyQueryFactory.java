@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Query;
+
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -7,7 +9,12 @@ package org.infinispan.query.dsl.impl;
 class DummyQueryFactory extends BaseQueryFactory {
 
    @Override
-   public DummyQueryBuilder from(Class entityType) {
+   public Query create(String queryString) {
+      return new DummyQuery();
+   }
+
+   @Override
+   public DummyQueryBuilder from(Class<?> entityType) {
       return new DummyQueryBuilder(this, entityType.getName());
    }
 

@@ -1,5 +1,9 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -9,16 +13,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * An interceptor that keeps track of the keys
@@ -27,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class GroupingInterceptor extends DDSequentialInterceptor {
+public class GroupingInterceptor extends DDAsyncInterceptor {
 
    private CacheNotifier<?, ?> cacheNotifier;
    private GroupManager groupManager;
@@ -44,37 +43,36 @@ public class GroupingInterceptor extends DDSequentialInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       command.setGroupOwner(isGroupOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
-         Object result = ctx.forkInvocationSync(command);
-         if (result instanceof List) {
-            //noinspection unchecked
-            filter((List<CacheEntry>) result);
-         }
-         return ctx.shortCircuit(result);
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+            if (rv instanceof List) {
+               //noinspection unchecked
+               filter((List<CacheEntry>) rv);
+            }
+         });
       }
+
       KeyListener listener = new KeyListener(groupName, groupManager, factory);
       //this is just to try to make the snapshot the most recent possible by picking some modification on the fly.
       cacheNotifier.addListener(listener);
-      try {
-         Object result = ctx.forkInvocationSync(command);
-         if (result instanceof List) {
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         cacheNotifier.removeListener(listener);
+
+         if (rv instanceof List) {
             //noinspection unchecked
-            ((List) result).addAll(listener.activatedKeys);
+            ((List) rv).addAll(listener.activatedKeys);
             //noinspection unchecked
-            filter((List<CacheEntry>) result);
-         } else if (result instanceof Map) {
+            filter((List<CacheEntry>) rv);
+         } else if (rv instanceof Map) {
             for (CacheEntry entry : listener.activatedKeys) {
                //noinspection unchecked
-               ((Map) result).put(entry.getKey(), entry.getValue());
+               ((Map) rv).put(entry.getKey(), entry.getValue());
             }
          }
-         return ctx.shortCircuit(result);
-      } finally {
-         cacheNotifier.removeListener(listener);
-      }
+      });
    }
 
    private void filter(List<CacheEntry> list) {

@@ -1,8 +1,9 @@
 package org.infinispan.jmx;
 
-import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
+
+import javax.management.MBeanServer;
 
 /**
  * Default implementation for {@link MBeanServerLookup}, will return the platform MBean server.

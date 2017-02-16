@@ -75,11 +75,6 @@
             <artifactId>infinispan-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-remote</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
         </dependency>
@@ -101,6 +96,11 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -135,11 +135,6 @@
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId> 
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -262,6 +257,14 @@
             <groupId>org.jboss.aesh</groupId>
             <artifactId>aesh</artifactId>
             <scope>test</scope>
+        </dependency>
+		<dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-jcache-remote</artifactId>
         </dependency>
     </dependencies>
 
@@ -920,6 +923,16 @@
                 <suite.manual.phase>none</suite.manual.phase>
                 <suite.manual.include.groups>org.infinispan.server.test.category.Smoke</suite.manual.include.groups>
                 <suite.queries.phase>none</suite.queries.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+            </properties>
+        </profile>
+        <profile>
+            <id>suite.queries</id>
+            <properties>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.queries.phase>integration-test</suite.queries.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>

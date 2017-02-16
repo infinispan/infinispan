@@ -1,11 +1,11 @@
 package org.infinispan;
 
 
-import org.infinispan.tree.Fqn;
-import org.testng.annotations.Test;
-
 import java.util.Arrays;
 import java.util.HashMap;
+
+import org.infinispan.tree.Fqn;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "FqnTest")
 public class FqnTest {

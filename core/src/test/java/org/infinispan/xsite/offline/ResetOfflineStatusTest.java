@@ -1,5 +1,8 @@
 package org.infinispan.xsite.offline;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -12,9 +15,6 @@ import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * @author Mircea Markus

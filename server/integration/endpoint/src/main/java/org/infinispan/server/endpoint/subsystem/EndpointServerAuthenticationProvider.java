@@ -1,5 +1,7 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -17,8 +19,6 @@ import org.jboss.as.core.security.RealmUser;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.RealmConfigurationConstants;
 import org.jboss.as.domain.management.SecurityRealm;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 /**
  * EndpointServerAuthenticationProvider.
  *

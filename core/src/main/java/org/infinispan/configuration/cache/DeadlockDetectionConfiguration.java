@@ -39,7 +39,7 @@ public class DeadlockDetectionConfiguration {
     * Whether deadlock detection is enabled or disabled
     */
    public boolean enabled() {
-      return attributes.attribute(ENABLED).get();
+      return enabled.get();
    }
 
    public AttributeSet attributes() {

@@ -10,6 +10,8 @@ import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.infinispan.server.hotrod.test.HotRodTestingUtil
 
+import scala.collection.JavaConversions._
+
 /**
  * Tests Hot Rod instances that are behind a proxy.
  *

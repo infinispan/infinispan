@@ -1,17 +1,17 @@
 package org.infinispan.persistence.jdbc.table.management;
 
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.persistence.spi.PersistenceException;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+
+import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * @author Ryan Emerson
@@ -21,6 +21,7 @@ public abstract class AbstractTableManager implements TableManager {
    private final Log log;
    protected final ConnectionFactory connectionFactory;
    protected final TableManipulationConfiguration config;
+   protected final String timestampIndexExt = "timestamp_index";
 
    protected String identifierQuoteString = "\"";
    protected String cacheName;
@@ -31,6 +32,7 @@ public abstract class AbstractTableManager implements TableManager {
    protected String updateRowSql;
    protected String upsertRowSql;
    protected String selectRowSql;
+   protected String selectMultipleRowSql;
    protected String selectIdRowSql;
    protected String deleteRowSql;
    protected String loadAllRowsSql;
@@ -56,6 +58,7 @@ public abstract class AbstractTableManager implements TableManager {
             if (!tableExists(conn)) {
                createTable(conn);
             }
+            createTimestampIndex(conn);
          } finally {
             connectionFactory.releaseConnection(conn);
          }
@@ -118,6 +121,40 @@ public abstract class AbstractTableManager implements TableManager {
       executeUpdateSql(conn, ddl);
    }
 
+   protected void createTimestampIndex(Connection conn) throws PersistenceException {
+      if (metaData.isIndexingDisabled()) return;
+
+      boolean indexExists = timestampIndexExists(conn);
+      if (!indexExists) {
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true), getTableName(), config.timestampColumnName());
+         if (log.isTraceEnabled()) {
+            log.tracef("Adding timestamp index with following DDL: '%s'.", ddl);
+         }
+         executeUpdateSql(conn, ddl);
+      }
+   }
+
+   protected boolean timestampIndexExists(Connection conn) throws PersistenceException {
+      ResultSet rs = null;
+      try {
+         TableName table = getTableName();
+         DatabaseMetaData meta = conn.getMetaData();
+         rs = meta.getIndexInfo(null, table.getSchema(), table.getName(), false, false);
+
+         while (rs.next()) {
+            String indexName = rs.getString("INDEX_NAME");
+            if (indexName != null && indexName.equalsIgnoreCase(getIndexName(false))) {
+               return true;
+            }
+         }
+      } catch (SQLException e) {
+         throw new PersistenceException(e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+      }
+      return false;
+   }
+
    public void executeUpdateSql(Connection conn, String sql) throws PersistenceException {
       Statement statement = null;
       try {
@@ -132,6 +169,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    public void dropTable(Connection conn) throws PersistenceException {
+      dropTimestampIndex(conn);
       String dropTableDdl = "DROP TABLE " + getTableName();
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
@@ -139,6 +177,13 @@ public abstract class AbstractTableManager implements TableManager {
          log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
       executeUpdateSql(conn, dropTableDdl);
+   }
+
+   protected void dropTimestampIndex(Connection conn) throws PersistenceException {
+      if (!timestampIndexExists(conn)) return;
+
+      String dropIndexDdl = String.format("DROP INDEX %s ON %s", getIndexName(true), getTableName());
+      executeUpdateSql(conn, dropIndexDdl);
    }
 
    public int getFetchSize() {
@@ -163,6 +208,16 @@ public abstract class AbstractTableManager implements TableManager {
          tableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
       }
       return tableName;
+   }
+
+   public String getIndexName(boolean withIdentifier) {
+      TableName table = getTableName();
+      String tableName = table.toString().replace(identifierQuoteString, "");
+      String indexName = tableName + "_" + timestampIndexExt;
+      if (withIdentifier) {
+         return identifierQuoteString + indexName + identifierQuoteString;
+      }
+      return indexName;
    }
 
    @Override
@@ -190,6 +245,26 @@ public abstract class AbstractTableManager implements TableManager {
                                       config.idColumnName(), config.dataColumnName(), getTableName(), config.idColumnName());
       }
       return selectRowSql;
+   }
+
+   protected String getSelectMultipleRowSql(int numberOfParams, String selectCriteria) {
+      if (numberOfParams < 1)
+         return null;
+
+      if (numberOfParams == 1)
+         return getSelectRowSql();
+
+      StringBuilder sb = new StringBuilder(getSelectRowSql());
+      for (int i = 0; i < numberOfParams - 1; i++) {
+         sb.append(" OR ");
+         sb.append(selectCriteria);
+      }
+      return sb.toString();
+   }
+
+   @Override
+   public String getSelectMultipleRowSql(int numberOfParams) {
+      return getSelectMultipleRowSql(numberOfParams, config.idColumnName() + " = ?");
    }
 
    @Override
@@ -244,7 +319,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getSelectExpiredRowsSql() {
+   public String getSelectExpiredBucketsSql() {
       if (selectExpiredRowsSql == null) {
          selectExpiredRowsSql = String.format("%s WHERE %s < ?", getLoadAllRowsSql(), config.timestampColumnName());
       }
@@ -252,9 +327,9 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getDeleteExpiredRowsSql() {
+   public String getSelectOnlyExpiredRowsSql() {
       if (deleteExpiredRowsSql == null) {
-         deleteExpiredRowsSql = String.format("DELETE FROM %1$s WHERE %2$s < ? AND %2$s > 0", getTableName(), config.timestampColumnName());
+         deleteExpiredRowsSql = String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
       }
       return deleteExpiredRowsSql;
    }
@@ -271,5 +346,15 @@ public abstract class AbstractTableManager implements TableManager {
 
       }
       return upsertRowSql;
+   }
+
+   @Override
+   public boolean isStringEncodingRequired() {
+      return false;
+   }
+
+   @Override
+   public String encodeString(String string) {
+      return string;
    }
 }

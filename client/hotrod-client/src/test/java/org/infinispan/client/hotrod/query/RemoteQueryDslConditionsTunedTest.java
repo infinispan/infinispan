@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,9 +10,6 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.testng.annotations.Test;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Verifying that the tuned query configuration also works for Remote Queries.

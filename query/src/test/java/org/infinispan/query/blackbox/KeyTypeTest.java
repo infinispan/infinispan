@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,8 +15,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Class that will put in different kinds of keys into the cache and run a query on it to see if
@@ -75,10 +75,10 @@ public class KeyTypeTest extends SingleCacheManagerTest {
 
       // Going to search the 'blurb' field for 'owns'
       Term term = new Term("blurb", "owns");
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
       assert cacheQuery.getResultSize() == 9;
 
-      List<Object> found = cacheQuery.list();
+      List<Person> found = cacheQuery.list();
       for (int i = 0; i < 9; i++){
          assert found.get(i).equals(person1);
       }
@@ -95,7 +95,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key3, person1);
 
       Term term = new Term("blurb", "owns");
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
       int i;
       assert (i = cacheQuery.getResultSize()) == 3 : "Expected 3, was " + i;
    }

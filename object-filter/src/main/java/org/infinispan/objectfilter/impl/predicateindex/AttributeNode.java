@@ -1,12 +1,12 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
-import org.infinispan.objectfilter.impl.MetadataAdapter;
-import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.MetadataAdapter;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 /**
  * An attribute node represents a single attribute and keeps track of subscribed predicates and projections.
@@ -165,7 +165,7 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
 
    public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
       if (predicates == null) {
-         predicates = new Predicates(filterSubscription.isUseIntervals() && metadataAdapter.isComparableProperty(metadata));
+         predicates = new Predicates(filterSubscription.useIntervals() && metadataAdapter.isComparableProperty(metadata));
       }
       return predicates.addPredicateSubscription(predicateNode, filterSubscription);
    }

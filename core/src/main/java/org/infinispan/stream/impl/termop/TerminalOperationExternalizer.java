@@ -1,6 +1,19 @@
 package org.infinispan.stream.impl.termop;
 
-import org.infinispan.Cache;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+import java.util.function.ObjDoubleConsumer;
+import java.util.function.ObjIntConsumer;
+import java.util.function.ObjLongConsumer;
+
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
@@ -24,20 +37,6 @@ import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
 import org.jboss.marshalling.util.IdentityIntMap;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.DoubleConsumer;
-import java.util.function.Function;
-import java.util.function.IntConsumer;
-import java.util.function.LongConsumer;
-import java.util.function.ObjDoubleConsumer;
-import java.util.function.ObjIntConsumer;
-import java.util.function.ObjLongConsumer;
 
 /**
  * {@link AdvancedExternalizer} that provides functionality required for marshalling all of the various terminal

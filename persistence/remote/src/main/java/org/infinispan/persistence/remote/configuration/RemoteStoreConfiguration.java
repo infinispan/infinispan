@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote.configuration;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -10,7 +11,6 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -30,7 +30,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> KEY_SIZE_ESTIMATE = AttributeDefinition.builder("keySizeEstimate", ConfigurationProperties.DEFAULT_KEY_SIZE).immutable().build();
    static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder("valueSizeEstimate", ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder("marshaller", null, String.class).immutable().build();
-   static final AttributeDefinition<String> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", null, String.class).immutable().build();
+   static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION).immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", BasicCacheContainer.DEFAULT_CACHE_NAME).immutable().xmlName("cache").build();
    static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>)(Class<?>)List.class)
          .initializer(() -> new ArrayList<>()).autoPersist(false).build();
@@ -51,7 +51,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<Integer> keySizeEstimate;
    private final Attribute<Integer> valueSizeEstimate;
    private final Attribute<String> marshaller;
-   private final Attribute<String> protocolVersion;
+   private final Attribute<ProtocolVersion> protocolVersion;
    private final Attribute<String> remoteCacheName;
    private final Attribute<List<RemoteServerConfiguration>> servers;
    private final Attribute<Long> socketTimeout;
@@ -113,7 +113,12 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return marshaller.get();
    }
 
+   @Deprecated
    public String protocolVersion() {
+      return protocolVersion.get().toString();
+   }
+
+   public ProtocolVersion protocol() {
       return protocolVersion.get();
    }
 
@@ -145,4 +150,3 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return valueSizeEstimate.get();
    }
 }
-

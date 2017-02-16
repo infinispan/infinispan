@@ -1,5 +1,9 @@
 package org.infinispan.interceptors.totalorder;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Collection;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -7,11 +11,12 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -22,9 +27,6 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Created to control the total order validation. It disable the possibility of acquiring locks during execution through
  * the cache API
@@ -32,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Pedro Ruivo
  * @author Mircea.Markus@jboss.com
  */
-public class TotalOrderInterceptor extends DDSequentialInterceptor {
+public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -53,116 +55,132 @@ public class TotalOrderInterceptor extends DDSequentialInterceptor {
    }
 
    @Override
-   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         throws Throwable {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
                     command.getGlobalTransaction().globalId(),
-                    command.getAffectedKeys(),
+                    toStr(command.getAffectedKeys()),
                     ctx.isOriginLocal());
       }
       if (!(command instanceof TotalOrderPrepareCommand)) {
          throw new IllegalStateException("TotalOrderInterceptor can only handle TotalOrderPrepareCommand");
       }
 
+      TotalOrderRemoteTransactionState state = getTransactionState(ctx);
+
       try {
          simulateLocking(ctx, command, clusteringDependentLogic);
+
          if (ctx.isOriginLocal()) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         } else {
-            TotalOrderRemoteTransactionState state = getTransactionState(ctx);
-
-            try {
-               state.preparing();
-               if (state.isRollbackReceived()) {
-                  //this means that rollback has already been received
-                  transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
-                  throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
-                                                 ". it was already marked as rollback");
+            return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+               if (t != null) {
+                  rollbackTxOnPrepareException(rCtx, (PrepareCommand) rCommand, t);
                }
-
-               if (state.isCommitReceived()) {
-                  log.tracef("Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
-                             command.getGlobalTransaction().globalId());
-                  ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
-                  ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
-               }
-
-
-               if (trace) {
-                  log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
-               }
-
-               //invoke next interceptor in the chain
-               Object result = ctx.forkInvocationSync(command);
-
-               if (command.isOnePhaseCommit()) {
-                  totalOrderManager.release(state);
-               }
-               return ctx.shortCircuit(result);
-            } finally {
-               state.prepared();
-            }
-
+            });
          }
-      } catch (Throwable exception) {
-         if (log.isDebugEnabled()) {
-            log.debugf(exception, "Exception while preparing for transaction %s. Local=%s",
-                       command.getGlobalTransaction().globalId(), ctx.isOriginLocal());
+
+         state.preparing();
+         if (state.isRollbackReceived()) {
+            //this means that rollback has already been received
+            transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
+            throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
+                  ". it was already marked as rollback");
          }
-         if (command.isOnePhaseCommit()) {
-            transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
+
+         if (state.isCommitReceived()) {
+            log.tracef("Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
+                  command.getGlobalTransaction().globalId());
+            ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
+            ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
          }
-         throw exception;
+
+         if (trace) {
+            log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
+         }
+
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+            afterPrepare((TxInvocationContext) rCtx, (PrepareCommand) rCommand, state, t);
+         });
+      } catch (Throwable t) {
+         afterPrepare(ctx, command, state, t);
+         throw t;
+      }
+   }
+
+   private void rollbackTxOnPrepareException(InvocationContext ctx, PrepareCommand command, Throwable throwable) {
+      if (log.isDebugEnabled()) {
+         log.debugf(throwable, "Exception while preparing for transaction %s. Local=%s",
+               command.getGlobalTransaction().globalId(), ctx.isOriginLocal());
+      }
+      if (command.isOnePhaseCommit()) {
+         transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
+      }
+   }
+
+   private void afterPrepare(TxInvocationContext ctx, PrepareCommand command, TotalOrderRemoteTransactionState state,
+         Throwable t) {
+      if (t == null && command.isOnePhaseCommit()) {
+         totalOrderManager.release(state);
+      }
+
+      state.prepared();
+
+      if (t != null) {
+         rollbackTxOnPrepareException(ctx, command, t);
       }
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true);
    }
 
    @Override
-   public final CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public final Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
+         throws Throwable {
       throw new UnsupportedOperationException("Lock interface not supported with total order protocol");
    }
 
-   private CompletableFuture<Void> visitSecondPhaseCommand(TxInvocationContext context, AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
+   private Object visitSecondPhaseCommand(TxInvocationContext context,
+         AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
       GlobalTransaction gtx = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s", commit, gtx.globalId(),
-                    context.isOriginLocal());
+               context.isOriginLocal());
       }
 
       TotalOrderRemoteTransactionState state = getTransactionState(context);
-
       try {
          if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
             //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
-            return context.shortCircuit(null);
+            return null;
          }
+      } catch (Throwable t) {
+         finishSecondPhaseCommand(commit, state, context, command);
+         throw t;
+      }
 
-         return context.shortCircuit(context.forkInvocationSync(command));
-      } catch (Throwable exception) {
-         if (log.isDebugEnabled()) {
-            log.debugf(exception, "Exception while rollback transaction %s", gtx.globalId());
+      return invokeNextAndFinally(context, command, (rCtx, rCommand, rv, t) ->
+            finishSecondPhaseCommand(commit, state, rCtx, (AbstractTransactionBoundaryCommand) rCommand));
+   }
+
+   private void finishSecondPhaseCommand(boolean commit, TotalOrderRemoteTransactionState state, InvocationContext ctx,
+         AbstractTransactionBoundaryCommand txCommand) {
+      if (state != null && state.isFinished()) {
+         totalOrderManager.release(state);
+         if (commit) {
+            transactionTable.remoteTransactionCommitted(txCommand.getGlobalTransaction(), false);
+         } else {
+            transactionTable.remoteTransactionRollback(txCommand.getGlobalTransaction());
          }
-         throw exception;
-      } finally {
-         if (state != null && state.isFinished()) {
-            totalOrderManager.release(state);
-            if (commit) {
-               transactionTable.remoteTransactionCommitted(command.getGlobalTransaction(), false);
-            } else {
-               transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
-            }
-            if (context.isOriginLocal()) {
-               executorService.checkForReadyTasks();
-            }
+         if (ctx.isOriginLocal()) {
+            executorService.checkForReadyTasks();
          }
       }
    }
@@ -192,7 +210,7 @@ public class TotalOrderInterceptor extends DDSequentialInterceptor {
 
    private void simulateLocking(TxInvocationContext context, PrepareCommand command,
                                 ClusteringDependentLogic clusteringDependentLogic) {
-      Collection<Object> affectedKeys = command.getAffectedKeys();
+      Collection<?> affectedKeys = command.getAffectedKeys();
       //this map is only populated after locks are acquired. However, no locks are acquired when total order is enabled
       //so we need to populate it here
       context.addAllAffectedKeys(command.getAffectedKeys());

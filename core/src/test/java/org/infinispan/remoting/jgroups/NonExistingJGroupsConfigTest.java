@@ -1,7 +1,6 @@
 package org.infinispan.remoting.jgroups;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.ByteArrayInputStream;
 
@@ -9,7 +8,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.testng.annotations.Test;

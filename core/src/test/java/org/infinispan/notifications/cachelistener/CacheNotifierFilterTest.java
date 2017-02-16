@@ -1,11 +1,15 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -22,20 +26,10 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.BeforeMethod;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Simple test class that tests to make sure other events are properly handled for filters
@@ -63,14 +57,17 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       }
    }
 
+   @SuppressWarnings("unused")
    @Listener
    private static class TestListener {
+      private static final Log log = LogFactory.getLog(TestListener.class);
       private final List<CacheEntryVisitedEvent> visitedEvents = Collections.synchronizedList(
-            new ArrayList<CacheEntryVisitedEvent>());
-      private final List<TopologyChangedEvent> topologyEvents = Collections.synchronizedList(
-            new ArrayList<TopologyChangedEvent>());
+            new ArrayList<>());
+      private final List<TopologyChangedEvent> topologyEvents = Collections.synchronizedList(new ArrayList<>());
+
       @CacheEntryVisited
       public void entryVisited(CacheEntryVisitedEvent event) {
+         log.tracef("Visited %s", event.getKey());
          visitedEvents.add(event);
       }
 
@@ -80,10 +77,10 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       }
    }
 
+   @SuppressWarnings("unused")
    @Listener
    private static class AllCacheEntryListener {
-      private final List<CacheEntryEvent> events = Collections.synchronizedList(
-            new ArrayList<CacheEntryEvent>());
+      private final List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryVisited
       @CacheEntryActivated
@@ -118,8 +115,9 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       String notKey = "not" + key;
       cache0.put(notKey, value);
       cache0.get("not" + key);
+      cache0.getAdvancedCache().getAll(Collections.singleton("not" + key));
 
-      assertEquals(2, listener.visitedEvents.size());
+      assertEquals(4, listener.visitedEvents.size());
    }
 
    @Test
@@ -131,6 +129,7 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       cache0.addListener(listener, new CollectionKeyFilter<>(Collections.emptyList(), true));
 
       addClusterEnabledCacheManager(builderUsed);
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
 
       waitForClusterToForm(CACHE_NAME);
 

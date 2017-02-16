@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
@@ -22,25 +21,44 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InTransactionMode;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
 @CleanupAfterMethod
-public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
+public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    protected static final String CACHE_NAME = "pferSync";
 
    protected static final String key = "k", value = "v1", value2 = "v2";
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).totalOrder(true),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).totalOrder(true),
+      };
+   }
 
    @Override
    protected void createCacheManagers() {
@@ -48,16 +66,27 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, CACHE_NAME, c);
    }
 
-   protected abstract ConfigurationBuilder createCacheConfigBuilder();
+   protected ConfigurationBuilder createCacheConfigBuilder() {
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, transactional);
+      c.clustering().hash().numOwners(100);
+      c.clustering().hash().numSegments(4);
+      if (lockingMode != null) {
+         c.transaction().lockingMode(lockingMode);
+      }
+      if (totalOrder != null && totalOrder) {
+         c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
+      }
+      return c;
+   }
 
    public void testKeyOnlyWrittenOnceOnOriginator() throws Exception {
       final Cache<MagicKey, String> cache1 = cache(0, CACHE_NAME);
       final Cache<MagicKey, String> cache2 = cache(1, CACHE_NAME);
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
-      cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptor(new BaseSequentialInterceptor() {
+      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         public Object visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand) {
                if (!ctx.isOriginLocal()) {
@@ -67,7 +96,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
                   barrier.await(10, TimeUnit.SECONDS);
                }
             }
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       }, 0);
 
@@ -80,12 +109,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       // Verify that the key is written on the origin afterwards
       barrier.await(10, TimeUnit.SECONDS);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey));
-         }
-      });
+      eventually(() -> value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey)));
    }
 
    public void testNoOpWhenKeyPresent() {
@@ -93,31 +117,16 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       final Cache<String, String> cache2 = cache(1, CACHE_NAME);
       cache1.putForExternalRead(key, value);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
-         }
-      });
+      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       // reset
       cache1.remove(key);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache1.isEmpty() && cache2.isEmpty();
-         }
-      });
+      eventually(() -> cache1.isEmpty() && cache2.isEmpty());
 
       cache1.put(key, value);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
-         }
-      });
+      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       // now this pfer should be a no-op
       cache1.putForExternalRead(key, value2);
@@ -126,18 +135,14 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       assertEquals("PFER should have been a no-op", value, cache2.get(key));
    }
 
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testTxSuspension() throws Exception {
       final Cache<String, String> cache1 = cache(0, CACHE_NAME);
       final Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
       cache1.put(key + "0", value);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache2.get(key+"0"));
-         }
-      });
+      eventually(() -> value.equals(cache2.get(key+"0")));
 
       // start a tx and do some stuff.
       tm(0, CACHE_NAME).begin();
@@ -145,36 +150,26 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value); // should have happened in a separate tx and have committed already.
       Transaction t = tm(0, CACHE_NAME).suspend();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
-         }
-      });
+      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       tm(0, CACHE_NAME).resume(t);
       tm(0, CACHE_NAME).commit();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0"));
-         }
-      });
+      eventually(() -> value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0")));
    }
 
    public void testExceptionSuppression() throws Exception {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
-      assertTrue(cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(new BaseSequentialInterceptor() {
+      assertTrue(cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
-         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         public Object visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
             if (command instanceof PutKeyValueCommand || command instanceof RemoveCommand) {
                throw new RuntimeException("Barf!");
             }
-            return ctx.continueInvocation();
+            return invokeNext(ctx, command);
          }
       }, CallInterceptor.class));
 
@@ -213,12 +208,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       replListener2.waitForRpc();
 
       // wait for command the finish executing asynchronously
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache1.containsKey(key) && cache2.containsKey(key);
-         }
-      });
+      eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
 
       assertEquals("PFER updated cache1", value, cache1.get(key));
       assertEquals("PFER propagated to cache2 as expected", value, cache2.get(key));
@@ -232,8 +222,6 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    /**
     * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead().
-    *
-    * @throws Exception
     */
    public void testSimpleCacheModeLocal(Method m) throws Exception {
       cacheModeLocalTest(false, m);
@@ -242,9 +230,8 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
    /**
     * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead() when the call
     * occurs inside a transaction.
-    *
-    * @throws Exception
     */
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testCacheModeLocalInTx(Method m) throws Exception {
       cacheModeLocalTest(true, m);
    }
@@ -252,11 +239,11 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
    /**
     * Tests that suspended transactions do not leak.  See JBCACHE-1246.
     */
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testMemLeakOnSuspendedTransactions() throws Exception {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
-      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
       ReplListener replListener2 = replListener(cache2);
 
       replListener2.expect(PutKeyValueCommand.class);
@@ -268,13 +255,8 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
       final TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 &&
-                  tt2.getRemoteTxCount() == 0 && tt2.getLocalTxCount() == 0;
-         }
-      });
+      eventually(() -> tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 &&
+            tt2.getRemoteTxCount() == 0 && tt2.getLocalTxCount() == 0);
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
@@ -286,13 +268,8 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       log.info("Before commit!!");
       tm1.commit();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
-                  && (tt2.getLocalTxCount() == 0);
-         }
-      });
+      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+            && (tt2.getLocalTxCount() == 0));
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
@@ -300,13 +277,8 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
       tm1.commit();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
-                  && (tt2.getLocalTxCount() == 0);
-         }
-      });
+      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+            && (tt2.getLocalTxCount() == 0));
 
       replListener2.expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
       tm1.begin();
@@ -315,13 +287,8 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.put(key, value);
       tm1.commit();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
-                  && (tt2.getLocalTxCount() == 0);
-         }
-      });
+      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+            && (tt2.getLocalTxCount() == 0));
    }
 
    public void testMultipleIdenticalPutForExternalReadCalls() {
@@ -331,12 +298,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
 
       // wait for command the finish executing asynchronously
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache1.containsKey(key) && cache2.containsKey(key);
-         }
-      });
+      eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
 
       cache1.putForExternalRead(key, value2);
 

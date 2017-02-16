@@ -1,12 +1,12 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.testng.annotations.Test;
 
 
 // Since all tests currently are clustered only, there is no reason to even enable this test as nothing would work

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,9 +13,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.junit.Assert.assertTrue;
-
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataCachePreserveStateAcrossRestartsTest")
 public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends AbstractInfinispanTest {

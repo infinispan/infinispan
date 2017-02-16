@@ -1,73 +1,79 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
+import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.infinispan.Cache;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
+import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.concurrent.CommandAckCollector;
+import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncL1FuncTest")
 public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
    public DistSyncL1FuncTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getDistributionInterceptorClass() {
-      return NonTxDistributionInterceptor.class;
+   protected Class<? extends AsyncInterceptor> getDistributionInterceptorClass() {
+      return isTriangle() ? TriangleDistributionInterceptor.class : NonTxDistributionInterceptor.class;
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getL1InterceptorClass() {
+   protected Class<? extends AsyncInterceptor> getL1InterceptorClass() {
       return L1NonTxInterceptor.class;
    }
 
    protected void assertL1PutWithConcurrentUpdate(final Cache<Object, String> nonOwnerCache, Cache<Object, String> ownerCache,
                                                   final boolean replace, final Object key, final String originalValue,
-                                                  final String nonOwnerValue, String updateValue) throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+                                                  final String nonOwnerValue, String updateValue) throws Throwable {
       CyclicBarrier barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = addBlockingInterceptorBeforeTx(nonOwnerCache, barrier,
             replace ? ReplaceCommand.class : PutKeyValueCommand.class);
 
       try {
-         Future<String> future = fork(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-               if (replace) {
-                  // This should always be true
-                  if (nonOwnerCache.replace(key, originalValue, nonOwnerValue)) {
-                     return originalValue;
-                  }
-                  return nonOwnerCache.get(key);
+         Future<String> future = fork(() -> {
+            if (replace) {
+               // This should always be true
+               if (nonOwnerCache.replace(key, originalValue, nonOwnerValue)) {
+                  return originalValue;
                }
-               else {
-                  return nonOwnerCache.put(key, nonOwnerValue);
-               }
+               return nonOwnerCache.get(key);
+            }
+            else {
+               return nonOwnerCache.put(key, nonOwnerValue);
             }
          });
 
          // Now wait for the put/replace to return and block it for now
          barrier.await(5, TimeUnit.SECONDS);
+
+         //we need to wait for the command to complete everywhere.
+         CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
+         List<CommandInvocationId> pendingIds = collector.getPendingCommands();
+         assertEquals(1, pendingIds.size());
+         CompletableFuture<?> cFuture = collector.getCollectorCompletableFuture(pendingIds.get(0));
+         cFuture.get(30, TimeUnit.SECONDS);
 
          // Stop blocking new commands as we check that a put returns the correct previous value
          blockingInterceptor.suspend(true);
@@ -94,7 +100,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       }
    }
 
-   public void testNoEntryInL1PutWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testNoEntryInL1PutWithConcurrentInvalidation() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -104,7 +110,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testEntryInL1PutWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testEntryInL1PutWithConcurrentInvalidation() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -117,7 +123,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testNoEntryInL1PutWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testNoEntryInL1PutWithConcurrentPut() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -127,7 +133,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testEntryInL1PutWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testEntryInL1PutWithConcurrentPut() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -140,7 +146,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testNoEntryInL1ReplaceWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testNoEntryInL1ReplaceWithConcurrentInvalidation() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -150,7 +156,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testEntryInL1ReplaceWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testEntryInL1ReplaceWithConcurrentInvalidation() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -163,7 +169,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testNoEntryInL1ReplaceWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testNoEntryInL1ReplaceWithConcurrentPut() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -173,7 +179,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testEntryInL1ReplaceWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testEntryInL1ReplaceWithConcurrentPut() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -186,7 +192,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   public void testNoEntryInL1GetWithConcurrentReplace() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+   public void testNoEntryInL1GetWithConcurrentReplace() throws Throwable {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -258,25 +264,13 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       addBlockingInterceptor(backupOwnerCache, backupOwnerWriteBarrier, PutKeyValueCommand.class, L1NonTxInterceptor.class, true);
 
       try {
-         Future<String> future = fork(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-
-               return ownerCache.put(key, secondValue);
-            }
-         });
+         Future<String> future = fork(() -> ownerCache.put(key, secondValue));
 
          // Wait until the put is trying to replicate
          backupOwnerWriteBarrier.await(5, TimeUnit.SECONDS);
 
          // Wait until the L1 is cleared out from the owners L1 invalidation
-         eventually(new Condition() {
-
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return !isInL1(nonOwnerCache, key);
-            }
-         }, 5000, 50, TimeUnit.MILLISECONDS);
+         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
 
          // This should come back from the backup owner, since the primary owner is blocked
          assertEquals(firstValue, nonOwnerCache.get(key));
@@ -290,12 +284,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          future.get(5, TimeUnit.SECONDS);
 
          // The Last chance interceptor is async so wait to make sure it was invalidated
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return !isInL1(nonOwnerCache, key);
-            }
-         }, 5000, 250);
+         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
          // The L1 value shouldn't be present
          assertIsNotInL1(nonOwnerCache, key);
 
@@ -340,16 +329,15 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
                              false);
 
       try {
-         Future<String> future = fork(new Callable<String>() {
-
-            @Override
-            public String call() throws Exception {
-               return nonOwnerCache.put(key, secondValue);
-            }
-         });
+         Future<String> future = fork(() -> nonOwnerCache.put(key, secondValue));
 
          // Wait until owner has already replicated to backup owner, but hasn't updated local value
          ownerPutBarrier.await(10, TimeUnit.SECONDS);
+
+         CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
+         List<CommandInvocationId> pendingIds = collector.getPendingCommands();
+         assertEquals(1, pendingIds.size());
+         eventually(() -> !collector.hasPendingBackupAcks(pendingIds.get(0)));
 
          assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
          assertEquals(secondValue, backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());

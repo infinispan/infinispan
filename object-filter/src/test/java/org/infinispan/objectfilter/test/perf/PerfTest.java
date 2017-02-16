@@ -1,6 +1,11 @@
 package org.infinispan.objectfilter.test.perf;
 
-import org.infinispan.objectfilter.FilterCallback;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Arrays;
+
+import org.infinispan.commons.test.annotations.Profiling;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
@@ -10,11 +15,6 @@ import org.infinispan.objectfilter.test.model.PhoneNumber;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author anistor@redhat.com
@@ -51,15 +51,9 @@ public class PerfTest {
 
       Object obj = createPerson1();
 
-      final int[] matchCount = new int[1];
-
+      int[] matchCount = new int[1];
       for (int k = 0; k < NUM_FILTERS; k++) {
-         matcher.registerFilter(query, new FilterCallback() {
-            @Override
-            public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-               matchCount[0]++;
-            }
-         });
+         matcher.registerFilter(query, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
       }
 
       long stime = System.nanoTime();

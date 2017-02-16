@@ -50,6 +50,7 @@ public class NotStoreAsBinaryValidationTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cacheManager = null;
       try {
          cacheManager = TestCacheManagerFactory.createCacheManager(configuration);
+         cacheManager.defineConfiguration(CACHE_NAME, configuration.build());
          Cache cache = cacheManager.getCache(CACHE_NAME);
 
          DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).create();

@@ -1,28 +1,30 @@
 package org.infinispan.interceptors.base;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
@@ -46,24 +48,25 @@ import java.util.concurrent.CompletableFuture;
  * @see VisitableCommand
  * @see Visitor
  * @see InterceptorChain
- * @deprecated Since 9.0, please extend {@link BaseSequentialInterceptor} instead.
+ * @deprecated Since 9.0, please extend {@link BaseAsyncInterceptor} instead.
  */
 @Deprecated
 @Scope(Scopes.NAMED_CACHE)
-public abstract class CommandInterceptor extends AbstractVisitor implements SequentialInterceptor {
+public abstract class CommandInterceptor extends AbstractVisitor implements AsyncInterceptor {
 
-   private SequentialInterceptorChain interceptorChain;
+   private AsyncInterceptorChain interceptorChain;
 
    protected Configuration cacheConfiguration;
 
    private static final Log log = LogFactory.getLog(CommandInterceptor.class);
-   
+   private AsyncInterceptor nextInterceptor;
+
    protected Log getLog() {
       return log;
    }
 
    @Inject
-   public void injectConfiguration(Configuration configuration, SequentialInterceptorChain interceptorChain) {
+   public void injectConfiguration(Configuration configuration, AsyncInterceptorChain interceptorChain) {
       this.cacheConfiguration = configuration;
       this.interceptorChain = interceptorChain;
    }
@@ -75,12 +78,12 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Sequ
     * @return the next interceptor in the chain.
     */
    public final CommandInterceptor getNext() {
-      List<SequentialInterceptor> interceptors = interceptorChain.getInterceptors();
+      List<AsyncInterceptor> interceptors = interceptorChain.getInterceptors();
       int myIndex = interceptors.indexOf(this);
       if (myIndex < interceptors.size() - 1) {
-         SequentialInterceptor sequentialInterceptor = interceptors.get(myIndex + 1);
-         if (sequentialInterceptor instanceof CommandInterceptor)
-            return (CommandInterceptor) sequentialInterceptor;
+         AsyncInterceptor asyncInterceptor = interceptors.get(myIndex + 1);
+         if (asyncInterceptor instanceof CommandInterceptor)
+            return (CommandInterceptor) asyncInterceptor;
       }
       return null;
    }
@@ -92,7 +95,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Sequ
     * @return true if there is another interceptor in the chain after this; false otherwise.
     */
    public final boolean hasNext() {
-      List<SequentialInterceptor> interceptors = interceptorChain.getInterceptors();
+      List<AsyncInterceptor> interceptors = interceptorChain.getInterceptors();
       int myIndex = interceptors.indexOf(this);
       return myIndex < interceptors.size();
    }
@@ -101,6 +104,11 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Sequ
     * Does nothing since 9.0.
     */
    public final void setNext(CommandInterceptor ignored) {
+   }
+
+   @Override
+   public final void setNextInterceptor(AsyncInterceptor interceptorStage) {
+      this.nextInterceptor = interceptorStage;
    }
 
    /**
@@ -113,7 +121,12 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Sequ
     * @throws Throwable in the event of problems
     */
    public final Object invokeNextInterceptor(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return ctx.forkInvocationSync(command);
+      Object maybeStage = nextInterceptor.visitCommand(ctx, command);
+      if (maybeStage instanceof SimpleAsyncInvocationStage) {
+         return ((InvocationStage) maybeStage).get();
+      } else {
+         return maybeStage;
+      }
    }
 
    /**
@@ -130,32 +143,30 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Sequ
       return invokeNextInterceptor(ctx, command);
    }
 
-   protected final long getLockAcquisitionTimeout(LocalFlagAffectedCommand command, boolean skipLocking) {
+   protected final long getLockAcquisitionTimeout(FlagAffectedCommand command, boolean skipLocking) {
       if (!skipLocking)
-         return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-               0 : cacheConfiguration.locking().lockAcquisitionTimeout();
+         return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+                0 : cacheConfiguration.locking().lockAcquisitionTimeout();
 
       return -1;
    }
 
-   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_LOCKING);
+   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
+      return command.hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 
-   protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
-      Set<Flag> flags = command.getFlags();
-      if (flags != null && !flags.isEmpty()) {
-         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, FlagAffectedCommand command) {
+      long flags = command.getFlagsBitSet();
+      if (flags != EnumUtil.EMPTY_BIT_SET) {
+         return cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
       } else {
          return cache;
       }
    }
 
    @Override
-   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      // Any exceptions will be propagated to the caller
-      Object returnValue = command.acceptVisitor(ctx, this);
-      return ctx.shortCircuit(returnValue);
+      return command.acceptVisitor(ctx, this);
    }
 }

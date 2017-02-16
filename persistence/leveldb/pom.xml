@@ -14,17 +14,23 @@
 
    <dependencies>
       <dependency>
-         <groupId>org.fusesource.leveldbjni</groupId>
-         <artifactId>leveldbjni-all</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.iq80.leveldb</groupId>
-         <artifactId>leveldb</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 
@@ -104,6 +110,25 @@
                            <classifier>features</classifier>
                         </artifact>
                      </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+                  <configuration>
+                     <jars>
+                        <jar>infinispan-cachestore-rocksdb</jar>
+                     </jars>
                   </configuration>
                </execution>
             </executions>

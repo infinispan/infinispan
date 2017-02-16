@@ -52,7 +52,7 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setXmlName(Attribute.PASSIVATION.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(false))
                     .build();
     static final SimpleAttributeDefinition PURGE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PURGE, ModelType.BOOLEAN, true)
@@ -74,6 +74,7 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
+                    .setDeprecated(Namespace.INFINISPAN_SERVER_9_0.getVersion())
                     .build();
 
     static final AttributeDefinition[] BASE_STORE_ATTRIBUTES = {PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON};

@@ -1,5 +1,7 @@
 package org.infinispan.commands.write;
 
+import java.util.Collections;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
@@ -9,8 +11,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -25,7 +25,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    public EvictCommand(Object key, CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId,
                        InternalEntryFactory factory) {
-      super(key, null, notifier, flagsBitSet, null, commandInvocationId);
+      super(key, null, notifier, flagsBitSet, commandInvocationId);
       this.factory = factory;
    }
 
@@ -44,8 +44,8 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    }
 
    @Override
-   public void notify(InvocationContext ctx, Object value, Metadata previousMetadata, 
-         boolean isPre) {
+   public void notify(InvocationContext ctx, Object value, Metadata previousMetadata,
+                      boolean isPre) {
       // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
       // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
       // with non-null values, so we should do the same here as an ugly workaround.
@@ -62,7 +62,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    public byte getCommandId() {
       return -1; // these are not meant for replication!
    }
-   
+
    @Override
    public String toString() {
       return new StringBuilder()
@@ -75,8 +75,8 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
 }

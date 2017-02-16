@@ -1,5 +1,10 @@
 package org.infinispan.jmx;
 
+import java.util.Set;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -7,11 +12,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import java.util.Set;
 
 /**
  * Registers all the components from global component registry to the mbean server.
@@ -65,7 +65,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
-      // Quote group name, to handle invalid ObjectName characters      
+      // Quote group name, to handle invalid ObjectName characters
       String groupName = CACHE_MANAGER_JMX_GROUP
             + "," + ComponentsJmxRegistration.NAME_KEY
             + "=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());

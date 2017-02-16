@@ -1,5 +1,18 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
+import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
@@ -15,18 +28,8 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
-
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.test.TestingUtil.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -182,6 +185,12 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    private void addHitCountInterceptor(Cache<?, ?> cache) {
       HitCountInterceptor interceptor = new HitCountInterceptor();
       cache.getAdvancedCache().addInterceptor(interceptor, 1);
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void destroy() {
+      addr2hrServer.values().forEach(HotRodClientTestingUtil::killServers);
+      super.destroy();
    }
 
    /**

@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.i;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs flat map operation on a {@link IntStream}

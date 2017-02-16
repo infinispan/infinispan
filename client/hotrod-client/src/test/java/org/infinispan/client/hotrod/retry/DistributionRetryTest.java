@@ -1,20 +1,7 @@
 package org.infinispan.client.hotrod.retry;
 
-import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.KeyGenerator;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.marshall.core.JBossMarshaller;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -22,8 +9,21 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.affinity.KeyAffinityService;
+import org.infinispan.affinity.KeyAffinityServiceFactory;
+import org.infinispan.affinity.KeyGenerator;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.JBossMarshaller;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com

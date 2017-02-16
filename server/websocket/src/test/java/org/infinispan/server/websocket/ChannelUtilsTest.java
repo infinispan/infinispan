@@ -1,10 +1,10 @@
 package org.infinispan.server.websocket;
 
-import org.infinispan.server.websocket.json.JsonObject;
-import org.testng.annotations.Test;
-
 import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
 import static org.testng.Assert.fail;
+
+import org.infinispan.server.websocket.json.JsonObject;
+import org.testng.annotations.Test;
 
 /**
  * Tests Channel Utils class.

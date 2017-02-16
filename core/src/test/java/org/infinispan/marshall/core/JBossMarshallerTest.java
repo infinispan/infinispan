@@ -1,32 +1,31 @@
 package org.infinispan.marshall.core;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.ExternalizerTable;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.marshall.core.JBossMarshaller;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaAnnotationObj;
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaBothObj;
+import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaConfigObj;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.marshall.AdvancedExternalizerTest.*;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.commons.marshall.StreamingMarshaller} implementation
@@ -39,12 +38,12 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager();
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       if (cm != null) cm.stop();
    }
@@ -88,11 +87,15 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assertEquals(3456, extTable.getExternalizerId(new IdViaBothObj()));
+         assertEquals(3456, findExternalizerId(new IdViaBothObj(), cm));
       } finally {
          cm.stop();
       }
+   }
+
+   private int findExternalizerId(Object obj, EmbeddedCacheManager cm) {
+      GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
+      return ((AdvancedExternalizer<?>) marshaller.findExternalizerFor(obj)).getId();
    }
 
    public void testForeignExternalizerMultiClassTypesViaSameExternalizer() {
@@ -101,10 +104,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assert 767 == extTable.getExternalizerId(new IdViaConfigObj());
-         assert 767 == extTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 767 == extTable.getExternalizerId(new IdViaBothObj());
+         assert 767 == findExternalizerId(new IdViaConfigObj(), cm);
+         assert 767 == findExternalizerId(new IdViaAnnotationObj(), cm);
+         assert 767 == findExternalizerId(new IdViaBothObj(), cm);
       } finally {
          cm.stop();
       }
@@ -116,10 +118,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder, new ConfigurationBuilder());
       try {
          cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         assert 868 == extTable.getExternalizerId(new IdViaConfigObj());
-         assert 868 == extTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 868 == extTable.getExternalizerId(new IdViaBothObj());
+         assert 868 == findExternalizerId(new IdViaConfigObj(), cm);
+         assert 868 == findExternalizerId(new IdViaAnnotationObj(), cm);
+         assert 868 == findExternalizerId(new IdViaBothObj(), cm);
       } finally {
          cm.stop();
       }
@@ -145,12 +146,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    private void withExpectedInternalFailure(final AdvancedExternalizer<?> ext, String message) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       try {
-         cm.getCache();
-         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
-         extTable.addInternalExternalizer(ext);
-         extTable.start();
+         GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+         globalBuilder.serialization().addAdvancedExternalizer(ext).addAdvancedExternalizer(ext);
          assert false : message;
       } catch (CacheConfigurationException ce) {
          log.trace("Expected exception", ce);
@@ -172,7 +170,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
          @Override
          public Integer getId() {
-            return Ids.ARRAY_LIST;
+            return Ids.MAPS;
          }
 
          @Override

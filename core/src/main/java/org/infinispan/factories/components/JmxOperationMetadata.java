@@ -1,12 +1,12 @@
 package org.infinispan.factories.components;
 
-import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.jmx.annotations.Parameter;
-
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 
 /**
  * Persistable and cacheable metadata for JMX operations
@@ -42,7 +42,7 @@ public class JmxOperationMetadata implements Serializable {
          }
       }
       ManagedOperation mo = m.getAnnotation(ManagedOperation.class);
-      operationName = mo.name();
+      operationName = mo != null ? (mo.name().isEmpty() ? methodName : mo.name()) : methodName;
       description = mo != null ? mo.description() : null;
    }
 
@@ -51,7 +51,7 @@ public class JmxOperationMetadata implements Serializable {
    }
 
    public String getOperationName() {
-      return operationName.isEmpty() ? methodName : operationName;
+      return operationName;
    }
 
    public String getMethodName() {

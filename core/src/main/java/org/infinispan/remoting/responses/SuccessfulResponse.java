@@ -77,22 +77,12 @@ public class SuccessfulResponse extends ValidResponse {
    public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {
       @Override
       public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
-         if (response.responseValue == null) {
-            output.writeBoolean(false);
-         } else {
-            output.writeBoolean(true);
-            output.writeObject(response.responseValue);
-         }
+         output.writeObject(response.responseValue);
       }
 
       @Override
       public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         boolean nonNullResponse = input.readBoolean();
-         if (nonNullResponse) {
-            return new SuccessfulResponse(input.readObject());
-         } else {
-            return SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
-         }
+         return create(input.readObject());
       }
 
       @Override

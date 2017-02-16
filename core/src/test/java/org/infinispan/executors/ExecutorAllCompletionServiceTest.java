@@ -1,13 +1,13 @@
 package org.infinispan.executors;
 
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

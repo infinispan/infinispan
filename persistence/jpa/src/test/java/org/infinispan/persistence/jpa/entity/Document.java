@@ -1,27 +1,28 @@
 package org.infinispan.persistence.jpa.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.io.Serializable;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
 @Entity
 public class Document implements Serializable {
-   
+
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = -81291531402946577L;
-   
+
    @Id
    private String name;
    private String title;
    private String article;
-   
+
    public String getName() {
       return name;
    }
@@ -49,7 +50,7 @@ public class Document implements Serializable {
       result = prime * result + ((title == null) ? 0 : title.hashCode());
       return result;
    }
-   
+
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
@@ -81,5 +82,5 @@ public class Document implements Serializable {
       return "Document [name=" + name + ", title=" + title + ", article="
             + article + "]";
    }
-   
+
 }

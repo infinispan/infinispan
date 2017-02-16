@@ -1,26 +1,28 @@
 package org.infinispan.stats.topK;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.stats.AbstractTopKeyTest;
-import org.infinispan.test.fwk.CleanupAfterTest;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.fail;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
 import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.fail;
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.stats.AbstractTopKeyTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterTest;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Pedro Ruivo
@@ -138,7 +140,8 @@ public class LocalTopKeyTest extends AbstractTopKeyTest {
             .interceptor(new CacheUsageInterceptor());
       builder.versioning().enabled(true).scheme(VersioningScheme.SIMPLE);
       builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true).lockAcquisitionTimeout(100);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
+             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       addClusterEnabledCacheManager(builder);
    }
 }

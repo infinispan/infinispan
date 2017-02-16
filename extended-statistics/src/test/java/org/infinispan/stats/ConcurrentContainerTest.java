@@ -1,5 +1,11 @@
 package org.infinispan.stats;
 
+import static org.testng.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.StatisticsSnapshot;
@@ -7,12 +13,6 @@ import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.Assert.fail;
 
 /**
  * @author Pedro Ruivo

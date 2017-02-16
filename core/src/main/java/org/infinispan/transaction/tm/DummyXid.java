@@ -1,12 +1,13 @@
 package org.infinispan.transaction.tm;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.util.Util;
-
-import javax.transaction.xa.Xid;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.transaction.xa.Xid;
+
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.util.Util;
 
 /**
  * Implementation of Xid.

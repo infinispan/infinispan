@@ -1,9 +1,9 @@
 package org.infinispan.persistence.async;
 
+import java.util.concurrent.Executor;
+
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheWriter;
-
-import java.util.concurrent.Executor;
 
 /**
  * @author Mircea Markus

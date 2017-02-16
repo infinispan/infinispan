@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -137,7 +137,7 @@ public class ServerEventImpl implements EventLog {
 
       @Override
       public Set<Class<? extends ServerEventImpl>> getTypeClasses() {
-         return Util.<Class<? extends ServerEventImpl>> asSet(ServerEventImpl.class);
+         return Collections.singleton(ServerEventImpl.class);
       }
 
    }

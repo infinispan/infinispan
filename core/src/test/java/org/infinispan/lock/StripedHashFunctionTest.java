@@ -1,15 +1,15 @@
 package org.infinispan.lock;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.StripedHashFunction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Test(groups = "unit", testName = "lock.StripedHashFunctionTest")
 public class StripedHashFunctionTest extends AbstractInfinispanTest {
@@ -17,7 +17,7 @@ public class StripedHashFunctionTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      stripedHashFunction = new StripedHashFunction<>(AnyEquivalence.getInstance(), 500);
+      stripedHashFunction = new StripedHashFunction<>(500);
    }
 
    public void testHashingDistribution() {

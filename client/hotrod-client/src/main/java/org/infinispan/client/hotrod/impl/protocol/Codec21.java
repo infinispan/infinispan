@@ -1,5 +1,9 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.commons.util.Util.printArray;
+
+import java.util.Arrays;
+
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryExpiredEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
@@ -8,10 +12,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
-
-import java.util.Arrays;
-
-import static org.infinispan.commons.util.Util.printArray;
 
 public class Codec21 extends Codec20 {
 

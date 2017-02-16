@@ -1,11 +1,11 @@
 package org.infinispan.factories.components;
 
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 
 /**
  * Persistable and cacheable metadata for JMX attributes

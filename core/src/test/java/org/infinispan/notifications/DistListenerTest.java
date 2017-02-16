@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * Used to verify which nodes are going to receive events in case it's configured
  * as DIST: all key owners and the node which is performing the operation will receive
  * a notification.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.0
  */
@@ -30,7 +30,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
             CacheMode.DIST_SYNC, true), 3);
       waitForClusterToForm();
    }
-   
+
    public void testRemoteGet() {
       final String key1 = this.getClass().getName() + "K1";
 
@@ -50,9 +50,9 @@ public class DistListenerTest extends MultipleCacheManagersTest {
          }
       }
       assert nonOwner != null;
-      
+
       listener = new TestListener();
-      
+
       // test owner puts and listens:
       assertCreated(false);
       assertModified(false);
@@ -65,13 +65,13 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       owner1.put(key1, "hello");
       assertModified(true);
       assertCreated(false);
-      
+
       // now de-register:
       owner1.removeListener(listener);
       owner1.put(key1, "hello");
       assertModified(false);
       assertCreated(false);
-      
+
       // put on non-owner and listens on owner:
       owner1.addListener(listener);
       nonOwner.put(key1, "hello");
@@ -80,25 +80,24 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       owner1.removeListener(listener);
       assertModified(false);
       assertCreated(false);
-      
+
       //listen on non-owner:
       nonOwner.addListener(listener);
       nonOwner.put(key1, "hello");
       assertModified(false);
-      // TODO: should originators raise these events?  it seems broken
-      assertCreated(true);
-      
+      assertCreated(false);
+
       //listen on non-owner non-putting:
       owner1.put(key1, "hello");
       assertModified(false);
       assertCreated(false);
    }
-   
+
    private void assertCreated(boolean b) {
       assert listener.created == b;
       listener.created = false;
    }
-   
+
    private void assertModified(boolean b) {
       assert listener.modified == b;
       listener.modified = false;
@@ -110,19 +109,19 @@ public class DistListenerTest extends MultipleCacheManagersTest {
             return c;
       return null;
    }
-   
+
    @Listener
    static public class TestListener {
-      
+
       boolean created = false;
       boolean modified = false;
-      
+
       @CacheEntryCreated
       @SuppressWarnings("unused")
       public void create(CacheEntryEvent e) {
          created = true;
       }
-      
+
       @CacheEntryModified
       @SuppressWarnings("unused")
       public void modify(CacheEntryEvent e) {

@@ -1,16 +1,15 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
-import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
 
 /**
  * Defines clustered characteristics of the cache.

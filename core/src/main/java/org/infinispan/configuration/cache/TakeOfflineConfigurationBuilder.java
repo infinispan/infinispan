@@ -11,7 +11,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @author Mircea Markus
  * @since 5.2
  */
-public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration>{
+public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration> {
 
 
    private final AttributeSet attributes;

@@ -1,10 +1,10 @@
 package org.infinispan.profiling.testinternals;
 
-import org.infinispan.tree.Fqn;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import org.infinispan.tree.Fqn;
 
 /**
  * Helper class that will generate fqn's.

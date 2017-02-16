@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl.util;
 
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -14,8 +14,8 @@ public class IntervalTreeTest {
 
    @Test
    public void testSingleIntervalStab() {
-      Interval<Integer> interval = new Interval<Integer>(3, true, 100, false);
-      IntervalTree<Integer, String> tree = new IntervalTree<Integer, String>();
+      Interval<Integer> interval = new Interval<>(3, true, 100, false);
+      IntervalTree<Integer, String> tree = new IntervalTree<>();
       tree.add(interval);
 
       List<IntervalTree.Node<Integer, String>> result = tree.stab(3);

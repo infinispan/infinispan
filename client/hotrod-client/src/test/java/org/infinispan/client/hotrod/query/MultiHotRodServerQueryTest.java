@@ -1,5 +1,17 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.query.dsl.Expression.count;
+import static org.infinispan.query.dsl.Expression.property;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -21,18 +33,8 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 /**
- * Tests query over Hot Rod in a two-node cluster.
+ * Tests query over Hot Rod in a three node cluster.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -50,7 +52,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      createHotRodServers(2, builder);
+      createHotRodServers(3, builder);
 
       waitForClusterToForm();
 
@@ -82,6 +84,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       user1.setName("Tom");
       user1.setSurname("Cat");
       user1.setGender(User.Gender.MALE);
+      user1.setAge(5);
       user1.setAccountIds(Collections.singleton(12));
       Address address1 = new AddressPB();
       address1.setStreet("Dark Alley");
@@ -97,6 +100,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       user2.setName("Adrian");
       user2.setSurname("Nistor");
       user2.setGender(User.Gender.MALE);
+      user2.setAge(22);
       Address address2 = new AddressPB();
       address2.setStreet("Old Street");
       address2.setPostCode("XYZ");
@@ -123,20 +127,43 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
       Query query = qf.from(UserPB.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(UserPB.class, list.get(0).getClass());
       assertUser1(list.get(0));
+   }
+
+   public void testGroupByQuery() throws Exception {
+      // get user back from remote cache and check its attributes
+      User fromCache = remoteCache0.get(1);
+      assertNotNull(fromCache);
+      assertUser1(fromCache);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache0);
+      Query query = qf.from(UserPB.class)
+            .select(property("name"), count("age"))
+            .having("age").gte(5)
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+      List<Object[]> list = query.list();
+      assertNotNull(list);
+      assertEquals(2, list.size());
+      assertEquals(Object[].class, list.get(0).getClass());
+      assertEquals(Object[].class, list.get(1).getClass());
+      assertEquals("Adrian", list.get(0)[0]);
+      assertEquals("Tom", list.get(1)[0]);
    }
 
    public void testEmbeddedAttributeQuery() throws Exception {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
       Query query = qf.from(UserPB.class)
-            .having("addresses.postCode").eq("1234").toBuilder()
+            .having("addresses.postCode").eq("1234")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
@@ -145,7 +172,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(list.get(0));
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
 
@@ -164,7 +191,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
       Query query = qf.from(UserPB.class)
             .select("name", "surname")
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
 
       List<Object[]> list = query.list();

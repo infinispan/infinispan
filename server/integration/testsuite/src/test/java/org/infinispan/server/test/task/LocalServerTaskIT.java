@@ -1,5 +1,15 @@
 package org.infinispan.server.test.task;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -8,6 +18,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Task;
+import org.infinispan.server.test.task.servertask.Greeting;
+import org.infinispan.server.test.task.servertask.GreetingServerTask;
 import org.infinispan.server.test.task.servertask.JSExecutingServerTask;
 import org.infinispan.server.test.task.servertask.LocalExceptionalServerTask;
 import org.infinispan.server.test.task.servertask.LocalMapReduceServerTask;
@@ -25,12 +37,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Arquillian.class)
 @Category({Task.class})
@@ -51,8 +57,10 @@ public class LocalServerTaskIT {
       jar.addClass(LocalExceptionalServerTask.class);
       jar.addClass(LocalMapReduceServerTask.class);
       jar.addClass(JSExecutingServerTask.class);
+      jar.addClass(GreetingServerTask.class);
+      jar.addClass(Greeting.class);
       jar.addAsServiceProvider(ServerTask.class, LocalTestServerTask.class,
-              LocalExceptionalServerTask.class, LocalMapReduceServerTask.class, JSExecutingServerTask.class);
+              LocalExceptionalServerTask.class, LocalMapReduceServerTask.class, JSExecutingServerTask.class, GreetingServerTask.class);
       jar.addAsResource(new File("/stream_serverTask.js"));
       jar.addAsManifestResource("MANIFEST.MF");
 
@@ -126,5 +134,31 @@ public class LocalServerTaskIT {
       assertEquals(3, result.get("word1").intValue());
       assertEquals(2, result.get("word2").intValue());
       assertEquals(1, result.get("word3").intValue());
+   }
+
+   @Test
+   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
+   public void shouldWorkWithCustomMojo() throws Exception {
+      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCache remoteCache = rcm.getCache();
+
+      Map params = new HashMap();
+      params.put("greeting", toBytes(new Greeting("hello, good morning :)")));
+
+      String result = (String) remoteCache.execute(GreetingServerTask.NAME, params);
+      assertEquals("hello, good morning :)", result);
+   }
+
+
+   private byte[] toBytes(Object o) {
+      try {
+         ByteArrayOutputStream os = new ByteArrayOutputStream();
+         ObjectOutputStream oos = new ObjectOutputStream(os);
+         oos.writeObject(o);
+         oos.close();
+         return os.toByteArray();
+      } catch (IOException e) {
+         throw new AssertionError(e);
+      }
    }
 }

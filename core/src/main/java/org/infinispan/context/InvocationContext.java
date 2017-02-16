@@ -15,13 +15,13 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface InvocationContext extends EntryLookup, SequentialInvocationContext, Cloneable {
+public interface InvocationContext extends EntryLookup, Cloneable {
 
    /**
     * Returns true if the call was originated locally, false if it is the result of a remote rpc.
     */
    boolean isOriginLocal();
-   
+
    /**
     * @return the origin of the command, or null if the command originated locally
     */
@@ -61,12 +61,17 @@ public interface InvocationContext extends EntryLookup, SequentialInvocationCont
     *
     * @return a class loader instance or null if no class loader was
     *         specifically associated
+    * @deprecated Not in use any more, implementations might return null.
     */
+   @Deprecated
    ClassLoader getClassLoader();
 
    /**
     * Sets the class loader associated for this invocation
+    *
+    * @deprecated Not in use any more.
     */
+   @Deprecated
    void setClassLoader(ClassLoader classLoader);
 
    /**
@@ -82,7 +87,7 @@ public interface InvocationContext extends EntryLookup, SequentialInvocationCont
    boolean hasLockedKey(Object key);
 
    /**
-    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, EntryFactory.Wrap, boolean)} instead.
+    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, boolean)} instead.
     */
    @Deprecated
    default boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {

@@ -31,6 +31,8 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.msc.service.ServiceRegistryException;
 import org.jboss.msc.service.StartException;
 
+
+
 /**
  * @author Tristan Tarrant
  */
@@ -184,5 +186,12 @@ public interface EndpointLogger extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(id = 10032, value = "No Security realm declared for endpoint '%s'. Using default encryption realm.")
    void noSSLContextForSni(String endpoint);
-}
 
+   @LogMessage(level = INFO)
+   @Message(id = 10033, value = "Starting server %s without transport (use multi tenant router instead)")
+   void startingServerWithoutTransport(String protocolName);
+
+   @LogMessage(level = INFO)
+   @Message(id = 10034, value = "Multi tenant router started (HotRod listening on %s, REST listening on %s")
+   void routerStarted(String hotrodAddress, String restAddress);
+}

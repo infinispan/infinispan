@@ -1,5 +1,10 @@
 package org.infinispan.commands.read;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Spliterator;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -8,6 +13,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
@@ -18,11 +24,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.
@@ -35,10 +36,10 @@ import java.util.Spliterator;
 public class EntrySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
 
-   public EntrySetCommand(Cache<K, V> cache, Set<Flag> flags) {
-      setFlags(flags);
-      if (flags != null) {
-         this.cache = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   public EntrySetCommand(Cache<K, V> cache, long flagsBitSet) {
+      setFlagsBitSet(flagsBitSet);
+      if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
+         this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagsBitSet, Flag.class));
       } else {
          this.cache = cache;
       }
@@ -50,8 +51,8 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

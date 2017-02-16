@@ -1,5 +1,9 @@
 package org.infinispan.query.helper;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,7 +14,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.junit.Assert;
+import org.infinispan.query.backend.WrappingErrorHandler;
 
 public class StaticTestingErrorHandler implements ErrorHandler {
 
@@ -34,12 +38,15 @@ public class StaticTestingErrorHandler implements ErrorHandler {
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
-      Assert.assertNotNull(errorHandler);
-      Assert.assertTrue(errorHandler instanceof StaticTestingErrorHandler);
+      assertNotNull(errorHandler);
+      if (errorHandler instanceof WrappingErrorHandler) {
+         errorHandler = ((WrappingErrorHandler) errorHandler).unwrap();
+      }
+      assertTrue(errorHandler instanceof StaticTestingErrorHandler);
       StaticTestingErrorHandler instance = (StaticTestingErrorHandler) errorHandler;
       Object fault = instance.getAndReset();
-      if (fault!=null) {
-         Assert.fail(fault.toString());
+      if (fault != null) {
+         fail(fault.toString());
       }
    }
 

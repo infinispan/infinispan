@@ -1,5 +1,9 @@
 package org.infinispan.hibernate.search.spi;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.hibernate.search.backend.BackendFactory;
@@ -10,16 +14,17 @@ import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.store.spi.DirectoryHelper;
 import org.hibernate.search.store.spi.LockFactoryCreator;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.hibernate.search.impl.AsyncDeleteExecutorService;
+import org.infinispan.hibernate.search.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
 import org.infinispan.hibernate.search.util.configuration.impl.ConfigurationParseHelper;
-import org.infinispan.hibernate.search.impl.LoggerFactory;
+import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * A DirectoryProvider using Infinispan to store the Index. This depends on the CacheManagerServiceProvider to get a
@@ -49,6 +54,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
 
    private LockFactory indexWriterLockFactory;
    private int affinityId;
+   private boolean isAsync;
 
 
    public InfinispanDirectoryProvider(int affinityId) {
@@ -83,6 +89,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
          }
          indexWriterLockFactory = getLockFactory(verifiedIndexDir, properties);
       }
+      this.isAsync = !BackendFactory.isConfiguredAsSync(properties);
    }
 
    private LockFactory getLockFactory(File indexDir, Properties properties) {
@@ -117,6 +124,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    public void start(DirectoryBasedIndexManager indexManager) {
       log.debug("Starting InfinispanDirectory");
       deletesExecutor = getDeleteOperationsExecutor();
+      validateCacheManagerConfiguration();
       cacheManager.startCaches(metadataCacheName, dataCacheName, lockingCacheName);
       Cache<?, ?> metadataCache = cacheManager.getCache(metadataCacheName);
       Cache<?, ?> dataCache = cacheManager.getCache(dataCacheName);
@@ -124,7 +132,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       org.infinispan.lucene.directory.BuildContext directoryBuildContext = DirectoryBuilder
             .newDirectoryInstance(metadataCache, dataCache, lockingCache, directoryProviderName)
             .writeFileListAsynchronously(writeFileListAsync)
-            .deleteOperationsExecutor(deletesExecutor.getExecutor());
+            .deleteOperationsExecutor(isAsync ? new WithinThreadExecutor() : deletesExecutor.getExecutor());
       if (chunkSize != null) {
          directoryBuildContext.chunkSize(chunkSize.intValue());
       }
@@ -140,8 +148,62 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       log.debugf("Initialized Infinispan index: '%s'", directoryProviderName);
    }
 
+   private void validateCacheManagerConfiguration() {
+      if (cacheManager.getCacheConfiguration(metadataCacheName) == null) {
+         log.missingIndexCacheConfiguration(metadataCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(metadataCacheName, builder.build());
+      }
+
+      if (cacheManager.getCacheConfiguration(dataCacheName) == null) {
+         log.missingIndexCacheConfiguration(dataCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(dataCacheName, builder.build());
+      }
+
+      if (cacheManager.getCacheConfiguration(lockingCacheName) == null) {
+         log.missingIndexCacheConfiguration(lockingCacheName);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+            // Clustered Metadata cache configuration
+            builder
+                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+            ;
+         } else {
+            builder.simpleCache(true);
+         }
+         cacheManager.defineConfiguration(lockingCacheName, builder.build());
+      }
+   }
+
    private AsyncDeleteExecutorService getDeleteOperationsExecutor() {
       return serviceManager.requestService(AsyncDeleteExecutorService.class);
+   }
+
+   public int pendingDeleteTasks() {
+      return isAsync ? 0 : deletesExecutor.getActiveTasks();
    }
 
    @Override
@@ -166,4 +228,11 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       return cacheManager;
    }
 
+   public Address getLockOwner(String indexName, int affinityId, String lockName) {
+      FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName, affinityId);
+      Cache<?, Address> lockCache = cacheManager.getCache(lockingCacheName);
+      Address address = lockCache.get(fileCacheKey);
+      log.debugf("Lock owner for %s: %s", fileCacheKey, address);
+      return address;
+   }
 }

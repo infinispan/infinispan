@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
-
 import java.util.Map;
+
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 
 /**
  * A filter that accepts all inputs of a given type. Does not support sorting and projections.

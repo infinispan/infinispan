@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 
 /**
  * Class that assures concurrent access to the in memory database.
@@ -104,11 +104,11 @@ public class UnitTestDatabaseManager {
       builder.dialect(dt);
    }
 
-   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
+   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table) {
       table
-         .tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
+         .tableNamePrefix("ISPN_STRING")
          .idColumnName("ID_COLUMN")
-         .idColumnType(binary ? "INT" : "VARCHAR(255)")
+         .idColumnType("VARCHAR(255)")
          .dataColumnName("DATA_COLUMN")
          .dataColumnType("BLOB")
          .timestampColumnName("TIMESTAMP_COLUMN")
@@ -144,7 +144,7 @@ public class UnitTestDatabaseManager {
          PooledConnectionFactory pcf = (PooledConnectionFactory) connectionFactory;
          try {
             Thread.sleep(500); // C3P0 needs a little delay before reporting the correct number of connections. Bah!
-            assertEquals(pcf.getPooledDataSource().getNumBusyConnectionsAllUsers(), 0);
+            assertEquals(pcf.getNumBusyConnectionsAllUsers(), 0);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

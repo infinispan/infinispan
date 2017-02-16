@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
@@ -20,12 +26,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterExpirationEventsTest")
 public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {

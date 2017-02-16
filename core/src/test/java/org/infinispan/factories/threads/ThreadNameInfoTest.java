@@ -1,8 +1,8 @@
 package org.infinispan.factories.threads;
 
-import org.testng.annotations.Test;
-
 import static org.testng.AssertJUnit.assertEquals;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Galder Zamarreño

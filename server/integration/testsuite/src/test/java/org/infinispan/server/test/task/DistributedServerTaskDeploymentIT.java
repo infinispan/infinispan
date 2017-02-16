@@ -1,5 +1,13 @@
 package org.infinispan.server.test.task;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -26,12 +34,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-
-import java.util.Collections;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
 
 /**
  * Testing the jar task deployment/undeploy.

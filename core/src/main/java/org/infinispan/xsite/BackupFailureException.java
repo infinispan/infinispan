@@ -1,9 +1,9 @@
 package org.infinispan.xsite;
 
-import org.infinispan.remoting.RpcException;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.remoting.RpcException;
 
 /**
  * Exception to be used to signal failures to backup to remote sites.
@@ -27,7 +27,7 @@ public class BackupFailureException extends RpcException {
    public void addFailure(String site, Throwable t) {
       if(site != null && t != null) {
          if(failures == null)
-            failures = new HashMap<String,Throwable>(3);
+            failures = new HashMap<>(3);
          failures.put(site, t);
       }
    }

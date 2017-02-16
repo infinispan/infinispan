@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.client.hotrod.impl.TimeUnitParam.encodeTimeUnits;
+
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.client.hotrod.impl.TimeUnitParam.encodeTimeUnits;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 
 public class Codec22 extends Codec21 {

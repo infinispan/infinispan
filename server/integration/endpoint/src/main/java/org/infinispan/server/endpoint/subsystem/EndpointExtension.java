@@ -18,18 +18,13 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
 import org.infinispan.server.endpoint.Constants;
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
-import org.jboss.dmr.ModelNode;
-import org.jboss.staxmapper.XMLElementReader;
 import org.kohsuke.MetaInfServices;
-
 
 /**
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
@@ -44,10 +39,6 @@ public class EndpointExtension implements Extension {
    private static final String RESOURCE_NAME = EndpointExtension.class.getPackage().getName() + ".LocalDescriptions";
 
    static ResourceDescriptionResolver getResourceDescriptionResolver(String keyPrefix) {
-      /*StringBuilder prefix = new StringBuilder(Constants.SUBSYSTEM_NAME);
-      for (String kp : keyPrefix) {
-          prefix.append('.').append(kp);
-      }*/
       return new SharedResourceDescriptionResolver(keyPrefix, RESOURCE_NAME, EndpointExtension.class.getClassLoader(), true, true, null);
   }
 
@@ -63,11 +54,8 @@ public class EndpointExtension implements Extension {
 
    @Override
    public void initializeParsers(ExtensionParsingContext context) {
-       for (Namespace namespace: Namespace.values()) {
-           XMLElementReader<List<ModelNode>> reader = namespace.getXMLReader();
-           if (reader != null) {
-               context.setSubsystemXmlMapping(Constants.SUBSYSTEM_NAME, namespace.getUri(), reader);
-           }
-       }
+      for (Namespace namespace : Namespace.values()) {
+         context.setSubsystemXmlMapping(Constants.SUBSYSTEM_NAME, namespace.getUri(), new EndpointSubsystemReader(namespace));
+      }
    }
 }

@@ -1,9 +1,9 @@
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.context.impl.TxInvocationContext;
-
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * A manager that checks and waits for older topology transaction with conflicting keys.

@@ -1,6 +1,10 @@
 package org.infinispan.all.embeddedquery;
 
-import org.apache.lucene.search.BooleanQuery;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
 import org.hibernate.search.exception.SearchException;
@@ -11,11 +15,6 @@ import org.infinispan.query.Search;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Clone of QueryPhrasesTest for uber jars.
@@ -55,8 +54,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .must(queryBuilder.createBooleanQuery("name", "Goat")).not().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person1);
@@ -83,8 +82,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .should(queryBuilder.createBooleanQuery("name", "Goat")).should(subQuery).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -119,8 +118,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .should(subQuery1).should(subQuery2).createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.get(0).equals(person1);
@@ -150,8 +149,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().
             onField("name").matching("Goat").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person2);
@@ -220,8 +219,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class)
             .get().range().onField("num1").andField("num2").below(20).excludeLimit().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());  //<------ All entries should be here, because andField is executed as SHOULD;
       assert found.contains(type1);
@@ -250,8 +249,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().wildcard()
             .onField("wrongname").matching("Goat").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
    }
@@ -263,8 +262,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().keyword().wildcard()
             .onField("name").matching("*wildcard*").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(type1);
@@ -307,8 +306,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().onField("name")
             .andField("blurb").matching("Eats").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
 
@@ -334,8 +333,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().phrase()
             .onField("blurb").sentence("Eats grass").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person2);
@@ -358,8 +357,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().phrase()
             .onField("name").sentence("Some string").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -379,8 +378,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().phrase().withSlop(3)
             .onField("blurb").sentence("Eats grass").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person2);
@@ -429,8 +428,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().phrase().withSlop(1)
             .onField("name").sentence("Some string").createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -460,8 +459,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().all().except().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person2);
@@ -493,8 +492,8 @@ public class QueryPhrasesTest extends AbstractQueryTest {
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().all().except().createQuery();
 
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<Object> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(type1);

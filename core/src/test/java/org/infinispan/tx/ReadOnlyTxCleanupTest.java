@@ -1,5 +1,12 @@
 package org.infinispan.tx;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -9,13 +16,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
 @Test(testName = "tx.ReadOnlyTxCleanupTest", groups = "functional")
 @CleanupAfterMethod
@@ -28,6 +28,7 @@ public class ReadOnlyTxCleanupTest extends SingleCacheManagerTest {
 
    public void testReadOnlyTx() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException, NotSupportedException {
       Cache<String, String> c1 = cacheManager.getCache();
+      cacheManager.defineConfiguration("two", cacheManager.getDefaultCacheConfiguration());
       Cache<String, String> c2 = cacheManager.getCache("two");
 
       c1.put("c1", "c1");

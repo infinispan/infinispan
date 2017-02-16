@@ -1,9 +1,12 @@
 package org.infinispan.lock;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
@@ -13,8 +16,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests if the same lock is used for the same key.
@@ -81,8 +82,8 @@ public class KeyLockTest extends SingleCacheManagerTest {
       }).get(10, TimeUnit.SECONDS);
    }
 
-   private static byte[] byteArray() {
-      return new byte[]{1};
+   private static WrappedByteArray byteArray() {
+      return new WrappedByteArray(new byte[]{1});
    }
 
    private enum CacheName {

@@ -1,14 +1,14 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * An encapsulation of a JGroups Address
@@ -35,7 +35,7 @@ public class JGroupsAddress implements Address {
 
       JGroupsAddress that = (JGroupsAddress) o;
 
-      return address.equals(that.address);
+      return hashCode == that.hashCode && address.equals(that.address);
    }
 
    @Override
@@ -59,11 +59,11 @@ public class JGroupsAddress implements Address {
    }
 
    public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsAddress> {
-      
+
       public Externalizer() {
          super(false);
       }
-      
+
       @Override
       public void doWriteObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          try {

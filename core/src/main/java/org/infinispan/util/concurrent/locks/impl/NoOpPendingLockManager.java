@@ -1,11 +1,11 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;
-
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link PendingLockManager} implementation that does nothing.

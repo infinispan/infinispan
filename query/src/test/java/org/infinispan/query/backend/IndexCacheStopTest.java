@@ -1,5 +1,13 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,14 +27,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests for cache stop order when storing indexes on infinispan
@@ -51,6 +51,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    @Test
    public void testIndexingOnNamedCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager(getIndexedConfig());
+      cacheManager.defineConfiguration("custom", cacheManager.getDefaultCacheConfiguration());
       startAndIndexData("custom", cacheManager);
       cacheManager.stop();
 
@@ -161,7 +162,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    private <T> void assertIndexPopulated(Cache<Integer, T> cache, Class<T> clazz) {
-      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
+      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
       assertEquals(query.list().size(), CACHE_SIZE);
    }
 

@@ -1,11 +1,13 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.interceptors.base.BaseCustomInterceptor
-import org.infinispan.context.{Flag, InvocationContext}
-import org.infinispan.commands.{LocalFlagAffectedCommand, VisitableCommand}
-import org.infinispan.commons.CacheException
 import java.lang.reflect.Method
-import test.HotRodTestingUtil._
+
+import org.infinispan.commands.{FlagAffectedCommand, VisitableCommand}
+import org.infinispan.commons.CacheException
+import org.infinispan.context.impl.FlagBitSets
+import org.infinispan.context.InvocationContext
+import org.infinispan.interceptors.base.BaseCustomInterceptor
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.testng.annotations.Test
 
 /**
@@ -20,136 +22,134 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
 
    def testPut(m: Method) {
       val commandInterceptor = init()
-      //PutRequest
+      //PUT
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.put(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.Success)
-      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.SuccessWithPrevious)
+      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.Success)
+      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.SuccessWithPrevious)
    }
 
    def testReplace(m: Method) {
-      //ReplaceRequest
+      //REPLACE
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.replace(k(m), 0, 0, v(m), 0), OperationStatus.OperationNotExecuted)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                         ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.OperationNotExecuted)
 
    }
 
    def testPutIfAbsent(m: Method) {
-      //PutIfAbsentRequest
+      //PUT_IF_ABSENT
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.NotExecutedWithPrevious)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.OperationNotExecuted)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                             ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.NotExecutedWithPrevious)
    }
 
    def testReplaceIfUnmodified(m: Method) {
-      //ReplaceIfUnmodifiedRequest
+      //REPLACE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
-                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                                        ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testGet(m: Method) {
-      //GetRequest
+      //GET
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.get(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.get(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.get(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                         ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testGetWithVersion(m: Method) {
-      //GetWithVersionRequest
+      //GET_WITH_VERSION
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.getWithVersion(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                    ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                    ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
 
    }
 
    def testGetWithMetadata(m: Method) {
-      //GetWithMetadataRequest
+      //GET_WITH_METADATA
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.getWithMetadata(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemove(m: Method) {
-      //RemoveRequest
+      //REMOVE
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.remove(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.remove(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                            ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                            ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemoveIfUnmodified(m: Method) {
-      //RemoveIfUnmodifiedRequest
+      //REMOVE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
-                                                                       ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                                       ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testContainsKey(m: Method) {
-      //ContainsKeyRequest
+      //CONTAINS_KEY
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.containsKey(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                 ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                 ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    private def init(): FlagCheckCommandInterceptor = {
-      val iterator = cacheManager.getCache(cacheName).getAdvancedCache.getInterceptorChain.iterator()
-      while (iterator.hasNext) {
-         val commandInterceptor = iterator.next()
-         if (commandInterceptor.isInstanceOf[FlagCheckCommandInterceptor])
-            return commandInterceptor.asInstanceOf[FlagCheckCommandInterceptor]
-      }
+      val interceptorChain = cacheManager.getCache(cacheName).getAdvancedCache.getAsyncInterceptorChain
+      val interceptor = interceptorChain.findInterceptorExtending(classOf[FlagCheckCommandInterceptor])
+      if (interceptor != null)
+         return interceptor
 
       val ci = new FlagCheckCommandInterceptor
-      cacheManager.getCache(cacheName).getAdvancedCache.getSequentialInterceptorChain().addInterceptor(ci, 1)
+      interceptorChain.addInterceptor(ci, 1)
       ci
    }
 
@@ -164,8 +164,8 @@ class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
 
    protected override def handleDefault(ctx: InvocationContext, command: VisitableCommand): AnyRef = {
       command match {
-         case flagAffectedCommand: LocalFlagAffectedCommand =>
-            val hasFlag = flagAffectedCommand.hasFlag(Flag.SKIP_CACHE_LOAD)
+         case flagAffectedCommand: FlagAffectedCommand =>
+            val hasFlag = flagAffectedCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD)
             if (expectSkipLoadFlag && !hasFlag) {
                throw new CacheException("SKIP_CACHE_LOAD flag is expected!")
             } else if (!expectSkipLoadFlag && hasFlag) {

@@ -1,5 +1,11 @@
 package org.infinispan.remoting.inboundhandler;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -22,10 +28,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.XSiteReplicateCommand;
-
-import java.util.concurrent.ExecutorService;
-
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 
 /**
  * {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} implementation that handles all the {@link
@@ -52,8 +54,8 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    private BackupReceiverRepository backupReceiverRepository;
    private GlobalComponentRegistry globalComponentRegistry;
 
-   public static ExceptionResponse shuttingDownResponse() {
-      return new ExceptionResponse(new CacheException("Cache is shutting down"));
+   private static Response shuttingDownResponse() {
+      return CacheNotFoundResponse.INSTANCE;
    }
 
    public static ExceptionResponse exceptionHandlingCommand(Throwable throwable) {
@@ -78,16 +80,16 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
             if (trace) {
                log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]", command, origin);
             }
-            Runnable runnable = create(command, reply);
+            Runnable runnable = create(command, reply, order.preserveOrder());
             if (order.preserveOrder() || !command.canBlock()) {
                runnable.run();
             } else {
                remoteCommandsExecutor.execute(runnable);
             }
          }
-      } catch (Throwable throwable) {
-         log.debug(throwable);
-         reply.reply(new ExceptionResponse(new CacheException(throwable)));
+      } catch (Throwable t) {
+         log.exceptionHandlingCommand(command, t);
+         reply.reply(exceptionHandlingCommand(t));
       }
    }
 
@@ -150,24 +152,35 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       };
    }
 
-   private Runnable create(final ReplicableCommand command, final Reply reply) {
+   private Runnable create(final ReplicableCommand command, final Reply reply, boolean preserveOrder) {
       return new Runnable() {
          @Override
          public void run() {
             try {
                globalComponentRegistry.wireDependencies(command);
 
-               Object retVal = command.perform(null);
-               if (retVal != null && !(retVal instanceof Response)) {
-                  retVal = SuccessfulResponse.create(retVal);
+               CompletableFuture<Object> future = command.invokeAsync();
+               if (preserveOrder) {
+                  future.join();
+               } else {
+                  future.whenComplete((retVal, throwable) -> {
+                     if (retVal != null && !(retVal instanceof Response)) {
+                        retVal = SuccessfulResponse.create(retVal);
+                     }
+                     reply.reply(retVal);
+                  });
                }
-               reply.reply(retVal);
-            } catch (InterruptedException | IllegalLifecycleStateException e) {
-               log.shutdownHandlingCommand(command);
-               reply.reply(shuttingDownResponse());
             } catch (Throwable throwable) {
-               log.exceptionHandlingCommand(command, throwable);
-               reply.reply(exceptionHandlingCommand(throwable));
+               if (throwable.getCause() != null && throwable instanceof CompletionException) {
+                  throwable = throwable.getCause();
+               }
+               if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
+                  log.shutdownHandlingCommand(command);
+                  reply.reply(shuttingDownResponse());
+               } else {
+                  log.exceptionHandlingCommand(command, throwable);
+                  reply.reply(exceptionHandlingCommand(throwable));
+               }
             }
          }
       };

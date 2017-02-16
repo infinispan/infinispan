@@ -1,8 +1,18 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
+import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.Immutables;
@@ -16,6 +26,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -30,20 +41,14 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.TimeService;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
-import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -58,6 +63,37 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCh
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
 
+   enum Commit {
+      /**
+       * Do not commit the entry.
+       */
+      NO_COMMIT(false, false),
+      /**
+       * Commit the entry but this node is not an owner, therefore, listeners should not be fired.
+       */
+      COMMIT_NON_LOCAL(true, false),
+      /**
+       * Commit the entry, this is the owner.
+       */
+      COMMIT_LOCAL(true, true);
+
+      private boolean commit;
+      private boolean local;
+
+      Commit(boolean commit, boolean local) {
+         this.commit = commit;
+         this.local = local;
+      }
+
+      public boolean isCommit() {
+         return commit;
+      }
+
+      public boolean isLocal() {
+         return local;
+      }
+   }
+
    boolean localNodeIsOwner(Object key);
 
    boolean localNodeIsPrimaryOwner(Object key);
@@ -67,6 +103,8 @@ public interface ClusteringDependentLogic {
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
                     Flag trackFlag, boolean l1Invalidation);
 
+   Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed);
+
    List<Address> getOwners(Collection<Object> keys);
 
    List<Address> getOwners(Object key);
@@ -74,6 +112,8 @@ public interface ClusteringDependentLogic {
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
    Address getAddress();
+
+   int getSegmentForKey(Object key);
 
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
 
@@ -129,6 +169,34 @@ public interface ClusteringDependentLogic {
       protected abstract void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                                 InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
+      @Override
+      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         // ignore locality for removals, even if skipOwnershipCheck is not true
+         if (command != null && command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
+            return Commit.COMMIT_LOCAL;
+         }
+         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ));
+         // When a command is local-mode, it does not get written by replicating origin -> primary -> backup but
+         // when origin == backup it's written right from the original context
+         // ClearCommand is also broadcast to all nodes from originator, and on originator it should remove entries
+         // for which this node is backup owner even though it did not get the removal from primary owner.
+         if (transactional || !ctx.isOriginLocal() || (command != null &&
+               (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
+            // During ST, entries whose ownership is lost are invalidated by InvalidateCommand
+            // and at that point we're no longer owners - the only information is that the origin
+            // is local and the entry is removed.
+            if (localNodeIsOwner(key)) {
+               return Commit.COMMIT_LOCAL;
+            } else if (removed) {
+               return Commit.COMMIT_NON_LOCAL;
+            }
+         } else {
+            // in non-tx mode, on backup we don't commit in original context, backup command has its own context.
+            return localNodeIsPrimaryOwner(key) ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+         }
+         return Commit.NO_COMMIT;
+      }
+
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
       protected void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
@@ -136,13 +204,14 @@ public interface ClusteringDependentLogic {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {
-               ((RemoveCommand)command).notify(ctx, previousValue, previousMetadata, false);
+               ((RemoveCommand) command).notify(ctx, previousValue, previousMetadata, false);
+            } else if (command instanceof InvalidateCommand) {
+               notifier.notifyCacheEntryInvalidated(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
             } else {
                if (expired) {
                   notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
                } else {
-                  notifier.notifyCacheEntryRemoved(
-                          entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+                  notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, previousMetadata, false, ctx, command);
                }
 
                // A write-only command only writes and so can't 100% guarantee
@@ -157,7 +226,7 @@ public interface ClusteringDependentLogic {
             // Notify entry event after container has been updated
             if (created) {
                notifier.notifyCacheEntryCreated(
-                  entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
+                     entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee
                // that an entry has been created, so only send create event
@@ -167,8 +236,8 @@ public interface ClusteringDependentLogic {
 
                functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
             } else {
-               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue, previousMetadata,
-                                                 false, ctx, command);
+               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue,
+                     previousMetadata, false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee
                // that an entry has been created, so only send modify when the
@@ -227,7 +296,6 @@ public interface ClusteringDependentLogic {
          cacheTransaction.setUpdatedEntryVersions(uv);
          return (uv.isEmpty()) ? null : uv;
       }
-
    }
 
    /**
@@ -271,9 +339,14 @@ public interface ClusteringDependentLogic {
       public Address getAddress() {
          Address address = cacheManager.getAddress();
          if (address == null) {
-            address = LOCAL_MODE_ADDRESS;
+            address = LocalModeAddress.INSTANCE;
          }
          return address;
+      }
+
+      @Override
+      public int getSegmentForKey(Object key) {
+         return 0;
       }
 
       @Override
@@ -314,18 +387,6 @@ public interface ClusteringDependentLogic {
       }
    }
 
-   Address LOCAL_MODE_ADDRESS = new Address() {
-      @Override
-      public String toString() {
-         return "Local Address";
-      }
-
-      @Override
-      public int compareTo(Address o) {
-         return 0;
-      }
-   };
-
    /**
     * This logic is used in invalidation mode caches.
     */
@@ -342,12 +403,14 @@ public interface ClusteringDependentLogic {
 
       @Override
       public boolean localNodeIsOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         return cacheTopology == null || cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
       }
 
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
+         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         return cacheTopology == null || cacheTopology.getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
       }
 
       @Override
@@ -398,6 +461,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public int getSegmentForKey(Object key) {
+         return stateTransferManager.getCacheTopology().getWriteConsistentHash().getSegment(key);
+      }
+
+      @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
          return null; //not used because write skew check is not allowed with invalidation
       }
@@ -407,8 +475,9 @@ public interface ClusteringDependentLogic {
     * This logic is used in replicated mode caches.
     */
    class ReplicationLogic extends InvalidationLogic {
-
       private StateTransferLock stateTransferLock;
+
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
 
       @Inject
       public void init(StateTransferLock stateTransferLock) {
@@ -418,9 +487,35 @@ public interface ClusteringDependentLogic {
       @Override
       protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+         // Don't allow the CH to change (and state transfer to invalidate entries)
+         // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            super.commitSingleEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+            Commit doCommit = commitType(command, ctx, entry.getKey(), entry.isRemoved());
+            if (doCommit.isCommit()) {
+               boolean created = false;
+               boolean removed = false;
+               boolean expired = false;
+               if (doCommit.isLocal()) {
+                  created = entry.isCreated();
+                  removed = entry.isRemoved();
+                  if (removed && entry instanceof MVCCEntry) {
+                     expired = ((MVCCEntry) entry).isExpired();
+                  }
+               }
+
+               InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
+               Object previousValue = null;
+               Metadata previousMetadata = null;
+               if (previousEntry != null) {
+                  previousValue = previousEntry.getValue();
+                  previousMetadata = previousEntry.getMetadata();
+               }
+               commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+               if (doCommit.isLocal()) {
+                  notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+               }
+            }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
@@ -428,21 +523,11 @@ public interface ClusteringDependentLogic {
 
       @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
-         return totalOrder ?
-               new WriteSkewHelper.KeySpecificLogic() {
-                  @Override
-                  public boolean performCheckOnKey(Object key) {
-                     //in total order, all nodes perform the write skew check
-                     return true;
-                  }
-               } :
-               new WriteSkewHelper.KeySpecificLogic() {
-                  @Override
-                  public boolean performCheckOnKey(Object key) {
-                     //in two phase commit, only the primary owner should perform the write skew check
-                     return localNodeIsPrimaryOwner(key);
-                  }
-               };
+         return totalOrder
+               //in total order, all nodes perform the write skew check
+               ? key -> true
+               //in two phase commit, only the primary owner should perform the write skew check
+               : localNodeIsPrimaryOwner;
       }
    }
 
@@ -450,11 +535,13 @@ public interface ClusteringDependentLogic {
     * This logic is used in distributed mode caches.
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
-
       private DistributionManager dm;
       private Configuration configuration;
       private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
+
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = this::localNodeIsOwner;
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
 
       @Inject
       public void init(DistributionManager dm, Configuration configuration,
@@ -476,6 +563,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public int getSegmentForKey(Object key) {
+         return dm.getWriteConsistentHash().getSegment(key);
+      }
+
+      @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
          final Address address = rpcManager.getAddress();
          return dm.getPrimaryLocation(key).equals(address);
@@ -493,15 +585,12 @@ public interface ClusteringDependentLogic {
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            boolean doCommit = true;
-            // ignore locality for removals, even if skipOwnershipCheck is not true
-            boolean skipOwnershipCheck = command != null &&
-                  command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+            Commit doCommit = commitType(command, ctx, entry.getKey(), entry.isRemoved());
 
-            boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey());
-            if (isForeignOwned && !entry.isRemoved()) {
-               if (configuration.clustering().l1().enabled()) {
-                  // transform for L1
+            boolean isL1Write = false;
+            if (!doCommit.isCommit() && configuration.clustering().l1().enabled()) {
+               // transform for L1
+               if (!entry.isRemoved()) {
                   long lifespan;
                   if (metadata != null) {
                      lifespan = metadata.lifespan();
@@ -516,27 +605,28 @@ public interface ClusteringDependentLogic {
                         builder = entry.getMetadata().builder();
                      }
                      metadata = builder
-                           .lifespan(configuration.clustering().l1().lifespan())
-                           .build();
+                        .lifespan(configuration.clustering().l1().lifespan())
+                        .build();
                      metadata = new L1Metadata(metadata);
                   }
-               } else {
-                  doCommit = false;
                }
+               isL1Write = true;
+               doCommit = Commit.COMMIT_NON_LOCAL;
             }
 
-            boolean created = false;
-            boolean removed = false;
-            boolean expired = false;
-            if (!isForeignOwned) {
-               created = entry.isCreated();
-               removed = entry.isRemoved();
-               if (removed && entry instanceof MVCCEntry) {
-                  expired = ((MVCCEntry) entry).isExpired();
+            if (doCommit.isCommit()) {
+               boolean created = false;
+               boolean removed = false;
+               boolean expired = false;
+               if (doCommit.isLocal()) {
+                  created = entry.isCreated();
+                  removed = entry.isRemoved();
+                  if (removed && entry instanceof MVCCEntry) {
+                     expired = ((MVCCEntry) entry).isExpired();
+                  }
                }
-            }
 
-            if (doCommit) {
+               // TODO use value from the entry
                InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
                Object previousValue = null;
                Metadata previousMetadata = null;
@@ -544,13 +634,16 @@ public interface ClusteringDependentLogic {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
-               if (!isForeignOwned) {
-                  notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+               if (isL1Write && previousEntry != null && !previousEntry.isL1Entry()) {
+                  // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
+                  // and therefore we have two contexts on one node)
+               } else {
+                  commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+                  if (doCommit.isLocal()) {
+                     notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+                  }
                }
-            } else
-               entry.rollback();
-
+            }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
@@ -571,21 +664,11 @@ public interface ClusteringDependentLogic {
 
       @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
-         return totalOrder ?
-               new WriteSkewHelper.KeySpecificLogic() {
-                  @Override
-                  public boolean performCheckOnKey(Object key) {
-                     //in total order, all the owners can perform the write skew check.
-                     return localNodeIsOwner(key);
-                  }
-               } :
-               new WriteSkewHelper.KeySpecificLogic() {
-                  @Override
-                  public boolean performCheckOnKey(Object key) {
-                     //in two phase commit, only the primary owner should perform the write skew check
-                     return localNodeIsPrimaryOwner(key);
-                  }
-               };
+         return totalOrder
+               //in total order, all the owners can perform the write skew check.
+               ? localNodeIsOwner
+               //in two phase commit, only the primary owner should perform the write skew check
+               : localNodeIsPrimaryOwner;
       }
    }
 }

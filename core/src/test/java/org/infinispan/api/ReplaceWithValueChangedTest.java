@@ -1,14 +1,14 @@
 package org.infinispan.api;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+
+import javax.transaction.Transaction;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Test;
 
 /**
  * Test the condition described here: {@link org.infinispan.interceptors.distribution.TxDistributionInterceptor#ignorePreviousValueOnBackup}.

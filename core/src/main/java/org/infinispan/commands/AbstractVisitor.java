@@ -3,11 +3,20 @@ package org.infinispan.commands;
 import java.util.Collection;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.functional.*;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -67,7 +76,7 @@ public abstract class AbstractVisitor implements Visitor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
-   
+
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return handleDefault(ctx, command);
@@ -126,7 +135,7 @@ public abstract class AbstractVisitor implements Visitor {
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
       return handleDefault(ctx, invalidateCommand);
    }
-   
+
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
       return visitInvalidateCommand(ctx, invalidateL1Command);
@@ -167,7 +176,7 @@ public abstract class AbstractVisitor implements Visitor {
    public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
-   
+
    @Override
    public <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable {
       return handleDefault(ctx, command);

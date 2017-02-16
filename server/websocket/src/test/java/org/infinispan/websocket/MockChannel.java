@@ -1,19 +1,27 @@
 package org.infinispan.websocket;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.*;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.DefaultPromise;
-import io.netty.util.concurrent.Promise;
-import org.infinispan.server.websocket.json.JsonObject;
-
 import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
+
+import org.infinispan.server.websocket.json.JsonObject;
+
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelId;
+import io.netty.channel.ChannelMetadata;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelProgressivePromise;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.DefaultChannelPromise;
+import io.netty.channel.EventLoop;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 
 /**
  * Mock Server channel for testing.

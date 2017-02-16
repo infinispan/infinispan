@@ -21,18 +21,32 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.time.format.DateTimeFormatter;
+
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
-import org.jboss.as.controller.*;
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ListAttributeDefinition;
+import org.jboss.as.controller.OperationDefinition;
+import org.jboss.as.controller.OperationStepHandler;
+import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
+import org.jboss.as.controller.ResourceDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
+import org.jboss.as.controller.SimpleMapAttributeDefinition;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-
-import java.time.format.DateTimeFormatter;
 
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X
@@ -142,6 +156,15 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            .build();
 
     static final OperationDefinition GET_PROTO = new SimpleOperationDefinitionBuilder("get-proto-schema", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAME)
+           .setRuntimeOnly()
+           .build();
+
+    static final OperationDefinition GET_PROTO_SCHEMAS_WITH_ERRORS = new SimpleOperationDefinitionBuilder("get-proto-schemas-with-errors", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setRuntimeOnly()
+           .build();
+
+    static final OperationDefinition GET_PROTO_SCHEMA_ERRORS = new SimpleOperationDefinitionBuilder("get-proto-schema-errors", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAME)
            .setRuntimeOnly()
            .build();
@@ -300,14 +323,16 @@ public class CacheContainerResource extends SimpleResourceDefinition {
          .build();
 
 
-   private final ResolvePathHandler resolvePathHandler;
+    private final ResolvePathHandler resolvePathHandler;
+    private final PathManager pathManager;
     private final boolean runtimeRegistration;
-    public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+    public CacheContainerResource(final ResolvePathHandler resolvePathHandler, PathManager pathManager, boolean runtimeRegistration) {
         super(CONTAINER_PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER),
                 new CacheContainerAddHandler(),
                 new CacheContainerRemoveHandler());
         this.resolvePathHandler = resolvePathHandler;
+        this.pathManager = pathManager;
         this.runtimeRegistration = runtimeRegistration;
     }
 
@@ -336,6 +361,8 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(GET_PROTO_NAMES, GetProtobufSchemaNamesHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(GET_PROTO, GetProtobufSchemaHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO_SCHEMAS_WITH_ERRORS, GetProtobufSchemasWithErrorsHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO_SCHEMA_ERRORS, GetProtoSchemaErrorsHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(UNREGISTER_PROTO, UnregisterProtoSchemasOperationHandler.INSTANCE);
@@ -359,6 +386,8 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         super.registerChildren(resourceRegistration);
 
         // child resources
+        resourceRegistration.registerSubModel(new HealthResource(pathManager));
+
         resourceRegistration.registerSubModel(new TransportResource());
         resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
         resourceRegistration.registerSubModel(new GlobalStateResource());

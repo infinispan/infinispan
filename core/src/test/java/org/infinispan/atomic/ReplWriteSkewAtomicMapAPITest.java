@@ -1,24 +1,26 @@
 package org.infinispan.atomic;
 
+import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * {@link org.infinispan.atomic.impl.AtomicHashMap} test with write skew check enabled in a replicated cluster.
@@ -102,7 +104,7 @@ public class ReplWriteSkewAtomicMapAPITest extends RepeatableReadAtomicMapAPITes
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC)
-            .locking().lockAcquisitionTimeout(100l)
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .clustering().hash().numOwners(2)

@@ -1,13 +1,7 @@
 package org.infinispan.client.hotrod.near;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +12,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.near.AvoidStaleNearCacheReadsTest")
 public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {

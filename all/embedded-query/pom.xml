@@ -39,6 +39,12 @@
       </pluginManagement>
       <plugins>
          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <executions>
@@ -51,7 +57,6 @@
                      <artifactSet>
                         <excludes>
                            <exclude>org.infinispan:infinispan-embedded-query</exclude>
-                           <exclude>log4j:log4j:jar:</exclude>
                            <exclude>org.infinispan:infinispan-commons</exclude>
                            <exclude>org.infinispan:infinispan-core</exclude>
                            <exclude>org.jgroups:jgroups</exclude>
@@ -110,11 +115,6 @@
                            <pattern>org.codehaus</pattern>
                            <shadedPattern>infinispan.org.codehaus</shadedPattern>
                         </relocation>
-                        
-                        
-                           
-                           
-                        
                         <relocation>
                            <pattern>org.slf4j</pattern>
                            <shadedPattern>infinispan.org.slf4j</shadedPattern>

@@ -1,5 +1,13 @@
 package org.infinispan.statetransfer;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -7,7 +15,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -15,17 +22,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")
 @CleanupAfterMethod

@@ -1,10 +1,10 @@
 package org.infinispan.test.concurrent;
 
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matcher;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 
 /**
  * Creates {@link InvocationMatcher}s.

@@ -1,7 +1,16 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.transaction.Transaction;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.commons.CacheException;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -10,15 +19,6 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Transaction table that delegates prepared transaction's management to the {@link RecoveryManager}.
@@ -30,13 +30,6 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
    private static final boolean trace = log.isTraceEnabled();
-
-   private RecoveryManagerImpl recoveryManager;
-
-   @Inject
-   public void initialize(RecoveryManager recoveryManager) {
-      this.recoveryManager = (RecoveryManagerImpl) recoveryManager;
-   }
 
    /**
     * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
@@ -86,7 +79,8 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       RemoteTransaction remoteTransaction = super.getRemoteTransaction(txId);
       if (remoteTransaction != null) return remoteTransaction;
       //also look in the recovery manager, as this transaction might be prepared
-      return recoveryManager.getPreparedTransaction(((RecoverableTransactionIdentifier) txId).getXid());
+      return (RemoteTransaction) recoveryManager
+            .getPreparedTransaction(((RecoverableTransactionIdentifier) txId).getXid());
    }
 
    @Override

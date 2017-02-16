@@ -1,6 +1,8 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
 
+import java.util.Properties;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
@@ -17,6 +19,7 @@ import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InvocationBatchingConfigurationBuilder;
 import org.infinispan.configuration.cache.JMXStatisticsConfigurationBuilder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfigurationBuilder;
@@ -27,8 +30,6 @@ import org.infinispan.configuration.cache.TransactionConfigurationBuilder;
 import org.infinispan.configuration.cache.UnsafeConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-
-import java.util.Properties;
 
 public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilder {
 
@@ -88,6 +89,11 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
 
    @Override
    public Object shared(boolean b) {
+      return null;
+   }
+
+   @Override
+   public Object transactional(boolean b) {
       return null;
    }
 
@@ -188,6 +194,11 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
 
    @Override
    public CompatibilityModeConfigurationBuilder compatibility() {
+      return null;
+   }
+
+   @Override
+   public MemoryConfigurationBuilder memory() {
       return null;
    }
 

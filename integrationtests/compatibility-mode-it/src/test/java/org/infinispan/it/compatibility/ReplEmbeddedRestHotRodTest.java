@@ -1,25 +1,22 @@
 package org.infinispan.it.compatibility;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.servlet.http.HttpServletResponse;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
  * Tests embedded, Hot Rod and REST compatibility in a replicated
@@ -55,7 +52,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
             "<hey>ho</hey>".getBytes(), "application/octet-stream"));
       HttpClient restClient = cacheFactory1.getRestClient();
       restClient.executeMethod(put);
-      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, put.getStatusCode());
       assertEquals("", put.getResponseBodyAsString().trim());
 
       // 2. Get with Embedded
@@ -79,7 +76,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. Get with REST
       HttpMethod get = new GetMethod(cacheFactory2.getRestUrl() + "/" + key);
       cacheFactory2.getRestClient().executeMethod(get);
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertEquals("v1", get.getResponseBodyAsString());
    }
 
@@ -96,7 +93,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. Get with REST
       HttpMethod get = new GetMethod(cacheFactory2.getRestUrl() + "/" + key);
       cacheFactory2.getRestClient().executeMethod(get);
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
+      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
       assertEquals("v1", get.getResponseBodyAsString());
    }
 }

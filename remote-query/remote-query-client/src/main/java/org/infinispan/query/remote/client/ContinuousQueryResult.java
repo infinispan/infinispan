@@ -1,12 +1,13 @@
 package org.infinispan.query.remote.client;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.WrappedMessage;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.infinispan.protostream.EnumMarshaller;
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 /**
  * @author anistor@redhat.com
@@ -14,7 +15,53 @@ import java.util.List;
  */
 public final class ContinuousQueryResult {
 
-   private final boolean isJoining;
+   public enum ResultType {
+      JOINING,
+      UPDATED,
+      LEAVING;
+
+      static final class Marshaller implements EnumMarshaller<ResultType> {
+
+         @Override
+         public ResultType decode(int enumValue) {
+            switch (enumValue) {
+               case 0:
+                  return ResultType.LEAVING;
+               case 1:
+                  return ResultType.JOINING;
+               case 2:
+                  return ResultType.UPDATED;
+            }
+            return null;
+         }
+
+         @Override
+         public int encode(ResultType resultType) throws IllegalArgumentException {
+            switch (resultType) {
+               case LEAVING:
+                  return 0;
+               case JOINING:
+                  return 1;
+               case UPDATED:
+                  return 2;
+               default:
+            }
+            throw new IllegalArgumentException("Unexpected ResultType value : " + resultType);
+         }
+
+         @Override
+         public Class<? extends ResultType> getJavaClass() {
+            return ResultType.class;
+         }
+
+         @Override
+         public String getTypeName() {
+            return "org.infinispan.query.remote.client.ContinuousQueryResult.ResultType";
+         }
+      }
+   }
+
+   private final ResultType resultType;
 
    private final byte[] key;
 
@@ -22,15 +69,15 @@ public final class ContinuousQueryResult {
 
    private final Object[] projection;
 
-   public ContinuousQueryResult(boolean isJoining, byte[] key, byte[] value, Object[] projection) {
-      this.isJoining = isJoining;
+   public ContinuousQueryResult(ResultType resultType, byte[] key, byte[] value, Object[] projection) {
+      this.resultType = resultType;
       this.key = key;
       this.value = value;
       this.projection = projection;
    }
 
-   public boolean isJoining() {
-      return isJoining;
+   public ResultType getResultType() {
+      return resultType;
    }
 
    public byte[] getKey() {
@@ -48,18 +95,18 @@ public final class ContinuousQueryResult {
    @Override
    public String toString() {
       return "ContinuousQueryResult{" +
-            "isJoining=" + isJoining +
+            "resultType=" + resultType +
             ", key=" + Arrays.toString(key) +
             ", value=" + Arrays.toString(value) +
             ", projection=" + Arrays.toString(projection) +
             '}';
    }
 
-   public static final class Marshaller implements MessageMarshaller<ContinuousQueryResult> {
+   static final class Marshaller implements MessageMarshaller<ContinuousQueryResult> {
 
       @Override
       public ContinuousQueryResult readFrom(ProtoStreamReader reader) throws IOException {
-         boolean isJoining = reader.readBoolean("isJoining");
+         ResultType type = reader.readObject("resultType", ResultType.class);
          byte[] key = reader.readBytes("key");
          byte[] value = reader.readBytes("value");
          List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
@@ -71,12 +118,12 @@ public final class ContinuousQueryResult {
                p[j++] = m.getValue();
             }
          }
-         return new ContinuousQueryResult(isJoining, key, value, p);
+         return new ContinuousQueryResult(type, key, value, p);
       }
 
       @Override
       public void writeTo(ProtoStreamWriter writer, ContinuousQueryResult continuousQueryResult) throws IOException {
-         writer.writeBoolean("isJoining", continuousQueryResult.isJoining);
+         writer.writeObject("resultType", continuousQueryResult.resultType, ResultType.class);
          writer.writeBytes("key", continuousQueryResult.key);
          if (continuousQueryResult.projection == null) {
             // skip marshalling the instance if there is a projection

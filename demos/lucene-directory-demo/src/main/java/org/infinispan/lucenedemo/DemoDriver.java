@@ -16,11 +16,11 @@ import org.infinispan.remoting.transport.Address;
  * DemoDriver is a console hello-world application to show the Lucene
  * clustering capabilities.
  * This class parses the user input and drives the actions implemented in DemoActions.
- * 
+ *
  * As always when running JGroups to run a demo cluster of multiple applications running
  * on the same host, set these JVM options:
  * -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -101,7 +101,7 @@ public class DemoDriver implements Runnable {
          int i = 0;
          for (String value : storedValues) {
             System.out.println(++i + "\t\"" + value + "\"");
-         }   
+         }
       }
    }
 

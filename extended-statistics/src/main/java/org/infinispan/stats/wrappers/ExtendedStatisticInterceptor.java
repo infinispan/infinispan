@@ -1,17 +1,84 @@
 package org.infinispan.stats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
-import static org.infinispan.stats.percentiles.PercentileStatistic.*;
+import static org.infinispan.stats.container.ExtendedStatistic.ABORT_RATE;
+import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.ARRIVAL_RATE;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_COMMIT_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_EXEC_NO_CONT;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_GET_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_PREPARE_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_ROLLBACK_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_LOCAL;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_REMOTE;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMIT_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCAL_COMMITTED_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_REMOTE_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PREPARE_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_RO_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUTS_WR_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ROLLBACK_COMMAND;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WRITE_SKEW;
+import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_COMMIT_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_GET_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_PREPARE_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_PUT_EXECUTION;
+import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_ROLLBACK_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.RESPONSE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ROLLBACK_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SUCCESSFUL_WRITE_TX_PERCENTAGE;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.THROUGHPUT;
+import static org.infinispan.stats.container.ExtendedStatistic.WRITE_SKEW_PROBABILITY;
+import static org.infinispan.stats.container.ExtendedStatistic.WRITE_TX_PERCENTAGE;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
+import static org.infinispan.stats.percentiles.PercentileStatistic.RO_LOCAL_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.RO_REMOTE_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.WR_LOCAL_EXECUTION;
+import static org.infinispan.stats.percentiles.PercentileStatistic.WR_REMOTE_EXECUTION;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
 
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -25,7 +92,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -56,7 +123,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "ExtendedStatistics", description = "Component that manages and exposes extended statistics " +
       "relevant to transactions.")
-public class ExtendedStatisticInterceptor extends BaseCustomSequentialInterceptor {
+public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -67,79 +134,80 @@ public class ExtendedStatisticInterceptor extends BaseCustomSequentialIntercepto
    private TimeService timeService;
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (trace) {
          log.tracef("Visit Get Key Value command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
       }
-      if (ctx.isInTxScope()) {
-         long start = timeService.time();
-         Object retVal = ctx.forkInvocationSync(command);
+      if (!ctx.isInTxScope()) {
+         return invokeNext(ctx, command);
+      }
+      long start = timeService.time();
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          long end = timeService.time();
-         initStatsIfNecessary(ctx);
-         if (isRemote(command.getKey())) {
-            cacheStatisticManager.increment(NUM_REMOTE_GET, getGlobalTransaction(ctx), ctx.isOriginLocal());
+         initStatsIfNecessary(rCtx);
+         Object key = ((GetKeyValueCommand) rCommand).getKey();
+         if (isRemote(key)) {
+            cacheStatisticManager.increment(NUM_REMOTE_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
             cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
-                                      getGlobalTransaction(ctx), ctx.isOriginLocal());
+                  getGlobalTransaction(rCtx), rCtx.isOriginLocal());
          }
          cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
-                                   getGlobalTransaction(ctx), ctx.isOriginLocal());
-         cacheStatisticManager.increment(NUM_GET, getGlobalTransaction(ctx), ctx.isOriginLocal());
-         return ctx.shortCircuit(retVal);
-      } else {
-         return ctx.continueInvocation();
-      }
+               getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.increment(NUM_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (trace) {
          log.tracef("Visit Get All Command %s. Is it in transaction scope? %s. Is it local? %s", command,
                ctx.isInTxScope(), ctx.isOriginLocal());
       }
-      if (ctx.isInTxScope()) {
-         long start = timeService.time();
-         Object retVal = ctx.forkInvocationSync(command);
+      if (!ctx.isInTxScope()) {
+         return invokeNext(ctx, command);
+      }
+      long start = timeService.time();
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          long end = timeService.time();
-         initStatsIfNecessary(ctx);
+         initStatsIfNecessary(rCtx);
          int numRemote = 0;
-         for (Object key : command.getKeys()) {
-            if (isRemote(key)) numRemote++;
+         Collection<?> keys = ((GetAllCommand) rCommand).getKeys();
+         for (Object key : keys) {
+            if (isRemote(key))
+               numRemote++;
          }
          // TODO: tbh this seems like it doesn't work properly for statistics as each
          // one will have the duration of all the time for all gets...  Maybe do an average
          // instead ?  Either way this isn't very indicative
          if (numRemote > 0) {
-            cacheStatisticManager.add(NUM_REMOTE_GET, numRemote, getGlobalTransaction(ctx), ctx.isOriginLocal());
+            cacheStatisticManager.add(NUM_REMOTE_GET, numRemote, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
             cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
-                  getGlobalTransaction(ctx), ctx.isOriginLocal());
+                  getGlobalTransaction(rCtx), rCtx.isOriginLocal());
          }
          cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
-               getGlobalTransaction(ctx), ctx.isOriginLocal());
-         cacheStatisticManager.add(NUM_GET, command.getKeys().size(), getGlobalTransaction(ctx), ctx.isOriginLocal());
-         return ctx.shortCircuit(retVal);
-      } else {
-         return ctx.continueInvocation();
-      }
+               getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.add(NUM_GET, keys.size(), getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Visit Prepare command %s. Is it local?. Transaction is %s", command,
@@ -151,67 +219,67 @@ public class ExtendedStatisticInterceptor extends BaseCustomSequentialIntercepto
          cacheStatisticManager.markAsWriteTransaction(globalTransaction, ctx.isOriginLocal());
       }
 
-      boolean success = false;
-      try {
-         long start = timeService.time();
-         Object ret = ctx.forkInvocationSync(command);
-         long end = timeService.time();
-         updateTime(PREPARE_EXECUTION_TIME, NUM_PREPARE_COMMAND, start, end, globalTransaction, ctx.isOriginLocal());
-         success = true;
-         return ctx.shortCircuit(ret);
-      } catch (TimeoutException e) {
-         if (ctx.isOriginLocal() && isLockTimeout(e)) {
-            cacheStatisticManager.increment(NUM_LOCK_FAILED_TIMEOUT, globalTransaction, ctx.isOriginLocal());
+      long start = timeService.time();
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         if (t != null) {
+            processWriteException(rCtx, globalTransaction, t);
+         } else {
+            long end = timeService.time();
+            updateTime(PREPARE_EXECUTION_TIME, NUM_PREPARE_COMMAND, start, end, globalTransaction, rCtx
+                  .isOriginLocal());
          }
-         throw e;
-      } catch (DeadlockDetectedException e) {
-         if (ctx.isOriginLocal()) {
-            cacheStatisticManager.increment(NUM_LOCK_FAILED_DEADLOCK, globalTransaction, ctx.isOriginLocal());
-         }
-         throw e;
-      } catch (WriteSkewException e) {
-         if (ctx.isOriginLocal()) {
-            cacheStatisticManager.increment(NUM_WRITE_SKEW, globalTransaction, ctx.isOriginLocal());
-         }
-         throw e;
-      } catch (RemoteException remote) {
-         if (ctx.isOriginLocal()) {
-            ExtendedStatistic stat = null;
-            Throwable cause = remote.getCause();
-            while (cause != null) {
-               if (cause instanceof TimeoutException) {
-                  stat = NUM_LOCK_FAILED_TIMEOUT;
-                  break;
-               } else if (cause instanceof DeadlockDetectedException) {
-                  stat = NUM_LOCK_FAILED_DEADLOCK;
-                  break;
-               } else if (cause instanceof WriteSkewException) {
-                  stat = NUM_WRITE_SKEW;
-                  break;
-               }
-               cause = cause.getCause();
-            }
-            if (stat != null) {
-               cacheStatisticManager.increment(stat, globalTransaction, true);
-            }
-         }
-         throw remote;
-      } finally {
-         if (command.isOnePhaseCommit()) {
-            boolean local = ctx.isOriginLocal();
-            cacheStatisticManager.setTransactionOutcome(success, globalTransaction, ctx.isOriginLocal());
+
+         if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
+            boolean local = rCtx.isOriginLocal();
+            boolean success = t == null;
+            cacheStatisticManager.setTransactionOutcome(success, globalTransaction, rCtx.isOriginLocal());
             cacheStatisticManager.terminateTransaction(globalTransaction, local, !local);
          }
+      });
+   }
+
+   private void processWriteException(InvocationContext ctx, GlobalTransaction globalTransaction,
+         Throwable throwable) {
+      if (!ctx.isOriginLocal())
+         return;
+
+      ExtendedStatistic stat = null;
+      if (throwable instanceof TimeoutException) {
+         if (isLockTimeout(((TimeoutException) throwable))) {
+            stat = NUM_LOCK_FAILED_TIMEOUT;
+         }
+      } else if (throwable instanceof DeadlockDetectedException) {
+         stat = NUM_LOCK_FAILED_DEADLOCK;
+      } else if (throwable instanceof WriteSkewException) {
+         stat = NUM_WRITE_SKEW;
+      } else if (throwable instanceof RemoteException) {
+         Throwable cause = throwable.getCause();
+         while (cause != null) {
+            if (cause instanceof TimeoutException) {
+               stat = NUM_LOCK_FAILED_TIMEOUT;
+               break;
+            } else if (cause instanceof DeadlockDetectedException) {
+               stat = NUM_LOCK_FAILED_DEADLOCK;
+               break;
+            } else if (cause instanceof WriteSkewException) {
+               stat = NUM_WRITE_SKEW;
+               break;
+            }
+            cause = cause.getCause();
+         }
+      }
+      if (stat != null) {
+         cacheStatisticManager.increment(stat, globalTransaction, true);
       }
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true, COMMIT_EXECUTION_TIME, NUM_COMMIT_COMMAND);
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false, ROLLBACK_EXECUTION_TIME, NUM_ROLLBACK_COMMAND);
    }
 
@@ -707,7 +775,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomSequentialIntercepto
       replace();
    }
 
-   private CompletableFuture<Void> visitSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command, boolean commit,
+   private Object visitSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command, boolean commit,
                                           ExtendedStatistic duration, ExtendedStatistic counter) throws Throwable {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
       if (trace) {
@@ -715,80 +783,41 @@ public class ExtendedStatisticInterceptor extends BaseCustomSequentialIntercepto
                     ctx.isOriginLocal(), globalTransaction.globalId());
       }
       long start = timeService.time();
-      Object ret = ctx.forkInvocationSync(command);
-      long end = timeService.time();
-      updateTime(duration, counter, start, end, globalTransaction, ctx.isOriginLocal());
-      cacheStatisticManager.setTransactionOutcome(commit, globalTransaction, ctx.isOriginLocal());
-      cacheStatisticManager.terminateTransaction(globalTransaction, true, true);
-      return ctx.shortCircuit(ret);
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         long end = timeService.time();
+         updateTime(duration, counter, start, end, globalTransaction, rCtx.isOriginLocal());
+         cacheStatisticManager.setTransactionOutcome(commit, globalTransaction, rCtx.isOriginLocal());
+         cacheStatisticManager.terminateTransaction(globalTransaction, true, true);
+      });
    }
 
-   private CompletableFuture<Void> visitWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+   private Object visitWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
       if (trace) {
          log.tracef("Visit write command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
       }
-      Object ret;
-      if (ctx.isInTxScope()) {
-         long start = timeService.time();
-         long end;
-         try {
-            ret = ctx.forkInvocationSync(command);
-         } catch (TimeoutException e) {
-            if (ctx.isOriginLocal() && isLockTimeout(e)) {
-               initStatsIfNecessary(ctx);
-               cacheStatisticManager.increment(NUM_LOCK_FAILED_TIMEOUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
+      if (!ctx.isInTxScope()) {
+         return invokeNext(ctx, command);
+      }
+      long start = timeService.time();
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         long end = timeService.time();
+         initStatsIfNecessary(rCtx);
+
+         if (t != null) {
+            processWriteException(rCtx, getGlobalTransaction(rCtx), t);
+         } else {
+            if (isRemote(key)) {
+               cacheStatisticManager
+                     .add(REMOTE_PUT_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+                           getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+               cacheStatisticManager.increment(NUM_REMOTE_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
             }
-            throw e;
-         } catch (DeadlockDetectedException e) {
-            if (ctx.isOriginLocal()) {
-               initStatsIfNecessary(ctx);
-               cacheStatisticManager.increment(NUM_LOCK_FAILED_DEADLOCK, getGlobalTransaction(ctx), ctx.isOriginLocal());
-            }
-            throw e;
-         } catch (WriteSkewException e) {
-            if (ctx.isOriginLocal()) {
-               initStatsIfNecessary(ctx);
-               cacheStatisticManager.increment(NUM_WRITE_SKEW, getGlobalTransaction(ctx), ctx.isOriginLocal());
-            }
-            throw e;
-         } catch (RemoteException remote) {
-            if (ctx.isOriginLocal()) {
-               ExtendedStatistic stat = null;
-               Throwable cause = remote.getCause();
-               while (cause != null) {
-                  if (cause instanceof TimeoutException) {
-                     stat = NUM_LOCK_FAILED_TIMEOUT;
-                     break;
-                  } else if (cause instanceof DeadlockDetectedException) {
-                     stat = NUM_LOCK_FAILED_DEADLOCK;
-                     break;
-                  } else if (cause instanceof WriteSkewException) {
-                     stat = NUM_WRITE_SKEW;
-                     break;
-                  }
-                  cause = cause.getCause();
-               }
-               if (stat != null) {
-                  initStatsIfNecessary(ctx);
-                  cacheStatisticManager.increment(stat, getGlobalTransaction(ctx), true);
-               }
-            }
-            throw remote;
-         } finally {
-            end = timeService.time();
-            initStatsIfNecessary(ctx);
-            cacheStatisticManager.increment(NUM_PUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
-            cacheStatisticManager.markAsWriteTransaction(getGlobalTransaction(ctx), ctx.isOriginLocal());
          }
-         if (isRemote(key)) {
-            cacheStatisticManager.add(REMOTE_PUT_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
-                                      getGlobalTransaction(ctx), ctx.isOriginLocal());
-            cacheStatisticManager.increment(NUM_REMOTE_PUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
-         }
-         return ctx.shortCircuit(ret);
-      } else
-         return ctx.continueInvocation();
+
+         cacheStatisticManager.increment(NUM_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.markAsWriteTransaction(getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+      });
    }
 
    private GlobalTransaction getGlobalTransaction(InvocationContext context) {

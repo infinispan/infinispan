@@ -1,21 +1,24 @@
 package org.infinispan.transaction.impl;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.InvalidTransactionException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.InvalidTransactionException;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Defines the state of a remotely originated transaction.
@@ -27,6 +30,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFutures.completedNull();
 
    /**
     * This int should be set to the highest topology id for transactions received via state transfer. During state
@@ -41,21 +45,21 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private volatile TotalOrderRemoteTransactionState transactionState;
    private final Object transactionStateLock = new Object();
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
-                            Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
+   private final AtomicReference<CompletableFuture<Void>> synchronization =
+         new AtomicReference<>(INITIAL_FUTURE);
+
+   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
       this.modifications = modifications == null || modifications.length == 0
             ? Collections.emptyList()
             : Arrays.asList(modifications);
-      lookedUpEntries = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(this.modifications.size()), keyEquivalence,
-                  AnyEquivalence.getInstance());
+      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(this.modifications.size()));
    }
 
-   public RemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
-      this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = CollectionFactory.makeMap(4, keyEquivalence, AnyEquivalence.getInstance());
+   public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
+      this.modifications = new LinkedList<>();
+      lookedUpEntries = CollectionFactory.makeMap(4);
    }
 
    @Override
@@ -69,7 +73,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public void putLookedUpEntry(Object key, CacheEntry e) {
       checkIfRolledBack();
       if (trace) {
-         log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
+         log.tracef("Adding key %s to tx %s", toStr(key), getGlobalTransaction());
       }
       lookedUpEntries.put(key, e);
    }
@@ -100,9 +104,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public Object clone() {
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
-         dolly.modifications = new ArrayList<WriteCommand>(modifications);
-         dolly.lookedUpEntries = CollectionFactory.makeMap(
-               lookedUpEntries, keyEquivalence, AnyEquivalence.getInstance());
+         dolly.modifications = new ArrayList<>(modifications);
+         dolly.lookedUpEntries = CollectionFactory.makeMap(lookedUpEntries);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!", e);
@@ -114,8 +117,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       return "RemoteTransaction{" +
             "modifications=" + modifications +
             ", lookedUpEntries=" + lookedUpEntries +
-            ", lockedKeys=" + getLockedKeys() +
-            ", backupKeyLocks=" + getBackupLockedKeys() +
+            ", lockedKeys=" + toStr(getLockedKeys()) +
+            ", backupKeyLocks=" + toStr(getBackupLockedKeys()) +
             ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
             ", isMarkedForRollback=" + isMarkedForRollback() +
             ", tx=" + tx +
@@ -150,5 +153,13 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
          }
          return transactionState;
       }
+   }
+
+   public final CompletableFuture<Void> enterSynchronizationAsync(CompletableFuture<Void> releaseFuture) {
+      CompletableFuture<Void> currentFuture;
+      do {
+         currentFuture = synchronization.get();
+      } while (!synchronization.compareAndSet(currentFuture, releaseFuture));
+      return currentFuture;
    }
 }

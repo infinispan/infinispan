@@ -1,9 +1,10 @@
 package org.infinispan.jmx;
 
+import java.lang.reflect.Method;
+
 import javax.management.Descriptor;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
-import java.lang.reflect.Method;
 
 /**
  * Infinispan allows a different JMX operation name than the actual method name that gets invoked

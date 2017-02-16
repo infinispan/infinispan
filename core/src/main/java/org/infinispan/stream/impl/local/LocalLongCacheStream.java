@@ -1,10 +1,29 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.LongSummaryStatistics;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
+import java.util.PrimitiveIterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.LongBinaryOperator;
+import java.util.function.LongConsumer;
+import java.util.function.LongFunction;
+import java.util.function.LongPredicate;
+import java.util.function.LongToDoubleFunction;
+import java.util.function.LongToIntFunction;
+import java.util.function.LongUnaryOperator;
+import java.util.function.ObjLongConsumer;
+import java.util.function.Supplier;
+import java.util.stream.LongStream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.DistinctLongOperation;
@@ -18,6 +37,7 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.SkipLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableLongBinaryOperator;
 import org.infinispan.util.function.SerializableLongConsumer;
 import org.infinispan.util.function.SerializableLongFunction;
@@ -26,135 +46,122 @@ import org.infinispan.util.function.SerializableLongToDoubleFunction;
 import org.infinispan.util.function.SerializableLongToIntFunction;
 import org.infinispan.util.function.SerializableLongUnaryOperator;
 import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableSupplier;
-
-import java.util.LongSummaryStatistics;
-import java.util.OptionalDouble;
-import java.util.OptionalLong;
-import java.util.PrimitiveIterator;
-import java.util.Spliterator;
-import java.util.function.BiConsumer;
-import java.util.function.LongBinaryOperator;
-import java.util.function.LongConsumer;
-import java.util.function.LongFunction;
-import java.util.function.LongPredicate;
-import java.util.function.LongToDoubleFunction;
-import java.util.function.LongToIntFunction;
-import java.util.function.LongUnaryOperator;
-import java.util.function.ObjLongConsumer;
-import java.util.function.Supplier;
-import java.util.stream.LongStream;
 
 /**
  * LongStream that wraps a given stream to allow for additional functionality such as injection of values into
  * various operations
  */
 public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStream, LongCacheStream> implements LongCacheStream {
+
+   public LocalLongCacheStream(StreamSupplier<Long, LongStream> streamSupplier, boolean parallel, ComponentRegistry registry) {
+      super(streamSupplier, parallel, registry);
+   }
+
    LocalLongCacheStream(AbstractLocalCacheStream<?, ?, ?> original) {
       super(original);
    }
 
    @Override
-   public LongCacheStream filter(LongPredicate predicate) {
+   public LocalLongCacheStream filter(LongPredicate predicate) {
       registry.wireDependencies(predicate);
       intermediateOperations.add(new FilterLongOperation<>(predicate));
       return this;
    }
 
    @Override
-   public LongCacheStream filter(SerializableLongPredicate predicate) {
+   public LocalLongCacheStream filter(SerializableLongPredicate predicate) {
       return filter((LongPredicate) predicate);
    }
 
    @Override
-   public LongCacheStream map(LongUnaryOperator mapper) {
+   public LocalLongCacheStream map(LongUnaryOperator mapper) {
       registry.wireDependencies(mapper);
       intermediateOperations.add(new MapLongOperation(mapper));
       return this;
    }
 
    @Override
-   public LongCacheStream map(SerializableLongUnaryOperator mapper) {
+   public LocalLongCacheStream map(SerializableLongUnaryOperator mapper) {
       return map((LongUnaryOperator) mapper);
    }
 
    @Override
-   public <U> CacheStream<U> mapToObj(LongFunction<? extends U> mapper) {
+   public <U> LocalCacheStream<U> mapToObj(LongFunction<? extends U> mapper) {
       registry.wireDependencies(mapper);
       intermediateOperations.add(new MapToObjLongOperation<>(mapper));
       return new LocalCacheStream<U>(this);
    }
 
    @Override
-   public <U> CacheStream<U> mapToObj(SerializableLongFunction<? extends U> mapper) {
+   public <U> LocalCacheStream<U> mapToObj(SerializableLongFunction<? extends U> mapper) {
       return mapToObj((LongFunction<? extends U>) mapper);
    }
 
    @Override
-   public IntCacheStream mapToInt(LongToIntFunction mapper) {
+   public LocalIntCacheStream mapToInt(LongToIntFunction mapper) {
       intermediateOperations.add(new MapToIntLongOperation(mapper));
       return new LocalIntCacheStream(this);
    }
 
    @Override
-   public IntCacheStream mapToInt(SerializableLongToIntFunction mapper) {
+   public LocalIntCacheStream mapToInt(SerializableLongToIntFunction mapper) {
       return mapToInt((LongToIntFunction) mapper);
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(LongToDoubleFunction mapper) {
+   public LocalDoubleCacheStream mapToDouble(LongToDoubleFunction mapper) {
       intermediateOperations.add(new MapToDoubleLongOperation(mapper));
       return new LocalDoubleCacheStream(this);
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(SerializableLongToDoubleFunction mapper) {
+   public LocalDoubleCacheStream mapToDouble(SerializableLongToDoubleFunction mapper) {
       return mapToDouble((LongToDoubleFunction) mapper);
    }
 
    @Override
-   public LongCacheStream flatMap(LongFunction<? extends LongStream> mapper) {
+   public LocalLongCacheStream flatMap(LongFunction<? extends LongStream> mapper) {
       intermediateOperations.add(new FlatMapLongOperation(mapper));
       return this;
    }
 
    @Override
-   public LongCacheStream flatMap(SerializableLongFunction<? extends LongStream> mapper) {
+   public LocalLongCacheStream flatMap(SerializableLongFunction<? extends LongStream> mapper) {
       return flatMap((LongFunction<? extends LongStream>) mapper);
    }
 
    @Override
-   public LongCacheStream distinct() {
+   public LocalLongCacheStream distinct() {
       intermediateOperations.add(DistinctLongOperation.getInstance());
       return this;
    }
 
    @Override
-   public LongCacheStream sorted() {
+   public LocalLongCacheStream sorted() {
       intermediateOperations.add(SortedLongOperation.getInstance());
       return this;
    }
 
    @Override
-   public LongCacheStream peek(LongConsumer action) {
+   public LocalLongCacheStream peek(LongConsumer action) {
       intermediateOperations.add(new PeekLongOperation(action));
       return this;
    }
 
    @Override
-   public LongCacheStream peek(SerializableLongConsumer action) {
+   public LocalLongCacheStream peek(SerializableLongConsumer action) {
       return peek((LongConsumer) action);
    }
 
    @Override
-   public LongCacheStream limit(long maxSize) {
+   public LocalLongCacheStream limit(long maxSize) {
       intermediateOperations.add(new LimitLongOperation(maxSize));
       return this;
    }
 
    @Override
-   public LongCacheStream skip(long n) {
+   public LocalLongCacheStream skip(long n) {
       intermediateOperations.add(new SkipLongOperation(n));
       return this;
    }
@@ -306,7 +313,7 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
 
    @Override
    public DoubleCacheStream asDoubleStream() {
-      return null;
+      return mapToDouble(l -> (double) l);
    }
 
    @Override
@@ -325,4 +332,49 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
       return createStream().spliterator();
    }
 
+   @Override
+   public LocalLongCacheStream sequentialDistribution() {
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream parallelDistribution() {
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream filterKeySegments(Set<Integer> segments) {
+      segmentsToFilter = segments;
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream filterKeys(Set<?> keys) {
+      keysToFilter = keys;
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream distributedBatchSize(int batchSize) {
+      // TODO: Does this change cache loader?
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream segmentCompletionListener(SegmentCompletionListener listener) {
+      // All segments are completed when the getStream() is completed so we don't track them
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream disableRehashAware() {
+      // Local long stream doesn't matter for rehash
+      return this;
+   }
+
+   @Override
+   public LocalLongCacheStream timeout(long timeout, TimeUnit unit) {
+      // Timeout does nothing for a local long cache stream
+      return this;
+   }
 }

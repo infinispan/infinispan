@@ -15,6 +15,7 @@ public enum Attribute {
     // KEEP THESE IN ALPHABETICAL ORDER!
 
     ACQUIRE_TIMEOUT("acquire-timeout"),
+    ADDRESS_COUNT("address-count"),
     AFTER("after"),
     ALIASES("aliases"),
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
@@ -40,6 +41,7 @@ public enum Attribute {
     DEFAULT_CACHE("default-cache"),
     ENABLED("enabled"),
     EXECUTOR("executor"),
+    EVICTION("eviction"),
     @Deprecated
     EVICTION_EXECUTOR("eviction-executor"),
     EXPIRATION_EXECUTOR("expiration-executor"),
@@ -114,6 +116,7 @@ public enum Attribute {
     @Deprecated
     SHUTDOWN_TIMEOUT("shutdown-timeout"),
     SIMPLE_CACHE("simple-cache"),
+    @Deprecated
     SINGLETON("singleton"),
     SITE("site"),
     SIZE("size"),
@@ -138,6 +141,7 @@ public enum Attribute {
     TOTAL_ORDER_EXECUTOR("total-order-executor"),
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
     TRANSACTION_PROTOCOL("protocol"),
+    TRANSACTIONAL("transactional"),
     TRANSPORT("transport"),
     TYPE("type"),
     UNRELIABLE_RETURN_VALUES("unreliable-return-values"),

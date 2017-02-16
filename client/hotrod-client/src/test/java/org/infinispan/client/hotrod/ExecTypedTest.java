@@ -1,5 +1,15 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -8,16 +18,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiConsumer;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * These tests mimic how Javascript clients remotely execute typed scripts.

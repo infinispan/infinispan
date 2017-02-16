@@ -27,5 +27,5 @@ public interface FilterCallback {
     * @param sortProjection the projection of fields used for sorting, if sorting was requested or {@code null}
     *                       otherwise
     */
-   void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection);
+   void onFilterResult(Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection);
 }

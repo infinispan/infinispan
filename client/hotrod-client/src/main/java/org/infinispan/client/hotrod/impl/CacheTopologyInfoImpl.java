@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.client.hotrod.CacheTopologyInfo;
-
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 
 /**
  * @author gustavonalle

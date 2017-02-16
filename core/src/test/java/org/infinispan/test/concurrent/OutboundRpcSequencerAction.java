@@ -1,5 +1,8 @@
 package org.infinispan.test.concurrent;
 
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
@@ -8,9 +11,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Replaces the {@link RpcManager} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -67,7 +67,6 @@ public class OutboundRpcSequencerAction {
       private final CommandMatcher matcher;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
-      private final ThreadLocal<Boolean> accepted = new ThreadLocal<Boolean>();
 
       public SequencerRpcManager(RpcManager rpcManager, StateSequencer stateSequencer, CommandMatcher matcher) {
          super(rpcManager);
@@ -76,20 +75,20 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected void beforeInvokeRemotely(ReplicableCommand command) {
+      protected Object beforeInvokeRemotely(ReplicableCommand command) {
          try {
             boolean accept = matcher.accept(command);
-            accepted.set(accept);
             StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesBefore);
+            return accept;
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, org.infinispan.remoting.responses.Response> responseMap) {
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
          try {
-            StateSequencerUtil.advanceMultiple(stateSequencer, accepted.get(), statesAfter);
+            StateSequencerUtil.advanceMultiple(stateSequencer, (Boolean) argument, statesAfter);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

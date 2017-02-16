@@ -1,5 +1,16 @@
 package org.infinispan.server.test.client.hotrod.osgi;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.CoreOptions.maven;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -37,14 +48,6 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.RawUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-
-import java.io.File;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.ops4j.pax.exam.CoreOptions.maven;
 
 /**
  * Simple test for RemoteCache running in OSGi (Karaf). Both basic put/get operations and remote
@@ -159,7 +162,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
       // get User back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(cache);
-      Query query = qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+      Query query = qf.from(User.class).having("name").eq("Tom").build();
       List list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -167,7 +170,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       assertUser((User) list.get(0));
 
       // get Note back from remote cache via query and check its attributes
-      query = qf.from(Note.class).having("author.name").eq("name").toBuilder().build();
+      query = qf.from(Note.class).having("author.name").eq("name").build();
       list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());

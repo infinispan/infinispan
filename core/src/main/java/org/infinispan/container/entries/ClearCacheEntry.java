@@ -124,19 +124,9 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
       container.clear();
    }
 
-   @Override
-   public void rollback() {
-      /*no-op*/
-   }
-
-   @Override
+      @Override
    public void setSkipLookup(boolean skipLookup) {
       /*no-op*/
-   }
-
-   @Override
-   public boolean undelete(boolean doUndelete) {
-      return false;
    }
 
    @SuppressWarnings("CloneDoesntCallSuperClone")

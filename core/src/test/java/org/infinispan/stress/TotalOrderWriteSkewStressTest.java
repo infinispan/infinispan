@@ -18,4 +18,3 @@ public class TotalOrderWriteSkewStressTest extends ReplWriteSkewStressTest {
             .recovery().disable();
    }
 }
-

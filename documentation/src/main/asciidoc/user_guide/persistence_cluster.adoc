@@ -1,0 +1,29 @@
+=== Cluster cache loader
+The ClusterCacheLoader is a cache loader implementation that retrieves data from other cluster members.
+
+It is a cache loader only as it doesn't persist anything (it is not a Store), therefore features like _fetchPersistentState_ (and like) are not applicable.
+
+A cluster cache loader can be used as a non-blocking (partial) alternative to _stateTransfer_ : keys not already available in the local node are fetched on-demand from other nodes in the cluster. This is a kind of lazy-loading of the cache content.
+
+[source,xml]
+----
+
+<persistence>
+   <cluster-loader remote-timeout="500"/>
+</persistence>
+
+----
+
+[source,java]
+----
+
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence()
+    .addClusterLoader()
+    .remoteCallTimeout(500);
+
+----
+
+For a list of ClusterCacheLoader configuration refer to the link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[javadoc] .
+
+NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.

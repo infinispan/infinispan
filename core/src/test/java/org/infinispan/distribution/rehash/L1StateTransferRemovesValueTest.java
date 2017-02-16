@@ -1,5 +1,21 @@
 package org.infinispan.distribution.rehash;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,22 +37,6 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
 /**
  * Test that ensure when L1 cache is enabled that if writes occurs during a state transfer and vice versa that the
  * proper data is available.
@@ -49,7 +49,6 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    public L1StateTransferRemovesValueTest() {
       INIT_CLUSTER_SIZE = 3;
       numOwners = 2;
-      tx = false;
       performRehashing = true;
       l1CacheEnabled = true;
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -139,7 +138,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertIsInL1(c3, key);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      c3.getAdvancedCache().getSequentialInterceptorChain()
+      c3.getAdvancedCache().getAsyncInterceptorChain()
             .addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
                   EntryWrappingInterceptor.class);
 

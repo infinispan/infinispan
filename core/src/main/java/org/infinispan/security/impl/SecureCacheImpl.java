@@ -1,5 +1,16 @@
 package org.infinispan.security.impl;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -15,7 +26,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -29,15 +40,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.SecureCache;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * SecureCacheImpl.
@@ -83,6 +85,14 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public void addListener(Object listener) {
       authzManager.checkPermission(AuthorizationPermission.LISTEN);
       delegate.addListener(listener);
+   }
+
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      authzManager.checkPermission(AuthorizationPermission.LISTEN);
+      delegate.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    @Override
@@ -193,9 +203,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
-      return delegate.getSequentialInterceptorChain();
+      return delegate.getAsyncInterceptorChain();
    }
 
    @Override

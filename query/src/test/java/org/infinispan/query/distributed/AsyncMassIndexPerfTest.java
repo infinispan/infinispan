@@ -1,6 +1,16 @@
 package org.infinispan.query.distributed;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.elasticsearch.plugin.deletebyquery.DeleteByQueryPlugin;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,20 +21,13 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.massindex.IndexUpdater;
+import org.infinispan.query.test.elasticsearch.ElasticSearchCluster;
+import org.infinispan.query.test.elasticsearch.ElasticSearchCluster.ElasticSearchClusterBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
-
-import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.test.fwk.TestResourceTracker;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.
- *
  * @author gustavonalle
  * @since 7.1
  */
@@ -62,6 +65,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      if (INDEX_MANAGER == IndexManager.ELASTIC_SEARCH) {
+         startElasticsearch();
+      }
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
       cacheCfg.clustering().remoteTimeout(120000)
             .indexing().index(Index.LOCAL)
@@ -72,7 +78,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
             .addProperty("hibernate.search.default.worker.execution", WORKER_MODE.toString())
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      ;
+
       List<Cache<Integer, Transaction>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
@@ -83,20 +89,17 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       ExecutorService executorService = Executors.newFixedThreadPool(WRITING_THREADS, getTestThreadFactory("Worker"));
       final AtomicInteger counter = new AtomicInteger(0);
       for (int i = 0; i < OBJECT_COUNT; i++) {
-         executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-               int key = counter.incrementAndGet();
-               Cache insertCache;
-               if (DISABLE_INDEX_WHEN_INSERTING) {
-                  insertCache = cache1.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
-               } else {
-                  insertCache = cache1;
-               }
-               insertCache.put(key, new Transaction(key * 100, "0eab" + key));
-               if (key != 0 && key % PRINT_EACH == 0) {
-                  System.out.printf("\rInserted %d", key);
-               }
+         executorService.submit(() -> {
+            int key = counter.incrementAndGet();
+            Cache insertCache;
+            if (DISABLE_INDEX_WHEN_INSERTING) {
+               insertCache = cache1.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+            } else {
+               insertCache = cache1;
+            }
+            insertCache.put(key, new Transaction(key * 100, "0eab" + key));
+            if (key != 0 && key % PRINT_EACH == 0) {
+               System.out.printf("\rInserted %d", key);
             }
          });
       }
@@ -113,13 +116,10 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
     * Waits until the index reaches a certain size. Useful for async backend
     */
    private void waitForIndexSize(final int expected) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int idxCount = countIndex();
-            System.out.printf("\rWaiting for indexing completion: %d indexed so far", +idxCount);
-            return idxCount == expected;
-         }
+      eventually(() -> {
+         int idxCount = countIndex();
+         System.out.printf("\rWaiting for indexing completion (%d): %d indexed so far", expected, +idxCount);
+         return idxCount == expected;
       });
       System.out.println("\nIndexing done.");
    }
@@ -127,9 +127,18 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    public static void main(String[] args) throws Throwable {
       AsyncMassIndexPerfTest test = new AsyncMassIndexPerfTest();
+      TestResourceTracker.testThreadStarted(test);
       test.createBeforeClass();
       test.createBeforeMethod();
       test.populate();
+   }
+
+   void startElasticsearch() throws IOException {
+      ElasticSearchCluster cluster = new ElasticSearchClusterBuilder()
+            .withNumberNodes(2)
+            .addPlugin(DeleteByQueryPlugin.class)
+            .build();
+      cluster.start();
    }
 
    public void populate() throws Exception {
@@ -142,7 +151,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void info() {
-      System.out.println("\rTo run MassIndexer, press 'r'. To cancel press 'c'. To put new entry, press 'i'. For index size, type 's', 'p' to purge it, and 'f' to flush");
+      System.out.println("\rr: Run MassIndexer\nc: Cancel MassIndexer\ni: Put new entry\ns: Current index size\np: Purge indexes\nf: flush\nh: This menu\nx: Exit");
    }
 
    private enum Provider {
@@ -169,6 +178,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private enum IndexManager {
       NRT("near-real-time"),
       INFINISPAN("org.infinispan.query.indexmanager.InfinispanIndexManager"),
+      ELASTIC_SEARCH("elasticsearch"),
       DIRECTORY("directory-based");
       private final String cfg;
 
@@ -184,7 +194,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    protected int countIndex() {
       SearchManager searchManager = Search.getSearchManager(cache1);
-      CacheQuery q = searchManager.getQuery(new MatchAllDocsQuery(), Transaction.class);
+      CacheQuery<?> q = searchManager.getQuery(new MatchAllDocsQuery(), Transaction.class);
       return q.getResultSize();
    }
 
@@ -253,7 +263,12 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
                cache2.put(nextIndex, new Transaction(nextIndex, "0" + nextIndex));
                System.out.println("New entry inserted");
             }
-            info();
+            if ("h".equals(next)) {
+               info();
+            }
+            if ("x".equals(next)) {
+               System.exit(0);
+            }
          }
       }
    }

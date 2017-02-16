@@ -1,9 +1,9 @@
 package org.infinispan.commons.util;
 
+import java.util.Properties;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.util.Properties;
 
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain
@@ -136,7 +136,7 @@ public class TypedProperties extends Properties {
     * @param key new key
     * @param value new value
     * @return this TypedProperties instance for method chaining
-    *              
+    *
     */
    public synchronized TypedProperties putIfAbsent(String key, String value) {
       if (getProperty(key) == null) {

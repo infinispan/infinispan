@@ -59,7 +59,7 @@ public class GlobalAuthorizationConfiguration {
       return roles.get();
    }
 
-   AttributeSet attributes() {
+   public AttributeSet attributes() {
       return attributes;
    }
 

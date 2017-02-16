@@ -1,5 +1,13 @@
 package org.infinispan.cdi.embedded.test.cache.remote;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.Assert.assertEquals;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -10,18 +18,10 @@ import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests that the use of a specific cache manager for one cache.
@@ -48,7 +48,7 @@ public class SpecificCacheManagerTest extends Arquillian {
    @Small
    private RemoteCache<String, String> cache;
 
-   @BeforeTest
+   @BeforeClass
    public void beforeMethod() {
       embeddedCacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(TestCacheManagerFactory
@@ -58,7 +58,7 @@ public class SpecificCacheManagerTest extends Arquillian {
       hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void afterMethod() {
       if (embeddedCacheManager != null) embeddedCacheManager.stop();
       if (hotRodServer != null) hotRodServer.stop();

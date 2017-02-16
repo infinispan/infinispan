@@ -1,13 +1,14 @@
 package org.infinispan.jcache.util;
 
-import org.infinispan.commons.util.CollectionFactory;
-
-import javax.cache.integration.CacheLoader;
-import javax.cache.integration.CacheLoaderException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
+
+import javax.cache.integration.CacheLoader;
+import javax.cache.integration.CacheLoaderException;
+
+import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * // TODO: Document this

@@ -1,19 +1,10 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.event.EventLogListener;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.scripting.utils.ScriptingUtils;
-import org.infinispan.test.TestingUtil;
-import org.testng.AssertJUnit;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,11 +15,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.client.hotrod.event.EventLogListener;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.scripting.utils.ScriptingUtils;
+import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * ExecTest.
@@ -62,8 +61,6 @@ public class ExecTest extends MultiHotRodServersTest {
    private void defineInAll(String cacheName, CacheMode mode) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
       builder.dataContainer()
-            .keyEquivalence(new AnyServerEquivalence())
-            .valueEquivalence(new AnyServerEquivalence())
             .compatibility().enable()
             .marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
@@ -106,7 +103,7 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testScriptExecutionWithPassingParams(CacheMode cacheMode) throws IOException {
       String cacheName = "testScriptExecutionWithPassingParams_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.dataContainer().compatibility().enable().marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = TestingUtil.loadFileAsString(is);
@@ -137,8 +134,7 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testRemoteMapReduceWithStreams(CacheMode cacheMode) throws Exception {
       String cacheName = "testRemoteMapReduce_Streams_dist_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence())
-              .compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.dataContainer() .compatibility().enable().marshaller(new GenericJBossMarshaller());
       defineInAll(cacheName, builder);
       waitForClusterToForm(cacheName);
 
@@ -150,8 +146,8 @@ public class ExecTest extends MultiHotRodServersTest {
 
       ArrayList<Map<String, Long>> results = cache.execute("wordCountStream_dist.js", new HashMap<String, String>());
       assertEquals(2, results.size());
-      assertEquals(3209, results.get(0).size());
-      assertEquals(3209, results.get(1).size());
+      assertEquals(3202, results.get(0).size());
+      assertEquals(3202, results.get(1).size());
       assertTrue(results.get(0).get("macbeth").equals(Long.valueOf(287)));
       assertTrue(results.get(1).get("macbeth").equals(Long.valueOf(287)));
    }

@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * both.
  * <p />
  * @see StoreAsBinaryConfigurationBuilder
+ * @deprecated Use {@link MemoryConfiguration} instead
  */
 public class StoreAsBinaryConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).autoPersist(false).build();
@@ -50,6 +51,7 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables storing keys as binary.
+    * @deprecated when store as binary is enabled, keys are always stored as binary
     */
    public boolean storeKeysAsBinary() {
       return storeKeysAsBinary.get();
@@ -57,6 +59,7 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables storing values as binary.
+    * @deprecated when store as binary is enabled, values are always stored as binary
     */
    public boolean storeValuesAsBinary() {
       return storeValuesAsBinary.get();

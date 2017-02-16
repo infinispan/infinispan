@@ -1,5 +1,10 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.Map;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -16,7 +21,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.JmxUtil;
@@ -28,6 +33,7 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
+import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
 import org.infinispan.query.remote.impl.filter.JPABinaryProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.JPAProtobufCacheEventFilterConverter;
@@ -37,10 +43,6 @@ import org.infinispan.query.remote.impl.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.kohsuke.MetaInfServices;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -60,6 +62,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new JPAContinuousQueryProtobufCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.JPA_BINARY_PROTOBUF_FILTER_AND_CONVERTER, new JPABinaryProtobufFilterAndConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.JPA_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResultExternalizer());
+      externalizerMap.put(ExternalizerIds.JPA_FILTER_RESULT, new FilterResultExternalizer());
    }
 
    @Override
@@ -131,7 +134,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
+         AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
          InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
@@ -168,7 +171,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-         cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
+         cr.registerComponent(new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new), ProtobufMatcher.class);
 
          if (isCompatMode) {
             SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
@@ -182,13 +185,13 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          }
 
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
+         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode);
          cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 
    private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
-      SequentialInterceptorChain interceptorChain = cr.getComponent(SequentialInterceptorChain.class);
+      AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
       return interceptorChain != null && interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
    }
 
@@ -203,7 +206,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
 
       for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.sequentialInterceptor() instanceof RemoteValueWrapperInterceptor)) {
+         if (!(interceptorConfig.asyncInterceptor() instanceof RemoteValueWrapperInterceptor)) {
             customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
          }
       }

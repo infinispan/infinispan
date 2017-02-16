@@ -1,13 +1,13 @@
 package org.infinispan.query;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
@@ -20,14 +20,14 @@ import java.util.concurrent.TimeUnit;
  * @author Marko Luksa
  * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(org.apache.lucene.search.Query, Class...)
  */
-public interface CacheQuery extends Iterable<Object> {
+public interface CacheQuery<E> extends Iterable<E> {
 
    /**
     * Returns the results of a search as a list.
     *
     * @return list of objects that were found from the search.
     */
-   List<Object> list();
+   List<E> list();
 
    /**
     * Returns the results of a search as a {@link ResultIterator}.
@@ -38,7 +38,7 @@ public interface CacheQuery extends Iterable<Object> {
     * @param fetchOptions how to fetch results (see @link FetchOptions)
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
-   ResultIterator iterator(FetchOptions fetchOptions);
+   ResultIterator<E> iterator(FetchOptions fetchOptions);
 
    /**
     * Returns the results of a search as a {@link ResultIterator}. This calls {@link CacheQuery#iterator(FetchOptions fetchOptions)}
@@ -47,7 +47,7 @@ public interface CacheQuery extends Iterable<Object> {
     * @return a ResultIterator which can be used to iterate through the results that were found.
     */
    @Override
-   ResultIterator iterator();
+   ResultIterator<E> iterator();
 
    /**
     * Sets a result with a given index to the first result.
@@ -55,14 +55,14 @@ public interface CacheQuery extends Iterable<Object> {
     * @param index of result to be set to the first.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
-   CacheQuery firstResult(int index);
+   CacheQuery<E> firstResult(int index);
 
    /**
     * Sets the maximum number of results to the number passed in as a parameter.
     *
     * @param numResults that are to be set to the maxResults.
     */
-   CacheQuery maxResults(int numResults);
+   CacheQuery<E> maxResults(int numResults);
 
    /**
     * @return return the manager for all faceting related operations
@@ -91,7 +91,7 @@ public interface CacheQuery extends Iterable<Object> {
     *
     * @param s - lucene sort object
     */
-   CacheQuery sort(Sort s);
+   CacheQuery<E> sort(Sort s);
 
    /**
     * Defines the Lucene field names projected and returned in a query result
@@ -103,9 +103,9 @@ public interface CacheQuery extends Iterable<Object> {
     * If the projected field is not a projectable field, null is returned in the object[]
     *
     * @param fields the projected field names
-    * @return {@code this}  to allow for method chaining
+    * @return {@code this} to allow for method chaining, but the type parameter now becomes {@code Object[]}
     */
-   CacheQuery projection(String... fields);
+   CacheQuery<Object[]> projection(String... fields);
 
    /**
     * Enable a given filter by its name.
@@ -120,14 +120,14 @@ public interface CacheQuery extends Iterable<Object> {
     *
     * @param name of filter.
     */
-   CacheQuery disableFullTextFilter(String name);
+   CacheQuery<E> disableFullTextFilter(String name);
 
    /**
     * Allows lucene to filter the results.
     *
     * @param f - lucene filter
     */
-   CacheQuery filter(Filter f);
+   CacheQuery<E> filter(Filter f);
 
    /**
     * Set the timeout for this query. If the query hasn't finished processing before the timeout,
@@ -137,5 +137,5 @@ public interface CacheQuery extends Iterable<Object> {
     * @param timeUnit the time unit of the timeout parameter
     * @return
     */
-   CacheQuery timeout(long timeout, TimeUnit timeUnit);
+   CacheQuery<E> timeout(long timeout, TimeUnit timeUnit);
 }

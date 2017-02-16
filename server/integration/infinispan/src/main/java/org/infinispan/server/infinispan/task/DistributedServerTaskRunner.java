@@ -1,14 +1,12 @@
 package org.infinispan.server.infinispan.task;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.Cache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.concurrent.CompletableFutures;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

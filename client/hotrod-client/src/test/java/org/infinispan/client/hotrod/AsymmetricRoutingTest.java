@@ -1,5 +1,16 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
+import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.net.InetSocketAddress;
+import java.util.Random;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -14,17 +25,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.net.InetSocketAddress;
-import java.util.Random;
-import java.util.Set;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
-import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.AsymmetricRoutingTest")
 public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {

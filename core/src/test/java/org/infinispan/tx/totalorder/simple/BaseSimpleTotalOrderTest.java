@@ -1,11 +1,20 @@
 package org.infinispan.tx.totalorder.simple;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
@@ -19,12 +28,6 @@ import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.Assert.*;
 
 /**
  * @author Pedro Ruivo
@@ -64,7 +67,7 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
    }
 
    public final void testInterceptorChain() {
-      SequentialInterceptorChain ic = advancedCache(0).getSequentialInterceptorChain();
+      AsyncInterceptorChain ic = advancedCache(0).getAsyncInterceptorChain();
       assertTrue(ic.containsInterceptorType(TotalOrderInterceptor.class));
       if (writeSkew) {
          assertFalse(ic.containsInterceptorType(TotalOrderDistributionInterceptor.class));

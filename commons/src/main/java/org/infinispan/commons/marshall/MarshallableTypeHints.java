@@ -1,10 +1,10 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.util.CollectionFactory;
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.util.concurrent.ConcurrentMap;
+import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * Class providing hints about marshallable types, such as whether a particular
@@ -50,6 +50,12 @@ public final class MarshallableTypeHints {
          }
       }
       return marshallingType.sizePredictor;
+   }
+
+   public BufferSizePredictor getBufferSizePredictor(Object obj) {
+      return obj == null
+            ? NullBufferSizePredictor.INSTANCE
+            : getBufferSizePredictor(obj.getClass());
    }
 
    /**
@@ -155,6 +161,21 @@ public final class MarshallableTypeHints {
          result = 31 * result + (sizePredictor != null ? sizePredictor.hashCode() : 0);
          return result;
       }
+   }
+
+   final static class NullBufferSizePredictor implements BufferSizePredictor {
+      static final BufferSizePredictor INSTANCE = new NullBufferSizePredictor();
+
+      @Override
+      public int nextSize(Object obj) {
+         return 1;
+      }
+
+      @Override
+      public void recordSize(int previousSize) {
+         // No-op
+      }
+
    }
 
 }

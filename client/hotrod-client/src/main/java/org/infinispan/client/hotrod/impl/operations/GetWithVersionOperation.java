@@ -2,9 +2,8 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
-
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.VersionedValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -12,6 +11,8 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Corresponds to getWithVersion operation as described by
@@ -27,9 +28,10 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
    private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
+   public GetWithVersionOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes,
+                                  byte[] cacheName, AtomicInteger topologyId, int flags,
+                                  ClientIntelligence clientIntelligence) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence);
    }
 
    @Override

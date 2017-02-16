@@ -1,15 +1,6 @@
 package org.infinispan.configuration.serializer;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.configuration.cache.AbstractStoreConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,10 +11,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional")
-public abstract class AbstractConfigurationSerializerTest {
+public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
    @Test(dataProvider="configurationFiles")
    public void configurationSerializationTest(String config) throws Exception {
       ParserRegistry registry = new ParserRegistry();
@@ -39,6 +41,17 @@ public abstract class AbstractConfigurationSerializerTest {
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
       try {
          ConfigurationBuilderHolder holderAfter = registry.parse(bais);
+         GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
+         GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
+
+         assertEquals(globalConfigurationBefore.sites().localSite(), globalConfigurationAfter.sites().localSite());
+         assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());
+         compareAttributeSets("Global", globalConfigurationBefore.globalState().attributes(), globalConfigurationAfter.globalState().attributes());
+         compareAttributeSets("Global", globalConfigurationBefore.globalJmxStatistics().attributes(), globalConfigurationAfter.globalJmxStatistics().attributes(), "mBeanServerLookup");
+         compareAttributeSets("Global", globalConfigurationBefore.security().authorization().attributes(), globalConfigurationAfter.security().authorization().attributes());
+         compareAttributeSets("Global", globalConfigurationBefore.serialization().attributes(), globalConfigurationAfter.serialization().attributes(), "marshaller", "classResolver");
+         compareAttributeSets("Global", globalConfigurationBefore.transport().attributes(), globalConfigurationAfter.transport().attributes(), "transport");
+         compareExtraGlobalConfiguration(globalConfigurationBefore, globalConfigurationAfter);
 
          for (String name : holderBefore.getNamedConfigurationBuilders().keySet()) {
             Configuration configurationBefore = holderBefore.getNamedConfigurationBuilders().get(name).build();
@@ -59,13 +72,17 @@ public abstract class AbstractConfigurationSerializerTest {
 
             compareExtraConfiguration(name, configurationBefore, configurationAfter);
          }
-      } catch (Exception e) {
+      } catch (Throwable e) {
          System.out.println(new String(baos.toByteArray()));
          throw e;
       }
    }
 
    protected void compareExtraConfiguration(String name, Configuration configurationBefore, Configuration configurationAfter) {
+      // Do nothing. Subclasses can override to implement their own specific comparison
+   }
+
+   protected void compareExtraGlobalConfiguration(GlobalConfiguration configurationBefore, GlobalConfiguration configurationAfter) {
       // Do nothing. Subclasses can override to implement their own specific comparison
    }
 

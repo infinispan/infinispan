@@ -1,15 +1,15 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import org.infinispan.persistence.spi.PersistenceException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 /**
  * Connection factory implementation that will create database connection on a per invocation basis. Not recommended in

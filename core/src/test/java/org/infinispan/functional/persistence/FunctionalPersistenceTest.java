@@ -1,5 +1,10 @@
 package org.infinispan.functional.persistence;
 
+import java.lang.reflect.Method;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.decorators.FunctionalAdvancedCache;
@@ -7,10 +12,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.CacheLoaderFunctionalTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import java.lang.reflect.Method;
 
 @Test(groups = "functional", testName = "functional.persistence.FunctionalPersistenceTest")
 public class FunctionalPersistenceTest extends CacheLoaderFunctionalTest {

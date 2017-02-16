@@ -1,9 +1,5 @@
 package org.infinispan.test.concurrent;
 
-import net.jcip.annotations.GuardedBy;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +16,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Defines a set of logical threads, each with a list of states, and a partial ordering between states.
@@ -83,7 +84,7 @@ public class StateSequencer {
             stateMap.put(stateName, state);
          }
          doOrder(states);
-         log.tracef("Added logical thread %s, with states %s", threadName, Arrays.asList(states));
+         log.tracef("Added logical thread %s, with states %s", threadName, states);
       } finally {
          lock.unlock();
       }

@@ -1,9 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -23,6 +19,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.MarshallUtil;
 
 
 /**
@@ -456,7 +456,6 @@ public class Immutables {
       }
    }
 
-
    private static class ImmutableSetWrapper<E> extends ImmutableCollectionWrapper<E> implements Set<E>, Serializable, Immutable {
       private static final long serialVersionUID = 7991492805176142615L;
 
@@ -518,6 +517,30 @@ public class Immutables {
                return new ImmutableEntry<K, V>(super.next());
             }
          };
+      }
+   }
+
+   public static class ImmutableSetWrapperExternalizer extends AbstractExternalizer<Set> {
+      @Override
+      public void writeObject(ObjectOutput output, Set set) throws IOException {
+         MarshallUtil.marshallCollection(set, output);
+      }
+
+      @Override
+      public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Set<Object> set = MarshallUtil.unmarshallCollection(input, HashSet::new);
+         return Immutables.immutableSetWrap(set);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_SET;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends Set>> getTypeClasses() {
+         return Util.<Class<? extends Set>>asSet(ImmutableSetWrapper.class);
       }
    }
 

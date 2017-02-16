@@ -1,17 +1,19 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+import java.util.UUID;
+
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
+import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-
-import java.lang.annotation.Annotation;
-import java.util.UUID;
 
 /**
  * A wrapper around a {@link CacheEntryListenerInvocation} that keeps a reference to the {@link
  * FilterIndexingServiceProvider} instance that handles this invocation. All methods are delegated to the wrapped
- * invocation except {@link CacheEntryListenerInvocation#invoke(CacheEntryEvent, boolean)} and {@link
+ * invocation except {@link CacheEntryListenerInvocation#invoke(EventWrapper, boolean)} and {@link
  * CacheEntryListenerInvocation#invoke(Object)}. FilterIndexingServiceProvider implementors must extends this class and
  * implement its abstract {@link #unregister} method.
  *
@@ -43,11 +45,11 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    }
 
    @Override
-   public void invoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+   public void invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner) {
    }
 
    @Override
-   public void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter) {
+   public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter) {
       invocation.invokeNoChecks(event, skipQueue, skipConverter);
    }
 
@@ -84,5 +86,10 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    @Override
    public <C> CacheEventConverter<? super K, ? super V, C> getConverter() {
       return invocation.getConverter();
+   }
+
+   @Override
+   public Set<Class<? extends Annotation>> getFilterAnnotations() {
+      return invocation.getFilterAnnotations();
    }
 }

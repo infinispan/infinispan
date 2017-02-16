@@ -1,17 +1,5 @@
 package org.infinispan.persistence.util;
 
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.util.function.CloseableSupplier;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -20,6 +8,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.function.CloseableSupplier;
 
 /**
  * A closeable supplier that provides a way to supply cache entries from a given persistence manager.  On the first

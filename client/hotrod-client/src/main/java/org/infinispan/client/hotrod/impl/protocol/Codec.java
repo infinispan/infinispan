@@ -1,7 +1,12 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -55,4 +60,17 @@ public interface Codec {
     * Read and unmarshall byte array.
     */
    <T> T readUnmarshallByteArray(Transport transport, short status);
+
+   /**
+    * Reads a stream of data
+    */
+   <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose);
+
+   /**
+    * Writes a stream of data
+    */
+   OutputStream writeAsStream(Transport transport, Runnable afterClose);
+
+   void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes);
+
 }

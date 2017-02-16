@@ -3,23 +3,29 @@ package org.infinispan.persistence.jdbc.stringbased;
 import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
+
+import javax.transaction.Transaction;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -34,7 +40,10 @@ import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.TransactionalCacheWriter;
+import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -71,28 +80,35 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.persistence.keymappers.Key2StringMapper
  * @see org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper
  */
+@Store(shared = true)
 @ConfiguredBy(JdbcStringBasedStoreConfiguration.class)
-public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
+public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, TransactionalCacheWriter<K,V> {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private final Map<Transaction, Connection> transactionConnectionMap = new ConcurrentHashMap<>();
    private JdbcStringBasedStoreConfiguration configuration;
 
-   private Key2StringMapper key2StringMapper;
-   private ConnectionFactory connectionFactory;
-   private TableManager tableManager;
-   private InitializationContext ctx;
-   private String cacheName;
    private GlobalConfiguration globalConfiguration;
-
+   private Key2StringMapper key2StringMapper;
+   private String cacheName;
+   private ConnectionFactory connectionFactory;
+   private MarshalledEntryFactory marshalledEntryFactory;
+   private StreamingMarshaller marshaller;
+   private TableManager tableManager;
+   private TimeService timeService;
+   private boolean isDistributedCache;
 
    @Override
    public void init(InitializationContext ctx) {
       this.configuration = ctx.getConfiguration();
-      this.ctx = ctx;
-      cacheName = ctx.getCache().getName();
-      globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
+      this.cacheName = ctx.getCache().getName();
+      this.globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
+      this.marshalledEntryFactory = ctx.getMarshalledEntryFactory();
+      this.marshaller = ctx.getMarshaller();
+      this.timeService = ctx.getTimeService();
+      this.isDistributedCache = ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
    @Override
@@ -102,6 +118,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
          initializeConnectionFactory(factory);
       }
+
       try {
          Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
                                               globalConfiguration.classLoader()).newInstance();
@@ -117,7 +134,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       if (configuration.preload()) {
          enforceTwoWayMapper("preload");
       }
-      if (isDistributed()) {
+      if (isDistributedCache) {
          enforceTwoWayMapper("distribution/rehashing");
       }
    }
@@ -127,6 +144,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       Throwable cause = null;
       try {
          tableManager.stop();
+         tableManager = null;
       } catch (Throwable t) {
          cause = t.getCause();
          if (cause == null) cause = t;
@@ -139,12 +157,27 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             connectionFactory.stop();
          }
       } catch (Throwable t) {
-         if (cause == null) cause = t;
+         if (cause == null) {
+            cause = t;
+         } else {
+            t.addSuppressed(cause);
+         }
          log.debug("Exception while stopping", t);
       }
       if (cause != null) {
          throw new PersistenceException("Exceptions occurred while stopping store", cause);
       }
+   }
+
+   void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
+      this.connectionFactory = connectionFactory;
+      tableManager = getTableManager();
+      tableManager.setCacheName(cacheName);
+      tableManager.start();
+   }
+
+   public ConnectionFactory getConnectionFactory() {
+      return connectionFactory;
    }
 
    @Override
@@ -153,11 +186,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       String keyStr = key2Str(entry.getKey());
       try {
          connection = connectionFactory.getConnection();
-         if (tableManager.isUpsertSupported()) {
-            executeUpsert(connection, entry, keyStr);
-         } else {
-            executeLegacyUpdate(connection, entry, keyStr);
-         }
+         write(entry, connection, keyStr);
       } catch (SQLException ex) {
          log.sqlFailureStoringKey(keyStr, ex);
          throw new PersistenceException(String.format("Error while storing string key to database; key: '%s'", keyStr), ex);
@@ -168,6 +197,18 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          Thread.currentThread().interrupt();
       } finally {
          connectionFactory.releaseConnection(connection);
+      }
+   }
+
+   private void write(MarshalledEntry entry, Connection connection) throws SQLException, InterruptedException {
+      write(entry, connection, key2Str(entry.getKey()));
+   }
+
+   private void write(MarshalledEntry entry, Connection connection, String keyStr) throws SQLException, InterruptedException {
+      if (tableManager.isUpsertSupported()) {
+         executeUpsert(connection, entry, keyStr);
+      } else {
+         executeLegacyUpdate(connection, entry, keyStr);
       }
    }
 
@@ -230,8 +271,8 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          rs = ps.executeQuery();
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
-            KeyValuePair<ByteBuffer, ByteBuffer> icv = JdbcUtil.unmarshall(ctx.getMarshaller(), inputStream);
-            storedValue = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, icv.getKey(), icv.getValue());
+            KeyValuePair<ByteBuffer, ByteBuffer> icv = unmarshall(inputStream);
+            storedValue = marshalledEntryFactory.newMarshalledEntry(key, icv.getKey(), icv.getValue());
          }
       } catch (SQLException e) {
          log.sqlFailureReadingKey(key, lockingKey, e);
@@ -244,10 +285,31 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          connectionFactory.releaseConnection(conn);
       }
       if (storedValue != null && storedValue.getMetadata() != null &&
-            storedValue.getMetadata().isExpired(ctx.getTimeService().wallClockTime())) {
+            storedValue.getMetadata().isExpired(timeService.wallClockTime())) {
          return null;
       }
       return storedValue;
+   }
+
+   @Override
+   public void clear() {
+      Connection conn = null;
+      Statement statement = null;
+      try {
+         String sql = tableManager.getDeleteAllRowsSql();
+         conn = connectionFactory.getConnection();
+         statement = conn.createStatement();
+         int result = statement.executeUpdate(sql);
+         if (log.isTraceEnabled()) {
+            log.tracef("Successfully removed %d rows.", result);
+         }
+      } catch (SQLException ex) {
+         log.failedClearingJdbcCacheStore(ex);
+         throw new PersistenceException("Failed clearing cache store", ex);
+      } finally {
+         JdbcUtil.safeClose(statement);
+         connectionFactory.releaseConnection(conn);
+      }
    }
 
    @Override
@@ -274,61 +336,49 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void clear() throws PersistenceException {
+   public void purge(Executor executor, PurgeListener purgeListener) {
       Connection conn = null;
       PreparedStatement ps = null;
+      ResultSet rs = null;
       try {
-         String sql = tableManager.getDeleteAllRowsSql();
+         String sql = tableManager.getSelectOnlyExpiredRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         int result = ps.executeUpdate();
-         if (trace) {
-            log.tracef("Successfully removed %d rows.", result);
+         ps.setLong(1, timeService.wallClockTime());
+         rs = ps.executeQuery();
+
+         try (PreparedStatement batchDelete = conn.prepareStatement(tableManager.getDeleteRowSql())) {
+            int affectedRows = 0;
+            boolean twoWayMapperExists = key2StringMapper instanceof TwoWayKey2StringMapper;
+            while (rs.next()) {
+               affectedRows++;
+               String keyStr = rs.getString(2);
+               batchDelete.setString(1, keyStr);
+               batchDelete.addBatch();
+
+               if (twoWayMapperExists && purgeListener != null) {
+                  Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+                  purgeListener.entryPurged(key);
+               }
+            }
+
+            if (!twoWayMapperExists)
+               log.twoWayKey2StringMapperIsMissing(TwoWayKey2StringMapper.class.getSimpleName());
+
+            if (affectedRows > 0) {
+               int[] result = batchDelete.executeBatch();
+               if (trace) {
+                  log.tracef("Successfully purged %d rows.", result.length);
+               }
+            }
          }
       } catch (SQLException ex) {
          log.failedClearingJdbcCacheStore(ex);
-         throw new PersistenceException("Failed clearing cache store", ex);
+         throw new PersistenceException("Failed clearing string based JDBC store", ex);
       } finally {
+         JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
-      }
-   }
-
-   @Override
-   public void purge(Executor executor, PurgeListener task) {
-      //todo we should make the notification to the purge listener here
-      ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
-      Future<Void> future = ecs.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            try {
-               String sql = tableManager.getDeleteExpiredRowsSql();
-               conn = connectionFactory.getConnection();
-               ps = conn.prepareStatement(sql);
-               ps.setLong(1, ctx.getTimeService().wallClockTime());
-               int result = ps.executeUpdate();
-               if (trace) {
-                  log.tracef("Successfully purged %d rows.", result);
-               }
-            } catch (SQLException ex) {
-               log.failedClearingJdbcCacheStore(ex);
-               throw new PersistenceException("Failed clearing string based JDBC store", ex);
-            } finally {
-               JdbcUtil.safeClose(ps);
-               connectionFactory.releaseConnection(conn);
-            }
-            return null;
-         }
-      });
-      try {
-         future.get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         log.errorExecutingParallelStoreTask(e);
-         throw new PersistenceException(e);
       }
    }
 
@@ -338,65 +388,141 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       return load(key) != null;
    }
 
-
    @Override
    public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+         String sql = tableManager.getLoadNonExpiredAllRowsSql();
+         if (trace) {
+            log.tracef("Running sql %s", sql);
+         }
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+         ps.setLong(1, timeService.wallClockTime());
+         ps.setFetchSize(tableManager.getFetchSize());
+         rs = ps.executeQuery();
 
-      ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
-      Future<Void> future = ecs.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-               String sql = tableManager.getLoadNonExpiredAllRowsSql();
-               if (trace) {
-                  log.tracef("Running sql %s", sql);
-               }
-               conn = connectionFactory.getConnection();
-               ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-               ps.setLong(1, ctx.getTimeService().wallClockTime());
-               ps.setFetchSize(tableManager.getFetchSize());
-               rs = ps.executeQuery();
+         TaskContext taskContext = new TaskContextImpl();
+         ExecutorAllCompletionService ecs = new ExecutorAllCompletionService(executor);
+         while (rs.next()) {
+            String keyStr = rs.getString(2);
+            Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+            if (taskContext.isStopped()) break;
+            if (filter != null && !filter.accept(key))
+               continue;
 
-               TaskContext taskContext = new TaskContextImpl();
-               while (rs.next()) {
-                  String keyStr = rs.getString(2);
-                  Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
-                  if (taskContext.isStopped()) break;
-                  if (filter != null && !filter.accept(key))
-                     continue;
-                  InputStream inputStream = rs.getBinaryStream(1);
+            InputStream inputStream = rs.getBinaryStream(1);
+            ecs.submit(() -> {
+               if (!taskContext.isStopped()) {
                   MarshalledEntry entry;
                   if (fetchValue || fetchMetadata) {
-                     KeyValuePair<ByteBuffer, ByteBuffer> kvp = JdbcUtil.unmarshall(ctx.getMarshaller(), inputStream);
-                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(
+                     KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
+                     entry = marshalledEntryFactory.newMarshalledEntry(
                            key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
                   } else {
-                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object)null, null);
+                     entry = marshalledEntryFactory.newMarshalledEntry(key, (Object) null, null);
                   }
                   task.processEntry(entry, taskContext);
                }
                return null;
-            } catch (SQLException e) {
-               log.sqlFailureFetchingAllStoredEntries(e);
-               throw new PersistenceException("SQL error while fetching all StoredEntries", e);
-            } finally {
-               JdbcUtil.safeClose(rs);
-               JdbcUtil.safeClose(ps);
-               connectionFactory.releaseConnection(conn);
-            }
+            });
          }
-      });
-      try {
-         future.get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         log.errorExecutingParallelStoreTask(e);
-         throw new PersistenceException(e);
+         ecs.waitUntilAllCompleted();
+         if (ecs.isExceptionThrown()) {
+            throw new PersistenceException("Execution exception!", ecs.getFirstException());
+         }
+      } catch (SQLException e) {
+         log.sqlFailureFetchingAllStoredEntries(e);
+         throw new PersistenceException("SQL error while fetching all StoredEntries", e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
       }
+   }
+
+   @Override
+   public void prepareWithModifications(Transaction transaction, BatchModification batchModification) throws PersistenceException {
+      try {
+         Connection connection = getTxConnection(transaction);
+         connection.setAutoCommit(false);
+
+         boolean upsertSupported = tableManager.isUpsertSupported();
+         try (PreparedStatement upsertBatch = upsertSupported ? connection.prepareStatement(tableManager.getUpsertRowSql()) : null;
+              PreparedStatement deleteBatch = connection.prepareStatement(tableManager.getDeleteRowSql())) {
+
+            for (MarshalledEntry entry : batchModification.getMarshalledEntries()) {
+               if (upsertSupported) {
+                  String keyStr = key2Str(entry.getKey());
+                  prepareUpdateStatement(entry, keyStr, upsertBatch);
+                  upsertBatch.addBatch();
+               } else {
+                  write(entry, connection);
+               }
+            }
+
+            for (Object key : batchModification.getKeysToRemove()) {
+               String keyStr = key2Str(key);
+               deleteBatch.setString(1, keyStr);
+               deleteBatch.addBatch();
+            }
+
+            if (upsertSupported && !batchModification.getMarshalledEntries().isEmpty())
+               upsertBatch.executeBatch();
+
+            if (!batchModification.getKeysToRemove().isEmpty())
+               deleteBatch.executeUpdate();
+         }
+         // We do not call connection.close() in the event of an exception, as close() on active Tx behaviour is implementation
+         // dependent. See https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#close--
+      } catch (SQLException | InterruptedException e) {
+         throw log.prepareTxFailure(e);
+      }
+   }
+
+   @Override
+   public void commit(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.commit();
+      } catch (SQLException e) {
+         log.sqlFailureTxCommit(e);
+         throw new PersistenceException(String.format("Error during commit of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   @Override
+   public void rollback(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.rollback();
+      } catch (SQLException e) {
+         log.sqlFailureTxRollback(e);
+         throw new PersistenceException(String.format("Error during rollback of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   private Connection getTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.get(tx);
+      if (connection == null) {
+         connection = connectionFactory.getConnection();
+         transactionConnectionMap.put(tx, connection);
+      }
+      return connection;
+   }
+
+   private void destroyTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.remove(tx);
+      if (connection != null)
+         connectionFactory.releaseConnection(connection);
    }
 
    @Override
@@ -422,7 +548,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    }
 
    private void prepareUpdateStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
-      ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
+      ByteBuffer byteBuffer = marshall(new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, getExpiryTime(entry.getMetadata()));
       ps.setString(3, key);
@@ -432,31 +558,13 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       if (!key2StringMapper.isSupportedType(key.getClass())) {
          throw new UnsupportedKeyTypeException(key);
       }
-      return key2StringMapper.getStringMapping(key);
-   }
-
-   public boolean supportsKey(Class<?> keyType) {
-      return key2StringMapper.isSupportedType(keyType);
-   }
-
-   /**
-    * Keeps a reference to the connection factory for further use. Also initializes the {@link
-    * TableManager} that needs connections. This method should be called when you don't
-    * want the store to manage the connection factory, perhaps because it is using an shared connection factory: see
-    * {@link org.infinispan.persistence.jdbc.mixed.JdbcMixedStore} for such an example of this.
-    */
-   public void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
-      this.connectionFactory = connectionFactory;
-      tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
-      tableManager.setCacheName(cacheName);
-      tableManager.start();
-   }
-
-   public ConnectionFactory getConnectionFactory() {
-      return connectionFactory;
+      String keyStr = key2StringMapper.getStringMapping(key);
+      return tableManager.isStringEncodingRequired() ? tableManager.encodeString(keyStr) : keyStr;
    }
 
    public TableManager getTableManager() {
+      if (tableManager == null)
+         tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
       return tableManager;
    }
 
@@ -467,7 +575,25 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       }
    }
 
-   public boolean isDistributed() {
-      return ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
+   private ByteBuffer marshall(Object obj) throws PersistenceException, InterruptedException {
+      try {
+         return marshaller.objectToBuffer(obj);
+      } catch (IOException e) {
+         log.errorMarshallingObject(e, obj);
+         throw new PersistenceException("I/O failure while marshalling object: " + obj, e);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private <T> T unmarshall(InputStream inputStream) throws PersistenceException {
+      try {
+         return (T) marshaller.objectFromInputStream(inputStream);
+      } catch (IOException e) {
+         log.ioErrorUnmarshalling(e);
+         throw new PersistenceException("I/O error while unmarshalling from stream", e);
+      } catch (ClassNotFoundException e) {
+         log.unexpectedClassNotFoundException(e);
+         throw new PersistenceException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
+      }
    }
 }

@@ -1,9 +1,9 @@
 package org.infinispan.server.endpoint.subsystem;
 
-import org.jboss.dmr.ModelNode;
-
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.jboss.dmr.ModelNode;
 
 /**
  * @author gustavonalle

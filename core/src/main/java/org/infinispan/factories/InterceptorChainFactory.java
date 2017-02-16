@@ -1,9 +1,9 @@
 package org.infinispan.factories;
 
+import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -12,25 +12,26 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.compat.TypeConverterInterceptor;
+import org.infinispan.interceptors.TriangleAckInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
-import org.infinispan.interceptors.impl.ClusteredActivationInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CompatibilityInterceptor;
 import org.infinispan.interceptors.impl.DeadlockDetectingInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -38,9 +39,9 @@ import org.infinispan.interceptors.impl.GroupingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.interceptors.impl.NotificationInterceptor;
-import org.infinispan.interceptors.impl.SequentialInterceptorChainImpl;
+import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
+import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
@@ -62,12 +63,10 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.List;
-
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
  *
- * For backwards compatibility, the factory will register both a {@link SequentialInterceptorChain} and
+ * For backwards compatibility, the factory will register both a {@link AsyncInterceptorChain} and
  * a {@link InterceptorChain} before initializing the interceptors.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
@@ -76,14 +75,14 @@ import java.util.List;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {SequentialInterceptorChain.class, InterceptorChain.class})
+@DefaultFactoryFor(classes = {AsyncInterceptorChain.class, InterceptorChain.class})
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
-   private SequentialInterceptor createInterceptor(SequentialInterceptor interceptor,
-         Class<? extends SequentialInterceptor> interceptorType) {
-      SequentialInterceptor chainedInterceptor = componentRegistry.getComponent(interceptorType);
+   private AsyncInterceptor createInterceptor(AsyncInterceptor interceptor,
+         Class<? extends AsyncInterceptor> interceptorType) {
+      AsyncInterceptor chainedInterceptor = componentRegistry.getComponent(interceptorType);
       if (chainedInterceptor == null) {
          register(interceptorType, interceptor);
          chainedInterceptor = interceptor;
@@ -92,7 +91,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
 
-   private void register(Class<? extends SequentialInterceptor> clazz, SequentialInterceptor chainedInterceptor) {
+   private void register(Class<? extends AsyncInterceptor> clazz, AsyncInterceptor chainedInterceptor) {
       try {
          componentRegistry.registerComponent(chainedInterceptor, clazz);
       } catch (RuntimeException e) {
@@ -101,20 +100,16 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
    }
 
-   private boolean isUsingMarshalledValues(Configuration c) {
-      return c.storeAsBinary().enabled() && (c.storeAsBinary().storeKeysAsBinary() || c.storeAsBinary().storeValuesAsBinary());
-   }
-
-   public SequentialInterceptorChain buildInterceptorChain() {
+   public AsyncInterceptorChain buildInterceptorChain() {
       TransactionMode transactionMode = configuration.transaction().transactionMode();
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isVersioningEnabled(configuration);
 
-      SequentialInterceptorChain interceptorChain =
-            new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
+      AsyncInterceptorChain interceptorChain =
+            new AsyncInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       // Add both the old class and the new interface
-      componentRegistry.registerComponent(interceptorChain, SequentialInterceptorChain.class);
+      componentRegistry.registerComponent(interceptorChain, AsyncInterceptorChain.class);
       componentRegistry.registerComponent(new InterceptorChain(interceptorChain), InterceptorChain.class);
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
@@ -134,16 +129,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       if (compatibility.enabled()) {
-         Marshaller compatibilityMarshaller = compatibility.marshaller();
-         if (compatibilityMarshaller != null) {
-            componentRegistry.wireDependencies(compatibilityMarshaller);
-         }
          interceptorChain.appendInterceptor(createInterceptor(
-               new TypeConverterInterceptor(compatibilityMarshaller), TypeConverterInterceptor.class), false);
+               new CompatibilityInterceptor(), CompatibilityInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
-      // Store as binary marshalls keys/values eagerly now, so avoid extra serialization
       if (hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
@@ -167,6 +157,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
+      if (transactionMode == TransactionMode.NON_TRANSACTIONAL && cacheMode.isDistributed()) {
+         interceptorChain.appendInterceptor(createInterceptor(new TriangleAckInterceptor(), TriangleAckInterceptor.class), false);
+      }
+
       // The partition handling must run every time the state transfer interceptor retries a command (in non-transactional caches)
       if (configuration.clustering().partitionHandling().enabled()
             && (cacheMode.isDistributed() || cacheMode.isReplicated())) {
@@ -183,12 +177,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (transactionMode.isTransactional())
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
-      if (isUsingMarshalledValues(configuration)) {
-         SequentialInterceptor interceptor =
-               createInterceptor(new MarshalledValueInterceptor(), MarshalledValueInterceptor.class);
-
-         interceptorChain.appendInterceptor(interceptor, false);
-      }
 
       if (configuration.transaction().useEagerLocking()) {
          configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
@@ -245,16 +233,19 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
 
       if (configuration.persistence().usingStores()) {
-         if (configuration.persistence().passivation()) {
-            if (cacheMode.isClustered())
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredActivationInterceptor(), ClusteredActivationInterceptor.class), false);
-            else
-               interceptorChain.appendInterceptor(createInterceptor(new ActivationInterceptor(), ActivationInterceptor.class), false);
+         if (cacheMode.isClustered()) {
+            interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
          } else {
-            if (cacheMode.isClustered())
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
-            else
-               interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+            interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+         }
+
+         if (configuration.persistence().passivation()) {
+            interceptorChain.appendInterceptor(createInterceptor(new PassivationWriterInterceptor(), PassivationWriterInterceptor.class), false);
+         } else {
+            boolean transactionalStore = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional);
+            if (transactionalStore && transactionMode.isTransactional())
+               interceptorChain.appendInterceptor(createInterceptor(new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class), false);
+
             switch (cacheMode) {
                case DIST_SYNC:
                case DIST_ASYNC:
@@ -307,25 +298,29 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                   interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(), TxDistributionInterceptor.class), false);
                }
             } else {
-               interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterceptor(), NonTxDistributionInterceptor.class), false);
+               if (cacheMode.isDistributed()) {
+                  interceptorChain.appendInterceptor(createInterceptor(new TriangleDistributionInterceptor(), TriangleDistributionInterceptor.class), false);
+               } else {
+                  interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterceptor(), NonTxDistributionInterceptor.class), false);
+               }
             }
             break;
          case LOCAL:
             //Nothing...
       }
 
-      SequentialInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
+      AsyncInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
       interceptorChain.appendInterceptor(callInterceptor, false);
       log.trace("Finished building default interceptor chain.");
       buildCustomInterceptors(interceptorChain, configuration.customInterceptors());
       return interceptorChain;
    }
 
-   private void buildCustomInterceptors(SequentialInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
+   private void buildCustomInterceptors(AsyncInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
       for (InterceptorConfiguration config : customInterceptors.interceptors()) {
-         if (interceptorChain.containsInterceptorType(config.sequentialInterceptor().getClass())) continue;
+         if (interceptorChain.containsInterceptorType(config.asyncInterceptor().getClass())) continue;
 
-         SequentialInterceptor customInterceptor = config.sequentialInterceptor();
+         AsyncInterceptor customInterceptor = config.asyncInterceptor();
          SecurityActions.applyProperties(customInterceptor, config.properties());
          register(customInterceptor.getClass(), customInterceptor);
          if (config.first())
@@ -365,11 +360,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    @Override
    public <T> T construct(Class<T> componentType) {
       try {
-         SequentialInterceptorChain sequentialInterceptorChain = buildInterceptorChain();
+         AsyncInterceptorChain asyncInterceptorChain = buildInterceptorChain();
          if (componentType == InterceptorChain.class) {
             return componentType.cast(componentRegistry.getComponent(InterceptorChain.class));
          } else {
-            return componentType.cast(sequentialInterceptorChain);
+            return componentType.cast(asyncInterceptorChain);
          }
       } catch (CacheException ce) {
          throw ce;

@@ -47,6 +47,7 @@ public enum Attribute {
     IDLE_TIMEOUT(ModelKeys.IDLE_TIMEOUT),
     MECHANISMS(ModelKeys.MECHANISMS),
     HOST_NAME(ModelKeys.HOST_NAME),
+    PATH(ModelKeys.PATH),
     LAZY_RETRIEVAL(ModelKeys.LAZY_RETRIEVAL),
     LOCK_TIMEOUT(ModelKeys.LOCK_TIMEOUT),
     REPLICATION_TIMEOUT(ModelKeys.REPLICATION_TIMEOUT),
@@ -61,9 +62,12 @@ public enum Attribute {
     SERVER_CONTEXT_NAME(ModelKeys.SERVER_CONTEXT_NAME),
     SERVER_NAME(ModelKeys.SERVER_NAME),
     SOCKET_BINDING(ModelKeys.SOCKET_BINDING),
+    REST_SOCKET_BINDING(ModelKeys.REST_SOCKET_BINDING),
+    HOTROD_SOCKET_BINDING(ModelKeys.HOTROD_SOCKET_BINDING),
     SSL(ModelKeys.SSL),
     STRENGTH(ModelKeys.STRENGTH),
     TCP_NODELAY(ModelKeys.TCP_NODELAY),
+    KEEP_ALIVE(ModelKeys.KEEP_ALIVE),
     UPDATE_TIMEOUT(ModelKeys.UPDATE_TIMEOUT),
     VALUE(ModelKeys.VALUE),
     VIRTUAL_HOST(ModelKeys.VIRTUAL_HOST),
@@ -113,4 +117,3 @@ public enum Attribute {
         return attribute == null ? UNKNOWN : attribute;
     }
 }
-

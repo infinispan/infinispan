@@ -1,5 +1,7 @@
 package org.infinispan.distribution.topologyaware;
 
+import static org.testng.Assert.assertTrue;
+
 import java.util.List;
 
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -9,8 +11,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com

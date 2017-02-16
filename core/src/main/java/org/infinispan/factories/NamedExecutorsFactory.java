@@ -1,5 +1,21 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
+import static org.infinispan.factories.KnownComponentNames.shortened;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -13,23 +29,6 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
-import static org.infinispan.factories.KnownComponentNames.shortened;
 
 /**
  * A factory that specifically knows how to create named executors.
@@ -47,7 +46,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService persistenceExecutor;
    private BlockingTaskAwareExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService expirationExecutor;
-   private BlockingTaskAwareExecutorService totalOrderExecutor;
    private ExecutorService stateTransferExecutor;
    private ExecutorService asyncOperationsExecutor;
    private ScheduledExecutorService timeoutExecutor;
@@ -92,7 +90,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (expirationExecutor == null) {
                   expirationExecutor = createExecutorService(
-                        globalConfiguration.evictionThreadPool(),
+                        globalConfiguration.expirationThreadPool(),
                         EXPIRATION_SCHEDULED_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
                }
@@ -108,16 +106,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) remoteCommandsExecutor;
-         } else if (componentName.equals(TOTAL_ORDER_EXECUTOR)) {
-            synchronized (this) {
-               if (totalOrderExecutor == null) {
-                  totalOrderExecutor = createExecutorService(
-                        globalConfiguration.transport().totalOrderThreadPool(),
-                        TOTAL_ORDER_EXECUTOR,
-                        ExecutorServiceType.BLOCKING);
-               }
-            }
-            return (T) totalOrderExecutor;
          } else if (componentName.equals(STATE_TRANSFER_EXECUTOR)) {
             synchronized (this) {
                if (stateTransferExecutor == null) {
@@ -161,7 +149,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (persistenceExecutor != null) persistenceExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (expirationExecutor != null) expirationExecutor.shutdownNow();
-      if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
       if (stateTransferExecutor != null) stateTransferExecutor.shutdownNow();
       if (timeoutExecutor != null) timeoutExecutor.shutdownNow();
       if (asyncOperationsExecutor != null) asyncOperationsExecutor.shutdownNow();

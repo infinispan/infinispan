@@ -5,7 +5,7 @@ import javax.security.auth.callback.CallbackHandler;
 
 /**
  *
- * No-op {@link javax.security.auth.callback.CallbackHandler}. Convenient CollbackHandler which comes handy when
+ * No-op {@link javax.security.auth.callback.CallbackHandler}. Convenient CallbackHandler which comes handy when
  * no auth. callback is needed. This applies namely to SASL EXTERNAL auth. mechanism when auth. information is obtained
  * from external channel, like TLS certificate.
  *

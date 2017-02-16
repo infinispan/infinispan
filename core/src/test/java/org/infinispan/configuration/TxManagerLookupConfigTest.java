@@ -1,5 +1,11 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -8,13 +14,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-
-import javax.transaction.TransactionManager;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * @author Mircea.Markus@jboss.com

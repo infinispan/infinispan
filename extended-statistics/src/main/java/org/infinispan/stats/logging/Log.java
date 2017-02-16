@@ -1,14 +1,14 @@
 package org.infinispan.stats.logging;
 
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.WARN;
+
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.percentiles.PercentileStatistic;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * The JBoss Logging interface which defined the logging methods for the extended statistics module. The id range for

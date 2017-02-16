@@ -3,11 +3,11 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 /**
  * Cache key for a list with current files in cache
@@ -100,7 +100,7 @@ public final class FileListCacheKey implements IndexScopedKey {
 
       @Override
       public Set<Class<? extends FileListCacheKey>> getTypeClasses() {
-         return Util.<Class<? extends FileListCacheKey>>asSet(FileListCacheKey.class);
+         return Collections.singleton(FileListCacheKey.class);
       }
 
    }

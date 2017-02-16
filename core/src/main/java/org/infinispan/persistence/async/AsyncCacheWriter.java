@@ -1,23 +1,5 @@
 package org.infinispan.persistence.async;
 
-import net.jcip.annotations.GuardedBy;
-
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.modifications.Modification;
-import org.infinispan.persistence.modifications.Remove;
-import org.infinispan.persistence.modifications.Store;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.support.DelegatingCacheWriter;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +12,24 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.modifications.Modification;
+import org.infinispan.persistence.modifications.Remove;
+import org.infinispan.persistence.modifications.Store;
+import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.DelegatingCacheWriter;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * The AsyncCacheWriter is a delegating CacheStore that buffers changes and writes them asynchronously to

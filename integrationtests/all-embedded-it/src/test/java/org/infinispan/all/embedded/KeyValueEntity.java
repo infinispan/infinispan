@@ -1,9 +1,10 @@
 package org.infinispan.all.embedded;
 
+import java.io.Serializable;
+
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import java.io.Serializable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

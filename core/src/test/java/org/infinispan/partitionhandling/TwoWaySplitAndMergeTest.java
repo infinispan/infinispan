@@ -1,13 +1,15 @@
 package org.infinispan.partitionhandling;
 
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
 
-import static org.testng.Assert.*;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.TwoWaySplitAndMergeTest")
 public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {

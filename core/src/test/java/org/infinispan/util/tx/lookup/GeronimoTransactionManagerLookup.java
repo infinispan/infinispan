@@ -17,9 +17,9 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Transaction manager lookup for testing purposes. Use this lookup class to verify that
  * Infinispan works correctly with Geronimo Transaction Manager.
- * 
+ *
  * In order to use this TM lookup, run tests with -Dinfinispan.test.jta.tm=geronimotm
- * 
+ *
  * @author mgencur
  *
  */
@@ -27,7 +27,7 @@ public class GeronimoTransactionManagerLookup implements TransactionManagerLooku
 
    private static final int DEFAULT_TRANSACTION_TIMEOUT = 600;
    private static final Log log = LogFactory.getLog(GeronimoTransactionManagerLookup.class);
-   
+
    private TransactionManager manager;
    private UserTransaction userTransaction;
    private TransactionLog transactionLog;

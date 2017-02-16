@@ -1,9 +1,9 @@
 package org.infinispan.persistence.spi;
 
-import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.marshall.core.MarshalledEntry;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Defines the logic for loading data from an external storage. The writing of data is optional and coordinated through

@@ -1,7 +1,9 @@
 package org.infinispan.query.dsl.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.query.dsl.Expression;
-import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -9,9 +11,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -68,7 +67,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    @Override
    public QueryBuilder orderBy(Expression pathExpression, SortOrder sortOrder) {
       if (sortCriteria == null) {
-         sortCriteria = new ArrayList<SortCriteria>();
+         sortCriteria = new ArrayList<>();
       }
       sortCriteria.add(new SortCriteria(pathExpression, sortOrder));
       return this;
@@ -197,7 +196,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    }
 
    @Override
-   public FilterConditionBeginContext not() {
+   public BaseCondition not() {
       if (filterCondition != null) {
          throw log.cannotUseOperatorAgain("not()");
       }
@@ -208,7 +207,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
    }
 
    @Override
-   public FilterConditionContext not(FilterConditionContext fcc) {
+   public BaseCondition not(FilterConditionContext fcc) {
       if (fcc == null) {
          throw log.argumentCannotBeNull();
       }

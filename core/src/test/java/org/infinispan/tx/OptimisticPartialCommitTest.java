@@ -1,5 +1,15 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,16 +30,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test that the modifications of a transaction that were not committed on a node because it didn't own all the keys

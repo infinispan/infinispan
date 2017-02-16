@@ -2,13 +2,10 @@ package org.infinispan.distribution.groups;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistSyncFuncTest;
-import org.infinispan.distribution.group.Grouper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
 
 /**
  * @author Pete Muir
@@ -19,8 +16,7 @@ import java.util.Collections;
 public class GroupsChFunctionalTest extends DistSyncFuncTest {
 
    public GroupsChFunctionalTest() {
-      groupsEnabled = true;
-      groupers = Collections.<Grouper<?>>singletonList(new KXGrouper());
+      groupers = true;
    }
 
    public void testGrouper() throws Throwable {

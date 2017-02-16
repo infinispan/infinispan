@@ -1,10 +1,19 @@
 package org.infinispan.persistence.sifs.configuration;
 
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.COMPACTION_THRESHOLD;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.DATA_LOCATION;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.INDEX_LOCATION;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.INDEX_QUEUE_LENGTH;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.INDEX_SEGMENTS;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.MAX_FILE_SIZE;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.MAX_NODE_SIZE;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.MIN_NODE_SIZE;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.OPEN_FILES_LIMIT;
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.SYNC_WRITES;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
-import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.*;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

@@ -26,7 +26,7 @@ public class AsyncAPIAsyncInvalTest extends AsyncAPISyncInvalTest {
    protected boolean sync() {
       return false;
    }
-   
+
    @Override
    protected void resetListeners() {
       rl.resetEager();

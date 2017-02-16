@@ -1,12 +1,16 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
 public class RepeatableReadLockTest extends LockTestBase {
@@ -15,90 +19,90 @@ public class RepeatableReadLockTest extends LockTestBase {
    }
 
    public void testRepeatableReadWithRemove() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       cache.put("k", "v");
 
       tm.begin();
-      assert cache.get("k") != null;
+      assertNotNull(cache.get("k"));
       Transaction reader = tm.suspend();
 
       tm.begin();
-      assert cache.remove("k") != null;
-      assert cache.get("k") == null;
+      assertNotNull(cache.remove("k"));
+      assertNull(cache.get("k"));
       tm.commit();
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
 
       tm.resume(reader);
-      assert cache.get("k") != null;
-      assert "v".equals(cache.get("k"));
+      assertNotNull(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       tm.commit();
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
       assertNoLocks();
    }
 
    public void testRepeatableReadWithEvict() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
 
       cache.put("k", "v");
 
       tm.begin();
-      assert cache.get("k") != null;
+      assertNotNull(cache.get("k"));
       Transaction reader = tm.suspend();
 
       tm.begin();
       cache.evict("k");
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
       tm.commit();
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
 
       tm.resume(reader);
-      assert cache.get("k") != null;
-      assert "v".equals(cache.get("k"));
+      assertNotNull(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       tm.commit();
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
       assertNoLocks();
    }
 
    public void testRepeatableReadWithNull() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
 
       tm.begin();
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
       Transaction reader = tm.suspend();
 
       tm.begin();
       cache.put("k", "v");
-      assert cache.get("k") != null;
-      assert "v".equals(cache.get("k"));
+      assertNotNull(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       tm.commit();
 
-      assert cache.get("k") != null;
-      assert "v".equals(cache.get("k"));
+      assertNotNull(cache.get("k"));
+      assertEquals("v", cache.get("k"));
 
       tm.resume(reader);
       Object o = cache.get("k");
-      assert o == null : "found value " + o;
+      assertNull("found value " + o, o);
       tm.commit();
 
-      assert cache.get("k") != null;
-      assert "v".equals(cache.get("k"));
+      assertNotNull(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       assertNoLocks();
    }
 
    public void testRepeatableReadWithNullRemoval() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
 
@@ -108,18 +112,19 @@ public class RepeatableReadLockTest extends LockTestBase {
       Transaction tx = tm.suspend();
 
       cache.put("a", "v2");
-      assert cache.get("a").equals("v2");
+      assertEquals(cache.get("a"), "v2");
 
       tm.resume(tx);
-      assert cache.get("a") == null : "expected null but received " + cache.get("a");
+      assertNull("expected null but received " + cache.get("a"), cache.get("a"));
       cache.remove("a");
       tm.commit();
 
-      assert cache.get("a") == null : "expected null but received " + cache.get("a");
+      assertNull("expected null but received " + cache.get("a"), cache.get("a"));
    }
 
+   @Override
    public void testLocksOnPutKeyVal() throws Exception {
-      LockTestBaseTL tl = threadLocal.get();
+      LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
       tm.begin();
@@ -132,7 +137,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       assertNoLocks();
 
       tm.begin();
-      assert cache.get("k").equals("v");
+      assertEquals(cache.get("k"), "v");
 
 
       assertNotLocked("k");

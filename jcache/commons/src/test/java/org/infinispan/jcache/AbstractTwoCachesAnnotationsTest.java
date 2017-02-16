@@ -1,16 +1,19 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.jcache.JCacheCustomKeyGenerator.CustomGeneratedCacheKey;
+import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
+import java.lang.reflect.Method;
+
+import javax.cache.Cache;
+
 import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.cache.Cache;
-import java.lang.reflect.Method;
-
-import static org.infinispan.jcache.JCacheCustomKeyGenerator.CustomGeneratedCacheKey;
-import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
-import static org.testng.Assert.*;
 
 /**
  * Base class for clustered JCache annotations tests. Implementations must provide cache & {@link

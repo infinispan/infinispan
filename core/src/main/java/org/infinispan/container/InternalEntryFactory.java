@@ -1,12 +1,13 @@
 package org.infinispan.container;
 
-import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A factory for {@link InternalCacheEntry} and {@link InternalCacheValue} instances.
@@ -29,7 +30,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates a new {@link InternalCacheEntry} instance based on the version and timestamp/lifespan
-    * information reflected in the {@link CacheEntry} instance passed in.  Key and value are both passed in 
+    * information reflected in the {@link CacheEntry} instance passed in.  Key and value are both passed in
     * explicitly.
     * @param key key to use
     * @param value value to use
@@ -43,7 +44,7 @@ public interface InternalEntryFactory {
    /**
     * Creates a new {@link InternalCacheEntry} instance
     * @param key key to use
-    * @param value value to use           
+    * @param value value to use
     * @param metadata metadata for entry
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry
@@ -102,7 +103,7 @@ public interface InternalEntryFactory {
     * {@link InternalCacheEntry} instance being created, as a different {@link InternalCacheEntry} implementation
     * may be more appropriate to suit the new metadata values.  As such, one should consider the {@link InternalCacheEntry}
     * passed in as a parameter as passed by value and not by reference.
-    * 
+    *
     * @param cacheEntry original internal cache entry
     * @param metadata new metadata
     * @param <K> The key type for the entry
@@ -129,7 +130,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates an {@link InternalCacheValue} based on the {@link InternalCacheEntry} passed in.
-    * 
+    *
     * @param cacheEntry to use to generate a {@link InternalCacheValue}
     * @param <V> The value type
     * @return an {@link InternalCacheValue}
@@ -153,4 +154,16 @@ public interface InternalEntryFactory {
     *@param value @return a new {@link org.infinispan.container.entries.InternalCacheEntry}
     */
    <K, V> InternalCacheEntry<K, V> createL1(K key, V value, Metadata metadata);
+
+   /**
+    * Retrieve an {@link InternalCacheValue} from the provided {@link InvocationContext} if an {@link InternalCacheEntry}
+    * exists, otherwise create {@link InternalCacheEntry} from the context's {@link CacheEntry} and return its value.
+    *
+    * @param key the key of the entry to be retrieved
+    * @param ctx the invocation context from which the value should be retrieved
+    * @param <K> The key type for the entry
+    * @param <V> The value type for the entry
+    * @return an {@link InternalCacheValue}
+    */
+   <K, V> InternalCacheValue<V> getValueFromCtxOrCreateNew(K key, InvocationContext ctx);
 }

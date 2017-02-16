@@ -6,8 +6,7 @@
                         <role name="HotRod" permissions="READ" />
                     </authorization>
                 </security>
-                <distributed-cache name="testcache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-                    <transaction mode="NONE" />
+                <distributed-cache name="testcache" remote-timeout="30000" >
                     <security>
                         <authorization roles="HotRod" enabled="true" />
                     </security>

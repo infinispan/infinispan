@@ -1,12 +1,12 @@
 package org.infinispan.persistence.dummy;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
 
 @Test(groups = "unit", testName = "persistence.dummy.DummyInMemoryStoreFunctionalTest")
 public class DummyInMemoryStoreFunctionalTest extends BaseStoreFunctionalTest {

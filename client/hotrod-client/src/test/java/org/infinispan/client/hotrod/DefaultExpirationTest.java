@@ -1,6 +1,11 @@
 package org.infinispan.client.hotrod;
 
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -12,10 +17,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.*;
+import org.testng.annotations.Test;
 
 /**
  * @author Tristan Tarrant

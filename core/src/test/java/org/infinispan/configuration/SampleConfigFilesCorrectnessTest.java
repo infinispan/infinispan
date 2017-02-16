@@ -63,7 +63,8 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
          EmbeddedCacheManager dcm = null;
          try {
             dcm = TestCacheManagerFactory.fromXml(getRootFolder() + File.separator + aConfFile, false, true);
-            dcm.getCache();
+            if (dcm.getDefaultCacheConfiguration() != null)
+               dcm.getCache();
             assert !appender.isFoundUnknownWarning() : String.format(
                   "Unknown warning discovered in file %s: %s",
                   aConfFile, appender.unknownWarning());

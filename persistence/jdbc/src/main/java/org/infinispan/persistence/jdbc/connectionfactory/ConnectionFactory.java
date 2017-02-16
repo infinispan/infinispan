@@ -1,10 +1,10 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import org.infinispan.persistence.spi.PersistenceException;
+import java.sql.Connection;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
-
-import java.sql.Connection;
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * Defines the functionality a connection factory should implement.

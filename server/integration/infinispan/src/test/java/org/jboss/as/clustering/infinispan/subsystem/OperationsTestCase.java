@@ -41,10 +41,9 @@ public class OperationsTestCase extends OperationTestCaseBase {
     // TODO
 
     // cache store test operations
-    static final ModelNode readDistCacheMixedJDBCStoreDatastoreOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource");
-    static final ModelNode writeDistCacheFileStoreDatastoreOp = getMixedKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource", "new-datasource");
-    static final ModelNode readDistCacheMixedJDBCStoreStringKeyedTableOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "string-keyed-table");
-    // static final ModelNode writeDistCacheFileStoreStringKeyedTableOp = getMixedKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE, "dist", "string-keyed-table", "new-datasource");
+    static final ModelNode readDistCacheStringJDBCStoreDatastoreOp = getStringKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource");
+    static final ModelNode writeDistCacheStringJDBCStoreDatastoreOp = getStringKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource", "new-datasource");
+    static final ModelNode readDistCacheStringJDBCStoreStringKeyedTableOp = getStringKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "string-keyed-table");
 
     /*
      * Tests access to cache container attributes
@@ -100,7 +99,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
      * Tests access to local cache attributes
      */
     @Test
-    public void testDistributedCacheMixedJDBCStoreReadWriteOperation() throws Exception {
+    public void testDistributedCacheStringJDBCStoreReadWriteOperation() throws Exception {
 
         ModelNode stringKeyedTable = createStringKeyedTable() ;
 
@@ -108,34 +107,33 @@ public class OperationsTestCase extends OperationTestCaseBase {
         String subsystemXml = getSubsystemXml() ;
         KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
-        // read the distributed cache mixed-keyed-jdbc-store datasource attribute
-        ModelNode result = servicesA.executeOperation(readDistCacheMixedJDBCStoreDatastoreOp);
+        // read the distributed cache string-keyed-jdbc-store datasource attribute
+        ModelNode result = servicesA.executeOperation(readDistCacheStringJDBCStoreDatastoreOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
-        Assert.assertEquals("java:jboss/jdbc/store", result.get(RESULT).asString());
+        Assert.assertEquals("java:jboss/datasources/JdbcDS", result.get(RESULT).asString());
 
         // write the batching attribute
-        result = servicesA.executeOperation(writeDistCacheFileStoreDatastoreOp);
+        result = servicesA.executeOperation(writeDistCacheStringJDBCStoreDatastoreOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
 
         // re-read the batching attribute
-        result = servicesA.executeOperation(readDistCacheMixedJDBCStoreDatastoreOp);
+        result = servicesA.executeOperation(readDistCacheStringJDBCStoreDatastoreOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("new-datasource", result.get(RESULT).asString());
 
          // read the string-keyed-table attribute
-        result = servicesA.executeOperation(readDistCacheMixedJDBCStoreStringKeyedTableOp);
+        result = servicesA.executeOperation(readDistCacheStringJDBCStoreStringKeyedTableOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals(stringKeyedTable.asString(), result.get(RESULT).asString());
         assertServerState(servicesA, "running");
     }
 
     private ModelNode createStringKeyedTable() {
-
         // create a string-keyed-table complex attribute
         ModelNode stringKeyedTable = new ModelNode().setEmptyObject() ;
-        stringKeyedTable.get(ModelKeys.PREFIX).set("ispn_bucket");
-        stringKeyedTable.get(ModelKeys.BATCH_SIZE).set(100);
-        stringKeyedTable.get(ModelKeys.FETCH_SIZE).set(100);
+        stringKeyedTable.get(ModelKeys.PREFIX).set("ISPN_MC_SK");
+        stringKeyedTable.get(ModelKeys.CREATE_ON_START).set(true);
+        stringKeyedTable.get(ModelKeys.DROP_ON_EXIT).set(true);
 
         ModelNode idColumn = stringKeyedTable.get(ModelKeys.ID_COLUMN).setEmptyObject();
         idColumn.get(ModelKeys.NAME).set("id") ;
@@ -149,7 +147,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         timestampColumn.get(ModelKeys.NAME).set("version") ;
         timestampColumn.get(ModelKeys.TYPE).set("BIGINT") ;
 
-        return stringKeyedTable ;
+        return stringKeyedTable;
     }
 
 }

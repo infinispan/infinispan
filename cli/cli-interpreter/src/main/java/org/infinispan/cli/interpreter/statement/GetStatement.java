@@ -4,13 +4,11 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.codec.Codec;
-import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.JsonResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  *

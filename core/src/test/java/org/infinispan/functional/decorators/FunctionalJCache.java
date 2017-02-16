@@ -1,5 +1,40 @@
 package org.infinispan.functional.decorators;
 
+import static org.infinispan.commons.marshall.MarshallableFunctions.identity;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindIsPresent;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.configuration.CacheEntryListenerConfiguration;
+import javax.cache.configuration.Configuration;
+import javax.cache.integration.CompletionListener;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.EntryProcessorResult;
+import javax.cache.processor.MutableEntry;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
@@ -17,29 +52,6 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.Traversables;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.cache.configuration.CacheEntryListenerConfiguration;
-import javax.cache.configuration.Configuration;
-import javax.cache.integration.CompletionListener;
-import javax.cache.processor.EntryProcessor;
-import javax.cache.processor.EntryProcessorException;
-import javax.cache.processor.EntryProcessorResult;
-import javax.cache.processor.MutableEntry;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
-import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
 
 /**
  * A {@link Cache} implementation that uses the operations exposed by
@@ -81,18 +93,18 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
 
    @Override
    public V get(K key) {
-      return await(readOnly.eval(key, ro -> ro.find().orElse(null)));
+      return await(readOnly.eval(key, returnReadOnlyFindOrNull()));
    }
 
    @Override
    public Map<K, V> getAll(Set<? extends K> keys) {
-      Traversable<ReadEntryView<K, V>> t = readOnly.evalMany(keys, ro -> ro);
-      return t.collect(HashMap::new, (m, ro) -> ro.find().map(v -> m.put(ro.key(), v)), HashMap::putAll);
+      Traversable<ReadEntryView<K, V>> t = readOnly.evalMany(keys, identity());
+      return t.collect(HashMap::new, (m, ro) -> ro.find().ifPresent(v -> m.put(ro.key(), v)), HashMap::putAll);
    }
 
    @Override
    public boolean containsKey(K key) {
-      return await(readOnly.eval(key, e -> e.find().isPresent()));
+      return await(readOnly.eval(key, returnReadOnlyFindIsPresent()));
    }
 
    @Override

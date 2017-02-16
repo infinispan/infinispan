@@ -1,5 +1,8 @@
 package org.infinispan.lucene.cacheloader;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -12,9 +15,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Tests covering LuceneCacheLoader methods.

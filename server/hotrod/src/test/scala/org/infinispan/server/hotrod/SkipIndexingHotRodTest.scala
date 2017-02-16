@@ -1,11 +1,13 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.interceptors.base.BaseCustomInterceptor
-import org.infinispan.context.{Flag, InvocationContext}
-import org.infinispan.commands.{LocalFlagAffectedCommand, VisitableCommand}
-import org.infinispan.commons.CacheException
 import java.lang.reflect.Method
-import test.HotRodTestingUtil._
+
+import org.infinispan.commands.{FlagAffectedCommand, VisitableCommand}
+import org.infinispan.commons.CacheException
+import org.infinispan.context.impl.FlagBitSets
+import org.infinispan.context.InvocationContext
+import org.infinispan.interceptors.base.BaseCustomInterceptor
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.testng.annotations.Test
 
 /**
@@ -19,124 +21,124 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
 
    def testPut(m: Method) {
       val commandInterceptor = init()
-      //PutRequest
+      //PUT
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.put(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.Success)
-      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.SuccessWithPrevious)
+      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.Success)
+      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.SuccessWithPrevious)
    }
 
    def testReplace(m: Method) {
-      //ReplaceRequest
+      //REPLACE
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.replace(k(m), 0, 0, v(m), 0), OperationStatus.OperationNotExecuted)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                         ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.OperationNotExecuted)
 
    }
 
    def testPutIfAbsent(m: Method) {
-      //PutIfAbsentRequest
+      //PUT_IF_ABSENT
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.NotExecutedWithPrevious)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.OperationNotExecuted)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                             ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.NotExecutedWithPrevious)
    }
 
    def testReplaceIfUnmodified(m: Method) {
-      //ReplaceIfUnmodifiedRequest
+      //REPLACE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipIndexing.id,
-                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipIndexing.getValue(),
+                                                                        ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testGet(m: Method) {
-      //GetRequest
+      //GET
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.get(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.get(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.get(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                         ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testGetWithVersion(m: Method) {
-      //GetWithVersionRequest
+      //GET_WITH_VERSION
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.getWithVersion(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                    ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                    ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
 
    }
 
    def testGetWithMetadata(m: Method) {
-      //GetWithMetadataRequest
+      //GET_WITH_METADATA
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.getWithMetadata(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemove(m: Method) {
-      //RemoveRequest
+      //REMOVE
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.remove(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.remove(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                            ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                            ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemoveIfUnmodified(m: Method) {
-      //RemoveIfUnmodifiedRequest
+      //REMOVE_IF_UNMODIFIED
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipIndexing.id,
-                                                                       ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipIndexing.getValue(),
+                                                                       ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testContainsKey(m: Method) {
-      //ContainsKeyRequest
+      //CONTAINS_KEY
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
       assertStatus(client.containsKey(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                 ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                 ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    private def init(): SkipIndexingFlagCheckCommandInterceptor = {
@@ -148,7 +150,7 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       }
 
       val ci = new SkipIndexingFlagCheckCommandInterceptor
-      cacheManager.getCache(cacheName).getAdvancedCache.getSequentialInterceptorChain().addInterceptor(ci, 1)
+      cacheManager.getCache(cacheName).getAdvancedCache.getAsyncInterceptorChain().addInterceptor(ci, 1)
       ci
    }
 
@@ -163,8 +165,8 @@ class SkipIndexingFlagCheckCommandInterceptor extends BaseCustomInterceptor {
 
    protected override def handleDefault(ctx: InvocationContext, command: VisitableCommand): AnyRef = {
       command match {
-         case flagAffectedCommand: LocalFlagAffectedCommand =>
-            val hasFlag = flagAffectedCommand.hasFlag(Flag.SKIP_INDEXING)
+         case flagAffectedCommand: FlagAffectedCommand =>
+            val hasFlag = flagAffectedCommand.hasAnyFlag(FlagBitSets.SKIP_INDEXING)
             if (expectSkipIndexingFlag && !hasFlag) {
                throw new CacheException("SKIP_INDEXING flag is expected!")
             } else if (!expectSkipIndexingFlag && hasFlag) {

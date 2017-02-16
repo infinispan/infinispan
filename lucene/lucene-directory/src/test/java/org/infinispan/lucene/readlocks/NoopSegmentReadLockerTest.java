@@ -1,5 +1,8 @@
 package org.infinispan.lucene.readlocks;
 
+import java.io.IOException;
+import java.util.Set;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
@@ -15,9 +18,6 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.FileListCacheValue;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Set;
 
 /**
  * Tests covering the functionality of NoopSegmentreadLocker.

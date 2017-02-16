@@ -1,5 +1,22 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_PASSWD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.SUPERVISOR_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.SUPERVISOR_PASSWD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_PASSWD;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -18,7 +35,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -28,29 +45,13 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_PASSWD;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_LOGIN;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_PASSWD;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.SUPERVISOR_LOGIN;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.SUPERVISOR_PASSWD;
-
-import static org.junit.Assert.*;
-
 /**
  * Tests for remote queries over HotRod with security on a DIST indexed/non-indexed cache.
  *
  * @author Adrian Nistor
  * @since 7.2
  */
-@Category({Queries.class})
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "remote-query-security")})
 public class RemoteQuerySecurityIT {
@@ -59,7 +60,7 @@ public class RemoteQuerySecurityIT {
    protected RemoteInfinispanServer server;
 
    private RemoteCacheManagerFactory rcmFactory;
-   private Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<String, RemoteCacheManager>();
+   private Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<>();
 
    private static final String TEST_CACHE_INDEXED = "test_cache_indexed";
    private static final String TEST_CACHE_NOT_INDEXED = "test_cache_not_indexed";
@@ -102,7 +103,7 @@ public class RemoteQuerySecurityIT {
    }
 
    private ConfigurationBuilder getClientConfigBuilderForUser(String login, String password) {
-      return new SaslConfigurationBuilder(SASL_MECH)
+      return new SecurityConfigurationHelper(SASL_MECH)
             .forIspnServer(server)
             .withServerName(TEST_SERVER_NAME)
             .forCredentials(login, password)
@@ -173,7 +174,7 @@ public class RemoteQuerySecurityIT {
       RemoteCache<Object, Object> cache = remoteCacheManagers.get(userLogin).getCache(cacheName);
       QueryFactory qf = Search.getQueryFactory(cache);
       Query query = qf.from(User.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<User> list = query.list();
       assertNotNull(list);

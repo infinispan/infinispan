@@ -7,8 +7,11 @@ import java.util.Arrays;
  *
  * @author Tristan Tarrant
  * @since 5.3
+ * @deprecated
  */
 public class AnyServerEquivalence implements Equivalence<Object> {
+
+    public static final Equivalence<Object> INSTANCE = new AnyServerEquivalence();
 
     private static boolean isByteArray(Object obj) {
         return byte[].class == obj.getClass();

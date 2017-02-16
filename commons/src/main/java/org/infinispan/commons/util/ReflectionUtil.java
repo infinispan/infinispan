@@ -1,9 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +9,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 /**
  * Basic reflection utilities to enhance what the JDK provides.
  *
@@ -41,7 +41,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethods(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<Method>();
+      List<Method> annotated = new LinkedList<>();
       inspectRecursively(c, annotated, annotationType);
       return annotated;
    }
@@ -55,7 +55,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethodsShallow(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<Method>();
+      List<Method> annotated = new LinkedList<>();
       for (Method m : c.getDeclaredMethods()) {
          if (m.isAnnotationPresent(annotationType))
             annotated.add(m);
@@ -74,7 +74,7 @@ public class ReflectionUtil {
    }
 
    public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Field> fields = new ArrayList<Field>(4);
+      List<Field> fields = new ArrayList<>(4);
       // Class could be null in the case of an interface
       for (;c != null && !c.equals(Object.class); c = c.getSuperclass()) {
          getAnnotatedFieldHelper(fields, c, annotationType);
@@ -212,6 +212,9 @@ public class ReflectionUtil {
    }
 
    public static Method findSetterForField(Class<?> c, String fieldName) {
+      if (c == Object.class) {
+         return null;
+      }
       for (Method m : c.getDeclaredMethods()) {
          String name = m.getName();
          String s = null;
@@ -223,7 +226,8 @@ public class ReflectionUtil {
             return m;
          }
       }
-      return null;
+      // Try parent class until we run out
+      return findSetterForField(c.getSuperclass(), fieldName);
    }
 
    public static String extractFieldName(String setterOrGetter) {

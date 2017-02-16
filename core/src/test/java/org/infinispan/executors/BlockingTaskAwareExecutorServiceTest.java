@@ -1,11 +1,5 @@
 package org.infinispan.executors;
 
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.testng.annotations.Test;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -14,6 +8,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.BlockingRunnable;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
+import org.testng.annotations.Test;
 
 /**
  * Simple executor test

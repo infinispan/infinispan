@@ -1,29 +1,29 @@
 package org.infinispan.container;
 
-import org.infinispan.eviction.ActivationManager;
-import org.infinispan.expiration.ExpirationManager;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.CoreImmutables;
-import org.mockito.Mockito;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.eviction.ActivationManager;
+import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.CoreImmutables;
+import org.mockito.Mockito;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest extends AbstractInfinispanTest {
@@ -40,7 +40,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    protected DataContainer createContainer() {
-      DefaultDataContainer dc = new DefaultDataContainer<Object, String>(16, AnyEquivalence.getInstance());
+      DefaultDataContainer dc = new DefaultDataContainer<Object, String>(16);
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       internalEntryFactory.injectTimeService(TIME_SERVICE);
       ActivationManager activationManager = mock(ActivationManager.class);
@@ -62,7 +62,6 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(0, TimeUnit.MINUTES).build());
-      dc.purgeExpired();
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       Thread.sleep(100);
@@ -81,10 +80,8 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(100);
       assert dc.size() == 0;
-      dc.purgeExpired();
-      assert dc.size() == 0;
    }
-   
+
    public void testResetOfCreationTime() throws Exception {
       long now = System.currentTimeMillis();
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
@@ -216,7 +213,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }
-   
+
    public void testKeys() {
       dc.put("k1", "v1", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       dc.put("k2", "v2", new EmbeddedMetadata.Builder().build());
@@ -282,5 +279,5 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       }
 
       assert i == 10 : "Expected the loop to run 10 times, only ran " + i;
-   }   
+   }
 }

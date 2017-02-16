@@ -1,20 +1,28 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.util.Arrays.asList;
+import static org.infinispan.configuration.global.TransportConfiguration.CLUSTER_NAME;
+import static org.infinispan.configuration.global.TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT;
+import static org.infinispan.configuration.global.TransportConfiguration.INITIAL_CLUSTER_SIZE;
+import static org.infinispan.configuration.global.TransportConfiguration.INITIAL_CLUSTER_TIMEOUT;
+import static org.infinispan.configuration.global.TransportConfiguration.MACHINE_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.NODE_NAME;
+import static org.infinispan.configuration.global.TransportConfiguration.PROPERTIES;
+import static org.infinispan.configuration.global.TransportConfiguration.RACK_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.SITE_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.TRANSPORT;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Arrays.asList;
-
-import static org.infinispan.configuration.global.TransportConfiguration.*;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures the transport used for network communications across the cluster.
@@ -27,8 +35,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    private final ThreadPoolConfigurationBuilder transportThreadPool;
    private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
-   @Deprecated
-   private final ThreadPoolConfigurationBuilder totalOrderThreadPool;
    private final AttributeSet attributes;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
@@ -36,7 +42,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       attributes = TransportConfiguration.attributeSet();
       transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
-      totalOrderThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
    }
 
    /**
@@ -197,18 +202,10 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return remoteCommandThreadPool;
    }
 
-   @Deprecated
-   public ThreadPoolConfigurationBuilder totalOrderThreadPool() {
-      return totalOrderThreadPool;
-   }
-
    @Override
    public
    void validate() {
-      for (Builder<?> validatable : asList(transportThreadPool,
-            remoteCommandThreadPool, totalOrderThreadPool)) {
-         validatable.validate();
-      }
+      asList(transportThreadPool, remoteCommandThreadPool).forEach(Builder::validate);
       if(attributes.attribute(CLUSTER_NAME).get() == null){
           throw new CacheConfigurationException("Transport clusterName cannot be null");
       }
@@ -217,7 +214,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfiguration create() {
-      return new TransportConfiguration(attributes.protect(), transportThreadPool.create(), remoteCommandThreadPool.create(), totalOrderThreadPool.create());
+      return new TransportConfiguration(attributes.protect(), transportThreadPool.create(), remoteCommandThreadPool.create());
    }
 
    public TransportConfigurationBuilder defaultTransport() {
@@ -231,7 +228,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    TransportConfigurationBuilder read(TransportConfiguration template) {
       attributes.read(template.attributes());
       this.remoteCommandThreadPool.read(template.remoteCommandThreadPool());
-      this.totalOrderThreadPool.read(template.totalOrderThreadPool());
       this.transportThreadPool.read(template.transportThreadPool());
       if (template.transport() != null) {
          Transport transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());
@@ -248,7 +244,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public String toString() {
       return "TransportConfigurationBuilder [transportThreadPool=" + transportThreadPool + ", remoteCommandThreadPool="
-            + remoteCommandThreadPool + ", totalOrderThreadPool=" + totalOrderThreadPool + ", attributes=" + attributes
+            + remoteCommandThreadPool + ", attributes=" + attributes
             + "]";
    }
 

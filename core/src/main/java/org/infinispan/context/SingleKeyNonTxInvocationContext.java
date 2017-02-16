@@ -1,21 +1,20 @@
 package org.infinispan.context;
 
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.impl.BaseSequentialInvocationContext;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * @author Mircea Markus
  * @author Sanne Grinovero
- * @since 5.1
+ * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
-public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocationContext implements InvocationContext {
+@Deprecated
+public final class SingleKeyNonTxInvocationContext implements InvocationContext {
 
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
@@ -26,19 +25,14 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    private CacheEntry cacheEntry;
 
-   //TODO move reference to Equivalence to InvocationContextFactory (Memory allocation cost)
-   private final Equivalence keyEquivalence;
-   //TODO move reference to ClassLoader to InvocationContextFactory (Memory allocation cost)
-   private ClassLoader classLoader;
    //TODO move the Origin's address to the InvocationContextFactory when isOriginLocal=true -> all addresses are the same  (Memory allocation cost)
    //(verify if this is worth it by looking at object alignment - would need a different implementation as pointing to null wouldn't help)
    private final Address origin;
 
    private Object lockOwner;
 
-   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence) {
+   public SingleKeyNonTxInvocationContext(final Address origin) {
       this.origin = origin;
-      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -62,6 +56,15 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
    }
 
    @Override
+   public InvocationContext clone() {
+      try {
+         return (InvocationContext) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new IllegalStateException("Impossible!", e);
+      }
+   }
+
+   @Override
    public Set<Object> getLockedKeys() {
       return isLocked ? Collections.singleton(key) : Collections.emptySet();
    }
@@ -79,7 +82,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!keyEquivalence.equals(key, this.key)) {
+      } else if (!this.key.equals(key)) {
          throw illegalStateException();
       }
 
@@ -92,7 +95,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      if (key != null && this.key != null && keyEquivalence.equals(key, this.key))
+      if (this.key != null && this.key.equals(key))
          return cacheEntry;
 
       return null;
@@ -100,7 +103,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return cacheEntry == null ? Collections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
+      return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override
@@ -108,7 +111,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!keyEquivalence.equals(key, this.key)) {
+      } else if (!this.key.equals(key)) {
          throw illegalStateException();
       }
 
@@ -117,7 +120,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      if (keyEquivalence.equals(key, this.key)) {
+      if (this.key != null && this.key.equals(key)) {
          this.cacheEntry = null;
       }
    }
@@ -137,17 +140,17 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    @Override
    public ClassLoader getClassLoader() {
-      return classLoader;
+      return null;
    }
 
    @Override
    public void setClassLoader(ClassLoader classLoader) {
-      this.classLoader = classLoader;
+      // No-op
    }
 
    @Override
    public boolean hasLockedKey(final Object key) {
-      return isLocked && keyEquivalence.equals(this.key, key);
+      return isLocked && this.key.equals(key);
    }
 
    @Override

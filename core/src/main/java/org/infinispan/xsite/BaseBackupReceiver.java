@@ -1,5 +1,12 @@
 package org.infinispan.xsite;
 
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.AbstractVisitor;
@@ -18,22 +25,18 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-
-import javax.transaction.TransactionManager;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Common implementation logic for {@link org.infinispan.xsite.BackupReceiver}
@@ -44,18 +47,20 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class BaseBackupReceiver implements BackupReceiver {
 
-   protected final Cache<Object, Object> cache;
+   protected final AdvancedCache<Object, Object> cache;
+   protected final ByteString cacheName;
    protected final TimeService timeService;
    private final BackupCacheUpdater siteUpdater;
 
    protected BaseBackupReceiver(Cache<Object, Object> cache) {
-      this.cache = cache;
-      this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
+      this.cache = cache.getAdvancedCache();
+      this.cacheName = ByteString.fromString(cache.getName());
+      this.timeService = this.cache.getComponentRegistry().getTimeService();
       siteUpdater = new BackupCacheUpdater(cache);
    }
 
-   protected static XSiteStatePushCommand newStatePushCommand(Cache<?, ?> cache, List<XSiteState> stateList) {
-      CommandsFactory commandsFactory = cache.getAdvancedCache().getComponentRegistry().getCommandsFactory();
+   protected static XSiteStatePushCommand newStatePushCommand(AdvancedCache<?, ?> cache, List<XSiteState> stateList) {
+      CommandsFactory commandsFactory = cache.getComponentRegistry().getCommandsFactory();
       return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[stateList.size()]), 0);
    }
 
@@ -69,7 +74,14 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       return command.acceptVisitor(null, siteUpdater);
    }
 
-   public static final class BackupCacheUpdater extends AbstractVisitor {
+   protected final void assertAllowInvocation() {
+      ComponentStatus status = cache.getStatus();
+      if (!status.allowInvocations()) {
+         throw new CacheException("Cache is stopping or terminated: " + status);
+      }
+   }
+
+   private static final class BackupCacheUpdater extends AbstractVisitor {
 
       private static Log log = LogFactory.getLog(BackupCacheUpdater.class);
 
@@ -222,7 +234,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       }
 
       private TransactionManager txManager() {
-         return backupCache.getAdvancedCache().getTransactionManager();
+         return backupCache.getTransactionManager();
       }
 
       private void replayModifications(PrepareCommand command) throws Throwable {

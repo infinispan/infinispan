@@ -1,16 +1,16 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.AdvancedCache;
-import org.infinispan.query.backend.KeyTransformationHandler;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.infinispan.AdvancedCache;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.testng.annotations.Test;
 
 /**
  * Test whether LazyIterator and EagerIterator can handle a very large fetch size (Integer.MAX_VALUE). This makes sure
@@ -23,20 +23,20 @@ public class VeryLargeFetchSizeTest {
 
    private static final int VERY_LARGE_FETCH_SIZE = Integer.MAX_VALUE;
 
-   private List<EntityInfo> entityInfos = new ArrayList<EntityInfo>();
+   private List<EntityInfo> entityInfos = new ArrayList<>();
    private AdvancedCache<String, String> cache;
 
    @Test
    public void testLazyIteratorHandlesVeryLargeFetchSize() throws IOException {
       cache = mock(AdvancedCache.class);
       DocumentExtractor extractor = mock(DocumentExtractor.class);
-      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
+      new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
    }
 
    @Test
    public void testEagerIteratorHandlesVeryLargeFetchSize() throws IOException {
       cache = mock(AdvancedCache.class);
-      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
+      new EagerIterator<>(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
    }
 
 }

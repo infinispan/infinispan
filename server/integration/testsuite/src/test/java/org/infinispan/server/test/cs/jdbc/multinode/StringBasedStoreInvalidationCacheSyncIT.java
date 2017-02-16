@@ -1,5 +1,9 @@
 package org.infinispan.server.test.cs.jdbc.multinode;
 
+import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.CacheStore;
@@ -7,10 +11,6 @@ import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreMultinodeIT;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests cache operations in Invalidation mode. There's a cluster of 2 nodes

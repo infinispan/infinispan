@@ -1,16 +1,5 @@
 package org.infinispan.lock;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.LockPromise;
-import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
-import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,6 +11,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.LockPromise;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
+import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
+
 /**
  * Unit test for {@link LockContainer}.
  *
@@ -32,25 +32,25 @@ import java.util.concurrent.TimeUnit;
 public class LockContainerTest extends AbstractInfinispanTest {
 
    public void testSingleLockWithPerEntry() throws InterruptedException {
-      PerKeyLockContainer lockContainer = new PerKeyLockContainer(16, AnyEquivalence.getInstance());
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, -1);
    }
 
    public void testSingleCounterTestPerEntry() throws ExecutionException, InterruptedException {
-      PerKeyLockContainer lockContainer = new PerKeyLockContainer(16, AnyEquivalence.getInstance());
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, -1);
    }
 
    public void testSingleLockWithStriped() throws InterruptedException {
-      StripedLockContainer lockContainer = new StripedLockContainer(16, AnyEquivalence.getInstance());
+      StripedLockContainer lockContainer = new StripedLockContainer(16);
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, 16);
    }
 
    public void testSingleCounterWithStriped() throws ExecutionException, InterruptedException {
-      StripedLockContainer lockContainer = new StripedLockContainer(16, AnyEquivalence.getInstance());
+      StripedLockContainer lockContainer = new StripedLockContainer(16);
       lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, 16);
    }

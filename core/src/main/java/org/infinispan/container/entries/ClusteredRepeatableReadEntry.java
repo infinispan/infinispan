@@ -1,19 +1,21 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A version of RepeatableReadEntry that can perform write-skew checks during prepare.
@@ -36,33 +38,33 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
                                         VersionGenerator versionGenerator, TimeService timeService) {
       if (versionSeen == null) {
          if (trace) {
-            log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", key);
+            log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", toStr(key));
          }
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
          return true;
       }
       EntryVersion prevVersion;
-      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
-                                                                           ctx, timeService, ignored);
-      if (ice == null) {
-         if (trace) {
-            log.tracef("No entry for key %s found in data container" , key);
-         }
-         prevVersion = ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
-         if (prevVersion == null) {
-            if (trace) {
-               log.tracef("No looked up remote version for key %s found in context" , key);
-            }
-            //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
-            return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
-         }
+      if (ctx.isOriginLocal()) {
+         prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
       } else {
-         prevVersion = ice.getMetadata().version();
-         if (prevVersion == null)
-            throw new IllegalStateException("Entries cannot have null versions!");
+         // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
+         // so the version in context should be up-to-date
+         prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
+         if (prevVersion == null) {
+            // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
+            // from cache loader - we have to force load
+            prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
+         }
       }
-      if (trace) {
-         log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, key);
+      // ISPN-7170: With total-order protocol, a command may skip loading the entry from persistence layer, and keep
+      // the entry would have non-existing version. Then TotalOrderVersionedEntryWrappingInterceptor would
+      // increase the version and store the entry during commit phase, potentially overwriting newer version.
+      // Therefore we use the compulsory load during this check (in prepare phase) and update the entry version.
+      if (prevVersion.compareTo(metadata.version()) != InequalVersionComparisonResult.EQUAL) {
+         if (trace) {
+            log.tracef("Updating version in metadata %s -> %s", metadata.version(), prevVersion);
+         }
+         metadata = metadata.builder().version(prevVersion).build();
       }
 
       //in this case, the transaction read some value and the data container has a value stored.
@@ -71,7 +73,28 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       if (trace) {
          log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, versionSeen, key, result);
       }
-      return InequalVersionComparisonResult.AFTER != result;
+      // TODO: there is a risk associated with versions that are not monotonous per entry - if an entry is removed
+      // and then written several times, it can reach the previous version.
+      return InequalVersionComparisonResult.EQUAL == result;
+   }
+
+   private EntryVersion getCurrentEntryVersion(DataContainer container, PersistenceManager persistenceManager, TxInvocationContext ctx, VersionGenerator versionGenerator, TimeService timeService) {
+      EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
+      // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
+      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
+            ctx, timeService, ignored);
+      if (ice == null) {
+         if (trace) {
+            log.tracef("No entry for key %s found in data container", toStr(key));
+         }
+         //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
+         prevVersion = versionGenerator.nonExistingVersion();
+      } else {
+         prevVersion = ice.getMetadata().version();
+         if (prevVersion == null)
+            throw new IllegalStateException("Entries cannot have null versions!");
+      }
+      return prevVersion;
    }
 
    // This entry is only used when versioning is enabled, and in these
@@ -87,11 +110,6 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
    @Override
    public void setVersion(EntryVersion version) {
       metadata = metadata.builder().version(version).build();
-   }
-
-   @Override
-   public boolean isNull() {
-      return value == null;
    }
 
    @Override

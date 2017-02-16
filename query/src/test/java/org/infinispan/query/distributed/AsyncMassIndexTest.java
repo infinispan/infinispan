@@ -1,5 +1,12 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -11,14 +18,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for the non blocking MassIndexer
@@ -84,7 +83,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
    protected void checkIndex(int expectedNumber, Class<?> entity) {
       Cache<Integer, Transaction> c = caches.get(0);
       SearchManager searchManager = Search.getSearchManager(c);
-      CacheQuery q = searchManager.getQuery(new MatchAllDocsQuery(), entity);
+      CacheQuery<?> q = searchManager.getQuery(new MatchAllDocsQuery(), entity);
       int resultSize = q.getResultSize();
       assertEquals(expectedNumber, resultSize);
    }

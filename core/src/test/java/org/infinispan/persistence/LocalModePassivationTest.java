@@ -1,5 +1,15 @@
 package org.infinispan.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -8,8 +18,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -20,16 +30,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test if keys are properly passivated and reloaded in local mode (to ensure fix for ISPN-2712 did no break local mode).
@@ -66,9 +66,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup())
             .eviction().maxEntries(150).strategy(EvictionStrategy.LIRS)
-            .locking().lockAcquisitionTimeout(20000)
-            .concurrencyLevel(5000)
-            .useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
+            .locking().useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .dataContainer().storeAsBinary()
             .persistence().passivation(passivationEnabled).addSingleFileStore().location(cacheStoreDir.getAbsolutePath())
             .fetchPersistentState(true)

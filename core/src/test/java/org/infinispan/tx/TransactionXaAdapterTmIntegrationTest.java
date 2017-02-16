@@ -1,15 +1,21 @@
 package org.infinispan.tx;
 
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.UUID;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.tm.DummyBaseTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -21,13 +27,6 @@ import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.util.UUID;
-
-import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -46,7 +45,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Cache mockCache = mock(Cache.class);
       Configuration configuration = new ConfigurationBuilder().build();
       XaTransactionTable txTable = new XaTransactionTable();
-      txTable.initialize(null, configuration, null, null, null,
+      txTable.initialize(null, configuration, null, null,
                          null, null, null, null, mockCache, null, null, null, null);
       txTable.start();
       txTable.startXidMapping();
@@ -54,7 +53,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       gtf.init(false, false, true, false);
       GlobalTransaction globalTransaction = gtf.newGlobalTransaction(null, false);
       DummyBaseTransactionManager tm = new DummyBaseTransactionManager();
-      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, AnyEquivalence.getInstance(), 0);
+      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, 0);
       xid = new DummyXid(uuid);
 
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();
@@ -62,8 +61,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       InterceptorChain invoker = mock(InterceptorChain.class);
       txCoordinator = new TransactionCoordinator();
       txCoordinator.init(commandsFactory, icf, invoker, txTable, null, configuration);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
-                                           new ClusteringDependentLogic.InvalidationLogic(), configuration, "", null);
+      xaAdapter = new TransactionXaAdapter(localTx, txTable);
 
       xaAdapter.start(xid, 0);
    }

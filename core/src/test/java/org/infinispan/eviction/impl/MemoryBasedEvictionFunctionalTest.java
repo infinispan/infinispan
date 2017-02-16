@@ -1,5 +1,12 @@
 package org.infinispan.eviction.impl;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -7,15 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "eviction.MemoryBasedEvictionFunctionalTest")
 public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
@@ -58,13 +56,17 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       // Note that there is overhead for the map itself, so we will not get exactly the same amount
       // More than likely there will be a few hundred byte overhead
       for (long i = 0; i < numberInserted; i++) {
-         Byte[] key = new Byte[keyValueByteSize];
+         byte[] key = new byte[keyValueByteSize];
          Byte[] value = new Byte[keyValueByteSize];
          fillByteArray(random, key);
          fillByteArray(random, value);
          cache.put(key, value);
       }
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
+   }
+
+   private void fillByteArray(Random random, byte[] bytes) {
+      random.nextBytes(bytes);
    }
 
    private void fillByteArray(Random random, Byte[] bytes) {

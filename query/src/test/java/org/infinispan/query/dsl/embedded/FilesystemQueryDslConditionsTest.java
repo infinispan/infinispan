@@ -1,5 +1,9 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -7,10 +11,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.io.File;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Verifies the Query DSL functionality for Filesystem directory_provider.

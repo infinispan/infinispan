@@ -1,23 +1,25 @@
 package org.infinispan.lock.singlelock;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Main owner changes due to state transfer in a distributed cluster using optimistic locking.
@@ -35,7 +37,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000l);
+      dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();
@@ -99,7 +101,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
          tm(nodeThatPuts).resume(tx);
          dummyTm(nodeThatPuts).getTransaction().runCommit(false);
       }
-      
+
       for (Object key : key2Tx.keySet()) {
          Object value = getValue(key);//make sure that data from the container, just to make sure all replicas are correctly set
          assertEquals(key, value);

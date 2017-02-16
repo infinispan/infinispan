@@ -1,16 +1,16 @@
 package org.infinispan.profiling;
 
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Random;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Random;
 
 @Test(groups = "profiling", testName = "profiling.MemConsumptionTest")
 public class MemConsumptionTest extends AbstractInfinispanTest {

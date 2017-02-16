@@ -1,5 +1,7 @@
 package org.infinispan.server.endpoint.deployments;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.endpoint.Constants;
 import org.infinispan.server.endpoint.subsystem.ExtensionManagerService;
@@ -12,8 +14,6 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public class MarshallerExtensionProcessor extends AbstractServerExtensionProcessor<Marshaller> {
 

@@ -1,5 +1,26 @@
 package org.infinispan.spring.support.remote;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Properties;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -10,16 +31,6 @@ import org.infinispan.spring.AssertionUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Properties;
-
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -109,7 +120,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
                       + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
                       + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-              new RemoteCacheManager().getProperties(), remoteCacheManager.getProperties());
+              new RemoteCacheManager().getConfiguration().properties(), remoteCacheManager.getConfiguration().properties());
       objectUnderTest.destroy();
    }
 
@@ -169,7 +180,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
                       + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationProperties(props). "
                       + "However, those two are not equal.", configurationProperties,
-              remoteCacheManager.getProperties());
+              remoteCacheManager.getConfiguration().properties());
       objectUnderTest.destroy();
    }
 
@@ -207,7 +218,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
                       + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
                       + "However, those two are not equal.",
               loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION),
-              remoteCacheManager.getProperties());
+              remoteCacheManager.getConfiguration().properties());
       objectUnderTest.destroy();
    }
 
@@ -254,7 +265,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       assertEquals("setTransportFactory(" + expectedTransportFactory
                          + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedTransportFactory, remoteCacheManager.getProperties().get(TRANSPORT_FACTORY));
+                   expectedTransportFactory, remoteCacheManager.getConfiguration().properties().get(TRANSPORT_FACTORY));
       objectUnderTest.destroy();
    }
 
@@ -278,7 +289,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       assertEquals("setServerList(" + expectedServerList
                          + ") should have overridden property 'serverList'. However, it didn't.",
-                   expectedServerListString, remoteCacheManager.getProperties().get(SERVER_LIST));
+                   expectedServerListString, remoteCacheManager.getConfiguration().properties().get(SERVER_LIST));
       objectUnderTest.destroy();
    }
 
@@ -301,7 +312,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       assertEquals("setMarshaller(" + expectedMarshaller
                          + ") should have overridden property 'marshaller'. However, it didn't.",
-                   expectedMarshaller, remoteCacheManager.getProperties().get(MARSHALLER));
+                   expectedMarshaller, remoteCacheManager.getConfiguration().properties().get(MARSHALLER));
       objectUnderTest.destroy();
    }
 
@@ -326,7 +337,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setAsyncExecutorFactory(" + expectedAsyncExecutorFactory
                          + ") should have overridden property 'asyncExecutorFactory'. However, it didn't.",
                    expectedAsyncExecutorFactory,
-                   remoteCacheManager.getProperties().get(ASYNC_EXECUTOR_FACTORY));
+                   remoteCacheManager.getConfiguration().properties().get(ASYNC_EXECUTOR_FACTORY));
       objectUnderTest.destroy();
    }
 
@@ -349,7 +360,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setTcpNoDelay(" + expectedTcpNoDelay
                          + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
                    String.valueOf(expectedTcpNoDelay),
-                   remoteCacheManager.getProperties().get(TCP_NO_DELAY));
+                   remoteCacheManager.getConfiguration().properties().get(TCP_NO_DELAY));
       objectUnderTest.destroy();
    }
 
@@ -371,7 +382,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setTcpKeepAlive(" + expectedTcpKeepAlive
                          + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
                    String.valueOf(expectedTcpKeepAlive),
-                   remoteCacheManager.getProperties().get(TCP_KEEP_ALIVE));
+                   remoteCacheManager.getConfiguration().properties().get(TCP_KEEP_ALIVE));
       objectUnderTest.destroy();
    }
 
@@ -398,7 +409,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
                   + expectedRequestBalancingStrategy
                   + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.",
             expectedRequestBalancingStrategy,
-            remoteCacheManager.getProperties().get(REQUEST_BALANCING_STRATEGY));
+            remoteCacheManager.getConfiguration().properties().get(REQUEST_BALANCING_STRATEGY));
       objectUnderTest.destroy();
    }
 
@@ -421,7 +432,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setKeySizeEstimate(" + expectedKeySizeEstimate
                          + ") should have overridden property 'keySizeEstimate'. However, it didn't.",
                    String.valueOf(expectedKeySizeEstimate),
-                   remoteCacheManager.getProperties().get(KEY_SIZE_ESTIMATE));
+                   remoteCacheManager.getConfiguration().properties().get(KEY_SIZE_ESTIMATE));
       objectUnderTest.destroy();
    }
 
@@ -444,7 +455,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setValueSizeEstimate(" + expectedValueSizeEstimate
                          + ") should have overridden property 'valueSizeEstimate'. However, it didn't.",
                    String.valueOf(expectedValueSizeEstimate),
-                   remoteCacheManager.getProperties().get(VALUE_SIZE_ESTIMATE));
+                   remoteCacheManager.getConfiguration().properties().get(VALUE_SIZE_ESTIMATE));
       objectUnderTest.destroy();
    }
 
@@ -467,7 +478,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       assertEquals("setForceReturnValue(" + expectedForceReturnValues
                          + ") should have overridden property 'forceReturnValue'. However, it didn't.",
                    String.valueOf(expectedForceReturnValues),
-                   remoteCacheManager.getProperties().get(FORCE_RETURN_VALUES));
+                   remoteCacheManager.getConfiguration().properties().get(FORCE_RETURN_VALUES));
       objectUnderTest.destroy();
    }
 }

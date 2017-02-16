@@ -1,22 +1,23 @@
 package org.infinispan.stream;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.filter.Converter;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.Test;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.filter.Converter;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
+import org.testng.annotations.Test;
 
 /**
  * Base class used solely for setting up cluster configuration for use with stream iterators
@@ -35,11 +36,11 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       this.tx = tx;
       cacheMode = mode;
    }
-   
+
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       // Do nothing to config by default, used by people who extend this
    }
-   
+
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
@@ -56,6 +57,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          enhanceConfiguration(builderUsed);
          EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builderUsed);
          cacheManagers.add(cm);
+         cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
    }
 
@@ -72,8 +74,8 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return stream.collect(CacheCollectors.serializableCollector(
               () -> Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
    }
-   
-   protected static class StringTruncator implements Converter<Object, String, String>, Serializable {
+
+   protected static class StringTruncator implements Converter<Object, String, String>, Serializable, ExternalPojo {
       private final int beginning;
       private final int length;
 

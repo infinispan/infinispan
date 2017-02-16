@@ -1,24 +1,24 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.infinispan.test.TestingUtil.marshaller;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * DistSyncStoreSharedTest.
@@ -30,8 +30,6 @@ import static org.testng.AssertJUnit.assertEquals;
 public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
 
    public DistSyncStoreSharedTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = true;
    }
@@ -103,12 +101,6 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       if (testRetVals) assert retval == null;
       assertOnAllCachesAndOwnership(key, value);
    }
-
-   private void assertNumberOfInvocations(CacheLoader cs, String method, int expected) {
-      int actual = ((DummyInMemoryStore) cs).stats().get(method);
-      assert expected == actual : "Expected " + expected + " but was " + actual;
-   }
-
 
    public void testPutAll() throws Exception {
       log.trace("Here it begins");
@@ -214,7 +206,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
 
       // Simulate c3 was by itself and someone wrote a value that is now stale
       CacheWriter store = (CacheWriter) TestingUtil.getFirstLoader(c3);
-      store.write(new MarshalledEntryImpl(k, v2, null, marshaller(c3)));
+      store.write(new MarshalledEntryImpl(k, v2, null, extractGlobalMarshaller(c3.getCacheManager())));
 
       c1.put(k, v1);
 

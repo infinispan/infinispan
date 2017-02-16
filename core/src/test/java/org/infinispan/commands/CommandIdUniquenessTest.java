@@ -1,8 +1,6 @@
 package org.infinispan.commands;
 
-import org.infinispan.commons.util.ClassFinder;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -10,7 +8,9 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import org.infinispan.commons.util.ClassFinder;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "commands.CommandIdUniquenessTest")
 public class CommandIdUniquenessTest extends AbstractInfinispanTest {

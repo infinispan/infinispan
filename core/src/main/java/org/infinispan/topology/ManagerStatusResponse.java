@@ -1,8 +1,5 @@
 package org.infinispan.topology;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -10,6 +7,9 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.marshall.core.Ids;
 
 /**
 * @author Dan Berindei

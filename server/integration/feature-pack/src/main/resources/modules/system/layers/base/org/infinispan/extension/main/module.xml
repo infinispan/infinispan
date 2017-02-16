@@ -14,9 +14,9 @@
       <module name="javax.transaction.api"/>
       <module name="org.infinispan" services="import"/>
       <module name="org.infinispan.persistence.jdbc"/>
-      <module name="org.infinispan.persistence.leveldb"/>
       <module name="org.infinispan.persistence.remote" services="import"/>
       <module name="org.infinispan.persistence.rest" services="import"/>
+      <module name="org.infinispan.persistence.rocksdb" services="import"/>
       <module name="org.infinispan.hotrod.client" optional="true"/>
       <module name="org.infinispan.cli.interpreter" services="import"/>
       <module name="org.infinispan.server" services="import"/>
@@ -34,7 +34,9 @@
       <module name="org.infinispan.tasks.api" services="import"/>
       <module name="org.jgroups"/>
       <module name="org.jgroups.extension"/>
-      
+
+      <module name="org.apache.commons.io"/>
+
       <module name="org.jboss.as.controller"/>
       <module name="org.jboss.as.ee"/>
       <module name="org.jboss.as.jmx"/>

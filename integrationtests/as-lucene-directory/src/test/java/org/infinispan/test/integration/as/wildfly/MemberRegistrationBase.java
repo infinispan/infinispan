@@ -1,17 +1,21 @@
 package org.infinispan.test.integration.as.wildfly;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import javax.ejb.EJBTransactionRolledbackException;
+import javax.inject.Inject;
+
 import org.apache.lucene.document.Document;
 import org.infinispan.test.integration.as.wildfly.controller.MemberRegistration;
 import org.infinispan.test.integration.as.wildfly.model.Member;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.junit.InSequence;
 import org.junit.Test;
-
-import javax.ejb.EJBTransactionRolledbackException;
-import javax.inject.Inject;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 @SuppressWarnings("unused")
 class MemberRegistrationBase {

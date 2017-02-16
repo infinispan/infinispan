@@ -33,8 +33,15 @@ import org.jboss.dmr.ModelType;
 public class RestConnectorResource extends CommonConnectorResource {
    public static final PathElement REST_CONNECTOR_PATH = PathElement.pathElement(ModelKeys.REST_CONNECTOR);
 
+   static final SimpleAttributeDefinition NAME =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.NAME, ModelType.STRING, true)
+                   .setAllowExpression(true)
+                   .setXmlName(ModelKeys.NAME)
+                   .setRestartAllServices()
+                   .build();
+
    static final SimpleAttributeDefinition SOCKET_BINDING =
-      new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, false)
+      new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, true)
          .setAllowExpression(true)
          .setXmlName(ModelKeys.SOCKET_BINDING)
          .setRestartAllServices()
@@ -99,6 +106,11 @@ public class RestConnectorResource extends CommonConnectorResource {
 
    public RestConnectorResource(boolean isRuntimeRegistration) {
       super(REST_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.REST_CONNECTOR), RestSubsystemAdd.INSTANCE, RestSubsystemRemove.INSTANCE, isRuntimeRegistration);
+   }
+
+   @Override
+   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      resourceRegistration.registerSubModel(new EncryptionResource());
    }
 
    @Override

@@ -1,14 +1,16 @@
 package org.infinispan.cdi.embedded;
 
-import org.infinispan.Cache;
-import org.infinispan.cdi.common.util.CDIHelper;
-import org.infinispan.distexec.spi.DistributedTaskLifecycle;
+import java.util.concurrent.Callable;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
-import java.util.concurrent.Callable;
+
+import org.infinispan.Cache;
+import org.infinispan.cdi.common.util.CDIHelper;
+import org.infinispan.distexec.RunnableAdapter;
+import org.infinispan.distexec.spi.DistributedTaskLifecycle;
 
 public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecycle {
    private final DistributedTaskLifecycle delegate;
@@ -46,12 +48,10 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
          if (bm == null)
             return;
          ContextInputCache.set(inputDataCache);
-         Class<Callable<T>> clazz = (Class<Callable<T>>) task.getClass();
-         AnnotatedType<Callable<T>> type = bm.createAnnotatedType(clazz);
-         InjectionTarget<Callable<T>> it = bm.createInjectionTarget(type);
-         CreationalContext<Callable<T>> ctx = bm.createCreationalContext(null);
-         it.inject(task, ctx);
-         it.postConstruct(task);
+         preInject(bm, task);
+         if (task instanceof RunnableAdapter) {
+            preInject(bm, ((RunnableAdapter) task).getTask());
+         }
       }
 
       @Override
@@ -60,14 +60,30 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
             BeanManager bm = CDIHelper.getBeanManager();
             if (bm == null)
                return;
-            Class<Callable<T>> clazz = (Class<Callable<T>>) task.getClass();
-            AnnotatedType<Callable<T>> type = bm.createAnnotatedType(clazz);
-            InjectionTarget<Callable<T>> it = bm.createInjectionTarget(type);
-            it.preDestroy(task);
-            it.dispose(task);
+            postInject(bm, task);
+            if (task instanceof RunnableAdapter) {
+               postInject(bm, ((RunnableAdapter) task).getTask());
+            }
          } finally {
             ContextInputCache.clean();
          }
+      }
+
+      private <T> void preInject(BeanManager bm, T task) {
+         Class<T> clazz = (Class<T>) task.getClass();
+         AnnotatedType<T> type = bm.createAnnotatedType(clazz);
+         InjectionTarget<T> it = bm.createInjectionTarget(type);
+         CreationalContext<T> ctx = bm.createCreationalContext(null);
+         it.inject(task, ctx);
+         it.postConstruct(task);
+      }
+
+      private <T> void postInject(BeanManager bm, T task) {
+         Class<T> clazz = (Class<T>) task.getClass();
+         AnnotatedType<T> type = bm.createAnnotatedType(clazz);
+         InjectionTarget<T> it = bm.createInjectionTarget(type);
+         it.preDestroy(task);
+         it.dispose(task);
       }
    }
 }

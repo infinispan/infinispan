@@ -4,8 +4,6 @@ package org.infinispan.query.dsl;
  * Factory for query DSL objects. Query construction starts here, usually by invoking the {@link #from} method which
  * returns a {@link QueryBuilder} capable of constructing {@link Query} objects. The other methods are use for creating
  * sub-conditions.
- * <p>
- * Type parameter Q will be removed in Infinispan 9.0
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -13,12 +11,19 @@ package org.infinispan.query.dsl;
 public interface QueryFactory {
 
    /**
+    * Creates a Query based on an Ickle query string.
+    *
+    * @return a query
+    */
+   Query create(String queryString);
+
+   /**
     * Creates a QueryBuilder for the given entity type.
     *
     * @param entityType the Class of the entity
     * @return a builder capable of creating queries for the specified entity type
     */
-   QueryBuilder from(Class entityType);
+   QueryBuilder from(Class<?> entityType);
 
    /**
     * Creates a QueryBuilder for the given entity type.
@@ -28,6 +33,12 @@ public interface QueryFactory {
     */
    QueryBuilder from(String entityType);
 
+   /**
+    * Creates a condition on the given attribute path that is to be completed later by using it as a sub-condition.
+    *
+    * @param expression a path Expression
+    * @return the incomplete sub-condition
+    */
    FilterConditionEndContext having(Expression expression);
 
    /**

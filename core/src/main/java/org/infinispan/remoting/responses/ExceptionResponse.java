@@ -33,6 +33,11 @@ public class ExceptionResponse extends InvalidResponse {
       this.exception = exception;
    }
 
+   @Override
+   public String toString() {
+      return "ExceptionResponse(" + exception + ")";
+   }
+
    public static class Externalizer extends AbstractExternalizer<ExceptionResponse> {
       @Override
       public void writeObject(ObjectOutput output, ExceptionResponse response) throws IOException {

@@ -1,11 +1,13 @@
 package org.infinispan.client.hotrod;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.testng.annotations.Test;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tester for ConsistentHashFactory.

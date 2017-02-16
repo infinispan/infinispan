@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -43,7 +44,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -67,6 +67,7 @@ import net.jcip.annotations.ThreadSafe;
  * @author Tristan Tarrant
  * @since 6.0
  */
+@Store(shared = true)
 @ThreadSafe
 @ConfiguredBy(RestStoreConfiguration.class)
 public class RestStore implements AdvancedLoadWriteStore {
@@ -202,13 +203,13 @@ public class RestStore implements AdvancedLoadWriteStore {
    private class HttpResponseHandler extends SimpleChannelInboundHandler<HttpResponse> {
 
       private FullHttpResponse response;
-      
+
       private boolean retainResponse;
-      
+
       public HttpResponseHandler() {
          this(false);
       }
-      
+
       public HttpResponseHandler(boolean retainResponse) {
          this.retainResponse = retainResponse;
       }

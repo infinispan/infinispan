@@ -1,44 +1,139 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.lucene.document.Field;
+import org.hibernate.search.annotations.Store;
+import org.hibernate.search.bridge.LuceneOptions;
+import org.hibernate.search.engine.impl.LuceneOptionsImpl;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.query.remote.impl.QueryFacadeImpl;
+import org.infinispan.query.remote.impl.logging.Log;
+import org.jboss.logging.Logger;
 
-import java.util.HashSet;
-import java.util.Set;
+//todo [anistor] @IndexedField should become a deprecated alias for @Field
+//todo [anistor] Should be able to have multiple mappings per field. Ie. have a @Fields annotation and should also implement support for plural annotations (java 8) in protostream
 
 /**
+ * {@link AnnotationMetadataCreator} for {@code @Indexed} ProtoStream annotation placed at message type level. Also
+ * handles {@code @Field} and {@code @Analyzer} annotations.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class IndexingMetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
+final class IndexingMetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
+
+   private static final Log log = LogFactory.getLog(IndexingMetadataCreator.class, Log.class);
 
    // Recognized annotations:
-   // @Indexed (single boolean argument, default true)
-   // @IndexedField (index = true/false, default true, store = true/false, default true)
+   // @Indexed (default 'value' boolean argument; defaults to true; the 'value' argument is deprecated, 'index' optional string attribute; defaults to empty string)
+   // @Analyzer (definition = "<definition name>")
+   // @IndexedField (index = true/false; defaults to true, store = true/false; defaults to true) - deprecated annotation, prefer @Field instead
+   // @Field (name optional string, index = true/false, defaults to true, analyze = true/false, defaults to true, store = true/false, defaults to false, analyzer = @Analyzer(definition = "<definition name>"))
    @Override
    public IndexingMetadata create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
       AnnotationElement.Value indexedValue = annotation.getDefaultAttributeValue();
       if (Boolean.TRUE.equals(indexedValue.getValue())) {
-         Set<Integer> indexedFields = new HashSet<Integer>();
-         Set<Integer> storedFields = new HashSet<Integer>();
-         for (FieldDescriptor fd : descriptor.getFields()) {
-            AnnotationElement.Annotation indexedFieldAnnotation = fd.getAnnotations().get(IndexingMetadata.INDEXED_FIELD_ANNOTATION);
-            if (indexedFieldAnnotation != null) {
-               AnnotationElement.Value indexAttribute = indexedFieldAnnotation.getAttributeValue(IndexingMetadata.INDEX_ATTRIBUTE);
-               if (Boolean.TRUE.equals(indexAttribute.getValue())) {
-                  indexedFields.add(fd.getNumber());
-               }
-               AnnotationElement.Value storeAttribute = indexedFieldAnnotation.getAttributeValue(IndexingMetadata.STORE_ATTRIBUTE);
-               if (Boolean.TRUE.equals(storeAttribute.getValue())) {
-                  storedFields.add(fd.getNumber());
-               }
+         String indexName = null;
+         String v1 = (String) annotation.getAttributeValue(IndexingMetadata.INDEXED_INDEX_ATTRIBUTE).getValue();
+         if (!v1.isEmpty()) {
+            indexName = v1;
+         }
+
+         String entityAnalyzer = null;
+         AnnotationElement.Annotation entityAnalyzerAnnotation = descriptor.getAnnotations().get(IndexingMetadata.ANALYZER_ANNOTATION);
+         if (entityAnalyzerAnnotation != null) {
+            String v = (String) entityAnalyzerAnnotation.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+            if (!v.isEmpty()) {
+               entityAnalyzer = v;
             }
          }
-         return new IndexingMetadata(true, indexedFields, storedFields);
+
+         Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
+         for (FieldDescriptor fd : descriptor.getFields()) {
+            String fieldLevelAnalyzer = null;
+            AnnotationElement.Annotation fieldAnalyzerAnnotation = descriptor.getAnnotations().get(IndexingMetadata.ANALYZER_ANNOTATION);
+            if (fieldAnalyzerAnnotation != null) {
+               String v = (String) fieldAnalyzerAnnotation.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+               if (!v.isEmpty()) {
+                  fieldLevelAnalyzer = v;
+               }
+            }
+
+            AnnotationElement.Annotation fieldAnnotation = fd.getAnnotations().get(IndexingMetadata.FIELD_ANNOTATION);
+            if (fieldAnnotation != null) {
+               String fieldName = fd.getName();
+               String v = (String) fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_NAME_ATTRIBUTE).getValue();
+               if (!v.isEmpty()) {
+                  fieldName = v;
+               }
+
+               AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_ATTRIBUTE);
+               boolean isIndexed = IndexingMetadata.INDEX_YES.equals(indexAttribute.getValue());
+
+               AnnotationElement.Value boostAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_BOOST_ATTRIBUTE);
+               float fieldLevelBoost = (Float) boostAttribute.getValue();
+
+               AnnotationElement.Value analyzeAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZE_ATTRIBUTE);
+               boolean isAnalyzed = IndexingMetadata.ANALYZE_YES.equals(analyzeAttribute.getValue());
+
+               AnnotationElement.Value storeAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_STORE_ATTRIBUTE);
+               boolean isStored = IndexingMetadata.STORE_YES.equals(storeAttribute.getValue());
+
+               AnnotationElement.Value indexNullAsAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_NULL_AS_ATTRIBUTE);
+               String indexNullAs = (String) indexNullAsAttribute.getValue();
+
+               AnnotationElement.Annotation fieldLevelAnalyzerAnnotation2 = (AnnotationElement.Annotation) fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZER_ATTRIBUTE).getValue();
+               String fieldLevelAnalyzer2 = (String) fieldLevelAnalyzerAnnotation2.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+               if (!fieldLevelAnalyzer2.isEmpty()) {
+                  fieldLevelAnalyzer = fieldLevelAnalyzer2;
+               }
+
+               //TODO [anistor] the analyzer/fieldLevelAnalyzer is still not used
+               //TODO [anistor] indexNullAs is probably not correctly implemented for numbers
+               //TODO [anistor] what is the 'inherited boost'?
+               LuceneOptions luceneOptions = new LuceneOptionsImpl(Field.Index.toIndex(isIndexed, isAnalyzed),
+                     Field.TermVector.NO,
+                     isStored ? Store.YES : Store.NO,
+                     indexNullAs,
+                     fieldLevelBoost, 1.0f);
+
+               fields.put(fieldName, new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, fieldLevelAnalyzer, indexNullAs, luceneOptions));
+            }
+
+            // process the deprecated @IndexedField annotation if present
+            AnnotationElement.Annotation indexedFieldAnnotation = fd.getAnnotations().get(IndexingMetadata.INDEXED_FIELD_ANNOTATION);
+            if (indexedFieldAnnotation != null) {
+               if (fieldAnnotation != null) {
+                  throw new IllegalStateException("Annotation '" + IndexingMetadata.INDEXED_FIELD_ANNOTATION +
+                        "' cannot be used together with '" + IndexingMetadata.FIELD_ANNOTATION + "' on field " + fd.getFullName());
+               }
+               if (log.isEnabled(Logger.Level.WARN)) {
+                  log.warnf("Detected usage of deprecated annotation '%s' on field %s", IndexingMetadata.INDEXED_FIELD_ANNOTATION, fd.getFullName());
+               }
+
+               AnnotationElement.Value indexAttribute = indexedFieldAnnotation.getAttributeValue(IndexingMetadata.INDEXED_FIELD_INDEX_ATTRIBUTE);
+               boolean isIndexed = Boolean.TRUE.equals(indexAttribute.getValue());
+               AnnotationElement.Value storeAttribute = indexedFieldAnnotation.getAttributeValue(IndexingMetadata.INDEXED_FIELD_STORE_ATTRIBUTE);
+               boolean isStored = Boolean.TRUE.equals(storeAttribute.getValue());
+               String indexNullAs = QueryFacadeImpl.NULL_TOKEN;
+               LuceneOptions luceneOptions = new LuceneOptionsImpl(isIndexed ? Field.Index.NOT_ANALYZED : Field.Index.NO,
+                     Field.TermVector.NO,
+                     isStored ? Store.YES : Store.NO,
+                     indexNullAs,
+                     1.0f, 1.0f);
+
+               fields.put(fd.getName(), new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, null, indexNullAs, luceneOptions));
+            }
+         }
+         return new IndexingMetadata(true, indexName, entityAnalyzer, fields);
       } else {
-         return new IndexingMetadata(false, null, null);
+         return IndexingMetadata.NO_INDEXING;
       }
    }
 }

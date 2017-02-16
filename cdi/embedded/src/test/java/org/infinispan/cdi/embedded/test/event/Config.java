@@ -1,9 +1,9 @@
 package org.infinispan.cdi.embedded.test.event;
 
+import javax.enterprise.inject.Produces;
+
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
-
-import javax.enterprise.inject.Produces;
 
 /**
  * Configures two default caches - we will use both caches to check that events for one don't spill over to the other.

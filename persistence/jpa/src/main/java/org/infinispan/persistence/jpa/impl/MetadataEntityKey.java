@@ -3,17 +3,17 @@ package org.infinispan.persistence.jpa.impl;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.persistence.Embeddable;
 
-import org.infinispan.commons.util.Base64;
 import org.infinispan.persistence.jpa.JpaStoreException;
 
 /**
- * 
+ *
  * Embedded entity which serves as primary key for metadata. Bytes representing the key are hashed
  * via SHA-256.
- * 
+ *
  * @author vjuranek
  */
 @Embeddable
@@ -30,7 +30,7 @@ public class MetadataEntityKey implements Serializable {
    public MetadataEntityKey(byte[] keyBytes) {
       keySha = getKeyBytesSha(keyBytes);
    }
-   
+
    public String getKeySha() {
       return keySha;
    }
@@ -50,13 +50,13 @@ public class MetadataEntityKey implements Serializable {
    public int hashCode() {
       return keySha.hashCode();
    }
-   
+
    public static String getKeyBytesSha(byte[] keyBytes) {
       String keyBytesSha;
       try {
          MessageDigest digest = MessageDigest.getInstance(DIGEST_ALG);
          byte[] sha = digest.digest(keyBytes);
-         keyBytesSha = Base64.encodeBytes(sha);
+         keyBytesSha = Base64.getEncoder().encodeToString(sha);
       } catch(NoSuchAlgorithmException e) {
          throw new JpaStoreException("Failed to create SHA hash of metadata key", e);
       }

@@ -1,17 +1,17 @@
 package org.infinispan.affinity.impl;
 
-import org.junit.Assert;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -56,7 +56,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       caches.get(2).getCacheManager().stop();
       caches.remove(2);
       waitForClusterToResize();
-      Assert.assertEquals(2, caches.size());
+      assertEquals(2, caches.size());
       assertUnaffected();
    }
 
@@ -64,9 +64,9 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       log.info("**** here it starts");
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
-      Assert.assertEquals(1, caches.size());
+      assertEquals(1, caches.size());
       TestingUtil.blockUntilViewsReceived(10000, false, caches.toArray(new Cache[0]));
-      Assert.assertEquals(1, topology().size());
+      assertEquals(1, topology().size());
 
       eventually(new Condition() {
          @Override

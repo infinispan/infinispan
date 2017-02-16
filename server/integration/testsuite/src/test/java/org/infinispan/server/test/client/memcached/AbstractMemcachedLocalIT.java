@@ -1,5 +1,13 @@
 package org.infinispan.server.test.client.memcached;
 
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -15,14 +23,6 @@ import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.infinispan.server.test.util.ITestUtils.eventually;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for Memcached endpoint. Subclasses must provide a way to get the list of remote

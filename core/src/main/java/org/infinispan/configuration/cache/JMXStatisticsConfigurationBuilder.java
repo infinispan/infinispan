@@ -1,5 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.AVAILABLE;
+import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ENABLED;
+
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
@@ -8,9 +11,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.AVAILABLE;
-import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ENABLED;
 /**
  * Determines whether statistics are gather and reported.
  *

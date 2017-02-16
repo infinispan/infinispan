@@ -25,7 +25,7 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 7.0
  */
 public class ApacheDsLdap {
-   
+
    public static final int LDAP_PORT = 10389;
    public static final String LDAP_INIT_FILE = "ldif/ispn-test.ldif";
 
@@ -37,17 +37,17 @@ public class ApacheDsLdap {
       createDs();
       createLdap();
    }
-  
+
    public void start() throws Exception {
       ldapServer.start();
    }
-   
+
    public void stop() throws Exception {
       ldapServer.stop();
       directoryService.shutdown();
       FileUtils.deleteDirectory(directoryService.getInstanceLayout().getInstanceDirectory());
    }
-   
+
    @CreateDS(
          name = "InfinispanDS",
          partitions = {
@@ -71,13 +71,13 @@ public class ApacheDsLdap {
    public void createDs() throws Exception {
       directoryService = DSAnnotationProcessor.getDirectoryService();
    }
-   
+
    @CreateLdapServer(transports = { @CreateTransport( protocol = "LDAP",  port = LDAP_PORT) })
    public void createLdap() throws Exception {
       final String initFile = System.getProperty("ldap.init.file", LDAP_INIT_FILE);
       final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile));
       final SchemaManager schemaManager = directoryService.getSchemaManager();
-     
+
       try {
          for (LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(ldifContent))) {
                   directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
@@ -86,7 +86,7 @@ public class ApacheDsLdap {
          log.error("Error adding ldif entries", e);
          throw e;
       }
-      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);    
+      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
       ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
    }
 

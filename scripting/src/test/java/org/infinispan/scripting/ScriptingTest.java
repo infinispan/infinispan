@@ -1,10 +1,9 @@
 package org.infinispan.scripting;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.tasks.TaskContext;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.Test;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +12,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
-import static org.junit.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.tasks.TaskContext;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.ScriptingTest")
 @CleanupAfterMethod
@@ -31,6 +32,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
+      cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
    }
 
    @Override
@@ -116,17 +118,17 @@ public class ScriptingTest extends AbstractScriptingTest {
       String value = "javaValue";
       String key = "processValue";
 
-      cacheManager.getCache("test_cache").put(key, value);
+      cacheManager.getCache(CACHE_NAME).put(key, value);
 
       CompletableFuture exec = scriptingManager.runScript("testExecWithoutProp.js");
       exec.get(1000, TimeUnit.MILLISECONDS);
 
-      assertEquals(value + ":additionFromJavascript", cacheManager.getCache("test_cache").get(key));
+      assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
    }
 
    public void testScriptCallFromJavascript() throws Exception {
       String result = (String) scriptingManager.runScript("testInnerScriptCall.js",
-              new TaskContext().cache(cacheManager.getCache("test_cache")).addParameter("a", "ahoj")).get();
+              new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")).get();
 
       assertEquals("script1:additionFromJavascript", result);
       assertEquals("ahoj", cacheManager.getCache(CACHE_NAME).get("a"));
@@ -212,7 +214,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       scriptingManager.addScript("wordCountStream.js", script);
       Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache())).get();
-      assertEquals(3209, result.size());
+      assertEquals(3202, result.size());
       assertEquals(Long.valueOf(287), result.get("macbeth"));
    }
 }

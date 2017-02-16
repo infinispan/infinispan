@@ -1,6 +1,21 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.TransactionConfiguration.*;
+import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.EAGER_LOCKING_SINGLE_NODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
+import static org.infinispan.configuration.cache.TransactionConfiguration.SYNC_COMMIT_PHASE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.SYNC_ROLLBACK_PHASE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_PROTOCOL;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_EAGER_LOCKING;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.TimeUnit;

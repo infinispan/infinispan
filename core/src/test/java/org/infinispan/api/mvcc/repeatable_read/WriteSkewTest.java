@@ -1,5 +1,28 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.atomic.AtomicMapLookup;
@@ -16,28 +39,9 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -47,14 +51,14 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected EmbeddedCacheManager cacheManager;
    protected volatile Cache<String, String> cache;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .locking()
-            .lockAcquisitionTimeout(3000)
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ);
       // The default cache is NOT write skew enabled.
       cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
@@ -62,7 +66,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       cacheManager = null;
@@ -189,6 +193,19 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       assertTrue("k1 is expected to be in cache.", cache.containsKey("k1"));
       assertEquals("Wrong value for key k1.", "v2", cache.get("k1"));
+   }
+
+   /** Checks that multiple modifications compare the initial value and the write skew does not fire */
+   public void testNoWriteSkewWithMultipleModifications() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      cache.put("k1", "init");
+      tm.begin();
+      assertEquals("init", cache.get("k1"));
+      cache.put("k1", "v2");
+      cache.put("k2", "v3");
+      tm.commit();
    }
 
    /**

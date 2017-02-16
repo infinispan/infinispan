@@ -6,8 +6,8 @@ var Arrays = Java.type("org.infinispan.scripting.utils.JSArrays")
 var CacheCollectors = Java.type("org.infinispan.stream.CacheCollectors");
 var HashMap = Java.type("java.util.HashMap");
 var SerializableFunction = Java.extend(Function, Serializable);
-var SerializableSupplier = Java.extend(Java.type("org.infinispan.stream.SerializableSupplier"))
-var SerializableTriConsumer = Java.extend(Java.type("org.infinispan.util.TriConsumer"))
+var SerializableSupplier = Java.extend(Java.type("org.infinispan.util.function.SerializableSupplier"))
+var SerializableTriConsumer = Java.extend(Java.type("org.infinispan.util.function.TriConsumer"))
 
 var e = new SerializableFunction( {
    apply: function(object) {

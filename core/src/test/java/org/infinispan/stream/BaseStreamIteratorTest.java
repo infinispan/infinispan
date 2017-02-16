@@ -1,21 +1,8 @@
 package org.infinispan.stream;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.CompositeKeyValueFilterConverter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.filter.KeyValueFilterConverter;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,9 +13,23 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.Cache;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.filter.CacheFilters;
+import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.filter.CompositeKeyValueFilterConverter;
+import org.infinispan.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.testng.annotations.Test;
 
 /**
  * Base class for stream iterator tests
@@ -152,7 +153,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -175,7 +176,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -198,7 +199,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -221,7 +222,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -242,7 +243,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -267,7 +268,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
          @Override
          public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
             return super.visitRemoveCommand(ctx, command);
          }
       }, 0);
@@ -283,4 +284,3 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       assertEquals(0, cache.size());
    }
 }
-

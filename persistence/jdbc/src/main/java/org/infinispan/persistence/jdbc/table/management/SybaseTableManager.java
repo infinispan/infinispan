@@ -36,6 +36,12 @@ class SybaseTableManager extends AbstractTableManager {
    }
 
    @Override
+   public String getSelectMultipleRowSql(int numberOfParams) {
+      String selectCriteria = config.idColumnName() + " = convert(" + config.idColumnType() + ",?)";
+      return getSelectMultipleRowSql(numberOfParams, selectCriteria);
+   }
+
+   @Override
    public String getSelectIdRowSql() {
       if (selectIdRowSql == null) {
          selectIdRowSql = String.format("SELECT %s FROM %s WHERE %s = convert(%s,?)",

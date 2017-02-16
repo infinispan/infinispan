@@ -1,32 +1,7 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
-import org.infinispan.interceptors.impl.CacheWriterInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
-import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -38,8 +13,34 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * Tests manual eviction with concurrent read and/or write operation. This test has passivation disabled and the
@@ -333,6 +334,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       assertInMemory(key1, "v3");
    }
 
+   @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
       builder.persistence().passivation(false).addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(storeName + storeNamePrefix.getAndIncrement());
@@ -384,7 +386,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       return controlledDataContainer;
    }
 
-   public static class SameHashCodeKey implements Serializable {
+   public static class SameHashCodeKey implements Serializable, ExternalPojo {
 
       private final String name;
       private final int hashCode;
@@ -482,11 +484,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void purgeExpired() {
-         delegate.purgeExpired();
-      }
-
-      @Override
       public void evict(K key) {
          run(beforeEvict);
          delegate.evict(key);
@@ -508,7 +505,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry< K, V>> action)
+      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action)
             throws InterruptedException {
          throw new UnsupportedOperationException();
       }
@@ -532,8 +529,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       volatile Runnable afterEvict;
 
       public AfterPassivationOrCacheWriter injectThis(Cache<Object, Object> injectInCache) {
-         SequentialInterceptorChain chain = extractComponent(injectInCache, SequentialInterceptorChain.class);
-         SequentialInterceptor interceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
+         AsyncInterceptorChain chain = extractComponent(injectInCache, AsyncInterceptorChain.class);
+         AsyncInterceptor interceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
          if (interceptor == null) {
             interceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
          }

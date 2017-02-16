@@ -42,7 +42,9 @@ class ModelKeys {
     static final String MECH = "mech";
     static final String MODULE = "module";
     static final String NAME = "name";
+    @Deprecated
     static final String OOB = "oob";
+    @Deprecated
     static final String OOB_EXECUTOR = "oob-executor";
     static final String PROPERTY = "property";
     static final String PROPERTIES = "properties";
@@ -62,7 +64,9 @@ class ModelKeys {
     static final String STACK = "stack";
     static final String THREAD_POOL = "thread-pool";
     static final String THREAD_FACTORY = "thread-factory";
+    @Deprecated
     static final String TIMER = "timer";
+    @Deprecated
     static final String TIMER_EXECUTOR = "timer-executor";
     static final String TRANSPORT = "transport";
     static final String TRANSPORT_NAME = "TRANSPORT";

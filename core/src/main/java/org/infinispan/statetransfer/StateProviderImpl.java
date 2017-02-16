@@ -1,5 +1,20 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
@@ -12,9 +27,9 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.notifications.Listener;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -23,12 +38,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * {@link StateProvider} implementation.
@@ -154,7 +163,8 @@ public class StateProviderImpl implements StateProvider {
 
    public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, Set<Integer> segments) throws InterruptedException {
       if (trace) {
-         log.tracef("Received request for transactions from node %s for segments %s of cache %s with topology id %d", destination, segments, cacheName, requestTopologyId);
+         log.tracef("Received request for transactions from node %s for cache %s, topology id %d, segments %s",
+                    destination, cacheName, requestTopologyId, segments);
       }
 
       final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, true);
@@ -199,7 +209,11 @@ public class StateProviderImpl implements StateProvider {
                   "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
                   requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         try {
+            stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         } catch (TimeoutException e) {
+            throw log.failedWaitingForTopology(requestTopologyId);
+         }
          cacheTopology = stateConsumer.getCacheTopology();
       }
       return cacheTopology;
@@ -269,8 +283,8 @@ public class StateProviderImpl implements StateProvider {
    public void startOutboundTransfer(Address destination, int requestTopologyId, Set<Integer> segments)
          throws InterruptedException {
       if (trace) {
-         log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d for cache %s", segments,
-               destination, requestTopologyId, cacheName);
+         log.tracef("Starting outbound transfer to node %s for cache %s, topology id %d, segments %s", destination,
+                    cacheName, requestTopologyId, segments);
       }
 
       final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, false);
@@ -284,7 +298,8 @@ public class StateProviderImpl implements StateProvider {
 
    private void addTransfer(OutboundTransferTask transferTask) {
       if (trace) {
-         log.tracef("Adding outbound transfer of segments %s to %s", transferTask.getSegments(), transferTask.getDestination());
+         log.tracef("Adding outbound transfer to %s for segments %s", transferTask.getDestination(),
+                    transferTask.getSegments());
       }
       synchronized (transfersByDestination) {
          List<OutboundTransferTask> transfers = transfersByDestination.get(transferTask.getDestination());
@@ -299,7 +314,8 @@ public class StateProviderImpl implements StateProvider {
    @Override
    public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
       if (trace) {
-         log.tracef("Cancelling outbound transfer of segments %s to node %s with topology id %d for cache %s", segments, destination, topologyId, cacheName);
+         log.tracef("Cancelling outbound transfer to node %s for cache %s, topology id %d, segments %s", destination,
+                    cacheName, topologyId, segments);
       }
       // get the outbound transfers for this address and given segments and cancel the transfers
       synchronized (transfersByDestination) {
@@ -330,8 +346,9 @@ public class StateProviderImpl implements StateProvider {
 
    void onTaskCompletion(OutboundTransferTask transferTask) {
       if (trace) {
-         log.tracef("Removing %s outbound transfer of segments %s to %s for cache %s",
-               transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getSegments(), transferTask.getDestination(), cacheName);
+         log.tracef("Removing %s outbound transfer of segments to %s for cache %s, segments %s",
+                    transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getDestination(),
+                    cacheName, transferTask.getSegments());
       }
 
       removeTransfer(transferTask);

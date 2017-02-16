@@ -1,18 +1,19 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
- * A stream response command taht also returns back suspected segments that need to be retried
+ * A stream response command that also returns back suspected segments that need to be retried
  * @param <R> the response type
  */
 public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
@@ -34,9 +35,9 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       csm.receiveResponse(id, getOrigin(), complete, missedSegments, response);
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

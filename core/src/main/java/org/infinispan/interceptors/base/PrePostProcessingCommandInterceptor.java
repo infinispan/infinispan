@@ -14,6 +14,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.AsyncInterceptor;
 
 /**
  * This interceptor adds pre and post processing to each <tt>visitXXX()</tt> method.
@@ -29,7 +30,7 @@ import org.infinispan.context.impl.TxInvocationContext;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 9.0, please extend {@link org.infinispan.interceptors.SequentialInterceptor} instead.
+ * @deprecated Since 9.0, please extend {@link AsyncInterceptor} instead.
  */
 @Deprecated
 public abstract class PrePostProcessingCommandInterceptor extends CommandInterceptor {

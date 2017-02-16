@@ -11,22 +11,6 @@
    <name>Infinispan Distribution</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <analytics.code>
----&gt;
--&lt;!--
--&lt;script type='text/javascript'&gt;
--var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
--document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
--&lt;/script&gt;
--&lt;script type='text/javascript'&gt;
--try {
--var pageTracker = _gat._getTracker("UA-8601422-4");
--pageTracker._trackPageview();
--} catch(err) {}&lt;/script&gt;
-            </analytics.code>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -109,14 +93,28 @@
          <artifactId>infinispan-extended-statistics</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-javadoc</artifactId>
+         <artifactId>infinispan-javadoc-embedded</artifactId>
          <version>${project.version}</version>
          <classifier>javadoc</classifier>
       </dependency>
-      
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-javadoc-remote</artifactId>
+         <version>${project.version}</version>
+         <classifier>javadoc</classifier>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-javadoc-all</artifactId>
+         <version>${project.version}</version>
+         <classifier>javadoc</classifier>
+      </dependency>
+
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
@@ -138,7 +136,6 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
-                  
                   <id>xsdocgen</id>
                   <phase>package</phase>
                   <goals>
@@ -150,8 +147,8 @@
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
                            <fileset casesensitive="yes" dir="${basedir}/..">
-                              <include name="core/src/main/resources/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="persistence/*/src/main/resources/schema/*-${infinispan.core.schema.version}.xsd" />
+                              <include name="core/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
+                              <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="spring/spring/src/main/resources/org/infinispan/spring/config/*-${infinispan.core.schema.version}.xsd" />
                            </fileset>
                         </path>
@@ -160,6 +157,34 @@
                         <java classname="org.infinispan.tools.xsd.XSDoc">
                            <arg value="-o" />
                            <arg value="${project.build.directory}/site/configdocs" />
+                           <arg line="${xsd.fileset}" />
+                           <classpath>
+                              <pathelement path="${plugin_classpath}" />
+                           </classpath>
+                        </java>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>serverxsdocgen</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <target>
+                        <property name="plugin_classpath" refid="maven.plugin.classpath" />
+                        <echo message="Base dir: ${basedir}" />
+                        <path id="xsd.fileset.path">
+                           <fileset casesensitive="yes" dir="${basedir}/../server/integration/build/target/infinispan-server-${project.version}/docs/schema">
+                              <include name="*.xsd" />
+                           </fileset>
+                        </path>
+                        <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
+                        <echo message="XSDs: ${xsd.fileset}" />
+                        <java classname="org.infinispan.tools.xsd.XSDoc">
+                           <arg value="-o" />
+                           <arg value="${project.build.directory}/site/serverconfigdocs" />
                            <arg line="${xsd.fileset}" />
                            <classpath>
                               <pathelement path="${plugin_classpath}" />
@@ -212,7 +237,7 @@
                <outputDirectory>${buildDirectory}/distribution</outputDirectory>
                <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
-               
+
                <attach>false</attach>
             </configuration>
          </plugin>

@@ -61,7 +61,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    }
 
    @Override
-   public FilterConditionBeginContext not() {
+   public BaseCondition not() {
       if (filterCondition != null) {
          throw log.cannotUseOperatorAgain("not()");
       }
@@ -71,7 +71,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    }
 
    @Override
-   public FilterConditionContext not(FilterConditionContext fcc) {
+   public BaseCondition not(FilterConditionContext fcc) {
       if (fcc == null) {
          throw log.argumentCannotBeNull();
       }

@@ -1,15 +1,7 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.Cache;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +11,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.testng.Assert.assertEquals;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
+import org.infinispan.Cache;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * A base test for all rehashing tests
@@ -29,7 +30,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
 
    protected RehashTestBase() {
       cleanup = CleanupPhase.AFTER_METHOD;
-      tx = true;
+      transactional = true;
       performRehashing = true;
    }
 
@@ -52,7 +53,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
 
    protected List<MagicKey> init() {
 
-      List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
+      List<MagicKey> keys = new ArrayList<>(Arrays.asList(
             new MagicKey("k1", c1), new MagicKey("k2", c2),
             new MagicKey("k3", c3), new MagicKey("k4", c4)
       ));
@@ -96,7 +97,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
 
-      Future<Void>future = fork(new Runnable() {
+      Future<Void> future = fork(new Runnable() {
          @Override
          public void run() {
             try {
@@ -170,7 +171,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
    private void stressTest(boolean tx) throws Throwable {
       final List<MagicKey> keys = init();
       final CountDownLatch latch = new CountDownLatch(1);
-      List<Updater> updaters = new ArrayList<Updater>(keys.size());
+      List<Updater> updaters = new ArrayList<>(keys.size());
       for (MagicKey k : keys) {
          Updater u = new Updater(c1, k, latch, tx);
          u.start();

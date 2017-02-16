@@ -1,5 +1,21 @@
 package org.infinispan.commands;
 
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -24,7 +40,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -41,10 +56,18 @@ import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
+import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PrimaryAckCommand;
+import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -58,11 +81,13 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -70,9 +95,9 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -94,7 +119,7 @@ import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -107,21 +132,6 @@ import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
-
-import javax.transaction.xa.Xid;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -139,9 +149,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CacheNotifier<Object, Object> notifier;
    private Cache<Object, Object> cache;
    private ByteString cacheName;
+   private boolean transactional;
    private boolean totalOrderProtocol;
+   private boolean deadlockDetection;
+   private boolean distributedOrReplicated;
 
-   private InterceptorChain interceptorChain;
+   private AsyncInterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextFactory icf;
    private TransactionTable txTable;
@@ -160,25 +173,27 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
+   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
-   private TimeService timeService;
+   private CommandAckCollector commandAckCollector;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-   private ExternalizerTable externalizerTable;
+   private StreamingMarshaller marshaller;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
-                                 InterceptorChain interceptorChain, DistributionManager distributionManager,
+                                 AsyncInterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
                                  LockManager lockManager, InternalEntryFactory entryFactory,
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
-                                 TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
+                                 XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
                                  XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, ExternalizerTable externalizerTable) {
+                                 @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
+                                 CommandAckCollector commandAckCollector) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -203,67 +218,78 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
-      this.timeService = timeService;
-      this.externalizerTable = externalizerTable;
+      this.marshaller = marshaller;
+      this.commandAckCollector = commandAckCollector;
    }
 
    @Start(priority = 1)
    // needs to happen early on
    public void start() {
       cacheName = ByteString.fromString(cache.getName());
+      this.transactional = configuration.transaction().transactionMode().isTransactional();
       this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
+      this.deadlockDetection = configuration.deadlockDetection().enabled();
+      this.distributedOrReplicated = configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated();
    }
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
+      boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
       return new PutKeyValueCommand(key, value, false, notifier, metadata, flagsBitSet,
-                                    configuration.dataContainer().valueEquivalence(), generateUUID());
+                                    generateUUID(reallyTransactional));
    }
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet) {
-      return new RemoveCommand(key, value, notifier, flagsBitSet, configuration.dataContainer().valueEquivalence(), generateUUID());
+      return new RemoveCommand(key, value, notifier, flagsBitSet,
+                               generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys) {
-      return new InvalidateCommand(notifier, flagsBitSet, generateUUID(), keys);
+      // StateConsumerImpl always uses non-tx invalidation
+      return new InvalidateCommand(notifier, flagsBitSet, generateUUID(false), keys);
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys) {
-      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flagsBitSet, keys, generateUUID());
+      // StateConsumerImpl always uses non-tx invalidation
+      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flagsBitSet, keys,
+            generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flagsBitSet, keys, generateUUID());
+      // L1 invalidation is always non-transactional
+      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flagsBitSet, keys,
+            generateUUID(false));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
-      return new RemoveExpiredCommand(key, value, lifespan, notifier, configuration.dataContainer().valueEquivalence(),
-              timeService, generateUUID());
+      return new RemoveExpiredCommand(key, value, lifespan, notifier,
+                                      generateUUID(transactional));
    }
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flagsBitSet, configuration.dataContainer().valueEquivalence(), generateUUID());
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flagsBitSet,
+                                generateUUID(transactional));
    }
 
    @Override
-   public SizeCommand buildSizeCommand(Set<Flag> flags) {
-      return new SizeCommand(cache, flags);
+   public SizeCommand buildSizeCommand(long flagsBitSet) {
+      return new SizeCommand(cache, flagsBitSet);
    }
 
    @Override
-   public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
-      return new KeySetCommand(cache, flags);
+   public KeySetCommand buildKeySetCommand(long flagsBitSet) {
+      return new KeySetCommand(cache, flagsBitSet);
    }
 
    @Override
-   public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
-      return new EntrySetCommand(cache, flags);
+   public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
+      return new EntrySetCommand(cache, flagsBitSet);
    }
 
    @Override
@@ -278,7 +304,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
-      return new PutMapCommand(map, notifier, metadata, flagsBitSet, generateUUID());
+      return new PutMapCommand(map, notifier, metadata, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
@@ -288,7 +314,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public EvictCommand buildEvictCommand(Object key, long flagsBitSet) {
-      return new EvictCommand(key, notifier, flagsBitSet, generateUUID(), entryFactory);
+      return new EvictCommand(key, notifier, flagsBitSet, generateUUID(transactional), entryFactory);
    }
 
    @Override
@@ -321,19 +347,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
-      return new MultipleRpcCommand(toReplicate, cacheName);
-   }
-
-   @Override
    public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return new SingleRpcCommand(cacheName, call);
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return new ClusteredGetCommand(key, cacheName, flagsBitSet, acquireRemoteLock, gtx,
-                                     configuration.dataContainer().keyEquivalence());
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet) {
+      return new ClusteredGetCommand(key, cacheName, flagsBitSet);
    }
 
    /**
@@ -344,24 +364,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (c == null) return;
       switch (c.getCommandId()) {
          case PutKeyValueCommand.COMMAND_ID:
-            ((PutKeyValueCommand) c).init(notifier, configuration);
+            ((PutKeyValueCommand) c).init(notifier);
             break;
          case ReplaceCommand.COMMAND_ID:
-            ((ReplaceCommand) c).init(notifier, configuration);
+            ((ReplaceCommand) c).init(notifier);
             break;
          case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);
             break;
          case RemoveCommand.COMMAND_ID:
-            ((RemoveCommand) c).init(notifier, configuration);
-            break;
-         case MultipleRpcCommand.COMMAND_ID:
-            MultipleRpcCommand rc = (MultipleRpcCommand) c;
-            rc.init(interceptorChain, icf);
-            if (rc.getCommands() != null)
-               for (ReplicableCommand nested : rc.getCommands()) {
-                  initializeReplicableCommand(nested, false);
-               }
+            ((RemoveCommand) c).init(notifier);
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
@@ -372,11 +384,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
-            ic.init(notifier, configuration);
+            ic.init(notifier);
             break;
          case InvalidateL1Command.COMMAND_ID:
             InvalidateL1Command ilc = (InvalidateL1Command) c;
-            ilc.init(configuration, distributionManager, notifier, dataContainer);
+            ilc.init(distributionManager, notifier, dataContainer);
             break;
          case PrepareCommand.COMMAND_ID:
          case VersionedPrepareCommand.COMMAND_ID:
@@ -390,7 +402,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                   initializeReplicableCommand(nested, false);
                }
             pc.markTransactionAsRemote(isRemote);
-            if (configuration.deadlockDetection().enabled() && isRemote) {
+            if (deadlockDetection && isRemote) {
                DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
                transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
             }
@@ -416,18 +428,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
             clusteredGetCommand.initialize(icf, this, entryFactory,
-                                           interceptorChain, txTable,
-                                           configuration.dataContainer().keyEquivalence());
+                                           interceptorChain
+            );
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icf, txTable);
             lcc.markTransactionAsRemote(isRemote);
-            if (configuration.deadlockDetection().enabled() && isRemote) {
+            if (deadlockDetection && isRemote) {
                DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();
                RemoteTransaction transaction = txTable.getRemoteTransaction(gtx);
                if (transaction != null) {
-                  if (!configuration.clustering().cacheMode().isDistributed()) {
+                  if (!distributedOrReplicated) {
                      Set<Object> keys = txTable.getLockedKeysForRemoteTransaction(gtx);
                      GlobalTransaction gtx2 = transaction.getGlobalTransaction();
                      ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(keys);
@@ -493,8 +505,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetAllCommand.COMMAND_ID:
             ClusteredGetAllCommand clusteredGetAllCommand = (ClusteredGetAllCommand) c;
-            clusteredGetAllCommand.init(icf, this, entryFactory, interceptorChain, txTable,
-                  configuration.dataContainer().keyEquivalence());
+            clusteredGetAllCommand.init(icf, this, entryFactory, interceptorChain, txTable);
             break;
          case StreamRequestCommand.COMMAND_ID:
             StreamRequestCommand streamRequestCommand = (StreamRequestCommand) c;
@@ -510,7 +521,30 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
-            removeExpiredCommand.init(notifier, configuration);
+            removeExpiredCommand.init(notifier);
+            break;
+         case BackupAckCommand.COMMAND_ID:
+            BackupAckCommand command = (BackupAckCommand) c;
+            command.setCommandAckCollector(commandAckCollector);
+            break;
+         case BackupWriteRcpCommand.COMMAND_ID:
+            BackupWriteRcpCommand bwc = (BackupWriteRcpCommand) c;
+            bwc.init(icf, interceptorChain, notifier);
+            break;
+         case PrimaryAckCommand.COMMAND_ID:
+            ((PrimaryAckCommand) c).setCommandAckCollector(commandAckCollector);
+            break;
+         case BackupMultiKeyAckCommand.COMMAND_ID:
+            ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
+            break;
+         case PrimaryMultiKeyAckCommand.COMMAND_ID:
+            ((PrimaryMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
+            break;
+         case ExceptionAckCommand.COMMAND_ID:
+            ((ExceptionAckCommand) c).setCommandAckCollector(commandAckCollector);
+            break;
+         case BackupPutMapRcpCommand.COMMAND_ID:
+            ((BackupPutMapRcpCommand) c).init(icf, interceptorChain, notifier);
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
@@ -569,7 +603,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return new DistributedExecuteCommand<T>(cacheName, keys, callable);
+      return new DistributedExecuteCommand<>(cacheName, keys, callable);
    }
 
    @Override
@@ -584,7 +618,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
-      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys, generateUUID());
+      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys, generateUUID(transactional));
    }
 
    @Override
@@ -656,11 +690,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, long flagsBitSet, GlobalTransaction gtx) {
-      return new ClusteredGetAllCommand(cacheName, keys, flagsBitSet, gtx, configuration.dataContainer().keyEquivalence());
+      return new ClusteredGetAllCommand(cacheName, keys, flagsBitSet, gtx);
    }
 
-   private CommandInvocationId generateUUID() {
-      return CommandInvocationId.generateId(clusteringDependentLogic.getAddress());
+   private CommandInvocationId generateUUID(boolean tx) {
+      if (tx) {
+         return CommandInvocationId.DUMMY_INVOCATION_ID;
+      } else {
+         return CommandInvocationId.generateId(clusteringDependentLogic.getAddress());
+      }
    }
 
    @Override
@@ -669,55 +707,92 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       return new ReadOnlyManyCommand<>(keys, f);
    }
 
    @Override
    public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(
          K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f), params);
+      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(transactional), getValueMatcher(f),
+            params);
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
          K key, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID(), getValueMatcher(f), params);
+      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyCommand<>(keys, f);
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteManyCommand<>(keys, f, params, generateUUID(transactional));
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyEntriesCommand<>(entries, f);
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID(transactional));
    }
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          K key, Consumer<WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyKeyCommand<>(key, f, generateUUID(), getValueMatcher(f), params);
+      return new WriteOnlyKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params);
    }
 
    @Override
    public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
          K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f), params);
+      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(transactional), getValueMatcher(f),
+            params);
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyManyCommand<>(keys, f);
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
+      return new WriteOnlyManyCommand<>(keys, f, params, generateUUID(transactional));
    }
 
    @Override
    public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
          Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      WriteOnlyManyEntriesCommand<K, V> cmd = new WriteOnlyManyEntriesCommand<>(entries, f);
-      cmd.setParams(params);
+      return new WriteOnlyManyEntriesCommand<>(entries, f, params, generateUUID(transactional));
+   }
+
+   @Override
+   public BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId) {
+      return new BackupAckCommand(cacheName, id, topologyId);
+   }
+
+   @Override
+   public PrimaryAckCommand buildPrimaryAckCommand() {
+      return new PrimaryAckCommand(cacheName);
+   }
+
+   @Override
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+      return new BackupMultiKeyAckCommand(cacheName, id, segment, topologyId);
+   }
+
+   @Override
+   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId) {
+      return new PrimaryMultiKeyAckCommand(cacheName, id, topologyId);
+   }
+
+   @Override
+   public ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId) {
+      return new ExceptionAckCommand(cacheName, id, throwable, topologyId);
+   }
+
+   @Override
+   public BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command) {
+      BackupWriteRcpCommand cmd = new BackupWriteRcpCommand(cacheName);
+      command.initBackupWriteRcpCommand(cmd);
       return cmd;
+   }
+
+   @Override
+   public BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command) {
+      return new BackupPutMapRcpCommand(cacheName, command);
    }
 
    private ValueMatcher getValueMatcher(Object o) {
@@ -725,7 +800,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (ann != null)
          return ValueMatcher.valueOf(ann.valueMatcher().toString());
 
-      Externalizer ext = externalizerTable.getExternalizer(o);
+      Externalizer ext = ((GlobalMarshaller) marshaller).findExternalizerFor(o);
       if (ext != null && ext instanceof LambdaExternalizer)
          return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
 

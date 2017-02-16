@@ -1,11 +1,14 @@
 package org.infinispan.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -15,9 +18,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests if the conditional commands correctly fetch the value from cache loader even with the skip cache load/store
@@ -70,10 +70,10 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    private static CacheLoaderInterceptor cacheLoaderInterceptor(Cache<?, ?> cache) {
-      SequentialInterceptorChain chain =
-            TestingUtil.extractComponent(cache, SequentialInterceptorChain.class);
-      return (CacheLoaderInterceptor) chain.findInterceptorExtending(
-            org.infinispan.interceptors.impl.CacheLoaderInterceptor.class);
+      AsyncInterceptorChain chain =
+            TestingUtil.extractComponent(cache, AsyncInterceptorChain.class);
+      return chain.findInterceptorExtending(
+            CacheLoaderInterceptor.class);
    }
 
    private void doTest(Cache<String, String> cache, ConditionalOperation operation, Flag flag) {
@@ -113,51 +113,51 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    public void testPutIfAbsentWithSkipCacheLoader() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Flag.SKIP_CACHE_LOAD);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Flag.SKIP_CACHE_LOAD);
    }
 
    public void testPutIfAbsentWithIgnoreReturnValues() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Flag.IGNORE_RETURN_VALUES);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Flag.IGNORE_RETURN_VALUES);
    }
 
    public void testPutIfAbsent() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, null);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, null);
    }
 
    public void testReplaceWithSkipCacheLoader() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Flag.SKIP_CACHE_LOAD);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Flag.SKIP_CACHE_LOAD);
    }
 
    public void testReplaceWithIgnoreReturnValues() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Flag.IGNORE_RETURN_VALUES);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Flag.IGNORE_RETURN_VALUES);
    }
 
    public void testReplace() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, null);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, null);
    }
 
    public void testReplaceIfWithSkipCacheLoader() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Flag.SKIP_CACHE_LOAD);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Flag.SKIP_CACHE_LOAD);
    }
 
    public void testReplaceIfWithIgnoreReturnValues() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Flag.IGNORE_RETURN_VALUES);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Flag.IGNORE_RETURN_VALUES);
    }
 
    public void testReplaceIf() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, null);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, null);
    }
 
    public void testRemoveIfWithSkipCacheLoader() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Flag.SKIP_CACHE_LOAD);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Flag.SKIP_CACHE_LOAD);
    }
 
    public void testRemoveIfWithIgnoreReturnValues() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Flag.IGNORE_RETURN_VALUES);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Flag.IGNORE_RETURN_VALUES);
    }
 
    public void testRemoveIf() {
-      doTest(this.<String, String>cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, null);
+      doTest(this.cache(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, null);
    }
 
    @Override
@@ -168,7 +168,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
       return embeddedCacheManager;
    }
 
-   private static enum ConditionalOperation {
+   private enum ConditionalOperation {
       PUT_IF_ABSENT {
          @Override
          public <K, V> void execute(Cache<K, V> cache, K key, V value1, V value2) {

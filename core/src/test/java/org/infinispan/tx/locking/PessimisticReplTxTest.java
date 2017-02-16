@@ -1,17 +1,21 @@
 package org.infinispan.tx.locking;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
 
 /**
  * @author Mircea Markus
@@ -34,7 +38,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       conf.transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup())
-         .locking().lockAcquisitionTimeout(10L); //fail fast
+         .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       return conf;
    }
 
@@ -121,7 +125,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       assertEquals(cache(0).get(k), "v");
       assertEquals(cache(1).get(k), "v");
    }
-   
+
 
    @Override
    protected void assertLocking() {

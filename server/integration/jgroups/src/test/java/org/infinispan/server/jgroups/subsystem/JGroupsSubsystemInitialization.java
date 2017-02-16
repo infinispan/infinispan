@@ -23,11 +23,6 @@ package org.infinispan.server.jgroups.subsystem;
 
 import java.io.Serializable;
 
-import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.JGroupsExtension;
-import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.StackResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.TransportResourceDefinition;
 import org.jboss.as.controller.RunningMode;
 import org.jboss.as.controller.capability.registry.RuntimeCapabilityRegistry;
 import org.jboss.as.controller.extension.ExtensionRegistry;

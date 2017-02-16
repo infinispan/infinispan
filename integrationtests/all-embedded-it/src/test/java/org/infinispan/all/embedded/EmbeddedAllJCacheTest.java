@@ -1,5 +1,9 @@
 package org.infinispan.all.embedded;
 
+import static javax.cache.expiry.Duration.ONE_HOUR;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -8,10 +12,6 @@ import javax.cache.expiry.AccessedExpiryPolicy;
 import javax.cache.spi.CachingProvider;
 
 import org.junit.Test;
-
-import static javax.cache.expiry.Duration.ONE_HOUR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class EmbeddedAllJCacheTest {
    @Test

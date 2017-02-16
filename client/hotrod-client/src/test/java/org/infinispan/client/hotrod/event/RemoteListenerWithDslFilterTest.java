@@ -1,6 +1,22 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
@@ -31,21 +47,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.query.dsl.Expression.*;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 
 /**
  * @author anistor@redhat.com
@@ -68,7 +69,9 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       // Register the filter/converter factory. This should normally be discovered by the server via class path instead
       // of being added manually here, but this is ok in a test.
       JPACacheEventFilterConverterFactory factory = new JPACacheEventFilterConverterFactory();
-      server(0).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+      for (int i = 0; i < NUM_NODES; i++) {
+         server(i).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+      }
 
       remoteCache = client(0).getCache();
 
@@ -102,7 +105,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = new AddressPB();
@@ -132,8 +135,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(31);
-      user3.setAccountIds(Collections.<Integer>emptySet());
 
+      remoteCache.clear();
       remoteCache.put("user_" + user1.getId(), user1);
       remoteCache.put("user_" + user2.getId(), user2);
       remoteCache.put("user_" + user3.getId(), user3);
@@ -144,7 +147,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       Query query = qf.from(UserPB.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 
@@ -170,7 +173,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = new AddressPB();
@@ -200,8 +203,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(31);
-      user3.setAccountIds(Collections.<Integer>emptySet());
 
+      remoteCache.clear();
       remoteCache.put("user_" + user1.getId(), user1);
       remoteCache.put("user_" + user2.getId(), user2);
       remoteCache.put("user_" + user3.getId(), user3);
@@ -212,7 +215,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       Query query = qf.from(UserPB.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 
@@ -234,11 +237,11 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       ClientEntryListener listener = new ClientEntryListener(ProtoStreamMarshaller.getSerializationContext(client(0)));
@@ -252,7 +255,6 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    public void testRequireRawDataListener() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder()
             .build();
 
       @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
@@ -274,7 +276,6 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    public void testRequireQueryDslFilterFactoryNameForListener() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder()
             .build();
 
       @ClientListener(filterFactoryName = "some-filter-factory-name",
@@ -314,9 +315,9 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       private final Log log = LogFactory.getLog(getClass());
 
-      public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<FilterResult>();
+      public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<>();
 
-      public final BlockingQueue<FilterResult> modifyEvents = new LinkedBlockingQueue<FilterResult>();
+      public final BlockingQueue<FilterResult> modifyEvents = new LinkedBlockingQueue<>();
 
       private final SerializationContext serializationContext;
 
@@ -326,24 +327,24 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       @ClientCacheEntryCreated
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          createEvents.add(r);
 
          log.debugf("handleClientCacheEntryCreatedEvent instance=%s projection=%s sortProjection=%s\n",
-                    r.getInstance(),
-                    r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
-                    r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
+               r.getInstance(),
+               r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
+               r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
       }
 
       @ClientCacheEntryModified
       public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          modifyEvents.add(r);
 
          log.debugf("handleClientCacheEntryModifiedEvent instance=%s projection=%s sortProjection=%s\n",
-                    r.getInstance(),
-                    r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
-                    r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
+               r.getInstance(),
+               r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
+               r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
 
       }
 

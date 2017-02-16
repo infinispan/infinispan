@@ -1,9 +1,20 @@
 package org.infinispan.cache.impl;
 
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -13,23 +24,18 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -38,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Tristan Tarrant
  * @see org.infinispan.cache.impl.AbstractDelegatingCache
  */
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 
    protected final AdvancedCache<K, V> cache;
@@ -52,8 +59,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       });
    }
 
-   public AbstractDelegatingAdvancedCache(
-         AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
+   protected AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
       super(cache);
       this.cache = cache;
       this.wrapper = wrapper;
@@ -61,32 +67,32 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
-      cache.getSequentialInterceptorChain().addInterceptor(i, position);
+      cache.getAsyncInterceptorChain().addInterceptor(i, position);
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
-      return cache.getSequentialInterceptorChain();
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
+      return cache.getAsyncInterceptorChain();
    }
 
    @Override
    public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.getSequentialInterceptorChain().addInterceptorAfter(i, afterInterceptor);
+      return cache.getAsyncInterceptorChain().addInterceptorAfter(i, afterInterceptor);
    }
 
    @Override
    public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.getSequentialInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
+      return cache.getAsyncInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
    }
 
    @Override
    public void removeInterceptor(int position) {
-      cache.getSequentialInterceptorChain().removeInterceptor(position);
+      cache.getAsyncInterceptorChain().removeInterceptor(position);
    }
 
    @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.getSequentialInterceptorChain().removeInterceptor(interceptorType);
+      cache.getAsyncInterceptorChain().removeInterceptor(interceptorType);
    }
 
    @Override
@@ -171,9 +177,58 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       cache.setAvailability(availabilityMode);
    }
 
+   @ManagedAttribute(
+         description = "Returns the cache availability",
+         displayName = "Cache availability",
+         dataType = DataType.TRAIT,
+         writable = true
+   )
+   public String getCacheAvailability() {
+      return getAvailability().toString();
+   }
+
+   public void setCacheAvailability(String availabilityString) throws Exception {
+      setAvailability(AvailabilityMode.valueOf(availabilityString));
+   }
+
+   @ManagedAttribute(
+         description = "Returns whether cache rebalancing is enabled",
+         displayName = "Cache rebalacing",
+         dataType = DataType.TRAIT,
+         writable = true
+   )
+   public boolean isRebalancingEnabled() {
+      LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
+      if (localTopologyManager != null) {
+         try {
+            return localTopologyManager.isCacheRebalancingEnabled(getName());
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      } else {
+         return false;
+      }
+   }
+
+   public void setRebalancingEnabled(boolean enabled) {
+      LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
+      if (localTopologyManager != null) {
+         try {
+            localTopologyManager.setCacheRebalancingEnabled(getName(), enabled);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      return this.wrapper.wrap(this.cache.withFlags(flags));
+      AdvancedCache<K, V> flagCache = this.cache.withFlags(flags);
+      if (flagCache != cache) {
+         return this.wrapper.wrap(flagCache);
+      } else {
+         return this;
+      }
    }
 
    @Override
@@ -203,7 +258,12 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this.wrapper.wrap(this.cache.with(classLoader));
+      AdvancedCache<K, V> loaderCache = this.cache.with(classLoader);
+      if (loaderCache != cache) {
+         return this.wrapper.wrap(loaderCache);
+      } else {
+         return this;
+      }
    }
 
    @Override
@@ -277,11 +337,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, EnumUtil.bitSetOf(flags), classLoader);
+      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, EnumUtil.bitSetOf(flags));
    }
 
    protected final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags), classLoader);
+      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags));
    }
 
    public interface AdvancedCacheWrapper<K, V> {

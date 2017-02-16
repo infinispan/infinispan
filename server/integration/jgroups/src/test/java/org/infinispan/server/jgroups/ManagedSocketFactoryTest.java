@@ -21,8 +21,10 @@
  */
 package org.infinispan.server.jgroups;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -33,7 +35,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 
-import org.infinispan.server.jgroups.ManagedSocketFactory;
 import org.jboss.as.network.SocketBindingManager;
 import org.jgroups.util.SocketFactory;
 import org.junit.Before;

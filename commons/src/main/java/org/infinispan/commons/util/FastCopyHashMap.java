@@ -1,8 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -13,6 +10,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
@@ -104,7 +104,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    @SuppressWarnings("unchecked")
    private void init(int initialCapacity, float loadFactor) {
       int c = 1;
-      for (; c < initialCapacity; c <<= 1) ;
+      while (c < initialCapacity) c <<= 1;
 
       this.table = new Entry[c];
 
@@ -175,7 +175,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
          index = nextIndex(index, length);
       }
    }
-   
+
    /**
     * Returns a string representation of this map.  The string representation
     * consists of a list of key-value mappings in the order returned by the
@@ -288,7 +288,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
             size = MAXIMUM_CAPACITY;
 
          int length = table.length;
-         for (; length < size; length <<= 1) ;
+         while (length < size) length <<= 1;
 
          resize(length);
       }

@@ -1,5 +1,17 @@
 package org.infinispan.stats.wrappers;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.CacheStatisticManager;
@@ -9,18 +21,6 @@ import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
 
 /**
  * Takes statistic about lock acquisition.

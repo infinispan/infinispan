@@ -1,5 +1,12 @@
 package org.infinispan.spring.provider;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBean;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -8,8 +15,6 @@ import org.springframework.cache.Cache;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -38,7 +43,10 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(
+            new GlobalConfigurationBuilder().defaultCacheName(CACHE_NAME),
+            new ConfigurationBuilder()
+      );
    }
 
    @BeforeMethod
@@ -112,7 +120,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = NullPointerException.class)
    public void testThrowingNullPointerExceptionOnNullGetWithClass() throws Exception {
       //when
-      cache.get(null, null);
+      cache.get(null, (Class<?>) null);
    }
 
    @Test
@@ -121,7 +129,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       this.cache.put("test", "test");
 
       //when
-      Object value = cache.get("test", null);
+      Object value = cache.get("test", (Class<?>) null);
 
       //then
       assertTrue(value instanceof String);
@@ -190,6 +198,37 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
       this.cache.clear();
       assertNull(this.cache.get("vlaicu"));
       assertNull(this.cache.get("enescu"));
+   }
+
+   @Test
+   public void testValueLoaderWithNoPreviousValue() {
+      //given
+      cache.get("test", () -> "test");
+
+      //when
+      Cache.ValueWrapper valueFromCache = cache.get("test");
+
+      //then
+      assertEquals("test", valueFromCache.get());
+   }
+
+   @Test
+   public void testValueLoaderWithPreviousValue() {
+      //given
+      cache.put("test", "test");
+      cache.get("test", () -> "This should not be updated");
+
+      //when
+      Cache.ValueWrapper valueFromCache = cache.get("test");
+
+      //then
+      assertEquals("test", valueFromCache.get());
+   }
+
+   @Test(expectedExceptions = Cache.ValueRetrievalException.class)
+   public void testValueLoaderWithExceptionWhenLoading() {
+      //when//then
+      cache.get("test", () -> {throw new IllegalStateException();});
    }
 
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {

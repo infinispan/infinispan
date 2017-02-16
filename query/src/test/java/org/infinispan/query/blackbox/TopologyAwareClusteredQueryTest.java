@@ -1,12 +1,12 @@
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Tests for testing clustered queries functionality on topology aware nodes.
@@ -19,7 +19,7 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
-                                                                         isIndexLocalOnly(), isRamDirectory());
+                                                                         isIndexLocalOnly(), isRamDirectory(), "default");
 
       for(Object cache : caches) {
          cacheManagers.add(((Cache) cache).getCacheManager());

@@ -1,21 +1,6 @@
 package org.infinispan.transaction.impl;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.ImmutableListCopy;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.container.versioning.IncrementableEntryVersion;
-import org.infinispan.context.Flag;
-import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +14,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.infinispan.commons.util.Util.toStr;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.ImmutableListCopy;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
+import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
@@ -65,7 +65,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private EntryVersionsMap updatedEntryVersions;
    private EntryVersionsMap versionsSeenMap;
-   private EntryVersionsMap lookedUpRemoteVersions;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -74,13 +73,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
     * Mark the time this tx object was created
     */
    private final long txCreationTime;
-
-   /**
-    * Equivalence function to compare keys that are stored in temporary
-    * collections used in the cache transaction to keep track of locked keys,
-    * looked up keys...etc.
-    */
-   protected final Equivalence<Object> keyEquivalence;
 
    private volatile Flag stateTransferFlag;
 
@@ -95,10 +87,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       isMarkedForRollback = markForRollback;
    }
 
-   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
+   public AbstractCacheTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       this.tx = tx;
       this.topologyId = topologyId;
-      this.keyEquivalence = keyEquivalence;
       this.txCreationTime = txCreationTime;
       txCompleted = new CompletableFuture<>();
       backupLockReleased = new CompletableFuture<>();
@@ -112,7 +103,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public final List<WriteCommand> getModifications() {
       if (hasLocalOnlyModifications) {
-         return modifications.stream().filter(cmd -> !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)).collect(Collectors.toList());
+         return modifications.stream().filter(cmd -> !cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)).collect(Collectors.toList());
       } else {
          return getAllModifications();
       }
@@ -132,9 +123,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (modifications == null) {
          throw new IllegalArgumentException("modification list cannot be null");
       }
-      List<WriteCommand> mods = new ArrayList<>();
+      List<WriteCommand> mods = new ArrayList<>(modifications.size());
       for (WriteCommand cmd : modifications) {
-         if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             hasLocalOnlyModifications = true;
          }
          mods.add(cmd);
@@ -218,7 +209,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void registerLockedKey(Object key) {
       // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
-      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence)) : value);
+      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY)) : value);
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
       keys.add(key);
    }
@@ -237,7 +228,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void clearLockedKeys() {
-      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys));
+      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
       lockedKeys.set(null);
    }
 
@@ -278,7 +269,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence);
+      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY);
    }
 
    @Override
@@ -292,23 +283,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public EntryVersion getLookedUpRemoteVersion(Object key) {
-      return lookedUpRemoteVersions != null ? lookedUpRemoteVersions.get(key) : null;
-   }
-
-   @Override
-   public void putLookedUpRemoteVersion(Object key, EntryVersion version) {
-      if (lookedUpRemoteVersions == null) {
-         lookedUpRemoteVersions = new EntryVersionsMap();
-      }
-      lookedUpRemoteVersions.put(key, (IncrementableEntryVersion) version);
-   }
-
-   @Override
    public void addReadKey(Object key) {
       // No-op
    }
-   
+
    @Override
    public boolean keyRead(Object key) {
       return false;
@@ -331,21 +309,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public void replaceVersionRead(Object key, EntryVersion version) {
-      if (version == null) {
-         return;
-      }
-      if (versionsSeenMap == null) {
-         versionsSeenMap = new EntryVersionsMap();
-      }
-      EntryVersion oldVersion = versionsSeenMap.put(key, (IncrementableEntryVersion) version);
-      if (trace) {
-         log.tracef("Transaction %s replaced version for key %s. old=%s, new=%s", getGlobalTransaction().globalId(), key,
-                    oldVersion, version);
-      }
-   }
-
-   @Override
    public EntryVersionsMap getVersionsRead() {
       return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
    }
@@ -363,7 +326,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected final void internalSetStateTransferFlag(Flag stateTransferFlag) {
       this.stateTransferFlag = stateTransferFlag;
    }
-   
+
    @Override
    public long getCreationTime() {
       return txCreationTime;

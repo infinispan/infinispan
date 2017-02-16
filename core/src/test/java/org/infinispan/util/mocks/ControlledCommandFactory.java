@@ -1,8 +1,28 @@
 package org.infinispan.util.mocks;
 
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -28,7 +48,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -40,9 +59,17 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
+import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
+import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -50,7 +77,6 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView;
-import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -71,24 +97,6 @@ import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
-
-import javax.transaction.xa.Xid;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 /**
  * @author Mircea Markus
@@ -187,8 +195,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand(Set<Flag> flags) {
-      return actual.buildSizeCommand(flags);
+   public SizeCommand buildSizeCommand(long flagsBitSet) {
+      return actual.buildSizeCommand(flagsBitSet);
    }
 
    @Override
@@ -202,13 +210,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
-      return actual.buildKeySetCommand(flags);
+   public KeySetCommand buildKeySetCommand(long flagsBitSet) {
+      return actual.buildKeySetCommand(flagsBitSet);
    }
 
    @Override
-   public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
-      return actual.buildEntrySetCommand(flags);
+   public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
+      return actual.buildEntrySetCommand(flagsBitSet);
    }
 
    @Override
@@ -252,18 +260,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
-      return actual.buildReplicateCommand(toReplicate);
-   }
-
-   @Override
    public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return actual.buildSingleRpcCommand(call);
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return actual.buildClusteredGetCommand(key, flagsBitSet, acquireRemoteLock, gtx);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet) {
+      return actual.buildClusteredGetCommand(key, flagsBitSet);
    }
 
    @Override
@@ -403,7 +406,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
       return actual.buildReadOnlyManyCommand(keys, f);
    }
 
@@ -434,18 +437,52 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<EntryView.WriteEntryView<V>> f) {
-      return actual.buildWriteOnlyManyCommand(keys, f);
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<EntryView.WriteEntryView<V>> f, Params params) {
+      return actual.buildWriteOnlyManyCommand(keys, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
-      return actual.buildReadWriteManyCommand(keys, f);
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadWriteManyCommand(keys, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f) {
-      return actual.buildReadWriteManyEntriesCommand(entries, f);
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadWriteManyEntriesCommand(entries, f, params);
    }
 
+   @Override
+   public BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId) {
+      return actual.buildBackupAckCommand(id, topologyId);
+   }
+
+   @Override
+   public PrimaryAckCommand buildPrimaryAckCommand() {
+      return actual.buildPrimaryAckCommand();
+   }
+
+   @Override
+   public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId) {
+      return actual.buildBackupMultiKeyAckCommand(id, segment, topologyId);
+   }
+
+   @Override
+   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId) {
+      return actual.buildPrimaryMultiKeyAckCommand(id, topologyId);
+   }
+
+   @Override
+   public ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId) {
+      return actual.buildExceptionAckCommand(id, throwable, topologyId);
+   }
+
+   @Override
+   public BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command) {
+      return actual.buildBackupWriteRcpCommand(command);
+   }
+
+   @Override
+   public BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command) {
+      return actual.buildBackupPutMapRcpCommand(command);
+   }
 }

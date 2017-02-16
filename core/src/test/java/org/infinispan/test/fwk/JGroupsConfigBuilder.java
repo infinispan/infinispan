@@ -1,18 +1,5 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
-import org.jgroups.conf.ConfiguratorFactory;
-import org.jgroups.conf.ProtocolConfiguration;
-import org.jgroups.conf.ProtocolStackConfigurator;
-import org.jgroups.conf.XmlConfigurator;
-import org.jgroups.protocols.TCP_NIO;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.infinispan.commons.util.Immutables.immutableMapCopy;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
@@ -25,6 +12,18 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
+import org.jgroups.conf.ConfiguratorFactory;
+import org.jgroups.conf.ProtocolConfiguration;
+import org.jgroups.conf.ProtocolStackConfigurator;
+import org.jgroups.conf.XmlConfigurator;
 
 /**
  * This class owns the logic of associating network resources(i.e. ports) with threads, in order to make sure that there
@@ -251,10 +250,10 @@ public class JGroupsConfigBuilder {
 
    static class JGroupsProtocolCfg {
       final Map<ProtocolType, ProtocolConfiguration> protoMap;
-      final ProtocolStackConfigurator configurator;
+      final XmlConfigurator configurator;
 
       JGroupsProtocolCfg(Map<ProtocolType, ProtocolConfiguration> protoMap,
-                         ProtocolStackConfigurator configurator) {
+                         XmlConfigurator configurator) {
          this.protoMap = protoMap;
          this.configurator = configurator;
       }
@@ -288,7 +287,7 @@ public class JGroupsConfigBuilder {
 
       @Override
       public String toString() {
-         return configurator.getProtocolStackString();
+         return configurator.getProtocolStackString(true);
       }
    }
 
@@ -304,7 +303,7 @@ public class JGroupsConfigBuilder {
       STABLE,
       GMS,
       UFC, MFC, FC,
-      FRAG2,
+      FRAG2, FRAG3,
       STREAMING_STATE_TRANSFER,
       RELAY2,
       TOA

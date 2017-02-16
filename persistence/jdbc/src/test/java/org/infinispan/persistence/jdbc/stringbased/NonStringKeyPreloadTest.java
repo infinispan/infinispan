@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.junit.Assert.assertEquals;
 import static org.infinispan.test.TestingUtil.clearCacheLoader;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.sql.Connection;
 
@@ -14,7 +14,6 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
@@ -23,6 +22,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -129,7 +129,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
                .fetchPersistentState(true)
                .preload(preload)
                .key2StringMapper(mapperName);
-      UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(store.table());
       if (wrap) {
          ConnectionFactoryConfigurationBuilder<?> tmp = UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class));
          store.connectionFactory(new SharedConnectionFactoryConfigurationBuilder(store)).read((PooledConnectionFactoryConfiguration)tmp.create());
@@ -172,7 +172,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    @BuiltBy(SharedConnectionFactoryConfigurationBuilder.class)
    public static class SharedConnectionFactoryConfiguration extends PooledConnectionFactoryConfiguration {
       SharedConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
-         super(connectionUrl, driverClass, username, password);
+         super(null, connectionUrl, driverClass, username, password);
       }
 
       @Override

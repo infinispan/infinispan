@@ -1,16 +1,16 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import static org.infinispan.commons.util.InfinispanCollections.forEach;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.StripedHashFunction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
-
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 /**
  * A lock container used with lock stripping.
@@ -23,8 +23,8 @@ public class StripedLockContainer implements LockContainer {
    private final InfinispanLock[] sharedLocks;
    private final StripedHashFunction<Object> hashFunction;
 
-   public StripedLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
-      this.hashFunction = new StripedHashFunction<>(keyEquivalence, concurrencyLevel);
+   public StripedLockContainer(int concurrencyLevel) {
+      this.hashFunction = new StripedHashFunction<>(concurrencyLevel);
       sharedLocks = new InfinispanLock[hashFunction.getNumSegments()];
    }
 

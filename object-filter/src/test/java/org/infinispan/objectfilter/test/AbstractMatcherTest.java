@@ -1,10 +1,18 @@
 package org.infinispan.objectfilter.test;
 
-import org.hibernate.hql.ParsingException;
-import org.infinispan.objectfilter.FilterCallback;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.test.model.Address;
 import org.infinispan.objectfilter.test.model.Person;
 import org.infinispan.objectfilter.test.model.PhoneNumber;
@@ -14,16 +22,6 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author anistor@redhat.com
@@ -72,14 +70,8 @@ public abstract class AbstractMatcherTest {
    protected boolean match(String queryString, Object obj) throws Exception {
       Matcher matcher = createMatcher();
 
-      final int[] matchCount = new int[1];
-
-      matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[0]++;
-         }
-      });
+      int[] matchCount = {0};
+      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, obj);
       return matchCount[0] == 1;
@@ -88,14 +80,8 @@ public abstract class AbstractMatcherTest {
    protected boolean match(Query query, Object obj) throws Exception {
       Matcher matcher = createMatcher();
 
-      final int[] matchCount = new int[1];
-
-      matcher.registerFilter(query, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[0]++;
-         }
-      });
+      int[] matchCount = {0};
+      matcher.registerFilter(query, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, obj);
       return matchCount[0] == 1;
@@ -104,10 +90,37 @@ public abstract class AbstractMatcherTest {
    @Test
    public void shouldRaiseExceptionDueToUnknownAlias() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000404");
+      expectedException.expectMessage("ISPN028502");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person person where x.name = 'John'";
-      assertTrue(match(queryString, createPerson1()));
+      match(queryString, createPerson1());
+   }
+
+   @Test
+   public void shouldRaiseNoSuchPropertyException() throws Exception {
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("ISPN028501");
+
+      String queryString = "from org.infinispan.objectfilter.test.model.Person person where person.name.blah = 'John'";
+      match(queryString, createPerson1());
+   }
+
+   @Test
+   public void shouldRaisePredicatesOnEntityAliasNotAllowedException1() throws Exception {
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("ISPN028519");
+
+      String queryString = "from org.infinispan.objectfilter.test.model.Person name where name = 'John'";
+      match(queryString, createPerson1());
+   }
+
+   @Test
+   public void shouldRaisePredicatesOnEntityAliasNotAllowedException2() throws Exception {
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("ISPN028519");
+
+      String queryString = "from org.infinispan.objectfilter.test.model.Person name where name is not null";
+      match(queryString, createPerson1());
    }
 
    @Test
@@ -129,11 +142,13 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   @Ignore
    //todo this triggers a bug in hql parser (https://hibernate.atlassian.net/browse/HQLPARSER-44): NPE in SingleEntityQueryRendererDelegate.addComparisonPredicate due to null property path.
    public void testNoOpFilter1() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where 4 = 4";  // this should match ALL
-      assertTrue(match(queryString, createPerson1()));
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("ISPN028524");
+
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where 4 = 4";
+      match(queryString, createPerson1());
    }
 
    @Test
@@ -177,19 +192,19 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testMissingProperty1() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person where missingProp is null";
-      assertFalse(match(queryString, createPerson1()));
+      match(queryString, createPerson1());
    }
 
    @Test
    public void testMissingProperty2() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.missingProp is null";
-      assertFalse(match(queryString, createPerson1()));
+      match(queryString, createPerson1());
    }
 
    @Test
@@ -304,22 +319,12 @@ public abstract class AbstractMatcherTest {
    public void testFilterInterference() throws Exception {
       Matcher matcher = createMatcher();
 
-      final int[] matchCount = new int[2];
+      int[] matchCount = {0, 0};
       String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
-      matcher.registerFilter(queryString1, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[0]++;
-         }
-      });
+      matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       String queryString2 = "from org.infinispan.objectfilter.test.model.Person p where p.phoneNumbers.number = '004012345'";
-      matcher.registerFilter(queryString2, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[1]++;
-         }
-      });
+      matcher.registerFilter(queryString2, (userContext, eventType, instance, projection, sortProjection) -> matchCount[1]++);
 
       matcher.match(null, null, createPerson1());
 
@@ -332,22 +337,17 @@ public abstract class AbstractMatcherTest {
    public void testOrderBy() throws Exception {
       Matcher matcher = createMatcher();
 
-      final List<Comparable[]> sortProjections = new ArrayList<Comparable[]>();
+      List<Comparable[]> sortProjections = new ArrayList<>();
 
       String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.age > 18 order by p.name, p.surname";
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString1, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            sortProjections.add(sortProjection);
-         }
-      });
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> sortProjections.add(sortProjection));
 
       matcher.match(null, null, createPerson1());
       matcher.match(null, null, createPerson2());
 
       assertEquals(2, sortProjections.size());
 
-      Collections.sort(sortProjections, filterSubscription.getComparator());
+      sortProjections.sort(filterSubscription.getComparator());
 
       assertEquals("Cat", sortProjections.get(0)[0]);
       assertEquals("Woman", sortProjections.get(0)[1]);
@@ -359,7 +359,7 @@ public abstract class AbstractMatcherTest {
    public void testDSL() throws Exception {
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("phoneNumbers.number").eq("004012345").toBuilder().build();
+            .having("phoneNumbers.number").eq("004012345").build();
       assertTrue(match(q, createPerson1()));
    }
 
@@ -370,13 +370,8 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final int[] matchCount = new int[1];
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[0]++;
-         }
-      });
+      int[] matchCount = {0};
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
 
@@ -390,7 +385,7 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testObjectFilterWithJPA() throws Exception {
+   public void testObjectFilterWithQL() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
 
       Matcher matcher = createMatcher();
@@ -415,7 +410,7 @@ public abstract class AbstractMatcherTest {
             .having("id").lt(1000)
             .and()
             .having("age").lt(1000)
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -435,7 +430,7 @@ public abstract class AbstractMatcherTest {
       Query q = qf.from(Person.class)
             .having("name").like("Jo%")
             .and(qf.not().having("name").like("Jo%").or().having("id").lt(1000))
-            .toBuilder().build();
+            .build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -451,16 +446,10 @@ public abstract class AbstractMatcherTest {
 
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
-      final boolean b[] = new boolean[1];
-
-      FilterSubscription filterSubscription = matcher.registerFilter(q, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            b[0] = true;
-         }
-      });
+      boolean b[] = new boolean[1];
+      FilterSubscription filterSubscription = matcher.registerFilter(q, (userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
 
@@ -480,7 +469,7 @@ public abstract class AbstractMatcherTest {
 
       QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
-            .having("name").eq("John").toBuilder().build();
+            .having("name").eq("John").build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -496,13 +485,8 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final int matchCount[] = new int[1];
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            matchCount[0]++;
-         }
-      });
+      int matchCount[] = {0};
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, person);
 
@@ -636,14 +620,9 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final List<Object[]> result = new ArrayList<Object[]>();
+      List<Object[]> result = new ArrayList<>();
 
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            result.add(projection);
-         }
-      });
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(2, filterSubscription.getProjection().length);
@@ -667,14 +646,9 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final List<Object[]> result = new ArrayList<Object[]>();
+      final List<Object[]> result = new ArrayList<>();
 
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            result.add(projection);
-         }
-      });
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(3, filterSubscription.getProjection().length);
@@ -700,14 +674,9 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final List<Object[]> result = new ArrayList<Object[]>();
+      List<Object[]> result = new ArrayList<>();
 
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            result.add(projection);
-         }
-      });
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(2, filterSubscription.getProjection().length);
@@ -728,23 +697,19 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testProjectionOnEmbeddedEntity() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000405");
+      expectedException.expectMessage("ISPN028503");
 
       String queryString = "select p.phoneNumbers from org.infinispan.objectfilter.test.model.Person p";
 
       Matcher matcher = createMatcher();
 
-      matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         }
+      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> {
       });
    }
 
    /**
-    * Test that projections are properly computed even if the query is a tautology so no predicates will ever be computed.
-    *
-    * @throws Exception
+    * Test that projections are properly computed even if the query is a tautology so no predicates will ever be
+    * computed.
     */
    @Test
    public void testTautologyAndProjections() throws Exception {
@@ -753,13 +718,8 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      final List<Object[]> result = new ArrayList<Object[]>();
-      FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-            result.add(projection);
-         }
-      });
+      List<Object[]> result = new ArrayList<>();
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> result.add(projection));
 
       assertNotNull(filterSubscription.getProjection());
       assertEquals(1, filterSubscription.getProjection().length);
@@ -787,10 +747,7 @@ public abstract class AbstractMatcherTest {
 
       Matcher matcher = createMatcher();
 
-      matcher.registerFilter(queryString, new FilterCallback() {
-         @Override
-         public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         }
+      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> {
       });
    }
 }

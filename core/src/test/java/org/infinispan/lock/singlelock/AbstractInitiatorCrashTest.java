@@ -1,11 +1,11 @@
 package org.infinispan.lock.singlelock;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Mircea Markus
@@ -49,7 +49,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
 
       Object k = getKeyForCache(2);
-      
+
       tm(1).begin();
       cache(1).put(k,"v");
       final DummyTransaction transaction = (DummyTransaction) tm(1).getTransaction();

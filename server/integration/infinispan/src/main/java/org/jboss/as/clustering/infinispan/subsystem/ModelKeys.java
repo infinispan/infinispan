@@ -30,6 +30,7 @@ public class ModelKeys {
     static final String CONFIGURATION_SUFFIX = "-configuration";
 
     static final String ACQUIRE_TIMEOUT = "acquire-timeout";
+    static final String ADDRESS_COUNT = "address-count";
     static final String ALIAS = "alias";
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
@@ -48,8 +49,7 @@ public class ModelKeys {
     static final String BACKUP_FOR = "backup-for";
     static final String BATCH_SIZE = "batch-size";
     static final String BATCHING = "batching";
-    static final String BINARY_KEYED_TABLE = "binary-keyed-table";
-    static final String BINARY_KEYED_TABLE_NAME = "BINARY_KEYED_TABLE";
+    static final String BINARY_NAME = "BINARY";
     static final String BLOCK_SIZE = "block-size";
     static final String BUCKET_TABLE = "bucket-table";
     static final String BUFFER_SIZE = "buffer-size";
@@ -128,20 +128,17 @@ public class ModelKeys {
     static final String JDBC_STORE = "jdbc-store";
     static final String JDBC_STORE_NAME = "JDBC_STORE";
     static final String KEEPALIVE_TIME = "keepalive-time";
-    static final String LEVELDB_STORE = "leveldb-store";
+    static final String ROCKSDB_EXPIRATION = "expiration-db";
+    static final String ROCKSDB_STORE = "rocksdb-store";
     static final String LOADER = "loader";
     static final String LOADER_NAME = "LOADER";
     static final String STRING_KEYED_JDBC_STORE = "string-keyed-jdbc-store";
     static final String STRING_KEYED_JDBC_STORE_NAME = "STRING_KEYED_JDBC_STORE";
     static final String STRING_KEYED_TABLE = "string-keyed-table";
     static final String STRING_KEYED_TABLE_NAME = "STRING_KEYED_TABLE";
-    static final String BINARY_KEYED_JDBC_STORE = "binary-keyed-jdbc-store";
-    static final String BINARY_KEYED_JDBC_STORE_NAME = "BINARY_KEYED_JDBC_STORE";
-    static final String MIXED_KEYED_JDBC_STORE = "mixed-keyed-jdbc-store";
-    static final String MIXED_KEYED_JDBC_STORE_NAME = "MIXED_KEYED_JDBC_STORE";
     static final String JNDI_NAME = "jndi-name";
     static final String L1_LIFESPAN = "l1-lifespan";
-    static final String LEVELDB_STORE_NAME = "LEVELDB_STORE";
+    static final String LEVELDB_STORE = "leveldb-store";
     static final String LIFESPAN = "lifespan";
     static final String LISTENER_EXECUTOR = "listener-executor";
     static final String LOCAL_CACHE = "local-cache";
@@ -158,6 +155,7 @@ public class ModelKeys {
     static final String MAX_RETRIES = "max-retries";
     static final String MAX_THREADS = "max-threads";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
+    static final String MEMORY = "memory";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MIN_THREADS = "min-threads";
     static final String MODE = "mode";
@@ -165,6 +163,8 @@ public class ModelKeys {
     static final String MODULE = "module";
     static final String NAME = "name";
     static final String NOTIFICATIONS = "notifications";
+    static final String OBJECT_NAME = "OBJECT";
+    static final String OFF_HEAP_NAME = "OFF-HEAP";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
     static final String OWNERS = "owners";
     static final String PARTITION_HANDLING = "partition-handling";
@@ -201,6 +201,7 @@ public class ModelKeys {
     static final String REPLICATION_QUEUE_EXECUTOR = "replication-queue-executor";
     static final String REST_STORE = "rest-store";
     static final String REST_STORE_NAME = "REST_STORE";
+    static final String ROCKSDB_STORE_NAME = "ROCKSDB_STORE";
     static final String ROLE = "role";
     static final String ROLES = "roles";
     static final String SECURITY = "security";
@@ -210,6 +211,8 @@ public class ModelKeys {
     static final String SHARED = "shared";
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
     static final String SIMPLE_CACHE = "simple-cache";
+
+    @Deprecated
     static final String SINGLETON = "singleton";
     static final String SITE = "site";
     static final String SIZE = "size";
@@ -240,7 +243,9 @@ public class ModelKeys {
     static final String TRANSACTION = "transaction";
     static final String TRANSACTION_NAME = "TRANSACTION";
     static final String TRANSPORT = "transport";
+    static final String HEALTH = "health";
     static final String TRANSPORT_NAME = "TRANSPORT";
+    static final String HEALTH_NAME = "HEALTH";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
     static final String VALUE = "value";

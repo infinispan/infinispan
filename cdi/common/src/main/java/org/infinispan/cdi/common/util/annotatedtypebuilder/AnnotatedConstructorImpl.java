@@ -1,9 +1,10 @@
 package org.infinispan.cdi.common.util.annotatedtypebuilder;
 
-import javax.enterprise.inject.spi.AnnotatedConstructor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Map;
+
+import javax.enterprise.inject.spi.AnnotatedConstructor;
 
 /**
  * @author Stuart Douglas

@@ -1,10 +1,9 @@
 package org.infinispan.cache.impl;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
-
-import java.util.Set;
 
 /**
  * Utility methods for dealing with caches.
@@ -16,10 +15,10 @@ public class Caches {
    private Caches() {
    }
 
-   public static <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
-      Set<Flag> flags = command.getFlags();
-      if (flags != null && !flags.isEmpty()) {
-         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   public static <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, FlagAffectedCommand command) {
+      long flags = command.getFlagsBitSet();
+      if (flags != EnumUtil.EMPTY_BIT_SET) {
+         return cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
       } else {
          return cache;
       }

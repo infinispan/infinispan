@@ -1,0 +1,37 @@
+= Infinispan {infinispanversion} User Guide
+The Infinispan community
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+
+// Load all default values here for use in all sub-chapters
+include::{defaults}[]
+
+include::introduction.adoc[]
+include::configuration.adoc[]
+include::cache_manager.adoc[]
+include::cache_api.adoc[]
+include::eviction.adoc[]
+include::persistence.adoc[]
+include::clustering.adoc[]
+include::marshalling.adoc[]
+include::transactions.adoc[]
+include::locking.adoc[]
+include::streams.adoc[]
+include::distributed_executor.adoc[]
+include::query.adoc[]
+include::cdi.adoc[]
+include::jcache.adoc[]
+include::management.adoc[]
+include::interceptors.adoc[]
+include::cloud.adoc[]
+include::server_protocols.adoc[]
+include::compatibility_mode.adoc[]
+include::security.adoc[]
+include::integrations.adoc[]
+include::grid_file_system.adoc[]
+include::cross_site_replication.adoc[]
+include::rolling_upgrades.adoc[]
+include::extending.adoc[]
+include::architecture.adoc[]

@@ -1,17 +1,6 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.marshall.core.Ids;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -32,7 +21,7 @@ public enum ValueMatcher {
     */
    MATCH_ALWAYS() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return true;
       }
 
@@ -53,8 +42,8 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(extractValue(existingEntry), expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return existingValue == null ? expectedValue == null : existingValue.equals(expectedValue);
       }
 
       @Override
@@ -73,9 +62,11 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED_OR_NEW() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(extractValue(existingEntry), expectedValue, valueEquivalence) ||
-               equal(extractValue(existingEntry), newValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         if (existingValue == null)
+            return expectedValue == null || newValue == null;
+         else
+            return existingValue.equals(expectedValue) || existingValue.equals(newValue);
       }
 
       @Override
@@ -91,8 +82,8 @@ public enum ValueMatcher {
 
    MATCH_EXPECTED_OR_NULL() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return newValue == null || equal(extractValue(existingEntry), expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return existingValue == null || existingValue.equals(expectedValue);
       }
 
       @Override
@@ -110,8 +101,8 @@ public enum ValueMatcher {
     */
    MATCH_NON_NULL() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return extractValue(existingEntry) != null;
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
+         return existingValue != null;
       }
 
       @Override
@@ -130,7 +121,7 @@ public enum ValueMatcher {
     */
    MATCH_NEVER() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return false;
       }
 
@@ -145,23 +136,15 @@ public enum ValueMatcher {
       }
    },;
 
-   public abstract boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue,
-                          Equivalence valueEquivalence);
+   public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue);
 
+   /**
+    * @deprecated Since 9.0, no longer used.
+    */
+   @Deprecated
    public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();
-
-   protected Object extractValue(MVCCEntry mvccEntry) {
-      // isRemoved() == true doesn't seem to imply isNull() == true, so we check it explicitly
-      return (mvccEntry == null || mvccEntry.isRemoved()) ? null : mvccEntry.getValue();
-   }
-
-   protected boolean equal(Object a, Object b, Equivalence valueEquivalence) {
-      // Compare by identity first to catch the case where both are null
-      if (a == b) return true;
-      return valueEquivalence != null ? valueEquivalence.equals(a, b) : (a != null && a.equals(b));
-   }
 
    private static final ValueMatcher[] CACHED_VALUES = values();
 
@@ -169,30 +152,4 @@ public enum ValueMatcher {
       return CACHED_VALUES[ordinal];
    }
 
-   public static class Externalizer extends AbstractExternalizer<ValueMatcher> {
-
-      @Override
-      public Integer getId() {
-         return Ids.VALUE_MATCHER;
-      }
-
-      @Override
-      public Set<Class<? extends ValueMatcher>> getTypeClasses() {
-         Set<Class<? extends ValueMatcher>> classes = new HashSet<>(CACHED_VALUES.length);
-         for (ValueMatcher valueMatcher : CACHED_VALUES) {
-            classes.add(valueMatcher.getClass());
-         }
-         return classes;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ValueMatcher valueMatcher) throws IOException {
-         MarshallUtil.marshallEnum(valueMatcher, output);
-      }
-
-      @Override
-      public ValueMatcher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      }
-   }
 }

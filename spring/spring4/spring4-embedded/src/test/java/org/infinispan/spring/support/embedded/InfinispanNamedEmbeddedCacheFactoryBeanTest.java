@@ -1,5 +1,12 @@
 package org.infinispan.spring.support.embedded;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -10,11 +17,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -40,6 +42,8 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractInfinis
    public void startCacheManagers() {
       DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
       DEFAULT_CACHE_MANAGER.start();
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.cache.Name", DEFAULT_CACHE_MANAGER.getDefaultCacheConfiguration());
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.bean.Name", DEFAULT_CACHE_MANAGER.getDefaultCacheConfiguration());
 
       InputStream configStream = null;
       try {

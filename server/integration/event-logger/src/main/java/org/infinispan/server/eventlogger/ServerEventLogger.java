@@ -1,12 +1,20 @@
 package org.infinispan.server.eventlogger;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionContext;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.util.TimeService;
@@ -16,15 +24,6 @@ import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -95,14 +94,16 @@ public class ServerEventLogger implements EventLogger {
 
    @Override
    public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
-      List<EventLog> events = new ArrayList<>();
+      List<EventLog> events = Collections.synchronizedList(new ArrayList<>());
       AtomicReference<Throwable> throwable = new AtomicReference<>();
       try {
          cacheManager.executor().submitConsumer(m -> {
             Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
             QueryFactory queryFactory = Search.getQueryFactory(cache);
-            QueryBuilder query = queryFactory.from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count);
-            FilterConditionContext filter = query.having("when").lte(start);
+            FilterConditionContext filter = queryFactory.from(ServerEventImpl.class)
+                  .orderBy("when", SortOrder.DESC)
+                  .maxResults(count)
+                  .having("when").lte(start);
             category.map(c -> filter.and(queryFactory.having("category").eq(c)));
             level.map(l -> filter.and(queryFactory.having("level").eq(l)));
             List<EventLog> nodeEvents = filter.toBuilder().build().list();
@@ -118,6 +119,9 @@ public class ServerEventLogger implements EventLogger {
          if (th != null) {
             throw new CacheException(th);
          }
+      } catch (CacheException e) {
+         log.debug("Could not retrieve events", e);
+         throw e;
       } catch (Exception e) {
          log.debug("Could not retrieve events", e);
          throw new CacheException(e);

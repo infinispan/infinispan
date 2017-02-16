@@ -1,24 +1,26 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.Params;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.function.Function;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
-public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
+// TODO: the command does not carry previous values to backup, so it can cause
+// the values on primary and backup owners to diverge in case of topology change
+public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
    public static final byte COMMAND_ID = 50;
 
@@ -34,6 +36,11 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       // No-op, for marshalling
    }
 
+   public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
+      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
+      this.f = other.f;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -44,8 +51,9 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       output.writeObject(key);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(commandInvocationId);
+      Params.writeObject(output, params);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -53,8 +61,9 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       key = input.readObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -90,12 +99,12 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.ReadWrite<>(f);
    }
 }

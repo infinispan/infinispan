@@ -1,5 +1,12 @@
 package org.infinispan.util.concurrent.locks;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.MBean;
@@ -10,13 +17,6 @@ import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Lock manager in charge with processing deadlock detections.

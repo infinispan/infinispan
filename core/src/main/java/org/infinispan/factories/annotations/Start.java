@@ -1,6 +1,7 @@
 package org.infinispan.factories.annotations;
 
 import static java.lang.annotation.ElementType.METHOD;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -23,5 +24,5 @@ public @interface Start {
     * @return execution priority
     * @since 4.0
     */
-   public abstract int priority() default 10;
+   int priority() default 10;
 }

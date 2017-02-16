@@ -1,8 +1,8 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.jgroups.Channel;
-
 import java.util.Properties;
+
+import org.jgroups.JChannel;
 
 /**
  * A hook to pass in a JGroups channel.  Implementations need to provide a public no-arg constructor as instances are
@@ -17,7 +17,7 @@ public interface JGroupsChannelLookup {
     * @param p properties
     * @return a JGroups channel
     */
-   Channel getJGroupsChannel(Properties p);
+   JChannel getJGroupsChannel(Properties p);
 
    /**
     * @return true if the JGroupsTransport should connect the channel before using it; false if the transport

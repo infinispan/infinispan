@@ -1,5 +1,10 @@
 package org.infinispan.cdi.embedded.test.cachemanager.xml;
 
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -7,10 +12,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import javax.inject.Inject;
-
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test that a cache configured in XML is available, and that it can be overridden.
@@ -37,11 +38,11 @@ public class XMLConfiguredCacheContainerTest extends Arquillian {
    private AdvancedCache<?, ?> quickCache;
 
    public void testVeryLargeCache() {
-      assertEquals(largeCache.getCacheConfiguration().eviction().maxEntries(), 1000);
+      assertEquals(largeCache.getCacheConfiguration().memory().size(), 1000);
    }
 
    public void testQuickCache() {
-      assertEquals(quickCache.getCacheConfiguration().eviction().maxEntries(), 1000);
+      assertEquals(quickCache.getCacheConfiguration().memory().size(), 1000);
       assertEquals(quickCache.getCacheConfiguration().expiration().wakeUpInterval(), 1);
    }
 }

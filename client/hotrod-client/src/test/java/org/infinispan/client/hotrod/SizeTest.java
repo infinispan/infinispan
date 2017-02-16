@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.SizeTest")
 public class SizeTest extends MultiHotRodServersTest {

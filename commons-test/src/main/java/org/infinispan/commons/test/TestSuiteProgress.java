@@ -1,9 +1,9 @@
 package org.infinispan.commons.test;
 
 
-import org.jboss.logging.Logger;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.jboss.logging.Logger;
 
 
 /**
@@ -61,7 +61,7 @@ public class TestSuiteProgress {
    static void setupFailed(String name, Throwable exception) {
       String message = "Test setup failed: " + name;
       consoleLog(message);
-      log.info(message, exception);
+      log.error(message, exception);
       failed.incrementAndGet();
       printStatus();
    }

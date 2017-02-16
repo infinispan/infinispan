@@ -1,5 +1,9 @@
 package org.infinispan.remoting.inboundhandler.action;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -8,10 +12,6 @@ import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link Action} implementation that check for older topology transactions.

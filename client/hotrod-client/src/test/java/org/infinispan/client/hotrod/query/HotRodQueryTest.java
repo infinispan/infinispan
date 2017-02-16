@@ -1,5 +1,16 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -27,17 +38,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test query via Hot Rod on a LOCAL cache.
@@ -149,7 +149,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
@@ -162,7 +162,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
-            .having("addresses.postCode").eq("1234").toBuilder()
+            .having("addresses.postCode").eq("1234")
             .build();
       List<User> list = query.list();
       assertNotNull(list);
@@ -171,7 +171,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser1(list.get(0));
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -190,7 +190,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
             .select("name", "surname")
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
 
       List<Object[]> list = query.list();

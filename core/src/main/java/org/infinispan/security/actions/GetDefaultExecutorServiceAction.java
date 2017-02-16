@@ -12,7 +12,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class GetDefaultExecutorServiceAction implements PrivilegedAction<DefaultExecutorService>{
+public class GetDefaultExecutorServiceAction implements PrivilegedAction<DefaultExecutorService> {
 
    private final Cache<?, ?> cache;
 

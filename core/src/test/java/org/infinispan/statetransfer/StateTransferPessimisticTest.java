@@ -1,19 +1,20 @@
 package org.infinispan.statetransfer;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Test if state transfer happens properly on a cache with pessimistic transactions.
@@ -37,8 +38,8 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true);
-      dccc.clustering().hash().numOwners(1).l1().disable().locking().lockAcquisitionTimeout(1000l);
-      dccc.clustering().stateTransfer().fetchInMemoryState(true);
+      dccc.clustering().hash().numOwners(1).l1().disable();
+      dccc.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createCluster(dccc, 2);
       waitForClusterToForm();
    }

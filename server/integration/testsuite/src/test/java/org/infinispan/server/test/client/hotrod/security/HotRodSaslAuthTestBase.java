@@ -1,28 +1,30 @@
 package org.infinispan.server.test.client.hotrod.security;
 
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 
 import java.security.PrivilegedActionException;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 
+import org.infinispan.arquillian.core.HotRodEndpoint;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.junit.After;
 import org.junit.Test;
 
 /**
- * 
+ *
  * Base class for tests of HotRod client SASL authentication. For supported SASL mechanisms see
  * {@code endpoint-7.0.xml} or later.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */
@@ -61,6 +63,14 @@ public abstract class HotRodSaslAuthTestBase {
 
    public abstract void initAsSupervisor() throws PrivilegedActionException, LoginException;
 
+   public void initAsAnonymous() throws PrivilegedActionException, LoginException {
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      HotRodEndpoint endpoint = getRemoteServer().getHotrodEndpoint();
+      config.addServer().host(endpoint.getInetAddress().getHostAddress()).port(endpoint.getPort());
+      remoteCacheManager = new RemoteCacheManager(config.build(), true);
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+   }
+
    @After
    public void release() {
       if (remoteCacheManager != null) {
@@ -98,8 +108,8 @@ public abstract class HotRodSaslAuthTestBase {
       return getDefaultSaslConfigBuilder().forSubject(subj).build();
    }
 
-   protected SaslConfigurationBuilder getDefaultSaslConfigBuilder() {
-      SaslConfigurationBuilder config = new SaslConfigurationBuilder(getTestedMech());
+   protected SecurityConfigurationHelper getDefaultSaslConfigBuilder() {
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper(getTestedMech());
       config.forIspnServer(getRemoteServer()).withServerName(TEST_SERVER_NAME);
       return config;
    }
@@ -139,6 +149,12 @@ public abstract class HotRodSaslAuthTestBase {
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterWriteRead() throws PrivilegedActionException, LoginException {
       initAsWriter();
+      testPutGet(remoteCache);
+   }
+
+   @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
+   public void testAnonymous() throws Exception {
+      initAsAnonymous();
       testPutGet(remoteCache);
    }
 

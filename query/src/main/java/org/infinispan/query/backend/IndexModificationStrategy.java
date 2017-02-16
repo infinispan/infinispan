@@ -3,9 +3,12 @@ package org.infinispan.query.backend;
 import org.hibernate.search.spi.IndexingMode;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * Defines for which events the Query Interceptor will generate indexing events.
@@ -22,7 +25,8 @@ public enum IndexModificationStrategy {
     */
    MANUAL {
       @Override
-      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
+      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
+                                         DistributionManager distributionManager, RpcManager rpcManager, Object key) {
          return false;
       }
    },
@@ -33,8 +37,9 @@ public enum IndexModificationStrategy {
     */
    ALL {
       @Override
-      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
-         return !command.hasFlag(Flag.SKIP_INDEXING);
+      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
+                                         DistributionManager distributionManager, RpcManager rpcManager, Object key) {
+         return !command.hasAnyFlag(FlagBitSets.SKIP_INDEXING);
       }
    },
 
@@ -44,14 +49,30 @@ public enum IndexModificationStrategy {
     */
    LOCAL_ONLY {
       @Override
-      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
+      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
+                                         DistributionManager distributionManager, RpcManager rpcManager, Object key) {
          // will index only local updates that were not flagged with SKIP_INDEXING,
          // are not caused internally by state transfer and indexing strategy is not configured to 'manual'
-         return ctx.isOriginLocal() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER) && !command.hasFlag(Flag.SKIP_INDEXING);
+         return ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_INDEXING);
+      }
+   },
+
+   /**
+    * Only events target to the primary owner will trigger indexing of the data
+    */
+   PRIMARY_OWNER {
+      @Override
+      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
+                                         DistributionManager distributionManager, RpcManager rpcManager, Object key) {
+         return command instanceof ClearCommand ||
+               !(command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER) || command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) &&
+                     (distributionManager == null || distributionManager.getPrimaryLocation(key).equals(rpcManager.getAddress()));
+
       }
    };
 
-   public abstract boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx);
+   public abstract boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
+                                               DistributionManager distributionManager, RpcManager rpcManager, Object key);
 
    /**
     * For a given configuration, define which IndexModificationStrategy is going to be used.
@@ -63,12 +84,12 @@ public enum IndexModificationStrategy {
       IndexingMode indexingMode = searchFactory.unwrap(SearchIntegrator.class).getIndexingMode();
       if (indexingMode == IndexingMode.MANUAL) {
          return MANUAL;
-      }
-      else {
+      } else {
          if (cfg.indexing().index().isLocalOnly()) {
             return LOCAL_ONLY;
-         }
-         else {
+         } else if (cfg.indexing().index().isPrimaryOwner()) {
+            return PRIMARY_OWNER;
+         } else {
             return ALL;
          }
       }

@@ -116,6 +116,27 @@ public class TypedProperties extends Properties {
       }
    }
 
+   public <T extends Enum<T>> T getEnumProperty(String key, Class<T> enumClass, T defaultValue) {
+      return getEnumProperty(key, enumClass, defaultValue, false);
+   }
+
+   public <T extends Enum<T>> T getEnumProperty(String key, Class<T> enumClass, T defaultValue, boolean doStringReplace) {
+      String value = getProperty(key);
+      if (value == null) return defaultValue;
+      value = value.trim();
+      if (value.length() == 0) return defaultValue;
+
+      if (doStringReplace)
+         value = StringPropertyReplacer.replaceProperties(value);
+
+      try {
+         return Enum.valueOf(enumClass, value);
+      } catch (IllegalArgumentException e) {
+         log.unableToConvertStringPropertyToEnum(value, defaultValue.name());
+         return defaultValue;
+      }
+   }
+
    /**
     * Get the property associated with the key, optionally applying string property replacement as defined in
     * {@link StringPropertyReplacer#replaceProperties} to the result.
@@ -137,5 +158,4 @@ public class TypedProperties extends Properties {
       super.setProperty(key, value);
       return this;
    }
-
 }

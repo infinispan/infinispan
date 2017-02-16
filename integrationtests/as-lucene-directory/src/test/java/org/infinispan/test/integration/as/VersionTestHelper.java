@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
@@ -28,12 +27,12 @@ public class VersionTestHelper {
       //not meant to be created
    }
 
-   public static void addHibernateSearchManifestDependencies(Archive<?> archive) {
-      archive.add( manifestDependencies( "org.hibernate.search.orm:${hibernate-search.module.slot} services"), "META-INF/MANIFEST.MF" );
+   public static String hibernateOrmModuleName() {
+      return "org.hibernate:" + injectVariables( "${hibernate-orm.module.slot}" );
    }
 
-   public static void addMainHibernateSearchManifestDependencies(Archive<?> archive) {
-      archive.add( manifestDependencies( "org.hibernate.search.orm services"), "META-INF/MANIFEST.MF" );
+   public static String hibernateSearchModuleName() {
+      return "org.hibernate.search.orm:" + injectVariables( "${hibernate-search.module.slot}" );
    }
 
    public static Asset manifestDependencies(String moduleDependencies) {
@@ -46,6 +45,7 @@ public class VersionTestHelper {
             .exportAsString();
       return new StringAsset( manifest );
    }
+
 
    private static String injectVariables(String dependencies) {
       Properties projectCompilationProperties = new Properties();

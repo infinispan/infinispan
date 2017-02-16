@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.Flag;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 
 /**
  * Hot Rod request header parameters
@@ -38,8 +39,8 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams clientIntel(byte clientIntel) {
-      this.clientIntel = clientIntel;
+   public HeaderParams clientIntel(ClientIntelligence clientIntel) {
+      this.clientIntel = clientIntel.getValue();
       return this;
    }
 
@@ -119,6 +120,10 @@ public class HeaderParams {
             return HotRodConstants.ITERATION_NEXT_RESPONSE;
          case HotRodConstants.ITERATION_END_REQUEST:
             return HotRodConstants.ITERATION_END_RESPONSE;
+         case HotRodConstants.GET_STREAM_REQUEST:
+            return HotRodConstants.GET_STREAM_RESPONSE;
+         case HotRodConstants.PUT_STREAM_REQUEST:
+            return HotRodConstants.PUT_STREAM_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

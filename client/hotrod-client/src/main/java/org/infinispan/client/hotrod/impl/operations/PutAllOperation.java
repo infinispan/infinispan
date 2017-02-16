@@ -7,14 +7,15 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
-
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Implements "putAll" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -27,8 +28,9 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    public PutAllOperation(Codec codec, TransportFactory transportFactory,
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
-                          int flags, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                          int flags, ClientIntelligence clientIntelligence,
+                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;

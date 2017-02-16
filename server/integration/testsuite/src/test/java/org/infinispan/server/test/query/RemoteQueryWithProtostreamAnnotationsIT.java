@@ -1,5 +1,11 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -24,16 +30,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 /**
  * Tests for remote queries over HotRod using Protobuf annotations.
  *
  * @author Adrian Nistor
  */
-@Category({Queries.class})
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryWithProtostreamAnnotationsIT {
 
@@ -170,7 +172,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
       // get user1 back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(AnnotatedUser.class)
-            .having("name").eq("Tom").toBuilder()
+            .having("name").eq("Tom")
             .build();
       List<AnnotatedUser> list = query.list();
       assertNotNull(list);
@@ -180,7 +182,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
 
       // get user2 back from remote cache via query and check its attributes
       query = qf.from(AnnotatedUser.class)
-            .having("address.postCode").eq("Xyz").toBuilder()
+            .having("address.postCode").eq("Xyz")
             .build();
       list = query.list();
       assertNotNull(list);

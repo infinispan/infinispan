@@ -1,5 +1,10 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
+
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,31 +12,24 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.CountDownLatch;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-
 @Test(testName = "tx.RollbackBeforePrepareTest", groups = "functional")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
 public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
    public static final long REPL_TIMEOUT = 1000;
    public static final long LOCK_TIMEOUT = 500;
    private FailPrepareInterceptor failPrepareInterceptor;
-   protected CacheMode cacheMode;
-   protected int numOwners;
+   protected int numOwners = 3;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      cacheMode = CacheMode.REPL_SYNC;
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(cacheMode, true);
-      numOwners = 3;
       config
             .locking().lockAcquisitionTimeout(LOCK_TIMEOUT)
             .clustering().remoteTimeout(REPL_TIMEOUT)

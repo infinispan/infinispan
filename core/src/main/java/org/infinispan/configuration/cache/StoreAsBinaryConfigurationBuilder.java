@@ -1,8 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.STORE_KEYS_AS_BINARY;
-import static org.infinispan.configuration.cache.StoreAsBinaryConfiguration.STORE_VALUES_AS_BINARY;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -18,6 +16,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * both.
  * <p />
  * @see StoreAsBinaryConfiguration
+ * @deprecated Please use {@link MemoryConfigurationBuilder#storageType(StorageType)} method instead
  */
 public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<StoreAsBinaryConfiguration> {
    private final AttributeSet attributes;
@@ -32,6 +31,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder enable() {
       attributes.attribute(ENABLED).set(true);
+      getBuilder().memory().storageType(StorageType.BINARY);
       return this;
    }
 
@@ -40,6 +40,7 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder disable() {
       attributes.attribute(ENABLED).set(false);
+      getBuilder().memory().storageType(StorageType.OBJECT);
       return this;
    }
 
@@ -49,23 +50,24 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     */
    public StoreAsBinaryConfigurationBuilder enabled(boolean enabled) {
       attributes.attribute(ENABLED).set(enabled);
+      getBuilder().memory().storageType(enabled ? StorageType.BINARY : StorageType.OBJECT);
       return this;
    }
 
    /**
     * Specify whether keys are stored as binary or not.
     * @param storeKeysAsBinary if true, keys are stored as binary.  If false, keys are stored as object references.
+    * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
    public StoreAsBinaryConfigurationBuilder storeKeysAsBinary(boolean storeKeysAsBinary) {
-      attributes.attribute(STORE_KEYS_AS_BINARY).set(storeKeysAsBinary);
       return this;
    }
    /**
     * Specify whether values are stored as binary or not.
     * @param storeValuesAsBinary if true, values are stored as binary.  If false, values are stored as object references.
+    * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
    public StoreAsBinaryConfigurationBuilder storeValuesAsBinary(boolean storeValuesAsBinary) {
-      attributes.attribute(STORE_VALUES_AS_BINARY).set(storeValuesAsBinary);
       return this;
    }
 

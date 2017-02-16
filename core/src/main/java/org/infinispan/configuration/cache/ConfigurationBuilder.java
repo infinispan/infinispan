@@ -38,6 +38,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SitesConfigurationBuilder sites;
    private final CompatibilityModeConfigurationBuilder compatibility;
+   private final MemoryConfigurationBuilder memory;
    private final AttributeSet attributes;
 
    private boolean template = false;
@@ -62,6 +63,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.compatibility = new CompatibilityModeConfigurationBuilder(this);
+      this.memory = new MemoryConfigurationBuilder(this);
    }
 
    @Override
@@ -95,6 +97,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return deadlockDetection;
    }
 
+   /**
+    *
+    * @return
+    * @deprecated Use {@link ConfigurationBuilder#memory()} instead
+    */
    @Override
    public EvictionConfigurationBuilder eviction() {
       return eviction;
@@ -165,6 +172,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return compatibility;
    }
 
+   @Override
+   public MemoryConfigurationBuilder memory() { return memory; }
+
    public List<Builder<?>> modules() {
       return modules;
    }
@@ -196,15 +206,25 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       if (attributes.attribute(SIMPLE_CACHE).get()) {
          validateSimpleCacheConfiguration();
       }
+      List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites, compatibility)) {
-         validatable.validate();
+         try {
+            validatable.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
       for (Builder<?> m : modules) {
-         m.validate();
+         try {
+            m.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
    }
 
    private void validateSimpleCacheConfiguration() {
@@ -222,13 +242,19 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      List<RuntimeException> validationExceptions = new ArrayList<>();
       for (ConfigurationChildBuilder validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
-                   versioning, unsafe, sites, compatibility)) {
-         validatable.validate(globalConfig);
+                   versioning, unsafe, sites, compatibility, security)) {
+         try {
+            validatable.validate(globalConfig);
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
       // Modules cannot be checked with GlobalConfiguration
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
    }
 
    @Override
@@ -253,7 +279,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
                storeAsBinary.create(), transaction.create(), unsafe.create(), versioning.create(), sites.create(),
-               compatibility.create(),
+               compatibility.create(), memory.create(),
                modulesConfig);
    }
 
@@ -277,6 +303,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.sites.read(template.sites());
       this.versioning.read(template.versioning());
       this.compatibility.read(template.compatibility());
+      this.memory.read(template.memory());
 
       for (Object c : template.modules().values()) {
          Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));

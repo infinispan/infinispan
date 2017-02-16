@@ -1,9 +1,9 @@
 package org.infinispan.cli;
 
 import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.cli.connection.jmx.JMXUrl;
 import org.infinispan.cli.connection.jmx.remoting.DirectJMXRemotingUrl;
-import org.infinispan.cli.connection.jmx.remoting.JMXRemotingUrl;
 import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="cli.JMXRemotingUrlTest")

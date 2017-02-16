@@ -1,6 +1,28 @@
 package org.infinispan.server.test.client.rest;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -10,27 +32,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
-import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -76,11 +84,11 @@ public class RESTHelper {
     }
 
     public static HttpResponse head(URI uri) throws Exception {
-        return head(uri, HttpServletResponse.SC_OK);
+        return head(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse headWithoutClose(URI uri) throws Exception {
-        return head(uri, HttpServletResponse.SC_OK);
+        return head(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse head(URI uri, int expectedCode) throws Exception {
@@ -117,19 +125,19 @@ public class RESTHelper {
     }
 
     public static HttpResponse get(URI uri) throws Exception {
-        return get(uri, HttpServletResponse.SC_OK);
+        return get(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse getWithoutClose(URI uri) throws Exception {
-        return getWithoutClose(uri, HttpServletResponse.SC_OK);
+        return getWithoutClose(uri, HttpStatus.SC_OK);
     }
 
     public static HttpResponse get(URI uri, String expectedResponseBody) throws Exception {
-        return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, true);
+        return get(uri, expectedResponseBody, HttpStatus.SC_OK, true);
     }
 
     public static HttpResponse getWithoutClose(URI uri, String expectedResponseBody) throws Exception {
-        return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, false);
+        return get(uri, expectedResponseBody, HttpStatus.SC_OK, false);
     }
 
     public static HttpResponse get(URI uri, int expectedCode) throws Exception {
@@ -149,7 +157,7 @@ public class RESTHelper {
         }
         HttpResponse resp = client.execute(get);
         try {
-            assertEquals(expectedCode, resp.getStatusLine().getStatusCode());
+            assertEquals(uri.toString(), expectedCode, resp.getStatusLine().getStatusCode());
             if (expectedResponseBody != null) {
                 assertEquals(expectedResponseBody, EntityUtils.toString(resp.getEntity()));
             }
@@ -188,7 +196,7 @@ public class RESTHelper {
     }
 
     public static HttpResponse put(URI uri, Object data, String contentType) throws Exception {
-        return put(uri, data, contentType, HttpServletResponse.SC_OK);
+        return put(uri, data, contentType, HttpStatus.SC_OK);
     }
 
     public static HttpResponse put(URI uri, Object data, String contentType, int expectedCode) throws Exception {
@@ -225,12 +233,25 @@ public class RESTHelper {
                 new AuthScope(servers.get(0).getHostname(), port), credentials);
     }
 
+    public static void setSni(SSLContext sslContext, java.util.Optional<String> sniHostName) {
+        client = HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER) {
+            @Override
+            protected void prepareSocket(SSLSocket socket) throws IOException {
+                if(sniHostName.isPresent()) {
+                SSLParameters sslParameters = socket.getSSLParameters();
+                sslParameters.setServerNames(Arrays.asList(new SNIHostName(sniHostName.get())));
+                socket.setSSLParameters(sslParameters);
+                }
+            }
+        }).build();
+    }
+
     public static void clearCredentials() {
         credsProvider.clear();
     }
 
     public static HttpResponse post(URI uri, Object data, String contentType) throws Exception {
-        return post(uri, data, contentType, HttpServletResponse.SC_OK);
+        return post(uri, data, contentType, HttpStatus.SC_OK);
     }
 
     public static HttpResponse post(URI uri, Object data, String contentType, int expectedCode) throws Exception {
@@ -303,6 +324,14 @@ public class RESTHelper {
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static URI toSsl(URI uri) {
+        try {
+            return new URI(uri.toString().replaceFirst("http", "https"));
+        } catch (URISyntaxException e) {
+            throw new AssertionError("Not a valid URI", e);
         }
     }
 

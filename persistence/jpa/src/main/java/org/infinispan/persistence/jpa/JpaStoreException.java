@@ -3,7 +3,7 @@ package org.infinispan.persistence.jpa;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */

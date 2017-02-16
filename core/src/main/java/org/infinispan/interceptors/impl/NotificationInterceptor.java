@@ -1,14 +1,15 @@
 package org.infinispan.interceptors.impl;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners
@@ -16,8 +17,22 @@ import java.util.concurrent.CompletableFuture;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 9.0
  */
-public class NotificationInterceptor extends DDSequentialInterceptor {
+public class NotificationInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
+   private final InvocationSuccessAction commitSuccessAction = new InvocationSuccessAction() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
+            throws Throwable {
+         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), true, rCtx);
+      }
+   };
+   private final InvocationSuccessAction rollbackSuccessAction = new InvocationSuccessAction() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
+            throws Throwable {
+         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), false, rCtx);
+      }
+   };
 
    @Inject
    public void injectDependencies(CacheNotifier notifier) {
@@ -25,23 +40,19 @@ public class NotificationInterceptor extends DDSequentialInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
-      return ctx.shortCircuit(retval);
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (!command.isOnePhaseCommit()) return invokeNext(ctx, command);
+
+      return invokeNextThenAccept(ctx, command, commitSuccessAction);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
-      return ctx.shortCircuit(retval);
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, commitSuccessAction);
    }
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), false, ctx);
-      return ctx.shortCircuit(retval);
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, rollbackSuccessAction);
    }
 }

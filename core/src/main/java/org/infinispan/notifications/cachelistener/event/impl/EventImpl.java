@@ -1,20 +1,33 @@
 package org.infinispan.notifications.cachelistener.event.impl;
 
-import net.jcip.annotations.NotThreadSafe;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
+import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
+import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
+import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Basic implementation of an event that covers all event types.
@@ -72,8 +85,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public K getKey() {
-      if (key instanceof MarshalledValue)
-         key = (K) ((MarshalledValue) key).get();
+//      if (key instanceof MarshalledValue)
+//         key = (K) ((MarshalledValue) key).get();
       return key;
    }
 
@@ -150,8 +163,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
-      if (value instanceof MarshalledValue)
-         value = (V) ((MarshalledValue) value).get();
+//      if (value instanceof MarshalledValue)
+//         value = (V) ((MarshalledValue) value).get();
       return value;
    }
 

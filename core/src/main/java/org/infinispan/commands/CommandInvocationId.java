@@ -1,26 +1,27 @@
 package org.infinispan.commands;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Represents an unique identified for non-transaction write commands.
  *
  * It is used to lock the key for a specific command.
  *
+ * This class is final to prevent issues as it is usually not marshalled
+ * as polymorphic object but directly using {@link #writeTo(ObjectOutput, CommandInvocationId)}
+ * and {@link #readFrom(ObjectInput)}.
+ *
  * @author Pedro Ruivo
  * @since 8.0
  */
-public class CommandInvocationId {
+public final class CommandInvocationId {
+   public static final CommandInvocationId DUMMY_INVOCATION_ID = new CommandInvocationId(null, 0);
 
    private static final AtomicLong nextId = new AtomicLong(0);
 
@@ -52,6 +53,10 @@ public class CommandInvocationId {
 
    }
 
+   public Address getAddress() {
+      return address;
+   }
+
    @Override
    public int hashCode() {
       int result = address != null ? address.hashCode() : 0;
@@ -64,29 +69,15 @@ public class CommandInvocationId {
       return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
    }
 
-   public static class Externalizer extends AbstractExternalizer<CommandInvocationId> {
-
-      @Override
-      public Set<Class<? extends CommandInvocationId>> getTypeClasses() {
-         return Collections.singleton(CommandInvocationId.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CommandInvocationId object) throws IOException {
-         output.writeObject(object.address);
-         output.writeLong(object.id);
-      }
-
-      @Override
-      public CommandInvocationId readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Address address = (Address) input.readObject();
-         long id = input.readLong();
-         return new CommandInvocationId(address, id);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.COMMAND_INVOCATION_ID;
-      }
+   public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
+      output.writeObject(commandInvocationId.address);
+      output.writeLong(commandInvocationId.id);
    }
+
+   public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
+      Address address = (Address) input.readObject();
+      long id = input.readLong();
+      return new CommandInvocationId(address, id);
+   }
+
 }

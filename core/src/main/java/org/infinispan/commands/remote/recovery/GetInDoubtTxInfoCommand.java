@@ -1,11 +1,11 @@
 package org.infinispan.commands.remote.recovery;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.util.ByteString;
 
 /**
  * Command used by the recovery tooling for obtaining the list of in-doubt transactions from a node.
@@ -26,8 +26,8 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      return recoveryManager.getInDoubtTransactionInfo();
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      return CompletableFuture.completedFuture(recoveryManager.getInDoubtTransactionInfo());
    }
 
    @Override

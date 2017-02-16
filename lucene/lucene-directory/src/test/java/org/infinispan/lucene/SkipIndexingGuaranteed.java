@@ -1,14 +1,14 @@
 package org.infinispan.lucene;
 
-import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
@@ -51,8 +51,8 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
       return handleDefaultCheckingAssertion(ctx, command);
    }
 
-   protected Object handleDefaultCheckingAssertion(InvocationContext ctx, AbstractFlagAffectedCommand command) throws Throwable {
-      if (! command.hasFlag(Flag.SKIP_INDEXING)) {
+   protected Object handleDefaultCheckingAssertion(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
+      if (! command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          throw new AssertionError("A write operation was detected which is not using SKIP_INDEXING flag");
       }
       return super.invokeNextInterceptor(ctx, command);

@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.util.CollectionFactory;
-
+import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.WrappedByteArray;
 
 /**
  * Tracks all keys seen during iteration. Depends on ISPN-5451 to be done more efficiently, by discarding segments as
@@ -14,11 +14,11 @@ import java.util.Set;
  */
 class ReplKeyTracker implements KeyTracker {
 
-   private Set<byte[]> keys = CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE);
+   private Set<WrappedByteArray> keys = new HashSet<>();
 
    @Override
    public boolean track(byte[] key, short status) {
-      return keys.add(key);
+      return keys.add(new WrappedByteArray(key));
    }
 
    @Override

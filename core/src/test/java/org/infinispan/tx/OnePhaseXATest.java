@@ -1,5 +1,10 @@
 package org.infinispan.tx;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,13 +13,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.List;
 
 @Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.")
 public class OnePhaseXATest extends AbstractInfinispanTest {
@@ -43,14 +44,14 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       }
    }
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() throws Exception {
       caches = new ArrayList<Cache>();
       cacheContainers = new ArrayList<EmbeddedCacheManager>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       if (caches != null) TestingUtil.killCacheManagers(cacheContainers);
    }
@@ -66,6 +67,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(gc, c);
       cacheContainers.add(container);
+      container.defineConfiguration("TestCache", c.build());
       return container.getCache("TestCache");
    }
 }

@@ -1,5 +1,14 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
@@ -14,20 +23,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-
 /**
  * Tests for remote queries over HotRod on a local cache using RAM directory.
  *
  * @author Adrian Nistor
  * @author Martin Gencur
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryIT extends RemoteQueryBaseIT {
 
@@ -59,7 +61,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         // get user back from remote cache via query and check its attributes
         QueryFactory qf = Search.getQueryFactory(remoteCache);
         Query query = qf.from(User.class)
-                .having("name").eq("Tom").toBuilder()
+                .having("name").eq("Tom")
                 .build();
         List<User> list = query.list();
         assertNotNull(list);
@@ -76,7 +78,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         // get user back from remote cache via query and check its attributes
         QueryFactory qf = Search.getQueryFactory(remoteCache);
         Query query = qf.from(User.class)
-                .having("addresses.postCode").eq("1234").toBuilder()
+                .having("addresses.postCode").eq("1234")
                 .build();
         List<User> list = query.list();
         assertNotNull(list);
@@ -98,7 +100,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         QueryFactory qf = Search.getQueryFactory(remoteCache);
         Query query = qf.from(User.class)
                 .select("name", "surname")
-                .having("name").eq("Tom").toBuilder()
+                .having("name").eq("Tom")
                 .build();
         List<Object[]> list = query.list();
         assertNotNull(list);
@@ -108,13 +110,30 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertEquals("Cat", list.get(0)[1]);
     }
 
+    /**
+     * Sorting on a field that does not contain DocValues so Hibernate Search is forced to uninvert it.
+     * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
+     */
+    @Test
+    public void testUninverting() throws Exception {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        Query query = qf.from(User.class)
+              .having("name").eq("John")
+              .orderBy("id")
+              .build();
+        assertEquals(0, query.list().size());
+    }
+
     @Test
     public void testIteratorWithQuery() throws Exception {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
         QueryFactory qf = Search.getQueryFactory(remoteCache);
-        Query simpleQuery = qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+        Query simpleQuery = qf.from(User.class).having("name").eq("Tom").build();
 
         List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
         try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -132,7 +151,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         remoteCache.put(2, createUser2());
 
         QueryFactory qf = Search.getQueryFactory(remoteCache);
-        Query simpleQuery = qf.from(User.class).select("surname", "name").having("name").eq("Tom").toBuilder().build();
+        Query simpleQuery = qf.from(User.class).select("surname", "name").having("name").eq("Tom").build();
 
         List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
         try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {

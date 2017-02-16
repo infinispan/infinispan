@@ -21,7 +21,7 @@
          <groupId>net.sf.webdav-servlet</groupId>
          <artifactId>webdav-servlet</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
@@ -32,4 +32,15 @@
          <artifactId>log4j-core</artifactId>
       </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

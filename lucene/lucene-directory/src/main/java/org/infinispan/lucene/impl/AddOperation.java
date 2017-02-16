@@ -1,13 +1,13 @@
 package org.infinispan.lucene.impl;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.lucene.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.lucene.ExternalizerIds;
 
 /**
  * Add operation associated to {@link org.infinispan.lucene.impl.FileListCacheValueDelta}
@@ -60,9 +60,8 @@ public class AddOperation implements Operation {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends AddOperation>> getTypeClasses() {
-         return Util.<Class<? extends AddOperation>>asSet(AddOperation.class);
+         return Collections.singleton(AddOperation.class);
       }
 
       @Override

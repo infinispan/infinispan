@@ -1,21 +1,8 @@
 package org.infinispan.stream.stress;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.stream.CacheCollectors;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.infinispan.test.fwk.TransportFlags;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -33,9 +20,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.stream.CacheCollectors;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.fwk.TransportFlags;
+import org.testng.annotations.Test;
 
 /**
  * Stress test designed to test to verify that distributed stream works properly when constant rehashes occur
@@ -44,22 +45,13 @@ import static org.testng.Assert.fail;
  * @since 8.0
  */
 @Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 5;
    protected final static int THREAD_MULTIPLIER = 5;
    protected final static long CACHE_ENTRY_COUNT = 250000;
    protected ConfigurationBuilder builderUsed;
-   protected final CacheMode cacheMode;
-
-   public DistributedStreamRehashStressTest() {
-      this(CacheMode.DIST_SYNC);
-   }
-
-   protected DistributedStreamRehashStressTest(CacheMode cacheMode) {
-      this.cacheMode = cacheMode;
-   }
-
 
    @Override
    protected void createCacheManagers() throws Throwable {

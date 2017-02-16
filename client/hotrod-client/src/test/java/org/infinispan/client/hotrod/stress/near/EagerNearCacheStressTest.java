@@ -1,16 +1,10 @@
 package org.infinispan.client.hotrod.stress.near;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManagers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,11 +19,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManagers;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
 
 /**
  * Manual test, requires external Hot Rod server.

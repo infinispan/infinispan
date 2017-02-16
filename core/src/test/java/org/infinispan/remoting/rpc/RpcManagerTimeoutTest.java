@@ -1,5 +1,9 @@
 package org.infinispan.remoting.rpc;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -11,10 +15,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Pedro Ruivo

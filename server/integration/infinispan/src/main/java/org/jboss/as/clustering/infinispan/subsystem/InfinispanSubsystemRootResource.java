@@ -30,6 +30,7 @@ import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 
 /**
@@ -42,13 +43,15 @@ public class InfinispanSubsystemRootResource extends SimpleResourceDefinition {
     static final PathElement PATH = PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, InfinispanExtension.SUBSYSTEM_NAME);
 
     private final ResolvePathHandler resolvePathHandler;
+    private final PathManager pathManager;
     private final boolean runtimeRegistration;
-    public InfinispanSubsystemRootResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+    public InfinispanSubsystemRootResource(final ResolvePathHandler resolvePathHandler, PathManager pathManager, boolean runtimeRegistration) {
         super(PathElement.pathElement(SUBSYSTEM, InfinispanExtension.SUBSYSTEM_NAME),
                 new InfinispanResourceDescriptionResolver(),
                 InfinispanSubsystemAdd.INSTANCE,
                 ReloadRequiredRemoveStepHandler.INSTANCE);
         this.resolvePathHandler = resolvePathHandler;
+        this.pathManager = pathManager;
         this.runtimeRegistration = runtimeRegistration;
     }
 
@@ -66,7 +69,7 @@ public class InfinispanSubsystemRootResource extends SimpleResourceDefinition {
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-        resourceRegistration.registerSubModel(new CacheContainerResource(resolvePathHandler, runtimeRegistration));
+        resourceRegistration.registerSubModel(new CacheContainerResource(resolvePathHandler, pathManager, runtimeRegistration));
     }
 
 

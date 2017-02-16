@@ -1,5 +1,19 @@
 package org.infinispan.client.hotrod.logging;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.TRACE;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.SocketAddress;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -12,16 +26,6 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
-import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Log abstraction for the hot rod client. For this module, message ids
@@ -222,12 +226,9 @@ public interface Log extends BasicLogger {
    @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
    IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
 
-   @Message(value = "Query parameter '%s' was not set", id = 4060)
-   IllegalStateException queryParameterNotSet(String filterConverterFactoryName);
-
    @LogMessage(level = WARN)
-   @Message(value = "Server not reachable whilst closing iteration '%s'", id = 4061)
-   void ignoringServerUnreachable(String iterationId);
+   @Message(value = "Ignoring error when closing iteration '%s'", id = 4061)
+   void ignoringErrorDuringIterationClose(String iterationId, @Cause Exception e);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Started iteration '%s'", id = 4062)
@@ -245,4 +246,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
    void warnAboutUberJarDuplicates();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
+   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
+
+   @Message(value = "Cannot specify both a callback handler and a username for authentication", id = 4067)
+   CacheConfigurationException callbackHandlerAndUsernameMutuallyExclusive();
 }

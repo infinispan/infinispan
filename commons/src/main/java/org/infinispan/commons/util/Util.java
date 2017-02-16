@@ -1,14 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
-
-import javax.naming.Context;
-import javax.security.auth.Subject;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -41,6 +32,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+
+import javax.naming.Context;
+import javax.security.auth.Subject;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -551,19 +552,19 @@ public final class Util {
    }
 
    public static String toHexString(byte input[]) {
-      return toHexString(input, input.length);
+      return input == null ? "null" : toHexString(input, input.length);
    }
 
    public static String toHexString(byte input[], int limit) {
-      int i = 0;
       if (input == null || input.length <= 0)
-         return null;
+         return "null";
 
       char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+                       '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
       char[] result = new char[(input.length < limit ? input.length : limit) * 2];
 
+      int i = 0;
       while (i < limit && i < input.length) {
          result[2*i] = lookup[(input[i] >> 4) & 0x0F];
          result[2*i+1] = lookup[(input[i] & 0x0F)];
@@ -710,15 +711,21 @@ public final class Util {
    }
 
    public static String hexDump(ByteBuffer buffer) {
-      byte[] data = new byte[buffer.remaining()];
+      int bufferLength = buffer.remaining();
+      int dumpLength = Math.min(bufferLength, 100);
+      byte[] data = new byte[dumpLength];
       int pos = buffer.position();
       buffer.get(data);
       buffer.position(pos);
-      StringBuilder buf = new StringBuilder(buffer.remaining() + 22);
-      for (byte b : data)
-         addHexByte(buf, b);
-
-      return buf.toString();
+      StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
+      for (byte b : data) {
+         addHexByte(sb, b);
+      }
+      if (dumpLength < bufferLength) {
+         sb.append("...");
+      }
+      sb.append(" (").append(bufferLength).append(" bytes)");
+      return sb.toString();
    }
 
    private static void addHexByte(StringBuilder buf, byte b) {
@@ -1011,4 +1018,3 @@ public final class Util {
       return sb.toString();
    }
 }
-

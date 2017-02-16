@@ -1,5 +1,43 @@
 package org.infinispan.stream;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.DoubleSummaryStatistics;
+import java.util.HashSet;
+import java.util.IntSummaryStatistics;
+import java.util.Iterator;
+import java.util.List;
+import java.util.LongSummaryStatistics;
+import java.util.Map;
+import java.util.Optional;
+import java.util.PrimitiveIterator;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.StreamSupport;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -10,6 +48,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -17,22 +56,6 @@ import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.*;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.StreamSupport;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * Base test class for streams to verify proper behavior of all of the terminal operations for all of the various
@@ -90,6 +113,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
          enhanceConfiguration(builderUsed);
          EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builderUsed);
          cacheManagers.add(cm);
+         cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
    }
 
@@ -272,7 +296,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachInjected<E> implements Consumer<E>,
-           CacheAware<Integer, String>, Serializable {
+           CacheAware<Integer, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -661,6 +685,22 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testObjPointlessSortMap() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      IntSummaryStatistics stats = createStream(entrySet).sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()))
+              .mapToInt(Map.Entry::getKey).summaryStatistics();
+      assertEquals(range, stats.getCount());
+      assertEquals(0, stats.getMin());
+      assertEquals(9, stats.getMax());
+   }
+
    // IntStream tests
 
    static final SerializableToIntFunction<Map.Entry<Integer, String>> toInt = Map.Entry::getKey;
@@ -821,7 +861,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachIntInjected implements IntConsumer,
-           CacheAware<Integer, String>, Serializable {
+           CacheAware<Integer, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1280,7 +1320,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachLongInjected implements LongConsumer,
-           CacheAware<Long, String>, Serializable {
+           CacheAware<Long, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1748,7 +1788,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachDoubleInjected<E> implements DoubleConsumer,
-           CacheAware<Double, String>, Serializable {
+           CacheAware<Double, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;

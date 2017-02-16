@@ -14,8 +14,9 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.CacheException;
+import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -29,9 +30,12 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    private CallbackHandler callbackHandler;
    private boolean enabled = false;
    private String serverName;
-   private Map<String, String> saslProperties = new HashMap<String, String>();
+   private Map<String, String> saslProperties = new HashMap<>();
    private String saslMechanism;
    private Subject clientSubject;
+   private String username;
+   private char[] password;
+   private String realm;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -132,9 +136,48 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       return this;
    }
 
+   /**
+    * Specifies the username to be used for authentication. This will use a simple CallbackHandler.
+    * This is mutually exclusive with explicitly providing the CallbackHandler
+    */
+   public AuthenticationConfigurationBuilder username(String username) {
+      this.username = username;
+      return this;
+   }
+
+   /**
+    * Specifies the password to be used for authentication. A username is also required
+    */
+   public AuthenticationConfigurationBuilder password(String password) {
+      this.password = password != null ? password.toCharArray() : null;
+      return this;
+   }
+
+   /**
+    * Specifies the password to be used for authentication. A username is also required
+    */
+   public AuthenticationConfigurationBuilder password(char[] password) {
+      this.password = password;
+      return this;
+   }
+
+   /**
+    * Specifies the realm to be used for authentication. Username and password also need to be supplied.
+    */
+   public AuthenticationConfigurationBuilder realm(String realm) {
+      this.realm = realm;
+      return this;
+   }
+
    @Override
    public AuthenticationConfiguration create() {
-      return new AuthenticationConfiguration(callbackHandler, clientSubject, enabled, saslMechanism, saslProperties, serverName);
+      CallbackHandler cbh;
+      if (username != null) {
+         cbh = new BasicCallbackHandler(username, realm, password);
+      } else {
+         cbh = callbackHandler;
+      }
+      return new AuthenticationConfiguration(cbh, clientSubject, enabled, saslMechanism, saslProperties, serverName);
    }
 
    @Override
@@ -151,8 +194,11 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public void validate() {
       if (enabled) {
-         if (callbackHandler == null && clientSubject == null) {
+         if (callbackHandler == null && clientSubject == null && username == null) {
             throw log.invalidCallbackHandler();
+         }
+         if (callbackHandler != null && username != null) {
+            throw log.callbackHandlerAndUsernameMutuallyExclusive();
          }
          if (saslMechanism == null) {
             throw log.invalidSaslMechanism(saslMechanism);
@@ -163,17 +209,22 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled));
-      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM));
+      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled, true));
+      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
       Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
       if (prop instanceof String) {
-         CallbackHandler handler = Util.getInstance((String) prop, builder.getBuilder().classLoader());
+         String cbhClassName = StringPropertyReplacer.replaceProperties((String) prop);
+         CallbackHandler handler = Util.getInstance(cbhClassName, builder.getBuilder().classLoader());
          this.callbackHandler(handler);
       } else {
          this.callbackHandler((CallbackHandler) prop);
       }
+      this.username(typed.getProperty(ConfigurationProperties.AUTH_USERNAME, username, true));
+      if (typed.containsKey(ConfigurationProperties.AUTH_PASSWORD))
+         this.password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD, null, true));
+      this.realm(typed.getProperty(ConfigurationProperties.AUTH_REALM));
 
-      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME));
+      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME, serverName, true));
       this.clientSubject((Subject) typed.get(ConfigurationProperties.AUTH_CLIENT_SUBJECT));
 
       Map<String, String> saslProperties = typed.entrySet().stream()
@@ -181,7 +232,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
             .collect(Collectors.toMap(
                   e -> ConfigurationProperties.SASL_PROPERTIES_PREFIX_REGEX
                         .matcher((String) e.getKey()).replaceFirst(""),
-                  e -> (String) e.getValue()));
+                  e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
       this.saslProperties(saslProperties);
 
       return builder.getBuilder();

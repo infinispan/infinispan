@@ -1,20 +1,20 @@
 package org.infinispan.tree.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.impl.AtomicHashMapProxy;
-import org.infinispan.batch.BatchContainer;
-import org.infinispan.context.Flag;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.Util;
-import org.infinispan.tree.Fqn;
-import org.infinispan.tree.Node;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.impl.AtomicHashMapProxy;
+import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Util;
+import org.infinispan.context.Flag;
+import org.infinispan.tree.Fqn;
+import org.infinispan.tree.Node;
 
 /**
  * Implementation backed by an {@link AtomicMap}

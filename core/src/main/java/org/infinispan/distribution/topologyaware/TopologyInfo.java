@@ -309,7 +309,7 @@ public class TopologyInfo {
       }
       return (int) Math.round(maxSegments);
    }
-   
+
    private static class Site {
       String site;
       Map<String, Rack> racks = new HashMap<String, Rack>();

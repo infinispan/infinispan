@@ -1,11 +1,18 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
@@ -19,14 +26,6 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author anistor@redhat.com
  * @since 8.0
@@ -39,20 +38,20 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    private boolean isCompatMode;
 
-   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      super(jpaQuery, namedParameters, matcherImplClass);
+   public JPAContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+      super(queryString, namedParameters, matcherImplClass);
    }
 
    @Override
-   protected void injectDependencies(ComponentRegistry componentRegistry, Cache c) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(c.getCacheManager());
-      Configuration cfg = c.getCacheConfiguration();
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      Configuration cfg = cache.getCacheConfiguration();
       isCompatMode = cfg.compatibility().enabled();
       usesValueWrapper = cfg.indexing().index().isEnabled() && !isCompatMode;
       if (isCompatMode) {
          matcherImplClass = CompatibilityReflectionMatcher.class;
       }
-      super.injectDependencies(componentRegistry, c);
+      super.injectDependencies(cache);
    }
 
    @Override
@@ -71,15 +70,17 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
       ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(oldValue);
       ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
       if (f1 == null && f2 != null) {
-         return makeFilterResult(true, key, f2.getProjection() == null ? newValue : null, f2.getProjection());
+         // result joining
+         return makeFilterResult(ContinuousQueryResult.ResultType.JOINING, key, f2.getProjection() == null ? newValue : null, f2.getProjection());
       } else if (f1 != null && f2 == null) {
-         return makeFilterResult(false, key, null, null);
+         // result leaving
+         return makeFilterResult(ContinuousQueryResult.ResultType.LEAVING, key, null, null);
       } else {
          return null;
       }
    }
 
-   protected Object makeFilterResult(boolean isJoining, Object key, Object value, Object[] projection) {
+   protected Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
       try {
          if (isCompatMode) {
             key = ProtobufUtil.toWrappedByteArray(serCtx, key);
@@ -88,7 +89,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
             }
          }
 
-         Object result = new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) value, projection);
+         Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
 
          if (!isCompatMode) {
             result = ProtobufUtil.toWrappedByteArray(serCtx, result);
@@ -102,14 +103,14 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    @Override
    public String toString() {
-      return "JPAContinuousQueryProtobufCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
+      return "JPAContinuousQueryProtobufCacheEventFilterConverter{queryString='" + queryString + "'}";
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryProtobufCacheEventFilterConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.jpaQuery);
+         output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
             UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
@@ -125,7 +126,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
       @Override
       public JPAContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String jpaQuery = input.readUTF();
+         String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
@@ -137,7 +138,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery, namedParameters, matcherImplClass);
+         return new JPAContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override

@@ -16,7 +16,7 @@ public class HotRodKrbAuthLdapAuthzIT extends HotRodKrbAuthIT {
 
    @InfinispanResource("hotrodAuthzLdap")
    RemoteInfinispanServer server;
-   
+
    @Override
    public RemoteInfinispanServer getRemoteServer() {
       return server;

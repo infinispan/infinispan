@@ -27,6 +27,7 @@ import org.infinispan.commons.util.AbstractMap;
  * @author Galder Zamarreño
  * @since 5.3
  * @see java.util.HashMap
+ * @deprecated
  */
 public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
@@ -99,7 +100,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
    @SuppressWarnings("unchecked")
    private void init(int initialCapacity, float loadFactor) {
       int c = 1;
-      for (; c < initialCapacity; c <<= 1) ;
+      while (c < initialCapacity) c <<= 1;
 
       this.table = new Node[c];
 
@@ -278,7 +279,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
             size = MAXIMUM_CAPACITY;
 
          int length = table.length;
-         for (; length < size; length <<= 1) ;
+         while (length < size) length <<= 1;
 
          resize(length);
       }
@@ -432,8 +433,12 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
          expectedCount = modCount;
          if (size > 0) { // advance to first entry
             Node<K, V>[] t = table;
-            while (index < t.length && (next = t[index++]) == null)
-               ;
+            while (index < t.length) {
+               next = t[index++];
+               if (next != null) {
+                  break;
+               }
+            }
          }
       }
 
@@ -450,11 +455,15 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
          if ((next = e.next) == null) {
             Node<K, V>[] t = table;
-            while (index < t.length && (next = t[index++]) == null)
-               ;
+            while (index < t.length) {
+               next = t[index++];
+               if (next != null) {
+                  break;
+               }
+            }
          }
          current = e;
-         return new MapEntry<K, V>(e.key, e.value, EquivalentHashMap.this);
+         return new MapEntry<>(e.key, e.value, EquivalentHashMap.this);
       }
 
       public void remove() {

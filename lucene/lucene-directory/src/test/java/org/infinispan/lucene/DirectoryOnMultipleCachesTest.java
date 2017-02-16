@@ -1,26 +1,27 @@
 package org.infinispan.lucene;
 
-import org.apache.lucene.store.Directory;
-import org.infinispan.Cache;
-import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.infinispan.lucene.impl.FileListCacheValue;
-import org.infinispan.lucene.testutils.TestSegmentReadLocker;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.testng.AssertJUnit;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
+import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
+import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
-import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
-import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+import org.apache.lucene.store.Directory;
+import org.infinispan.Cache;
+import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.impl.FileListCacheValue;
+import org.infinispan.lucene.testutils.TestSegmentReadLocker;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 
 /**
@@ -37,7 +38,7 @@ public class DirectoryOnMultipleCachesTest extends AbstractInfinispanTest {
    private static final long SLEEP = 60; //60 msecs
    private static final int MAX_ITERATIONS = 1000; //max timeout: SLEEP * MAX_ITERATIONS msecs (+- 60 seconds)
 
-   private CacheContainer cacheManager;
+   private EmbeddedCacheManager cacheManager;
    private Cache metadataCache;
    private Cache chunkCache;
    private Cache lockCache;
@@ -45,8 +46,11 @@ public class DirectoryOnMultipleCachesTest extends AbstractInfinispanTest {
    @BeforeClass
    public void createBeforeClass() {
       cacheManager = CacheTestSupport.createLocalCacheManager();
+      cacheManager.defineConfiguration("metadata", cacheManager.getDefaultCacheConfiguration());
       metadataCache = cacheManager.getCache("metadata");
+      cacheManager.defineConfiguration("chunks", cacheManager.getDefaultCacheConfiguration());
       chunkCache = cacheManager.getCache("chunks");
+      cacheManager.defineConfiguration("locks", cacheManager.getDefaultCacheConfiguration());
       lockCache = cacheManager.getCache("locks");
    }
 

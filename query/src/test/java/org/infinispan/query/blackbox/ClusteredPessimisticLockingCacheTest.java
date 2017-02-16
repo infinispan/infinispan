@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,8 +9,6 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Tests which test the querying on Clustered cache with Pessimistic Lock for transaction.

@@ -5,7 +5,7 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -23,13 +23,13 @@ import org.junit.runner.RunWith;
 @Category({ Security.class })
 @WithRunningServer({@RunningServer(name="hotrodAuthQop")})
 public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
-   
+
    @InfinispanResource("hotrodAuthQop")
    RemoteInfinispanServer server;
 
    @Override
-   protected SaslConfigurationBuilder getDefaultSaslConfigBuilder() {
-      SaslConfigurationBuilder builder = super.getDefaultSaslConfigBuilder();
+   protected SecurityConfigurationHelper getDefaultSaslConfigBuilder() {
+      SecurityConfigurationHelper builder = super.getDefaultSaslConfigBuilder();
       builder.withDefaultQop();
       return builder;
    }
@@ -43,7 +43,7 @@ public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
    public RemoteInfinispanServer getRemoteServer() {
       return server;
    }
-   
+
    @Override
    public void initAsAdmin() {
       initialize(ADMIN_LOGIN, ADMIN_PASSWD);

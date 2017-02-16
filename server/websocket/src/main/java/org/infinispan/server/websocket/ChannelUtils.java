@@ -1,14 +1,15 @@
 package org.infinispan.server.websocket;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.json.JsonConversionException;
 import org.infinispan.server.websocket.json.JsonObject;
 import org.infinispan.server.websocket.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.lang.invoke.MethodHandles;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 /**
  * Channel Utilities.

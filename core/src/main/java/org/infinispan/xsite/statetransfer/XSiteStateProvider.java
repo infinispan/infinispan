@@ -1,8 +1,8 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * It contains the logic to send state to another site.
@@ -15,26 +15,27 @@ public interface XSiteStateProvider {
    /**
     * It notifies this node to start sending state to the remote site. Also, it should keep information about which node
     * requested the state transfer in order to send back the notification when finishes.
-    *  @param siteName  the remote site name.
-    * @param requestor the requestor.
-    * @param minTopologyId
+    *
+    * @param siteName      the remote site name.
+    * @param requestor     the requestor.
+    * @param minTopologyId the topology id to wait before start sending the state.
     */
-   public void startStateTransfer(String siteName, Address requestor, int minTopologyId);
+   void startStateTransfer(String siteName, Address requestor, int minTopologyId);
 
    /**
     * It cancels the state transfer for the remote site. If no state transfer is available, it should do nothing.
     *
     * @param siteName the remote site name.
     */
-   public void cancelStateTransfer(String siteName);
+   void cancelStateTransfer(String siteName);
 
    /**
     * @return a site name collection with the sites in which this cache is sending state.
     */
-   public Collection<String> getCurrentStateSending();
+   Collection<String> getCurrentStateSending();
 
    /**
     * @return a site name collection with sites in which the coordinator is not in the {@code currentMembers}.
     */
-   public Collection<String> getSitesMissingCoordinator(Collection<Address> currentMembers);
+   Collection<String> getSitesMissingCoordinator(Collection<Address> currentMembers);
 }

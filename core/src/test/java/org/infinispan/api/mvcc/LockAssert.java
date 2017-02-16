@@ -1,15 +1,13 @@
 package org.infinispan.api.mvcc;
 
-import org.infinispan.Cache;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.LockManager;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
+
+import org.infinispan.Cache;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 
 /**
  * Helper class to assert lock status in MVCC
@@ -17,20 +15,12 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  */
 public class LockAssert {
-   public static void assertLocked(Object key, LockManager lockManager, InvocationContextContainer icc) {
+   public static void assertLocked(Object key, LockManager lockManager) {
       assertTrue("" + key + " not locked!", lockManager.isLocked(key));
-      InvocationContext context = icc.getInvocationContext(true);
-      if (context != null) {
-         assertTrue("" + key + " lock not recorded!", context.hasLockedKey(key));
-      }
    }
 
-   public static void assertNotLocked(Object key, InvocationContextContainer icc) {
-      // can't rely on the negative test since other entries may share the same lock with lock striping.
-      InvocationContext context = icc.getInvocationContext(true);
-      if (context != null) {
-         assertFalse("" + key + " lock recorded!", context.hasLockedKey(key));
-      }
+   public static void assertNotLocked(Object key, LockManager lockManager) {
+      assertFalse("" + key + " not locked!", lockManager.isLocked(key));
    }
 
    public static void assertNoLocks(LockManager lockManager) {

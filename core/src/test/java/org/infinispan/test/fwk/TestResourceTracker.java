@@ -1,19 +1,19 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.Security;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.Security;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Keeps track of resources created by tests and cleans them up at the end of the test.
@@ -23,11 +23,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TestResourceTracker {
    private static final Log log = LogFactory.getLog(TestResourceTracker.class);
-   private static final EquivalentConcurrentHashMapV8<String, TestResources> testResources = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+   private static final ConcurrentMap<String, TestResources> testResources = new ConcurrentHashMap<>();
    private static final ThreadLocal<String> threadTestName = new ThreadLocal<>();
 
    public static void addResource(AbstractInfinispanTest testInstance, final Cleaner<?> cleaner) {
-      TestResources resources = getTestResources(getTestName(testInstance));
+      TestResources resources = getTestResources(testInstance.getTestName());
       resources.addResource(cleaner);
    }
 
@@ -109,12 +109,8 @@ public class TestResourceTracker {
     * test with a {@code @Test(timeout=n)} annotation.
     */
    public static void testThreadStarted(AbstractInfinispanTest testInstance) {
-      setThreadTestName(getTestName(testInstance));
+      setThreadTestName(testInstance.getTestName());
       Thread.currentThread().setName(getNextTestThreadName());
-   }
-
-   protected static String getTestName(AbstractInfinispanTest testInstance) {
-      return testInstance.getClass().getName();
    }
 
    public static void setThreadTestName(String testName) {

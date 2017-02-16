@@ -1,15 +1,15 @@
 package org.infinispan.persistence.factory;
 
+import static org.testng.Assert.assertEquals;
+
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.testng.annotations.Test;
-
-import java.net.URL;
-import java.net.URLClassLoader;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "persistence.CacheStoreFactoryRegistryTest")
 public class CacheStoreFactoryRegistryTest {

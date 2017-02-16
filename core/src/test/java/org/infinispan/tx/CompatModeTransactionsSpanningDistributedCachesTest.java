@@ -27,4 +27,3 @@ public class CompatModeTransactionsSpanningDistributedCachesTest extends Transac
    }
 
 }
-

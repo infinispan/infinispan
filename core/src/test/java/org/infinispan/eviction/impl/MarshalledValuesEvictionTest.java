@@ -1,25 +1,19 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jgroups.util.Util;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jgroups.util.Util;
+import org.testng.annotations.Test;
 
 @Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest",
       description = "See ISPN-4042. Is this test even valid?  Evictions don't go thru the " +
@@ -40,9 +34,6 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          .build();
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cacheManager.getCache();
-      StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
-      MockMarshalledValueInterceptor interceptor = new MockMarshalledValueInterceptor(marshaller);
-      assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
       return cacheManager;
    }
 
@@ -55,60 +46,14 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          cache.put(p1, p2);
       }
 
-      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
-      while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
-         TestingUtil.sleepThread(100);
-      }
-
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size();
-
-      //let eviction manager kick in
-      Util.sleep(3000);
-      MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
+      assertEquals(CACHE_SIZE, cache.getAdvancedCache().getDataContainer().size());
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
          EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
-         EvictionPojo p2 = new EvictionPojo();
-         p2.i = 24;
-         cache.put(p1, p2);
-      }
-
-      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
-      while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
-         TestingUtil.sleepThread(100);
-      }
-
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size();
-      //let eviction manager kick in
-      Util.sleep(3000);
-      MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
-   }
-
-   static class MockMarshalledValueInterceptor extends MarshalledValueInterceptor {
-      boolean marshalledValueCreated;
-
-      MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
-         inject(marshaller, new InternalEntryFactoryImpl(), null);
-      }
-
-      @Override
-      protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
-         marshalledValueCreated = true;
-         return super.createMarshalledValue(toWrap, ctx);
-      }
-
-      @Override
-      public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-         // Reset value so that changes due to invocation can be asserted
-         if (marshalledValueCreated) marshalledValueCreated = false;
-         return super.visitEvictCommand(ctx, command);
+         cache.put(i, p1);
       }
    }
 

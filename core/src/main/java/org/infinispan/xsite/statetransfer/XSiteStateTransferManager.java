@@ -1,9 +1,9 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * It manages the state transfer between sites.
@@ -13,10 +13,10 @@ import java.util.Map;
  */
 public interface XSiteStateTransferManager {
 
-   public static final String STATUS_OK = "OK";
-   public static final String STATUS_ERROR = "ERROR";
-   public static final String STATUS_SENDING = "SENDING";
-   public static final String STATUS_CANCELED = "CANCELED";
+   String STATUS_OK = "OK";
+   String STATUS_ERROR = "ERROR";
+   String STATUS_SENDING = "SENDING";
+   String STATUS_CANCELED = "CANCELED";
 
    /**
     * It receives the notifications from local site when some node finishes pushing the state to the remote site.
@@ -26,7 +26,7 @@ public interface XSiteStateTransferManager {
     * @param statusOk {@code true} if no error or exception occurred during the state transfer.
     * @throws Throwable If some unexpected behavior occurs.
     */
-   public void notifyStatePushFinished(String siteName, Address node, boolean statusOk) throws Throwable;
+   void notifyStatePushFinished(String siteName, Address node, boolean statusOk) throws Throwable;
 
    /**
     * It notifies all nodes from local site to start transfer the state to the remote site.
@@ -34,7 +34,7 @@ public interface XSiteStateTransferManager {
     * @param siteName the remote site name
     * @throws Throwable If some unexpected behavior occurs.
     */
-   public void startPushState(String siteName) throws Throwable;
+   void startPushState(String siteName) throws Throwable;
 
    /**
     * It cancels a running state transfer.
@@ -47,17 +47,17 @@ public interface XSiteStateTransferManager {
    /**
     * @return a list of site names in which this cache is pushing state.
     */
-   public List<String> getRunningStateTransfers();
+   List<String> getRunningStateTransfers();
 
    /**
     * @return the completed state transfer status for which this node is the coordinator.
     */
-   public Map<String, String> getStatus();
+   Map<String, String> getStatus();
 
    /**
     * Clears the completed state transfer status.
     */
-   public void clearStatus();
+   void clearStatus();
 
    /**
     * @return the completed state transfer status from all the coordinators in the cluster.
@@ -95,5 +95,5 @@ public interface XSiteStateTransferManager {
     *
     * @param siteName the site name.
     */
-   public void becomeCoordinator(String siteName);
+   void becomeCoordinator(String siteName);
 }

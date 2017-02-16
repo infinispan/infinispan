@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -10,11 +13,9 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.responses.KeysValidateFilter;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor is used in total order in distributed mode when the write skew check is enabled. After sending the
@@ -27,34 +28,41 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private boolean onePhaseTotalOrderCommit;
 
    @Override
-   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications() ||
+   public void start() {
+      super.start();
+      onePhaseTotalOrderCommit = Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration);
+   }
+
+   @Override
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      if (onePhaseTotalOrderCommit || !ctx.hasModifications() ||
             !shouldTotalOrderRollbackBeInvokedRemotely(ctx)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
       totalOrderTxRollback(ctx);
       return super.visitRollbackCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications()) {
-         return ctx.continueInvocation();
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (onePhaseTotalOrderCommit || !ctx.hasModifications()) {
+         return invokeNext(ctx, command);
       }
       totalOrderTxCommit(ctx);
       return super.visitCommitCommand(ctx, command);
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       if (trace) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }
 
       if (!ctx.hasModifications()) {
-         return;
+         return CompletableFutures.completedNull();
       }
 
       if (!ctx.isOriginLocal()) {
@@ -65,14 +73,9 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
          throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
       }
 
-      try {
-         KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
-               null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
-
-         totalOrderPrepare(recipients, command, responseFilter);
-      } finally {
-         transactionRemotelyPrepared(ctx);
-      }
+      KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
+            null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
+      return totalOrderPrepare(ctx, command, recipients, responseFilter);
    }
 
    @Override

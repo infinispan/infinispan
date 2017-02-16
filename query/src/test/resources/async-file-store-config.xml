@@ -4,7 +4,7 @@
       xsi:schemaLocation="urn:infinispan:config:9.0 http://www.infinispan.org/schemas/infinispan-config-9.0.xsd"
       xmlns="urn:infinispan:config:9.0">
 
-   <cache-container default-cache="default">
+   <cache-container>
       <transport cluster="MyCluster"/>
       <local-cache name="queryCache_lucenestore_async_filestore">
          <transaction mode="NON_XA"/>
@@ -30,7 +30,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE"/>
@@ -42,7 +42,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE" />
@@ -54,7 +54,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE" />

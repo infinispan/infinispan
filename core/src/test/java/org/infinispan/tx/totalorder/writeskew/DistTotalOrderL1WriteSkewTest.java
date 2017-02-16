@@ -1,16 +1,15 @@
 package org.infinispan.tx.totalorder.writeskew;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.container.versioning.DistL1WriteSkewTest;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import javax.transaction.Transaction;
 
-import static org.testng.Assert.assertEquals;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.container.versioning.DistL1WriteSkewTest;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * A simple write skew check test for total order based protocol in distributed mode and with L1 cache enabled

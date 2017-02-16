@@ -37,6 +37,12 @@ class PostgresTableManager extends AbstractTableManager {
    }
 
    @Override
+   public String getSelectMultipleRowSql(int numberOfParams) {
+      String selectCriteria = config.idColumnName() + " = cast(? as " + config.idColumnType() + ")";
+      return getSelectMultipleRowSql(numberOfParams, selectCriteria);
+   }
+
+   @Override
    public String getSelectIdRowSql() {
       if (selectIdRowSql == null) {
          selectIdRowSql = String.format("SELECT %s FROM %s WHERE %s = cast(? as %s)",

@@ -1,5 +1,12 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,13 +24,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
-import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Pedro Ruivo
@@ -132,11 +132,11 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private ExceptionTrackerInterceptor getInterceptor(Cache cache) {
-      return cache.getAdvancedCache().getSequentialInterceptorChain()
+      return cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorWithClass(ExceptionTrackerInterceptor.class);
    }
 
-   private static enum CacheType {
+   private enum CacheType {
       NO_TRANSACTIONAL("NO_TX"),
       TRANSACTIONAL_SYNCHRONIZATION(TRANSACTIONAL, "TX_SYNC", true, false),
       TRANSACTIONAL_XA(TRANSACTIONAL, "TX_XA", false, false),
@@ -146,14 +146,15 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       final boolean useSynchronization;
       final boolean useRecovery;
 
-      private CacheType(TransactionMode transactionMode, String cacheName, boolean useSynchronization, boolean useRecovery) {
+      CacheType(TransactionMode transactionMode, String cacheName, boolean useSynchronization,
+            boolean useRecovery) {
          this.transactionMode = transactionMode;
          this.cacheName = cacheName;
          this.useSynchronization = useSynchronization;
          this.useRecovery = useRecovery;
       }
 
-      private CacheType(String cacheName) {
+      CacheType(String cacheName) {
          //no tx cache. the boolean parameters are ignored.
          this(NON_TRANSACTIONAL, cacheName, false, false);
       }

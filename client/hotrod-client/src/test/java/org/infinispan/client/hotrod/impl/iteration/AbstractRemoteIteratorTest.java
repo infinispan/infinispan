@@ -1,10 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.Date;
@@ -17,7 +13,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.testng.Assert.assertTrue;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 
 /**
  * @author gfernandes

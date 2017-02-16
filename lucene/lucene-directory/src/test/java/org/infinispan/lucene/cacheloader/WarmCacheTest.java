@@ -1,5 +1,13 @@
 package org.infinispan.lucene.cacheloader;
 
+import static org.infinispan.lucene.cacheloader.TestHelper.createIndex;
+import static org.infinispan.test.TestingUtil.findInterceptor;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.File;
+import java.nio.file.Files;
+
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
@@ -13,14 +21,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.nio.file.Files;
-
-import static org.infinispan.lucene.cacheloader.TestHelper.createIndex;
-import static org.infinispan.test.TestingUtil.findInterceptor;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  *

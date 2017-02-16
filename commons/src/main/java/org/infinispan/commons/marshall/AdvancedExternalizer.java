@@ -43,7 +43,7 @@ import java.util.Set;
  * @since 5.0
  */
 public interface AdvancedExternalizer<T> extends Externalizer<T> {
-   
+
    /**
     * Returns a collection of Class instances representing the types that this
     * AdvancedExternalizer can marshall.  Clearly, empty sets are not allowed.

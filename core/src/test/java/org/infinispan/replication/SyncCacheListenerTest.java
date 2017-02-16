@@ -1,5 +1,17 @@
 package org.infinispan.replication;
 
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -15,14 +27,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.*;
-
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Test out the CacheListener
@@ -38,7 +43,6 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder =
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder.locking().isolationLevel(IsolationLevel.SERIALIZABLE)
-            .lockAcquisitionTimeout(5000)
             // TODO: Another case of default values changed (see ISPN-2651)
             .transaction().useSynchronization(false);
 
@@ -48,7 +52,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
-  
+
    public void testSyncTxRepl() throws Exception {
       Integer age;
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);

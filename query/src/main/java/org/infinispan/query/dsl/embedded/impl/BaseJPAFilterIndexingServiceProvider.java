@@ -1,11 +1,21 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
+import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -27,14 +37,6 @@ import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
-
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author anistor@redhat.com
@@ -84,9 +86,9 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
                                                   IndexedFilter<?, ?, ?> indexedFilter,
                                                   Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
       final Matcher matcher = getMatcher(indexedFilter);
-      final String jpaQuery = getJPAQuery(indexedFilter);
+      final String queryString = getQueryString(indexedFilter);
       final Map<String, Object> namedParameters = getNamedParameters(indexedFilter);
-      final boolean isDelta = isDelta(indexedFilter);
+      final boolean isDeltaFilter = isDelta(indexedFilter);
 
       addFilteringInvocationForMatcher(matcher);
       Event.Type[] eventTypes = new Event.Type[listeners.keySet().size()];
@@ -94,8 +96,8 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       for (Class<? extends Annotation> annotation : listeners.keySet()) {
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
       }
-      Callback<K, V> callback = new Callback<>(isDelta, matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
-      callback.subscription = matcher.registerFilter(jpaQuery, namedParameters, callback, eventTypes);
+      Callback<K, V> callback = new Callback<>(matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
+      callback.subscription = matcher.registerFilter(queryString, namedParameters, callback, isDeltaFilter, eventTypes);
    }
 
    /**
@@ -154,12 +156,10 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       private final DelegatingCacheEntryListenerInvocation<K, V>[] evicted_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] expired_invocations;
 
-      private final boolean isDelta;
       private final Matcher matcher;
       protected volatile FilterSubscription subscription;
 
-      Callback(boolean isDelta, Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
-         this.isDelta = isDelta;
+      Callback(Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
          this.matcher = matcher;
          this.isClustered = isClustered;
          this.isPrimaryOnly = isPrimaryOnly;
@@ -198,10 +198,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       }
 
       @Override
-      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         if (this.isDelta != isDelta) {
-            return;
-         }
+      public void onFilterResult(Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
          CacheEntryEvent<K, V> event = (CacheEntryEvent<K, V>) userContext;
          if (event.isPre() && isClustered || isPrimaryOnly && !clusteringDependentLogic.localNodeIsPrimaryOwner(event.getKey())) {
             return;
@@ -256,7 +253,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
                   conversionDone = true;
                }
 
-               invocation.invokeNoChecks(event, false, filterAndConvert);
+               invocation.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, filterAndConvert);
             }
          }
       }
@@ -266,7 +263,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
       protected Callback<K, V> callback;
 
-      public DelegatingCacheEntryListenerInvocationImpl(CacheEntryListenerInvocation<K, V> invocation) {
+      DelegatingCacheEntryListenerInvocationImpl(CacheEntryListenerInvocation<K, V> invocation) {
          super(invocation);
       }
 
@@ -296,12 +293,12 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       }
 
       @Override
-      public void invoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
-         matchEvent(event, matcher);
+      public void invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner) {
+         matchEvent(event.getEvent(), matcher);
       }
 
       @Override
-      public void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter) {
+      public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter) {
       }
 
       @Override
@@ -338,11 +335,16 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       public <C> CacheEventConverter<? super K, ? super V, C> getConverter() {
          return null;
       }
+
+      @Override
+      public Set<Class<? extends Annotation>> getFilterAnnotations() {
+         return null;
+      }
    }
 
    protected abstract Matcher getMatcher(IndexedFilter<?, ?, ?> indexedFilter);
 
-   protected abstract String getJPAQuery(IndexedFilter<?, ?, ?> indexedFilter);
+   protected abstract String getQueryString(IndexedFilter<?, ?, ?> indexedFilter);
 
    protected abstract Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter);
 

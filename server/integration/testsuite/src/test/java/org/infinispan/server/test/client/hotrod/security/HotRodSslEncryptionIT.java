@@ -1,5 +1,12 @@
 package org.infinispan.server.test.client.hotrod.security;
 
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
+
+import java.io.File;
+
+import javax.net.ssl.SSLContext;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -15,12 +22,6 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import javax.net.ssl.SSLContext;
-
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
 
 /**
  * Test for using SSL for client server communication encryption.

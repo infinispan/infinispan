@@ -1,44 +1,60 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.query.remote.impl.logging.Log;
-
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
-final class RemoteQueryEngine extends QueryEngine {
-
-   private static final Log log = LogFactory.getLog(RemoteQueryEngine.class, Log.class);
+final class RemoteQueryEngine extends QueryEngine<Descriptor> {
 
    private final boolean isCompatMode;
 
-   private final ProtobufFieldBridgeProvider protobufFieldBridgeProvider;
+   private final ProtobufFieldBridgeProvider protobufFieldBridgeProvider = new ProtobufFieldBridgeProvider();
 
-   public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode, SerializationContext serCtx) {
+   private final SerializationContext serializationContext;
+
+   private final EmbeddedQueryFactory queryFactory = new EmbeddedQueryFactory(this);
+
+   public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode) {
       super(cache, isIndexed, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
       this.isCompatMode = isCompatMode;
-      protobufFieldBridgeProvider = new ProtobufFieldBridgeProvider(serCtx);
+      serializationContext = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+   }
+
+   protected SerializationContext getSerializationContext() {
+      return serializationContext;
+   }
+
+   protected BaseQuery makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      BaseQuery query = queryFactory.create(queryString);
+      query.startOffset(startOffset);
+      query.maxResults(maxResults);
+      if (namedParameters != null) {
+         query.setParameters(namedParameters);
+      }
+      return query;
    }
 
    @Override
@@ -82,24 +98,18 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
+   protected Query makeTypeQuery(Query query, String targetEntityName) {
       return isCompatMode ? query :
             new BooleanQuery.Builder()
-                  .add(new BooleanClause(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.MUST))
-                  .add(new BooleanClause(query, BooleanClause.Occur.MUST))
+                  .add(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.FILTER)
+                  .add(query, BooleanClause.Occur.MUST)
                   .build();
    }
 
    @Override
-   protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
-            new JPAFilterAndConverter(jpaQuery, namedParameters, matcher.getClass());
-   }
-
-   @Override
-   protected BooleShannonExpansion.IndexedFieldProvider getIndexedFieldProvider(FilterParsingResult<?> parsingResult) {
-      return isCompatMode ? super.getIndexedFieldProvider(parsingResult) :
-            new ProtobufIndexedFieldProvider((Descriptor) parsingResult.getTargetEntityMetadata());
+   protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(queryString, namedParameters) :
+            super.createFilter(queryString, namedParameters);
    }
 
    @Override
@@ -108,7 +118,7 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected LuceneQueryMaker createLuceneMaker() {
-      return isCompatMode ? super.createLuceneMaker() : new LuceneQueryMaker(getSearchFactory(), null, protobufFieldBridgeProvider);
+   protected LuceneQueryMaker<Descriptor> createLuceneQueryMaker() {
+      return isCompatMode ? super.createLuceneQueryMaker() : new LuceneQueryMaker<>(getSearchFactory(), protobufFieldBridgeProvider);
    }
 }

@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.i;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
-import java.util.stream.LongStream;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs as long operation on a {@link IntStream}

@@ -1,8 +1,8 @@
 package org.infinispan.context;
 
-import org.infinispan.container.entries.CacheEntry;
-
 import java.util.Map;
+
+import org.infinispan.container.entries.CacheEntry;
 
 /**
  * Interface that can look up MVCC wrapped entries.

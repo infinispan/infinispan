@@ -1,9 +1,15 @@
 package org.infinispan.cdi.embedded.test.event;
 
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import static org.mockito.Mockito.mock;
+
+import java.util.Arrays;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.cdi.embedded.test.assertions.ObserverAssertion;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
-import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.cdi.embedded.test.assertions.ObserverAssertion;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -17,12 +23,6 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-import java.util.Arrays;
-
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.mockito.Mockito.mock;
 
 /**
  * Tests if event mechanism works correctly in Weld implementation (with Arquillian).
@@ -38,8 +38,7 @@ import static org.mockito.Mockito.mock;
 @Test(groups = "functional", testName = "cdi.test.event.CacheEventTest")
 public class CacheEventTest extends Arquillian {
 
-   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null, AnyEquivalence.getInstance(),
-                                                                                       null);
+   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null);
 
    @Inject
    @Cache1

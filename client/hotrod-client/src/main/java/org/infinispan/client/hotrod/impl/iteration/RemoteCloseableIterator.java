@@ -1,6 +1,13 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import net.jcip.annotations.NotThreadSafe;
+import java.util.LinkedList;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Set;
+
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.IterationEndResponse;
 import org.infinispan.client.hotrod.impl.operations.IterationNextOperation;
@@ -15,11 +22,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 
-import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Set;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * @author gustavonalle
@@ -71,8 +74,8 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
             if (HotRodConstants.isInvalidIteration(status)) {
                throw log.errorClosingIteration(iterationId);
             }
-         } catch (TransportException te) {
-            log.ignoringServerUnreachable(iterationId);
+         } catch (HotRodClientException e) {
+            log.ignoringErrorDuringIterationClose(iterationId, e);
          } finally {
             closed = true;
          }
@@ -106,7 +109,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
             nextElements.addAll(iterationNextResponse.getEntries());
          }
 
-      } catch (TransportException e) {
+      } catch (TransportException | RemoteIllegalLifecycleStateException e) {
          log.warnf(e, "Error reaching the server during iteration");
          startInternal(segmentKeyTracker.missedSegments());
          fetch();

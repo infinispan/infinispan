@@ -1,16 +1,15 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.impl.AbstractCacheTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Support class for {@link org.infinispan.context.impl.TxInvocationContext}.
@@ -25,8 +24,7 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    private final T cacheTransaction;
 
-   protected AbstractTxInvocationContext(T cacheTransaction, Address origin,
-                                         SequentialInterceptorChain interceptorChain) {
+   protected AbstractTxInvocationContext(T cacheTransaction, Address origin) {
       super(origin);
       if (cacheTransaction == null) {
          throw new NullPointerException("CacheTransaction cannot be null");

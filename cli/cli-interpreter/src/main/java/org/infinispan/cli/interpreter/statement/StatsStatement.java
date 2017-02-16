@@ -15,6 +15,7 @@ import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.LogFactory;
@@ -83,7 +84,7 @@ public class StatsStatement implements Statement {
          throw log.statisticsNotEnabled(cache.getName());
       }
 
-      for (CommandInterceptor interceptor : cache.getAdvancedCache().getInterceptorChain()) {
+      for (AsyncInterceptor interceptor : cache.getAdvancedCache().getAsyncInterceptorChain().getInterceptors()) {
          printComponentStats(pw, cache, interceptor);
       }
       printComponentStats(pw, cache, cache.getAdvancedCache().getLockManager());

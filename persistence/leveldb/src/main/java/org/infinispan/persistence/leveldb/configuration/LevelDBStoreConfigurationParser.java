@@ -1,5 +1,8 @@
 package org.infinispan.persistence.leveldb.configuration;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -13,18 +16,16 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 /**
- *
- * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- * @since 9.0
+ * LevelDB XML Configuration Parser
+ * @author Ray Tsang
+ * @since 7.0
+ * @deprecated Use the RocksDB cache store instead
  */
+@Deprecated
 @MetaInfServices
 @Namespaces({
    @Namespace(root = "leveldb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:leveldb:9.0", root = "leveldb-store"),
    @Namespace(uri = "urn:infinispan:config:store:leveldb:8.0", root = "leveldb-store"),
    @Namespace(uri = "urn:infinispan:config:store:leveldb:7.2", root = "leveldb-store"),
    @Namespace(uri = "urn:infinispan:config:store:leveldb:7.1", root = "leveldb-store"),

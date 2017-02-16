@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -50,6 +51,7 @@ public class ClusteredCacheConfigurationResource extends CacheConfigurationResou
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(Mode.class, false, true))
                     .setAlternatives(ModelKeys.CONFIGURATION)
+                    .setDefaultValue(new ModelNode().set(Mode.SYNC.toString()))
                     .build();
 
     static final SimpleAttributeDefinition REMOTE_TIMEOUT =
@@ -58,7 +60,7 @@ public class ClusteredCacheConfigurationResource extends CacheConfigurationResou
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(15000))
+                    .setDefaultValue(new ModelNode().set(ClusteringConfiguration.REMOTE_TIMEOUT.getDefaultValue()))
                     .build();
 
     static final AttributeDefinition[] ATTRIBUTES = { MODE, REMOTE_TIMEOUT };

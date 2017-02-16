@@ -1,5 +1,14 @@
 package org.infinispan.scripting;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.InputStream;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
+import java.util.List;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,20 +30,12 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import javax.security.auth.Subject;
-import java.io.InputStream;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Verifying the script execution over task management with secured cache.
  *
  * @author amanukya
  */
-@Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
+@Test(groups="functional", testName="scripting.SecureScriptingTaskManagerTest")
 @CleanupAfterMethod
 public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
 
@@ -79,7 +80,8 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
                     String script = TestingUtil.loadFileAsString(is);
                     scriptCache.put(SCRIPT_NAME, script);
                 }
-                cacheManager.getCache(SecureScriptingTest.CACHE_NAME);
+                cacheManager.defineConfiguration(SecureScriptingTest.SECURE_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
+                cacheManager.getCache(SecureScriptingTest.SECURE_CACHE_NAME);
                 return null;
             }
         });

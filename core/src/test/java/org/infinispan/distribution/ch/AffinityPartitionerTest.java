@@ -1,16 +1,17 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Test;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.stream.IntStream;
 
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.AffinityPartitioner;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle
@@ -49,7 +50,7 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
       return conf;
    }
 
-   static class AffinityKey implements AffinityTaggedKey, Serializable {
+   static class AffinityKey implements AffinityTaggedKey, Serializable, ExternalPojo {
       final int segmentId;
 
       public AffinityKey(int segmentId) {

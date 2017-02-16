@@ -3,7 +3,11 @@ package org.infinispan.server.infinispan.task;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
-import org.jboss.msc.service.*;
+import org.jboss.msc.service.Service;
+import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
+import org.jboss.msc.service.StopContext;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
@@ -13,7 +17,8 @@ import org.jboss.msc.service.*;
 @Scope(Scopes.GLOBAL)
 public class ServerTaskRegistryService implements Service<ServerTaskRegistry> {
    public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("DeployedTaskRegistry");
-   private static final ServerTaskRegistry registry = new ServerTaskRegistryImpl();
+
+   private final ServerTaskRegistry registry = new ServerTaskRegistryImpl();
 
    @Override
    public ServerTaskRegistry getValue() throws IllegalStateException, IllegalArgumentException {

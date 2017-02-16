@@ -1,5 +1,14 @@
 package org.infinispan;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
@@ -13,7 +22,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -23,14 +32,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -74,7 +75,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param i        the interceptor to add
     * @param position the position to add the interceptor
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    void addInterceptor(CommandInterceptor i, int position);
 
@@ -85,7 +86,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                interceptor to add
     * @param afterInterceptor interceptor type after which to place custom interceptor
     * @return true if successful, false otherwise.
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
 
@@ -96,7 +97,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                 interceptor to add
     * @param beforeInterceptor interceptor type before which to place custom interceptor
     * @return true if successful, false otherwise.
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
 
@@ -105,7 +106,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * last one at getInterceptorChain().size() - 1.
     *
     * @param position the position at which to remove an interceptor
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    void removeInterceptor(int position);
 
@@ -113,12 +114,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Removes the interceptor of specified type.
     *
     * @param interceptorType type of interceptor to remove
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
 
    /**
-    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
+    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
     */
    List<CommandInterceptor> getInterceptorChain();
 
@@ -130,7 +131,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 9.0
     */
    @Experimental
-   SequentialInterceptorChain getSequentialInterceptorChain();
+   AsyncInterceptorChain getAsyncInterceptorChain();
 
    /**
     * @return the eviction manager - if one is configured - for this cache instance
@@ -223,7 +224,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * cache operations and the context information associated with them.
     *
     * @return the invocation context container component
-    * @deprecated This method may be removed in a future version of Infinispan.
+    * @deprecated No longer in use, implementations might return null.
     */
    @Deprecated
    InvocationContextContainer getInvocationContextContainer();
@@ -309,6 +310,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @return an {@link AdvancedCache} instance upon which operations can be called
     * with a particular {@link ClassLoader}.
+    * @deprecated A cache manager, and all caches within it, can only have
+    * one classloader associated to it, so it's no longer possible to read
+    * cached data with a different classloader.
     */
    AdvancedCache<K, V> with(ClassLoader classLoader);
 
@@ -388,7 +392,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    V putIfAbsent(K key, V value, Metadata metadata);
-   
+
    /**
     * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata

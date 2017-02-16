@@ -6,6 +6,7 @@ package org.infinispan.commons.equivalence;
  *
  * @author Pedro Ruivo
  * @since 7.1
+ * @deprecated
  */
 public class IdentityEquivalence<T> implements Equivalence<T> {
 

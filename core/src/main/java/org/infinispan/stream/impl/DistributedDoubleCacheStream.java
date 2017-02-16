@@ -1,5 +1,28 @@
 package org.infinispan.stream.impl;
 
+import java.util.Arrays;
+import java.util.DoubleSummaryStatistics;
+import java.util.Iterator;
+import java.util.OptionalDouble;
+import java.util.PrimitiveIterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleFunction;
+import java.util.function.DoublePredicate;
+import java.util.function.DoubleToIntFunction;
+import java.util.function.DoubleToLongFunction;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.ObjDoubleConsumer;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
@@ -16,12 +39,11 @@ import org.infinispan.stream.impl.intops.primitive.d.MapToIntDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.MapToLongDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.MapToObjDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.PeekDoubleOperation;
-import org.infinispan.stream.impl.intops.primitive.d.SkipDoubleOperation;
-import org.infinispan.stream.impl.intops.primitive.d.SortedDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableDoubleBinaryOperator;
 import org.infinispan.util.function.SerializableDoubleConsumer;
 import org.infinispan.util.function.SerializableDoubleFunction;
@@ -30,30 +52,7 @@ import org.infinispan.util.function.SerializableDoubleToIntFunction;
 import org.infinispan.util.function.SerializableDoubleToLongFunction;
 import org.infinispan.util.function.SerializableDoubleUnaryOperator;
 import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableSupplier;
-
-import java.util.Arrays;
-import java.util.DoubleSummaryStatistics;
-import java.util.Iterator;
-import java.util.OptionalDouble;
-import java.util.PrimitiveIterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.BiConsumer;
-import java.util.function.DoubleBinaryOperator;
-import java.util.function.DoubleConsumer;
-import java.util.function.DoubleFunction;
-import java.util.function.DoublePredicate;
-import java.util.function.DoubleToIntFunction;
-import java.util.function.DoubleToLongFunction;
-import java.util.function.DoubleUnaryOperator;
-import java.util.function.Function;
-import java.util.function.ObjDoubleConsumer;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.DoubleStream;
-import java.util.stream.Stream;
 
 /**
  * Implementation of {@link DoubleStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -146,15 +145,14 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public DoubleCacheStream distinct() {
-      DistinctDoubleOperation op = DistinctDoubleOperation.getInstance();
-      markDistinct(op, IntermediateType.DOUBLE);
-      return addIntermediateOperation(op);
+      // Limit is applied remotely as well
+      addIntermediateOperation(DistinctDoubleOperation.getInstance());
+      return new IntermediateDoubleCacheStream(this).distinct();
    }
 
    @Override
    public DoubleCacheStream sorted() {
-      markSorted(IntermediateType.DOUBLE);
-      return addIntermediateOperation(SortedDoubleOperation.getInstance());
+      return new IntermediateDoubleCacheStream(this).sorted();
    }
 
    @Override
@@ -169,16 +167,14 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public DoubleCacheStream limit(long maxSize) {
-      LimitDoubleOperation op = new LimitDoubleOperation(maxSize);
-      markDistinct(op, IntermediateType.DOUBLE);
-      return addIntermediateOperation(op);
+      // Limit is applied remotely as well
+      addIntermediateOperation(new LimitDoubleOperation(maxSize));
+      return new IntermediateDoubleCacheStream(this).limit(maxSize);
    }
 
    @Override
    public DoubleCacheStream skip(long n) {
-      SkipDoubleOperation op = new SkipDoubleOperation(n);
-      markSkip(IntermediateType.DOUBLE);
-      return addIntermediateOperation(op);
+      return new IntermediateDoubleCacheStream(this).skip(n);
    }
 
    @Override
@@ -237,14 +233,8 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public void forEachOrdered(DoubleConsumer action) {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation((DoubleStream s) -> {
-            s.forEachOrdered(action);
-            return null;
-         });
-      } else {
-         forEach(action);
-      }
+      // We aren't sorted, so just do forEach
+      forEach(action);
    }
 
    @Override
@@ -254,7 +244,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
                  double[] array = Arrays.copyOf(v1, v1.length + v2.length);
                  System.arraycopy(v2, 0, array, v1.length, v2.length);
                  return array;
-              }, null, false);
+              }, null);
    }
 
    @Override
@@ -404,11 +394,8 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public OptionalDouble findFirst() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation((DoubleStream s) -> s.findFirst());
-      } else {
-         return findAny();
-      }
+      // We aren't sorted, so just do findAny
+      return findAny();
    }
 
    @Override
@@ -430,12 +417,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public PrimitiveIterator.OfDouble iterator() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         DoubleStream stream = performIntermediateRemoteOperation(Function.identity());
-         return stream.iterator();
-      } else {
-         return remoteIterator();
-      }
+      return remoteIterator();
    }
 
    PrimitiveIterator.OfDouble remoteIterator() {
@@ -473,6 +455,64 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    @Override
    public long count() {
       return performOperation(TerminalFunctions.countDoubleFunction(), true, (i1, i2) -> i1 + i2, null);
+   }
+
+   // These are the custom added methods for cache streams
+
+   @Override
+   public DoubleCacheStream sequentialDistribution() {
+      parallelDistribution = false;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream parallelDistribution() {
+      parallelDistribution = true;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
+      segmentsToFilter = segments;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream filterKeys(Set<?> keys) {
+      keysToFilter = keys;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream distributedBatchSize(int batchSize) {
+      distributedBatchSize = batchSize;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream segmentCompletionListener(SegmentCompletionListener listener) {
+      if (segmentCompletionListener == null) {
+         segmentCompletionListener = listener;
+      } else {
+         segmentCompletionListener = composeWithExceptions(segmentCompletionListener, listener);
+      }
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream disableRehashAware() {
+      rehashAware = false;
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream timeout(long timeout, TimeUnit unit) {
+      if (timeout <= 0) {
+         throw new IllegalArgumentException("Timeout must be greater than 0");
+      }
+      this.timeout = timeout;
+      this.timeoutUnit = unit;
+      return this;
    }
 
    protected <R> DistributedCacheStream<R> cacheStream() {

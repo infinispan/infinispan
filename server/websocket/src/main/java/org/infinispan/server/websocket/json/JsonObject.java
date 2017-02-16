@@ -1,15 +1,15 @@
 package org.infinispan.server.websocket.json;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.infinispan.server.websocket.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.codehaus.jackson.map.ObjectMapper;
+import org.infinispan.server.websocket.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Json Object implementation. This is the only link between POJOs and particular JSON library implementation.

@@ -1,13 +1,14 @@
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.xa.GlobalTransaction;
-
-import javax.transaction.xa.Xid;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * RecoveryManager is the component responsible with managing recovery related information and the functionality
@@ -118,6 +119,8 @@ public interface RecoveryManager {
     * @param xid@see #removeRecoveryInformation(java.util.Collection, javax.transaction.xa.Xid, boolean)
     */
    RecoveryAwareTransaction removeRecoveryInformation(Xid xid);
+
+   void registerInDoubtTransaction(RecoveryAwareRemoteTransaction tx);
 
    /**
     * Stateful structure allowing prepared-tx retrieval in a batch-oriented manner, as required by {@link

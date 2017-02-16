@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "tx.TransactionManagerLookupTest", groups = "unit")
 public class TransactionManagerLookupTest extends AbstractInfinispanTest {
-   
+
    final GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
 
    public void testGenericTransactionManagerLookup() throws Exception {
@@ -37,7 +37,7 @@ public class TransactionManagerLookupTest extends AbstractInfinispanTest {
       lookup.init(globalConfiguration);
       doTest(lookup);
    }
-   
+
    protected void doTest(TransactionManagerLookup lookup) throws Exception {
       TransactionManager tm = lookup.getTransactionManager();
       tm.begin();

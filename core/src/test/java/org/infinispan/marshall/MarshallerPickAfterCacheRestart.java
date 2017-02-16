@@ -1,12 +1,12 @@
 package org.infinispan.marshall;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the marshaller is picked correctly when a cache is restarted.

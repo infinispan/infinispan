@@ -1,6 +1,6 @@
 <xsl:stylesheet version="2.0"
         xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-        xmlns:p="urn:jboss:domain:4.0"
+        xmlns:p="urn:jboss:domain:4.2"
         exclude-result-prefixes="p"
     >
 
@@ -33,6 +33,7 @@
     <xsl:param name="addJGroupsSasl">false</xsl:param>
     <xsl:param name="hotrodAuth">false</xsl:param>
     <xsl:param name="hotrodEncrypt">false</xsl:param>
+    <xsl:param name="restEncrypt">false</xsl:param>
     <xsl:param name="addKrbOpts">false</xsl:param>
     <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="addSecRealm">false</xsl:param>
@@ -157,7 +158,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='protocol'][contains(@type,'STABLE')]">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='protocol'][contains(@type,'VERIFY_SUSPECT')]">
         <xsl:if test="$addEncrypt = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -273,13 +274,25 @@
     </xsl:template>
 
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]/*[local-name()='rest-connector']">
-        <xsl:if test="$removeRestSecurity != 'true'">
+        <xsl:if test="$removeRestSecurity = 'false' and $restEncrypt = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
-        <xsl:if test="$removeRestSecurity = 'true'">
+        <xsl:if test="$removeRestSecurity != 'false' and $restEncrypt = 'false'">
             <xsl:copy>
                 <xsl:copy-of select="@*[not(name() = 'security-domain' or name() = 'auth-method')]"/>
                 <xsl:apply-templates/>
+            </xsl:copy>
+        </xsl:if>
+        <xsl:if test="$removeRestSecurity = 'false' and $restEncrypt != 'false'">
+            <xsl:copy>
+                <xsl:copy-of select="@*" />
+                <xsl:copy-of select="document($restEncrypt)"/>
+            </xsl:copy>
+        </xsl:if>
+        <xsl:if test="$removeRestSecurity != 'false' and $restEncrypt != 'false'">
+            <xsl:copy>
+                <xsl:copy-of select="@*[not(name() = 'security-domain' or name() = 'auth-method')]"/>
+                <xsl:copy-of select="document($restEncrypt)"/>
             </xsl:copy>
         </xsl:if>
     </xsl:template>
@@ -315,6 +328,11 @@
             <xsl:when test="$addNewHotrodSocketBinding = 'false' and $addNewRestSocketBinding != 'false'">
                 <xsl:call-template name="copynode"/>
                 <xsl:copy-of select="document($addNewRestSocketBinding)"/>
+            </xsl:when>
+            <xsl:when test="$addNewHotrodSocketBinding != 'false' and $addNewRestSocketBinding != 'false'">
+                <xsl:call-template name="copynode"/>
+                <xsl:copy-of select="document($addNewRestSocketBinding)"/>
+                <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
             </xsl:when>
         </xsl:choose>
     </xsl:template>

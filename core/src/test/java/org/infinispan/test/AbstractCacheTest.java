@@ -1,5 +1,10 @@
 package org.infinispan.test;
 
+import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,11 +12,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for {@link org.infinispan.test.SingleCacheManagerTest} and {@link org.infinispan.test.MultipleCacheManagersTest}.
@@ -53,7 +53,6 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       builder.
          clustering()
             .cacheMode(mode)
-            .stateTransfer().fetchInMemoryState(mode.isClustered())
          .transaction().syncCommitPhase(true).syncRollbackPhase(true)
          .cacheStopTimeout(0L);
 

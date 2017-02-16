@@ -22,14 +22,10 @@
 
 package org.jboss.as.clustering.infinispan;
 
-import java.nio.ByteBuffer;
-
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.remoting.transport.jgroups.MarshallerAdapter;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Custom {@link JGroupsTransport} that uses a provided channel.
@@ -39,22 +35,15 @@ public class ChannelTransport extends JGroupsTransport {
 
     final ChannelFactory factory;
 
-    public ChannelTransport(Channel channel, ChannelFactory factory) {
+    public ChannelTransport(JChannel channel, ChannelFactory factory) {
         super(channel);
         this.factory = factory;
     }
 
     @Override
     protected void initRPCDispatcher() {
-        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, this.getTimeoutExecutor(), timeService);
-        MarshallerAdapter adapter = new MarshallerAdapter(this.marshaller) {
-            @Override
-            public Object objectFromBuffer(byte[] buffer, int offset, int length) throws Exception {
-                return ChannelTransport.this.factory.isUnknownForkResponse(ByteBuffer.wrap(buffer, offset, length)) ? CacheNotFoundResponse.INSTANCE : super.objectFromBuffer(buffer, offset, length);
-            }
-        };
-        this.dispatcher.setRequestMarshaller(adapter);
-        this.dispatcher.setResponseMarshaller(adapter);
+        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService,
+              remoteExecutor, marshaller);
         this.dispatcher.start();
     }
 
@@ -66,4 +55,3 @@ public class ChannelTransport extends JGroupsTransport {
         this.closeChannel = false;
     }
 }
-

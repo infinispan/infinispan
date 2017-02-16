@@ -1,11 +1,11 @@
 package org.infinispan.it.osgi.persistence.jdbc;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class that assures concurrent access to the in memory database.
@@ -36,7 +36,7 @@ public class UnitTestDatabaseManager {
          throw new RuntimeException(e);
       }
    }
-   
+
    public static void setDialect(AbstractJdbcStoreConfigurationBuilder<?, ?> builder) {
       builder.dialect(dt);
    }
@@ -62,10 +62,10 @@ public class UnitTestDatabaseManager {
       return null;
    }
 
-   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
-      table.tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
+   public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table) {
+      table.tableNamePrefix("ISPN_STRING")
          .idColumnName("ID_COLUMN")
-         .idColumnType(binary ? "INT" : "VARCHAR(255)")
+         .idColumnType("VARCHAR(255)")
          .dataColumnName("DATA_COLUMN")
          .dataColumnType("BLOB")
          .timestampColumnName("TIMESTAMP_COLUMN")

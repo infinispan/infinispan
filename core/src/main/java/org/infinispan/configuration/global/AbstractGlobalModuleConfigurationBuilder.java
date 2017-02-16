@@ -5,5 +5,4 @@ public abstract class AbstractGlobalModuleConfigurationBuilder extends AbstractG
    protected AbstractGlobalModuleConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
    }
-
 }

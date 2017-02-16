@@ -1,12 +1,12 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Set;
+
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 
 public class PreferredServerBalancingStrategy implements FailoverRequestBalancingStrategy {
 

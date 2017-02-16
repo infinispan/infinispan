@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
-import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
+import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 
 /**
  * A matcher for projection rows. This matcher is not stateless so it cannot be reused.
@@ -22,8 +22,8 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected RowMatcherEvalContext startMultiTypeContext(Object userContext, Object eventType, Object instance) {
-      FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> filterRegistry = getFilterRegistryForType(rowMetadata);
+   protected RowMatcherEvalContext startMultiTypeContext(boolean isDeltaFilter, Object userContext, Object eventType, Object instance) {
+      FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> filterRegistry = getFilterRegistryForType(isDeltaFilter, rowMetadata);
       if (filterRegistry != null) {
          RowMatcherEvalContext context = new RowMatcherEvalContext(userContext, eventType, instance, rowMetadata);
          context.initMultiFilterContext(filterRegistry);
@@ -39,11 +39,6 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
       } else {
          return null;
       }
-   }
-
-   @Override
-   protected FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> getFilterRegistryForType(RowPropertyHelper.RowMetadata entityType) {
-      return filtersByType.get(entityType);
    }
 
    @Override

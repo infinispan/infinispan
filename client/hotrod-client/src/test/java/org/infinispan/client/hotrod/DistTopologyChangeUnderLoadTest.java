@@ -1,22 +1,21 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.SocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.DistTopologyChangeUnderLoadTest")
 public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
@@ -45,16 +44,13 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       PutHammer putHammer = new PutHammer();
       Future<Void> putHammerFuture = fork(putHammer);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
-      registerCacheManager(cm);
-      HotRodClientTestingUtil.startHotRodServer(cm);
-      waitForClusterToForm();
-      TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
+      HotRodServer newServer = addHotRodServer(getCacheConfiguration());
 
       // Wait for 2 seconds
       TestingUtil.sleepThread(2000);
 
-      TestingUtil.killCacheManagers(cm);
+      HotRodClientTestingUtil.killServers(newServer);
+      TestingUtil.killCacheManagers(newServer.getCacheManager());
       TestingUtil.waitForRehashToComplete(cache(0));
 
       // Execute one more operation to guarantee topology update on the client

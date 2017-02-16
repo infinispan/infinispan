@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -8,9 +10,6 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.protostream.descriptors.Type;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com
@@ -49,7 +48,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
 
    //todo [anistor] missing tags need to be fired with default value defined in proto schema or null if they admit null; missing messages need to be fired with null at end of the nesting level. BTW, seems like this is better to be included in Protostream as a feature
    @Override
-   public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
+   public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
       if (payloadStarted) {
          if (skipping == 0) {
             AttributeNode<FieldDescriptor, Integer> attrNode = currentNode.getChild(fieldNumber);
@@ -68,7 +67,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
                entityTypeName = serializationContext.getTypeNameById((Integer) tagValue);
                break;
 
-            case WrappedMessage.WRAPPED_MESSAGE_BYTES:
+            case WrappedMessage.WRAPPED_MESSAGE:
                payload = (byte[]) tagValue;
                break;
 
@@ -98,13 +97,13 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    }
 
    @Override
-   public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       if (payloadStarted) {
          if (skipping == 0) {
             AttributeNode<FieldDescriptor, Integer> attrNode = currentNode.getChild(fieldNumber);
             if (attrNode != null) { // ignore 'uninteresting' tags
                messageContext.markField(fieldNumber);
-               pushContext(fieldName, messageDescriptor);
+               pushContext(fieldDescriptor.getName(), fieldDescriptor.getMessageType());
                currentNode = attrNode;
                return;
             }
@@ -118,7 +117,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    }
 
    @Override
-   public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
+   public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
       if (payloadStarted) {
          if (skipping == 0) {
             popContext();

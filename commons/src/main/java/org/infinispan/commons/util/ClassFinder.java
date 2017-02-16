@@ -1,8 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -15,13 +12,16 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * Find infinispan classes utility
  */
 public class ClassFinder {
-   
-   private static final Log log = LogFactory.getLog(ClassFinder.class); 
-   
+
+   private static final Log log = LogFactory.getLog(ClassFinder.class);
+
    public static final String PATH = SecurityActions.getProperty("java.class.path") + File.pathSeparator
             + SecurityActions.getProperty("surefire.test.class.path");
 
@@ -34,7 +34,7 @@ public class ClassFinder {
       }
       return clazzes;
    }
-   
+
    public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
       List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
       for (Class<?> clazz : classes) {

@@ -10,10 +10,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
-import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
@@ -47,6 +47,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass = RoundRobinBalancingStrategy.class;
    private FailoverRequestBalancingStrategy balancingStrategy;
+   private ClientIntelligence clientIntelligence = ClientIntelligence.getDefault();
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
@@ -55,9 +56,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    };
    private boolean forceReturnValues;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
-   private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
+   private Class<? extends Marshaller> marshallerClass;
    private Marshaller marshaller;
-   private String protocolVersion = ConfigurationProperties.DEFAULT_PROTOCOL_VERSION;
+   private ProtocolVersion protocolVersion = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
    private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
    private final SecurityConfigurationBuilder security;
@@ -71,7 +72,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
 
    public ConfigurationBuilder() {
-      this.classLoader = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
+      this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
@@ -138,12 +139,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder classLoader(ClassLoader cl) {
-      this.classLoader = new WeakReference<ClassLoader>(cl);
+      this.classLoader = new WeakReference<>(cl);
       return this;
    }
 
    ClassLoader classLoader() {
       return classLoader != null ? classLoader.get() : null;
+   }
+
+   @Override
+   public ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence) {
+      this.clientIntelligence = clientIntelligence;
+      return this;
    }
 
    @Override
@@ -211,8 +218,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return nearCache;
    }
 
+   /**
+    * @deprecated Use {@link ConfigurationBuilder#version(ProtocolVersion)} instead.
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder protocolVersion(String protocolVersion) {
+      this.protocolVersion = ProtocolVersion.parseVersion(protocolVersion);
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder version(ProtocolVersion protocolVersion) {
       this.protocolVersion = protocolVersion;
       return this;
    }
@@ -269,12 +286,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
       if (typed.containsKey(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY)) {
-         this.asyncExecutorFactory().factoryClass(typed.getProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY));
+         this.asyncExecutorFactory().factoryClass(typed.getProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, null, true));
       }
       this.asyncExecutorFactory().withExecutorProperties(typed);
-      this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass.getName()));
+      this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass.getName(), true));
+      this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault(), true));
       this.connectionPool.withPoolProperties(typed);
-      this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout));
+      this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
       if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
          log.warn("Hash function version 1 is no longer supported");
       }
@@ -283,25 +301,25 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             int version = i + 1;
             this.consistentHashImpl(version,
                   typed.getProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
-                        consistentHashImpl[i].getName()));
+                        consistentHashImpl[i].getName(), true));
          }
       }
-      this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues));
-      this.keySizeEstimate(typed.getIntProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate));
+      this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues, true));
+      this.keySizeEstimate(typed.getIntProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate, true));
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
-         this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER));
+         this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
-      this.protocolVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion));
+      this.version(typed.getEnumProperty(ConfigurationProperties.PROTOCOL_VERSION, ProtocolVersion.class, protocolVersion, true));
       this.servers.clear();
-      this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, ""));
-      this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout));
-      this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay));
-      this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive));
+      this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, "", true));
+      this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+      this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
+      this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));
       if (typed.containsKey(ConfigurationProperties.TRANSPORT_FACTORY)) {
-         this.transportFactory(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY));
+         this.transportFactory(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY, null, true));
       }
-      this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate));
-      this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries));
+      this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate, true));
+      this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
       return this;
@@ -338,15 +356,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
          .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
-      if (marshaller == null) {
-         return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
-      } else {
-         return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
+      if (marshaller == null && marshallerClass == null) {
+         marshallerClass = GenericJBossMarshaller.class;
       }
+
+      return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
+            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
    }
 
    @Override
@@ -376,7 +392,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.keySizeEstimate = template.keySizeEstimate();
       this.marshaller = template.marshaller();
       this.marshallerClass = template.marshallerClass();
-      this.protocolVersion = template.protocolVersion();
+      this.protocolVersion = template.version();
       this.servers.clear();
       for (ServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());

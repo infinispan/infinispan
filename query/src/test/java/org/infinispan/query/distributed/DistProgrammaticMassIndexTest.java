@@ -1,23 +1,23 @@
 package org.infinispan.query.distributed;
 
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
 
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 /**
  * Tests verifying that the Mass Indexing for programmatic cache configuration works as well.
@@ -33,11 +33,11 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       cacheCfg.indexing()
             .index(Index.LOCAL)
             .addIndexedEntity(Car.class)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
-      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
+      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, "default", cacheCfg);
 
       for(int i = 0; i < NUM_NODES; i++) {
          ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
@@ -57,7 +57,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       QueryParser queryParser = createQueryParser("make");
 
       Query luceneQuery = queryParser.parse(carMake);
-      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
 
       assertEquals(count, cacheQuery.getResultSize());
 

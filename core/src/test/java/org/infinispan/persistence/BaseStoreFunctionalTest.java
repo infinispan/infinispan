@@ -1,10 +1,16 @@
 package org.infinispan.persistence;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.assertArrayEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -18,6 +24,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
@@ -122,19 +129,46 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assert cache.getCacheConfiguration().persistence().preload();
       assert cache.getCacheConfiguration().storeAsBinary().enabled();
 
-      cache.put("k1", new Pojo());
-      cache.put("k2", new Pojo(), 111111, TimeUnit.MILLISECONDS);
-      cache.put("k3", new Pojo(), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-      cache.put("k4", new Pojo(), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      cache.put("k1", new Pojo(1));
+      cache.put("k2", new Pojo(2), 111111, TimeUnit.MILLISECONDS);
+      cache.put("k3", new Pojo(3), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+      cache.put("k4", new Pojo(4), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
 
       cache.stop();
 
       cache.start();
 
       assertEquals(4, cache.entrySet().size());
+      assertEquals(new Pojo(1), cache.get("k1"));
+      assertEquals(new Pojo(2), cache.get("k2"));
+      assertEquals(new Pojo(3), cache.get("k3"));
+      assertEquals(new Pojo(4), cache.get("k4"));
    }
 
-   public static class Pojo implements Serializable {
+   public static class Pojo implements Serializable, ExternalPojo {
+
+      private final int i;
+
+      public Pojo(int i) {
+         this.i = i;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Pojo pojo = (Pojo) o;
+
+         return i == pojo.i;
+
+      }
+
+      @Override
+      public int hashCode() {
+         return i;
+      }
+
    }
 
    public void testRestoreAtomicMap(Method m) {
@@ -196,6 +230,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          final String cacheName = "to-be-removed";
+         local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
          cache.put("1", wrap("1", "v1"));
@@ -213,6 +248,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          final String cacheName = "to-be-removed";
+         local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
          Cache<String, Object> cache = local.getCache(cacheName);
          assertTrue(local.isRunning(cacheName));
          cache.put("1", wrap("1", "v1"));
@@ -226,7 +262,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             }
 
             @Override
-            public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes) {
+            public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes) {
                passivate.set(true);
             }
          };

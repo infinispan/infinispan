@@ -1,9 +1,9 @@
 package org.infinispan.objectfilter.impl.util;
 
-import org.testng.annotations.Test;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 /**
  * @author anistor@redhat.com

@@ -66,7 +66,7 @@ public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest 
       cache(0).put("k1", p);
       assertEquals(p, cache(1).get("k1"));
    }
-   
+
    /*
     * This custom class has to be defined here. We can't reuse a similar class from ispn-core
     * as then a CNFE error would never appear. The custom class would be visible to

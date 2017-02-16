@@ -1,8 +1,15 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.BitSet;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -10,16 +17,11 @@ import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.BitSet;
-import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
 /**
  * Stream supplier that is to be used when the underlying stream is composed by {@link CacheEntry} instances.  This
  * supplier will do the proper filtering by key based on the CacheEntry key.
  */
-public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>> {
+public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> {
    private static final Log log = LogFactory.getLog(EntryStreamSupplier.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -37,12 +39,21 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<CacheEntry<K, V>> stream;
       if (keysToFilter != null) {
-         // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         stream = keysToFilter.stream().map(advancedCache::getCacheEntry).filter(e -> e != null);
+         // Make sure we aren't going remote to retrieve these
+         AdvancedCache<K, V> advancedCache =  AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+               .withFlags(Flag.CACHE_MODE_LOCAL);
+         // Need to box the key to get the correct segment
+         TypeConverter<Object, Object, Object, Object> typeConverter =
+               advancedCache.getComponentRegistry().getComponent(TypeConverter.class);
+         // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
+         // unbox, this way we avoid multiple calls and just do the one.
+         stream = keysToFilter.stream()
+               .map(typeConverter::boxKey)
+               .map(advancedCache::getCacheEntry)
+               .filter(e -> e != null);
       } else {
          stream = supplier.get();
       }

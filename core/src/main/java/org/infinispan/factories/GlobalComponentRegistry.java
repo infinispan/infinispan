@@ -1,6 +1,17 @@
 package org.infinispan.factories;
 
-import net.jcip.annotations.ThreadSafe;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
@@ -35,18 +46,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A global component registry where shared components are stored.

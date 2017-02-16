@@ -33,7 +33,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
    private final CachingProvider provider;
    protected Properties properties;
 
-   private final HashMap<String, AbstractJCache<?, ?>> caches = new HashMap<String, AbstractJCache<?, ?>>();
+   private final HashMap<String, AbstractJCache<?, ?>> caches = new HashMap<>();
 
    private final StackTraceElement[] allocationStackTrace;
 
@@ -147,7 +147,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
 
    @Override
    public Iterable<String> getCacheNames() {
-      return isClosed ? Collections.<String>emptyList() : delegateCacheNames();
+      return isClosed ? Collections.emptyList() : delegateCacheNames();
    }
 
    @Override
@@ -183,7 +183,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
       if (!isClosed()) {
          ArrayList<AbstractJCache<?, ?>> cacheList;
          synchronized (caches) {
-            cacheList = new ArrayList<AbstractJCache<?, ?>>(caches.values());
+            cacheList = new ArrayList<>(caches.values());
             caches.clear();
          }
          for (AbstractJCache<?, ?> cache : cacheList) {
@@ -224,7 +224,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
       }
    }
 
-   public <K, V, I extends BasicCache<K, V> > Cache<K, V> getOrCreateCache(String cacheName, I ispnCache) {
+   public <K, V, I extends BasicCache<K, V>> Cache<K, V> getOrCreateCache(String cacheName, I ispnCache) {
       synchronized (caches) {
          AbstractJCache<?, ?> cache = caches.get(cacheName);
          if (cache == null) {
@@ -246,10 +246,10 @@ public abstract class AbstractJCacheManager implements CacheManager {
    protected abstract <K, V> void delegateRemoveCache(AbstractJCache<K, V> cacheName);
 
    protected abstract <K, V, C extends Configuration<K, V>> AbstractJCache<K, V> create(String cacheName, C configuration);
-   protected abstract <K, V, I extends BasicCache<K, V> > AbstractJCache<K, V> create(I ispnCache);
+   protected abstract <K, V, I extends BasicCache<K, V>> AbstractJCache<K, V> create(I ispnCache);
 
    protected Set<String> getManagedCacheNames() {
-      HashSet<String> result = new HashSet<String>();
+      HashSet<String> result = new HashSet<>();
       synchronized (caches) {
          result.addAll(caches.keySet());
       }

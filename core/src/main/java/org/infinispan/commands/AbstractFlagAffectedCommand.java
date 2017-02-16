@@ -1,11 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
-import org.infinispan.metadata.Metadata;
-
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Base class for those commands that can carry flags.
@@ -13,28 +9,25 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 5.1
  */
-public abstract class AbstractFlagAffectedCommand extends AbstractLocalFlagAffectedCommand implements FlagAffectedCommand {
+public abstract class AbstractFlagAffectedCommand implements FlagAffectedCommand {
 
-   private int topologyId = -1;
+   private long flags = 0;
 
    @Override
-   public int getTopologyId() {
-      return topologyId;
+   public long getFlagsBitSet() {
+      return flags;
    }
 
    @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
+   public void setFlagsBitSet(long bitSet) {
+      this.flags = bitSet;
    }
 
-   @Override
-   public Metadata getMetadata() {
-      return null;
+   protected final boolean hasSameFlags(FlagAffectedCommand other) {
+      return this.flags == other.getFlagsBitSet();
    }
 
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // no-op
+   protected final String printFlags() {
+      return EnumUtil.prettyPrintBitSet(flags, Flag.class);
    }
-
 }

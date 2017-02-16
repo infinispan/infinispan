@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl.intops.primitive.d;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.DoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs boxed operation on a {@link DoubleStream}

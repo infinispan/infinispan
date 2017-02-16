@@ -1,5 +1,49 @@
 package org.infinispan.functional;
 
+import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
+import static org.infinispan.commons.marshall.MarshallableFunctions.identity;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteFind;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteGet;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnView;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadOnlyViewEmpty;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadOnlyViewEquals;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEmpty;
+import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEquals;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.functional.FunctionalTestUtils.ro;
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -21,30 +65,6 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
-import static org.infinispan.functional.FunctionalTestUtils.*;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Test suite for verifying basic functional map functionality,
@@ -85,7 +105,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       K key = keySupplier.get();
       await(
          map2.eval(key, SetStringConstant.INSTANCE).thenCompose(r ->
-               map1.eval(key, ReadEntryView::get).thenAccept(v -> {
+               map1.eval(key, returnReadOnlyFindOrNull()).thenAccept(v -> {
                      assertNull(r);
                      assertEquals("one", v);
                   }
@@ -137,7 +157,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       K key = keySupplier.get();
       await(
          map2.eval(key, "one", SetValueAndConstantLifespan.getInstance()).thenCompose(r ->
-               map1.eval(key, ro -> ro).thenAccept(ro -> {
+               map1.eval(key, identity()).thenAccept(ro -> {
                      assertNull(r);
                      assertEquals(Optional.of("one"), ro.find());
                      assertEquals("one", ro.get());
@@ -378,18 +398,21 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() throws Exception {
+            cm.defineConfiguration("read-only", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> readOnlyCache = cm.getCache("read-only").getAdvancedCache();
             try (ReadOnlyMap<?, ?> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(readOnlyCache))) {
                assertNotNull(ro); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(readOnlyCache.getStatus().isTerminated());
 
+            cm.defineConfiguration("write-only", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> writeOnlyCache = cm.getCache("write-only").getAdvancedCache();
             try (WriteOnlyMap<?, ?> wo = WriteOnlyMapImpl.create(FunctionalMapImpl.create(writeOnlyCache))) {
                assertNotNull(wo); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(writeOnlyCache.getStatus().isTerminated());
 
+            cm.defineConfiguration("read-write", cm.getDefaultCacheConfiguration());
             AdvancedCache<?, ?> readWriteCache = cm.getCache("read-write").getAdvancedCache();
             try (ReadWriteMap<?, ?> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(readWriteCache))) {
                assertNotNull(rw); // No-op, just verify that it implements AutoCloseable
@@ -422,7 +445,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    private <K> void doReadOnlyEvalManyEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
       Traversable<ReadEntryView<K, String>> t = map
-         .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), ro -> ro);
+         .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), identity());
       t.forEach(ro -> assertFalse(ro.find().isPresent()));
    }
 
@@ -454,7 +477,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       data.put(key2, "two");
       data.put(key3, "three");
       await(map2.evalMany(data, setValueConsumer()));
-      Traversable<String> currentValues = map1.evalMany(data.keySet(), ro -> ro.get());
+      Traversable<String> currentValues = map1.evalMany(data.keySet(), returnReadOnlyFindOrNull());
       List<String> collectedValues = currentValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       Collections.sort(collectedValues);
       List<String> dataValues = new ArrayList<>(data.values());
@@ -470,7 +493,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       Collections.sort(collectedPrev);
       assertEquals(dataValues, collectedPrev);
 
-      Traversable<String> updatedValues = map1.evalMany(data.keySet(), ro -> ro.get());
+      Traversable<String> updatedValues = map1.evalMany(data.keySet(), returnReadOnlyFindOrNull());
       List<String> collectedUpdates = updatedValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       Collections.sort(collectedUpdates);
       List<String> newDataValues = new ArrayList<>(newData.values());
@@ -534,9 +557,9 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    private <K> void doReturnViewFromReadOnlyEval(Supplier<K> keySupplier,
          ReadOnlyMap<K, String> ro, WriteOnlyMap<K, String> wo) {
       K k = keySupplier.get();
-      assertReadOnlyViewEmpty(k, await(ro.eval(k, rv -> rv)));
+      assertReadOnlyViewEmpty(k, await(ro.eval(k, identity())));
       await(wo.eval(k, setOneWriteOnly()));
-      assertReadOnlyViewEquals(k, "one", await(ro.eval(k, rv -> rv)));
+      assertReadOnlyViewEquals(k, "one", await(ro.eval(k, identity())));
    }
 
    private Consumer<WriteEntryView<String>> setOneWriteOnly() {

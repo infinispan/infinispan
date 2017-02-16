@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -121,24 +122,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             rpc instanceof CacheRpcCommand ? (CacheRpcCommand) rpc : cf.buildSingleRpcCommand(rpc);
 
       long startTimeNanos = statisticsEnabled ? timeService.time() : 0;
-      // TODO Re-enable the filter (and test MissingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
-      // add a response filter that will ensure we don't wait for replies from non-members
-      // but only if the target is the whole cluster and the call is synchronous
-      // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
-//            if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
-//               // TODO Could improve performance a tiny bit by caching the members in RpcManagerImpl
-//               Collection<Address> cacheMembers = localTopologyManager.getCacheTopology(cacheName).getMembers();
-//               // the filter won't work if there is no other member in the cache, so we have to
-//               if (cacheMembers.size() < 2) {
-//                  log.tracef("We're the only member of cache %s; Don't invoke remotely.", cacheName);
-//                  return Collections.emptyMap();
-//               }
-//               // if there is already a response filter attached it means it must have its own way of dealing with non-members
-//               // so skip installing the filter
-//               if (responseFilter == null) {
-//                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
-//               }
-//            }
       CompletableFuture<Map<Address, Response>> invocation;
       try {
          invocation = t.invokeRemotelyAsync(recipients, cacheRpc,
@@ -167,7 +150,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       });
    }
 
-   protected <T> T rethrowAsCacheException(Throwable throwable) {
+   private <T> T rethrowAsCacheException(Throwable throwable) {
       if (throwable.getCause() != null && throwable instanceof CompletionException) {
          throwable = throwable.getCause();
       }
@@ -249,6 +232,52 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             totalReplicationTime.getAndAdd(timeTaken);
          }
       }
+   }
+
+   private CacheRpcCommand toCacheRpcCommand(ReplicableCommand command) {
+      return command instanceof CacheRpcCommand ?
+            (CacheRpcCommand) command :
+            cf.buildSingleRpcCommand(command);
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+      if (trace) {
+         log.tracef("%s invoking %s to %s ordered by %s", t.getAddress(), command, destination, deliverOrder);
+      }
+
+      // Set the topology id of the command, in case we don't have it yet
+      setTopologyId(command);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      try {
+         t.sendTo(destination, cacheRpc, deliverOrder);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
+      if (trace) {
+         log.tracef("%s invoking %s to list %s ordered by %s", t.getAddress(), command, destinations, deliverOrder);
+      }
+
+      // Set the topology id of the command, in case we don't have it yet
+      setTopologyId(command);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      try {
+         t.sendToMany(destinations, cacheRpc, deliverOrder);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   private void errorReplicating(Exception e) {
+      log.unexpectedErrorReplicating(e);
+      if (statisticsEnabled) replicationFailures.incrementAndGet();
+      rethrowAsCacheException(e);
    }
 
    @Override
@@ -341,6 +370,12 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          return 0;
       }
       return totalReplicationTime.get() / replicationCount.get();
+   }
+
+   @ManagedAttribute(description = "Retrieves the x-site view.", displayName = "Cross site (x-site) view", dataType = DataType.TRAIT)
+   public String getSitesView() {
+      Set<String> sitesView = t.getSitesView();
+      return sitesView != null ? sitesView.toString() : "N/A";
    }
 
    // mainly for unit testing

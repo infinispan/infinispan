@@ -1,6 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.*;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.CHUNK_SIZE;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -15,10 +18,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class XSiteStateTransferConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<XSiteStateTransferConfiguration> {
-   public static final int DEFAULT_CHUNK_SIZE = CHUNK_SIZE.getDefaultValue();
-   public static final long DEFAULT_TIMEOUT = TIMEOUT.getDefaultValue();
-   public static final int DEFAULT_MAX_RETRIES = MAX_RETRIES.getDefaultValue();
-   public static final long DEFAULT_WAIT_TIME = WAIT_TIME.getDefaultValue();
    private final BackupConfigurationBuilder backupConfigurationBuilder;
    private final AttributeSet attributes;
 

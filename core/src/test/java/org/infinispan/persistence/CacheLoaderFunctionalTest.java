@@ -1,5 +1,25 @@
 package org.infinispan.persistence;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -7,17 +27,17 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -29,26 +49,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -275,7 +275,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    public void testLoading() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
       for (int i = 1; i < 5; i++) writer.write(new MarshalledEntryImpl("k" + i, "v" + i, null, sm));
-      for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
+      for (int i = 1; i < 5; i++) assertEquals("v" + i, cache.get("k" + i));
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
@@ -283,14 +283,15 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.putIfAbsent("k1", "v1-SHOULD-NOT-STORE").equals("v1");
-      assert cache.remove("k2").equals("v2");
-      assert cache.replace("k3", "v3-REPLACED").equals("v3");
-      assert cache.replace("k4", "v4", "v4-REPLACED");
+      assertEquals("v1", cache.putIfAbsent("k1", "v1-SHOULD-NOT-STORE"));
+      assertEquals("v2", cache.remove("k2"));
+      assertEquals("v3", cache.replace("k3", "v3-REPLACED"));
+      assertTrue(cache.replace("k4", "v4", "v4-REPLACED"));
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.size() == 3 : "Expected the cache to contain 3 elements but contained " + cache.entrySet();
+      int size = cache.size();
+      assertEquals("Expected the cache to contain 3 elements but contained " + cache.entrySet(), 3, size);
 
       for (int i = 1; i < 5; i++) cache.evict("k" + i);
       // make sure we have no stale locks!!

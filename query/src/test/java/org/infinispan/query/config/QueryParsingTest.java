@@ -1,5 +1,9 @@
 package org.infinispan.query.config;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -7,6 +11,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -16,62 +21,65 @@ public class QueryParsingTest extends AbstractInfinispanTest {
    public void testConfigurationFileParsing() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test.xml");
-      Configuration defaultConfiguration = holder.getDefaultConfigurationBuilder().build();
+      Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
+      Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
-      assert defaultConfiguration.indexing().properties().size() == 0;
-      assert !defaultConfiguration.indexing().index().isEnabled();
+      assertEquals(defaultConfiguration.indexing().properties().size(), 0);
+      assertFalse(defaultConfiguration.indexing().index().isEnabled());
 
-      final Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
+      Configuration simpleCfg = namedConfigurations.get("simple").build();
+      assertFalse(simpleCfg.indexing().index().isEnabled());
+      assertEquals(simpleCfg.indexing().properties().size(), 0);
 
-      final Configuration simpleCfg = namedConfigurations.get("simple").build();
-      assert !simpleCfg.indexing().index().isEnabled();
-      assert simpleCfg.indexing().properties().size() == 0;
+      Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
+      assertTrue(memoryCfg.indexing().index().isEnabled());
+      assertEquals(2, memoryCfg.indexing().properties().size());
+      assertEquals(memoryCfg.indexing().properties().getProperty("default.directory_provider"), "ram");
 
-      final Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
-      assert memoryCfg.indexing().index().isEnabled();
-      assert memoryCfg.indexing().properties().size() == 2;
-      assert memoryCfg.indexing().properties().getProperty("default.directory_provider").equals("ram");
+      Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
+      assertTrue(diskCfg.indexing().index().isEnabled());
+      assertEquals(diskCfg.indexing().properties().size(), 3);
+      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
+      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
 
-      final Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
-      assert diskCfg.indexing().index().isEnabled();
-      assert diskCfg.indexing().properties().size() == 3;
-      assert diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
-      assert diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
+      Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
+      assertTrue(replDefaults.indexing().index().isEnabled());
+      assertFalse(replDefaults.indexing().properties().isEmpty());
 
-      final Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
-      assert replDefaults.indexing().index().isEnabled();
-      assert !replDefaults.indexing().properties().isEmpty();
+      Configuration affinity = namedConfigurations.get("dist-with-affinity").build();
+      assertTrue(affinity.indexing().index().isEnabled());
+      assertTrue(affinity.indexing().index().isPrimaryOwner());
+      assertEquals(affinity.indexing().properties().getProperty("default.indexmanager"), AffinityIndexManager.class.getName());
    }
 
    public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test-enbledInDefault.xml");
-      Configuration defaultConfiguration = holder.getDefaultConfigurationBuilder().build();
+      Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
+      Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
-      assert defaultConfiguration.indexing().properties().size() == 2;
-      assert defaultConfiguration.indexing().index().isEnabled();
-      assert defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("someDefault");
+      assertEquals(defaultConfiguration.indexing().properties().size(), 2);
+      assertTrue(defaultConfiguration.indexing().index().isEnabled());
+      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "someDefault");
 
-      final Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
+      Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
+      assertFalse(nonSearchableCfg.indexing().index().isEnabled());
 
-      final Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
-      assert !nonSearchableCfg.indexing().index().isEnabled();
+      Configuration simpleCfg = namedConfigurations.get("simple").build();
+      assertTrue(simpleCfg.indexing().index().isEnabled());
+      assertEquals(simpleCfg.indexing().properties().size(), 2);
 
-      final Configuration simpleCfg = namedConfigurations.get("simple").build();
-      assert simpleCfg.indexing().index().isEnabled();
-      assert simpleCfg.indexing().properties().size() == 2;
+      Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
+      assertTrue(memoryCfg.indexing().index().isEnabled());
+      assertFalse(memoryCfg.indexing().index().isLocalOnly());
+      assertEquals(memoryCfg.indexing().properties().size(), 2);
+      assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "ram");
 
-      final Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
-      assert memoryCfg.indexing().index().isEnabled();
-      assert !memoryCfg.indexing().index().isLocalOnly();
-      assert memoryCfg.indexing().properties().size() == 2;
-      assert memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("ram");
-
-      final Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
-      assert diskCfg.indexing().index().isEnabled();
-      assert diskCfg.indexing().index().isLocalOnly();
-      assert diskCfg.indexing().properties().size() == 3;
-      assert diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
-      assert diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
+      Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
+      assertTrue(diskCfg.indexing().index().isEnabled());
+      assertTrue(diskCfg.indexing().index().isLocalOnly());
+      assertEquals(diskCfg.indexing().properties().size(), 3);
+      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
+      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
    }
 }

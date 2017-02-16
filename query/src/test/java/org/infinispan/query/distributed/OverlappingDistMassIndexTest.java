@@ -1,5 +1,8 @@
 package org.infinispan.query.distributed;
 
+import java.io.Serializable;
+import java.util.List;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -9,10 +12,8 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.List;
 
 /**
  * Tests for entities sharing the same index in DIST caches.
@@ -46,7 +47,7 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
 }
 
 @Indexed(index = "commonIndex")
-class Transaction implements Serializable {
+class Transaction implements Serializable, ExternalPojo {
 
    @Field(analyze = Analyze.NO)
    int size;
@@ -69,7 +70,7 @@ class Transaction implements Serializable {
 }
 
 @Indexed(index = "commonIndex")
-class Block implements Serializable {
+class Block implements Serializable, ExternalPojo {
 
    @Field(analyze = Analyze.NO)
    int height;

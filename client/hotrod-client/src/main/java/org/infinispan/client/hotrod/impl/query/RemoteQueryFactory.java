@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 import org.infinispan.query.remote.client.MarshallerRegistration;
@@ -33,7 +34,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
    }
 
    @Override
-   public QueryBuilder from(Class entityType) {
+   public Query create(String queryString) {
+      return new RemoteQuery(this, cache, serializationContext, queryString);
+   }
+
+   @Override
+   public QueryBuilder from(Class<?> entityType) {
       String typeName = serializationContext.getMarshaller(entityType).getTypeName();
       return new RemoteQueryBuilder(this, cache, serializationContext, typeName);
    }
@@ -42,7 +48,6 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
    public QueryBuilder from(String entityType) {
       // just check that the type name is valid
       serializationContext.getMarshaller(entityType);
-
       return new RemoteQueryBuilder(this, cache, serializationContext, entityType);
    }
 }

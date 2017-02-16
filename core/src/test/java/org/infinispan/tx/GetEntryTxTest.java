@@ -1,13 +1,13 @@
 package org.infinispan.tx;
 
+import static org.testng.AssertJUnit.assertNotNull;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for getCacheEntry under Tx

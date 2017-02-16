@@ -1,8 +1,16 @@
 package org.infinispan.query.impl.massindex;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
@@ -11,16 +19,8 @@ import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Base class for mass indexer tasks.
@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
    protected Cache<Object, Object> cache;
+   protected TypeConverter typeConverter;
    protected final Class<?> entity;
    private final boolean flush;
    private final boolean clean;
@@ -52,6 +53,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       this.indexUpdater = new IndexUpdater(cache);
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
+      this.typeConverter = componentRegistry.getComponent(TypeConverter.class);
    }
 
    protected void preIndex() {
@@ -59,6 +61,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    protected void postIndex() {
+      indexUpdater.waitForAsyncCompletion();
       if (flush) indexUpdater.flush(entity);
    }
 
@@ -67,8 +70,9 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (wrappedValue instanceof MarshalledValue)
-         return ((MarshalledValue) wrappedValue).get();
+      if (typeConverter != null) {
+         return typeConverter.unboxValue(wrappedValue);
+      }
       return wrappedValue;
    }
 
@@ -103,9 +107,8 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    public static class Externalizer extends AbstractExternalizer<IndexWorker> {
 
       @Override
-      @SuppressWarnings("ALL")
       public Set<Class<? extends IndexWorker>> getTypeClasses() {
-         return Util.<Class<? extends IndexWorker>>asSet(IndexWorker.class);
+         return Collections.singleton(IndexWorker.class);
       }
 
       @Override

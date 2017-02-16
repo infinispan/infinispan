@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -17,10 +18,11 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
-import org.infinispan.client.hotrod.Version;
+import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -55,8 +57,6 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 
-import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -74,6 +74,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private int estimateKeySize;
    private int estimateValueSize;
    private volatile boolean hasCompatibility;
+
+   private final Runnable clear = this::clear;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
       if (trace) {
@@ -267,7 +269,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return op.execute();
    }
 
-   private K compatKeyIfNeeded(Object key) {
+   K compatKeyIfNeeded(Object key) {
       return hasCompatibility ? (K) key : null;
    }
 
@@ -301,7 +303,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public CompletableFuture<Void> clearAsync() {
       assertRemoteCacheManagerIsStarted();
-      return CompletableFuture.runAsync(this::clear, executorService);
+      return CompletableFuture.runAsync(clear, executorService);
    }
 
    @Override
@@ -427,7 +429,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public String getProtocolVersion() {
-      return Version.getProtocolVersion();
+      return "HotRod client, protocol version: " + ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
    }
 
    @Override
@@ -489,7 +491,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return operationsFactory.newFaultTolerantPingOperation().execute();
    }
 
-   private byte[] obj2bytes(Object o, boolean isKey) {
+   byte[] obj2bytes(Object o, boolean isKey) {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
       } catch (IOException ioe) {
@@ -543,6 +545,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public CacheTopologyInfo getCacheTopologyInfo() {
       return operationsFactory.getCacheTopologyInfo();
+   }
+
+   @Override
+   public StreamingRemoteCache<K> streaming() {
+      assertRemoteCacheManagerIsStarted();
+      return new StreamingRemoteCacheImpl(this);
    }
 
    public PingOperation.PingResult resolveCompatibility() {

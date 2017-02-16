@@ -1,5 +1,21 @@
 package org.infinispan.stream;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
@@ -10,21 +26,6 @@ import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test to verify distributed stream iterator when in a tx
@@ -74,7 +75,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
          String value = "converted-value";
          values.put(key, value);
          cache.put(key, "converted-value");
-         
+
          try (Stream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream().
                  filter(CacheFilters.predicate(AcceptAllKeyValueFilter.getInstance())).
                  map(CacheFilters.function(new StringTruncator(2, 5)))) {
@@ -106,7 +107,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
             iter.next();
             iter.remove();
          }
-         
+
          Object key = "converted-key";
          String value = "converted-value";
          values.put(key, value);
@@ -115,8 +116,8 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
          Collection<Object> acceptedKeys = new ArrayList<>();
          acceptedKeys.add(key);
          acceptedKeys.add(extraEntry.getKey());
-         
-         KeyValueFilterConverter<Object, String, String> filterConverter = 
+
+         KeyValueFilterConverter<Object, String, String> filterConverter =
                new CompositeKeyValueFilterConverter<>(
                      new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(acceptedKeys, true)),
                      new StringTruncator(2, 5));

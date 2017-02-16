@@ -1,16 +1,16 @@
 package org.infinispan.remoting.rpc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.ByteString;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -19,11 +19,11 @@ import java.util.Map;
 public class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
-   public ExtendedModuleCommandFactory getModuleCommandFactory() {
-      return new ExtendedModuleCommandFactory() {
+   public ModuleCommandFactory getModuleCommandFactory() {
+      return new ModuleCommandFactory() {
          @Override
          public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
-            Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(2);
+            Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<>(2);
             map.put(CustomReplicableCommand.COMMAND_ID, CustomReplicableCommand.class);
             map.put(CustomCacheRpcCommand.COMMAND_ID, CustomCacheRpcCommand.class);
             map.put(SleepingCacheRpcCommand.COMMAND_ID, SleepingCacheRpcCommand.class);

@@ -9,6 +9,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -97,6 +98,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@Store
 public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class);
@@ -135,7 +137,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          throw new IllegalStateException("This store is already started!");
       }
       started = true;
-      temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(), keyEquivalence);
+      temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<LogRequest>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength(), keyEquivalence);
       fileProvider = new FileProvider(configuration.dataLocation(), configuration.openFilesLimit());
@@ -161,7 +163,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             @Override
             public boolean apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws IOException, ClassNotFoundException {
                long prevSeqId;
-               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId));
+               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+               }
                Object key = marshaller.objectFromByteBuffer(serializedKey);
                if (trace) {
                   log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);

@@ -1,8 +1,8 @@
 package org.infinispan.stream.impl.intops.primitive.d;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.stream.DoubleStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs limit operation on a {@link DoubleStream}

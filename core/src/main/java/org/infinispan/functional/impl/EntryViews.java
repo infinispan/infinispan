@@ -1,22 +1,25 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Experimental;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.metadata.Metadata;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Experimental;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Entry views implementation class holder.
@@ -195,6 +198,7 @@ public final class EntryViews {
       public Void remove() {
          entry.setRemoved(true);
          entry.setChanged(true);
+         entry.setValue(null);
          return null;
       }
 
@@ -238,6 +242,7 @@ public final class EntryViews {
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setChanged(true);
+            entry.setValue(null);
          }
 
          return null;
@@ -288,7 +293,7 @@ public final class EntryViews {
 
       @Override
       public Optional<V> find() {
-         return prevValue == null ? Optional.empty() : Optional.ofNullable(prevValue);
+         return Optional.ofNullable(prevValue);
       }
 
       @Override
@@ -308,6 +313,7 @@ public final class EntryViews {
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setChanged(true);
+            entry.setValue(null);
          }
 
          return null;
@@ -328,6 +334,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
+         if (prevValue == null) throw new NoSuchElementException();
          return prevValue;
       }
 
@@ -355,7 +362,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
-         throw new NoSuchElementException("No value");
+         throw new NoSuchElementException("No value for key " + key);
       }
 
       @Override
@@ -438,21 +445,21 @@ public final class EntryViews {
       }
    }
 
-   private static <K, V> MetaParams updateMetaParams(CacheEntry<K, V> entry, MetaParam.Writable[] metas) {
+   private static <K, V> void updateMetaParams(CacheEntry<K, V> entry, MetaParam.Writable[] metas) {
       // TODO: Deal with entry instances that are MetaParamsCacheEntry and merge meta params
       // e.g. check if meta params exist and if so, merge, but also check for old metadata
       // information and merge it individually
 
+      Optional<EntryVersion> version = Optional.ofNullable(entry.getMetadata()).map(m -> m.version());
+      MetaParams metaParams = MetaParams.empty();
+      if (version.isPresent()) {
+         metaParams.add(new MetaParam.MetaEntryVersion(new FunctionalEntryVersionAdapter(version.get())));
+      }
       if (metas.length != 0) {
-         MetaParams metaParams = MetaParams.empty();
          metaParams.addMany(metas);
-         entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
-         return metaParams;
       }
 
-      MetaParams empty = MetaParams.empty();
-      entry.setMetadata(MetaParamsInternalMetadata.from(empty));
-      return empty;
+      entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
    }
 
    private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {
@@ -467,6 +474,56 @@ public final class EntryViews {
       }
 
       return MetaParams.empty();
+   }
+
+   public static final class ReadOnlySnapshotViewExternalizer implements AdvancedExternalizer<ReadOnlySnapshotView> {
+      @Override
+      public Set<Class<? extends ReadOnlySnapshotView>> getTypeClasses() {
+         return Util.asSet(ReadOnlySnapshotView.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.READ_ONLY_SNAPSHOT_VIEW;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ReadOnlySnapshotView object) throws IOException {
+         output.writeObject(object.key);
+         output.writeObject(object.value);
+         output.writeObject(object.metadata);
+      }
+
+      @Override
+      public ReadOnlySnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object key = input.readObject();
+         Object value = input.readObject();
+         Metadata metadata = (Metadata) input.readObject();
+         return new ReadOnlySnapshotView<>(key, value, metadata);
+      }
+   }
+
+   public static final class NoValueReadOnlyViewExternalizer implements AdvancedExternalizer<NoValueReadOnlyView> {
+
+      @Override
+      public Set<Class<? extends NoValueReadOnlyView>> getTypeClasses() {
+         return Util.asSet(NoValueReadOnlyView.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.NO_VALUE_READ_ONLY_VIEW;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, NoValueReadOnlyView object) throws IOException {
+         output.writeObject(object.key);
+      }
+
+      @Override
+      public NoValueReadOnlyView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new NoValueReadOnlyView(input.readObject());
+      }
    }
 
    // Externalizer class defined outside of externalized class to avoid having

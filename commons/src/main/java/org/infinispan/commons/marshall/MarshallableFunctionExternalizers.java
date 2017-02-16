@@ -1,15 +1,40 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.util.Util;
-import org.jboss.marshalling.util.IdentityIntMap;
+import static org.infinispan.commons.marshall.MarshallableFunctions.LambdaWithMetas;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetas;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfAbsentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfPresentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.SetValueMetasReturnView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.identity;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindIsPresent;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteFind;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteGet;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteView;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnView;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
+import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.util.Util;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 public class MarshallableFunctionExternalizers {
 
@@ -36,6 +61,9 @@ public class MarshallableFunctionExternalizers {
    private static final int RETURN_READ_WRITE_FIND = 12 | VALUE_MATCH_ALWAYS;
    private static final int RETURN_READ_WRITE_GET = 13 | VALUE_MATCH_ALWAYS;
    private static final int RETURN_READ_WRITE_VIEW = 14 | VALUE_MATCH_ALWAYS;
+   private static final int RETURN_READ_ONLY_FIND_OR_NULL = 15 | VALUE_MATCH_ALWAYS;
+   private static final int RETURN_READ_ONLY_FIND_IS_PRESENT = 16 | VALUE_MATCH_ALWAYS;
+   private static final int IDENTITY = 17 | VALUE_MATCH_ALWAYS;
 
    public static final class ConstantLambdaExternalizer implements LambdaExternalizer<Object> {
       private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
@@ -55,6 +83,9 @@ public class MarshallableFunctionExternalizers {
          numbers.put(returnReadWriteFind().getClass(), RETURN_READ_WRITE_FIND);
          numbers.put(returnReadWriteGet().getClass(), RETURN_READ_WRITE_GET);
          numbers.put(returnReadWriteView().getClass(), RETURN_READ_WRITE_VIEW);
+         numbers.put(returnReadOnlyFindOrNull().getClass(), RETURN_READ_ONLY_FIND_OR_NULL);
+         numbers.put(returnReadOnlyFindIsPresent().getClass(), RETURN_READ_ONLY_FIND_IS_PRESENT);
+         numbers.put(identity().getClass(), IDENTITY);
       }
 
       @Override
@@ -84,7 +115,10 @@ public class MarshallableFunctionExternalizers {
             removeConsumer().getClass(),
             returnReadWriteFind().getClass(),
             returnReadWriteGet().getClass(),
-            returnReadWriteView().getClass()
+            returnReadWriteView().getClass(),
+            returnReadOnlyFindOrNull().getClass(),
+            returnReadOnlyFindIsPresent().getClass(),
+            identity().getClass()
          );
       }
 
@@ -115,6 +149,9 @@ public class MarshallableFunctionExternalizers {
             case RETURN_READ_WRITE_FIND: return returnReadWriteFind();
             case RETURN_READ_WRITE_GET: return returnReadWriteGet();
             case RETURN_READ_WRITE_VIEW: return returnReadWriteView();
+            case RETURN_READ_ONLY_FIND_OR_NULL: return returnReadOnlyFindOrNull();
+            case RETURN_READ_ONLY_FIND_IS_PRESENT: return returnReadOnlyFindIsPresent();
+            case IDENTITY: return identity();
             default:
                throw new IllegalStateException("Unknown lambda ID: " + id);
          }

@@ -1,19 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
@@ -23,7 +11,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.*;
+import org.infinispan.Cache;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.tx.dld.ControlledRpcManager;
+import org.testng.annotations.Test;
 
 /**
  * Cluster listener test having a configuration of non tx and replication
@@ -68,7 +68,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
 
       // This should return null normally, but since it was retried it returns it's own value :(
       // Maybe some day this can work properly
-      assertNull(future.get(10, TimeUnit.SECONDS));
+      assertEquals(null, future.get(10, TimeUnit.SECONDS));
 
       // We should have received an event that was marked as retried
       assertEquals(clusterListener.events.size(), 1);
@@ -93,25 +93,21 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       CyclicBarrier barrier = new CyclicBarrier(3);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache0.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache2.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
+      cache2.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
 
-      final MagicKey key = new MagicKey(cache1, cache2);
-      Future<String> future = fork(new Callable<String>() {
-         @Override
-         public String call() throws Exception {
-            return cache0.put(key, FIRST_VALUE);
-         }
-      });
+      // this is a replicated cache, all other nodes are backup owners
+      final MagicKey key = new MagicKey(cache1);
+      Future<String> future = fork(() -> cache0.put(key, FIRST_VALUE));
 
       // Wait until the primary owner has sent the put command successfully to both backups
       barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so the next command can proceed properly
-      cache0.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
-      cache2.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      cache0.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      cache2.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       blockingInterceptor0.suspend(true);
       blockingInterceptor2.suspend(true);
 
@@ -123,23 +119,13 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
 
       // This should return null normally, but since it was retried it returns it's own value :(
       // Maybe some day this can work properly
-      assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
+      String returnValue = future.get(10, TimeUnit.SECONDS);
+      assertEquals(FIRST_VALUE, returnValue);
 
-      assertEquals(clusterListener.events.size(), 2);
-      CacheEntryEvent<Object, String> event = clusterListener.events.get(0);
-      assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-      CacheEntryCreatedEvent<Object, String> createEvent = (CacheEntryCreatedEvent<Object, String>)event;
-      assertFalse(createEvent.isCommandRetried());
-      assertEquals(createEvent.getKey(), key);
-      assertEquals(createEvent.getValue(), FIRST_VALUE);
+      assertEquals(2, clusterListener.events.size());
+      checkEvent(clusterListener.events.get(0), key, true, false);
 
       // We should have received an event that was marked as retried
-      event = clusterListener.events.get(1);
-      // Since it was a retry but the backup got the write the event isn't a CREATE!!
-      assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
-      CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>)event;
-      assertTrue(modEvent.isCommandRetried());
-      assertEquals(modEvent.getKey(), key);
-      assertEquals(modEvent.getValue(), FIRST_VALUE);
+      checkEvent(clusterListener.events.get(1), key, false, true);
    }
 }

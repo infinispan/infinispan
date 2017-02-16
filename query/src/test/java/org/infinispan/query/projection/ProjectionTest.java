@@ -1,5 +1,10 @@
 package org.infinispan.query.projection;
 
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -17,11 +22,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Assert;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Test(groups = "functional", testName = "query.projection.ProjectionTest")
 public class ProjectionTest extends SingleCacheManagerTest {
@@ -44,21 +45,21 @@ public class ProjectionTest extends SingleCacheManagerTest {
    @Test
    public void testQueryProjectionWithSingleField() throws Exception {
       cache.put("1", new Foo("bar1", "baz1"));
-      CacheQuery cacheQuery = createProjectionQuery("bar");
+      CacheQuery<?> cacheQuery = createProjectionQuery("bar");
       assertQueryReturns(cacheQuery, new Object[] { "bar1" });
    }
 
    @Test
    public void testQueryProjectionWithMultipleFields() throws Exception {
       cache.put("1", new Foo("bar1", "baz1"));
-      CacheQuery cacheQuery = createProjectionQuery("bar", "baz");
+      CacheQuery<?> cacheQuery = createProjectionQuery("bar", "baz");
       assertQueryReturns(cacheQuery, new Object[] { "bar1", "baz1" });
    }
 
    @Test
    public void testKeyProjectionConstant() throws Exception {
       cache.put("1", new Foo("bar1", "baz1"));
-      CacheQuery cacheQuery = createProjectionQuery(ProjectionConstants.KEY);
+      CacheQuery<?> cacheQuery = createProjectionQuery(ProjectionConstants.KEY);
       assertQueryReturns(cacheQuery, new Object[] { "1" });
    }
 
@@ -66,7 +67,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    public void testValueProjectionConstant() throws Exception {
       Foo foo = new Foo("bar1", "baz1");
       cache.put("1", foo);
-      CacheQuery cacheQuery = createProjectionQuery(ProjectionConstants.VALUE);
+      CacheQuery<?> cacheQuery = createProjectionQuery(ProjectionConstants.VALUE);
       assertQueryReturns(cacheQuery, new Object[] { foo });
    }
 
@@ -74,7 +75,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    public void testMixedProjections() throws Exception {
       Foo foo = new Foo("bar1", "baz4");
       cache.put("1", foo);
-      CacheQuery cacheQuery = createProjectionQuery(
+      CacheQuery<?> cacheQuery = createProjectionQuery(
             ProjectionConstants.KEY,
             ProjectionConstants.VALUE,
             ProjectionConstants.VALUE,
@@ -85,39 +86,29 @@ public class ProjectionTest extends SingleCacheManagerTest {
       assertQueryReturns(cacheQuery, new Object[] { "1", foo, foo, foo.getClass(), foo.baz, foo.bar });
    }
 
-   private CacheQuery createProjectionQuery(String... projection) {
+   private CacheQuery<?> createProjectionQuery(String... projection) {
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Foo.class).get();
       Query query = queryBuilder.keyword().onField("bar").matching("bar1").createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery(query);
-      cacheQuery.projection(projection);
-      return cacheQuery;
+      return searchManager.getQuery(query).projection(projection);
    }
 
-   private void assertQueryReturns(CacheQuery cacheQuery, Object[] expected) {
+   private void assertQueryReturns(CacheQuery<?> cacheQuery, Object[] expected) {
       assertQueryListContains(cacheQuery.list(), expected);
-      final ResultIterator eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
-      try {
+      try (ResultIterator<?> eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
          assertQueryIteratorContains(eagerIterator, expected);
       }
-      finally {
-         eagerIterator.close();
-      }
-      final ResultIterator lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-      try {
+      try (ResultIterator<?> lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
          assertQueryIteratorContains(lazyIterator, expected);
       }
-      finally {
-         lazyIterator.close();
-      }
    }
 
-   private void assertQueryListContains(List list, Object[] expected) {
+   private void assertQueryListContains(List<?> list, Object[] expected) {
       assert list.size() == 1;
       Object[] array = (Object[]) list.get(0);
-      Assert.assertArrayEquals(expected, array);
+      assertArrayEquals(expected, array);
    }
 
-   private void assertQueryIteratorContains(ResultIterator iterator, Object[] expected) {
+   private void assertQueryIteratorContains(ResultIterator<?> iterator, Object[] expected) {
       assert iterator.hasNext();
       Object[] array = (Object[]) iterator.next();
       assert Arrays.equals(array, expected);

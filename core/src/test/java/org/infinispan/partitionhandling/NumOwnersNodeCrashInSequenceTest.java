@@ -1,5 +1,14 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -19,21 +28,13 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * With a cluster made out of nodes {A,B,C,D}, tests that D crashes and before the state transfer finishes, another node
@@ -183,7 +184,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(a0), LocalTopologyManager.class);
       ltm.setCacheAvailability(CacheContainer.DEFAULT_CACHE_NAME, AvailabilityMode.AVAILABLE);
       TestingUtil.waitForRehashToComplete(cache(a0), cache(a1));
-      eventually(() -> AvailabilityMode.AVAILABLE == phm0.getAvailabilityMode());
+      eventuallyEquals(AvailabilityMode.AVAILABLE, phm0::getAvailabilityMode);
    }
 
    private void installNewView(List<Address> members, Address missing, EmbeddedCacheManager... where) {
@@ -197,7 +198,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
-         Channel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
+         JChannel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
          ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
       }
    }
@@ -208,11 +209,11 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
    protected void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
       for (EmbeddedCacheManager cm : cacheManagers) {
          JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
-         Channel channel = t.getChannel();
+         JChannel channel = t.getChannel();
          try {
             DISCARD discard = new DISCARD();
             discard.setDiscardAll(true);
-            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
          } catch (Exception e) {
             log.warn("Problems inserting discard", e);
             throw new RuntimeException(e);

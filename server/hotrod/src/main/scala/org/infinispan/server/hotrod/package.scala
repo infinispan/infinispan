@@ -1,10 +1,15 @@
 package org.infinispan.server
 
+import java.util.Optional
 import java.util.function.{Function => J8Function}
 import java.util.function.{Consumer => J8Consumer}
 import java.util.function.{BiConsumer => J8BiConsumer}
+import java.util.{List => JList}
 
 import org.infinispan.remoting.transport.Address
+import org.infinispan.util.KeyValuePair
+
+import scala.language.implicitConversions
 
 /**
  * @author Galder Zamarreño
@@ -15,7 +20,7 @@ package object hotrod {
    type Cache = org.infinispan.AdvancedCache[Bytes, Bytes]
    type AddressCache = org.infinispan.Cache[Address, ServerAddress]
    type InternalCacheEntry = org.infinispan.container.entries.InternalCacheEntry[Bytes, Bytes]
-   type NamedFactory = Option[(String, List[Bytes])]
+   type NamedFactory = Optional[KeyValuePair[String, JList[Bytes]]]
    type NamedFactories = (NamedFactory, NamedFactory)
 
    implicit def asScalaFunction[T, U](f: J8Function[T, U]): T => U = new Function[T, U] {

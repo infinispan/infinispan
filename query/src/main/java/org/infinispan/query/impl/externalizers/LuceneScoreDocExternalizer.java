@@ -3,18 +3,18 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.search.ScoreDoc;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 public class LuceneScoreDocExternalizer extends AbstractExternalizer<ScoreDoc> {
 
    @Override
    public Set<Class<? extends ScoreDoc>> getTypeClasses() {
-      return Util.<Class<? extends ScoreDoc>>asSet(ScoreDoc.class);
+      return Collections.singleton(ScoreDoc.class);
    }
 
    @Override

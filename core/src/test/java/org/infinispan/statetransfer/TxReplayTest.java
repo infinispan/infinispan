@@ -1,5 +1,13 @@
 package org.infinispan.statetransfer;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.Status;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -10,7 +18,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -20,12 +28,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests the prepare replay.
@@ -127,7 +129,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       }
 
       public static TxCommandInterceptor inject(Cache cache) {
-         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+         AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
          if (chain.containsInterceptorType(TxCommandInterceptor.class)) {
             return chain.findInterceptorWithClass(TxCommandInterceptor.class);
          }

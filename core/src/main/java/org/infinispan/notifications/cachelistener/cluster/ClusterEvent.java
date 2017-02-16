@@ -1,23 +1,25 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionalEvent;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 /**
  * This is an event designed for use with cluster listeners solely.  This is the event that is serialized across the
@@ -28,7 +30,7 @@ import java.util.Set;
  * @since 7.0
  */
 public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEntryRemovedEvent<K, V>,
-                                           CacheEntryModifiedEvent<K, V> {
+                                           CacheEntryModifiedEvent<K, V>, CacheEntryExpiredEvent<K, V> {
    transient Cache<K, V> cache;
 
    private final K key;
@@ -40,7 +42,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    private final Address origin;
    private final boolean commandRetried;
 
-   public static <K, V>ClusterEvent<K, V> fromEvent(CacheEntryEvent<K, V> event) {
+   public static <K, V> ClusterEvent<K, V> fromEvent(CacheEntryEvent<K, V> event) {
       if (event instanceof ClusterEvent) {
          return (ClusterEvent<K, V>) event;
       }
@@ -73,9 +75,9 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
          metadata = ((EventImpl)event).getMetadata();
       }
 
-      ClusterEvent<K, V> clusterEvent = new ClusterEvent<K, V>(event.getKey(), event.getValue(), oldValue, metadata,
-                                                               eventType, event.getCache().getCacheManager().getAddress(),
-                                                               transaction, commandRetried);
+      ClusterEvent<K, V> clusterEvent = new ClusterEvent<>(event.getKey(), event.getValue(), oldValue, metadata,
+            eventType, event.getCache().getCacheManager().getAddress(),
+            transaction, commandRetried);
       clusterEvent.cache = event.getCache();
       return clusterEvent;
    }
@@ -155,7 +157,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
 
       @Override
       public Set<Class<? extends ClusterEvent>> getTypeClasses() {
-         return Util.<Class<? extends ClusterEvent>>asSet(ClusterEvent.class);
+         return Collections.singleton(ClusterEvent.class);
       }
 
       @Override
@@ -164,7 +166,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
          output.writeObject(object.value);
          output.writeObject(object.oldValue);
          output.writeObject(object.metadata);
-         output.writeObject(object.type);
+         MarshallUtil.marshallEnum(object.type, output);
          output.writeObject(object.origin);
          output.writeObject(object.transaction);
          output.writeBoolean(object.commandRetried);
@@ -174,7 +176,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
       public ClusterEvent readObject(ObjectInput input) throws IOException, ClassNotFoundException {
 
          return new ClusterEvent(input.readObject(), input.readObject(), input.readObject(),
-                                 (Metadata)input.readObject(),(Type)input.readObject(),
+                                 (Metadata)input.readObject(),MarshallUtil.unmarshallEnum(input, Type::valueOf),
                                  (Address)input.readObject(), (GlobalTransaction)input.readObject(),
                                  input.readBoolean());
       }

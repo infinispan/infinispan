@@ -59,8 +59,8 @@
       </dependency>
 
       <dependency>
-         <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
+         <groupId>gnu.getopt</groupId>
+         <artifactId>java-getopt</artifactId>
       </dependency>
 
       <dependency>
@@ -83,6 +83,12 @@
       <dependency>
         <groupId>org.kohsuke.metainf-services</groupId>
         <artifactId>metainf-services</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -122,9 +128,14 @@
                   <Export-Package>
                      ${project.groupId}.tools.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Include-Resource>
+                     {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
+                  </Include-Resource>
                </instructions>
             </configuration>
          </plugin>
       </plugins>
    </build>
 </project>
+

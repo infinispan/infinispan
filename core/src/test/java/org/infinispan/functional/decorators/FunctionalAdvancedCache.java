@@ -1,8 +1,29 @@
 package org.infinispan.functional.decorators;
 
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
@@ -11,6 +32,9 @@ import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -24,7 +48,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -35,22 +59,9 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
-import org.infinispan.util.CollectionAsCacheCollection;
-import org.infinispan.util.SetAsCacheSet;
+import org.infinispan.util.AbstractDelegatingCollection;
+import org.infinispan.util.AbstractDelegatingSet;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 
@@ -276,8 +287,8 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
-      return cache.getSequentialInterceptorChain();
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
+      return cache.getAsyncInterceptorChain();
    }
 
    @Override
@@ -635,6 +646,13 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       return null;  // TODO: Customise this generated block
    }
 
+   @Override
+   public <C> void addFilteredListener(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      // TODO: Customise this generated block
+   }
+
    public static <T> T await(CompletableFuture<T> cf) {
       try {
          return cf.get();
@@ -643,4 +661,76 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       }
    }
 
+   private static final class SetAsCacheSet<E> extends AbstractDelegatingSet<E> implements CacheSet<E> {
+      final Set<E> set;
+
+      private SetAsCacheSet(Set<E> set) {
+         this.set = set;
+      }
+
+      @Override
+      protected Set<E> delegate() {
+         return set;
+      }
+
+      @Override
+      public CacheStream<E> stream() {
+         return null;
+      }
+
+      @Override
+      public CacheStream<E> parallelStream() {
+         return null;
+      }
+
+      @Override
+      public CloseableIterator<E> iterator() {
+         return Closeables.iterator(set.iterator());
+      }
+
+      @Override
+      public CloseableSpliterator<E> spliterator() {
+         return Closeables.spliterator(set.spliterator());
+      }
+
+      @Override
+      public String toString() {
+         return "SetAsCacheSet{" +
+            "set=" + set +
+            '}';
+      }
+   }
+
+   private static class CollectionAsCacheCollection<E> extends AbstractDelegatingCollection<E> implements CacheCollection<E> {
+      private final Collection<E> col;
+
+      public CollectionAsCacheCollection(Collection<E> col) {
+         this.col = col;
+      }
+
+      @Override
+      protected Collection<E> delegate() {
+         return col;
+      }
+
+      @Override
+      public CloseableIterator<E> iterator() {
+         return Closeables.iterator(col.iterator());
+      }
+
+      @Override
+      public CloseableSpliterator<E> spliterator() {
+         return Closeables.spliterator(col.spliterator());
+      }
+
+      @Override
+      public CacheStream<E> stream() {
+         return null;
+      }
+
+      @Override
+      public CacheStream<E> parallelStream() {
+         return null;
+      }
+   }
 }

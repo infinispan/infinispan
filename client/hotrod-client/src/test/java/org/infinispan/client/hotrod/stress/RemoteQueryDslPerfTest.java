@@ -1,5 +1,17 @@
 package org.infinispan.client.hotrod.stress;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -7,7 +19,6 @@ import org.infinispan.client.hotrod.marshall.EmbeddedUserMarshaller;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -25,18 +36,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * Perf test for remote query. This test runs in compat mode so we can also run queries with lucene directly and compare
@@ -62,7 +61,6 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
-      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -106,7 +104,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
          user1.setName("John" + id1);
          user1.setSurname("Doe" + id1);
          user1.setAge(22);
-         user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+         user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
          user1.setNotes("Lorem ipsum dolor sit amet");
 
          User user2 = new UserHS();
@@ -121,7 +119,6 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
          user3.setId(id3);
          user3.setName("Spider" + id3);
          user3.setSurname("Woman" + id3);
-         user3.setAccountIds(Collections.<Integer>emptySet());
 
          cache.put("user_" + user1.getId(), user1);
          cache.put("user_" + user2.getId(), user2);
@@ -132,8 +129,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    public void testRemoteQueryDslExecution() throws Exception {
       QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
       QueryBuilder qb = qf.from("sample_bank_account.User")
-            .having("name").eq("John1")
-            .toBuilder();
+            .having("name").eq("John1");
 
       final int loops = 100000;
       final long startTs = System.nanoTime();
@@ -152,8 +148,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    public void testEmbeddedQueryDslExecution() throws Exception {
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
       QueryBuilder qb = qf.from(UserHS.class)
-            .having("name").eq("John1")
-            .toBuilder();
+            .having("name").eq("John1");
 
       final int loops = 100000;
       final long startTs = System.nanoTime();
@@ -177,10 +172,10 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       final int loops = 100000;
       final long startTs = System.nanoTime();
       for (int i = 0; i < loops; i++) {
-         CacheQuery cacheQuery = searchManager.getQuery(query);
-         List<Object> list = cacheQuery.list();
+         CacheQuery<User> cacheQuery = searchManager.getQuery(query);
+         List<User> list = cacheQuery.list();
          assertEquals(1, list.size());
-         assertEquals("John1", ((User) list.get(0)).getName());
+         assertEquals("John1", list.get(0).getName());
       }
       final long duration = (System.nanoTime() - startTs) / loops;
 

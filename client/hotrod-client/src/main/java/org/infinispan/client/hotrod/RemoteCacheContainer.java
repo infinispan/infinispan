@@ -4,8 +4,6 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
 
-import java.util.Properties;
-
 public interface RemoteCacheContainer extends BasicCacheContainer {
 
    /**
@@ -24,16 +22,6 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @return The configuration of this RemoteCacheManager
     */
    Configuration getConfiguration();
-
-   /**
-    * Retrieves a clone of the properties currently in use.  Note that making
-    * any changes to the properties instance retrieved will not affect an
-    * already-running RemoteCacheManager.
-    *
-    * @return a clone of the properties used to configure this RemoteCacheManager
-    */
-   @Deprecated
-   Properties getProperties();
 
    <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue);
 

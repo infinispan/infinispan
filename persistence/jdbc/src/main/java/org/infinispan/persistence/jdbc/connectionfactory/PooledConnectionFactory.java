@@ -1,12 +1,8 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Properties;
 
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -14,78 +10,53 @@ import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import com.mchange.v2.c3p0.DataSources;
-
 /**
- * Pooled connection factory based on C3P0. For a complete configuration reference, look <a
- * href="http://www.mchange.com/projects/c3p0/index.html#configuration">here</a>. The connection pool can be configured
- * in various ways, as described <a href="http://www.mchange.com/projects/c3p0/index.html#configuration_files">here</a>.
- * The simplest way is by having an <tt>c3p0.properties</tt> file in the classpath. If no such file is found, default,
- * hardcoded values will be used.
+ * Pooled connection factory that uses HikariCP by default. In order to utilise the legacy connection pool, C3P0, users
+ * must pass the system property <tt>infinispan.jdbc.c3p0.force</tt> with the value true.
+ *
+ * HikariCP property files can be specified by explicitly stating its path or name (if the file is on the classpath) via
+ * PooledConnectionFactoryConfiguration.propertyFile field.  Or by ensuring that a <tt>hikari.properties</tt> file is
+ * on the classpath. Note, that the file specified by <tt>propertyField</tt> takes precedence over <tt>hikari.properties</tt>.
+ *
+ * For a complete configuration reference for C3P0 look <a href="http://www.mchange.com/projects/c3p0/index.html#configuration">here</a>.
+ * The connection pool can be configured n various ways, as described
+ * <a href="http://www.mchange.com/projects/c3p0/index.html#configuration_files">here</a>. The simplest way is by having
+ * an <tt>c3p0.properties</tt> file in the classpath.
+ *
+ * If no properties files are found for either HikariCP or C3PO then the default values of these connection pools are
+ * utilised.
  *
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant
+ * @author Ryan Emerson
  */
 public class PooledConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
-   private ComboPooledDataSource pooledDataSource;
+   private static boolean trace = log.isTraceEnabled();
+
+   private ConnectionPool connectionPool;
 
    @Override
    public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws PersistenceException {
-      logFileOverride(classLoader);
-      PooledConnectionFactoryConfiguration pooledConfiguration;
+      PooledConnectionFactoryConfiguration poolConfig;
       if (config instanceof PooledConnectionFactoryConfiguration) {
-         pooledConfiguration = (PooledConnectionFactoryConfiguration) config;
-      }
-      else {
+         poolConfig = (PooledConnectionFactoryConfiguration) config;
+      } else {
          throw new PersistenceException("ConnectionFactoryConfiguration passed in must be an instance of " +
-               "PooledConnectionFactoryConfiguration");
+                                              "PooledConnectionFactoryConfiguration");
       }
-      pooledDataSource = new ComboPooledDataSource();
-      pooledDataSource.setProperties(new Properties());
-      try {
-         /* Since c3p0 does not throw an exception when it fails to load a driver we attempt to do so here
-          * Also, c3p0 does not allow specifying a custom classloader, so use c3p0's
-          */
-         Class.forName(pooledConfiguration.driverClass(), true, ComboPooledDataSource.class.getClassLoader());
-         pooledDataSource.setDriverClass(pooledConfiguration.driverClass()); //loads the jdbc driver
-      } catch (Exception e) {
-         log.errorInstantiatingJdbcDriver(pooledConfiguration.driverClass(), e);
-         throw new PersistenceException(String.format(
-               "Error while instatianting JDBC driver: '%s'", pooledConfiguration.driverClass()), e);
-      }
-      pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
-      pooledDataSource.setUser(pooledConfiguration.username());
-      pooledDataSource.setPassword(pooledConfiguration.password());
-      if (trace) {
-         log.tracef("Started connection factory with config: %s", config);
-      }
-   }
 
-   private void logFileOverride(ClassLoader classLoader) {
-      URL propsUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0.properties", classLoader);
-      URL xmlUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0-config.xml", classLoader);
-      if (log.isDebugEnabled() && propsUrl != null) {
-         log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
-      }
-      if (log.isDebugEnabled() && xmlUrl != null) {
-         log.debugf("Found 'c3p0-config.xml' in classpath: %s", xmlUrl);
-      }
+      connectionPool = C3P0ConnectionPool.forceC3P0() ? new C3P0ConnectionPool(classLoader, poolConfig) :
+            new HikariConnectionPool(classLoader, poolConfig);
+      if (trace) log.tracef("Started connection factory with config: %s", config);
    }
 
    @Override
    public void stop() {
-      try {
-         DataSources.destroy(pooledDataSource);
-         if (log.isDebugEnabled()) {
-            log.debug("Successfully stopped PooledConnectionFactory.");
-         }
-      }
-      catch (SQLException sqle) {
-         log.couldNotDestroyC3p0ConnectionPool(pooledDataSource!=null?pooledDataSource.toString():null, sqle);
+      if (connectionPool != null) {
+         connectionPool.close();
+         if (trace) log.debug("Successfully stopped PooledConnectionFactory.");
       }
    }
 
@@ -93,7 +64,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
    public Connection getConnection() throws PersistenceException {
       try {
          logBefore(true);
-         Connection connection = pooledDataSource.getConnection();
+         Connection connection = connectionPool.getConnection();
          logAfter(connection, true);
          return connection;
       } catch (SQLException e) {
@@ -108,32 +79,39 @@ public class PooledConnectionFactory extends ConnectionFactory {
       logAfter(conn, false);
    }
 
-   public ComboPooledDataSource getPooledDataSource() {
-      return pooledDataSource;
+   public int getMaxPoolSize() {
+      return connectionPool.getMaxPoolSize();
+   }
+
+   public int getNumConnectionsAllUsers() throws SQLException {
+      return connectionPool.getNumConnectionsAllUsers();
+   }
+
+   public int getNumBusyConnectionsAllUsers() throws SQLException {
+      return connectionPool.getNumBusyConnectionsAllUsers();
    }
 
    private void logBefore(boolean checkout) {
-      if (trace) {
-         String operation = checkout ? "checkout" : "release";
-         try {
-            log.tracef("DataSource before %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
-                       operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
-         } catch (SQLException e) {
-            log.sqlFailureUnexpected(e);
-         }
-      }
+      log(null, checkout, true);
    }
 
-   private void logAfter(Connection connection, boolean checkout)  {
+   private void logAfter(Connection connection, boolean checkout) {
+      log(connection, checkout, false);
+   }
+
+   private void log(Connection connection, boolean checkout, boolean before)  {
       if (trace) {
+         String stage = before ? "before" : "after";
          String operation = checkout ? "checkout" : "release";
          try {
-            log.tracef("DataSource after %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
-                      operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
+            log.tracef("DataSource %s %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
+                       stage, operation, getNumBusyConnectionsAllUsers(), getNumConnectionsAllUsers());
          } catch (SQLException e) {
             log.sqlFailureUnexpected(e);
          }
-         log.tracef("Connection %s : %s", operation, connection);
+
+         if (connection != null)
+            log.tracef("Connection %s : %s", operation, connection);
       }
    }
 }

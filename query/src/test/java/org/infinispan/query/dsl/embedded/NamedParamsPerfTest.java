@@ -1,5 +1,11 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.List;
+import java.util.Random;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -14,12 +20,6 @@ import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Matej Cimbora
@@ -93,7 +93,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
             .or()
             .having("id").gte(Expression.param("idParam1"))
             .or()
-            .having("id").lt(Expression.param("idParam2")).toBuilder()
+            .having("id").lt(Expression.param("idParam2"))
             .build();
 
       final int iterations = 1000;

@@ -1,24 +1,23 @@
 package org.infinispan.partitionhandling.impl;
 
-import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheStatusResponse;
-import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
-import org.infinispan.topology.PersistentUUIDManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.events.EventLogCategory;
-import org.infinispan.util.logging.events.EventLogManager;
-
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheStatusResponse;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUIDManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
 
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);

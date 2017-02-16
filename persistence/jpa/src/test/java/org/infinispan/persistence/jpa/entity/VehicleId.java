@@ -1,31 +1,34 @@
 package org.infinispan.persistence.jpa.entity;
 
-import javax.persistence.Embeddable;
 import java.io.Serializable;
 
+import javax.persistence.Embeddable;
+
+import org.infinispan.marshall.core.ExternalPojo;
+
 /**
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
 @Embeddable
-public class VehicleId implements Serializable {
+public class VehicleId implements Serializable, ExternalPojo {
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 3684882454815768434L;
-   
+
    private String state;
    private String licensePlate;
-   
+
    public VehicleId() {
    }
-   
+
    public VehicleId(String state, String licensePlate) {
       this.state = state;
       this.licensePlate = licensePlate;
    }
-   
+
    @Override
    public int hashCode() {
       final int prime = 31;

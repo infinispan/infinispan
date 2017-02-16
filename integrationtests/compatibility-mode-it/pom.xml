@@ -79,8 +79,13 @@
          <type>test-jar</type>
       </dependency>
       <dependency>
-         <groupId>spy</groupId>
-         <artifactId>memcached</artifactId>
+         <groupId>net.spy</groupId>
+         <artifactId>spymemcached</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>

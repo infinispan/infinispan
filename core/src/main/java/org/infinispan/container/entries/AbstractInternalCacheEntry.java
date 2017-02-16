@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
+import org.infinispan.metadata.Metadata;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container
@@ -22,11 +22,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final void commit(DataContainer container, Metadata metadata) {
-      // no-op
-   }
-
-   @Override
-   public final void rollback() {
       // no-op
    }
 
@@ -92,7 +87,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final boolean isValid() {
-      return false;
+      return true;
    }
 
    @Override
@@ -102,12 +97,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public boolean skipLookup() {
-      return false;
-   }
-
-   @Override
-   public boolean undelete(boolean doUndelete) {
-      return false;
+      return true;
    }
 
    @Override

@@ -1,59 +1,61 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
-public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
+// TODO: the command does not carry previous values to backup, so it can cause
+// the values on primary and backup owners to diverge in case of topology change
+public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand<K, V> {
 
    public static final byte COMMAND_ID = 52;
 
-   private Set<? extends K> keys;
+   private Collection<? extends K> keys;
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    private int topologyId = -1;
    boolean isForwarded = false;
-   private List<R> remoteReturns = new ArrayList<>();
 
-   public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
+   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.keys = keys;
       this.f = f;
+      this.params = params;
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
+      this.commandInvocationId = command.commandInvocationId;
       this.keys = command.keys;
       this.f = command.f;
+      this.params = command.params;
+      this.flags = command.flags;
    }
 
    public ReadWriteManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
-      return keys;
+   public void setKeys(Collection<? extends K> keys) {
+      this.keys = keys;
    }
 
-   public void setKeys(Set<? extends K> keys) {
-      this.keys = keys;
+   public final ReadWriteManyCommand<K, V, R> withKeys(Collection<? extends K> keys) {
+      setKeys(keys);
+      return this;
    }
 
    @Override
@@ -63,16 +65,24 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, size -> new HashSet<>());
+      commandInvocationId = CommandInvocationId.readFrom(input);
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    public boolean isForwarded() {
@@ -84,17 +94,8 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
-   }
-
-   @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   public void addAllRemoteReturns(List<R> returns) {
-      remoteReturns.addAll(returns);
    }
 
    @Override
@@ -108,16 +109,6 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // No-op
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteManyCommand(ctx, this);
    }
@@ -128,7 +119,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
       // EntryWrappingInterceptor expects any changes to be done eagerly,
       // otherwise they're not applied. So, apply the function eagerly and
       // return a lazy stream of the void returns.
-      List<R> returns = new ArrayList<>(remoteReturns);
+      List<R> returns = new ArrayList<>(keys.size());
       keys.forEach(k -> {
          CacheEntry<K, V> entry = ctx.lookupEntry(k);
 
@@ -142,83 +133,37 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
-   public boolean isSuccessful() {
-      return true;
-   }
-
-   @Override
-   public boolean isConditional() {
-      return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Set<Object> getAffectedKeys() {
-      return null;  // TODO: Customise this generated block
+   public Collection<?> getAffectedKeys() {
+      return keys;
    }
 
    @Override
    public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
    }
 
    @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("ReadWriteManyCommand{");
+      sb.append("keys=").append(keys);
+      sb.append(", f=").append(f);
+      sb.append(", isForwarded=").append(isForwarded);
+      sb.append('}');
+      return sb.toString();
    }
 
    @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) keys;
    }
 
    @Override
-   public Set<Flag> getFlags() {
-      return null;  // TODO: Customise this generated block
+   public Mutation toMutation(K key) {
+      return new Mutations.ReadWrite<>(f);
    }
-
-   @Override
-   public long getFlagsBitSet() {
-      return EnumUtil.EMPTY_BIT_SET;
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlagsBitSet(long bitSet) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Metadata getMetadata() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
 }

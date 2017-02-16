@@ -1,20 +1,20 @@
 package org.infinispan.atomic;
 
+import java.lang.reflect.Method;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import java.lang.reflect.Method;
 
 /**
  * Tests passivation of atomic hash map instances.

@@ -1,5 +1,14 @@
 package org.infinispan.statetransfer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
+import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,14 +25,6 @@ import org.jgroups.JChannel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Future;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
-import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Tests concurrent startup of cache managers when the channel is started externally
  * and injected with a JGroupsChannelLookup.
@@ -34,6 +35,8 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(testName = "statetransfer.ConcurrentStartChanelLookupTest", groups = "functional")
 @CleanupAfterMethod
 public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
+
+   public static final String CACHE_NAME = "repl";
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -66,7 +69,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
 
          log.debugf("Channels created. Starting the caches");
-         Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache("repl"));
+         Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache(CACHE_NAME));
 
          // If eagerManager == 0, the coordinator broadcasts a GET_STATUS command.
          // If eagerManager == 1, the non-coordinator sends a POLICY_GET_STATUS command to the coordinator.
@@ -76,13 +79,13 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          // command, so we don't try to wait for a precise amount of time.
          Thread.sleep(500);
 
-         Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache("repl"));
+         Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache(CACHE_NAME));
 
          repl1Future.get(10, SECONDS);
          repl2Future.get(10, SECONDS);
 
-         Cache<String, String> c1r = cm1.getCache("repl");
-         Cache<String, String> c2r = cm2.getCache("repl");
+         Cache<String, String> c1r = cm1.getCache(CACHE_NAME);
+         Cache<String, String> c2r = cm2.getCache(CACHE_NAME);
 
          blockUntilViewsReceived(10000, cm1, cm2);
          waitForRehashToComplete(c1r, c2r);
@@ -110,13 +113,15 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm1 = new DefaultCacheManager(gcb1.build(), replCfg.build(), false);
       registerCacheManager(cm1);
+      cm1.defineConfiguration(CACHE_NAME, replCfg.build());
       return cm1;
    }
 
    private JChannel createChannel(String name, int portRange) throws Exception {
-      JChannel channel = new JChannel(JGroupsConfigBuilder
+      String configString = JGroupsConfigBuilder
             .getJGroupsConfig(ConcurrentStartChanelLookupTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange)));
+                  new TransportFlags().withPortRange(portRange));
+      JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
       channel.connect(ConcurrentStartChanelLookupTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());

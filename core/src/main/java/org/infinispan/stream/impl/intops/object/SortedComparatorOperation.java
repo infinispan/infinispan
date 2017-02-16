@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.object;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.Comparator;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs sorted operation with a comparator on a regular {@link Stream}

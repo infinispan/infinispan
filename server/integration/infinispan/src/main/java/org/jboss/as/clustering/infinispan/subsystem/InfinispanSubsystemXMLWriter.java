@@ -340,13 +340,26 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
-        if (cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME).isDefined()) {
-            writer.writeStartElement(Element.EVICTION.getLocalName());
-            ModelNode eviction = cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
-            this.writeOptional(writer, Attribute.STRATEGY, eviction, ModelKeys.STRATEGY);
-            this.writeOptional(writer, Attribute.MAX_ENTRIES, eviction, ModelKeys.MAX_ENTRIES);
-            this.writeOptional(writer, Attribute.TYPE, eviction, ModelKeys.TYPE);
-            this.writeOptional(writer, Attribute.SIZE, eviction, ModelKeys.SIZE);
+        ModelNode memory = cache.get(ModelKeys.MEMORY);
+        if (memory.isDefined()) {
+            ModelNode memoryValues;
+            writer.writeStartElement(Element.MEMORY.getLocalName());
+            if ((memoryValues = memory.get(ModelKeys.BINARY_NAME)).isDefined()) {
+                writer.writeStartElement(Element.BINARY.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
+                writer.writeEndElement();
+            } else if ((memoryValues = memory.get(ModelKeys.OBJECT_NAME)).isDefined()) {
+                writer.writeStartElement(Element.OBJECT.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                writer.writeEndElement();
+            } else if ((memoryValues = memory.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
+                writer.writeStartElement(Element.OFF_HEAP.getLocalName());
+                this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
+                this.writeOptional(writer, Attribute.ADDRESS_COUNT, memoryValues, ModelKeys.ADDRESS_COUNT);
+                writer.writeEndElement();
+            }
             writer.writeEndElement();
         }
 
@@ -461,56 +474,22 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             }
         }
 
-        if (cache.get(ModelKeys.BINARY_KEYED_JDBC_STORE).isDefined()) {
-            for (Property binaryKeyedJDBCStoreEntry : cache.get(ModelKeys.BINARY_KEYED_JDBC_STORE).asPropertyList()) {
-                ModelNode store = binaryKeyedJDBCStoreEntry.getValue();
-                writer.writeStartElement(Element.BINARY_KEYED_JDBC_STORE.getLocalName());
+        if (cache.get(ModelKeys.ROCKSDB_STORE).isDefined()) {
+            for (Property rocksDbStoreEntry : cache.get(ModelKeys.ROCKSDB_STORE).asPropertyList()) {
+                ModelNode store = rocksDbStoreEntry.getValue();
+                writer.writeStartElement(Element.ROCKSDB_STORE.getLocalName());
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(binaryKeyedJDBCStoreEntry.getName());
-                BinaryKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeJdbcStoreAttributes(writer, store);
-                this.writeStoreWriteBehind(writer, store);
-                this.writeStoreProperties(writer, store);
-                this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
-                writer.writeEndElement();
-            }
-        }
-
-        if (cache.get(ModelKeys.MIXED_KEYED_JDBC_STORE).isDefined()) {
-            for (Property mixedKeyedJDBCStoreEntry : cache.get(ModelKeys.MIXED_KEYED_JDBC_STORE).asPropertyList()) {
-                ModelNode store = mixedKeyedJDBCStoreEntry.getValue();
-                writer.writeStartElement(Element.MIXED_KEYED_JDBC_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(mixedKeyedJDBCStoreEntry.getName());
-                MixedKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeJdbcStoreAttributes(writer, store);
-                this.writeStoreWriteBehind(writer, store);
-                this.writeStoreProperties(writer, store);
-                this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
-                this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
-                writer.writeEndElement();
-            }
-        }
-
-        if (cache.get(ModelKeys.LEVELDB_STORE).isDefined()) {
-            for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
-                ModelNode store = levelDbStoreEntry.getValue();
-                writer.writeStartElement(Element.LEVELDB_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
-                LevelDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
+                name.get(ModelKeys.NAME).set(rocksDbStoreEntry.getName());
+                RocksDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
                 this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
                 this.writeOptional(writer, Attribute.CACHE_SIZE, store, ModelKeys.CACHE_SIZE);
                 this.writeOptional(writer, Attribute.CLEAR_THRESHOLD, store, ModelKeys.CLEAR_THRESHOLD);
                 this.writeStoreAttributes(writer, store);
-                this.writeStoreExpiration(writer, store);
-                this.writeStoreImplementation(writer, store);
-                this.writeStoreCompression(writer, store);
+                this.writeRocksDBStoreExpiration(writer, store);
+                this.writeRocksDBStoreCompression(writer, store);
                 this.writeStoreProperties(writer, store);
                 writer.writeEndElement();
             }
@@ -682,9 +661,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         if (store.get(ModelKeys.WRITE_BEHIND, ModelKeys.WRITE_BEHIND_NAME).isDefined()) {
             ModelNode writeBehind = store.get(ModelKeys.WRITE_BEHIND, ModelKeys.WRITE_BEHIND_NAME);
             writer.writeStartElement(Element.WRITE_BEHIND.getLocalName());
-            this.writeOptional(writer, Attribute.FLUSH_LOCK_TIMEOUT, writeBehind, ModelKeys.FLUSH_LOCK_TIMEOUT);
             this.writeOptional(writer, Attribute.MODIFICATION_QUEUE_SIZE, writeBehind, ModelKeys.MODIFICATION_QUEUE_SIZE);
-            this.writeOptional(writer, Attribute.SHUTDOWN_TIMEOUT, writeBehind, ModelKeys.SHUTDOWN_TIMEOUT);
             this.writeOptional(writer, Attribute.THREAD_POOL_SIZE, writeBehind, ModelKeys.THREAD_POOL_SIZE);
             writer.writeEndElement();
         }
@@ -706,7 +683,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-    private void writeStoreExpiration(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+    private void writeRocksDBStoreExpiration(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         if (store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME).isDefined()) {
             ModelNode expiration = store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME);
             writer.writeStartElement(Element.EXPIRATION.getLocalName());
@@ -717,20 +694,11 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-    private void writeStoreCompression(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+    private void writeRocksDBStoreCompression(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         if (store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME).isDefined()) {
             ModelNode compression = store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
             writer.writeStartElement(Element.COMPRESSION.getLocalName());
             this.writeOptional(writer, Attribute.TYPE, compression, ModelKeys.TYPE);
-            writer.writeEndElement();
-        }
-    }
-
-    private void writeStoreImplementation(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
-        if (store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME).isDefined()) {
-            ModelNode implementation = store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME);
-            writer.writeStartElement(Element.IMPLEMENTATION.getLocalName());
-            this.writeOptional(writer, Attribute.TYPE, implementation, ModelKeys.IMPLEMENTATION);
             writer.writeEndElement();
         }
     }

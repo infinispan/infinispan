@@ -1,5 +1,20 @@
 package org.infinispan.statetransfer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.Status;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
@@ -12,7 +27,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -28,20 +43,6 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Tests that a transaction is replayed only once if the commit command is received twice.
@@ -106,7 +107,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             CommandsFactory cf = TestingUtil.extractCommandsFactory(newBackupOwnerCache);
             cf.initializeReplicableCommand(command, true);
             try {
-               command.perform(null);
+               command.invoke();
             } catch (Throwable throwable) {
                throw new CacheException(throwable);
             }
@@ -204,7 +205,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       }
 
       public static CountingInterceptor inject(Cache cache) {
-         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+         AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
          if (chain.containsInterceptorType(CountingInterceptor.class)) {
             return chain.findInterceptorWithClass(CountingInterceptor.class);
          }

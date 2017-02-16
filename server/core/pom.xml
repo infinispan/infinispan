@@ -13,7 +13,7 @@
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -33,30 +33,15 @@
          <artifactId>log4j-slf4j-impl</artifactId>
          <scope>runtime</scope>
       </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
-      <sourceDirectory>src/main/scala</sourceDirectory>
-      <testSourceDirectory>src/test/scala</testSourceDirectory>
-
       <plugins>
-         <plugin>
-            <groupId>org.scala-tools</groupId>
-            <artifactId>maven-scala-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>compile</id>
-                  <phase>compile</phase>
-               </execution>
-               <execution>
-                  <id>test-compile</id>
-                  <phase>test-compile</phase>
-               </execution>
-               <execution>
-                  <phase>process-resources</phase>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>

@@ -1,5 +1,9 @@
 package org.infinispan.xsite;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
@@ -11,10 +15,6 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Mircea Markus
@@ -57,10 +57,10 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    }
 
    /**
-    * Returns the local cache associated defined as backup for the provided remote (site, cache) combo, or throws an
-    * exception of no such site is defined.
+    * Returns the local cache defined as backup for the provided remote (site, cache) combo, or throws an
+    * exception if no such site is defined.
     * <p/>
-    * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
+    * Also starts the cache if not already started; that is because the cache is needed for update after this method
     * is invoked.
     */
    @Override
@@ -71,7 +71,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
       //check the default cache first
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      if (isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
+      if (dcc != null && isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
          Cache<Object, Object> cache = cacheManager.getCache();
          backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
          toLookFor.setLocalCacheName(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
@@ -104,7 +104,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       return found;
    }
 
-   static class SiteCachePair {
+   private static class SiteCachePair {
       public final String remoteSite;
       public final String remoteCache;
       public String localCacheName;
@@ -160,8 +160,9 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    }
 
    private static BackupReceiver createBackupReceiver(Cache<Object,Object> cache) {
-      return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
-            new ClusteredCacheBackupReceiver(cache) :
-            new LocalCacheBackupReceiver(cache);
+      Cache<Object, Object> receiverCache = SecurityActions.getUnwrappedCache(cache);
+      return receiverCache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
+            new ClusteredCacheBackupReceiver(receiverCache) :
+            new LocalCacheBackupReceiver(receiverCache);
    }
 }

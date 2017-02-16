@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl.intops.primitive.d;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.DoubleToLongFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.LongStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs map to long operation on a {@link DoubleStream}

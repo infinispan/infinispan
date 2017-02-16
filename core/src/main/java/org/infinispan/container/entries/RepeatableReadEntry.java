@@ -1,13 +1,12 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
+
 import org.infinispan.container.DataContainer;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -19,18 +18,15 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   /* The value before we start modifying the entry (after first read in transaction) */
+   protected Object initialValue;
+   /* Value before the last modification. Serves as the previous value when the operation is retried */
+   protected Object oldValue;
+
    public RepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
-   }
-
-   @Override
-   public void copyForUpdate() {
-      if (isFlagSet(COPIED)) return; // already copied
-
-      setFlag(COPIED); //mark as copied
-
-      // make a backup copy
-      oldValue = value;
+      this.initialValue = value;
+      this.oldValue = value;
    }
 
    public void performLocalWriteSkewCheck(DataContainer container, boolean alreadyCopied) {
@@ -38,7 +34,7 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       InternalCacheEntry ice = container.get(key);
 
       Object actualValue = ice == null ? null : ice.getValue();
-      Object valueToCompare = alreadyCopied ? oldValue : value;
+      Object valueToCompare = initialValue;
       if (trace) {
          log.tracef("Performing local write skew check. actualValue=%s, transactionValue=%s", actualValue, valueToCompare);
       }
@@ -58,11 +54,6 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public boolean isNull() {
-      return value == null;
-   }
-
-   @Override
    public void setSkipLookup(boolean skipLookup) {
       setFlag(skipLookup, SKIP_LOOKUP);
    }
@@ -75,5 +66,22 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    @Override
    public RepeatableReadEntry clone() {
       return (RepeatableReadEntry) super.clone();
+   }
+
+   @Override
+   public final Object setValue(Object value) {
+      super.setValue(value);
+      setSkipLookup(true);
+      return oldValue;
+   }
+
+   @Override
+   public void resetCurrentValue() {
+      value = oldValue;
+   }
+
+   @Override
+   public void updatePreviousValue() {
+      oldValue = value;
    }
 }

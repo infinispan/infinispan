@@ -1,14 +1,16 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-import org.infinispan.xsite.BackupReceiver;
-import org.infinispan.xsite.XSiteReplicateCommand;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.BackupReceiver;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Command used to control the state transfer between sites.
@@ -56,7 +58,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       switch (control) {
          case START_SEND:
             provider.startStateTransfer(siteName, getOrigin(), topologyId);
@@ -78,14 +80,14 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
             provider.startStateTransfer(siteName, getOrigin(), topologyId);
             break;
          case STATUS_REQUEST:
-            return stateTransferManager.getStatus();
+            return CompletableFuture.completedFuture(stateTransferManager.getStatus());
          case CLEAR_STATUS:
             stateTransferManager.clearStatus();
             break;
          default:
             throw new IllegalStateException("Unknown control command: " + control);
       }
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -123,7 +125,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      control = MarshallUtil.unmarshallEnum(input, ordinal -> StateTransferControl.CACHED_VALUES[ordinal]);
+      control = Objects.requireNonNull(MarshallUtil.unmarshallEnum(input, StateTransferControl::valueOf));
       switch (control) {
          case START_SEND:
          case RESTART_SEND:
@@ -170,9 +172,9 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       this.topologyId = topologyId;
    }
 
-   public XSiteStateTransferControlCommand copyForCache(String cacheName) {
+   public XSiteStateTransferControlCommand copyForCache(ByteString cacheName) {
       //cache name is final. we need to copy the command.
-      XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(ByteString.fromString(cacheName));
+      XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(cacheName);
       copy.control = this.control;
       copy.provider = this.provider;
       copy.consumer = this.consumer;
@@ -196,6 +198,10 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       CLEAR_STATUS;
 
       private static final StateTransferControl[] CACHED_VALUES = values();
+
+      private static StateTransferControl valueOf(int index) {
+         return CACHED_VALUES[index];
+      }
    }
 
    @Override

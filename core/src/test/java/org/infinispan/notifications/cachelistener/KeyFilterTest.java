@@ -1,14 +1,20 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.EmptySequentialInterceptorChain;
+import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -20,8 +26,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.*;
 
 @Test(testName = "notifications.cachelistener.KeyFilterTest", groups = "unit")
 public class KeyFilterTest extends AbstractInfinispanTest {
@@ -50,6 +54,8 @@ public class KeyFilterTest extends AbstractInfinispanTest {
          }
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
+            new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
                            mock(DistributionManager.class), mock(InternalEntryFactory.class),
@@ -57,7 +63,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), EmptySequentialInterceptorChain.INSTANCE);
+      ctx = new NonTxInvocationContext(null);
    }
 
    public void testFilters() {

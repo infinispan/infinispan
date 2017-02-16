@@ -1,5 +1,8 @@
 package org.infinispan.server.test.cs.file;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -13,16 +16,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 /**
  * The goal is to test that the file-store is really preserving data after server kills/shutdowns.
  * The path configuration and expiration is tested in ExampleConfigs (we can't test there the server restarts because all the
  * caches in the example configuration have purge=true).
  *
  * @author Martin Gencur
- * 
+ *
  */
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)

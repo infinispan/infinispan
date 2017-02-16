@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jboss.as.controller.AttributeDefinition;
-
 /**
  * Enumerates the elements used in the Infinispan Endpoint subsystem schema.
 
@@ -37,10 +36,14 @@ public enum Element {
     MEMCACHED_CONNECTOR(ModelKeys.MEMCACHED_CONNECTOR),
     REST_CONNECTOR(ModelKeys.REST_CONNECTOR),
     WEBSOCKET_CONNECTOR(ModelKeys.WEBSOCKET_CONNECTOR),
+    ROUTER_CONNECTOR(ModelKeys.ROUTER_CONNECTOR),
 
     AUTHENTICATION(ModelKeys.AUTHENTICATION),
+    HOTROD(ModelKeys.HOTROD),
+    REST(ModelKeys.REST),
     ENCRYPTION(ModelKeys.ENCRYPTION),
     SNI(ModelKeys.SNI),
+    PREFIX(ModelKeys.PREFIX),
     SECURITY(ModelKeys.SECURITY),
     TOPOLOGY_STATE_TRANSFER(ModelKeys.TOPOLOGY_STATE_TRANSFER),
 
@@ -56,6 +59,7 @@ public enum Element {
     NO_DICTIONARY(ModelKeys.NO_DICTIONARY),
     NO_PLAIN_TEXT(ModelKeys.NO_PLAIN_TEXT),
     PASS_CREDENTIALS(ModelKeys.PASS_CREDENTIALS),
+    MULTI_TENANCY(ModelKeys.MULTI_TENANCY),
     ;
 
     private final String name;

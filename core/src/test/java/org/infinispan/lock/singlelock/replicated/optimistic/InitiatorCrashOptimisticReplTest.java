@@ -1,12 +1,12 @@
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractCrashTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Mircea Markus

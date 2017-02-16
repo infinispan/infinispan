@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -37,7 +38,7 @@ public class ReplStateTransferOnJoinConsistencyTest extends DistStateTransferOnJ
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(1000l);
+      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       builder.clustering().hash().numSegments(10)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       return builder;

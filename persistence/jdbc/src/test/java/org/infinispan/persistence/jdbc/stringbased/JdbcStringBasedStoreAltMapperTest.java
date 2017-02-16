@@ -1,31 +1,35 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import static org.infinispan.test.TestingUtil.marshalledEntry;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.marshalledEntry;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tester for {@link JdbcStringBasedStore} with an alternative {@link org.infinispan.persistence.keymappers.Key2StringMapper}.
@@ -35,21 +39,26 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreAltMapperTest")
 public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
-   private AdvancedLoadWriteStore cacheStore;
-   private TableManager tableManager;
-   private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
-   private static final Person MANIK = new Person("Manik", "Surtani", 18);
-   private StreamingMarshaller marshaller;
+   protected AdvancedLoadWriteStore cacheStore;
+   protected TableManager tableManager;
+   protected static final Person MIRCEA = new Person("Mircea", "Markus", 28);
+   protected static final Person MANIK = new Person("Manik", "Surtani", 18);
+   protected StreamingMarshaller marshaller;
 
-   @BeforeTest
-   public void createCacheStore() throws PersistenceException {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+   protected JdbcStringBasedStoreConfigurationBuilder createJdbcConfig(ConfigurationBuilder builder) {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .key2StringMapper(PersonKey2StringMapper.class);
+      return storeBuilder;
+   }
 
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+   @BeforeClass
+   public void createCacheStore() throws PersistenceException {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = createJdbcConfig(builder);
+
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
       marshaller = new TestObjectStreamMarshaller();
@@ -64,7 +73,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       assertRowCount(0);
    }
 
-   @AfterTest
+   @AfterClass
    public void destroyStore() throws PersistenceException {
       cacheStore.stop();
       marshaller.stop();
@@ -116,24 +125,23 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       cacheStore.write(marshalledEntry(second, marshaller));
       assertRowCount(2);
       Thread.sleep(1100);
-//      printTableContent();
       cacheStore.purge(new WithinThreadExecutor(), null);
       assertRowCount(1);
       assertEquals("val2", cacheStore.load(MANIK).getValue());
    }
 
-   private int rowCount() {
+   protected int rowCount() {
       ConnectionFactory connectionFactory = getConnection();
       TableName tableName = tableManager.getTableName();
       return UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
    }
 
-   private ConnectionFactory getConnection() {
+   protected ConnectionFactory getConnection() {
       JdbcStringBasedStore store = (JdbcStringBasedStore) cacheStore;
       return store.getConnectionFactory();
    }
 
-   private void assertRowCount(int size) {
+   protected void assertRowCount(int size) {
       assertEquals(size, rowCount());
    }
 }

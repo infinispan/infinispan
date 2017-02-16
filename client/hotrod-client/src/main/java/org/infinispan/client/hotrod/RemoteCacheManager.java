@@ -1,12 +1,18 @@
 package org.infinispan.client.hotrod;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
-import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -22,19 +28,9 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -107,18 +103,8 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       return configuration;
    }
 
-
    /**
-    * @since 4.2
-    */
-   @Override
-   @Deprecated
-   public Properties getProperties() {
-      return configuration.properties();
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
+    * Same as {@link RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
     * server tries to connect to "127.0.0.1:11222" in start.
     *
@@ -187,9 +173,6 @@ public class RemoteCacheManager implements RemoteCacheContainer {
 
    @Override
    public void start() {
-      // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
-      SecurityActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
-
       transportFactory = Util.getInstance(configuration.transportFactory());
 
       if (marshaller == null) {
@@ -199,7 +182,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          }
       }
 
-      codec = CodecFactory.getCodec(configuration.protocolVersion());
+      codec = CodecFactory.getCodec(configuration.version());
 
       if (asyncExecutorService == null) {
          ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
@@ -209,7 +192,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
 
-      listenerNotifier = ClientListenerNotifier.create(codec, marshaller);
+      listenerNotifier = ClientListenerNotifier.create(codec, marshaller, transportFactory);
       transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
@@ -321,7 +304,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
               transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
-            asyncExecutorService);
+            asyncExecutorService, configuration.clientIntelligence());
       remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
    }
 

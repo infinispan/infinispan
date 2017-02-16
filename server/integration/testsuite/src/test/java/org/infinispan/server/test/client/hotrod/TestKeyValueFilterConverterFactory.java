@@ -6,8 +6,8 @@ import java.util.Arrays;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.metadata.Metadata;
 
 /**
  * @author gustavonalle

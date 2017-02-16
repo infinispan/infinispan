@@ -1,6 +1,14 @@
 package org.infinispan.query.dsl.embedded;
 
-import org.hibernate.hql.ParsingException;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -10,6 +18,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -17,12 +26,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.query.dsl.Expression.*;
-import static org.junit.Assert.*;
 
 
 /**
@@ -60,7 +63,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 31);
+            .build().setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -115,7 +118,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().build().setParameter("ageParam", 31);
+            .build().setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -176,7 +179,6 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .having("age").lte(31)
-            .toBuilder()
             .select("name", "age")
             .build();
 
@@ -206,14 +208,21 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       cache().removeListener(listener);
    }
 
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028523: Filters cannot use full-text searches")
+   public void testDisallowFullTextQuery() {
+      Query query = Search.getQueryFactory(cache()).create("from org.infinispan.query.test.Person where name : 'john'");
+
+      cache().addListener(new EntryListener(), Search.makeFilter(query), null);
+   }
+
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
             .having("age").gte(20)
-            .toBuilder().select(max("age"))
+            .select(max("age"))
             .build();
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);
@@ -223,9 +232,9 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    private static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> createEvents = new ArrayList<ObjectFilter.FilterResult>();
+      public final List<ObjectFilter.FilterResult> createEvents = new ArrayList<>();
 
-      public final List<ObjectFilter.FilterResult> modifyEvents = new ArrayList<ObjectFilter.FilterResult>();
+      public final List<ObjectFilter.FilterResult> modifyEvents = new ArrayList<>();
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {

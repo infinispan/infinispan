@@ -1,23 +1,31 @@
 package org.infinispan.scripting.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheCollection;
-import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
-import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.util.CollectionAsCacheCollection;
-import org.infinispan.util.SetAsCacheSet;
-
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
+import org.infinispan.Cache;
+import org.infinispan.CacheCollection;
+import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.util.CacheCollectionMapper;
+import org.infinispan.util.CacheSetMapper;
 
+public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    final DataTypedCacheManager dataTypedCacheManager;
+
+   private final Function<V, V> toDataType = this::toDataType;
 
    public DataTypedCache(DataTypedCacheManager dataTypedCacheManager, Cache<K, V> cache) {
       super(cache.getAdvancedCache());
@@ -69,22 +77,23 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
 
    @Override
    public CacheSet<K> keySet() {
-      CacheStream<K> stream = getDelegate().keySet().stream().map(this::toDataType);
-      return new SetAsCacheSet<>(stream.collect(Collectors.toSet()));
+      return new CacheSetMapper<>(getDelegate().keySet(),
+            new ValueToTypedValueFunction<>(
+                dataTypedCacheManager.dataType, dataTypedCacheManager.marshaller));
    }
 
    @Override
    public CacheCollection<V> values() {
-      CacheStream<V> stream = getDelegate().values().stream().map(this::toDataType);
-      return new CollectionAsCacheCollection<>(stream.collect(Collectors.toList()));
+      return new CacheCollectionMapper<>(getDelegate().values(),
+            new ValueToTypedValueFunction<>(
+                  dataTypedCacheManager.dataType, dataTypedCacheManager.marshaller));
    }
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      CacheStream<Entry<K, V>> stream = getDelegate().entrySet().stream()
-            .map(e -> Immutables.immutableEntry(
-                  toDataType(e.getKey()), toDataType(e.getValue())));
-      return new SetAsCacheSet<>(stream.collect(Collectors.toSet()), stream);
+      return new CacheSetMapper<>(getDelegate().entrySet(),
+            new EntryToTypedEntryFunction<>(
+                  dataTypedCacheManager.dataType, dataTypedCacheManager.marshaller));
    }
 
    @Override
@@ -114,7 +123,7 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
       Stream<Entry<K, V>> stream = map.entrySet().stream().map(
             e -> Immutables.immutableEntry(
                   fromDataType(e.getKey()), fromDataType(e.getValue())));
-      return (Map<K, V>) stream.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+      return stream.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
    }
 
    @Override
@@ -175,20 +184,20 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().putAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
@@ -212,51 +221,50 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().putIfAbsentAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return getDelegate().removeAsync(fromDataType(key))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return getDelegate().removeAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+      return getDelegate().removeAsync(fromDataType(key), fromDataType(value));
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value), lifespan, unit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return getDelegate().replaceAsync(fromDataType(key), fromDataType(value),
             lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
@@ -281,7 +289,7 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
    @Override
    public CompletableFuture<V> getAsync(K key) {
       return getDelegate().getAsync(fromDataType(key))
-            .thenApply(this::toDataType);
+            .thenApply(toDataType);
    }
 
    @Override
@@ -304,5 +312,68 @@ public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<
       return getDelegate().replace(fromDataType(key), fromDataType(value));
    }
 
-}
+   @SerializeWith(ValueToTypedValueFunction.Externalizer.class)
+   public static final class ValueToTypedValueFunction<T> implements Function<T, T>, InjectiveFunction<T, T> {
+      private final DataType dataType;
+      private final Optional<Marshaller> marshaller;
 
+      public ValueToTypedValueFunction(DataType dataType, Optional<Marshaller> marshaller) {
+         this.dataType = dataType;
+         this.marshaller = marshaller;
+      }
+
+      @Override
+      public Object apply(Object o) {
+         return dataType.transformer.toDataType(o, marshaller);
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ValueToTypedValueFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, ValueToTypedValueFunction object) throws IOException {
+            output.writeInt(object.dataType.ordinal());
+         }
+
+         @Override
+         public ValueToTypedValueFunction readObject(ObjectInput input) throws IOException {
+            int ordinal = input.readInt();
+            return new ValueToTypedValueFunction(DataType.values()[ordinal], Optional.empty());
+         }
+      }
+   }
+
+   @SerializeWith(EntryToTypedEntryFunction.Externalizer.class)
+   public static final class EntryToTypedEntryFunction<K, V>
+         implements Function<Entry<K, V>, Entry<K, V>>, InjectiveFunction<Entry<K, V>, Entry<K, V>> {
+      private final DataType dataType;
+      private final Optional<Marshaller> marshaller;
+
+      public EntryToTypedEntryFunction(DataType dataType, Optional<Marshaller> marshaller) {
+         this.dataType = dataType;
+         this.marshaller = marshaller;
+      }
+
+      @Override
+      public Entry<K, V> apply(Entry<K, V> e) {
+         return Immutables.immutableEntry(
+               (K) dataType.transformer.toDataType(e.getKey(), marshaller),
+               (V) dataType.transformer.toDataType(e.getValue(), marshaller));
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<EntryToTypedEntryFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, EntryToTypedEntryFunction object) throws IOException {
+            output.writeInt(object.dataType.ordinal());
+         }
+
+         @Override
+         public EntryToTypedEntryFunction readObject(ObjectInput input) throws IOException {
+            int ordinal = input.readInt();
+            return new EntryToTypedEntryFunction(DataType.values()[ordinal], Optional.empty());
+         }
+      }
+   }
+
+
+
+
+}

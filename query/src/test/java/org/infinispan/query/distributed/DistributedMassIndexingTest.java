@@ -1,12 +1,13 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -18,8 +19,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
@@ -30,7 +29,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected static final String[] neededCacheNames = new String[] {
-      BasicCacheContainer.DEFAULT_CACHE_NAME,
+      "default",
       "LuceneIndexesMetadata",
       "LuceneIndexesData",
       "LuceneIndexesLocking",
@@ -92,7 +91,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       SearchManager searchManager = Search.getSearchManager(cache);
       QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
       Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
-      CacheQuery cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
+      CacheQuery<Car> cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

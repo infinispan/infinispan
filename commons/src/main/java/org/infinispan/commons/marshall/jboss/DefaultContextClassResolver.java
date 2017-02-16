@@ -1,8 +1,8 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.jboss.marshalling.ContextClassResolver;
-
 import java.lang.ref.WeakReference;
+
+import org.jboss.marshalling.ContextClassResolver;
 
 /**
  * This class refines <code>ContextClassLoader</code> to add a default class loader.

@@ -1,5 +1,8 @@
 package org.infinispan.spring.provider;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -12,6 +15,16 @@ import org.springframework.util.Assert;
  * @author Sebastian Laskawiec
  */
 class CacheDelegate implements Cache {
+
+   //Implemented as a static holder class for backwards compatibility.
+   //Imagine a situation where a client has new integration module and old Spring version. In that case
+   //this exception does not exist. However we can bypass this by using separate class file (which is loaded
+   //by the JVM when needed...)
+   private static class ValueRetrievalExceptionResolver {
+      static RuntimeException throwValueRetrievalException(Object key, Callable<?> loader, Throwable ex) {
+         return new ValueRetrievalException(key, loader, ex);
+      }
+   }
 
    private final org.infinispan.commons.api.BasicCache<Object, Object> nativeCache;
 
@@ -56,12 +69,30 @@ class CacheDelegate implements Cache {
       return (T) value;
    }
 
+   @Override
+   public <T> T get(Object key, Callable<T> valueLoader) {
+      return (T) nativeCache.computeIfAbsent(key, keyToBeInserted -> {
+         try {
+            return valueLoader.call();
+         } catch (Exception e) {
+            throw ValueRetrievalExceptionResolver.throwValueRetrievalException(key, valueLoader, e);
+         }
+      });
+   }
+
    /**
     * @see org.springframework.cache.Cache#put(Object, Object)
     */
    @Override
    public void put(final Object key, final Object value) {
       this.nativeCache.put(key, value != null ? value : NullValue.NULL);
+   }
+
+   /**
+    * @see org.infinispan.commons.api.BasicCache#put(Object, Object, long, TimeUnit)
+    */
+   public void put(Object key, Object value, long lifespan, TimeUnit unit) {
+      this.nativeCache.put(key, value != null ? value : NullValue.NULL, lifespan, unit);
    }
 
    @Override
@@ -103,5 +134,4 @@ class CacheDelegate implements Cache {
       }
       return new SimpleValueWrapper(value);
    }
-
 }

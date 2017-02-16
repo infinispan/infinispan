@@ -1,5 +1,15 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGood;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,16 +21,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGood;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 /**
  * Test to simulate concurrent index writing and merges using Infinispan Directory under
@@ -63,7 +63,7 @@ public class MergeTest extends MultipleCacheManagersTest {
             .addProperty("default.indexwriter.merge_max_size", "1024")
             .addProperty("default.indexwriter.ram_buffer_size", "256")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      ;
+
       List<Cache<Long, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
@@ -107,7 +107,7 @@ public class MergeTest extends MultipleCacheManagersTest {
       assertAllGood(cache1, cache2);
       System.out.println("Load took: " + (System.currentTimeMillis() - start) / 1000 + " s");
       SearchManager searchManager = Search.getSearchManager(cache1);
-      final CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      final CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
       eventually(new Condition() {
          @Override

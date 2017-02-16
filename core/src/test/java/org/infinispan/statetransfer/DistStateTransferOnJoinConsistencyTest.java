@@ -1,5 +1,16 @@
 package org.infinispan.statetransfer;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -7,8 +18,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -21,14 +32,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.*;
 
 /**
  * Test for ISPN-2362 and ISPN-2502 in distributed mode. Uses a cluster which initially has 2 nodes
@@ -68,7 +71,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(1000l);
+      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       return builder;
    }
@@ -147,7 +150,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
             // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a state transfer PUT
                applyStateStartedLatch.countDown();
                // wait until it is ok to apply state

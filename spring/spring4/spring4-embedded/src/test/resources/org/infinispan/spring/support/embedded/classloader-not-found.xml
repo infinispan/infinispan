@@ -16,9 +16,11 @@
             </persistence>
         </local-cache>
         <replicated-cache name="testCache">
-            <eviction max-entries="100" strategy="LRU"/>
             <expiration lifespan="300000" interval="5000"/>
             <state-transfer enabled="true"/>
+            <memory>
+                <object size="100"/>
+            </memory>
         </replicated-cache>
 
     </cache-container>

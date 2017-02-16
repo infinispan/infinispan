@@ -1,26 +1,22 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.CacheException;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.impl.BaseSequentialInvocationContext;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * This context is a non-context for operations such as eviction which are not related
  * to the method invocation which caused them.
- * 
+ *
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-public final class ImmutableContext extends BaseSequentialInvocationContext {
-   
+public final class ImmutableContext implements InvocationContext {
+
    public static final ImmutableContext INSTANCE = new ImmutableContext();
 
    private ImmutableContext() {
@@ -117,31 +113,5 @@ public final class ImmutableContext extends BaseSequentialInvocationContext {
    @Override
    public boolean isEntryRemovedInContext(Object key) {
       return false;
-   }
-
-   @Override
-   public CompletableFuture<Void> onReturn(SequentialInterceptor.ReturnHandler returnHandler) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletableFuture<Void> continueInvocation() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletableFuture<Void> shortCircuit(Object returnValue) {
-      return null;
-   }
-
-   @Override
-   public CompletableFuture<Void> forkInvocation(VisitableCommand newCommand,
-         SequentialInterceptor.ForkReturnHandler returnHandler) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Object forkInvocationSync(VisitableCommand newCommand) throws InterruptedException {
-      throw new UnsupportedOperationException();
    }
 }

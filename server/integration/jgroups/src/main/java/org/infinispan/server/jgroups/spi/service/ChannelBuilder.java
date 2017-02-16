@@ -33,21 +33,21 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Provides a channel for use by dependent services.
  * Channels produced by this service are unconnected.
  * @author Paul Ferraro
  */
-public class ChannelBuilder implements Service<Channel>, Builder<Channel> {
+public class ChannelBuilder implements Service<JChannel>, Builder<JChannel> {
 
     private static final Logger LOGGER = org.jboss.logging.Logger.getLogger(ChannelConnectorBuilder.class);
 
     private InjectedValue<ChannelFactory> factory = new InjectedValue<>();
     private final String name;
 
-    private volatile Channel channel;
+    private volatile JChannel channel;
 
     public ChannelBuilder(String name) {
         this.name = name;
@@ -59,7 +59,7 @@ public class ChannelBuilder implements Service<Channel>, Builder<Channel> {
     }
 
     @Override
-    public ServiceBuilder<Channel> build(ServiceTarget target) {
+    public ServiceBuilder<JChannel> build(ServiceTarget target) {
         return target.addService(this.getServiceName(), this)
                 .addDependency(ChannelServiceName.FACTORY.getServiceName(this.name), ChannelFactory.class, this.factory)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND)
@@ -67,7 +67,7 @@ public class ChannelBuilder implements Service<Channel>, Builder<Channel> {
     }
 
     @Override
-    public Channel getValue() {
+    public JChannel getValue() {
         return this.channel;
     }
 

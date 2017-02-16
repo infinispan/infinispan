@@ -7,13 +7,13 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
-import org.infinispan.Cache;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -274,11 +274,20 @@ public enum Flag {
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.
+    *
+    * @deprecated Since 9.0
     */
+   @Deprecated
    public static long copyWithoutRemotableFlags(long flagsBitSet) {
-      return EnumUtil.unsetEnum(flagsBitSet, FAIL_SILENTLY);
+      return FlagBitSets.copyWithoutRemotableFlags(flagsBitSet);
    }
 
+   /**
+    * Creates a copy of a Flag set removing instances of FAIL_SILENTLY.
+    *
+    * @deprecated Since 9.0
+    */
+   @Deprecated
    public static Set<Flag> copyWithoutRemotableFlags(Set<Flag> flags) {
       //FAIL_SILENTLY should not be sent to remote nodes
       if (flags != null && flags.contains(Flag.FAIL_SILENTLY)) {
@@ -310,7 +319,7 @@ public enum Flag {
 
       @Override
       public Set<Class<? extends Flag>> getTypeClasses() {
-         return Util.asSet(Flag.class);
+         return Collections.singleton(Flag.class);
       }
 
       @Override

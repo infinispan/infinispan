@@ -1,5 +1,15 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
@@ -12,15 +22,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -30,8 +31,8 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    private final RemoteQuery remoteQuery;
 
    public QueryOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId,
-                         int flags, RemoteQuery remoteQuery) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                         int flags, ClientIntelligence clientIntelligence, RemoteQuery remoteQuery) {
+      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
       this.remoteQuery = remoteQuery;
    }
 
@@ -44,7 +45,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    protected QueryResponse executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, QUERY_REQUEST);
       QueryRequest queryRequest = new QueryRequest();
-      queryRequest.setJpqlString(remoteQuery.getJPAQuery());
+      queryRequest.setQueryString(remoteQuery.getQueryString());
       if (remoteQuery.getStartOffset() > 0) {
          queryRequest.setStartOffset(remoteQuery.getStartOffset());
       }
@@ -74,7 +75,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    }
 
    private List<QueryRequest.NamedParameter> getNamedParameters() {
-      Map<String, Object> namedParameters = remoteQuery.getNamedParameters();
+      Map<String, Object> namedParameters = remoteQuery.getParameters();
       if (namedParameters == null || namedParameters.isEmpty()) {
          return null;
       }

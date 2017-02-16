@@ -1,5 +1,14 @@
 package org.infinispan.integrationtests.cdijcache.interceptor;
 
+import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.lang.invoke.MethodHandles;
+
+import javax.cache.CacheException;
+import javax.inject.Inject;
+
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
@@ -12,14 +21,6 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.cache.CacheException;
-import javax.inject.Inject;
-import java.lang.invoke.MethodHandles;
-
-import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

@@ -1,13 +1,13 @@
 package org.infinispan.commands.module;
 
+import java.util.Map;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.ByteString;
-
-import java.util.Map;
 
 /**
  * Modules which wish to implement their own commands and visitors must also provide an implementation of this interface

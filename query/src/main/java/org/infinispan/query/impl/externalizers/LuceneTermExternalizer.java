@@ -3,19 +3,19 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 public class LuceneTermExternalizer extends AbstractExternalizer<Term> {
 
    @Override
    public Set<Class<? extends Term>> getTypeClasses() {
-      return Util.<Class<? extends Term>>asSet(Term.class);
+      return Collections.singleton(Term.class);
    }
 
    @Override

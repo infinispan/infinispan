@@ -1,13 +1,13 @@
 package org.infinispan.atomic;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * DeltaCompositeKey is the key guarding access to a specific entry in DeltaAware

@@ -1,11 +1,11 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.persistence.spi.InitializationContext;
+import javax.cache.integration.CacheWriter;
+
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
 import org.infinispan.marshall.core.MarshalledEntry;
-
-import javax.cache.integration.CacheWriter;
+import org.infinispan.persistence.spi.InitializationContext;
 
 public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi.CacheWriter {
 

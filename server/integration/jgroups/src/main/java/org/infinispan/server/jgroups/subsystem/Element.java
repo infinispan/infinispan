@@ -35,7 +35,15 @@ public enum Element {
     CHANNELS("channels"),
     DEFAULT_THREAD_POOL("default-thread-pool"),
     FORK(ModelKeys.FORK),
+    /**
+     * @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
     INTERNAL_THREAD_POOL("internal-thread-pool"),
+    /**
+     * @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
     OOB_THREAD_POOL("oob-thread-pool"),
     PROPERTY(ModelKeys.PROPERTY),
     PROTOCOL(ModelKeys.PROTOCOL),
@@ -45,6 +53,10 @@ public enum Element {
     STACK(ModelKeys.STACK),
     STACKS("stacks"),
     THREAD_FACTORY(ModelKeys.THREAD_FACTORY),
+    /**
+     * @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
     TIMER_THREAD_POOL("timer-thread-pool"),
     TRANSPORT(ModelKeys.TRANSPORT),
     ;

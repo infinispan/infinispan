@@ -21,10 +21,16 @@
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
-       <dependency>
-           <groupId>org.codehaus.jackson</groupId>
-           <artifactId>jackson-mapper-asl</artifactId>
-       </dependency>
+      <dependency>
+         <groupId>org.codehaus.jackson</groupId>
+         <artifactId>jackson-mapper-asl</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.eclipse.jetty</groupId>
@@ -35,7 +41,7 @@
 
    </dependencies>
 
-   <build>     
+   <build>
       <plugins>
          <plugin>
             <groupId>org.apache.felix</groupId>

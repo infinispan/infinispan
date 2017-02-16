@@ -24,7 +24,7 @@ public class Exceptions {
    public static RuntimeException launderCacheLoaderException(Exception e) {
       if (!(e instanceof CacheLoaderException))
          return new CacheLoaderException("Exception in CacheLoader", e);
-      else 
+      else
          return (CacheLoaderException) e;
    }
 
@@ -60,4 +60,12 @@ public class Exceptions {
       return e;
    }
 
+   public static CacheException launderException(org.infinispan.commons.CacheException e) {
+      // Exceptions thrown from Infinispan are be wrapped as CacheExceptions
+      if (e.getCause() instanceof CacheException) {
+         return (CacheException) e.getCause();
+      } else {
+         return new CacheException(e);
+      }
+   }
 }

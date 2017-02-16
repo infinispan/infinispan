@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:9.0 http://www.infinispan.org/schemas/infinispan-config-9.0.xsd"
+      xmlns="urn:infinispan:config:9.0">
+
+   <cache-container name="AffinityMassIndex" default-cache="default" statistics="true">
+      <transport cluster="Infinispan-Query-Cluster"/>
+      <jmx duplicate-domains="true" />
+       <!-- *************************************** -->
+       <!--  Default Cache, with indexing enabled.  -->
+       <!-- *************************************** -->
+      <replicated-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
+         <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
+         <eviction size="-1" strategy="NONE" />
+         <expiration max-idle="-1" />
+         <indexing index="PRIMARY_OWNER">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+            </indexed-entities>
+            <property name="hibernate.search.default.indexmanager">org.infinispan.query.affinity.AffinityIndexManager</property>
+            <!-- Enable error safety net -->
+            <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
+         </indexing>
+         <state-transfer timeout="480000" enabled="true" />
+      </replicated-cache>
+
+       <!-- ******************************************************************************* -->
+       <!-- Individually configured "named" caches.                                         -->
+       <!--                                                                                 -->
+       <!-- While default configuration happens to be fine with similar settings across the -->
+       <!-- three caches, they should generally be different in a production environment.   -->
+       <!--                                                                                 -->
+       <!-- Current settings could easily lead to OutOfMemory exception as a CacheStore     -->
+       <!-- should be enabled, and maybe distribution is more suited for LuceneIndexesData. -->
+       <!-- ******************************************************************************* -->
+
+      <!-- *************************************** -->
+      <!--  Cache to store Lucene's file metadata  -->
+      <!-- *************************************** -->
+      <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
+         <indexing index="NONE" />
+         <state-transfer enabled="true" />
+      </replicated-cache>
+      <!-- **************************** -->
+      <!--  Cache to store Lucene data  -->
+      <!-- **************************** -->
+      <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
+         <indexing index="NONE" />
+         <state-transfer enabled="true" />
+      </distributed-cache>
+      <!-- ***************************** -->
+      <!--  Cache to store Lucene locks  -->
+      <!-- ***************************** -->
+      <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
+         <indexing index="NONE" />
+         <state-transfer enabled="true" />
+      </replicated-cache>
+   </cache-container>
+</infinispan>

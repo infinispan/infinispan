@@ -7,8 +7,8 @@
 
    <dependencies>
       <module name="org.infinispan.query.dsl"/>
+      <!-- TODO [anistor] We still need antlr-runtime because RecognitionException is used by the logger -->
       <module name="org.antlr.antlr-runtime"/>
-      <module name="org.hibernate.hql.parser"/>
       <module name="org.infinispan.protostream"/>
       <module name="org.jboss.logging" />
    </dependencies>

@@ -1,5 +1,8 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 
 import javax.management.ObjectName;
@@ -18,9 +21,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.junit.Assert.assertEquals;
-
 /**
  * Tests manual indexing in server.
  *
@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
  * @author vchepeli@redhat.com
  *
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class ManualIndexingIT extends RemoteQueryBaseIT {
 
@@ -59,7 +59,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
     @Test
     public void testManualIndexing() throws Exception {
         QueryBuilder qb = Search.getQueryFactory(remoteCache).from(User.class)
-                .having("name").eq("Tom").toBuilder();
+                .having("name").eq("Tom");
 
         User user = new User();
         user.setId(1);

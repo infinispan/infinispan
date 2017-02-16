@@ -124,6 +124,7 @@ public class NoStateTransferValidationTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cacheManager = null;
       try {
          cacheManager = TestCacheManagerFactory.createClusteredCacheManager(configuration);
+         cacheManager.defineConfiguration(CACHE_NAME, configuration.build());
          Cache cache = cacheManager.getCache(CACHE_NAME);
 
          DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).create();

@@ -1,27 +1,30 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
+
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_10;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_11;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_12;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_13;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_20;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_21;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_22;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_23;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_24;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_25;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_26;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_10;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_11;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_12;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_13;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_20;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_21;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_22;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_23;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_24;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_25;
-
 /**
- * Code factory.
+ * Codec factory.
  *
  * @author Galder Zamarreño
  * @since 5.1
  */
 public class CodecFactory {
-   private static final Map<String, Codec> codecMap;
+   private static final Map<ProtocolVersion, Codec> codecMap;
 
    private static final Codec CODEC_10 = new Codec10();
    private static final Codec CODEC_11 = new Codec11();
@@ -33,9 +36,10 @@ public class CodecFactory {
    private static final Codec CODEC_23 = new Codec23();
    private static final Codec CODEC_24 = new Codec24();
    private static final Codec CODEC_25 = new Codec25();
+   private static final Codec CODEC_26 = new Codec26();
 
    static {
-      codecMap = new HashMap<String, Codec>();
+      codecMap = new HashMap<>();
       codecMap.put(PROTOCOL_VERSION_10, CODEC_10);
       codecMap.put(PROTOCOL_VERSION_11, CODEC_11);
       codecMap.put(PROTOCOL_VERSION_12, CODEC_12);
@@ -46,13 +50,19 @@ public class CodecFactory {
       codecMap.put(PROTOCOL_VERSION_23, CODEC_23);
       codecMap.put(PROTOCOL_VERSION_24, CODEC_24);
       codecMap.put(PROTOCOL_VERSION_25, CODEC_25);
+      codecMap.put(PROTOCOL_VERSION_26, CODEC_26);
    }
 
    public static boolean isVersionDefined(String version) {
-      return codecMap.containsKey(version);
+      final ProtocolVersion protocolVersion = ProtocolVersion.parseVersion(version);
+      if (protocolVersion == null) {
+         return false;
+      } else {
+         return codecMap.containsKey(protocolVersion);
+      }
    }
 
-   public static Codec getCodec(String version) {
+   public static Codec getCodec(ProtocolVersion version) {
       if (codecMap.containsKey(version))
          return codecMap.get(version);
       else

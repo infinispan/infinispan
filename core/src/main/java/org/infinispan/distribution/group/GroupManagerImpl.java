@@ -2,13 +2,6 @@ package org.infinispan.distribution.group;
 
 import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.transport.Address;
-
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -17,26 +10,33 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.transport.Address;
+
 /**
  * @private
  */
 public class GroupManagerImpl implements GroupManager {
-    
+
     private interface GroupMetadata {
-        
+
         GroupMetadata NONE = new GroupMetadata() {
-            
+
             @Override
             public String getGroup(Object instance) {
                 return null;
             }
-            
-        }; 
-        
+
+        };
+
         String getGroup(Object instance);
-        
+
     }
-    
+
     private static class GroupMetadataImpl implements GroupMetadata {
         private final Method method;
 
@@ -58,9 +58,9 @@ public class GroupManagerImpl implements GroupManager {
             }
             return String.class.cast(object);
         }
-        
+
     }
-    
+
     private static GroupMetadata createGroupMetadata(Class<?> clazz) {
         Collection<Method> possibleMethods;
         if (System.getSecurityManager() == null) {
@@ -79,7 +79,7 @@ public class GroupManagerImpl implements GroupManager {
     private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
     private ClusteringDependentLogic clusteringDependentLogic;
-    
+
     public GroupManagerImpl(List<Grouper<?>> groupers) {
         this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
         if (groupers != null)
@@ -92,7 +92,7 @@ public class GroupManagerImpl implements GroupManager {
     public void injectDependencies(ClusteringDependentLogic clusteringDependentLogic) {
         this.clusteringDependentLogic = clusteringDependentLogic;
     }
-    
+
     @Override
     public String getGroup(Object key) {
         GroupMetadata metadata = getMetadata(key);
@@ -124,7 +124,7 @@ public class GroupManagerImpl implements GroupManager {
         }
         return group;
     }
-    
+
     private GroupMetadata getMetadata(final Object key) {
         final Class<?> keyClass = key.getClass();
         GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);

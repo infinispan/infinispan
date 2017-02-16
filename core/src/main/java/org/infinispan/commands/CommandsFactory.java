@@ -1,5 +1,21 @@
 package org.infinispan.commands;
 
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -22,7 +38,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -34,9 +49,17 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
+import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
+import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -46,7 +69,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.context.Flag;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.Params;
@@ -63,21 +85,6 @@ import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
-
-import javax.transaction.xa.Xid;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -155,10 +162,10 @@ public interface CommandsFactory {
 
    /**
     * Builds a SizeCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a SizeCommand
     */
-   SizeCommand buildSizeCommand(Set<Flag> flags);
+   SizeCommand buildSizeCommand(long flagsBitSet);
 
    /**
     * Builds a GetKeyValueCommand
@@ -188,17 +195,17 @@ public interface CommandsFactory {
 
    /**
     * Builds a KeySetCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a KeySetCommand
     */
-   KeySetCommand buildKeySetCommand(Set<Flag> flags);
+   KeySetCommand buildKeySetCommand(long flagsBitSet);
 
    /**
     * Builds a EntrySetCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a EntrySetCommand
     */
-   EntrySetCommand buildEntrySetCommand(Set<Flag> flags);
+   EntrySetCommand buildEntrySetCommand(long flagsBitSet);
 
    /**
     * Builds a PutMapCommand
@@ -278,13 +285,6 @@ public interface CommandsFactory {
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
 
    /**
-    * Builds an RpcCommand "envelope" containing multiple ReplicableCommands
-    * @param toReplicate ReplicableCommands to include in the envelope
-    * @return a MultipleRpcCommand
-    */
-   MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
-
-   /**
     * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
     * @param call ReplicableCommand to include in the envelope
     * @return a SingleRpcCommand
@@ -297,7 +297,13 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet);
+
+   @Deprecated
+   default ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
+      if (acquireRemoteLock) throw new UnsupportedOperationException("acquireRemoteLock is not supported, use Flag.FORCE_WRITE_LOCK");
+      return buildClusteredGetCommand(key, flagsBitSet);
+   }
 
    /**
     * Builds a ClusteredGetAllCommand, which is a remote lookup command
@@ -360,7 +366,7 @@ public interface CommandsFactory {
     * @param keys keys used in Callable
     * @return a DistributedExecuteCommand
     */
-   <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
+   <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
 
    /**
     * @see GetInDoubtTxInfoCommand
@@ -468,7 +474,7 @@ public interface CommandsFactory {
 
    <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f);
 
-   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
+   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
 
    <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
       K key, Consumer<WriteEntryView<V>> f, Params params);
@@ -485,10 +491,23 @@ public interface CommandsFactory {
    <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
       K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params);
 
-   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
+   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params);
 
-   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K,V>, R> f);
+   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params);
 
-   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K,V>, R> f);
+   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
 
+   BackupAckCommand buildBackupAckCommand(CommandInvocationId id, int topologyId);
+
+   PrimaryAckCommand buildPrimaryAckCommand();
+
+   BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(CommandInvocationId id, int segment, int topologyId);
+
+   PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(CommandInvocationId id, int topologyId);
+
+   ExceptionAckCommand buildExceptionAckCommand(CommandInvocationId id, Throwable throwable, int topologyId);
+
+   BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command);
+
+   BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command);
 }

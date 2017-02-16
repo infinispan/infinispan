@@ -1,8 +1,8 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * {@link org.infinispan.xsite.statetransfer.XSiteStateProvider} delegator. Mean to be overridden. For test purpose

@@ -1,8 +1,8 @@
 package org.infinispan.distribution;
 
-import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

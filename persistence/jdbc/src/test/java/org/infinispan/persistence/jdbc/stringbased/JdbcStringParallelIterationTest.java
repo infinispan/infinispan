@@ -18,7 +18,7 @@ public class JdbcStringParallelIterationTest extends ParallelIterationTest {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder =
             cb.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
    }
 
 }

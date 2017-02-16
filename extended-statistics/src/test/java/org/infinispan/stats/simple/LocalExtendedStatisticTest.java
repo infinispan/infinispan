@@ -1,10 +1,15 @@
 package org.infinispan.stats.simple;
 
+import static org.testng.Assert.assertNull;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -12,11 +17,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.testng.Assert.assertNull;
 
 /**
  * @author Pedro Ruivo
@@ -254,7 +254,7 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
    }
 
    private ExtendedStatisticInterceptor getExtendedStatistic(Cache<?, ?> cache) {
-      SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
       ExtendedStatisticInterceptor extendedStatisticInterceptor =
             interceptorChain.findInterceptorExtending(ExtendedStatisticInterceptor.class);
       if (extendedStatisticInterceptor != null) {

@@ -1,5 +1,7 @@
 package org.infinispan.query.api;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -9,8 +11,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.junit.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "query.api.ReplaceTest")
 public class ReplaceTest extends SingleCacheManagerTest {

@@ -1,17 +1,7 @@
 package org.infinispan.security;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.impl.IdentityRoleMapper;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
-import javax.security.auth.Subject;
 import java.io.Serializable;
 import java.security.Policy;
 import java.security.PrivilegedAction;
@@ -19,7 +9,19 @@ import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
-import static org.testng.AssertJUnit.assertEquals;
+import javax.security.auth.Subject;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
 
 /**
  * ExecutionAuthorizationTest.
@@ -146,7 +148,7 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
    }
 
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;

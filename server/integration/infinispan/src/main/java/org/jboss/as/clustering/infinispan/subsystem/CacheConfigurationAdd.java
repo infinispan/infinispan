@@ -40,6 +40,7 @@ import java.util.Properties;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
@@ -62,21 +63,18 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
-import org.infinispan.persistence.leveldb.configuration.CompressionType;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
+import org.infinispan.persistence.rocksdb.configuration.CompressionType;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -126,8 +124,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
     private static final String[] loaderKeys = new String[] { ModelKeys.LOADER, ModelKeys.CLUSTER_LOADER };
     private static final String[] storeKeys = new String[] { ModelKeys.STORE, ModelKeys.FILE_STORE,
-            ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.BINARY_KEYED_JDBC_STORE, ModelKeys.MIXED_KEYED_JDBC_STORE,
-            ModelKeys.REMOTE_STORE, ModelKeys.LEVELDB_STORE, ModelKeys.REST_STORE };
+            ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.REMOTE_STORE, ModelKeys.REST_STORE, ModelKeys.ROCKSDB_STORE };
 
     public static synchronized Configuration getDefaultConfiguration(CacheMode cacheMode) {
         if (defaults == null) {
@@ -367,7 +364,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 }
             }
             builder.indexing()
-                  .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
+                  .index(indexing.isEnabled() ? Index.valueOf(indexing.toString()) : Index.NONE)
                   .withProperties(indexingProperties)
                   .autoConfig(autoConfig)
             ;
@@ -445,20 +442,31 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             builder.transaction().invocationBatching().disable();
         }
 
-        // eviction is a child resource
-        if (cache.hasDefined(ModelKeys.EVICTION) && cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME).isDefined()) {
-            ModelNode eviction = cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
-
-            final EvictionStrategy strategy = EvictionStrategy.valueOf(EvictionConfigurationResource.EVICTION_STRATEGY.resolveModelAttribute(context, eviction).asString());
-            builder.eviction().strategy(strategy);
-
-            if (strategy.isEnabled()) {
-                final long size = EvictionConfigurationResource.SIZE.resolveModelAttribute(context, eviction).asLong();
-                builder.eviction().size(size);
-                final EvictionType type = EvictionType.valueOf(EvictionConfigurationResource.TYPE.resolveModelAttribute(context, eviction).asString());
-                builder.eviction().type(type);
+        // memory is a child resource
+        if (cache.hasDefined(ModelKeys.MEMORY)) {
+            ModelNode memoryNode = cache.get(ModelKeys.MEMORY);
+            ModelNode node;
+            if ((node = memoryNode.get(ModelKeys.OBJECT_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.OBJECT);
+                final long size = MemoryObjectConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+            } else if ((node = memoryNode.get(ModelKeys.BINARY_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.BINARY);
+                final long size = MemoryBinaryConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+                final EvictionType type = EvictionType.valueOf(MemoryBinaryConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionType(type);
+            } else if ((node = memoryNode.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
+                builder.memory().storageType(StorageType.OFF_HEAP);
+                final long size = MemoryOffHeapConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
+                builder.memory().size(size);
+                final EvictionType type = EvictionType.valueOf(MemoryOffHeapConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionType(type);
+                final int addressCount = MemoryOffHeapConfigurationResource.ADDRESS_COUNT.resolveModelAttribute(context, node).asInt();
+                builder.memory().addressCount(addressCount);
             }
         }
+
         // expiration is a child resource
         if (cache.hasDefined(ModelKeys.EXPIRATION) && cache.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME).isDefined()) {
 
@@ -691,7 +699,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             };
             dependencies.add(new Dependency<>(PathManagerService.SERVICE_NAME, PathManager.class, injector));
             return builder;
-        } else if (storeKey.equals(ModelKeys.STRING_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.BINARY_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.MIXED_KEYED_JDBC_STORE)) {
+        } else if (storeKey.equals(ModelKeys.STRING_KEYED_JDBC_STORE)) {
             ModelNode dialectNode = BaseJDBCStoreConfigurationResource.DIALECT.resolveModelAttribute(context, store);
             DatabaseType databaseType = dialectNode.isDefined() ? DatabaseType.valueOf(dialectNode.asString()) : null;
 
@@ -733,13 +741,13 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.tcpNoDelay(store.require(ModelKeys.TCP_NO_DELAY).asBoolean());
             }
             if (store.hasDefined(ModelKeys.PROTOCOL_VERSION)) {
-                builder.protocolVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString());
+                builder.protocolVersion(ProtocolVersion.parseVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString()));
             }
             return builder;
-        } else if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {
-            final LevelDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(LevelDBStoreConfigurationBuilder.class);
-            final String path = ((resolvedValue = LevelDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "data";
-            final String relativeTo = ((resolvedValue = LevelDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+        } else if (storeKey.equals(ModelKeys.ROCKSDB_STORE)) {
+            final RocksDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(RocksDBStoreConfigurationBuilder.class);
+            final String path = ((resolvedValue = RocksDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "data";
+            final String relativeTo = ((resolvedValue = RocksDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
             Injector<PathManager> injector = new SimpleInjector<PathManager>() {
                 volatile PathManager.Callback.Handle callbackHandle;
                 @Override
@@ -762,8 +770,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             final String expirationPath;
             if (expirationDefined) {
                 ModelNode expiration = store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME);
-                expirationPath = LevelDBExpirationConfigurationResource.PATH.resolveModelAttribute(context, expiration).asString();
-                builder.expiryQueueSize(LevelDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
+                expirationPath = RocksDBExpirationConfigurationResource.PATH.resolveModelAttribute(context, expiration).asString();
+                builder.expiryQueueSize(RocksDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
             } else {
                 expirationPath = InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "expiration";
             }
@@ -795,15 +803,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
             if (store.hasDefined(ModelKeys.COMPRESSION)) {
                 ModelNode node = store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
-                final CompressionType compressionType = CompressionType.valueOf(LevelDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
+                final CompressionType compressionType = CompressionType.valueOf(RocksDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
                 builder.compressionType(compressionType);
             }
 
-            if (store.hasDefined(ModelKeys.IMPLEMENTATION)) {
-                ModelNode node = store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME);
-                final LevelDBStoreConfiguration.ImplementationType implementationType = LevelDBStoreConfiguration.ImplementationType.valueOf(LevelDBImplementationConfigurationResource.TYPE.resolveModelAttribute(context, node).asString());
-                builder.implementationType(implementationType);
-            }
             return builder;
         } else if (storeKey.equals(ModelKeys.REST_STORE)) {
                 final RestStoreConfigurationBuilder builder = persistenceBuilder.addStore(RestStoreConfigurationBuilder.class);
@@ -865,6 +868,16 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         }
     }
 
+   private void buildDbVersions(AbstractJdbcStoreConfigurationBuilder builder, OperationContext context, ModelNode store) throws OperationFailedException {
+      ModelNode dbMajorVersion = BaseJDBCStoreConfigurationResource.DB_MAJOR_VERSION.resolveModelAttribute(context, store);
+      if (dbMajorVersion.isDefined())
+         builder.dbMajorVersion(dbMajorVersion.asInt());
+
+      ModelNode dbMinorVersion = BaseJDBCStoreConfigurationResource.DB_MINOR_VERSION.resolveModelAttribute(context, store);
+      if (dbMinorVersion.isDefined())
+         builder.dbMinorVersion(dbMinorVersion.asInt());
+   }
+
    private Object newInstance(String className) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
       return CacheLoader.class.getClassLoader().loadClass(className).newInstance();
    }
@@ -903,9 +916,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       if (async) {
          ModelNode writeBehind = store.get(ModelKeys.WRITE_BEHIND, ModelKeys.WRITE_BEHIND_NAME);
          storeConfigurationBuilder.async().enable()
-               .flushLockTimeout(StoreWriteBehindResource.FLUSH_LOCK_TIMEOUT.resolveModelAttribute(context, writeBehind).asLong())
                .modificationQueueSize(StoreWriteBehindResource.MODIFICATION_QUEUE_SIZE.resolveModelAttribute(context, writeBehind).asInt())
-               .shutdownTimeout(StoreWriteBehindResource.SHUTDOWN_TIMEOUT.resolveModelAttribute(context, writeBehind).asLong())
                .threadPoolSize(StoreWriteBehindResource.THREAD_POOL_SIZE.resolveModelAttribute(context, writeBehind).asInt())
          ;
       }
@@ -933,47 +944,27 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       }
    }
 
-   private AbstractJdbcStoreConfigurationBuilder<?, ?> buildJdbcStore(PersistenceConfigurationBuilder loadersBuilder, OperationContext context, ModelNode store, DatabaseType databaseType) throws OperationFailedException {
-        boolean useStringKeyedTable = store.hasDefined(ModelKeys.STRING_KEYED_TABLE);
-        boolean useBinaryKeyedTable = store.hasDefined(ModelKeys.BINARY_KEYED_TABLE);
-        if (useStringKeyedTable && !useBinaryKeyedTable) {
-            JdbcStringBasedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-            builder.dialect(databaseType);
-            this.buildStringKeyedTable(builder.table(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
-            return builder;
-        } else if (useBinaryKeyedTable && !useStringKeyedTable) {
-            JdbcBinaryStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcBinaryStoreConfigurationBuilder.class);
-            builder.dialect(databaseType);
-            this.buildBinaryKeyedTable(builder.table(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
-            return builder;
-        }
-        // Else, use mixed mode
-        JdbcMixedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcMixedStoreConfigurationBuilder.class);
+    private AbstractJdbcStoreConfigurationBuilder<?, ?> buildJdbcStore(PersistenceConfigurationBuilder loadersBuilder, OperationContext context, ModelNode store, DatabaseType databaseType) throws OperationFailedException {
+        JdbcStringBasedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcStringBasedStoreConfigurationBuilder.class);
         builder.dialect(databaseType);
-        this.buildStringKeyedTable(builder.stringTable(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
-        this.buildBinaryKeyedTable(builder.binaryTable(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
+        buildDbVersions(builder, context, store);
+        this.buildStringKeyedTable(builder.table(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
         return builder;
     }
 
-    private void buildBinaryKeyedTable(TableManipulationConfigurationBuilder<?, ?> builder, OperationContext context, ModelNode table) throws OperationFailedException {
-        this.buildTable(builder, context, table, "ispn_bucket");
-    }
-
     private void buildStringKeyedTable(TableManipulationConfigurationBuilder<?, ?> builder, OperationContext context, ModelNode table) throws OperationFailedException {
-        this.buildTable(builder, context, table, "ispn_entry");
-    }
-
-    private void buildTable(TableManipulationConfigurationBuilder<?, ?> builder, OperationContext context, ModelNode table, String defaultTableNamePrefix) throws OperationFailedException {
+        String defaultTableNamePrefix = BaseJDBCStoreConfigurationResource.STRING_KEYED_TABLE_PREFIX.getDefaultValue().asString();
         ModelNode tableNamePrefix = BaseJDBCStoreConfigurationResource.PREFIX.resolveModelAttribute(context, table);
+
         builder.batchSize(BaseJDBCStoreConfigurationResource.BATCH_SIZE.resolveModelAttribute(context, table).asInt())
-                .fetchSize(BaseJDBCStoreConfigurationResource.FETCH_SIZE.resolveModelAttribute(context, table).asInt())
-                .tableNamePrefix(tableNamePrefix.isDefined() ? tableNamePrefix.asString() : defaultTableNamePrefix)
-                .idColumnName(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "id"))
-                .idColumnType(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "VARCHAR"))
-                .dataColumnName(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "datum"))
-                .dataColumnType(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BINARY"))
-                .timestampColumnName(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "version"))
-                .timestampColumnType(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BIGINT"));
+              .fetchSize(BaseJDBCStoreConfigurationResource.FETCH_SIZE.resolveModelAttribute(context, table).asInt())
+              .tableNamePrefix(tableNamePrefix.isDefined() ? tableNamePrefix.asString() : defaultTableNamePrefix)
+              .idColumnName(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "id"))
+              .idColumnType(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "VARCHAR"))
+              .dataColumnName(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "datum"))
+              .dataColumnType(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BINARY"))
+              .timestampColumnName(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "version"))
+              .timestampColumnType(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BIGINT"));
     }
 
     private String getColumnProperty(OperationContext context, ModelNode table, String columnKey, AttributeDefinition columnAttribute, String defaultValue) throws OperationFailedException

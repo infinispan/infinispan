@@ -4,5 +4,5 @@ public interface PersistenceConfigurationChildBuilder extends ConfigurationChild
 
    @Override
    PersistenceConfigurationBuilder persistence();
-   
+
 }

@@ -1,5 +1,11 @@
 package org.infinispan.statetransfer;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Arrays;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,11 +18,6 @@ import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import java.util.Arrays;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.OrphanTransactionsCleanupTest")
 public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {

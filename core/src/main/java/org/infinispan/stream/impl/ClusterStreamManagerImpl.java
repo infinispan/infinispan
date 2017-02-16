@@ -1,18 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.CacheException;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,6 +15,19 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.CacheException;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Cluster stream manager that sends all requests using the {@link RpcManager} to do the underlying communications.

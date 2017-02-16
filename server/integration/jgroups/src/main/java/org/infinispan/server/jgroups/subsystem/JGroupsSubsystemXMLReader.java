@@ -30,6 +30,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
 import org.jboss.dmr.ModelNode;
@@ -301,11 +302,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case OOB_EXECUTOR: {
-                    TransportResourceDefinition.OOB_EXECUTOR.parseAndSetParameter(value, operation, reader);
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        ControllerLogger.DEPRECATED_LOGGER.warnf("OOB thread pool settings are ignored.");
+                    }
                     break;
                 }
                 case TIMER_EXECUTOR: {
-                    TransportResourceDefinition.TIMER_EXECUTOR.parseAndSetParameter(value, operation, reader);
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        ControllerLogger.DEPRECATED_LOGGER.warnf("Timer thread pool settings are ignored.");
+                    }
                     break;
                 }
                 case THREAD_FACTORY: {
@@ -392,13 +401,28 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 parseThreadPool(ThreadPoolResourceDefinition.DEFAULT, reader, address, operations);
                 break;
             case INTERNAL_THREAD_POOL:
-                parseThreadPool(ThreadPoolResourceDefinition.INTERNAL, reader, address, operations);
+                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                    throw ParseUtils.unexpectedElement(reader);
+                } else {
+                    ControllerLogger.DEPRECATED_LOGGER.warnf("Internal thread pool settings are ignored.");
+                    ParseUtils.requireNoContent(reader);
+                }
                 break;
             case OOB_THREAD_POOL:
-                parseThreadPool(ThreadPoolResourceDefinition.OOB, reader, address, operations);
+                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                    throw ParseUtils.unexpectedElement(reader);
+                } else {
+                    ControllerLogger.DEPRECATED_LOGGER.warnf("OOB thread pool settings are ignored.");
+                    ParseUtils.requireNoContent(reader);
+                }
                 break;
             case TIMER_THREAD_POOL:
-                parseThreadPool(ThreadPoolResourceDefinition.TIMER, reader, address, operations);
+                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                    throw ParseUtils.unexpectedElement(reader);
+                } else {
+                    ControllerLogger.DEPRECATED_LOGGER.warnf("Timer thread pool settings are ignored.");
+                    ParseUtils.requireNoContent(reader);
+                }
                 break;
             default: {
                 throw ParseUtils.unexpectedElement(reader);

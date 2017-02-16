@@ -4,15 +4,15 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Anyone using the {@link org.infinispan.AdvancedCache#addInterceptor(CommandInterceptor, int)} method (or any of its
- * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
+ * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own
  * custom interceptors.
  * <p />
- * As of Infinispan 5.1, annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop} 
+ * As of Infinispan 5.1, annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop}
  * will not be respected and callbacks will not be made.
  * <p />
  * Instead, custom interceptor authors should extend this base class to gain access to {@link Cache} and {@link EmbeddedCacheManager},
@@ -20,7 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * and {@link #stop()} as defined in this class.
  *
  * @author Manik Surtani
- * @deprecated Since 9.0, use {@link BaseCustomSequentialInterceptor} instead.
+ * @deprecated Since 9.0, use {@link BaseCustomAsyncInterceptor} instead.
  */
 @Deprecated
 public class BaseCustomInterceptor extends CommandInterceptor {

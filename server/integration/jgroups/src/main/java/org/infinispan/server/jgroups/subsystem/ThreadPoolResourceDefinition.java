@@ -59,10 +59,22 @@ import org.jboss.dmr.ModelType;
  */
 public enum ThreadPoolResourceDefinition implements ResourceDefinition {
 
-    DEFAULT(ModelKeys.DEFAULT, 2, 30, 0, 60L),
-    OOB(ModelKeys.OOB, 20, 200, 0, 60L),
-    INTERNAL(ModelKeys.INTERNAL, 5, 20, 500, 60L),
-    TIMER(ModelKeys.TIMER, 2, 4, 500, 5L),
+    DEFAULT(ModelKeys.DEFAULT, 0, 200, 0, 60000L),
+    /**
+     *  @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
+    OOB(ModelKeys.OOB, 20, 200, 0, 60000L),
+    /**
+     * @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
+    INTERNAL(ModelKeys.INTERNAL, 5, 20, 500, 60000L),
+    /**
+     * @deprecated Ignored since 9.0/JGroups 4.0
+     */
+    @Deprecated
+    TIMER(ModelKeys.TIMER, 2, 4, 500, 5000L),
     ;
 
     static final PathElement WILDCARD_PATH = pathElement(PathElement.WILDCARD_VALUE);

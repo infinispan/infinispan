@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,23 +11,28 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.cfg.spi.SearchConfigurationBase;
-import org.hibernate.search.engine.spi.SearchMappingHelper;
 import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
-import org.infinispan.hibernate.search.spi.CacheManagerService;
+import org.hibernate.search.engine.spi.SearchMappingHelper;
+import org.hibernate.search.exception.ErrorHandler;
+import org.hibernate.search.spi.ErrorHandlerFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.affinity.AffinityErrorHandler;
+import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
-import org.infinispan.query.affinity.ShardIndexManager;
-
-import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query, there
+ * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query,
+ * there
  * is
  * no need for a Hibernate Core configuration object.
  *
@@ -36,12 +43,15 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
    private static final String HSEARCH_PREFIX = "hibernate.search.";
    private static final String SHARDING_STRATEGY = "sharding_strategy";
+   private static final Log log = LogFactory.getLog(SearchableCacheConfiguration.class, Log.class);
+
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
    private final SearchMapping searchMapping;
    private final Map<Class<? extends Service>, Object> providedServices;
    private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
+   private boolean hasAffinity;
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
@@ -51,11 +61,16 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
          this.properties = augment(properties);
       }
 
-      classes = new HashMap<String, Class<?>>();
+      classes = new HashMap<>();
 
       for (Class<?> c : classArray) {
          String classname = c.getName();
          classes.put(classname, c);
+      }
+
+      if (hasAffinity) {
+         ErrorHandler configuredErrorHandler = ErrorHandlerFactory.createErrorHandler(this);
+         this.properties.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(configuredErrorHandler));
       }
 
       //deal with programmatic mapping:
@@ -63,7 +78,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
       //if we have a SearchMapping then we can predict at least those entities specified in the mapping
       //and avoid further SearchFactory rebuilds triggered by new entity discovery during cache events
-      if ( searchMapping != null ) {
+      if (searchMapping != null) {
          Set<Class<?>> mappedEntities = searchMapping.getMappedEntities();
          for (Class<?> entity : mappedEntities) {
             classes.put(entity.getName(), entity);
@@ -130,7 +145,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       return true;
    }
 
-   private static Properties augment(Properties origin) {
+   private Properties augment(Properties origin) {
       Properties target = new Properties();
       for (Entry<Object, Object> entry : origin.entrySet()) {
          Object key = entry.getKey();
@@ -138,8 +153,9 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
             key = HSEARCH_PREFIX + key.toString();
          }
          target.put(key, entry.getValue());
-         if (key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(ShardIndexManager.class.getName())) {
+         if (key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(AffinityIndexManager.class.getName())) {
             target.put(key.toString().replace(INDEX_MANAGER_IMPL_NAME, SHARDING_STRATEGY), AffinityShardIdentifierProvider.class.getName());
+            hasAffinity = true;
          }
       }
       return target;

@@ -1,13 +1,13 @@
 package org.infinispan.interceptors;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
@@ -15,16 +15,16 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @since 4.0
- * @deprecated Since 9.0, use {@link SequentialInterceptorChain} instead. Some methods will ignore the
+ * @deprecated Since 9.0, use {@link AsyncInterceptorChain} instead. Some methods will ignore the
  * interceptors that do not extend {@link CommandInterceptor}.
  */
 @Scope(Scopes.NAMED_CACHE)
 @Deprecated
 public class InterceptorChain {
-   private SequentialInterceptorChain sequentialInterceptorChain;
+   private AsyncInterceptorChain asyncInterceptorChain;
 
-   public InterceptorChain(SequentialInterceptorChain sequentialInterceptorChain) {
-      this.sequentialInterceptorChain = sequentialInterceptorChain;
+   public InterceptorChain(AsyncInterceptorChain asyncInterceptorChain) {
+      this.asyncInterceptorChain = asyncInterceptorChain;
    }
 
    /**
@@ -34,7 +34,7 @@ public class InterceptorChain {
     *                                  chain)
     */
    public void addInterceptor(CommandInterceptor interceptor, int position) {
-      sequentialInterceptorChain.addInterceptor(interceptor, position);
+      asyncInterceptorChain.addInterceptor(interceptor, position);
    }
 
    /**
@@ -44,14 +44,14 @@ public class InterceptorChain {
     *                                  chain)
     */
    public void removeInterceptor(int position) {
-      sequentialInterceptorChain.removeInterceptor(position);
+      asyncInterceptorChain.removeInterceptor(position);
    }
 
    /**
     * Returns the number of interceptors in the chain.
     */
    public int size() {
-      return sequentialInterceptorChain.size();
+      return asyncInterceptorChain.size();
    }
 
    /**
@@ -60,8 +60,8 @@ public class InterceptorChain {
     */
    public List<CommandInterceptor> asList() {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
+            new ArrayList<>(asyncInterceptorChain.getInterceptors().size());
+      asyncInterceptorChain.getInterceptors().forEach(ci -> {
          if (ci instanceof CommandInterceptor) {
             list.add((CommandInterceptor) ci);
          }
@@ -73,7 +73,7 @@ public class InterceptorChain {
     * Removes all the occurences of supplied interceptor type from the chain.
     */
    public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
-      sequentialInterceptorChain.removeInterceptor(clazz);
+      asyncInterceptorChain.removeInterceptor(clazz);
    }
 
    /**
@@ -83,7 +83,7 @@ public class InterceptorChain {
     */
    public boolean addInterceptorAfter(CommandInterceptor toAdd,
                                       Class<? extends CommandInterceptor> afterInterceptor) {
-      return sequentialInterceptorChain.addInterceptorAfter(toAdd, afterInterceptor);
+      return asyncInterceptorChain.addInterceptorAfter(toAdd, afterInterceptor);
    }
 
    /**
@@ -93,7 +93,7 @@ public class InterceptorChain {
    public boolean addInterceptorBefore(CommandInterceptor toAdd,
                                        Class<? extends CommandInterceptor> beforeInterceptor,
                                        boolean isCustom) {
-      return sequentialInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
+      return asyncInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
    /**
@@ -103,7 +103,7 @@ public class InterceptorChain {
     */
    public boolean addInterceptorBefore(CommandInterceptor toAdd,
                                        Class<? extends CommandInterceptor> beforeInterceptor) {
-      return sequentialInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
+      return asyncInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
    /**
@@ -115,35 +115,35 @@ public class InterceptorChain {
     */
    public boolean replaceInterceptor(CommandInterceptor replacingInterceptor,
                                      Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
-      return sequentialInterceptorChain.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
+      return asyncInterceptorChain.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }
 
    /**
     * Appends at the end.
     */
    public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
-      sequentialInterceptorChain.appendInterceptor(ci, isCustom);
+      asyncInterceptorChain.appendInterceptor(ci, isCustom);
    }
 
    /**
     * Walks the command through the interceptor chain. The received ctx is being passed in.
     *
     * <p>Note: Reusing the context for multiple invocations is allowed. However, the two invocations
-    * must not overlap, so calling {@link #invoke(InvocationContext, VisitableCommand)} from an interceptor
-    * is not allowed. If an interceptor wants to invoke a new command, it must first copy the invocation
-    * context with {@link InvocationContext#clone()}.</p>
+    * must not overlap, so calling {@code invoke(ctx, command)} from an interceptor is not allowed.
+    * If an interceptor needs to invoke a new command through the entire chain, it must first
+    * copy the invocation context with {@link InvocationContext#clone()}.</p>
     */
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
-      return sequentialInterceptorChain.invoke(ctx, command);
+      return asyncInterceptorChain.invoke(ctx, command);
    }
 
    /**
     * @return the first {@code CommandInterceptor} in the chain.
-    * Since 9.0, there will likely be other {@link SequentialInterceptor}s before it.
+    * Since 9.0, there will likely be other {@link AsyncInterceptor}s before it.
     */
    @Deprecated
    public CommandInterceptor getFirstInChain() {
-      return (CommandInterceptor) sequentialInterceptorChain
+      return asyncInterceptorChain
             .findInterceptorExtending(CommandInterceptor.class);
    }
 
@@ -162,8 +162,8 @@ public class InterceptorChain {
    public List<CommandInterceptor> getInterceptorsWhichExtend(
          Class<? extends CommandInterceptor> interceptorClass) {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
+            new ArrayList<>(asyncInterceptorChain.getInterceptors().size());
+      asyncInterceptorChain.getInterceptors().forEach(ci -> {
          if (interceptorClass.isInstance(ci)) {
             list.add((CommandInterceptor) ci);
          }
@@ -177,8 +177,8 @@ public class InterceptorChain {
     */
    public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
+            new ArrayList<>(asyncInterceptorChain.getInterceptors().size());
+      asyncInterceptorChain.getInterceptors().forEach(ci -> {
          if (clazz == ci.getClass()) {
             list.add((CommandInterceptor) ci);
          }
@@ -190,15 +190,15 @@ public class InterceptorChain {
     * Checks whether the chain contains the supplied interceptor instance.
     */
    public boolean containsInstance(CommandInterceptor interceptor) {
-      return sequentialInterceptorChain.containsInstance(interceptor);
+      return asyncInterceptorChain.containsInstance(interceptor);
    }
 
    public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
-      return sequentialInterceptorChain.containsInterceptorType(interceptorType);
+      return asyncInterceptorChain.containsInterceptorType(interceptorType);
    }
 
    public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
-      return sequentialInterceptorChain.containsInterceptorType(interceptorType, alsoMatchSubClasses);
+      return asyncInterceptorChain.containsInterceptorType(interceptorType, alsoMatchSubClasses);
    }
 }

@@ -1,8 +1,17 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.ComponentRegistry;
@@ -16,12 +25,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * This DistributedCallable is used to install a {@link RemoteClusterListener} on the resulting node.  This class
@@ -47,14 +50,19 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    private final CacheEventConverter<K, V, ?> converter;
    private final Address origin;
    private final boolean sync;
+   private final Set<Class<? extends Annotation>> filterAnnotations;
 
    public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
-                                           CacheEventConverter<K, V, ?> converter, boolean sync) {
+                                           CacheEventConverter<K, V, ?> converter, boolean sync,
+                                           Set<Class<? extends Annotation>> filterAnnotations) {
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
       this.converter = converter;
       this.sync = sync;
+      this.filterAnnotations = filterAnnotations;
+      if (trace)
+         log.tracef("Created clustered listener replicate callable for: %s", filterAnnotations);
    }
 
    @Override
@@ -96,7 +104,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
                                                                              cacheManagerNotifier, eventManager, sync);
-                  cacheNotifier.addListener(listener, filter, converter);
+                  cacheNotifier.addFilteredListener(listener, filter, converter, filterAnnotations);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
                   if (!cacheManager.getMembers().contains(origin)) {
@@ -127,7 +135,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    public static class Externalizer extends AbstractExternalizer<ClusterListenerReplicateCallable> {
       @Override
       public Set<Class<? extends ClusterListenerReplicateCallable>> getTypeClasses() {
-         return Util.<Class<? extends ClusterListenerReplicateCallable>>asSet(ClusterListenerReplicateCallable.class);
+         return Collections.singleton(ClusterListenerReplicateCallable.class);
       }
 
       @Override
@@ -142,6 +150,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
             output.writeObject(object.converter);
          }
          output.writeBoolean(object.sync);
+         MarshallUtil.marshallCollection(object.filterAnnotations, output);
       }
 
       @Override
@@ -157,7 +166,8 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
             converter = (CacheEventConverter)input.readObject();
          }
          boolean sync = input.readBoolean();
-         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync);
+         Set<Class<? extends Annotation>> listenerAnnots = MarshallUtil.unmarshallCollection(input, HashSet::new);
+         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots);
       }
 
       @Override

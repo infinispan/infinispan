@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,10 +16,8 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.store.ShardIdentifierProvider;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -28,10 +25,12 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -39,11 +38,9 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.query.Transformer;
-import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -63,7 +60,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 4.0
  */
-public final class QueryInterceptor extends DDSequentialInterceptor {
+public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
@@ -82,6 +79,7 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
    private DistributionManager distributionManager;
    private RpcManager rpcManager;
    protected ExecutorService asyncExecutor;
+   protected TypeConverter typeConverter;
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
 
@@ -106,7 +104,8 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
                                      DistributionManager distributionManager,
                                      RpcManager rpcManager,
                                      DataContainer dataContainer,
-                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+                                     TypeConverter typeConverter) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.distributionManager = distributionManager;
@@ -117,6 +116,7 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
       this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
       this.queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
       this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.queryKnownClasses, new TransactionHelper(transactionManager));
+      this.typeConverter = typeConverter;
    }
 
    @Start
@@ -140,8 +140,8 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
       stopping.set(true);
    }
 
-   protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
-      return indexingMode.shouldModifyIndexes(command, ctx);
+   protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key) {
+      return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
    }
 
    /**
@@ -152,40 +152,36 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object toReturn = ctx.forkInvocationSync(command);
-      processPutKeyValueCommand(command, ctx, toReturn, null);
-      return ctx.shortCircuit(toReturn);
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+         throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processPutKeyValueCommand(((PutKeyValueCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       // remove the object out of the cache first.
-      Object valueRemoved = ctx.forkInvocationSync(command);
-      processRemoveCommand(command, ctx, valueRemoved, null);
-      return ctx.shortCircuit(valueRemoved);
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processRemoveCommand(((RemoveCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object valueReplaced = ctx.forkInvocationSync(command);
-      processReplaceCommand(command, ctx, valueReplaced, null);
-      return ctx.shortCircuit(valueReplaced);
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processReplaceCommand(((ReplaceCommand) rCommand), rCtx, rv, null));
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map<Object, Object> previousValues = (Map<Object, Object>) ctx.forkInvocationSync(command);
-      processPutMapCommand(command, ctx, previousValues, null);
-      return ctx.shortCircuit(previousValues);
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      command.setFlagsBitSet(EnumUtil.diffBitSets(command.getFlagsBitSet(), FlagBitSets.IGNORE_RETURN_VALUES));
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         Map<Object, Object> previousValues = (Map<Object, Object>) rv;
+         processPutMapCommand(((PutMapCommand) rCommand), rCtx, previousValues, null);
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(final InvocationContext ctx, final ClearCommand command) throws Throwable {
+   public Object visitClearCommand(final InvocationContext ctx, final ClearCommand command)
+         throws Throwable {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
-      Object returnValue = ctx.forkInvocationSync(command);
-      processClearCommand(command, ctx, null);
-      return ctx.shortCircuit(returnValue);
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processClearCommand(((ClearCommand) rCommand), rCtx, null));
    }
 
    /**
@@ -224,20 +220,16 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
       performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
    }
 
-   private boolean isPrimaryOwner(Object key) {
-      return distributionManager == null || distributionManager.getPrimaryLocation(key).equals(rpcManager.getAddress());
-   }
 
-   protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key, final TransactionContext transactionContext) {
+   protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key,
+         final TransactionContext transactionContext) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
-      ShardIdentifierProvider shardIdentifierProvider = searchFactory.getIndexBinding(value.getClass()).getShardIdentifierProvider();
-      if (shardIdentifierProvider == null || !(shardIdentifierProvider instanceof AffinityShardIdentifierProvider) || isPrimaryOwner(key)) {
-         performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
-      }
+      performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
    }
 
-   private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
+   private void performSearchWork(Object value, Serializable id, WorkType workType,
+         TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
       Collection<Work> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
       performSearchWorks(works, transactionContext);
@@ -255,9 +247,9 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (wrappedValue instanceof MarshalledValue)
-         return ((MarshalledValue) wrappedValue).get();
-      else
+      if (typeConverter != null) {
+         return typeConverter.unboxValue(wrappedValue);
+      }
          return wrappedValue;
    }
 
@@ -274,7 +266,7 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
    }
 
    private String keyToString(Object key) {
-      return keyTransformationHandler.keyToString(key);
+      return keyTransformationHandler.keyToString(extractValue(key));
    }
 
    public KeyTransformationHandler getKeyTransformationHandler() {
@@ -305,7 +297,7 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
     * as a transaction sync.
     */
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final WriteCommand[] writeCommands = command.getModifications();
       final Object[] stateBeforePrepare = new Object[writeCommands.length];
 
@@ -325,30 +317,34 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
          }
       }
 
-      final Object toReturn = ctx.forkInvocationSync(command);
-
-      if (ctx.isTransactionValid()) {
-         final TransactionContext transactionContext = makeTransactionalEventContext();
-         for (int i = 0; i < writeCommands.length; i++) {
-            final WriteCommand writeCommand = writeCommands[i];
-            if (writeCommand instanceof PutKeyValueCommand) {
-               processPutKeyValueCommand((PutKeyValueCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof PutMapCommand) {
-               processPutMapCommand((PutMapCommand) writeCommand, ctx, (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof RemoveCommand) {
-               processRemoveCommand((RemoveCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof ReplaceCommand) {
-               processReplaceCommand((ReplaceCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof ClearCommand) {
-               processClearCommand((ClearCommand) writeCommand, ctx, transactionContext);
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+         if (txInvocationContext.isTransactionValid()) {
+            final TransactionContext transactionContext = makeTransactionalEventContext();
+            for (int i = 0; i < writeCommands.length; i++) {
+               final WriteCommand writeCommand = writeCommands[i];
+               if (writeCommand instanceof PutKeyValueCommand) {
+                  processPutKeyValueCommand((PutKeyValueCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                        transactionContext);
+               } else if (writeCommand instanceof PutMapCommand) {
+                  processPutMapCommand((PutMapCommand) writeCommand, txInvocationContext,
+                        (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
+               } else if (writeCommand instanceof RemoveCommand) {
+                  processRemoveCommand((RemoveCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                        transactionContext);
+               } else if (writeCommand instanceof ReplaceCommand) {
+                  processReplaceCommand((ReplaceCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                        transactionContext);
+               } else if (writeCommand instanceof ClearCommand) {
+                  processClearCommand((ClearCommand) writeCommand, txInvocationContext, transactionContext);
+               }
             }
          }
-      }
-      return ctx.shortCircuit(toReturn);
+      });
    }
 
    private Map<Object, Object> getPreviousValues(Set<Object> keySet) {
-      HashMap<Object, Object> previousValues = new HashMap<>();
+      Map<Object, Object> previousValues = new HashMap<>();
       for (Object key : keySet) {
          InternalCacheEntry internalCacheEntry = dataContainer.get(key);
          Object previousValue = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
@@ -366,23 +362,25 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
-      if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
-         final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
-         Object p2 = extractValue(command.getNewValue());
-         final boolean newValueIsIndexed = updateKnownTypesIfNeeded(p2);
+      if (valueReplaced != null && command.isSuccessful()) {
          Object key = extractValue(command.getKey());
+         if (shouldModifyIndexes(command, ctx, key)) {
+            final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
+            Object p2 = extractValue(command.getNewValue());
+            final boolean newValueIsIndexed = updateKnownTypesIfNeeded(p2);
 
-         if (!usingSkipIndexCleanupFlag) {
-            final Object p1 = extractValue(command.getOldValue());
-            final boolean originalIsIndexed = updateKnownTypesIfNeeded(p1);
-            if (p1 != null && originalIsIndexed) {
-               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               removeFromIndexes(p1, key, transactionContext);
+            if (!usingSkipIndexCleanupFlag) {
+               final Object p1 = extractValue(command.getOldValue());
+               final boolean originalIsIndexed = updateKnownTypesIfNeeded(p1);
+               if (p1 != null && originalIsIndexed) {
+                  transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+                  removeFromIndexes(p1, key, transactionContext);
+               }
             }
-         }
-         if (newValueIsIndexed) {
-            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
+            if (newValueIsIndexed) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
+            }
          }
       }
    }
@@ -396,11 +394,14 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processRemoveCommand(final RemoveCommand command, final InvocationContext ctx, final Object valueRemoved, TransactionContext transactionContext) {
-      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command, ctx)) {
-         final Object value = extractValue(valueRemoved);
-         if (updateKnownTypesIfNeeded(value)) {
-            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            removeFromIndexes(value, extractValue(command.getKey()), transactionContext);
+      if (command.isSuccessful() && !command.isNonExistent()) {
+         Object key = extractValue(command.getKey());
+         if (shouldModifyIndexes(command, ctx, key)) {
+            final Object value = extractValue(valueRemoved);
+            if (updateKnownTypesIfNeeded(value)) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               removeFromIndexes(value, key, transactionContext);
+            }
          }
       }
    }
@@ -414,20 +415,22 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
-      if (shouldModifyIndexes(command, ctx)) {
-         Map<Object, Object> dataMap = command.getMap();
-         final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
-         // Loop through all the keys and put those key-value pairings into lucene.
-         for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
-            final Object key = extractValue(entry.getKey());
-            final Object value = extractValue(entry.getValue());
-            final Object previousValue = previousValues.get(key);
-            if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
-               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      Map<Object, Object> dataMap = command.getMap();
+      final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
+      // Loop through all the keys and put those key-value pairings into lucene.
+      for (Map.Entry<Object, Object> entry : previousValues.entrySet()) {
+         final Object key = extractValue(entry.getKey());
+         final Object value = extractValue(dataMap.get(key));
+         final Object previousValue = entry.getValue();
+         if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            if (shouldModifyIndexes(command, ctx, key)) {
                removeFromIndexes(previousValue, key, transactionContext);
             }
-            if (updateKnownTypesIfNeeded(value)) {
-               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+         }
+         if (updateKnownTypesIfNeeded(value)) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            if (shouldModifyIndexes(command, ctx, key)) {
                updateIndexes(usingSkipIndexCleanupFlag, value, key, transactionContext);
             }
          }
@@ -446,17 +449,18 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
       Object value = extractValue(command.getValue());
+      Object key = command.getKey();
       if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value, previousValue)) {
-         if (shouldModifyIndexes(command, ctx)) {
+         if (shouldModifyIndexes(command, ctx, key)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
+            removeFromIndexes(previousValue, extractValue(key), transactionContext);
          }
       }
       if (updateKnownTypesIfNeeded(value)) {
-         if (shouldModifyIndexes(command, ctx)) {
+         if (shouldModifyIndexes(command, ctx, key)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(usingSkipIndexCleanupFlag, value, extractValue(command.getKey()), transactionContext);
+            updateIndexes(usingSkipIndexCleanupFlag, value, extractValue(key), transactionContext);
          }
       }
    }
@@ -478,7 +482,7 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
     * @param transactionContext Optional for lazy initialization, or to reuse an existing transactional context.
     */
    private void processClearCommand(final ClearCommand command, final InvocationContext ctx, TransactionContext transactionContext) {
-      if (shouldModifyIndexes(command, ctx)) {
+      if (shouldModifyIndexes(command, ctx, null)) {
          purgeAllIndexes(transactionContext);
       }
    }
@@ -487,8 +491,8 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
       return new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
    }
 
-   private boolean usingSkipIndexCleanup(final LocalFlagAffectedCommand command) {
-      return command != null && command.hasFlag(Flag.SKIP_INDEX_CLEANUP);
+   private boolean usingSkipIndexCleanup(final FlagAffectedCommand command) {
+      return command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
    }
 
    public IndexModificationStrategy getIndexModificationMode() {

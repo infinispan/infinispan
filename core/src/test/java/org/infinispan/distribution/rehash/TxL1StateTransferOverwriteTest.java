@@ -11,7 +11,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.rehash.TxL1StateTransferOverwriteTest")
 public class TxL1StateTransferOverwriteTest extends BaseTxStateTransferOverwriteTest {
    public TxL1StateTransferOverwriteTest() {
-      super();
       l1CacheEnabled = true;
    }
 }

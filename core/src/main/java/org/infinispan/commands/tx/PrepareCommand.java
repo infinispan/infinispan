@@ -1,27 +1,6 @@
 package org.infinispan.commands.tx;
 
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -32,8 +11,31 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Command corresponding to the 1st phase of 2PC.
@@ -45,7 +47,7 @@ import static org.infinispan.commons.util.InfinispanCollections.forEach;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-   private boolean trace = log.isTraceEnabled();
+   private static boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;
 
@@ -86,19 +88,16 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public Object perform(InvocationContext ignored) throws Throwable {
-      if (ignored != null)
-         throw new IllegalStateException("Expected null context!");
-
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       RemoteTxInvocationContext ctx = createContext();
       if (ctx == null) {
-         return null;
+         return CompletableFutures.completedNull();
       }
 
       if (trace)
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
-      return invoker.invoke(ctx, this);
+      return invoker.invokeAsync(ctx, this);
    }
 
    @Override
@@ -121,13 +120,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       if (modifications == null || modifications.length == 0) {
          return Collections.emptyList();
       }
       final Set<Object> set = new HashSet<>(modifications.length);
       forEach(modifications, writeCommand -> {
-         if (writeCommand.hasFlag(Flag.SKIP_LOCKING)) {
+         if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
             return;
          }
          switch (writeCommand.getCommandId()) {
@@ -227,7 +226,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       return modifications != null && modifications.length > 0;
    }
 
-   public Set<Object> getAffectedKeys() {
+   public Collection<?> getAffectedKeys() {
       if (modifications == null || modifications.length == 0)
          return Collections.emptySet();
 

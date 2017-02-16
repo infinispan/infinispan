@@ -1,5 +1,9 @@
 package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Set;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
@@ -9,12 +13,9 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -159,7 +160,7 @@ public class UserHS extends UserBase {
 /**
  * Parent class for UserHS to demonstrate inheritance of indexed attributes.
  */
-abstract class UserBase implements User, Serializable {
+abstract class UserBase implements User, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

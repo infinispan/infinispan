@@ -1,5 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.SitesConfiguration.DISABLE_BACKUPS;
+import static org.infinispan.configuration.cache.SitesConfiguration.IN_USE_BACKUP_SITES;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,8 +12,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-
-import static org.infinispan.configuration.cache.SitesConfiguration.*;
 
 /**
  * @author Mircea.Markus@jboss.com

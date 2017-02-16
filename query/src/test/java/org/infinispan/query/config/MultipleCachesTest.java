@@ -1,6 +1,6 @@
 package org.infinispan.query.config;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -60,13 +60,14 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void queryNotIndexedCache() throws ParseException {
+      cacheManager.defineConfiguration("notIndexedA", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedA");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Object> l =  cq.list();
+      List<Person> l =  cq.list();
       assertEquals(1, l.size());
-      Person p = (Person) l.get(0);
+      Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
       assertEquals("A paragraph containing some text", p.getBlurb());
       assertEquals(75, p.getAge());
@@ -74,6 +75,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Test
    public void notIndexedCacheNormalUse() {
+      cacheManager.defineConfiguration("notIndexedB", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedB");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       assert notIndexedCache.get("1") != null;
@@ -87,9 +89,9 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    private void useQuery(Cache<Object, Object> indexedCache) throws ParseException {
       indexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery cq = TestQueryHelperFactory.createCacheQuery(indexedCache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(indexedCache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Object> l =  cq.list();
+      List<Person> l =  cq.list();
       assertEquals(1, l.size());
       Person p = (Person) l.get(0);
       assertEquals("A Person's Name", p.getName());

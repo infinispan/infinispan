@@ -1,20 +1,24 @@
 package org.infinispan.statetransfer;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * This command is used by a StateConsumer to request transactions and cache entries from a StateProvider.
@@ -66,26 +70,27 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
          switch (type) {
             case GET_TRANSACTIONS:
-               return stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
+               List<TransactionInfo> transactions =
+                     stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
+               return CompletableFuture.completedFuture(transactions);
 
             case START_STATE_TRANSFER:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments);
-               // return a non-null value to ensure it will reach back to originator wrapped in a SuccessfulResponse (a null would not be sent back)
-               return true;
+               return CompletableFutures.completedNull();
 
             case CANCEL_STATE_TRANSFER:
                stateProvider.cancelOutboundTransfer(getOrigin(), topologyId, segments);
-               // originator does not care about the result, so we can return null
-               return null;
+               return CompletableFutures.completedNull();
 
             case GET_CACHE_LISTENERS:
-               return stateProvider.getClusterListenersToInstall();
+               Collection<DistributedCallable> listeners = stateProvider.getClusterListenersToInstall();
+               return CompletableFuture.completedFuture(listeners);
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }
@@ -109,6 +114,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       return type;
    }
 
+   @Override
    public int getTopologyId() {
       return topologyId;
    }
@@ -153,6 +159,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case START_STATE_TRANSFER:
             setOrigin((Address) input.readObject());
             segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+            return;
          case GET_CACHE_LISTENERS:
             return;
          default:

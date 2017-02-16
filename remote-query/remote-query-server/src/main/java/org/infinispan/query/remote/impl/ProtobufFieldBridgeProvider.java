@@ -5,9 +5,10 @@ import org.hibernate.search.bridge.builtin.BooleanBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
-import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
+import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
+import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
+import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
@@ -18,31 +19,33 @@ import org.infinispan.query.remote.impl.logging.Log;
  * @author anistor@redhat.com
  * @since 9.0
  */
-final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeProvider {
+final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeProvider<Descriptor> {
 
    private static final Log log = LogFactory.getLog(ProtobufFieldBridgeProvider.class, Log.class);
 
-   private static final FieldBridge DOUBLE_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final ToStringNullMarker NULL_MARKER = new ToStringNullMarker(QueryFacadeImpl.NULL_TOKEN);
 
-   private static final FieldBridge FLOAT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final LuceneStringNullMarkerCodec luceneStringNullMarkerCodec = new LuceneStringNullMarkerCodec(NULL_MARKER);
 
-   private static final FieldBridge LONG_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final FieldBridge DOUBLE_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, luceneStringNullMarkerCodec);
 
-   private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final FieldBridge FLOAT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, luceneStringNullMarkerCodec);
 
-   private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final FieldBridge LONG_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, luceneStringNullMarkerCodec);
 
-   private static final FieldBridge BOOL_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), QueryFacadeImpl.NULL_TOKEN_CODEC);
+   private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, luceneStringNullMarkerCodec);
 
-   private final SerializationContext serializationContext;
+   private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), luceneStringNullMarkerCodec);
 
-   ProtobufFieldBridgeProvider(SerializationContext serializationContext) {
-      this.serializationContext = serializationContext;
+   private static final FieldBridge BOOL_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), luceneStringNullMarkerCodec);
+
+   ProtobufFieldBridgeProvider() {
    }
 
    @Override
-   public FieldBridge getFieldBridge(String typeName, String[] propertyPath) {
-      FieldDescriptor fd = getFieldDescriptor(typeName, propertyPath);
+   public FieldBridge getFieldBridge(Descriptor typeMetadata, String[] propertyPath) {
+
+      FieldDescriptor fd = getFieldDescriptor(typeMetadata, propertyPath);
       switch (fd.getType()) {
          case DOUBLE:
             return DOUBLE_FIELD_BRIDGE;
@@ -72,8 +75,8 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
       return null;
    }
 
-   private FieldDescriptor getFieldDescriptor(String typeName, String[] propertyPath) {
-      Descriptor messageDescriptor = serializationContext.getMessageDescriptor(typeName);
+   private FieldDescriptor getFieldDescriptor(Descriptor typeMetadata, String[] propertyPath) {
+      Descriptor messageDescriptor = typeMetadata;
       FieldDescriptor fd = null;
       for (int i = 0; i < propertyPath.length; i++) {
          String name = propertyPath[i];
@@ -82,7 +85,7 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
             throw log.unknownField(name, messageDescriptor.getFullName());
          }
          IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+         if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getName())) {
             throw log.fieldIsNotIndexed(name, messageDescriptor.getFullName());
          }
          if (i < propertyPath.length - 1) {

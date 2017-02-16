@@ -1,16 +1,17 @@
 package org.infinispan.tx.exception;
 
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.atomic.impl.AtomicHashMap;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Test;
+import java.io.Serializable;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 
-import java.io.Serializable;
+import org.infinispan.atomic.Delta;
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.atomic.impl.AtomicHashMap;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -23,7 +24,7 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       createCluster(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true), 2);
       waitForClusterToForm();
-   }                                                                        
+   }
 
    public void testPutThrowsLocalException() throws Exception {
       tm(0).begin();
@@ -47,21 +48,16 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
       tm(0).begin();
 
       MyDelta d = new MyDelta();
-      d.setCreator();
 
       cache(0).put("k", d);
 
       tm(0).commit();
-
    }
 
-   private static class MyDelta implements Delta , Serializable {
-      transient Thread creator;
-
-      public void setCreator() {creator = Thread.currentThread();}
-
+   private static class MyDelta implements Delta , Serializable, ExternalPojo {
       public DeltaAware merge(DeltaAware d) {
-         if (creator != Thread.currentThread())
+         String threadName = Thread.currentThread().getName();
+         if (threadName.contains("OOB-") || threadName.contains("remote-"))
             throw new RuntimeException("Induced!");
          return new AtomicHashMap();
       }

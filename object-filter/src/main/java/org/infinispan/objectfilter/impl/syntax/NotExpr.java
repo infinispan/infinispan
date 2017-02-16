@@ -6,12 +6,11 @@ package org.infinispan.objectfilter.impl.syntax;
  */
 public final class NotExpr implements BooleanExpr {
 
-   private BooleanExpr child;
+   private final BooleanExpr child;
 
    public NotExpr(BooleanExpr child) {
       this.child = child;
    }
-
 
    public BooleanExpr getChild() {
       return child;
@@ -28,7 +27,7 @@ public final class NotExpr implements BooleanExpr {
    }
 
    @Override
-   public String toJpaString() {
-      return "NOT(" + child.toJpaString() + ")";
+   public String toQueryString() {
+      return "NOT(" + child.toQueryString() + ")";
    }
 }

@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-
 /**
- * Tests query without indexing over Hot Rod in a two-node cluster.
+ * Tests query without indexing over Hot Rod in a three node cluster.
  *
  * @author anistor@redhat.com
  * @since 7.2
@@ -17,8 +17,8 @@ public class MultiHotRodServerNonIndexedQueryTest extends MultiHotRodServerQuery
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-      createHotRodServers(2, builder);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      createHotRodServers(3, builder);
 
       waitForClusterToForm();
 

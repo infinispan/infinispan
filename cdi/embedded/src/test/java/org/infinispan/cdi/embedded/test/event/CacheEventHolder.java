@@ -1,11 +1,11 @@
 package org.infinispan.cdi.embedded.test.event;
 
-import org.infinispan.notifications.cachemanagerlistener.event.Event;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.notifications.cachemanagerlistener.event.Event;
 
 /**
  * Collects all events from observer and allows to extract them.
@@ -29,7 +29,7 @@ public class CacheEventHolder {
 
    private void addEventClass(Class<?> cacheAnnotationClass, Class<?> eventClass) {
       if(!eventMap.containsKey(cacheAnnotationClass)) {
-         eventMap.put(cacheAnnotationClass, new HashMap<Class<?>, List<Object>>());
+         eventMap.put(cacheAnnotationClass, new HashMap<>());
       }
       if(!eventMap.get(cacheAnnotationClass).containsKey(eventClass)) {
          eventMap.get(cacheAnnotationClass).put(eventClass, new ArrayList<>());
@@ -45,7 +45,7 @@ public class CacheEventHolder {
     * @param <T> Generic information about event type.
     */
    public <T extends org.infinispan.notifications.cachelistener.event.Event> void addEvent
-         (Class<?>cacheAnnotationClass, Class<T> eventStaticClass, T event) {
+         (Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
       addEventClass(cacheAnnotationClass, eventStaticClass);
       eventMap.get(cacheAnnotationClass).get(eventStaticClass).add(event);
    }

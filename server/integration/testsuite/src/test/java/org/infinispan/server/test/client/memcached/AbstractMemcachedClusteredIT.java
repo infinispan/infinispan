@@ -1,19 +1,15 @@
 package org.infinispan.server.test.client.memcached;
 
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.List;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
-import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
-import org.infinispan.server.test.util.ManagementClient;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.infinispan.server.test.util.ITestUtils.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * Tests for Memcached endpoint. Subclasses must provide a way to get the list of remote

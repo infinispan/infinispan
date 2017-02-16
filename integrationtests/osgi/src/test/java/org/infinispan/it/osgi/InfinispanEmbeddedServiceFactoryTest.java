@@ -54,7 +54,7 @@ public class InfinispanEmbeddedServiceFactoryTest {
 
    /**
     * If no configurations are present embedded cache manager instances are not created.
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -74,7 +74,7 @@ public class InfinispanEmbeddedServiceFactoryTest {
 
    /**
     * No services are created if the configuration doesn't contain the required properties.
-    * 
+    *
     * @throws Exception
     */
    @Test

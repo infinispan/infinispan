@@ -1,8 +1,9 @@
 package org.infinispan.replication;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
@@ -11,7 +12,7 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.*;
+import javax.transaction.Transaction;
 
 /**
  * Verifies the Flags affect both local and remote nodes.
@@ -29,7 +30,7 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
    private final String key = TEST_NAME;
 
    public FlagsReplicationTest() {
-      tx = true;
+      transactional = true;
       cacheName = TEST_NAME;
       cleanup = CleanupPhase.AFTER_METHOD;
       lockingMode = LockingMode.PESSIMISTIC;
@@ -54,77 +55,26 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
 
       assertNull(cache1.put(key, one));
 
-      haveSecondaryThreadTakeLock(cache2);
+      log.trace("About to try to acquire a lock.");
+      cache2.getTransactionManager().begin();
+      if (! cache2.lock(key)) {
+         fail("Could not acquire lock");
+      }
+      Transaction tx2 = cache2.getTransactionManager().suspend();
 
       cache1.getTransactionManager().begin();
       boolean locked = cache1.withFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.FAIL_SILENTLY).lock(key);
       assertFalse(locked);
       Object removed = cache1.withFlags(Flag.SKIP_LOCKING).remove(key);
       assertEquals(one, removed);
+      Transaction tx1 = cache1.getTransactionManager().suspend();
 
-      haveSecondaryThreadReleaseLock(cache2);
+      cache2.getTransactionManager().resume(tx2);
+      cache2.getTransactionManager().commit();
+
+      cache1.getTransactionManager().resume(tx1);
       cache1.getTransactionManager().commit();
       assertNull(cache2.get(key));
       log.tracef("End cache1IsOwner = %s, cache2IsOwner %s", cache1IsOwner, cache2IsOwner);
-   }
-
-   private void haveSecondaryThreadTakeLock(final AdvancedCache viaCache) throws InterruptedException, ExecutionException {
-      AtomicBoolean noerrors = new AtomicBoolean(true);
-      Future<?> submit = fork(new LockingThread(viaCache, noerrors));
-      submit.get(); //wait to be done
-      assertTrue(noerrors.get());
-   }
-
-   private void haveSecondaryThreadReleaseLock(final AdvancedCache viaCache) throws InterruptedException, ExecutionException {
-      AtomicBoolean noerrors = new AtomicBoolean(true);
-      Future<?> submit = fork(new CommitThread(viaCache, noerrors));
-      submit.get(); //wait to be done
-      assertTrue(noerrors.get());
-   }
-
-   private class LockingThread implements Runnable {
-
-      private final AdvancedCache cache;
-      private final AtomicBoolean allok;
-
-      LockingThread(AdvancedCache cache, AtomicBoolean allok) {
-         this.cache = cache;
-         this.allok = allok;
-      }
-
-      @Override
-      public void run() {
-         try {
-            log.trace("About to try to acquire a lock.");
-            cache.getTransactionManager().begin();
-            if (! cache.lock(key)) {
-               allok.set(false);
-               log.trace("Could not acquire lock");
-            }
-         } catch (Throwable e) {
-            log.trace("Error", e);
-            allok.set(false);
-         }
-      }
-   }
-
-   static private class CommitThread implements Runnable {
-
-      private final AdvancedCache cache;
-      private final AtomicBoolean allok;
-
-      CommitThread(AdvancedCache cache, AtomicBoolean allok) {
-         this.cache = cache;
-         this.allok = allok;
-      }
-
-      @Override
-      public void run() {
-         try {
-            cache.getTransactionManager().commit();
-         } catch (Throwable e) {
-            allok.set(false);
-         }
-      }
    }
 }

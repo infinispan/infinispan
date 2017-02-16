@@ -1,11 +1,11 @@
 package org.infinispan.tree.impl;
 
-import net.jcip.annotations.Immutable;
-
 import java.io.Serializable;
 import java.util.Comparator;
 
 import org.infinispan.tree.Fqn;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Compares the order of two FQN. Sorts by name, then by depth, e.g.

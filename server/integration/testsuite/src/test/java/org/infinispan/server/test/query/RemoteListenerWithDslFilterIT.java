@@ -1,5 +1,18 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.query.dsl.Expression.param;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
@@ -26,19 +39,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.query.dsl.Expression.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * Basic test for query DSL based remote event filters.
@@ -70,7 +70,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = new Address();
@@ -100,7 +100,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(31);
-      user3.setAccountIds(Collections.<Integer>emptySet());
+      user3.setAccountIds(Collections.emptySet());
 
       remoteCache.put(user1.getId(), user1);
       remoteCache.put(user2.getId(), user2);
@@ -112,7 +112,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       Query query = qf.from(User.class)
             .having("age").lte(param("ageParam"))
-            .toBuilder().select("age")
+            .select("age")
             .build()
             .setParameter("ageParam", 32);
 
@@ -156,9 +156,9 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       private final Log log = LogFactory.getLog(getClass());
 
-      public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<FilterResult>();
+      public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<>();
 
-      public final BlockingQueue<FilterResult> modifyEvents = new LinkedBlockingQueue<FilterResult>();
+      public final BlockingQueue<FilterResult> modifyEvents = new LinkedBlockingQueue<>();
 
       private final SerializationContext serializationContext;
 
@@ -168,7 +168,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       @ClientCacheEntryCreated
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          createEvents.add(r);
 
          log.debugf("handleClientCacheEntryCreatedEvent instance=%s projection=%s sortProjection=%s\n",
@@ -179,7 +179,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       @ClientCacheEntryModified
       public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
-         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          modifyEvents.add(r);
 
          log.debugf("handleClientCacheEntryModifiedEvent instance=%s projection=%s sortProjection=%s\n",

@@ -1,19 +1,19 @@
 package org.infinispan.notifications;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Manik Surtani

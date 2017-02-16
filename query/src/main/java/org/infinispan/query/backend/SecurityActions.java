@@ -1,11 +1,11 @@
 package org.infinispan.query.backend;
 
+import java.security.AccessController;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
-
-import java.security.AccessController;
 
 /**
  * SecurityActions for the org.infinispan.query.backend package.

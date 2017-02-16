@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.util.AbstractDelegatingCollection;
 import org.infinispan.util.AbstractDelegatingMap;
 
 /**
@@ -30,8 +31,8 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    protected final ConsistentHash ch;
    protected final Set<Integer> allowedSegments;
 
-   protected ReadOnlySegmentAwareSet<K> segmentAwareKeySet;
-   protected ReadOnlySegmentAwareEntrySet<K, V> segmentAwareEntrySet;
+   protected Set<K> segmentAwareKeySet;
+   protected Set<Map.Entry<K, V>> segmentAwareEntrySet;
 
    public ReadOnlySegmentAwareMap(Map<K, V> map, ConsistentHash ch,
          Set<Integer> allowedSegments) {
@@ -80,8 +81,8 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    @Override
    public Set<java.util.Map.Entry<K, V>> entrySet() {
       if (segmentAwareEntrySet == null) {
-         segmentAwareEntrySet = new ReadOnlySegmentAwareEntrySet<>(delegate().entrySet(),
-               ch, allowedSegments);
+         segmentAwareEntrySet = new CollectionAsSet<>(
+            new ReadOnlySegmentAwareEntryCollection<>(delegate().entrySet(), ch, allowedSegments));
       }
       return segmentAwareEntrySet;
    }
@@ -104,8 +105,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    @Override
    public Set<K> keySet() {
       if (segmentAwareKeySet == null) {
-         segmentAwareKeySet = new ReadOnlySegmentAwareSet<>(
-               super.keySet(), ch, allowedSegments);
+         segmentAwareKeySet = new CollectionAsSet<K>(new ReadOnlySegmentAwareCollection<>(super.keySet(), ch, allowedSegments));
       }
       return segmentAwareKeySet;
    }
@@ -144,7 +144,20 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
 
    @Override
    public String toString() {
-      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + ch + 
+      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + ch +
             ", allowedSegments=" + allowedSegments + "]";
+   }
+
+   private static class CollectionAsSet<T> extends AbstractDelegatingCollection<T> implements Set<T> {
+      private final AbstractDelegatingCollection<T> delegate;
+
+      public CollectionAsSet(AbstractDelegatingCollection<T> delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      protected Collection<T> delegate() {
+         return delegate;
+      }
    }
 }

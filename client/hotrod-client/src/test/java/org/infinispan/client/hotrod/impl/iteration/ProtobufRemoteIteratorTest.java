@@ -1,5 +1,17 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
@@ -19,18 +31,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author gustavonalle
@@ -127,7 +127,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       int lowerId = 5;
       int higherId = 8;
-      Query simpleQuery = queryFactory.from(AccountPB.class).having("id").between(lowerId, higherId).toBuilder().build();
+      Query simpleQuery = queryFactory.from(AccountPB.class).having("id").between(lowerId, higherId).build();
       Set<Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntriesByQuery(simpleQuery, null, 10));
       Set<Integer> keys = extractKeys(entries);
 
@@ -135,7 +135,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
       assertForAll(entries,e -> e.getValue() instanceof AccountPB);
 
-      Query projectionsQuery = queryFactory.from(AccountPB.class).select("id", "description").having("id").between(lowerId, higherId).toBuilder().build();
+      Query projectionsQuery = queryFactory.from(AccountPB.class).select("id", "description").having("id").between(lowerId, higherId).build();
       Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));
 
       assertEquals(4, entriesWithProjection.size());

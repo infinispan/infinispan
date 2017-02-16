@@ -7,6 +7,9 @@ import org.apache.lucene.store.Lock;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
+import org.infinispan.lucene.InvalidLockException;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,38 +32,44 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
    private final String lockName;
    private final String indexName;
    private final FileCacheKey keyOfLock;
+   private final Address valueOfLock;
 
    BaseLuceneLock(Cache<?, ?> cache, String indexName, String lockName, int affinitySegmentId) {
       this.noCacheStoreCache = (Cache<Object, Object>) cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
       this.keyOfLock = new FileCacheKey(indexName, lockName, affinitySegmentId);
+      Address address = noCacheStoreCache.getCacheManager().getAddress();
+      this.valueOfLock = address == null ? LocalModeAddress.INSTANCE : address;
    }
 
    @Override
    public boolean obtain() {
-      Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
+      Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, valueOfLock);
+      if (trace) log.tracef("Result of lock acquiring %s", previousValue);
       if (previousValue == null) {
          if (trace) {
-            log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
+            log.tracef("Lock: %s acquired for index: %s from %s", lockName, indexName, valueOfLock);
          }
          // we own the lock:
          return true;
       } else {
          if (trace) {
-            log.tracef("Lock: %s not acquired for index: %s, was taken already.", lockName, indexName);
+            log.tracef("Lock: %s not acquired for index: %s from %s, was taken already by %s.", lockName,
+                    indexName, valueOfLock, previousValue);
          }
          return false;
       }
    }
 
-   /**
-    * Used by Lucene at Directory creation: we expect the lock to not exist in this case.
-    */
    public void clearLock() {
-      Object previousValue = noCacheStoreCache.remove(keyOfLock);
-      if (previousValue!=null && trace) {
-         log.tracef("Lock removed for index: %s", indexName);
+      Object lockOwner = noCacheStoreCache.get(keyOfLock);
+      if (lockOwner == null || valueOfLock.equals(lockOwner)) {
+         Object previousValue = noCacheStoreCache.remove(keyOfLock);
+         log.tracef("Lock: %s removed for index: %s from %s (was %s)", lockName, indexName, valueOfLock, previousValue);
+      } else {
+         log.tracef("Lock: %s not cleared for index: %s from %s, was taken already by %s.", lockName,
+               indexName, valueOfLock, lockOwner);
       }
    }
 
@@ -79,7 +88,7 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
    @Override
    public void ensureValid() throws IOException {
       if (!isLocked()) {
-         throw new IOException("This lock is no longer being held");
+         throw new InvalidLockException("This lock is no longer being held");
       }
    }
 

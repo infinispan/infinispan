@@ -1,11 +1,13 @@
 package org.infinispan.query.remote.client;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.WrappedMessage;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 /**
  * @author anistor@redhat.com
@@ -13,7 +15,7 @@ import java.util.List;
  */
 public final class QueryRequest {
 
-   private String jpqlString;
+   private String queryString;
 
    private List<NamedParameter> namedParameters;
 
@@ -21,12 +23,12 @@ public final class QueryRequest {
 
    private Integer maxResults;
 
-   public String getJpqlString() {
-      return jpqlString;
+   public String getQueryString() {
+      return queryString;
    }
 
-   public void setJpqlString(String jpqlString) {
-      this.jpqlString = jpqlString;
+   public void setQueryString(String queryString) {
+      this.queryString = queryString;
    }
 
    public Long getStartOffset() {
@@ -53,21 +55,32 @@ public final class QueryRequest {
       this.namedParameters = namedParameters;
    }
 
-   public static final class Marshaller implements MessageMarshaller<QueryRequest> {
+   public Map<String, Object> getNamedParametersMap() {
+      if (namedParameters == null || namedParameters.isEmpty()) {
+         return null;
+      }
+      Map<String, Object> params = new HashMap<>(namedParameters.size());
+      for (NamedParameter p : namedParameters) {
+         params.put(p.getName(), p.getValue());
+      }
+      return params;
+   }
+
+   static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
       public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
          QueryRequest queryRequest = new QueryRequest();
-         queryRequest.setJpqlString(reader.readString("jpqlString"));
+         queryRequest.setQueryString(reader.readString("queryString"));
          queryRequest.setStartOffset(reader.readLong("startOffset"));
          queryRequest.setMaxResults(reader.readInt("maxResults"));
-         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<NamedParameter>(), NamedParameter.class));
+         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<>(), NamedParameter.class));
          return queryRequest;
       }
 
       @Override
       public void writeTo(ProtoStreamWriter writer, QueryRequest queryRequest) throws IOException {
-         writer.writeString("jpqlString", queryRequest.getJpqlString());
+         writer.writeString("queryString", queryRequest.getQueryString());
          writer.writeLong("startOffset", queryRequest.getStartOffset());
          writer.writeInt("maxResults", queryRequest.getMaxResults());
          writer.writeCollection("namedParameters", queryRequest.getNamedParameters(), NamedParameter.class);
@@ -109,7 +122,7 @@ public final class QueryRequest {
          return value;
       }
 
-      public static final class Marshaller implements MessageMarshaller<NamedParameter> {
+      static final class Marshaller implements MessageMarshaller<NamedParameter> {
 
          @Override
          public NamedParameter readFrom(ProtoStreamReader reader) throws IOException {

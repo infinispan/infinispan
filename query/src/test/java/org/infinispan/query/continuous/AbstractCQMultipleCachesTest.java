@@ -1,15 +1,15 @@
 package org.infinispan.query.continuous;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -50,7 +50,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
 
       Query query = qf.from(Person.class)
             .having("age").lte(30)
-            .toBuilder().build();
+            .build();
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));

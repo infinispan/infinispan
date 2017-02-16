@@ -16,5 +16,5 @@ public class ContinuousQueryMultipleCachesDistTest extends AbstractCQMultipleCac
    protected CacheMode getCacheMode() {
       return CacheMode.DIST_SYNC;
    }
-   
+
 }

@@ -1,18 +1,18 @@
 package org.infinispan.lock.singlelock;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.Collections;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
-import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus
@@ -41,7 +41,7 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
             .lockingMode(lockingMode)
             .useSynchronization(useSynchronization);
       config.clustering().hash().numOwners(3)
-            .locking().lockAcquisitionTimeout(2000L);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createCluster(config, 3);
       waitForClusterToForm();
    }

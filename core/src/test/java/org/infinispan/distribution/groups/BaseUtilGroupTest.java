@@ -1,16 +1,17 @@
 package org.infinispan.distribution.groups;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.distribution.group.Group;
-import org.infinispan.distribution.group.GroupManager;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.distribution.group.Group;
+import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 
 /**
  * This class contains some utility methods to the grouping advanced interface tests.
@@ -25,6 +26,13 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
 
    protected BaseUtilGroupTest(TestCacheFactory factory) {
       this.factory = factory;
+   }
+
+   @Override
+   protected String parameters() {
+      String parameters = super.parameters();
+      if (parameters == null) return "[" + factory + "]";
+      else return "[" + factory + ", " + parameters.substring(1);
    }
 
    protected static GroupKey key(int index) {
@@ -125,7 +133,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       public abstract TestCache create(String groupName, List<Cache<GroupKey, String>> cacheList);
    }
 
-   public static class GroupKey implements Serializable {
+   public static class GroupKey implements Serializable, ExternalPojo {
 
       private final String group;
       private final int key;

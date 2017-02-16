@@ -9,11 +9,11 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -57,9 +57,6 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config
-         .dataContainer()
-            .keyEquivalence(new AnyServerEquivalence())
-            .valueEquivalence(new AnyServerEquivalence())
          .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
       cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
       cacheManager.defineConfiguration(CACHE_NAME, config.build());

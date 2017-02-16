@@ -1,12 +1,23 @@
 package org.infinispan.api;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertNull;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.ComponentRegistry;
@@ -20,17 +31,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Tests if the keys are not wrapped in the non-owner nodes
@@ -74,12 +74,15 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
             InvocationContext context = (InvocationContext) invocation.getArguments()[0];
-            log.debugf("wrapEntryForPut invoked with %s", context);
-            assertFalse("Entry should not be wrapped!", context.isOriginLocal());
-            return invocation.callRealMethod();
+            log.debugf("wrapEntryForWriting invoked with %s", context);
+
+            Object mvccEntry = invocation.callRealMethod();
+            assertNull(mvccEntry, "Entry should not be wrapped!");
+            assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
+            return mvccEntry;
          }
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), anyObject(),
-                                                   any(EntryFactory.Wrap.class), anyBoolean(), anyBoolean());
+            anyBoolean());
 
       Future<?> killMemberResult = fork(new Runnable() {
          @Override

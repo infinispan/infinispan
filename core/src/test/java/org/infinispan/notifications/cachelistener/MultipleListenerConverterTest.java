@@ -1,5 +1,12 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -10,11 +17,6 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * This test is to make sure that when more than 1 listener is installed they don't affect each other

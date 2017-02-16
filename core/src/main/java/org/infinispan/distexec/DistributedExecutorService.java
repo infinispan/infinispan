@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import org.infinispan.remoting.transport.Address;
 
@@ -131,7 +130,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T, K > List<CompletableFuture<T>> submitEverywhere(Callable<T> task, K... input);
+   <T, K> List<CompletableFuture<T>> submitEverywhere(Callable<T> task, K... input);
 
    /**
     * Submits the given DistributedTask for execution on all available Infinispan nodes using input
@@ -146,7 +145,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T, K > List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task, K... input);
+   <T, K> List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task, K... input);
 
    /**
     * Returns DistributedTaskBuilder for this DistributedExecutorService and a given Callable. As it

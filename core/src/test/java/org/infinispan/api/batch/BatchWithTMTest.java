@@ -1,5 +1,9 @@
 package org.infinispan.api.batch;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -8,10 +12,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import static org.testng.Assert.assertEquals;
 
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")

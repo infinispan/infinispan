@@ -1,26 +1,25 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.AbstractFlagAffectedCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
-   
+public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
+
    public static final byte COMMAND_ID = 5;
    private CacheNotifier<Object, Object> notifier;
    private DataContainer<?,?> dataContainer;
@@ -28,13 +27,13 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer, long flagsBitSet) {
+   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer, long flagsBitSet) {
       this.notifier = notifier;
       this.dataContainer = dataContainer;
       setFlagsBitSet(flagsBitSet);
    }
 
-   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer) {
+   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer) {
       this.notifier = notifier;
       this.dataContainer = dataContainer;
    }
@@ -59,17 +58,12 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       setFlagsBitSet(input.readLong());
-   }
-
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
    }
 
    @Override
@@ -102,7 +96,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
+   public Collection<?> getAffectedKeys() {
       return Collections.emptySet();
    }
 
@@ -122,13 +116,8 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
-   }
-
-   @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override

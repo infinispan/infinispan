@@ -1,12 +1,18 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+
+import java.util.Map;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -15,12 +21,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 /**
  * Cache store interceptor specific for the distribution and replication cache modes.
@@ -69,81 +69,103 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    // ---- WRITE commands
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(returnValue);
-      if (!isProperWriter(ctx, command, command.getKey())) return ctx.shortCircuit(returnValue);
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+         Object key = putKeyValueCommand.getKey();
+         if (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
+            return rv;
 
-      storeEntry(ctx, key, command);
-      if (getStatisticsEnabled()) cacheStores.incrementAndGet();
-      return ctx.shortCircuit(returnValue);
+         storeEntry(rCtx, key, putKeyValueCommand);
+         if (getStatisticsEnabled())
+            cacheStores.incrementAndGet();
+         return rv;
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      if (!isStoreEnabled(command) || ctx.isInTxScope()) return ctx.shortCircuit(returnValue);
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
+         if (!isStoreEnabled(putMapCommand) || rCtx.isInTxScope())
+            return rv;
 
-      Map<Object, Object> map = command.getMap();
-      int count = 0;
-      for (Object key : map.keySet()) {
-         // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
-         // it must write only the keys locked on the primary owner that forwarded the command
-         if (isUsingLockDelegation && command.isForwarded() && !dm.getPrimaryLocation(key).equals(ctx.getOrigin()))
-            continue;
+         Map<Object, Object> map = putMapCommand.getMap();
+         int count = 0;
+         for (Object key : map.keySet()) {
+            // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
+            // it must write only the keys locked on the primary owner that forwarded the command
+            if (isUsingLockDelegation && putMapCommand.isForwarded() &&
+                  !dm.getPrimaryLocation(key).equals(rCtx.getOrigin()))
+               continue;
 
-         if (isProperWriter(ctx, command, key)) {
-            storeEntry(ctx, key, command);
-            count++;
+            if (isProperWriter(rCtx, putMapCommand, key)) {
+               storeEntry(rCtx, key, putMapCommand);
+               count++;
+            }
          }
-      }
-      if (getStatisticsEnabled()) cacheStores.getAndAdd(count);
-      return ctx.shortCircuit(returnValue);
+         if (getStatisticsEnabled())
+            cacheStores.getAndAdd(count);
+
+         return rv;
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(retval);
-      if (!isProperWriter(ctx, command, key)) return ctx.shortCircuit(retval);
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         RemoveCommand removeCommand = (RemoveCommand) rCommand;
+         Object key = removeCommand.getKey();
+         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, removeCommand, key))
+            return rv;
 
-      boolean resp = persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
-      log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-      return ctx.shortCircuit(retval);
+         boolean resp = persistenceManager
+               .deleteFromAllStores(key, skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
+         log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+
+         return rv;
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(returnValue);
-      if (!isProperWriter(ctx, command, command.getKey())) return ctx.shortCircuit(returnValue);
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         ReplaceCommand replaceCommand = (ReplaceCommand) rCommand;
+         Object key = replaceCommand.getKey();
+         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
+            return rv;
 
-      storeEntry(ctx, key, command);
-      if (getStatisticsEnabled()) cacheStores.incrementAndGet();
+         storeEntry(rCtx, key, replaceCommand);
+         if (getStatisticsEnabled())
+            cacheStores.incrementAndGet();
 
-      return ctx.shortCircuit(returnValue);
+         return rv;
+      });
    }
 
    @Override
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return !cdl.localNodeIsPrimaryOwner(key) || command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE);
+      return !cdl.localNodeIsPrimaryOwner(key) || command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
    }
 
    @Override
    protected boolean isProperWriter(InvocationContext ctx, FlagAffectedCommand command, Object key) {
-      if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK))
+      if (command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK))
          return true;
 
-      if (isUsingLockDelegation && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (isUsingLockDelegation && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          if (ctx.isOriginLocal() && !dm.getPrimaryLocation(key).equals(address)) {
             // The command will be forwarded back to the originator, and the value will be stored then
             // (while holding the lock on the primary owner).
             log.tracef("Skipping cache store on the originator because it is not the primary owner " +
-                             "of key %s", key);
+                             "of key %s", toStr(key));
             return false;
          }
       }

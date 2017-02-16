@@ -1,22 +1,11 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.junit.Assert;
-import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +18,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.*;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.testng.annotations.Test;
 
 /**
  * Extracted originally from FineGrainedAtomicMapAPITest
@@ -49,7 +53,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(2000l);
+            .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "atomic", configurationBuilder);
    }
 
@@ -574,7 +578,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       final Cache<MagicKey, Object> cache2 = cache(1, "atomic");
       testInsertDeleteCycle(new MagicKey(cache2));
    }
-   
+
    public void testInsertDeleteInsertCyclePrimaryOwner() throws Exception {
       final Cache<MagicKey, Object> cache1 = cache(0, "atomic");
       testInsertDeleteCycle(new MagicKey(cache1));
@@ -610,7 +614,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
          fails = am.containsKey("k1");
          TestingUtil.getTransactionManager(cache1).commit();
       }
-      Assert.assertFalse(fails);
+      assertFalse(fails);
    }
 
    public void testDuplicateValue() {

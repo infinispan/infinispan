@@ -1,10 +1,10 @@
 package org.infinispan.server.test.query;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-
-import java.io.Serializable;
 
 /**
  * @author anistor@redhat.com

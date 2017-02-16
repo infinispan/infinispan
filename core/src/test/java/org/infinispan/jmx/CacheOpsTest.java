@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "functional", testName = "jmx.CacheClearTest")
+@Test (groups = "functional", testName = "jmx.CacheOpsTest")
 public class CacheOpsTest extends SingleCacheManagerTest {
 
    public static final String JMX_DOMAIN = CacheOpsTest.class.getSimpleName();

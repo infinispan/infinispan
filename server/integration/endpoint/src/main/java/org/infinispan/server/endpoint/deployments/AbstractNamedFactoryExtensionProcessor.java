@@ -1,5 +1,9 @@
 package org.infinispan.server.endpoint.deployments;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
+import java.util.List;
+
 import org.infinispan.server.endpoint.Constants;
 import org.infinispan.server.endpoint.subsystem.ExtensionManagerService;
 import org.jboss.as.server.deployment.Attachments;
@@ -14,10 +18,6 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.value.InjectedValue;
-
-import java.util.List;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public abstract class AbstractNamedFactoryExtensionProcessor<T> extends AbstractServerExtensionProcessor<T> {
 

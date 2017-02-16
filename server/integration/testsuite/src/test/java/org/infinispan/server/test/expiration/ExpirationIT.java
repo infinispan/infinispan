@@ -1,10 +1,17 @@
 package org.infinispan.server.test.expiration;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletResponse;
-
+import org.apache.http.HttpStatus;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -18,14 +25,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.head;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test for expiration configuration. Tested with REST (verifies JBPAPP-6928) and HotRod.
@@ -63,14 +62,14 @@ public class ExpirationIT {
         URI key4Path = fullPathKey(0, "k4");
         Assert.assertEquals(2, server1.getCacheManager("clustered").getClusterSize());
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
-        post(key1Path, "v1", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
-                "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
+        post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+             "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
         // no value means never expire
-        post(key2Path, "v2", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text");
+        post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
         // 0 value means use default
-        post(key3Path, "v3", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
+        post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
-        post(key4Path, "v4", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
+        post(key4Path, "v4", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
         sleepForSecs(1);
@@ -80,14 +79,14 @@ public class ExpirationIT {
         sleepForSecs(2);
         // k3 and k4 expired
         get(key1Path, "v1");
-        head(key3Path, HttpServletResponse.SC_NOT_FOUND);
-        head(key4Path, HttpServletResponse.SC_NOT_FOUND);
+        head(key3Path, HttpStatus.SC_NOT_FOUND);
+        head(key4Path, HttpStatus.SC_NOT_FOUND);
         sleepForSecs(1);
         // k1 expired
-        head(key1Path, HttpServletResponse.SC_NOT_FOUND);
+        head(key1Path, HttpStatus.SC_NOT_FOUND);
         // k2 should not be expired because without timeToLive/maxIdle parameters,
         // the entries live forever. To use default values, 0 must be passed in.
-        head(key2Path, HttpServletResponse.SC_OK);
+        head(key2Path, HttpStatus.SC_OK);
     }
 
     @Test

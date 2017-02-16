@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.util.CollectionFactory;
-
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * A concurrent-map-based near cache implementation.

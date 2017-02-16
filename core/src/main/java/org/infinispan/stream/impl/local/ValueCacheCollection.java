@@ -1,5 +1,11 @@
 package org.infinispan.stream.impl.local;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -11,12 +17,6 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.StreamMarshalling;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.stream.Stream;
 
 /**
  * CacheCollection that can be used for the values method of a cache.  Backs all the calls to the cacheSet version
@@ -78,7 +78,8 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
    public boolean remove(Object o) {
       try (CloseableIterator<V> it = iterator()) {
          while (it.hasNext()) {
-            if (o.equals(it.next())) {
+            V next = it.next();
+            if (o.equals(next)) {
                it.remove();
                return true;
             }

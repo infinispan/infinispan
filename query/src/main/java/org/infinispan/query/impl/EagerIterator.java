@@ -2,9 +2,9 @@ package org.infinispan.query.impl;
 
 import java.util.List;
 
-import net.jcip.annotations.NotThreadSafe;
-
 import org.hibernate.search.query.engine.spi.EntityInfo;
+
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * This is the implementation class for the interface ResultIterator. It is what is
@@ -16,7 +16,7 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
  * @author Marko Luksa
  */
 @NotThreadSafe
-public class EagerIterator extends AbstractIterator {
+public class EagerIterator<E> extends AbstractIterator<E> {
 
    private List<EntityInfo> entityInfos;
 

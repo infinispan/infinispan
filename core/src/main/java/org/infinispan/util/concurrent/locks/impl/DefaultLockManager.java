@@ -1,5 +1,22 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -20,21 +37,6 @@ import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
-import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 
 /**
  * The default {@link LockManager} implementation for transactional and non-transactional caches.
@@ -71,7 +73,7 @@ public class DefaultLockManager implements LockManager {
       Objects.requireNonNull(unit, "Time unit must be non null");
 
       if (trace) {
-         log.tracef("Lock key=%s for owner=%s. timeout=%s (%s)", key, lockOwner, time, unit);
+         log.tracef("Lock key=%s for owner=%s. timeout=%s (%s)", toStr(key), lockOwner, time, unit);
       }
 
       ExtendedLockPromise promise = lockContainer.acquire(key, lockOwner, time, unit);
@@ -102,7 +104,8 @@ public class DefaultLockManager implements LockManager {
       }
 
       if (trace) {
-         log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)", uniqueKeys, lockOwner, time, unit);
+         log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)", toStr(uniqueKeys), lockOwner, time,
+               unit);
       }
 
       final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size());
@@ -137,7 +140,7 @@ public class DefaultLockManager implements LockManager {
    @Override
    public void unlockAll(Collection<?> keys, Object lockOwner) {
       if (trace) {
-         log.tracef("Release locks for keys=%s. owner=%s", keys, lockOwner);
+         log.tracef("Release locks for keys=%s. owner=%s", toStr(keys), lockOwner);
       }
       if (keys.isEmpty()) {
          return;
@@ -233,7 +236,8 @@ public class DefaultLockManager implements LockManager {
          try {
             lockPromise.lock();
          } catch (TimeoutException e) {
-            throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), key, lockPromise.getRequestor(), lockPromise.getOwner());
+            throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key),
+                  lockPromise.getRequestor(), lockPromise.getOwner());
          }
       }
 
@@ -253,7 +257,7 @@ public class DefaultLockManager implements LockManager {
          return null;
       }
 
-      public KeyAwareExtendedLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService) {
+      KeyAwareExtendedLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService) {
          if (executorService != null && timeoutMillis > 0 && !isAvailable()) {
             ScheduledFuture<?> future = executorService.schedule(this, timeoutMillis, TimeUnit.MILLISECONDS);
             lockPromise.addListener((state -> future.cancel(false)));
@@ -265,19 +269,21 @@ public class DefaultLockManager implements LockManager {
    private static class CompositeLockPromise implements KeyAwareLockPromise, LockListener, Callable<Void> {
 
       private final List<KeyAwareExtendedLockPromise> lockPromiseList;
-      private final CompletableFuture<Void> notifier;
+      private final CompletableFuture<LockState> notifier;
       volatile LockState lockState = LockState.ACQUIRED;
+      private final AtomicInteger countersLeft = new AtomicInteger();
 
       private CompositeLockPromise(int size) {
          lockPromiseList = new ArrayList<>(size);
          notifier = new CompletableFuture<>();
       }
 
-      public void addLock(KeyAwareExtendedLockPromise lockPromise) {
+      void addLock(KeyAwareExtendedLockPromise lockPromise) {
          lockPromiseList.add(lockPromise);
       }
 
-      public void markListAsFinal() {
+      void markListAsFinal() {
+         countersLeft.set(lockPromiseList.size());
          for (LockPromise lockPromise : lockPromiseList) {
             lockPromise.addListener(this);
          }
@@ -285,12 +291,7 @@ public class DefaultLockManager implements LockManager {
 
       @Override
       public boolean isAvailable() {
-         for (LockPromise lockPromise : lockPromiseList) {
-            if (!lockPromise.isAvailable()) {
-               return false;
-            }
-         }
-         return true;
+         return notifier.isDone();
       }
 
       @Override
@@ -326,18 +327,30 @@ public class DefaultLockManager implements LockManager {
 
       @Override
       public void addListener(LockListener listener) {
-         notifier.thenRun(() -> listener.onEvent(lockState));
+         notifier.thenAccept(listener::onEvent);
       }
 
       @Override
       public void onEvent(LockState state) {
-         if (state != LockState.ACQUIRED && UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
-            for (ExtendedLockPromise lockPromise : lockPromiseList) {
-               lockPromise.cancel(state);
-            }
+         if (notifier.isDone()) {
+            //already finished
+            return;
          }
-         if (isAvailable()) {
-            notifier.complete(null);
+         //each lock will invoke this
+         if (state != LockState.ACQUIRED) {
+            cancelAll(state);
+            return;
+         }
+         if (countersLeft.decrementAndGet() == 0) {
+            notifier.complete(lockState);
+         }
+      }
+
+      private void cancelAll(LockState state) {
+         if (UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
+            //complete the future before cancel other locks. the remaining locks will be invoke onEvent()
+            notifier.complete(state);
+            lockPromiseList.forEach(promise -> promise.cancel(state));
          }
       }
 
@@ -354,7 +367,7 @@ public class DefaultLockManager implements LockManager {
          return null;
       }
 
-      public CompositeLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService, long time, TimeUnit unit) {
+      CompositeLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService, long time, TimeUnit unit) {
          if (executorService != null && time > 0 && !isAvailable()) {
             ScheduledFuture<?> future = executorService.schedule(this, time, unit);
             addListener((state -> future.cancel(false)));

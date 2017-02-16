@@ -1,5 +1,19 @@
 package org.infinispan.xsite.statetransfer.failures;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
+import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,17 +34,6 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
-import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests the Cross-Site replication state transfer with a broken connection between sites.

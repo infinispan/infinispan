@@ -1,16 +1,17 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import org.infinispan.persistence.spi.PersistenceException;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.sql.DataSource;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Connection factory that can be used when on managed environments, like application servers. It knows how to look into
@@ -93,7 +94,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    @Override
    public void releaseConnection(Connection conn) {
-      try {         
+      try {
          if (conn != null) // Could be null if getConnection failed
             conn.close();
       } catch (SQLException e) {

@@ -2,23 +2,22 @@ package org.infinispan.persistence.jdbc;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.Serializable;
+import java.sql.Connection;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.jdbc.table.management.TableName;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
-import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.sql.Connection;
 
 /**
  * Test to make sure that no two caches will use the same table for storing data.
@@ -52,62 +51,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testForJdbcBinaryCacheStore() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/binary.xml");
-         Cache<String, String> first = cm.getCache("first");
-         Cache<String, String> second = cm.getCache("second");
-
-         JdbcBinaryStore firstCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
-         JdbcBinaryStore secondCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(second);
-
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_BUCKET_TABLE");
-
-         assertNoOverlapingState(first, second, firstCs, secondCs);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
-
-   }
-
-   @SuppressWarnings("unchecked")
-   public void testForMixedCacheStore() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/mixed.xml");
-         Cache<String, Person> first = cm.getCache("first");
-         Cache<String, Person> second = cm.getCache("second");
-
-         JdbcMixedStore firstCs = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
-         JdbcMixedStore secondCs = (JdbcMixedStore) TestingUtil.getFirstLoader(second);
-
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
-
-         assertNoOverlapingState(first, second, firstCs, secondCs);
-
-
-         Person person1 = new Person(29, "Mircea");
-         Person person2 = new Person(29, "Manik");
-
-         first.put("k", person1);
-         assert firstCs.contains("k");
-         assert !secondCs.contains("k");
-         assert first.get("k").equals(person1);
-         assert second.get("k") == null;
-
-         second.put("k2", person2);
-         assert second.get("k2").equals(person2);
-         assert first.get("k2") == null;
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
-
-   }
-
-
-   static class Person implements Serializable {
+   static class Person implements Serializable, ExternalPojo {
       int age;
       String name;
       private static final long serialVersionUID = 4227565864228124235L;

@@ -1,18 +1,11 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.Util;
+import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedLong;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedLong;
 
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.security.sasl.SaslClient;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,8 +18,19 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.*;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.security.sasl.SaslClient;
+
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 
 /**
  * Transport implementation based on TCP.
@@ -35,7 +39,7 @@ import static org.infinispan.commons.io.UnsignedNumeric.*;
  * @since 4.1
  */
 public class TcpTransport extends AbstractTransport {
-   private static final int SOCKET_STREAM_BUFFER = 8 * 1024;
+   public static final int SOCKET_STREAM_BUFFER = 8 * 1024;
 
    //needed for debugging
    private static AtomicLong ID_COUNTER = new AtomicLong(0);
@@ -167,6 +171,20 @@ public class TcpTransport extends AbstractTransport {
    }
 
    @Override
+   protected void writeBytes(byte[] toAppend, int offset, int count) {
+      try {
+         socketOutputStream.write(toAppend, offset, count);
+         if (trace) {
+            log.tracef("Wrote %d bytes", toAppend.length);
+         }
+      } catch (IOException e) {
+         invalid = true;
+         throw new TransportException(
+               "Problems writing data to stream", e, serverAddress);
+      }
+   }
+
+   @Override
    public void writeByte(short toWrite) {
       try {
          socketOutputStream.write(toWrite);
@@ -218,8 +236,7 @@ public class TcpTransport extends AbstractTransport {
    }
 
    @Override
-   public byte[] readByteArray(final int size) {
-      byte[] result = new byte[size];
+   public void readByteArray(byte[] result, int size) {
       boolean done = false;
       int offset = 0;
       do {
@@ -249,6 +266,12 @@ public class TcpTransport extends AbstractTransport {
       if (trace) {
          log.tracef("Successfully read array with size: %d", size);
       }
+   }
+
+   @Override
+   public byte[] readByteArray(final int size) {
+      byte[] result = new byte[size];
+      readByteArray(result, size);
       return result;
    }
 
@@ -337,11 +360,7 @@ public class TcpTransport extends AbstractTransport {
       } catch (IOException e) {
          // Ignore
       } finally {
-         try {
-            socket.close();
-         } catch (IOException e) {
-            // Ignore
-         }
+        Util.close(socket);
       }
       return os.toByteArray();
    }

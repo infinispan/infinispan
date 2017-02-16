@@ -1,6 +1,5 @@
 package org.infinispan.eviction;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -11,6 +10,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.spi.PersistenceException;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A passivation manager

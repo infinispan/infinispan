@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -53,6 +54,28 @@ public interface Transport extends Lifecycle {
                                                                  ResponseFilter responseFilter,
                                                                  DeliverOrder deliverOrder,
                                                                  boolean anycast) throws Exception;
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.
+    *
+    * @param destination  the destination's {@link Address}.
+    * @param rpcCommand   the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    * @throws Exception if there was problem sending the request.
+    */
+   void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
+    * DeliverOrder}.
+    *
+    * @param destinations the collection of destination's {@link Address}. If {@code null}, it sends to all the members
+    *                     in the cluster.
+    * @param rpcCommand   the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    * @throws Exception if there was problem sending the request.
+    */
+   void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
 
    /**
     * @deprecated Use {@link #invokeRemotely(Map, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead
@@ -132,4 +155,18 @@ public interface Transport extends Lifecycle {
     * protocol stack.
     */
    void checkTotalOrderSupported();
+
+   /**
+    * Get the view of interconnected sites.
+    * If no cross site replication has been configured, this method returns null.
+    *
+    * Inspecting the site view can be useful to see if the different sites
+    * have managed to join each other, which is pre-requisite to get cross
+    * replication working.
+    *
+    * @return set containing the connected sites, or null if no cross site
+    *         replication has been enabled.
+    */
+   Set<String> getSitesView();
+
 }

@@ -1,15 +1,19 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.HOST;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.KEY2STRING_MAPPER;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.METADATA_HELPER;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PATH;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PORT;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.RAW_VALUES;
+
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.rest.logging.Log;
-import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
-import org.infinispan.persistence.rest.metadata.MetadataHelper;
-import org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper;
 import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
+import org.infinispan.persistence.rest.logging.Log;
+import org.infinispan.persistence.rest.metadata.MetadataHelper;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.*;
 /**
  * RestStoreConfigurationBuilder. Configures a {@link org.infinispan.persistence.rest.RestStore}
  *

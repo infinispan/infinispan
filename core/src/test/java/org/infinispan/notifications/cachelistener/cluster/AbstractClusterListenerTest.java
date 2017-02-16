@@ -1,5 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
@@ -13,12 +19,6 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFi
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Base class to be used for cluster listener tests for both tx and nontx caches
@@ -241,6 +241,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
 
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
+
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);
 
@@ -259,6 +261,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builderUsed);
       log.info("Added a new node");
+
+      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
 
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);
@@ -661,7 +665,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertEquals(key, event.getKey());
       assertEquals(expectedValue, event.getValue());
    }
-   
+
    @Test
    public void testSimpleExpirationFilterNotOwner() {
       testSimpleExpirationFilter(new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)));

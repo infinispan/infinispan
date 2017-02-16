@@ -1,41 +1,39 @@
 package org.infinispan.context;
 
-import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.InvalidateCommand;
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Invocation Context container to be used for non-transactional caches.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
+   @Override
    @Inject
-   public void init(Configuration config, SequentialInterceptorChain interceptorChain) {
+   public void init(Configuration config, AsyncInterceptorChain interceptorChain) {
       super.init(config, interceptorChain);
    }
 
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       if (keyCount == 1) {
-         return new SingleKeyNonTxInvocationContext(null, keyEq);
+         return new SingleKeyNonTxInvocationContext(null);
       } else if (keyCount > 0) {
-         return new NonTxInvocationContext(keyCount, null, keyEq, interceptorChain);
+         return new NonTxInvocationContext(keyCount, null);
       }
       return createInvocationContext(null, false);
    }
@@ -47,19 +45,17 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
 
    @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(null, keyEq, interceptorChain);
-      return ctx;
+      return new NonTxInvocationContext(null);
    }
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      return new SingleKeyNonTxInvocationContext(null, keyEq);
+      return new SingleKeyNonTxInvocationContext(null);
    }
 
    @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq, interceptorChain);
-      return ctx;
+      return new NonTxInvocationContext(origin);
    }
 
    @Override
@@ -75,15 +71,5 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
 
    private IllegalStateException exception() {
       return new IllegalStateException("This is a non-transactional cache - why need to build a transactional context for it!");
-   }
-
-   @Override
-   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand,
-                                                                          Address origin) {
-      if (cacheCommand instanceof DataCommand && !(cacheCommand instanceof InvalidateCommand)) {
-         return new SingleKeyNonTxInvocationContext(origin, keyEq);
-      } else {
-         return super.createRemoteInvocationContextForCommand(cacheCommand, origin);
-      }
    }
 }

@@ -103,14 +103,14 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
       cache0.addListener(listener);
       cache0.addListener(listener);
       cache0.addListener(listener);
-      
+
       cache1.addListener(listener);
       cache1.addListener(listener);
-      
+
       cache2.addListener(listener);
 
       long begin = System.currentTimeMillis();
-      
+
       int threadCount = 10;
       final CountDownLatch latch = new CountDownLatch(threadCount);
       Callable<CreateModifyRemovals> callable = new Callable<CreateModifyRemovals>() {
@@ -189,13 +189,13 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
          modifyCount += cmr.modifyCount;
          removalCount += cmr.removalCount;
       }
-      
+
       int listenerCount = 6;
 
       assertEquals(listener.creationCount.get(), creationCount * listenerCount);
       assertEquals(listener.modifyCount.get(), modifyCount * listenerCount);
       assertEquals(listener.removalCount.get(), removalCount * listenerCount);
-      
+
       System.out.println("Took " + (System.currentTimeMillis() - begin) + " milliseconds");
    }
 }

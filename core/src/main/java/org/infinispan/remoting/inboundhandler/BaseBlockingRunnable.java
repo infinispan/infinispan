@@ -7,6 +7,9 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
 /**
  * Common logic to handle {@link org.infinispan.commands.remote.CacheRpcCommand}.
  *
@@ -18,41 +21,110 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    protected final BasePerCacheInboundInvocationHandler handler;
    protected final CacheRpcCommand command;
    protected final Reply reply;
+   protected final boolean sync;
    protected Response response;
 
-   protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply) {
+   protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
+                                  boolean sync) {
       this.handler = handler;
       this.command = command;
       this.reply = reply;
+      this.sync = sync;
    }
 
    @Override
    public void run() {
+      if (sync) {
+         runSync();
+      } else {
+         runAsync();
+      }
+   }
+
+   private void runSync() {
       try {
-         response = beforeInvoke();
-         if (response == null) {
-            response = handler.invokePerform(command);
+         CompletableFuture<Response> beforeFuture = beforeInvoke();
+         if (beforeFuture != null) {
+            response = beforeFuture.join();
+            if (response != null) {
+               return;
+            }
          }
+         CompletableFuture<Response> commandFuture = handler.invokeCommand(command);
+         response = commandFuture.join();
          afterInvoke();
-      } catch (InterruptedException e) {
-         response = handler.interruptedException(command);
-         onException(e);
-      } catch (OutdatedTopologyException oe) {
-         response = handler.outdatedTopology(oe);
-         onException(oe);
-      } catch (IllegalLifecycleStateException e) {
-         response = CacheNotFoundResponse.INSTANCE;
-         onException(e);
-      } catch (Exception e) {
-         response = handler.exceptionHandlingCommand(command, e);
-         onException(e);
-      } catch (Throwable throwable) {
-         response = handler.exceptionHandlingCommand(command, throwable);
-         onException(throwable);
+      } catch (Throwable t) {
+         afterCommandException(unwrap(t));
       } finally {
          reply.reply(response);
          onFinally();
       }
+   }
+
+   private void runAsync() {
+      CompletableFuture<Response> beforeFuture = beforeInvoke();
+      if (beforeFuture == null) {
+         invoke();
+      } else {
+         beforeFuture.whenComplete((rsp, throwable) -> {
+            if (rsp != null) {
+               response = rsp;
+               reply.reply(rsp);
+               onFinally();
+            } else if (throwable != null) {
+               afterCommandException(unwrap(throwable));
+               reply.reply(response);
+               onFinally();
+            } else {
+               invoke();
+            }
+         });
+      }
+   }
+
+   private void invoke() {
+      CompletableFuture<Response> commandFuture;
+      try {
+         commandFuture = handler.invokeCommand(command);
+      } catch (Throwable t) {
+         afterCommandException(unwrap(t));
+         reply.reply(response);
+         onFinally();
+         return;
+      }
+      commandFuture.whenComplete((rsp, throwable) -> {
+         try {
+            if (throwable == null) {
+               response = rsp;
+               afterInvoke();
+            } else {
+               afterCommandException(unwrap(throwable));
+            }
+         } finally {
+            reply.reply(response);
+            onFinally();
+         }
+      });
+   }
+
+   private Throwable unwrap(Throwable throwable) {
+      if (throwable instanceof CompletionException && throwable.getCause() != null) {
+         throwable = throwable.getCause();
+      }
+      return throwable;
+   }
+
+   private void afterCommandException(Throwable throwable) {
+      if (throwable instanceof InterruptedException) {
+         response = handler.interruptedException(command);
+      } else if (throwable instanceof OutdatedTopologyException) {
+         response = handler.outdatedTopology((OutdatedTopologyException) throwable);
+      } else if (throwable instanceof IllegalLifecycleStateException) {
+         response = CacheNotFoundResponse.INSTANCE;
+      } else {
+         response = handler.exceptionHandlingCommand(command, throwable);
+      }
+      onException(throwable);
    }
 
    protected void onFinally() {
@@ -67,7 +139,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       //no-op by default
    }
 
-   protected Response beforeInvoke() throws Exception {
+   protected CompletableFuture<Response> beforeInvoke() {
       return null; //no-op by default
    }
 }

@@ -1,21 +1,36 @@
 package org.infinispan.configuration.override;
 
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.Util;
-import org.infinispan.context.Flag;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.ReplListener;
@@ -23,17 +38,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests verifying that the overriding of the configuration which is read from the configuration XML file is done
@@ -56,21 +60,21 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() {
-            Assert.assertEquals(EvictionStrategy.NONE, cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
+            assertEquals(EvictionStrategy.NONE, cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
 
             Configuration newConfig = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU)
                   .size(5).build();
 
             cm.defineConfiguration(simpleCacheName, newConfig);
 
-            Assert.assertEquals(EvictionStrategy.LRU, cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
-            Assert.assertEquals(5, cm.getCacheConfiguration(simpleCacheName).eviction().maxEntries());
+            assertEquals(EvictionStrategy.LRU, cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
+            assertEquals(5, cm.getCacheConfiguration(simpleCacheName).eviction().maxEntries());
 
             for(int i = 0; i < 10; i++) {
                cm.getCache(simpleCacheName).put("test" + i, "value" + i);
             }
 
-            Assert.assertTrue(cm.getCache(simpleCacheName).size() <= 5);
+            assertTrue(cm.getCache(simpleCacheName).size() <= 5);
          }
       });
    }
@@ -79,22 +83,21 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() {
-            Assert.assertEquals(EvictionStrategy.LRU, cm.getCacheConfiguration(localCacheWithEviction).eviction().strategy());
-            Assert.assertEquals(10, cm.getCacheConfiguration(localCacheWithEviction).eviction().maxEntries());
+            assertEquals(10, cm.getCacheConfiguration(localCacheWithEviction).memory().size());
 
-            Configuration newConfig = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LIRS)
-                  .maxEntries(20).build();
+            Configuration newConfig = new ConfigurationBuilder().memory().size(20).build();
 
             cm.defineConfiguration(localCacheWithEviction, newConfig);
 
-            Assert.assertEquals(EvictionStrategy.LIRS, cm.getCacheConfiguration(localCacheWithEviction).eviction().strategy());
-            Assert.assertEquals(20, cm.getCacheConfiguration(localCacheWithEviction).eviction().maxEntries());
+            assertEquals(20, cm.getCacheConfiguration(localCacheWithEviction).memory().size());
 
             for(int i = 0; i < 30; i++) {
                cm.getCache(localCacheWithEviction).put("test" + i, "value" + i);
             }
 
-            Assert.assertTrue(cm.getCache(localCacheWithEviction).size() <= 20 && cm.getCache(localCacheWithEviction).size() > 10);
+            int size = cm.getCache(localCacheWithEviction).size();
+
+            assertTrue("Size was: " + size, size <= 20 && size > 10);
          }
       });
    }
@@ -103,17 +106,17 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() {
-            Assert.assertEquals(10000, cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
-            Assert.assertEquals(60000, cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
-            Assert.assertEquals(-1, cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
+            assertEquals(10000, cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
+            assertEquals(60000, cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
+            assertEquals(-1, cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
 
             Configuration newConfig = new ConfigurationBuilder().expiration().lifespan(5000).wakeUpInterval(1000).maxIdle(2000).build();
 
             cm.defineConfiguration(localCacheWithEviction, newConfig);
 
-            Assert.assertEquals(5000, cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
-            Assert.assertEquals(2000, cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
-            Assert.assertEquals(1000, cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
+            assertEquals(5000, cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
+            assertEquals(2000, cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
+            assertEquals(1000, cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
          }
       });
    }
@@ -122,12 +125,12 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() throws Exception {
-            Assert.assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
+            assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
 
             Configuration newConfig = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
             cm.defineConfiguration(simpleCacheName, newConfig);
 
-            Assert.assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
+            assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
 
             for(int i = 0; i < 10; i++) {
                cm.getCache(simpleCacheName).put("test" + i, "value" + i);
@@ -155,12 +158,12 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() {
-            Assert.assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(replSync).clustering().cacheMode());
+            assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(replSync).clustering().cacheMode());
 
             Configuration newConfig = new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL).build();
             cm.defineConfiguration(replSync, newConfig);
 
-            Assert.assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(replSync).clustering().cacheMode());
+            assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(replSync).clustering().cacheMode());
 
             for(int i = 0; i < 10; i++) {
                cm.getCache(replSync).put("test" + i, "value" + i);
@@ -171,7 +174,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cm1 = TestCacheManagerFactory.createClusteredCacheManager();
 
                cm1.defineConfiguration(replSync, newConfig);
-               Assert.assertTrue(cm1.getCache(replSync).isEmpty());
+               assertTrue(cm1.getCache(replSync).isEmpty());
             } finally {
                TestingUtil.killCacheManagers(cm1);
             }
@@ -183,14 +186,14 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
          public void call() {
-            Assert.assertFalse(cm.getCacheConfiguration(replSync).jmxStatistics().enabled());
+            assertFalse(cm.getCacheConfiguration(replSync).jmxStatistics().enabled());
 
             Configuration conf = new ConfigurationBuilder().jmxStatistics().enable().build();
 
             cm.defineConfiguration(replSync, conf);
 
-            Assert.assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(replSync).clustering().cacheMode());
-            Assert.assertTrue(cm.getCacheConfiguration(replSync).jmxStatistics().enabled());
+            assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(replSync).clustering().cacheMode());
+            assertTrue(cm.getCacheConfiguration(replSync).jmxStatistics().enabled());
          }
       });
    }
@@ -202,7 +205,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() {
             Configuration configuration = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(configuration.jmxStatistics().enabled());
+            assertFalse(configuration.jmxStatistics().enabled());
 
             Configuration conf = new ConfigurationBuilder().eviction().maxEntries(5).strategy(EvictionStrategy.LRU)
                   .persistence().passivation(true).addSingleFileStore().location(tmpDir + "/testOverrideLoaders").build();
@@ -210,17 +213,17 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             cm.defineConfiguration(simpleCacheName, conf);
 
             configuration = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
-            Assert.assertTrue(configuration.persistence().passivation());
+            assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
+            assertTrue(configuration.persistence().passivation());
 
             Cache cache = cm.getCache(simpleCacheName);
             for (int i = 0; i < 10; i++) {
                cache.put("key" + i, "value" + i);
             }
 
-            Assert.assertTrue(cache.getAdvancedCache().getDataContainer().size() <= 5);
+            assertTrue(cache.getAdvancedCache().getDataContainer().size() <= 5);
             for (int i = 0; i < 10; i++) {
-               Assert.assertEquals(cache.get("key" + i), "value" + i);
+               assertEquals(cache.get("key" + i), "value" + i);
             }
          }
       });
@@ -234,8 +237,8 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(simpleNonTransactionalCache);
-            Assert.assertEquals(TransactionMode.NON_TRANSACTIONAL, cnf.transaction().transactionMode());
-            Assert.assertEquals(100, cnf.locking().concurrencyLevel());
+            assertEquals(TransactionMode.NON_TRANSACTIONAL, cnf.transaction().transactionMode());
+            assertEquals(100, cnf.locking().concurrencyLevel());
 
             Configuration conf = new ConfigurationBuilder().transaction().transactionMode(TransactionMode.TRANSACTIONAL)
                   .jmxStatistics().enable().locking().concurrencyLevel(1).build();
@@ -243,9 +246,9 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             cm.defineConfiguration(simpleNonTransactionalCache, conf);
 
             cnf = cm.getCacheConfiguration(simpleNonTransactionalCache);
-            Assert.assertEquals(TransactionMode.TRANSACTIONAL, cnf.transaction().transactionMode());
-            Assert.assertTrue(cnf.jmxStatistics().enabled());
-            Assert.assertEquals(1, cnf.locking().concurrencyLevel());
+            assertEquals(TransactionMode.TRANSACTIONAL, cnf.transaction().transactionMode());
+            assertTrue(cnf.jmxStatistics().enabled());
+            assertEquals(1, cnf.locking().concurrencyLevel());
 
             TransactionManager tm = cm.getCache(simpleNonTransactionalCache).getAdvancedCache().getTransactionManager();
 
@@ -257,7 +260,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             tm.commit();
 
             for (int i = 0; i < 10; i++) {
-               Assert.assertNotNull(cm.getCache(simpleNonTransactionalCache).get("key" + i));
+               assertNotNull(cm.getCache(simpleNonTransactionalCache).get("key" + i));
             }
          }
       });
@@ -268,7 +271,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() {
             Configuration cnf = cm.getCacheConfiguration(simpleTransactionalCache);
-            Assert.assertEquals(TransactionMode.TRANSACTIONAL, cnf.transaction().transactionMode());
+            assertEquals(TransactionMode.TRANSACTIONAL, cnf.transaction().transactionMode());
 
             Configuration conf = new ConfigurationBuilder().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
                   .build();
@@ -276,16 +279,16 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             cm.defineConfiguration(simpleTransactionalCache, conf);
 
             cnf = cm.getCacheConfiguration(simpleTransactionalCache);
-            Assert.assertEquals(TransactionMode.NON_TRANSACTIONAL, cnf.transaction().transactionMode());
+            assertEquals(TransactionMode.NON_TRANSACTIONAL, cnf.transaction().transactionMode());
 
             TransactionManager tm = cm.getCache(simpleTransactionalCache).getAdvancedCache().getTransactionManager();
-            Assert.assertNull(tm);
+            assertNull(tm);
             for (int i = 0; i < 10; i++) {
                cm.getCache(simpleTransactionalCache).put("key" + i, "value" + i);
             }
 
             for (int i = 0; i < 10; i++) {
-               Assert.assertNotNull(cm.getCache(simpleTransactionalCache).get("key" + i));
+               assertNotNull(cm.getCache(simpleTransactionalCache).get("key" + i));
             }
          }
       });
@@ -296,15 +299,16 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() {
             Configuration cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.storeAsBinary().enabled());
+            assertFalse(cnf.storeAsBinary().enabled());
 
             Configuration conf = new ConfigurationBuilder().storeAsBinary().enable().defensive(true).build();
 
             cm.defineConfiguration(simpleCacheName, conf);
 
             cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertTrue(cnf.storeAsBinary().enabled());
-            Assert.assertTrue(cnf.storeAsBinary().storeValuesAsBinary());
+            assertTrue(cnf.storeAsBinary().enabled());
+            assertEquals(StorageType.BINARY, cnf.memory().storageType());
+            assertTrue(cnf.storeAsBinary().storeValuesAsBinary());
 
             List<NonIndexedClass> instances = new ArrayList<NonIndexedClass>();
             for (int i = 0; i < 10; i++) {
@@ -320,7 +324,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
             //Verifying that the entry in the cache is not changed.
             for (int i = 0; i < 10; i++) {
-               Assert.assertEquals(new NonIndexedClass("value" + i), cm.getCache(simpleCacheName).get("key" + i));
+               assertEquals(new NonIndexedClass("value" + i), cm.getCache(simpleCacheName).get("key" + i));
             }
          }
       });
@@ -331,16 +335,16 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(distCacheToChange);
-            Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
-            Assert.assertEquals(2, cnf.clustering().hash().numOwners());
+            assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
+            assertEquals(2, cnf.clustering().hash().numOwners());
 
             Configuration conf = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1).build();
 
             cm.defineConfiguration(distCacheToChange, conf);
 
             cnf = cm.getCacheConfiguration(distCacheToChange);
-            Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
-            Assert.assertEquals(1, cnf.clustering().hash().numOwners());
+            assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
+            assertEquals(1, cnf.clustering().hash().numOwners());
 
             AdvancedCache cache1 = cm.getCache(distCacheToChange).getAdvancedCache();
             for (int i = 0; i < 10; i++) {
@@ -357,7 +361,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
                assertTrue(cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() > 0);
                // Stale entries on cache1 are not removed immediately
-               eventually(() -> 10 == cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() +
+               eventuallyEquals(10, () -> cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() +
                      cache2.withFlags(Flag.CACHE_MODE_LOCAL).size());
             } finally {
                TestingUtil.killCacheManagers(cm1);
@@ -371,15 +375,15 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(distCacheToChange);
-            Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
-            Assert.assertEquals(2, cnf.clustering().hash().numOwners());
+            assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
+            assertEquals(2, cnf.clustering().hash().numOwners());
 
             Configuration conf = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
             cm.defineConfiguration(distCacheToChange, conf);
 
             cnf = cm.getCacheConfiguration(distCacheToChange);
-            Assert.assertEquals(CacheMode.DIST_ASYNC, cnf.clustering().cacheMode());
+            assertEquals(CacheMode.DIST_ASYNC, cnf.clustering().cacheMode());
 
             EmbeddedCacheManager cm1 = null;
             try {
@@ -413,14 +417,14 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(replAsync);
-            Assert.assertEquals(CacheMode.REPL_ASYNC, cnf.clustering().cacheMode());
+            assertEquals(CacheMode.REPL_ASYNC, cnf.clustering().cacheMode());
 
             Configuration conf = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
 
             cm.defineConfiguration(replAsync, conf);
 
             cnf = cm.getCacheConfiguration(replAsync);
-            Assert.assertEquals(CacheMode.REPL_SYNC, cnf.clustering().cacheMode());
+            assertEquals(CacheMode.REPL_SYNC, cnf.clustering().cacheMode());
 
             EmbeddedCacheManager cm1 = null;
             try {
@@ -448,7 +452,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          @Override
          public void call() {
             Configuration cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertTrue(cnf.customInterceptors().interceptors().isEmpty());
+            assertTrue(cnf.customInterceptors().interceptors().isEmpty());
 
             SimpleInterceptor interceptor = new SimpleInterceptor();
             Configuration conf = new ConfigurationBuilder().customInterceptors().addInterceptor().interceptor(interceptor)
@@ -457,18 +461,18 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             cm.defineConfiguration(simpleCacheName, conf);
 
             cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.customInterceptors().interceptors().isEmpty());
+            assertFalse(cnf.customInterceptors().interceptors().isEmpty());
 
-            Assert.assertFalse(interceptor.putOkay);
+            assertFalse(interceptor.putOkay);
             cm.getCache(simpleCacheName).put("key1", "value1");
 
-            Assert.assertTrue(interceptor.putOkay);
-            Assert.assertEquals("value1", cm.getCache(simpleCacheName).get("key1"));
+            assertTrue(interceptor.putOkay);
+            assertEquals("value1", cm.getCache(simpleCacheName).get("key1"));
          }
       });
    }
 
-   class NonIndexedClass implements Serializable {
+   class NonIndexedClass implements Serializable, ExternalPojo {
       public String description;
 
       NonIndexedClass(String description) {
@@ -491,15 +495,22 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       public int hashCode() {
          return description.hashCode();
       }
+
+      @Override
+      public String toString() {
+         return "NonIndexedClass{" +
+               "description='" + description + '\'' +
+               '}';
+      }
    }
 
-   private static class SimpleInterceptor extends DDSequentialInterceptor {
+   private static class SimpleInterceptor extends DDAsyncInterceptor {
       private boolean putOkay;
 
       @Override
-      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       private boolean isRightType(InvocationContext ctx) {

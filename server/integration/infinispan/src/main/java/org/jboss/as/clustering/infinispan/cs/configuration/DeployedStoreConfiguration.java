@@ -1,9 +1,12 @@
 package org.jboss.as.clustering.infinispan.cs.configuration;
 
-import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.configuration.cache.*;
-
 import java.util.Properties;
+
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 
 /**
  * Configuration which operates only on class names instead of class objects.

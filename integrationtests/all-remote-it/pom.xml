@@ -34,7 +34,7 @@
          <artifactId>infinispan-remote</artifactId>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-build</artifactId>
@@ -50,6 +50,11 @@
       <dependency>
          <groupId>org.wildfly.arquillian</groupId>
          <artifactId>wildfly-arquillian-container-managed</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -116,6 +121,18 @@
                <systemPropertyVariables>
                   <infinispan.jcache.mgmt.lookup.skip>true</infinispan.jcache.mgmt.lookup.skip>
                </systemPropertyVariables>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override"/>
+               <properties>
+                  <property>
+                     <name>usedefaultlisteners</name>
+                     <value>false</value>
+                  </property>
+                  <property>
+                     <name>listener</name>
+                     <value>${junitListener}</value>
+                  </property>
+               </properties>
             </configuration>
          </plugin>
       </plugins>

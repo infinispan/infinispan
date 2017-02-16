@@ -1,17 +1,8 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
-import org.infinispan.util.function.SerializableDoubleConsumer;
-import org.infinispan.util.function.SerializableDoubleFunction;
-import org.infinispan.util.function.SerializableDoublePredicate;
-import org.infinispan.util.function.SerializableDoubleToIntFunction;
-import org.infinispan.util.function.SerializableDoubleToLongFunction;
-import org.infinispan.util.function.SerializableDoubleUnaryOperator;
-import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.OptionalDouble;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleConsumer;
@@ -24,6 +15,17 @@ import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
 
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableDoubleBinaryOperator;
+import org.infinispan.util.function.SerializableDoubleConsumer;
+import org.infinispan.util.function.SerializableDoubleFunction;
+import org.infinispan.util.function.SerializableDoublePredicate;
+import org.infinispan.util.function.SerializableDoubleToIntFunction;
+import org.infinispan.util.function.SerializableDoubleToLongFunction;
+import org.infinispan.util.function.SerializableDoubleUnaryOperator;
+import org.infinispan.util.function.SerializableObjDoubleConsumer;
+import org.infinispan.util.function.SerializableSupplier;
+
 /**
  * A {@link DoubleStream} that has additional methods to allow for Serializable instances.  Please see
  * {@link CacheStream} for additional details about various methods.
@@ -31,7 +33,56 @@ import java.util.stream.DoubleStream;
  * @author wburns
  * @since 9.0
  */
-public interface DoubleCacheStream extends DoubleStream {
+public interface DoubleCacheStream extends DoubleStream, BaseCacheStream<Double, DoubleStream> {
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with parallel distribution disabled.
+    */
+   DoubleCacheStream sequentialDistribution();
+
+   /**
+    * @inheritDoc
+    * @return a stream with parallel distribution enabled.
+    */
+   DoubleCacheStream parallelDistribution();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the segments filtered.
+    */
+   DoubleCacheStream filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the keys filtered.
+    */
+   DoubleCacheStream filterKeys(Set<?> keys);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the batch size updated
+    */
+   DoubleCacheStream distributedBatchSize(int batchSize);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the listener registered.
+    */
+   DoubleCacheStream segmentCompletionListener(SegmentCompletionListener listener);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with rehash awareness disabled.
+    */
+   DoubleCacheStream disableRehashAware();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the timeout set
+    */
+   DoubleCacheStream timeout(long timeout, TimeUnit unit);
+
    /**
     * {@inheritDoc}
     * @return the new cache double stream

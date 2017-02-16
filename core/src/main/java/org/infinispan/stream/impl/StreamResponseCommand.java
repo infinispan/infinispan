@@ -1,15 +1,16 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Stream response command used to handle returning intermediate or final responses from the remote node
@@ -45,9 +46,9 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       csm.receiveResponse(id, getOrigin(), complete, Collections.emptySet(), response);
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

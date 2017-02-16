@@ -1,13 +1,5 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.ReplListener;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,6 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.ReplListener;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistAsyncTxFuncTest")
 public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
@@ -26,8 +27,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    List<Address> listenerCaches;
 
    public DistAsyncTxFuncTest() {
-      sync = false;
-      tx = true;
+      cacheMode = CacheMode.DIST_ASYNC;
       testRetVals = true;
       cleanup = CleanupPhase.AFTER_METHOD; // ensure any stale TXs are wiped
    }
@@ -47,7 +47,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
          listenerLookup.put(rl.getCache(), rl);
       }
    }
-  
+
    @Override
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
       if (cachesOnWhichKeyShouldInval == null) cachesOnWhichKeyShouldInval = new Cache[0];

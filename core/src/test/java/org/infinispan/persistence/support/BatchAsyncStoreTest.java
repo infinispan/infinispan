@@ -46,7 +46,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
             .passivation(false)
             .addSingleFileStore()
                .preload(false)
-               .shared(true)
+               .shared(false)
                .location(tmpDirectory)
                .async()
                   .enable()

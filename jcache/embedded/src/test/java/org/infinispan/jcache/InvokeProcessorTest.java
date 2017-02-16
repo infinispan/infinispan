@@ -1,7 +1,14 @@
 package org.infinispan.jcache;
 
-import org.infinispan.jcache.util.JCacheRunnable;
-import org.testng.annotations.Test;
+import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.cache.Cache;
 import javax.cache.CacheException;
@@ -10,15 +17,9 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.MutableEntry;
 import javax.cache.spi.CachingProvider;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.jcache.util.JCacheRunnable;
+import org.testng.annotations.Test;
 
 /**
  * Add {@link Cache#invoke(Object, javax.cache.processor.EntryProcessor, Object...)}

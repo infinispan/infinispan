@@ -6,10 +6,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.scripting.ScriptingManager;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Intercepts updates to the script caches, extracts metadata and updates the compiled scripts
@@ -18,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public final class ScriptingInterceptor extends BaseCustomSequentialInterceptor {
+public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
 
    private ScriptingManagerImpl scriptingManager;
 
@@ -28,31 +26,31 @@ public final class ScriptingInterceptor extends BaseCustomSequentialInterceptor 
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
       command.setMetadata(scriptingManager.compileScript(name, script));
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       scriptingManager.compiledScripts.clear();
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       scriptingManager.compiledScripts.remove(command.getKey());
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getNewValue();
       command.setMetadata(scriptingManager.compileScript(name, script));
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
 }

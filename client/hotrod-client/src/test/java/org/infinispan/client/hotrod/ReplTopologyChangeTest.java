@@ -1,8 +1,17 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Collection;
+
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -15,15 +24,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Collection;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -122,7 +122,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       waitForServerToDie(2);
 
-      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
+      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
 
       try {
          expectTopologyChange(server3Address, false);
@@ -139,13 +139,13 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
-         remoteCache.put("k" + i, "v" + i);         
+         remoteCache.put("k" + i, "v" + i);
          if (added == tcpTransportFactory.getServers().contains(server1Address)) break;
       }
       Collection<SocketAddress> addresses = tcpTransportFactory.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
-   
+
    protected void waitForServerToDie(int memberCount) {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }

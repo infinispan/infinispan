@@ -1,5 +1,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
@@ -10,9 +13,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceController;
-
-import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Handler to unregister a bunch of protobuf schemas given their names.
@@ -30,17 +30,19 @@ public class UnregisterProtoSchemasOperationHandler implements OperationStepHand
       final String cacheContainerName = address.getElement(address.size() - 1).getValue();
       final ServiceController<?> controller = context.getServiceRegistry(false).getService(
             CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
-      final EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-      final ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      if (protoManager != null) {
-         try {
-            ModelNode names = operation.require(CacheContainerResource.PROTO_NAMES.getName());
-            validateParameters(names);
-            for (ModelNode modelNode : names.asList()) {
-               protoManager.unregisterProtofile(modelNode.asString());
+      if (controller != null) {
+         final EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+         final ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         if (protoManager != null) {
+            try {
+               ModelNode names = operation.require(CacheContainerResource.PROTO_NAMES.getName());
+               validateParameters(names);
+               for (ModelNode modelNode : names.asList()) {
+                  protoManager.unregisterProtofile(modelNode.asString());
+               }
+            } catch (Exception e) {
+               throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
             }
-         } catch (Exception e) {
-            throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
          }
       }
       context.stepCompleted();

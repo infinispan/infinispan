@@ -1,19 +1,18 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.infinispan.commons.marshall.Externalizer;
-import org.jboss.marshalling.Creator;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.infinispan.commons.marshall.Externalizer;
+
 public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
+   private static final long serialVersionUID = 8187679200599686076L;
 
-   final Externalizer<Object> externalizer;
+   final Externalizer<? super Object> externalizer;
 
-   @SuppressWarnings("unchecked")
-   public JBossExternalizerAdapter(Externalizer<?> externalizer) {
-      this.externalizer = (Externalizer<Object>) externalizer;
+   public JBossExternalizerAdapter(Externalizer<? super Object> externalizer) {
+      this.externalizer = externalizer;
    }
 
    @Override
@@ -22,13 +21,7 @@ public class JBossExternalizerAdapter implements org.jboss.marshalling.Externali
    }
 
    @Override
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) throws IOException, ClassNotFoundException {
+   public Object createExternal(Class<?> targetClass, ObjectInput input) throws IOException, ClassNotFoundException {
       return externalizer.readObject(input);
    }
-
-   @Override
-   public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
-      // No-op
-   }
-
 }

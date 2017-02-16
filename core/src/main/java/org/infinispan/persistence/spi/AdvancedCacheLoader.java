@@ -1,10 +1,11 @@
 package org.infinispan.persistence.spi;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.concurrent.Executor;
+
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 
-import java.util.concurrent.Executor;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A specialised extension of the {@link CacheLoader} interface that allows processing parallel iteration over the

@@ -22,7 +22,7 @@
                        machine="${test.expr:machine1}"
                        rack="${test.expr:rack1}"
                        site="${test.expr:site1}">
-                <property name="enable_bundling">${test.expr:true}</property>
+                <property name="log_discard_msgs">${test.expr:true}</property>
                 <default-thread-pool min-threads="11"
                                      queue-length="12"
                                      max-threads="13"
@@ -53,7 +53,7 @@
             <protocol type="pbcast.GMS"/>
             <protocol type="UFC"/>
             <protocol type="MFC"/>
-            <protocol type="FRAG2"/>
+            <protocol type="FRAG3"/>
             <protocol type="RSVP"/>
             <relay site="LONDON">
                 <remote-site name="SFO" channel="bridge"/>

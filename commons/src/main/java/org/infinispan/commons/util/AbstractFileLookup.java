@@ -60,7 +60,11 @@ public abstract class AbstractFileLookup implements FileLookup {
 
    @Override
    public InputStream lookupFileStrict(URI uri, ClassLoader cl) throws FileNotFoundException {
-      return new FileInputStream(new File(uri));
+      //in case we don't have only file schema, but jar:file schema too, we have to get rid of all schemas
+      int startIndex = uri.toString().lastIndexOf(':');
+      String fileName = uri.toString().substring(startIndex + 1);
+
+      return cl.getResourceAsStream(fileName);
    }
 
    @Override

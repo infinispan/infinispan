@@ -1,15 +1,15 @@
 package org.infinispan.remoting.rpc;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
@@ -46,6 +46,26 @@ public interface RpcManager {
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
 
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.
+    *
+    * @param destination  the destination's {@link Address}.
+    * @param command      the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    */
+   void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder);
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
+    * DeliverOrder}.
+    *
+    * @param destinations the collection of destination's {@link Address}. If {@code null}, it sends to all the members
+    *                     in the cluster.
+    * @param command      the {@link ReplicableCommand} to send.
+    * @param deliverOrder the {@link DeliverOrder} to use.
+    */
+   void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder);
 
    /**
     * @return a reference to the underlying transport.
@@ -117,5 +137,4 @@ public interface RpcManager {
     * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by the parameter.
     */
    RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder);
-
 }

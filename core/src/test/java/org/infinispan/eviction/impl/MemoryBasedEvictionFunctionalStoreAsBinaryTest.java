@@ -1,17 +1,13 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.CustomClass;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Random;
 
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.marshall.CustomClass;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.MemoryBasedEvictionFunctionalStoreAsBinaryTest")
 public class MemoryBasedEvictionFunctionalStoreAsBinaryTest extends MemoryBasedEvictionFunctionalTest {
@@ -19,7 +15,7 @@ public class MemoryBasedEvictionFunctionalStoreAsBinaryTest extends MemoryBasedE
    @Override
    protected void configure(ConfigurationBuilder cb) {
       super.configure(cb);
-      cb.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(true);
+      cb.memory().storageType(StorageType.BINARY);
    }
 
    public void testCustomClass() throws Exception {

@@ -1,9 +1,18 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -14,7 +23,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.EmptySequentialInterceptorChain;
+import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -27,13 +36,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
-import java.util.List;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 @Test(testName = "notifications.cachelistener.OnlyPrimaryOwnerTest", groups = "unit")
 public class OnlyPrimaryOwnerTest {
@@ -56,13 +58,15 @@ public class OnlyPrimaryOwnerTest {
          }
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
+            new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
                            mock(InternalEntryFactory.class), mock(ClusterEventManager.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), EmptySequentialInterceptorChain.INSTANCE);
+      ctx = new NonTxInvocationContext(null);
    }
 
    private static class MockCDL implements ClusteringDependentLogic {
@@ -89,6 +93,11 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
+      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         return isOwner ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+      }
+
+      @Override
       public List<Address> getOwners(Collection<Object> keys) {
          throw new UnsupportedOperationException();
       }
@@ -105,6 +114,11 @@ public class OnlyPrimaryOwnerTest {
 
       @Override
       public Address getAddress() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int getSegmentForKey(Object key) {
          throw new UnsupportedOperationException();
       }
    }

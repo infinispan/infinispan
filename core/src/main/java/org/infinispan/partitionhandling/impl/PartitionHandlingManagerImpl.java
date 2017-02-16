@@ -1,5 +1,11 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -28,8 +34,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.*;
 
 public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);

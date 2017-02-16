@@ -1,5 +1,12 @@
 package org.infinispan.client.hotrod.retry;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.net.SocketAddress;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -11,12 +18,6 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.Clust
 import org.mockito.Mockito;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the number of retries.
@@ -79,7 +80,7 @@ public class RetryOnFailureUnitTest {
       private final boolean failOnTransport;
 
       public MockOperation(TransportFactory transportFactory, boolean failOnTransport) {
-         super(null, transportFactory, null, null, 0);
+         super(null, transportFactory, null, null, 0, ClientIntelligence.getDefault());
          this.failOnTransport = failOnTransport;
          transportInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);

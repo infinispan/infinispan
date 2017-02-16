@@ -1,22 +1,5 @@
 package org.infinispan.commands.control;
 
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -25,6 +8,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -36,7 +39,7 @@ import java.util.Map;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TransactionalRemoteLockCommand {
+public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TopologyAffectedCommand, TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
@@ -115,15 +118,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Object perform(InvocationContext ignored) throws Throwable {
-      if (ignored != null)
-         throw new IllegalStateException("Expected null context!");
-
-      RemoteTxInvocationContext ctxt = createContext();
-      if (ctxt == null) {
-         return null;
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      RemoteTxInvocationContext ctx = createContext();
+      if (ctx == null) {
+         return CompletableFutures.completedNull();
       }
-      return invoker.invoke(ctxt, this);
+      return invoker.invokeAsync(ctx, this);
    }
 
    @Override
@@ -132,7 +132,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
       if (transaction == null) {
          if (unlock) {
-            log.tracef("Unlock for non-existant transaction %s.  Not doing anything.", globalTx);
+            log.tracef("Unlock for missing transaction %s.  Not doing anything.", globalTx);
             return null;
          }
          //create a remote tx without any modifications (we do not know modifications ahead of time)
@@ -151,7 +151,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super.writeTo(output);
       output.writeBoolean(unlock);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 
    @Override
@@ -218,17 +218,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Metadata getMetadata() {
-      return null;
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // no-op
-   }
-
-   @Override
-   public Collection<Object> getKeysToLock() {
+   public Collection<?> getKeysToLock() {
       return unlock ? Collections.emptyList() : Collections.unmodifiableCollection(keys);
    }
 
@@ -239,11 +229,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public boolean hasSkipLocking() {
-      return hasFlag(Flag.SKIP_LOCKING); //is it possible??
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING); //is it possible??
    }
 }

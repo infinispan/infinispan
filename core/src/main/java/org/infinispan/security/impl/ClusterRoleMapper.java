@@ -1,5 +1,11 @@
 package org.infinispan.security.impl;
 
+import java.security.Principal;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,12 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapperContext;
-
-import java.security.Principal;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * ClusterRoleMapper.

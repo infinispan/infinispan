@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,6 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
 
 /**
@@ -61,7 +62,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    protected void killIterationServer() {
       servers.stream()
-            .filter(s -> s.iterationManager().activeIterations() > 0)
+            .filter(s -> s.getIterationManager().activeIterations() > 0)
             .forEach(HotRodClientTestingUtil::killServers);
    }
 

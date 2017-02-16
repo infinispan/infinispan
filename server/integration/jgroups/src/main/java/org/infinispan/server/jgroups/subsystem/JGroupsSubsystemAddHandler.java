@@ -23,13 +23,9 @@ package org.infinispan.server.jgroups.subsystem;
 
 import static org.infinispan.server.jgroups.logging.JGroupsLogger.ROOT_LOGGER;
 
-import java.util.Iterator;
-import java.util.ServiceLoader;
-
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
 import org.infinispan.server.commons.service.AliasServiceBuilder;
-import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceName;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceNameFactory;
@@ -40,7 +36,7 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceTarget;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Handler for JGroups subsystem add operations.
@@ -72,7 +68,7 @@ public class JGroupsSubsystemAddHandler extends AbstractAddStepHandler {
             for (ChannelServiceNameFactory factory : ChannelServiceName.values()) {
                 new AliasServiceBuilder<>(factory.getServiceName(), factory.getServiceName(defaultChannel), Object.class).build(target).install();
             }
-            new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(ChannelServiceNameFactory.DEFAULT_CHANNEL), ChannelServiceName.CHANNEL.getServiceName(defaultChannel), Channel.class).build(target).install();
+            new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(ChannelServiceNameFactory.DEFAULT_CHANNEL), ChannelServiceName.CHANNEL.getServiceName(defaultChannel), JChannel.class).build(target).install();
 
             new AliasServiceBuilder<>(ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(ChannelServiceNameFactory.DEFAULT_CHANNEL), ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(defaultChannel), ChannelFactory.class).build(target).install();
             new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelFactoryBinding(ChannelServiceNameFactory.DEFAULT_CHANNEL), ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(defaultChannel), ChannelFactory.class).build(target).install();

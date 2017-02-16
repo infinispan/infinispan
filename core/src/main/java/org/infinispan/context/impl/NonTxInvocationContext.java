@@ -1,15 +1,12 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Context to be used for non transactional calls, both remote and local.
@@ -22,23 +19,18 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    private static final int INITIAL_CAPACITY = 4;
 
    private final Map<Object, CacheEntry> lookedUpEntries;
-   private final Equivalence<Object> keyEq;
    private Set<Object> lockedKeys;
    private Object lockOwner;
 
 
-   public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq,
-                                 SequentialInterceptorChain interceptorChain) {
+   public NonTxInvocationContext(int numEntries, Address origin) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(numEntries), keyEq, AnyEquivalence.getInstance());
-      this.keyEq = keyEq;
+      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(numEntries));
    }
 
-   public NonTxInvocationContext(Address origin, Equivalence<Object> keyEq,
-                                 SequentialInterceptorChain interceptorChain) {
+   public NonTxInvocationContext(Address origin) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.getInstance());
-      this.keyEq = keyEq;
+      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY);
    }
 
    @Override
@@ -89,7 +81,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    @Override
    public void addLockedKey(Object key) {
       if (lockedKeys == null)
-         lockedKeys = CollectionFactory.makeSet(INITIAL_CAPACITY, keyEq);
+         lockedKeys = CollectionFactory.makeSet(INITIAL_CAPACITY);
 
       lockedKeys.add(key);
    }

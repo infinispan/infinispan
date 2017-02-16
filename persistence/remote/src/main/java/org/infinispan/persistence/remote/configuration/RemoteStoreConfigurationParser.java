@@ -1,6 +1,11 @@
 package org.infinispan.persistence.remote.configuration;
 
-import org.infinispan.commons.executors.ExecutorFactory;
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -14,11 +19,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
 /**
  * Remote cache store parser.
@@ -96,7 +96,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FACTORY: {
-               builder.factory(Util.<ExecutorFactory> getInstance(value, classLoader));
+               builder.factory(Util.getInstance(value, classLoader));
                break;
             }
             default: {
@@ -214,7 +214,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case PROTOCOL_VERSION: {
-               builder.protocolVersion(value);
+               builder.protocolVersion(ProtocolVersion.parseVersion(value));
                break;
             }
             case RAW_VALUES: {

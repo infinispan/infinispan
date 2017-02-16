@@ -1,22 +1,24 @@
 package org.infinispan.query.logging;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.hibernate.hql.ParsingException;
-import org.hibernate.search.backend.LuceneWork;
-import org.infinispan.commons.CacheException;
-import org.infinispan.remoting.transport.Address;
-import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageLogger;
-
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.transaction.Transaction;
+
+import org.hibernate.search.backend.LuceneWork;
+import org.infinispan.commons.CacheException;
+import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.remoting.transport.Address;
+import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the query module. For this module, message ids
@@ -99,11 +101,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Error executing MassIndexer", id = 14018)
    CacheException errorExecutingMassIndexer(@Cause Throwable cause);
 
-   @Message(value = "Cannot run Lucene queries on a cache that does not have indexing enabled", id = 14019)
-   IllegalStateException cannotRunLuceneQueriesIfNotIndexed();
-
-   @Message(value = "Query parameter '%s' was not set", id = 14020)
-   IllegalStateException queryParameterNotSet(String paramName);
+   @Message(value = "Cannot run Lucene queries on a cache '%s' that does not have indexing enabled", id = 14019)
+   IllegalStateException cannotRunLuceneQueriesIfNotIndexed(String cacheName);
 
    @Message(value = "Queries containing grouping and aggregation functions must use projections.", id = 14021)
    ParsingException groupingAndAggregationQueriesMustUseProjections();
@@ -138,6 +137,22 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The type %s is not an indexed entity.", id = 14030)
    IllegalArgumentException getNoIndexedEntityException(String typeName);
 
-   @Message(value = "No queries can be applied to property %2$s in type %1$s since the property is analyzed.", id = 14031)
-   ParsingException getQueryOnAnalyzedPropertyNotSupportedException(String typeName, String propertyName);
+   @Message(value = "Could not locate error handler class %s", id = 14032)
+   IllegalArgumentException unsupportedErrorHandlerConfigurationValueType(Class<?> type);
+
+   @Message(value = "Unable to resume suspended transaction %s", id = 14033)
+   CacheException unableToResumeSuspendedTx(Transaction transaction, @Cause Throwable cause);
+
+   @Message(value = "Unable to suspend transaction", id = 14034)
+   CacheException unableToSuspendTx(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error occurred while applying changes to the index", id = 14035)
+   void errorOccurredApplyingChanges(@Cause Throwable cause);
+
+   @Message(value = "Prefix, wildcard or regexp queries cannot be fuzzy: %s", id = 14036)
+   ParsingException getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(String s); //todo [anistor] this should be thrown earlier at parsing time
+
+   @Message(value = "Invalid boolean literal '%s'", id = 14037)
+   ParsingException getInvalidBooleanLiteralException(String value);
 }

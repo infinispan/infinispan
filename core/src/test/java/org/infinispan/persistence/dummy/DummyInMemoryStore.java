@@ -15,12 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
@@ -36,14 +34,19 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+/**
+ * A Dummy cache store which stores objects in memory. Instance of the store can be shared
+ * amongst multiple caches by utilising the same `storeName` for each store instance.
+ */
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
+@Store(shared = true)
 public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
-   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<String, Map<Object, byte[]>>();
-   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats =
-         new ConcurrentHashMap<String, ConcurrentMap<String, AtomicInteger>>();
+   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<>();
+   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
+   public static final int SLOW_STORE_WAIT = 100;
    String storeName;
    Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
@@ -79,17 +82,14 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       stats.get(method).incrementAndGet();
    }
 
-
    @Override
    public void write(MarshalledEntry entry) {
-//      System.out.println("[" + Thread.currentThread().getName() + "] entry.getKey() = " + entry.getKey());
       record("write");
       if (configuration.slow()) {
-         TestingUtil.sleepThread(100);
+         TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
       if (entry!= null) {
          if (debug) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
-         configuration.failKey();
          store.put(entry.getKey(), serialize(entry));
       }
    }
@@ -192,9 +192,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       if (store != null)
          return;
 
-      Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
-      Equivalence<byte[]> valueEq = ByteArrayEquivalence.INSTANCE;
-      store = new EquivalentConcurrentHashMapV8<Object, byte[]>(keyEq, valueEq);
+      store = new ConcurrentHashMap<>();
       stats = newStatsMap();
 
       if (storeName != null) {
@@ -219,7 +217,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    private ConcurrentMap<String, AtomicInteger> newStatsMap() {
-      ConcurrentMap<String, AtomicInteger> m = new ConcurrentHashMap<String, AtomicInteger>();
+      ConcurrentMap<String, AtomicInteger> m = new ConcurrentHashMap<>();
       for (Method method: AdvancedCacheLoader.class.getMethods()) {
          m.put(method.getName(), new AtomicInteger(0));
       }
@@ -249,7 +247,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    public Map<String, Integer> stats() {
-      Map<String, Integer> copy = new HashMap<String, Integer>(stats.size());
+      Map<String, Integer> copy = new HashMap<>(stats.size());
       for (String k: stats.keySet()) copy.put(k, stats.get(k).get());
       return copy;
    }

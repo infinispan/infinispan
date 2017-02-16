@@ -1,35 +1,30 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commands.LocalCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.functional.impl.EntryViews;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.function.Function;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.LocalCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.impl.EntryViews;
 
-public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
+public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
+   public static final int COMMAND_ID = 63;
 
-   private Set<? extends K> keys;
-   private Function<ReadEntryView<K, V>, R> f;
+   protected Collection<? extends K> keys;
+   protected Function<ReadEntryView<K, V>, R> f;
 
-   private ConsistentHash ch;
-   // TODO: remotely fetched are because of compatibility - can't we just always return InternalCacheEntry and have
-   //       the unboxing executed as the topmost interceptor?
-   private Map<Object, InternalCacheEntry> remotelyFetched;
-
-   public ReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
+   public ReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       this.keys = keys;
       this.f = f;
    }
@@ -37,51 +32,64 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    public ReadOnlyManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
+   public ReadOnlyManyCommand(ReadOnlyManyCommand c) {
+      this.keys = c.keys;
+      this.f = c.f;
+   }
+
+   public Collection<? extends K> getKeys() {
       return keys;
+   }
+
+   public void setKeys(Collection<? extends K> keys) {
+      this.keys = keys;
+   }
+
+   public final ReadOnlyManyCommand<K, V, R> withKeys(Collection<? extends K> keys) {
+      setKeys(keys);
+      return this;
    }
 
    @Override
    public byte getCommandId() {
-      return -1;
+      return COMMAND_ID;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
+
+   @Override
+   public boolean canBlock() {
+      return false;
    }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      // Not really replicated
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(f);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      // Not really replicated
-   }
-
-   public ConsistentHash getConsistentHash() {
-      return ch;
-   }
-
-   public void setConsistentHash(ConsistentHash ch) {
-      this.ch = ch;
-   }
-
-   public Map<Object, InternalCacheEntry> getRemotelyFetched() {
-      return remotelyFetched;
-   }
-
-   public void setRemotelyFetched(Map<Object, InternalCacheEntry> remotelyFetched) {
-      this.remotelyFetched = remotelyFetched;
+      this.keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      this.f = (Function<ReadEntryView<K, V>, R>) input.readObject();
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      return keys.stream().map(k -> {
+      // lazy execution triggers exceptions on unexpected places
+      ArrayList<R> retvals = new ArrayList<R>(keys.size());
+      for (K k : keys) {
          CacheEntry<K, V> me = lookupCacheEntry(ctx, k);
-         R ret = f.apply(me == null ? EntryViews.noValue(k) : EntryViews.readOnly(me));
-         return snapshot(ret);
-      });
+         R ret = f.apply(me.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(me));
+         retvals.add(snapshot(ret));
+      }
+      return retvals.stream();
    }
 
-   private CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
+   protected CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
       return ctx.lookupEntry(key);
    }
 
@@ -91,13 +99,8 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
@@ -105,8 +108,6 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
       return "ReadOnlyManyCommand{" +
          "keys=" + keys +
          ", f=" + f +
-         ", ch=" + ch +
-         ", remotelyFetched=" + remotelyFetched +
          '}';
    }
 }

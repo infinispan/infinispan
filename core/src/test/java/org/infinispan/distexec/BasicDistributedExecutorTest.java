@@ -1,17 +1,5 @@
 package org.infinispan.distexec;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +8,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Tests basic org.infinispan.distexec.DistributedExecutorService functionality
@@ -297,6 +298,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       DistributedExecutorService des = null;
+      cacheManager1.defineConfiguration("cache1", config.build());
+      cacheManager2.defineConfiguration("cache1", config.build());
       try {
          Cache<Object, Object> cache1 = cacheManager1.getCache("cache1");
          cache1.put("key1", "value1");
@@ -584,7 +587,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class SimpleCallable implements Callable<Integer>, Serializable {
+   static class SimpleCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
@@ -620,7 +623,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class FailOnlyOnceDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable {
+   static class FailOnlyOnceDistributedCallable implements DistributedCallable<String, String, Boolean>, Serializable, ExternalPojo {
       /** The serialVersionUID **/
       private static final long serialVersionUID = 5375461422884389555L;
       private static boolean throwException = true;
@@ -642,7 +645,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable {
+   static class ExceptionThrowingCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;

@@ -1,13 +1,13 @@
 package org.infinispan.commands.tx;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * The same as a {@link CommitCommand} except that version information is also carried by this command, used by

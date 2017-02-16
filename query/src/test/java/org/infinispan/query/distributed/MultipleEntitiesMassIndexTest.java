@@ -1,5 +1,10 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -18,11 +23,6 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test the MassIndexer in a configuration of multiple entity types per cache.
@@ -48,7 +48,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
 
       List<Cache<String, Car>> cacheList = createClusteredCaches(2, cacheCfg);
 
-      waitForClusterToForm(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      waitForClusterToForm();
 
       for (Cache cache : cacheList) {
          caches.add(cache);
@@ -113,7 +113,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       for (Cache cache : caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, entity);
+         CacheQuery<?> cacheQuery = searchManager.getQuery(luceneQuery, entity);
          assertEquals(expectedCount, cacheQuery.getResultSize());
       }
    }

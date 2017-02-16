@@ -1,16 +1,30 @@
 package org.infinispan.remoting;
 
+import static org.infinispan.test.TestingUtil.extractCommandsFactory;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -20,6 +34,7 @@ import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
@@ -27,29 +42,10 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 import org.jgroups.Address;
 import org.jgroups.Message;
 import org.jgroups.blocks.Response;
-import org.jgroups.blocks.RpcDispatcher;
-import org.jgroups.util.Buffer;
-import org.mockito.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.extractCommandsFactory;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests the Asynchronous Invocation API and checks if the commands are correctly processed (or JGroups or Infinispan
@@ -65,7 +61,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private DummyTaskCountExecutorService executorService;
    private CommandAwareRpcDispatcher commandAwareRpcDispatcher;
    private Address address;
-   private RpcDispatcher.Marshaller marshaller;
+   private StreamingMarshaller marshaller;
    private CommandsFactory commandsFactory;
    private ReplicableCommand blockingCacheRpcCommand;
    private ReplicableCommand nonBlockingCacheRpcCommand;
@@ -73,14 +69,11 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private ReplicableCommand nonBlockingNonCacheRpcCommand;
    private ReplicableCommand blockingSingleRpcCommand;
    private ReplicableCommand nonBlockingSingleRpcCommand;
-   private ReplicableCommand blockingMultipleRpcCommand;
-   private ReplicableCommand blockingMultipleRpcCommand2;
-   private ReplicableCommand nonBlockingMultipleRpcCommand;
 
    private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
       ReplicableCommand mock = mock(ReplicableCommand.class);
       when(mock.canBlock()).thenReturn(blocking);
-      doReturn(null).when(mock).perform(Matchers.any(InvocationContext.class));
+      doReturn(null).when(mock).invokeAsync();
       return mock;
    }
 
@@ -98,7 +91,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       if (transport instanceof JGroupsTransport) {
          commandAwareRpcDispatcher = ((JGroupsTransport) transport).getCommandAwareRpcDispatcher();
          address = ((JGroupsTransport) transport).getChannel().getAddress();
-         marshaller = commandAwareRpcDispatcher.getMarshaller();
+         marshaller = TestingUtil.extractGlobalMarshaller(cacheManager);
       } else {
          Assert.fail("Expected a JGroups Transport");
       }
@@ -116,15 +109,12 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       //populate commands
       blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName);
-      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, false, null, null);
+      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.STRING);
+      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
-      blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, blockingReplicableCommand), cacheName);
-      blockingMultipleRpcCommand2 = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
-      nonBlockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(nonBlockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
    }
 
    @AfterClass
@@ -140,13 +130,10 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       Assert.assertTrue(blockingCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingNonCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingSingleRpcCommand.canBlock());
-      Assert.assertTrue(blockingMultipleRpcCommand.canBlock());
-      Assert.assertTrue(blockingMultipleRpcCommand2.canBlock());
 
       Assert.assertFalse(nonBlockingCacheRpcCommand.canBlock());
       Assert.assertFalse(nonBlockingNonCacheRpcCommand.canBlock());
       Assert.assertFalse(nonBlockingSingleRpcCommand.canBlock());
-      Assert.assertFalse(nonBlockingMultipleRpcCommand.canBlock());
    }
 
    public void testCacheRpcCommands() throws Exception {
@@ -157,12 +144,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    public void testSingleRpcCommand() throws Exception {
       assertDispatchForCommand(blockingSingleRpcCommand, true);
       assertDispatchForCommand(nonBlockingSingleRpcCommand, false);
-   }
-
-   public void testMultipleRpcCommand() throws Exception {
-      assertDispatchForCommand(blockingMultipleRpcCommand, true);
-      assertDispatchForCommand(blockingMultipleRpcCommand2, true);
-      assertDispatchForCommand(nonBlockingMultipleRpcCommand, false);
    }
 
    public void testNonCacheRpcCommands() throws Exception {
@@ -198,18 +179,19 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    }
 
    private Message serialize(ReplicableCommand command, boolean oob, Address from) {
-      Buffer buffer;
+      ByteBuffer buffer;
       try {
          buffer = marshaller.objectToBuffer(command);
       } catch (Exception e) {
          //ignore, it will not be replicated
          return null;
       }
-      Message message = new Message(null, from, buffer.getBuf(), buffer.getOffset(), buffer.getLength());
+      Message message = new Message(null, buffer.getBuf(), buffer.getOffset(), buffer.getLength());
       message.setFlag(Message.Flag.NO_TOTAL_ORDER);
       if (oob) {
          message.setFlag(Message.Flag.OOB);
       }
+      message.src(from);
       return message;
    }
 

@@ -1,18 +1,18 @@
 package org.infinispan.container.entries.metadata;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.commons.util.Util.toStr;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A form of {@link org.infinispan.container.entries.ImmortalCacheEntry} that

@@ -1,7 +1,11 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.testng.Assert.assertEquals;
+
+import java.util.concurrent.Executor;
+
 import org.infinispan.Cache;
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -15,27 +19,21 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Properties;
-import java.util.concurrent.Executor;
-
-import static org.infinispan.test.TestingUtil.marshaller;
-import static org.testng.Assert.assertEquals;
 
 /**
  * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory, or if the
@@ -73,7 +71,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    public void testRepeatedLoads() throws PersistenceException {
       CountingStore countingCS = getCountingCacheStore();
-      store.write(new MarshalledEntryImpl("k1", "v1", null, marshaller(cache)));
+      store.write(new MarshalledEntryImpl("k1", "v1", null, extractGlobalMarshaller(cacheManager)));
 
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
@@ -94,7 +92,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    public void testSkipCacheFlagUsage() throws PersistenceException {
       CountingStore countingCS = getCountingCacheStore();
 
-      store.write(new MarshalledEntryImpl("k1", "v1", null, marshaller(cache)));
+      store.write(new MarshalledEntryImpl("k1", "v1", null, extractGlobalMarshaller(cacheManager)));
 
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
@@ -109,7 +107,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
 
       // now check that put won't return the stored value
-      store.write(new MarshalledEntryImpl("k2", "v2", null, marshaller(cache)));
+      store.write(new MarshalledEntryImpl("k2", "v2", null, extractGlobalMarshaller(cacheManager)));
       Object putReturn = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("k2", "v2-second");
       assert putReturn == null;
       assert countingCS.numLoads == 1 : "Expected 1, was " + countingCS.numLoads;

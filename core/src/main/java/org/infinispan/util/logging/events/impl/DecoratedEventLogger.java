@@ -1,5 +1,7 @@
 package org.infinispan.util.logging.events.impl;
 
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +11,6 @@ import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
-
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 /**
  * DecoratedEventLogger. Provides a way to decorate an EventLog with additional information.

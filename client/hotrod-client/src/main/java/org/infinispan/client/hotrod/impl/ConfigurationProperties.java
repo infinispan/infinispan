@@ -1,14 +1,15 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.Objects;
+import java.util.Properties;
+import java.util.regex.Pattern;
+
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-
-import java.util.Objects;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 /**
  * Encapsulate all config properties here
@@ -21,6 +22,7 @@ public class ConfigurationProperties {
    public static final String SERVER_LIST = "infinispan.client.hotrod.server_list";
    public static final String MARSHALLER = "infinispan.client.hotrod.marshaller";
    public static final String ASYNC_EXECUTOR_FACTORY = "infinispan.client.hotrod.async_executor_factory";
+   public static final String CLIENT_INTELLIGENCE = "infinispan.client.hotrod.client_intelligence";
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = "infinispan.client.hotrod.default_executor_factory.pool_size";
    public static final String TCP_NO_DELAY = "infinispan.client.hotrod.tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = "infinispan.client.hotrod.tcp_keep_alive";
@@ -42,12 +44,16 @@ public class ConfigurationProperties {
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = "infinispan.client.hotrod.key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
+   public static final String SSL_PROTOCOL = "infinispan.client.hotrod.ssl_protocol";
    public static final String SSL_CONTEXT = "infinispan.client.hotrod.ssl_context";
    public static final String MAX_RETRIES = "infinispan.client.hotrod.max_retries";
    public static final String USE_AUTH = "infinispan.client.hotrod.use_auth";
    public static final String SASL_MECHANISM = "infinispan.client.hotrod.sasl_mechanism";
    public static final String AUTH_CALLBACK_HANDLER = "infinispan.client.hotrod.auth_callback_handler";
    public static final String AUTH_SERVER_NAME = "infinispan.client.hotrod.auth_server_name";
+   public static final String AUTH_USERNAME = "infinispan.client.hotrod.auth_username";
+   public static final String AUTH_PASSWORD = "infinispan.client.hotrod.auth_password";
+   public static final String AUTH_REALM = "infinispan.client.hotrod.auth_realm";
    public static final String AUTH_CLIENT_SUBJECT = "infinispan.client.hotrod.auth_client_subject";
    public static final String SASL_PROPERTIES_PREFIX = "infinispan.client.hotrod.sasl_properties";
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
@@ -61,17 +67,6 @@ public class ConfigurationProperties {
    public static final int DEFAULT_SO_TIMEOUT = 60000;
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final int DEFAULT_MAX_RETRIES = 10;
-   public static final String PROTOCOL_VERSION_25 = "2.5";
-   public static final String PROTOCOL_VERSION_24 = "2.4";
-   public static final String PROTOCOL_VERSION_23 = "2.3";
-   public static final String PROTOCOL_VERSION_22 = "2.2";
-   public static final String PROTOCOL_VERSION_21 = "2.1";
-   public static final String PROTOCOL_VERSION_20 = "2.0";
-   public static final String PROTOCOL_VERSION_13 = "1.3";
-   public static final String PROTOCOL_VERSION_12 = "1.2";
-   public static final String PROTOCOL_VERSION_11 = "1.1";
-   public static final String PROTOCOL_VERSION_10 = "1.0";
-   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_25;
 
    private final TypedProperties props;
 
@@ -142,7 +137,7 @@ public class ConfigurationProperties {
    }
 
    public String getProtocolVersion() {
-      return props.getProperty(PROTOCOL_VERSION, DEFAULT_PROTOCOL_VERSION);
+      return props.getProperty(PROTOCOL_VERSION, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
    }
 
    public int getConnectTimeout() {
@@ -169,6 +164,10 @@ public class ConfigurationProperties {
       return props.getProperty(TRUST_STORE_PASSWORD, null);
    }
 
+   public String getSSLProtocol() {
+      return props.getProperty(SSL_PROTOCOL, null);
+   }
+
    public int getMaxRetries() {
       return props.getIntProperty(MAX_RETRIES, DEFAULT_MAX_RETRIES);
    }
@@ -177,7 +176,7 @@ public class ConfigurationProperties {
     * Is version previous to, and not including, 1.2?
     */
    public static boolean isVersionPre12(Configuration cfg) {
-      String version = cfg.protocolVersion();
+      String version = cfg.version().toString();
       return Objects.equals(version, "1.0") || Objects.equals(version, "1.1");
    }
 

@@ -1,9 +1,9 @@
 package org.infinispan.tasks.logging;
 
+import static org.jboss.logging.Messages.getBundle;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
-
-import static org.jboss.logging.Messages.getBundle;
 
 /**
  * Messages for the tasks module

@@ -1,12 +1,12 @@
 package org.infinispan.lock.singlelock;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 /**
  * @author Mircea Markus

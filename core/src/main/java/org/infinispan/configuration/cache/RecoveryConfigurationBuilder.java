@@ -1,5 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.RecoveryConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME;
+
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -7,11 +12,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.lang.invoke.MethodHandles;
-
-import static org.infinispan.configuration.cache.RecoveryConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME;
 
 /**
  * Defines recovery configuration for the cache.

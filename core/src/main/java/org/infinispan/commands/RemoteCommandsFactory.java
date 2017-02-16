@@ -1,10 +1,16 @@
 package org.infinispan.commands;
 
+import java.util.Map;
+
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -17,7 +23,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -34,16 +39,22 @@ import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.BackupPutMapRcpCommand;
+import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PrimaryAckCommand;
+import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -64,8 +75,6 @@ import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
-import java.util.Map;
-
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
  * This is a {@link Scopes#GLOBAL} component and doesn't have knowledge of initializing a command by injecting
@@ -81,15 +90,13 @@ import java.util.Map;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
-   EmbeddedCacheManager cacheManager;
-   GlobalComponentRegistry registry;
-   Map<Byte,ModuleCommandFactory> commandFactories;
+   private EmbeddedCacheManager cacheManager;
+   private Map<Byte,ModuleCommandFactory> commandFactories;
 
    @Inject
-   public void inject(EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry,
+   public void inject(EmbeddedCacheManager cacheManager,
                       @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES) Map<Byte, ModuleCommandFactory> commandFactories) {
       this.cacheManager = cacheManager;
-      this.registry = registry;
       this.commandFactories = commandFactories;
    }
 
@@ -178,6 +185,18 @@ public class RemoteCommandsFactory {
             case ReplicableCommandManagerFunction.COMMAND_ID:
                command = new ReplicableCommandManagerFunction();
                break;
+            case ReadOnlyKeyCommand.COMMAND_ID:
+               command = new ReadOnlyKeyCommand();
+               break;
+            case ReadOnlyManyCommand.COMMAND_ID:
+               command = new ReadOnlyManyCommand<>();
+               break;
+            case TxReadOnlyKeyCommand.COMMAND_ID:
+               command = new TxReadOnlyKeyCommand<>();
+               break;
+            case TxReadOnlyManyCommand.COMMAND_ID:
+               command = new TxReadOnlyManyCommand<>();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }
@@ -235,9 +254,6 @@ public class RemoteCommandsFactory {
                break;
             case TotalOrderRollbackCommand.COMMAND_ID:
                command = new TotalOrderRollbackCommand(cacheName);
-               break;
-            case MultipleRpcCommand.COMMAND_ID:
-               command = new MultipleRpcCommand(cacheName);
                break;
             case SingleRpcCommand.COMMAND_ID:
                command = new SingleRpcCommand(cacheName);
@@ -298,6 +314,27 @@ public class RemoteCommandsFactory {
                break;
             case StreamResponseCommand.COMMAND_ID:
                command = new StreamResponseCommand(cacheName);
+               break;
+            case BackupAckCommand.COMMAND_ID:
+               command = new BackupAckCommand(cacheName);
+               break;
+            case PrimaryAckCommand.COMMAND_ID:
+               command = new PrimaryAckCommand(cacheName);
+               break;
+            case BackupMultiKeyAckCommand.COMMAND_ID:
+               command = new BackupMultiKeyAckCommand(cacheName);
+               break;
+            case PrimaryMultiKeyAckCommand.COMMAND_ID:
+               command = new PrimaryMultiKeyAckCommand(cacheName);
+               break;
+            case ExceptionAckCommand.COMMAND_ID:
+               command = new ExceptionAckCommand(cacheName);
+               break;
+            case BackupWriteRcpCommand.COMMAND_ID:
+               command = new BackupWriteRcpCommand(cacheName);
+               break;
+            case BackupPutMapRcpCommand.COMMAND_ID:
+               command = new BackupPutMapRcpCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

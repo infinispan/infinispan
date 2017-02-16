@@ -1,10 +1,10 @@
 package org.infinispan.marshall;
 
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import java.util.Map;
 
 /**
  * Tests configuration of user defined {@link AdvancedExternalizer} implementations

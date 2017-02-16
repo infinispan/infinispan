@@ -2,18 +2,25 @@ package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
 import java.lang.reflect.Method
+
 import test.HotRodTestingUtil._
 import org.testng.Assert._
-import java.util.Arrays
+import java.util.{Arrays, Optional}
+
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.test.TestingUtil.generateRandomString
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
+
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import org.infinispan.server.hotrod.configuration.{HotRodServerConfiguration, HotRodServerConfigurationBuilder}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.server.core.QueryFacade
 import org.infinispan.AdvancedCache
+import org.infinispan.manager.EmbeddedCacheManager
+
+import scala.collection.JavaConversions._
 
 /**
  * Hot Rod server functional test.
@@ -117,9 +124,9 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutIfAbsentWithPreviousValue(m: Method) {
-      val resp1 = client.putIfAbsent(k(m) , 0, 0, v(m), 0)
+      val resp1 = client.putIfAbsent(k(m), 0, 0, v(m), 0)
       assertStatus(resp1, Success)
-      val resp2 = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
+      val resp2 = client.putIfAbsent(k(m), 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
       assertNotExecutedPrevious(resp2, v(m))
    }
 
@@ -350,15 +357,15 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    def testStatsDisabled(m: Method) {
       val s = client.stats
-      assertEquals(s.get("timeSinceStart").get, "-1")
-      assertEquals(s.get("currentNumberOfEntries").get, "-1")
-      assertEquals(s.get("totalNumberOfEntries").get, "-1")
-      assertEquals(s.get("stores").get, "-1")
-      assertEquals(s.get("retrievals").get, "-1")
-      assertEquals(s.get("hits").get, "-1")
-      assertEquals(s.get("misses").get, "-1")
-      assertEquals(s.get("removeHits").get, "-1")
-      assertEquals(s.get("removeMisses").get, "-1")
+      assertEquals(s.get("timeSinceStart"), "-1")
+      assertEquals(s.get("currentNumberOfEntries"), "-1")
+      assertEquals(s.get("totalNumberOfEntries"), "-1")
+      assertEquals(s.get("stores"), "-1")
+      assertEquals(s.get("retrievals"), "-1")
+      assertEquals(s.get("hits"), "-1")
+      assertEquals(s.get("misses"), "-1")
+      assertEquals(s.get("removeHits"), "-1")
+      assertEquals(s.get("removeMisses"), "-1")
    }
 
    def testPing(m: Method) {
@@ -368,16 +375,16 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPingWithTopologyAwareClient(m: Method) {
       var resp = client.ping
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
       resp = client.ping(1, 0)
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
       resp = client.ping(2, 0)
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
       resp = client.ping(3, 0)
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
    }
 
    def testBulkGet(m: Method) {
@@ -459,20 +466,6 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertStatus(client.put(k(m), 0, 0, value), Success)
    }
 
-   def testStoreAsBinaryOverrideOnNamedCache(m: Method) {
-      Stoppable.useCacheManager(createTestCacheManager) { cm =>
-         Stoppable.useServer(startHotRodServer(cm, server.getPort + 33)) { server =>
-            val cacheName = "cache-" + m.getName
-            val namedBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
-              .storeAsBinary.enable
-            val namedCfg = namedBuilder.build
-            assertTrue(namedCfg.storeAsBinary().enabled())
-            cm.defineConfiguration(cacheName, namedCfg)
-            assertFalse(cm.getCache(cacheName).getCacheConfiguration.storeAsBinary().enabled())
-         }
-      }
-   }
-
    def testQuery() {
       val query = Array[Byte](1, 2, 3, 4, 5)
       val resp = client.query(query)
@@ -491,13 +484,13 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    protected def assertSuccessPrevious(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
-      if (expected == null) assertEquals(None, resp.previous)
+      if (expected == null) assertEquals(Optional.empty(), resp.previous)
       else assertTrue(java.util.Arrays.equals(expected, resp.previous.get))
       assertStatus(resp, SuccessWithPrevious)
    }
 
    protected def assertNotExecutedPrevious(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
-      if (expected == null) assertEquals(None, resp.previous)
+      if (expected == null) assertEquals(Optional.empty(), resp.previous)
       else assertTrue(java.util.Arrays.equals(expected, resp.previous.get))
       assertStatus(resp, NotExecutedWithPrevious)
    }

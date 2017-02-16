@@ -34,6 +34,7 @@ public class TerminatedCacheTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopFollowedByCacheOp() {
+      cacheManager.defineConfiguration("big", cacheManager.getDefaultCacheConfiguration());
       Cache cache = cacheManager.getCache("big");
       cache.put("k", "v");
       cache.stop();

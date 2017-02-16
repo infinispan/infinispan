@@ -81,4 +81,3 @@ public class ScheduledThreadPoolBuilder extends ComponentConfigurationBuilder<Th
         return this.builder.create();
     }
 }
-

@@ -60,7 +60,7 @@ public class GlobalStateConfiguration {
       return temporaryLocation.get();
    }
 
-   AttributeSet attributes() {
+   public AttributeSet attributes() {
       return attributes;
    }
 

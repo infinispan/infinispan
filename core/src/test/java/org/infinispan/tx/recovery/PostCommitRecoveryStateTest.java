@@ -1,31 +1,33 @@
 package org.infinispan.tx.recovery;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.Xid;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 
 
 /**
@@ -50,8 +52,11 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       createCluster(configuration, 2);
       waitForClusterToForm();
       ComponentRegistry componentRegistry = this.cache(0).getAdvancedCache().getComponentRegistry();
-      XaTransactionTable txTable = (XaTransactionTable) componentRegistry.getComponent(TransactionTable.class);
-      txTable.setRecoveryManager(new RecoveryManagerDelegate(txTable.getRecoveryManager()));
+      XaTransactionTable txTable =
+            (XaTransactionTable) componentRegistry.getComponent(TransactionTable.class);
+      TestingUtil.replaceField(
+            new RecoveryManagerDelegate(TestingUtil.extractComponent(cache(0), RecoveryManager.class)),
+            "recoveryManager", txTable, XaTransactionTable.class);
    }
 
    public void testState() throws Exception {
@@ -106,6 +111,11 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       public RecoveryAwareTransaction removeRecoveryInformation(Xid xid) {
          rm.removeRecoveryInformation(xid);
          return null;
+      }
+
+      @Override
+      public void registerInDoubtTransaction(RecoveryAwareRemoteTransaction tx) {
+         rm.registerInDoubtTransaction(tx);
       }
 
       @Override

@@ -39,7 +39,7 @@ import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceTarget;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 
 /**
  * Add operation handler for fork resources.
@@ -85,7 +85,7 @@ public class ForkAddHandler extends AbstractAddStepHandler {
         new ChannelConnectorBuilder(name).build(target).install();
 
         // Install channel jndi binding
-        new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(name), ChannelServiceName.CHANNEL.getServiceName(name), Channel.class).build(target).install();
+        new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(name), ChannelServiceName.CHANNEL.getServiceName(name), JChannel.class).build(target).install();
     }
 
     static void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode model) {

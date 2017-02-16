@@ -1,9 +1,28 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.util.BlockingLocalTopologyManager.LatchType;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.infinispan.Cache;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -12,21 +31,10 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
+import org.infinispan.util.BlockingLocalTopologyManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
-import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
-import static org.infinispan.util.BlockingLocalTopologyManager.LatchType;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test multiple possible situations of interleaving between a remote get and state transfer.
@@ -57,25 +65,29 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    | [1]    |     | T0            | 1:T1              | T2                 | N     |                   |                    |
    | [2]    |     | T0            | 1:T2              | T0                 | N/A   |                   |                    |
    | [2]    |     | T0            | 1:T2              | T1                 | Y     | 2:T0              | N/A                |
-   | 021_11 | 4   | T0            | 1:T2              | T1                 | Y     | 2:T1              | T1                 |
-   | [1]    |     | T0            | 1:T2              | T1                 | Y     | 2:T1              | T2                 |
-   | 021_21 | 4.1 | T0            | 1:T2              | T1                 | Y     | 2:T2              | T1                 |
-   | [1]    |     | T0            | 1:T2              | T1                 | Y     | 2:T2              | T2                 |
-   | 022_11 | 5   | T0            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
-   | [1]    |     | T0            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
+   | [3]    | 4   | T0            | 1:T2              | T1                 | Y     | 2:T1              | T1                 |
+   | 021_12 |     | T0            | 1:T2              | T1                 | Y*    | 2:T1              | T2                 |
+   | [3]    | 4.1 | T0            | 1:T2              | T1                 | Y     | 2:T2              | T1                 |
+   | 021_22 |     | T0            | 1:T2              | T1                 | Y     | 2:T2              | T2                 |
+   | [4]    | 5   | T0            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
+   | 022_12 |     | T0            | 1:T2              | T2                 | Y     | 2:T1              | T2                 |
    | 022_22 | 5.1 | T0            | 1:T2              | T2                 | Y     | 2:T2              | T2                 |
    | 111    | 3   | T1            | 1:T1              | T1                 | N     |                   |                    |
    | [1]    |     | T1            | 1:T1              | T2                 | N     |                   |                    |
-   | 121_11 | 6   | T1            | 1:T2              | T1                 | Y     | 2:T1              | T1                 |
-   | [1]    |     | T1            | 1:T2              | T1                 | Y     | 2:T1              | T2                 |
-   | 121_21 | 6.1 | T1            | 1:T2              | T1                 | Y     | 2:T2              | T1                 |
-   | [1]    |     | T1            | 1:T2              | T1                 | Y     | 2:T2              | T2                 |
-   | 122_11 | 7   | T1            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
-   | [1]    | 7   | T1            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
+   | [3]    | 6   | T1            | 1:T2              | T1                 | Y     | 2:T1              | T1                 |
+   | 121_12 |     | T1            | 1:T2              | T1                 | Y     | 2:T1              | T2                 |
+   | [3]    | 6.1 | T1            | 1:T2              | T1                 | Y     | 2:T2              | T1                 |
+   | 121_22 |     | T1            | 1:T2              | T1                 | Y     | 2:T2              | T2                 |
+   | [4]    | 7   | T1            | 1:T2              | T2                 | Y     | 2:T1              | T1                 |
+   | 122_12 | 7   | T1            | 1:T2              | T2                 | Y     | 2:T1              | T2                 |
    | 122_22 | 7.1 | T1            | 1:T2              | T2                 | Y     | 2:T2              | T2                 |
 
+   *) There will be two retries: first retry will return UnsuccessfulResponse as node 2 is not read owner in T1
+      and node 0 will have to update to T2, the second retry will require update to T2 in node 2 before responding
    [1] too similar to the previous scenario
    [2] impossible because we can't have T0 on one node and T2 on another node at the same time
+   [3] impossible, retry is executed only after we allow the topology update
+   [4] impossible, first response was received in later topology than second response
     */
 
    @AfterMethod(alwaysRun = true)
@@ -203,7 +215,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
     * ISPN-3315: the remote get is trigger in stable state and the reply received after the rebalance_start command.
     * However, the old owner will receive the request after the state transfer and he no longer has the key.
     */
-   public void testScenario_021_11() throws Exception {
+   public void testScenario_021_12() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s4";
       ownerCheckAndInit(cache(1), key, "v");
@@ -219,8 +231,12 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager0.waitForCommandToBlock();
 
-      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE);
+      CyclicBarrier retryOnJoiner = new CyclicBarrier(2);
+      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE, addRetryBarrierInterceptor(currentTopologyId + 2, retryOnJoiner));
       topologyManager0.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
+
+      replaceStateTransferLock(cache(0),
+            lock -> new UnblockingStateTransferLock(lock, currentTopologyId + 2, topologyManager0));
 
       //wait until the consistent_hash_update arrives in old owner. Also, awaits until the requestor receives the
       //rebalance_start.
@@ -230,19 +246,28 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
       rpcManager0.stopBlocking();
 
+      retryOnJoiner.await(10, TimeUnit.SECONDS);
+      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
+
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
-      assertTopologyId(currentTopologyId + 1, cache(0));
+      assertTopologyId(currentTopologyId + 2, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
-      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
+   }
+
+   private Consumer<ConfigurationBuilder> addRetryBarrierInterceptor(int currentTopologyId, CyclicBarrier retryOnJoiner) {
+      // We cannot mock StateTransferLock on the joiner, so we'll just wait until the remote get throws OTE
+      // and then we'll allow CH_UPDATE from the main thread
+      return cb -> cb.customInterceptors().addInterceptor()
+               .after(StateTransferInterceptor.class)
+               .interceptor(new RetryBarrierInterceptor(currentTopologyId, retryOnJoiner));
    }
 
    /**
     * ISPN-3721: Same as 021_11 but the new owner is already in the stable state.
     */
-   public void testScenario_021_21() throws Exception {
+   public void testScenario_021_22() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s4";
       ownerCheckAndInit(cache(1), key, "v");
@@ -257,6 +282,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       assertTopologyId(currentTopologyId, cache(0));
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager0.waitForCommandToBlock();
+
+      replaceStateTransferLock(cache(0), lock -> new UnblockingStateTransferLock(lock, currentTopologyId + 2, topologyManager0));
 
       NewNode joiner = addNode();
       topologyManager0.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
@@ -271,16 +298,15 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
-      assertTopologyId(currentTopologyId + 1, cache(0));
+      assertTopologyId(currentTopologyId + 2, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
    }
 
    /**
     * ISPN-3315: Same as scenario 021_21 but the reply arrives after the requestor is in the stable state.
     */
-   public void testScenario_022_11() throws Exception {
+   public void testScenario_022_12() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s5";
       ownerCheckAndInit(cache(1), key, "v");
@@ -294,7 +320,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager.waitForCommandToBlock();
 
-      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE);
+      CyclicBarrier retryOnJoiner = new CyclicBarrier(2);
+      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE, addRetryBarrierInterceptor(currentTopologyId + 2, retryOnJoiner));
 
       //wait until the state transfer ends in old owner and requestor. then let the remote get go.
       awaitForTopology(currentTopologyId + 2, cache(1));
@@ -303,11 +330,13 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
       rpcManager.stopBlocking();
 
+      retryOnJoiner.await(10, TimeUnit.SECONDS);
+      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
+
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
       assertTopologyId(currentTopologyId + 2, cache(0));
 
-      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
    }
 
@@ -349,7 +378,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
     * The old owner receives the request after the CH_UPDATE and no longer has the key.
     * The new owner receives the 2nd request before the CH_UPDATE command.
     */
-   public void testScenario_121_11() throws Exception {
+   public void testScenario_121_12() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s6";
       ownerCheckAndInit(cache(1), key, "v");
@@ -360,7 +389,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       rpcManager0.blockBefore(ClusteredGetCommand.class);
       topologyManager0.startBlocking(LatchType.CONSISTENT_HASH_UPDATE);
 
-      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE);
+      CyclicBarrier retryOnJoiner = new CyclicBarrier(2);
+      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE, addRetryBarrierInterceptor(currentTopologyId + 2, retryOnJoiner));
       topologyManager0.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
 
       //consistency check. trigger the remote get.
@@ -368,25 +398,28 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager0.waitForCommandToBlock();
 
+      replaceStateTransferLock(cache(0), lock -> new UnblockingStateTransferLock(lock, currentTopologyId + 2, topologyManager0));
+
       //wait until the consistent_hash_update arrives in old owner
       awaitForTopology(currentTopologyId + 2, cache(1));
       awaitUntilNotInDataContainer(cache(1), key);
       joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
       rpcManager0.stopBlocking();
 
+      retryOnJoiner.await(10, TimeUnit.SECONDS);
+      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
+
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
-      assertTopologyId(currentTopologyId + 1, cache(0));
+      assertTopologyId(currentTopologyId + 2, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
-      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
    }
 
    /**
     * ISPN-3721: Same as scenario 121_11 but the new owner is already in the stable state.
     */
-   public void testScenario121_21() throws Exception {
+   public void testScenario_121_22() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s6";
       ownerCheckAndInit(cache(1), key, "v");
@@ -405,18 +438,20 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       rpcManager0.waitForCommandToBlock();
 
+      replaceStateTransferLock(cache(0), lock -> new UnblockingStateTransferLock(lock, currentTopologyId + 2, topologyManager0));
+
       //wait until the consistent_hash_update arrives in old owner
       awaitForTopology(currentTopologyId + 2, cache(1));
       awaitForTopology(currentTopologyId + 2, cache(2));
       awaitUntilNotInDataContainer(cache(1), key);
+      // TODO: is this needed? Joiner = cache(2) is already at topology T2
       joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
       rpcManager0.stopBlocking();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
-      assertTopologyId(currentTopologyId + 1, cache(0));
+      assertTopologyId(currentTopologyId + 2, cache(0));
 
-      topologyManager0.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
    }
 
@@ -439,7 +474,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       rpcManager.blockBefore(ClusteredGetCommand.class);
       topologyManager.startBlocking(LatchType.CONSISTENT_HASH_UPDATE);
 
-      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE);
+      CyclicBarrier retryOnJoiner = new CyclicBarrier(2);
+      NewNode joiner = addNode(LatchType.CONSISTENT_HASH_UPDATE, addRetryBarrierInterceptor(currentTopologyId + 2, retryOnJoiner));
       topologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
 
       //consistency check. trigger the remote get.
@@ -455,12 +491,13 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       awaitUntilNotInDataContainer(cache(1), key);
       joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
       rpcManager.stopBlocking();
+      retryOnJoiner.await(10, TimeUnit.SECONDS);
+      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
       assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
       assertTopologyId(currentTopologyId + 2, cache(0));
 
-      joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
       joiner.joinerFuture.get();
    }
 
@@ -545,12 +582,16 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private NewNode addNode() {
-      return addNode(null);
+      return addNode(null, null);
    }
 
-   private NewNode addNode(LatchType block) {
+   private NewNode addNode(LatchType block, Consumer<ConfigurationBuilder> modifyConfiguration) {
       NewNode newNode = new NewNode();
-      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(configuration());
+      ConfigurationBuilder configurationBuilder = configuration();
+      if (modifyConfiguration != null) {
+         modifyConfiguration.accept(configurationBuilder);
+      }
+      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(configurationBuilder);
       newNode.localTopologyManager = replaceTopologyManager(embeddedCacheManager);
       if (block != null) {
          newNode.localTopologyManager.startBlocking(block);
@@ -567,7 +608,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void ownerCheckAndInit(Cache<Object, Object> owner, Object key, Object value) {
-      assertTrue(address(owner) + " should be the owner of " + key + ".", isFirstOwner(cache(1), key));
+      assertTrue(address(owner) + " should be the owner of " + key + ".", isFirstOwner(owner, key));
       owner.put(key, value);
       assertCacheValue(key, value);
    }
@@ -604,6 +645,13 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       return controlledRpcManager;
    }
 
+   private <T extends StateTransferLock> T replaceStateTransferLock(Cache cache, Function<StateTransferLock, T> lockBuilder) {
+      StateTransferLock lock = TestingUtil.extractComponent(cache, StateTransferLock.class);
+      T controlledLock = lockBuilder.apply(lock);
+      TestingUtil.replaceComponent(cache, StateTransferLock.class, controlledLock, true);
+      return controlledLock;
+   }
+
    @SuppressWarnings("unchecked")
    public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory {
 
@@ -615,6 +663,46 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          assertEquals("Wrong number of owners.", 1, numberOfOwners);
          return Collections.singletonList(members.get(members.size() - 1));
+      }
+   }
+
+   private static class UnblockingStateTransferLock extends DelegatingStateTransferLock {
+      private final int expectedTopologyId;
+      private final BlockingLocalTopologyManager topologyManager;
+
+      public UnblockingStateTransferLock(StateTransferLock lock, int expectedTopologyId, BlockingLocalTopologyManager topologyManager) {
+         super(lock);
+         this.expectedTopologyId = expectedTopologyId;
+         this.topologyManager = topologyManager;
+      }
+
+      @Override
+      public CompletableFuture<Void> topologyFuture(int topologyId) {
+         if (expectedTopologyId == topologyId) {
+            topologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
+         }
+         return super.topologyFuture(topologyId);
+      }
+   }
+
+   private static class RetryBarrierInterceptor extends DDAsyncInterceptor {
+      private final int expectedTopologyId;
+      private final CyclicBarrier retryOnJoiner;
+
+      public RetryBarrierInterceptor(int expectedTopologyId, CyclicBarrier retryOnJoiner) {
+         this.expectedTopologyId = expectedTopologyId;
+         this.retryOnJoiner = retryOnJoiner;
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, t) -> {
+            if (t instanceof OutdatedTopologyException) {
+               assertEquals(expectedTopologyId, ((OutdatedTopologyException) t).requestedTopologyId);
+               retryOnJoiner.await(10, TimeUnit.SECONDS);
+            }
+            throw t;
+         });
       }
    }
 

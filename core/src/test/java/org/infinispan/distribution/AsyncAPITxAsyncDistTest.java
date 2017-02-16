@@ -1,10 +1,11 @@
 package org.infinispan.distribution;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "distribution.AsyncAPITxAsyncDistTest")
 public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
@@ -16,6 +17,7 @@ public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       rl = new ReplListener(cache(1), true);
+      defineConfigurationOnAllManagers("noTx", new ConfigurationBuilder());
       rlNoTx = new ReplListener(cache(1, "noTx"), true);
    }
 

@@ -1,19 +1,7 @@
 package org.infinispan.jmx;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.AbstractComponentRegistry.Component;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -21,8 +9,20 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.AbstractComponentRegistry;
+import org.infinispan.factories.AbstractComponentRegistry.Component;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * If {@link org.infinispan.configuration.cache.Configuration#jmxStatistics()} is enabled, then class will register all
@@ -101,9 +101,9 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
          String pattern = jmxDomain + ":" + groupName + ",*";
          try {
-            Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
+            Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);
             for (ObjectName name : names) {
-               mBeanServer.unregisterMBean(name);
+               JmxUtil.unregisterMBean(name, mBeanServer);
             }
          } catch (MBeanRegistrationException e) {
             log.unableToUnregisterMBeanWithPattern(pattern, e);
@@ -112,6 +112,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          } catch (MalformedObjectNameException e) {
             String message = "Malformed pattern " + pattern;
             throw new CacheException(message, e);
+         } catch (Exception e) {
+            throw new CacheException(e);
          }
       }
    }

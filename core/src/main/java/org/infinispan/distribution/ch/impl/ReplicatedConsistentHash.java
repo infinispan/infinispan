@@ -1,14 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -21,6 +12,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUID;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.

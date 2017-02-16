@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * Test for query conditions (filtering) without an index. Exercises the whole query DSL on the sample domain model.
@@ -22,5 +23,17 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    @Override
    public void testIndexPresence() {
       org.infinispan.query.Search.getSearchManager(getEmbeddedCache());
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Override
+   public void testFullTextTerm() throws Exception {
+      super.testFullTextTerm();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Override
+   public void testFullTextPhrase() throws Exception {
+      super.testFullTextPhrase();
    }
 }

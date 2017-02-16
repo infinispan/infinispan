@@ -1,13 +1,16 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.Exceptions.expectException;
+
+import javax.transaction.RollbackException;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "tx.MarkAsRollbackTest")
 public class MarkAsRollbackTest extends SingleCacheManagerTest {
@@ -27,12 +30,7 @@ public class MarkAsRollbackTest extends SingleCacheManagerTest {
       cache.put("k", "v");
       assert cache.get("k").equals("v");
       tm.setRollbackOnly();
-      try {
-         tm.commit();
-         assert false : "Should have rolled back";
-      }
-      catch (RollbackException expected) {
-      }
+      expectException(RollbackException.class, () -> tm.commit());
 
       assert tm.getTransaction() == null : "There should be no transaction in scope anymore!";
       assert cache.get("k") == null : "Expected a null but was " + cache.get("k");
@@ -43,19 +41,8 @@ public class MarkAsRollbackTest extends SingleCacheManagerTest {
       assert tm != null;
       tm.begin();
       tm.setRollbackOnly();
-      try {
-         cache.put("k", "v");
-         assert false : "Should have throw an illegal state exception";
-      } catch (IllegalStateException expected) {
-
-      }
-      try {
-         tm.commit();
-         assert false : "Should have rolled back";
-      }
-      catch (RollbackException expected) {
-
-      }
+      expectException(CacheException.class, IllegalStateException.class, () -> cache.put("k", "v"));
+      expectException(RollbackException.class, () -> tm.commit());
 
       assert tm.getTransaction() == null : "There should be no transaction in scope anymore!";
       assert cache.get("k") == null : "Expected a null but was " + cache.get("k");

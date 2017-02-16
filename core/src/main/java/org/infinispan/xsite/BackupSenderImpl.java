@@ -1,5 +1,19 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -36,19 +50,6 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 import org.infinispan.xsite.notification.SiteStatusListener;
-
-import javax.transaction.Transaction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 /**
  * @author Mircea Markus
@@ -300,16 +301,18 @@ public class BackupSenderImpl implements BackupSender {
             continue;
          }
          WriteCommand filteredCommand = writeCommand;
-         if (writeCommand instanceof PutKeyValueCommand && ((PutKeyValueCommand) writeCommand).isPutIfAbsent()) {
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(((PutKeyValueCommand) writeCommand).getKey(),
-                                                                      ((PutKeyValueCommand) writeCommand).getValue(),
-                                                                      writeCommand.getMetadata(),
-                                                                      writeCommand.getFlagsBitSet());
+         PutKeyValueCommand putCommand;
+         if (writeCommand instanceof PutKeyValueCommand && (putCommand = (PutKeyValueCommand) writeCommand).isPutIfAbsent()) {
+            filteredCommand = commandsFactory.buildPutKeyValueCommand(putCommand.getKey(),
+                                                                      putCommand.getValue(),
+                                                                      putCommand.getMetadata(),
+                                                                      putCommand.getFlagsBitSet());
          } else if (writeCommand instanceof ReplaceCommand) {
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(((ReplaceCommand) writeCommand).getKey(),
-                                                                      ((ReplaceCommand) writeCommand).getNewValue(),
-                                                                      writeCommand.getMetadata(),
-                                                                      writeCommand.getFlagsBitSet());
+            ReplaceCommand replaceCommand = (ReplaceCommand) writeCommand;
+            filteredCommand = commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(),
+                                                                      replaceCommand.getNewValue(),
+                                                                      replaceCommand.getMetadata(),
+                                                                      replaceCommand.getFlagsBitSet());
          } else if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
             filteredCommand = commandsFactory.buildRemoveCommand(((RemoveCommand) writeCommand).getKey(), null,
                                                                  writeCommand.getFlagsBitSet());
@@ -331,14 +334,15 @@ public class BackupSenderImpl implements BackupSender {
       return eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress());
    }
 
-   public static final class CustomBackupPolicyInvoker extends AbstractVisitor {
+   private static final class CustomBackupPolicyInvoker extends AbstractVisitor {
 
       private final String site;
-      private final CustomFailurePolicy failurePolicy;
+      private final CustomFailurePolicy<Object, Object> failurePolicy;
       private final Transaction tx;
 
       public CustomBackupPolicyInvoker(String site, CustomFailurePolicy failurePolicy, Transaction tx) {
          this.site = site;
+         //noinspection unchecked
          this.failurePolicy = failurePolicy;
          this.tx = tx;
       }

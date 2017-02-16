@@ -1,17 +1,8 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableIntBinaryOperator;
-import org.infinispan.util.function.SerializableIntConsumer;
-import org.infinispan.util.function.SerializableIntPredicate;
-import org.infinispan.util.function.SerializableIntToDoubleFunction;
-import org.infinispan.util.function.SerializableIntToLongFunction;
-import org.infinispan.util.function.SerializableIntUnaryOperator;
-import org.infinispan.util.function.SerializableObjIntConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.OptionalInt;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
@@ -24,6 +15,17 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableIntBinaryOperator;
+import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializableIntPredicate;
+import org.infinispan.util.function.SerializableIntToDoubleFunction;
+import org.infinispan.util.function.SerializableIntToLongFunction;
+import org.infinispan.util.function.SerializableIntUnaryOperator;
+import org.infinispan.util.function.SerializableObjIntConsumer;
+import org.infinispan.util.function.SerializableSupplier;
+
 /**
  * A {@link IntStream} that has additional methods to allow for Serializable instances.  Please see
  * {@link CacheStream} for additional details about various methods.
@@ -31,7 +33,56 @@ import java.util.stream.IntStream;
  * @author wburns
  * @since 9.0
  */
-public interface IntCacheStream extends IntStream {
+public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntStream> {
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with parallel distribution disabled.
+    */
+   IntCacheStream sequentialDistribution();
+
+   /**
+    * @inheritDoc
+    * @return a stream with parallel distribution enabled.
+    */
+   IntCacheStream parallelDistribution();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the segments filtered.
+    */
+   IntCacheStream filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the keys filtered.
+    */
+   IntCacheStream filterKeys(Set<?> keys);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the batch size updated
+    */
+   IntCacheStream distributedBatchSize(int batchSize);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the listener registered.
+    */
+   IntCacheStream segmentCompletionListener(SegmentCompletionListener listener);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with rehash awareness disabled.
+    */
+   IntCacheStream disableRehashAware();
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the timeout set
+    */
+   IntCacheStream timeout(long timeout, TimeUnit unit);
+
    /**
     * {@inheritDoc}
     * @return the new cache int stream

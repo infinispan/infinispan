@@ -3,6 +3,8 @@ package org.infinispan.commons.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.io.IOException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
@@ -103,5 +105,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot resize unbounded container", id = 917)
    UnsupportedOperationException cannotResizeUnboundedContainer();
 
-}
+   @Message(value = "Cannot find resource '%s'", id = 918)
+   IOException cannotFindResource(String fileName);
 
+   @Message(value = "Multiple errors encountered while validating configuration", id = 919)
+   CacheConfigurationException multipleConfigurationValidationErrors();
+
+}

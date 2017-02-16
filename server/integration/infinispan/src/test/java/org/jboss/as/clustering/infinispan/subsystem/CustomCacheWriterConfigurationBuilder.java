@@ -1,6 +1,5 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
@@ -40,4 +39,3 @@ public class CustomCacheWriterConfigurationBuilder extends AbstractStoreConfigur
    }
 
 }
-

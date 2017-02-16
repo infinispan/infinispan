@@ -1,10 +1,12 @@
 package org.infinispan.persistence.jpa.configuration;
 
-import org.infinispan.commons.util.TypedProperties;
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.BATCH_SIZE;
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.ENTITY_CLASS;
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.PERSISTENCE_UNIT_NAME;
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.STORE_METADATA;
+
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
-import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.*;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>

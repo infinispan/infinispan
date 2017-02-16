@@ -1,8 +1,8 @@
 package org.infinispan.objectfilter.test.model;
 
-import org.infinispan.protostream.MessageMarshaller;
-
 import java.io.IOException;
+
+import org.infinispan.protostream.MessageMarshaller;
 
 /**
  * @author anistor@redhat.com

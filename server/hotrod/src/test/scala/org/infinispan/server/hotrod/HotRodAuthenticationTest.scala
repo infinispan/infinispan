@@ -1,33 +1,17 @@
 package org.infinispan.server.hotrod
 
-import org.testng.annotations.Test
 import java.lang.reflect.Method
-import test.HotRodTestingUtil._
-import org.testng.Assert._
-import java.util.Arrays
-import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod.test._
-import org.infinispan.test.TestingUtil.generateRandomString
-import java.util.concurrent.TimeUnit
-import org.infinispan.server.core.test.Stoppable
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.server.core.QueryFacade
-import org.infinispan.AdvancedCache
-import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import javax.security.sasl.Sasl
-import javax.security.sasl.SaslClient
 import java.util.HashMap
+import javax.security.sasl.Sasl
+
+import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider
-import org.testng.annotations.BeforeClass
-import java.security.Provider
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer
+import org.infinispan.server.hotrod.test.{TestCallbackHandler, UniquePortThreadLocal}
 import org.jboss.sasl.JBossSaslProvider
-import org.testng.annotations.AfterClass
-import java.security.AccessController
-import java.security.PrivilegedAction
-import java.security.Security
-import org.junit.rules.ExpectedException
+import org.testng.Assert._
+import org.testng.annotations.Test
 
 /**
  * Hot Rod server authentication test.
@@ -51,7 +35,7 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val a = client.authMechList
       assertEquals(a.mechs.size, 1)
       assertTrue(a.mechs.contains("CRAM-MD5"))
-      assertEquals(1, server.getDecoder.getTransport.acceptedChannels.size())
+      assertEquals(1, server.getDecoder.getTransport.getNumberOfLocalConnections)
    }
 
    def testAuth(m: Method) {
@@ -59,7 +43,7 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val sc = Sasl.createSaslClient(Array("CRAM-MD5"), null, "hotrod", "localhost", props, new TestCallbackHandler("user", "realm", "password".toCharArray()))
       val res = client.auth(sc)
       assertTrue(res.complete)
-      assertEquals(1, server.getDecoder.getTransport.acceptedChannels.size())
+      assertEquals(1, server.getDecoder.getTransport.getNumberOfLocalConnections)
    }
    
    def testUnauthorizedOpCloseConnection(m: Method) {
@@ -69,7 +53,7 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       try {
         client.assertPutFail(m)
       } finally {
-        assertEquals(0, server.getDecoder.getTransport.acceptedChannels.size())
+        assertEquals(0, server.getDecoder.getTransport.getNumberOfLocalConnections)
       }
    }
 

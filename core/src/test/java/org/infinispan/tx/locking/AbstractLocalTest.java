@@ -1,19 +1,20 @@
 package org.infinispan.tx.locking;
 
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Collections;
+import java.util.Map;
+
+import javax.transaction.SystemException;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.context.Flag;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.SystemException;
-import javax.transaction.xa.Xid;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus

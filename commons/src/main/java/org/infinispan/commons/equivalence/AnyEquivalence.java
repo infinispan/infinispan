@@ -5,6 +5,7 @@ package org.infinispan.commons.equivalence;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated
  */
 public final class AnyEquivalence<T> implements Equivalence<T> {
 
@@ -37,7 +38,7 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    @Override
    public boolean equals(T obj, Object otherObj) {
-      return obj != null && obj.equals(otherObj);
+      return obj != null ? obj.equals(otherObj) : otherObj == null;
    }
 
    @Override

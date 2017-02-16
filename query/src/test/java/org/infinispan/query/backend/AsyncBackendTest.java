@@ -1,5 +1,14 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.testng.Assert.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,13 +24,6 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Tests for configuring a RemoteIndexingBackend so that it does not block on RPC

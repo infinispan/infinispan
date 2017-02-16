@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite",testName = "xsite.backupfailure.OptReplBackupFailureTest")
+@Test (groups = "xsite", testName = "xsite.backupfailure.OptReplBackupFailureTest")
 public class OptReplBackupFailureTest extends NonTxBackupFailureTest {
 
    @Override
@@ -21,4 +21,3 @@ public class OptReplBackupFailureTest extends NonTxBackupFailureTest {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 }
-

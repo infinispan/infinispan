@@ -48,7 +48,7 @@ import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceRegistry;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.protocols.FORK;
 import org.jgroups.stack.Protocol;
 
@@ -66,9 +66,9 @@ public class ForkProtocolResourceRegistrationHandler implements OperationStepHan
 
         ServiceController<?> controller = registry.getService(ChannelServiceName.CHANNEL.getServiceName(channelName));
         if (controller != null) {
-            Channel channel = (Channel) controller.getValue();
+            JChannel channel = (JChannel) controller.getValue();
             if (channel != null) {
-                FORK fork = (FORK) channel.getProtocolStack().findProtocol(FORK.class);
+                FORK fork = channel.getProtocolStack().findProtocol(FORK.class);
                 if (fork != null) {
                     controller = registry.getService(ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(channelName));
                     if (controller != null) {

@@ -1,13 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 import org.infinispan.distribution.ch.AffinityTaggedKey;
-import org.infinispan.marshall.core.Ids;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Key partitioner that maps keys to segments using information contained in {@link AffinityTaggedKey}.
@@ -29,21 +22,4 @@ public class AffinityPartitioner extends HashFunctionPartitioner {
       return super.getSegment(key);
    }
 
-   public static class Externalizer extends NoStateExternalizer<AffinityPartitioner> {
-
-      @Override
-      public Set<Class<? extends AffinityPartitioner>> getTypeClasses() {
-         return Collections.singleton(AffinityPartitioner.class);
-      }
-
-      @Override
-      public AffinityPartitioner readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new AffinityPartitioner();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.AFFINITY_FUNCTION_PARTITIONER;
-      }
-   }
 }

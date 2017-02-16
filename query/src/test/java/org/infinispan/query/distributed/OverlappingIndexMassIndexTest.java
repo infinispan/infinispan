@@ -1,5 +1,10 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -11,11 +16,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for the MassIndexer for different entities sharing the same index and cache.
@@ -82,8 +82,8 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
    protected void checkIndex(int expectedNumber, Class<?> entity, int otherExpected, Class<?> otherEntity) {
       for (Cache<?, ?> c : caches) {
          SearchManager searchManager = Search.getSearchManager(c);
-         CacheQuery query1 = searchManager.getQuery(new MatchAllDocsQuery(), entity);
-         CacheQuery query2 = searchManager.getQuery(new MatchAllDocsQuery(), otherEntity);
+         CacheQuery<?> query1 = searchManager.getQuery(new MatchAllDocsQuery(), entity);
+         CacheQuery<?> query2 = searchManager.getQuery(new MatchAllDocsQuery(), otherEntity);
          assertEquals(expectedNumber, query1.getResultSize());
          assertEquals(otherExpected, query2.getResultSize());
       }

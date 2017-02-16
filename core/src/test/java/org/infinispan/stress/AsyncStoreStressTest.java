@@ -1,37 +1,8 @@
 package org.infinispan.stress;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.DummyInitializationContext;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
-import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedCacheWriter;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.support.DelegatingCacheLoader;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static java.lang.Math.sqrt;
+import static org.infinispan.test.TestingUtil.marshalledEntry;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,9 +17,38 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Math.sqrt;
-import static org.infinispan.test.TestingUtil.marshalledEntry;
-import static org.junit.Assert.assertTrue;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
+import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.AdvancedCacheWriter;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.DelegatingCacheLoader;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * Async store stress test.
@@ -95,7 +95,7 @@ public class AsyncStoreStressTest {
    // ImmortalCacheEntry{key=key165168, value=ImmortalCacheValue {value=61456}}}
    // (Thread-194:) Expected state updated with key=key165168, value=61456
    // (Thread-200:) Expected state updated with key=key165168, value=60483
-   private LockContainer locks = new PerKeyLockContainer(32, AnyEquivalence.getInstance());
+   private LockContainer locks = new PerKeyLockContainer();
 
    private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws PersistenceException {
       Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = new TreeMap<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>>();
@@ -317,7 +317,7 @@ public class AsyncStoreStressTest {
          }
       };
    }
-   
+
    private boolean withStore(String key, Callable<Boolean> call) {
       boolean result = false;
       try {

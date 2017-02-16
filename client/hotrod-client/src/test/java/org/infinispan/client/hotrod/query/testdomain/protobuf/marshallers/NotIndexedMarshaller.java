@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

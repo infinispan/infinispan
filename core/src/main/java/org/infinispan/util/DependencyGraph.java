@@ -1,7 +1,5 @@
 package org.infinispan.util;
 
-import net.jcip.annotations.ThreadSafe;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  *  Graph to track dependencies between objects

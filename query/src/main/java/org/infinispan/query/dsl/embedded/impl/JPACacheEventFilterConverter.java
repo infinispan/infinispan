@@ -1,5 +1,11 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -8,12 +14,6 @@ import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilte
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

@@ -1,19 +1,12 @@
 package org.infinispan.test.integration.security.utils;
 
+import java.net.URL;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.jboss.as.arquillian.container.ManagementClient;
-import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.as.test.integration.security.common.CoreUtils;
-import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.exporter.ZipExporter;
-
-import java.io.File;
-import java.net.URL;
-import java.util.List;
 
 /**
  * Common utilities for JDG security tests.

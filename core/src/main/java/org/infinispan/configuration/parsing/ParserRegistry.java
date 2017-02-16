@@ -23,7 +23,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
@@ -113,6 +112,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
          parse(is, holder);
+         holder.validate();
          return holder;
       } catch (CacheConfigurationException e) {
          throw e;
@@ -139,8 +139,9 @@ public class ParserRegistry implements NamespaceMappingParser {
          reader.nextTag();
          reader.require(START_ELEMENT, null, null);
          parseElement(reader, holder);
-         for (; reader.next() != END_DOCUMENT;)
-            ;
+         while (reader.next() != END_DOCUMENT) {
+            // consume remaining parsing events
+         }
       } finally {
          try {
             reader.close();

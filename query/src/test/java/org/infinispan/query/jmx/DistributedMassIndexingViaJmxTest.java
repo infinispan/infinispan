@@ -59,7 +59,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
    protected void rebuildIndexes() throws Exception {
       String cacheManagerName = manager(0).getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       ObjectName massIndexerObjName = getMassIndexerObjectName(
-            BASE_JMX_DOMAIN + 0, cacheManagerName, BasicCacheContainer.DEFAULT_CACHE_NAME);
+            BASE_JMX_DOMAIN + 0, cacheManagerName, manager(0).getCacheManagerConfiguration().defaultCacheName().get());
       server.invoke(massIndexerObjName, "start", new Object[0], new String[0]);
    }
 

@@ -1,8 +1,15 @@
 package org.infinispan.transaction.tm;
 
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.lang.String.format;
+
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -14,15 +21,9 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import static java.lang.String.format;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author bela
@@ -103,7 +104,9 @@ public class DummyTransaction implements Transaction {
       if (trace) {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
-      checkDone("Cannot commit transaction.");
+      if (isDone()) {
+         throw new IllegalStateException("Transaction is done. Cannot commit transaction.");
+      }
       runPrepare();
       runCommit(false);
    }
@@ -121,7 +124,9 @@ public class DummyTransaction implements Transaction {
       if (trace) {
          log.tracef("Transaction.rollback() invoked in transaction with Xid=%s", xid);
       }
-      checkDone("Cannot rollback transaction");
+      if (isDone()) {
+         throw new IllegalStateException("Transaction is done. Cannot rollback transaction");
+      }
       try {
          status = Status.STATUS_MARKED_ROLLBACK;
          endResources();
@@ -150,7 +155,9 @@ public class DummyTransaction implements Transaction {
       if (trace) {
          log.tracef("Transaction.setRollbackOnly() invoked in transaction with Xid=%s", xid);
       }
-      checkDone("Cannot change status");
+      if (isDone()) {
+         throw new IllegalStateException("Transaction is done. Cannot change status");
+      }
       markRollbackOnly(new RollbackException("Transaction marked as rollback only."));
    }
 
@@ -513,12 +520,8 @@ public class DummyTransaction implements Transaction {
       if (status == Status.STATUS_MARKED_ROLLBACK) {
          throw new RollbackException("Transaction has been marked as rollback only");
       }
-      checkDone(format("Cannot register any more %s", component));
-   }
-
-   private void checkDone(String message) {
       if (isDone()) {
-         throw new IllegalStateException(format("Transaction is done. %s", message));
+         throw new IllegalStateException(format("Transaction is done. Cannot register any more %s", component));
       }
    }
 

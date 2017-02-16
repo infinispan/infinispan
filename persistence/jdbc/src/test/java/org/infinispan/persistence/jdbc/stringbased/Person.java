@@ -2,16 +2,18 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import java.io.Serializable;
 
+import org.infinispan.marshall.core.ExternalPojo;
+
 /**
  * Pojo used for testing jdbc caches stores.
  *
  * @author Mircea.Markus@jboss.com
  */
-public class Person implements Serializable {
-   
+public class Person implements Serializable, ExternalPojo {
+
    /** The serialVersionUID */
    private static final long serialVersionUID = -835015913569270262L;
-   
+
    private String name;
    private String surname;
    private int age;

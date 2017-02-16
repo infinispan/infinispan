@@ -1,5 +1,12 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,13 +20,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**
  * Tests visibility of effects of cache operations on a separate thread once

@@ -1,5 +1,9 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
@@ -16,10 +20,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * The test verifies the issue ISPN-3092.
@@ -69,7 +69,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       SearchManager sm = Search.getSearchManager(cache3);
       QueryBuilder qb = sm.buildQueryBuilderForClass(VeryLongIndexNamedClass.class).get();
       Query q = qb.keyword().wildcard().onField("name").matching("value*").createQuery();
-      CacheQuery cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
+      CacheQuery<?> cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
 
       assertEquals(100, cq.getResultSize());
 

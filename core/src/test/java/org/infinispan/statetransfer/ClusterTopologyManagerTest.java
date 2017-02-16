@@ -1,5 +1,21 @@
 package org.infinispan.statetransfer;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,22 +35,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-
 @Test(groups = "functional", testName = "statetransfer.ClusterTopologyManagerTest")
 @CleanupAfterMethod
 public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
@@ -49,6 +49,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      defineConfigurationOnAllManagers(CACHE_NAME, defaultConfig);
 
       c1 = cache(0, CACHE_NAME);
       c2 = cache(1, CACHE_NAME);
@@ -63,6 +64,11 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public void testNodeAbruptLeave() throws Exception {
       // Create some more caches to trigger ISPN-2572
+      ConfigurationBuilder cfg = new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration());
+      defineConfigurationOnAllManagers("cache2", cfg);
+      defineConfigurationOnAllManagers("cache3", cfg);
+      defineConfigurationOnAllManagers("cache4", cfg);
+      defineConfigurationOnAllManagers("cache5", cfg);
       cache(0, "cache2");
       cache(1, "cache2");
       cache(0, "cache3");
@@ -94,11 +100,16 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // Check that a new node can join
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      EmbeddedCacheManager newCm = addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      newCm.defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c4);
       TestingUtil.waitForRehashToComplete(c1, c2, c4);
 
+      newCm.defineConfiguration("cache2", defaultConfig.build());
+      newCm.defineConfiguration("cache3", defaultConfig.build());
+      newCm.defineConfiguration("cache4", defaultConfig.build());
+      newCm.defineConfiguration("cache5", defaultConfig.build());
       cache(3, "cache2");
       cache(3, "cache3");
       cache(3, "cache4");
@@ -127,7 +138,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // Check that a new node can join
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true)).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
       TestingUtil.waitForRehashToComplete(c2, c3, c4);
@@ -165,7 +176,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // Check that a new node can join
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true)).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4);
       TestingUtil.waitForRehashToComplete(c1, c2, c3, c4);
@@ -205,7 +216,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // Check that a new node can join
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true)).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
       TestingUtil.waitForRehashToComplete(c2, c3, c4);
@@ -247,6 +258,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             new TransportFlags().withFD(true).withMerge(true));
       blockRebalanceStart(cm4, checkpoint, 2);
       // Force the initialization of the transport
+      cm4.defineConfiguration(CACHE_NAME, defaultConfig.build());
+      cm4.defineConfiguration(OTHER_CACHE_NAME, defaultConfig.build());
       cm4.getCache(OTHER_CACHE_NAME);
       Future<Cache<Object,Object>> cacheFuture = fork(new Callable<Cache<Object, Object>>() {
          @Override
@@ -285,6 +298,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(defaultConfig,
             new TransportFlags().withFD(true).withMerge(true));
+      cm5.defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c5 = cm5.getCache(CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4, c5);
       TestingUtil.waitForRehashToComplete(c1, c2, c3, c4, c5);
@@ -469,6 +483,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public void testJoinerBecomesOnlyMember() {
       // Keep only 2 nodes for this test
       killMember(2, CACHE_NAME);
+      defineConfigurationOnAllManagers(OTHER_CACHE_NAME, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
 
       d2.setDiscardAll(true);
       fork(new Callable<Object>() {
@@ -481,4 +496,3 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(cache(1, OTHER_CACHE_NAME));
    }
 }
-

@@ -1,8 +1,8 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import org.infinispan.objectfilter.impl.util.ReflectionHelper;
-
 import java.util.Iterator;
+
+import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 /**
  * @author anistor@redhat.com

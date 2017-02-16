@@ -13,30 +13,22 @@ import org.infinispan.container.DataContainer;
  * Controls the data container for the cache.
  *
  * @author pmuir
- *
+ * @Deprecated Please use {@link MemoryConfiguration}
  */
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
    public static final AttributeDefinition<DataContainer> DATA_CONTAINER = AttributeDefinition
          .builder("dataContainer", null, DataContainer.class).xmlName("class").copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Equivalence> KEY_EQUIVALENCE = AttributeDefinition
-         .<Equivalence> builder("keyEquivalence", AnyEquivalence.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Equivalence> VALUE_EQUIVALENCE = AttributeDefinition
-         .<Equivalence> builder("valueEquivalence", AnyEquivalence.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DataContainerConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
-            DATA_CONTAINER, KEY_EQUIVALENCE, VALUE_EQUIVALENCE);
+            DATA_CONTAINER);
    }
 
    private final Attribute<DataContainer> dataContainer;
-   private final Attribute<Equivalence> keyEquivalence;
-   private final Attribute<Equivalence> valueEquivalence;
 
    DataContainerConfiguration(AttributeSet attributes) {
       super(attributes);
       dataContainer = attributes.attribute(DATA_CONTAINER);
-      keyEquivalence = attributes.attribute(KEY_EQUIVALENCE);
-      valueEquivalence = attributes.attribute(VALUE_EQUIVALENCE);
    }
 
    /**
@@ -49,14 +41,18 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       return dataContainer.get();
    }
 
-   @SuppressWarnings("unchecked")
+   /**
+    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    */
    public <K> Equivalence<K> keyEquivalence() {
-      return keyEquivalence.get();
+      return AnyEquivalence.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
+   /**
+    * @Deprecated Equivalence is no longer used.  This will be removed in the future.  Only returns {@link AnyEquivalence}
+    */
    public <V> Equivalence<V> valueEquivalence() {
-      return valueEquivalence.get();
+      return AnyEquivalence.getInstance();
    }
 
    public AttributeSet attributes() {

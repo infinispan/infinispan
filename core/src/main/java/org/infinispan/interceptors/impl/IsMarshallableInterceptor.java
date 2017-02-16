@@ -1,159 +1,80 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Map;
+
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables
- * or not. This is handy in situations where we want to find out before
- * marshalling whether the type of object is marshallable. Such situations
- * include lazy deserialization, or when marshalling happens in a separate
- * thread and marshalling failures might be swallowed. </p>
+ * or not.
  *
- * This interceptor offers the possibility to discover these issues way before
- * the code has moved onto a different thread where it's harder to communicate
- * with the original request thread.
+ * <p>This is handy when marshalling happens in a separate
+ * thread and marshalling failures might be swallowed.
+ * Currently, this only happens when we have an asynchronous store.</p>
  *
  * @author Galder Zamarreño
  * @since 9.0
  */
-public class IsMarshallableInterceptor extends DDSequentialInterceptor {
+public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    private StreamingMarshaller marshaller;
-   private DistributionManager distManager;
-   private boolean storeAsBinary;
+   private boolean usingAsyncStore;
 
    @Inject
-   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                                   DistributionManager distManager) {
+   protected void injectMarshaller(StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
-      this.distManager = distManager;
    }
 
    @Start
    protected void start() {
-      storeAsBinary = cacheConfiguration.storeAsBinary().enabled()
-            && (cacheConfiguration.storeAsBinary().storeKeysAsBinary()
-                      || cacheConfiguration.storeAsBinary().storeValuesAsBinary());
+      usingAsyncStore = cacheConfiguration.persistence().usingAsyncStore();
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
-         checkMarshallable(key);
-      return ctx.continueInvocation();
-   }
-
-   @Override
-   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      Object key = command.getKey();
-      if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
-         checkMarshallable(key);
-      return ctx.continueInvocation();
-   }
-
-   @Override
-   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      for (Object key : command.getKeys()) {
-         if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
-            checkMarshallable(key);
-      }
-      return ctx.continueInvocation();
-   }
-
-   @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command)) {
-         for (Object key : command.getKeys()) {
-            checkMarshallable(key);
-         }
-      }
-      return ctx.continueInvocation();
-   }
-
-   @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
-         checkMarshallable(command.getKey());
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getValue());
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getMap());
-      return ctx.continueInvocation();
+      }
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getKey());
-      return ctx.continueInvocation();
+      }
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
-         checkMarshallable(command.getKey());
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getNewValue());
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx, command);
    }
 
-   private boolean isClusterInvocation(InvocationContext ctx, FlagAffectedCommand command) {
-      // If the cache is local, the interceptor should only be enabled in case
-      // of lazy deserialization or when an async store is in place. So, if
-      // any cache store is configured, check whether it'll be skipped
-      return ctx.isOriginLocal()
-            && cacheConfiguration.clustering().cacheMode().isClustered()
-            && !command.hasFlag(Flag.CACHE_MODE_LOCAL);
-   }
-
-   private boolean isStoreInvocation(FlagAffectedCommand command) {
-      // If the cache is local, the interceptor should only be enabled in case
-      // of lazy deserialization or when an async store is in place. So, if
-      // any cache store is configured, check whether it'll be skipped
-      return !cacheConfiguration.clustering().cacheMode().isClustered()
-            && !cacheConfiguration.persistence().stores().isEmpty()
-            && !command.hasFlag(Flag.SKIP_CACHE_STORE);
-   }
-
-   private boolean isStoreAsBinary() {
-      return storeAsBinary;
-   }
-
-   private boolean getMightGoRemote(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return ctx.isOriginLocal()
-            && cacheConfiguration.clustering().cacheMode().isDistributed()
-            && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            && !distManager.getLocality(key).isLocal();
+   private boolean isUsingAsyncStore(InvocationContext ctx, FlagAffectedCommand command) {
+      return usingAsyncStore && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE);
    }
 
    private void checkMarshallable(Object o) throws NotSerializableException {

@@ -1,7 +1,6 @@
 package org.infinispan.persistence.spi;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.persistence.spi.CacheLoader;
 
 /**
  * An exception thrown by a {@link CacheLoader} or a {@link CacheWriter} implementation if there are problems

@@ -1,5 +1,13 @@
 package org.infinispan.tx.recovery;
 
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.assertPrepared;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -10,11 +18,6 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.existsObject;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

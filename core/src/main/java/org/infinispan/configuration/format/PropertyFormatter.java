@@ -13,9 +13,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * 
+ *
  * Extracts the configuration into flat key-value property structure by reflection.
- * 
+ *
  * @author Michal Linhard (mlinhard@redhat.com)
  * @since 6.0
  */
@@ -35,18 +35,18 @@ public class PropertyFormatter {
    private String configPrefix = "";
 
    /**
-    * 
+    *
     * Create a new PropertyFormatter instance.
-    * 
+    *
     */
    public PropertyFormatter() {
       this("", "");
    }
 
    /**
-    * 
+    *
     * Create a new PropertyFormatter instance.
-    * 
+    *
     * @param globalConfigPrefix
     *           Prefix used for global configuration property keys.
     * @param configPrefix
@@ -92,7 +92,8 @@ public class PropertyFormatter {
          if (cls.getName().startsWith("org.infinispan.config") && !cls.isEnum()) {
             for (Method m : getMethods(obj.getClass())) {
                if (m.getParameterTypes().length != 0 || "toString".equals(m.getName())
-                     || "hashCode".equals(m.getName()) || "toProperties".equals(m.getName())) {
+                     || "hashCode".equals(m.getName()) || "toProperties".equals(m.getName())
+                     || m.isAnnotationPresent(Deprecated.class)) {
                   continue;
                }
                try {

@@ -1,5 +1,8 @@
 package org.infinispan.distexec;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,16 +21,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService
- * 
+ *
  * @author Vladimir Blagojevic
  * @author Anna Manukyan
  */
@@ -55,7 +55,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
    protected Cache<Object, Object> getCache() {
       return cache(0, cacheName());
    }
-   
+
    @Test(expectedExceptions = ExecutionException.class)
    public void testBasicTargetLocalDistributedCallableWithTimeout() throws Exception {
       Cache<Object, Object> cache1 = getCache();
@@ -193,14 +193,14 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       assert taskCancelled : "Dist task not cancelled ";
       // Will unblock when LongRunningCallable is interrupted
       barrier.await(10, TimeUnit.SECONDS);
-      assert future.isCancelled();      
-      assert future.isDone(); 
+      assert future.isCancelled();
+      assert future.isDone();
 
       //Testing whether the cancellation already happened.
       boolean isCanceled = future.cancel(true);
       assert !isCanceled;
    }
-   
+
    @Test(expectedExceptions = CancellationException.class)
    public void testCancelAndGet() throws Exception {
       DistributedExecutorService des = createDES(getCache());
@@ -208,22 +208,22 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       List<Address> members = new ArrayList<Address>(cacheMembers);
       assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
-      
+
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
       final Future<Integer> future = des.submit(members.get(0),tb.build());
-      
+
       future.cancel(true);
-      future.get();     
+      future.get();
    }
-   
+
    @Test(expectedExceptions = TimeoutException.class)
    public void testTimeoutOnLocalNode() throws Exception {
-      AdvancedCache<Object, Object> localCache = getCache().getAdvancedCache();      
-      DistributedExecutorService des = createDES(localCache);      
-      Future<Integer> future = des.submit(localCache.getRpcManager().getAddress(), new SleepingSimpleCallable());     
+      AdvancedCache<Object, Object> localCache = getCache().getAdvancedCache();
+      DistributedExecutorService des = createDES(localCache);
+      Future<Integer> future = des.submit(localCache.getRpcManager().getAddress(), new SleepingSimpleCallable());
       future.get(1000, TimeUnit.MILLISECONDS);
    }
-   
+
    public void testBasicTargetDistributedCallableTargetSameNode() throws Exception {
       Cache<Object, Object> cache1 = getCache();
 
@@ -279,7 +279,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testBasicTargetCallableWithNullTask() {
-      Cache<Object, Object> cache1 = getCache();   
+      Cache<Object, Object> cache1 = getCache();
 
       DistributedExecutorService des = createDES(cache1);
       Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
@@ -288,7 +288,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    @Test(expectedExceptions = NullPointerException.class)
    public void testBasicTargetDistributedTaskWithNullTask() {
-      Cache<Object, Object> cache1 = getCache();   
+      Cache<Object, Object> cache1 = getCache();
 
       DistributedExecutorService des = createDES(cache1);
       Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
@@ -328,8 +328,8 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       // Check that the futures are distinct
       assertEquals(list.size(), new HashSet<>(list).size());
    }
-   
-   static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable {
+
+   static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -6110011263261397071L;

@@ -1,5 +1,9 @@
 package org.infinispan.lock.singlelock;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.List;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -14,10 +18,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Single phase commit is used with pessimistic caches.

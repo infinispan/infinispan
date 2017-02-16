@@ -1,19 +1,17 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.testng.Assert.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle

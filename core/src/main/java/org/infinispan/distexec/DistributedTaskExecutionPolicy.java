@@ -9,8 +9,8 @@ package org.infinispan.distexec;
  * backup remote network centre as well. Others might, for example, use only a dedicated subset of a
  * certain Infinispan rack nodes for specific task execution. DistributedTaskExecutionPolicy is set
  * per instance of DistributedTask.
- * 
- * 
+ *
+ *
  * @author Vladimir Blagojevic
  * @since 5.2
  */

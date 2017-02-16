@@ -3,11 +3,11 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 /**
  * Used as a key for file headers in a cache
@@ -118,7 +118,7 @@ public final class FileCacheKey implements IndexScopedKey {
 
       @Override
       public Set<Class<? extends FileCacheKey>> getTypeClasses() {
-         return Util.<Class<? extends FileCacheKey>>asSet(FileCacheKey.class);
+         return Collections.singleton(FileCacheKey.class);
       }
    }
 

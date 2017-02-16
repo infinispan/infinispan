@@ -109,11 +109,6 @@ public class CacheEntryDelegator implements CacheEntry {
    }
 
    @Override
-   public void rollback() {
-      delegate.rollback();
-   }
-
-   @Override
    public void setChanged(boolean changed) {
       delegate.setChanged(changed);
    }
@@ -146,11 +141,6 @@ public class CacheEntryDelegator implements CacheEntry {
    @Override
    public void setSkipLookup(boolean skipLookup) {
       delegate.setSkipLookup(skipLookup);
-   }
-
-   @Override
-   public boolean undelete(boolean doUndelete) {
-      return delegate.undelete(doUndelete);
    }
 
    @Override

@@ -4,12 +4,16 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.BatchModification;
 
 /**
  * Defines the logic for interacting with the chain of external storage.
@@ -55,8 +59,6 @@ public interface PersistenceManager extends Lifecycle {
    void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode);
 
    MarshalledEntry loadFromAllStores(Object key, InvocationContext context);
-
-   void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes);
 
    /**
     * Returns the store one configured with fetch persistent state, or null if none exist.
@@ -109,6 +111,44 @@ public interface PersistenceManager extends Lifecycle {
 
    void setClearOnStop(boolean clearOnStop);
 
+   /**
+    * Write to all stores that are not transactional. A store is considered transactional if all of the following are true:
+    *
+    * <p><ul>
+    *    <li>The store implements {@link org.infinispan.persistence.spi.TransactionalCacheWriter}</li>
+    *    <li>The store is configured to be transactional</li>
+    *    <li>The cache's TransactionMode === TRANSACTIONAL</li>
+    * </ul></p>
+    *
+    * @param marshalledEntry the entry to be written to all non-tx stores.
+    * @param accessMode the type of access to the underlying store.
+    */
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes);
+
+   /**
+    * Perform the prepare phase of 2PC on all Tx stores.
+    *
+    * @param transaction the current transactional context.
+    * @param batchModification an object containing the write/remove operations required for this transaction.
+    * @param accessMode the type of access to the underlying store.
+    * @throws PersistenceException if an error is encountered at any of the underlying stores.
+    */
+   void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+                           AccessMode accessMode) throws PersistenceException;
+
+   /**
+    * Perform the commit operation for the provided transaction on all Tx stores.
+    *
+    * @param transaction the transactional context to be committed.
+    * @param accessMode the type of access to the underlying store.
+    */
+   void commitAllTxStores(Transaction transaction, AccessMode accessMode);
+
+   /**
+    * Perform the rollback operation for the provided transaction on all Tx stores.
+    *
+    * @param transaction the transactional context to be rolledback.
+    * @param accessMode the type of access to the underlying store.
+    */
+   void rollbackAllTxStores(Transaction transaction, AccessMode accessMode);
 }
-
-

@@ -1,20 +1,19 @@
 package org.infinispan.configuration;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
-
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * It manages all the configuration for a specific container.
@@ -26,60 +25,51 @@ import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
  * @since 8.1
  */
 public class ConfigurationManager {
+   private static final Log log = LogFactory.getLog(ConfigurationManager.class);
 
    private final GlobalConfiguration globalConfiguration;
-   private final Configuration defaultConfiguration;
    private final ConcurrentMap<String, Configuration> namedConfiguration;
 
-   public ConfigurationManager(ConfigurationBuilderHolder globalConfigurationHolder, ConfigurationBuilderHolder defaultConfigurationHolder,
-                               Optional<ConfigurationBuilderHolder> namedConfigurationHolder) {
-      globalConfiguration = globalConfigurationHolder.getGlobalConfigurationBuilder().build();
-      defaultConfiguration = defaultConfigurationHolder.getDefaultConfigurationBuilder().build(globalConfiguration);
-      namedConfiguration = CollectionFactory.makeConcurrentMap();
 
-      if (namedConfigurationHolder.isPresent()) {
-         for (Map.Entry<String, ConfigurationBuilder> entry : namedConfigurationHolder.get().getNamedConfigurationBuilders().entrySet()) {
-            ConfigurationBuilder builder = entry.getValue();
-            org.infinispan.configuration.cache.Configuration c = builder.build(globalConfiguration);
-            namedConfiguration.put(entry.getKey(), c);
-         }
-      }
+   public ConfigurationManager(GlobalConfiguration globalConfiguration) {
+      this.globalConfiguration = globalConfiguration;
+      this.namedConfiguration = CollectionFactory.makeConcurrentMap();
    }
 
    public ConfigurationManager(ConfigurationBuilderHolder holder) {
-      this(holder, holder, Optional.of(holder));
-   }
+      this(holder.getGlobalConfigurationBuilder().build());
 
-   public ConfigurationManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
-      this.globalConfiguration = globalConfiguration;
-      this.defaultConfiguration = defaultConfiguration;
-      this.namedConfiguration = CollectionFactory.makeConcurrentMap();
+      holder.getNamedConfigurationBuilders()
+            .forEach((name, builder) -> namedConfiguration.put(name, builder.build(globalConfiguration)));
    }
 
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
 
-   public Configuration getDefaultConfiguration() {
-      return defaultConfiguration;
-   }
-
    public Configuration getConfiguration(String cacheName) {
-      return DEFAULT_CACHE_NAME.equals(cacheName) ? defaultConfiguration : namedConfiguration.get(cacheName);
+      return namedConfiguration.get(cacheName);
    }
 
-   public Configuration getConfigurationOrDefault(String cacheName) {
-      if (DEFAULT_CACHE_NAME.equals(cacheName) || !namedConfiguration.containsKey(cacheName)) {
-         return new ConfigurationBuilder().read(defaultConfiguration).build(globalConfiguration);
-      } else {
+   public Configuration getConfiguration(String cacheName, String defaultCacheName) {
+      if (namedConfiguration.containsKey(cacheName)) {
          return namedConfiguration.get(cacheName);
+      } else {
+         if (defaultCacheName != null) {
+            return namedConfiguration.get(defaultCacheName);
+         } else {
+            throw log.noSuchCacheConfiguration(cacheName);
+         }
       }
    }
 
-   public Configuration putConfiguration(String cacheName, ConfigurationBuilder builder) {
-      Configuration configuration = builder.build(globalConfiguration);
+   public Configuration putConfiguration(String cacheName, Configuration configuration) {
       namedConfiguration.put(cacheName, configuration);
       return configuration;
+   }
+
+   public Configuration putConfiguration(String cacheName, ConfigurationBuilder builder) {
+      return putConfiguration(cacheName, builder.build());
    }
 
    public void removeConfiguration(String cacheName) {
@@ -88,7 +78,7 @@ public class ConfigurationManager {
 
    public Collection<String> getDefinedCaches() {
       List<String> cacheNames = namedConfiguration.entrySet().stream()
-            .filter(entry -> !entry.getValue().isTemplate())
+            .filter(entry -> !entry.getValue().isTemplate() && !entry.getKey().equals(CacheContainer.DEFAULT_CACHE_NAME))
             .map(entry -> entry.getKey())
             .collect(Collectors.toList());
       return Collections.unmodifiableCollection(cacheNames);

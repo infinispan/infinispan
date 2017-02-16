@@ -28,6 +28,7 @@ public enum Attribute {
    PASSIVATION("passivation"),
    PASSWORD("password"),
    PREFIX("prefix"),
+   PROPERTIES_FILE("properties-file"),
    TYPE("type"),
    USERNAME("username")
    ;

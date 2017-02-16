@@ -1,9 +1,9 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.spi.SearchIntegrator;
-
 import java.util.Map;
 import java.util.Set;
+
+import org.hibernate.search.spi.SearchIntegrator;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search statistics object.

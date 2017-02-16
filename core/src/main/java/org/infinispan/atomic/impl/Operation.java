@@ -12,11 +12,11 @@ import java.util.Map;
  * @since 4.0
  */
 public abstract class Operation<K, V> {
-   
+
    public abstract K keyAffected();
-   
+
    public abstract void replay(Map<K, V> delegate);
 
    public abstract void rollback(Map<K, V> delegate);
-   
+
 }

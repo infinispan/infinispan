@@ -18,8 +18,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
  *
@@ -42,52 +40,63 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
       }
       wrapEntriesForPrepare(ctx, command);
-      EntryVersionsMap newVersionData= null;
+      EntryVersionsMap originVersionData;
       if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
-         newVersionData =
+         originVersionData =
                cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
+      } else {
+         originVersionData = null;
       }
 
-      Object retval = ctx.forkInvocationSync(command);
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+         EntryVersionsMap newVersionData;
+         if (txInvocationContext.isOriginLocal()) {
+            newVersionData = originVersionData;
+         } else {
+            newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
+                  versionedPrepareCommand);
+         }
 
-      if (!ctx.isOriginLocal()) {
-         newVersionData =
-               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
-      }
-      if (command.isOnePhaseCommit()) {
-         ctx.getCacheTransaction().setUpdatedEntryVersions(versionedPrepareCommand.getVersionsSeen());
-      }
+         boolean onePhaseCommit = ((PrepareCommand) rCommand).isOnePhaseCommit();
+         if (onePhaseCommit) {
+            txInvocationContext.getCacheTransaction()
+                  .setUpdatedEntryVersions(versionedPrepareCommand.getVersionsSeen());
+         }
 
-      if (newVersionData != null) {
-         retval = newVersionData;
-      }
-      if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, null, null);
-      }
-      return ctx.shortCircuit(retval);
+         if (onePhaseCommit) {
+            commitContextEntries(txInvocationContext, null, null);
+         }
+         if (newVersionData != null)
+            return newVersionData;
+
+         return rv;
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
-      try {
-         if (ctx.isOriginLocal()) {
-            versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
-         }
-
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         if (!ctx.isOriginLocal()) {
-            ctx.getCacheTransaction().setUpdatedEntryVersions(versionedCommitCommand.getUpdatedVersions());
-         }
-         commitContextEntries(ctx, null, null);
+      if (ctx.isOriginLocal()) {
+         versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
+
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) ->
+            doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
+   }
+
+   private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {
+      if (!rCtx.isOriginLocal()) {
+         ((TxInvocationContext<?>) rCtx).getCacheTransaction().setUpdatedEntryVersions(
+               versionedCommitCommand.getUpdatedVersions());
+      }
+      commitContextEntries(rCtx, null, null);
    }
 
    @Override

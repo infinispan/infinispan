@@ -6,21 +6,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -35,14 +35,14 @@ public class TableManagerTest {
    Connection connection;
    TableManager tableManager;
 
-   @BeforeTest
+   @BeforeClass
    public void createConnection() throws Exception {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.setDialect(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       ConnectionFactoryConfiguration factoryConfiguration = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
 
       if (factoryConfiguration instanceof SimpleConnectionFactoryConfiguration) {
@@ -64,7 +64,7 @@ public class TableManagerTest {
       tableManager.setCacheName("aName");
    }
 
-   @AfterTest
+   @AfterClass
    public void closeConnection() throws SQLException {
       connection.close();
    }
@@ -75,7 +75,7 @@ public class TableManagerTest {
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       PooledConnectionFactory connectionFactory = new PooledConnectionFactory();
       ConnectionFactoryConfiguration config = UnitTestDatabaseManager
             .configureUniqueConnectionFactory(storeBuilder).create();

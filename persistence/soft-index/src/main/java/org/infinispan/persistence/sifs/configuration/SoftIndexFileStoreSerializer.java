@@ -1,12 +1,10 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
-
-import javax.xml.stream.XMLStreamException;
 
 /**
  * SoftIndexFileStoreSerializer.

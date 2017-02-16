@@ -1,8 +1,8 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.util.Experimental;
-
 import java.util.Optional;
+
+import org.infinispan.commons.util.Experimental;
 
 /**
  * An easily extensible metadata parameter that's stored along with the value

@@ -2,8 +2,6 @@ package org.infinispan.stats.container;
 
 import org.infinispan.stats.ExtendedStatisticNotFoundException;
 
-import java.io.PrintStream;
-
 /**
  * Common logic for the {@link ExtendedStatisticsContainer}
  *

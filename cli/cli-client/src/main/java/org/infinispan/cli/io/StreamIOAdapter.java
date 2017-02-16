@@ -1,11 +1,11 @@
 package org.infinispan.cli.io;
 
-import org.infinispan.cli.commands.ProcessedCommand;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+
+import org.infinispan.cli.commands.ProcessedCommand;
 
 public class StreamIOAdapter implements IOAdapter {
 

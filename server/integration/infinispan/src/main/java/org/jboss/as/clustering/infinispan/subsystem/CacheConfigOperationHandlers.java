@@ -54,13 +54,10 @@ public class CacheConfigOperationHandlers {
     static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new CacheConfigAdd(StoreWriteBehindResource.ATTRIBUTES);
     static final OperationStepHandler FILE_STORE_ADD = new FileCacheStoreAdd();
     static final OperationStepHandler STRING_KEYED_JDBC_STORE_ADD = new StringKeyedJDBCCacheStoreAdd();
-    static final OperationStepHandler BINARY_KEYED_JDBC_STORE_ADD = new BinaryKeyedJDBCCacheStoreAdd();
-    static final OperationStepHandler MIXED_KEYED_JDBC_STORE_ADD = new MixedKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler REMOTE_STORE_ADD = new RemoteCacheStoreAdd();
-    static final OperationStepHandler LEVELDB_STORE_ADD = new LevelDBCacheStoreAdd();
-    static final OperationStepHandler LEVELDB_EXPIRATION_ADD = new CacheConfigAdd(LevelDBExpirationConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(LevelDBCompressionConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_IMPLEMENTATION_ADD = new CacheConfigAdd(LevelDBImplementationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler ROCKSDB_STORE_ADD = new RocksDBCacheStoreAdd();
+    static final OperationStepHandler ROCKSDB_EXPIRATION_ADD = new CacheConfigAdd(RocksDBExpirationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(RocksDBCompressionConfigurationResource.ATTRIBUTES);
     static final OperationStepHandler REST_STORE_ADD = new RestCacheStoreAdd();
 
     /**
@@ -279,58 +276,15 @@ public class CacheConfigOperationHandlers {
         }
     }
 
-    private static class BinaryKeyedJDBCCacheStoreAdd extends JDBCCacheStoreAdd {
-        private final AttributeDefinition[] additionalAttributes;
-
-        BinaryKeyedJDBCCacheStoreAdd() {
-            this.additionalAttributes = BinaryKeyedJDBCStoreConfigurationResource.ATTRIBUTES;
-        }
-
-        @Override
-        protected void populateSubclassModel(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
-            // this abstract method is called when populateModel() is called in the base class
-            super.populateSubclassModel(context, operation, model);
-
-            for(final AttributeDefinition attribute : additionalAttributes) {
-                attribute.validateAndSet(operation, model);
-            }
-            // now check for binary-keyed-table passed as optional parameter in order to create the resource
-//            if (operation.get("binary-keyed-table").isDefined()) {
-//                ModelNode binaryTable = operation.get("binary-keyed-table") ;
-//                // process this table DMR description
-//            }
-        }
-    }
-
-    private static class MixedKeyedJDBCCacheStoreAdd extends JDBCCacheStoreAdd {
-        private final AttributeDefinition[] attributes;
-
-        MixedKeyedJDBCCacheStoreAdd() {
-            this.attributes = MixedKeyedJDBCStoreConfigurationResource.MIXED_KEYED_JDBC_STORE_ATTRIBUTES;
-        }
-
-        @Override
-        protected void populateSubclassModel(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
-            // this abstract method is called when populateModel() is called in the base class
-            super.populateSubclassModel(context, operation, model);
-
-            for(final AttributeDefinition attribute : attributes) {
-                attribute.validateAndSet(operation, model);
-            }
-            // now check for string-keyed and binary-keyed-table passed as optional parameter
-            // now check for string-keyed-table passed as optional parameter
-        }
-    }
-
     private static class RemoteCacheStoreAdd extends AbstractCacheStoreAdd {
         RemoteCacheStoreAdd() {
             super(RemoteStoreConfigurationResource.REMOTE_STORE_ATTRIBUTES);
         }
     }
 
-    private static class LevelDBCacheStoreAdd extends AbstractCacheStoreAdd {
-        LevelDBCacheStoreAdd() {
-            super(LevelDBStoreConfigurationResource.LEVELDB_STORE_ATTRIBUTES);
+    private static class RocksDBCacheStoreAdd extends AbstractCacheStoreAdd {
+        RocksDBCacheStoreAdd() {
+            super(RocksDBStoreConfigurationResource.ROCKSDB_STORE_ATTRIBUTES);
         }
     }
 

@@ -14,14 +14,14 @@ public interface XSiteStateConsumer {
     * @param sendingSite the site name that will send the state.
     * @throws org.infinispan.commons.CacheException if this node is received state from a different site name.
     */
-   public void startStateTransfer(String sendingSite);
+   void startStateTransfer(String sendingSite);
 
    /**
     * It notifies the end of state transfer from other site.
     *
     * @param sendingSite the site name that is sending the state.
     */
-   public void endStateTransfer(String sendingSite);
+   void endStateTransfer(String sendingSite);
 
    /**
     * It applies state from other site.
@@ -29,10 +29,10 @@ public interface XSiteStateConsumer {
     * @param chunk a chunk of keys
     * @throws Exception if something go wrong while applying the state
     */
-   public void applyState(XSiteState[] chunk) throws Exception;
+   void applyState(XSiteState[] chunk) throws Exception;
 
    /**
     * @return the site name that is sending the state.
     */
-   public String getSendingSiteName();
+   String getSendingSiteName();
 }

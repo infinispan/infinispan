@@ -1,19 +1,16 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the base class for use when listening to segment completions when doing initial event
@@ -35,8 +32,8 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    protected final AtomicBoolean completed = new AtomicBoolean(false);
    protected final ConcurrentMap<K, Object> notifiedKeys;
 
-   protected BaseQueueingSegmentListener(Equivalence<? super K> keyEquivalence) {
-      this.notifiedKeys = new EquivalentConcurrentHashMapV8<>(keyEquivalence, AnyEquivalence.getInstance());
+   protected BaseQueueingSegmentListener() {
+      this.notifiedKeys = new ConcurrentHashMap<>();
    }
 
    @Override

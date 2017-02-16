@@ -1,8 +1,8 @@
 package org.infinispan.demo;
 
-import com.martiansoftware.jsap.JSAPException;
-import com.martiansoftware.jsap.JSAPResult;
-import com.martiansoftware.jsap.SimpleJSAP;
+import java.io.IOException;
+import java.util.Iterator;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -10,8 +10,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 
-import java.io.IOException;
-import java.util.Iterator;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.SimpleJSAP;
 
 public abstract class Demo {
    protected final boolean isMaster;

@@ -1,20 +1,23 @@
 package org.infinispan.jcache.remote;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
+import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for building wrappers over remote cache instances.
@@ -423,5 +426,10 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesWithMetadata(segments, batchSize);
+   }
+
+   @Override
+   public StreamingRemoteCache<K> streaming() {
+      return delegate.streaming();
    }
 }

@@ -1,20 +1,19 @@
 package org.infinispan.query.dsl.impl;
 
+import java.util.Collection;
+
 import org.infinispan.query.dsl.Expression;
-import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.RangeConditionContext;
+import org.infinispan.query.dsl.RangeConditionContextQueryBuilder;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.Collection;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContext {
+class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContextQueryBuilder {
 
    private static final Log log = Logger.getMessageLogger(Log.class, AttributeCondition.class.getName());
 
@@ -46,7 +45,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    }
 
    @Override
-   public FilterConditionContext in(Object... values) {
+   public BaseCondition in(Object... values) {
       if (values == null || values.length == 0) {
          throw log.listOfValuesForInCannotBeNulOrEmpty();
       }
@@ -55,7 +54,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    }
 
    @Override
-   public FilterConditionContext in(Collection values) {
+   public BaseCondition in(Collection values) {
       if (values == null || values.isEmpty()) {
          throw log.listOfValuesForInCannotBeNulOrEmpty();
       }
@@ -64,97 +63,97 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    }
 
    @Override
-   public FilterConditionContext like(String pattern) {
+   public BaseCondition like(String pattern) {
       setOperatorAndArgument(new LikeOperator(this, pattern));
       return this;
    }
 
    @Override
-   public FilterConditionContext contains(Object value) {
+   public BaseCondition contains(Object value) {
       setOperatorAndArgument(new ContainsOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAll(Object... values) {
+   public BaseCondition containsAll(Object... values) {
       setOperatorAndArgument(new ContainsAllOperator(this, values));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAll(Collection values) {
+   public BaseCondition containsAll(Collection values) {
       setOperatorAndArgument(new ContainsAllOperator(this, values));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAny(Object... values) {
+   public BaseCondition containsAny(Object... values) {
       setOperatorAndArgument(new ContainsAnyOperator(this, values));
       return this;
    }
 
    @Override
-   public FilterConditionContext containsAny(Collection values) {
+   public BaseCondition containsAny(Collection values) {
       setOperatorAndArgument(new ContainsAnyOperator(this, values));
       return this;
    }
 
    @Override
-   public FilterConditionContext isNull() {
+   public BaseCondition isNull() {
       setOperatorAndArgument(new IsNullOperator(this));
       return this;
    }
 
    @Override
-   public FilterConditionContext eq(Object value) {
+   public BaseCondition eq(Object value) {
       setOperatorAndArgument(new EqOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext equal(Object value) {
+   public BaseCondition equal(Object value) {
       return eq(value);
    }
 
    @Override
-   public FilterConditionContext lt(Object value) {
+   public BaseCondition lt(Object value) {
       setOperatorAndArgument(new LtOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext lte(Object value) {
+   public BaseCondition lte(Object value) {
       setOperatorAndArgument(new LteOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext gt(Object value) {
+   public BaseCondition gt(Object value) {
       setOperatorAndArgument(new GtOperator(this, value));
       return this;
    }
 
    @Override
-   public FilterConditionContext gte(Object value) {
+   public BaseCondition gte(Object value) {
       setOperatorAndArgument(new GteOperator(this, value));
       return this;
    }
 
    @Override
-   public RangeConditionContext between(Object from, Object to) {
+   public AttributeCondition between(Object from, Object to) {
       setOperatorAndArgument(new BetweenOperator(this, new ValueRange(from, to)));
       return this;
    }
 
    @Override
-   public RangeConditionContext includeLower(boolean includeLower) {
+   public AttributeCondition includeLower(boolean includeLower) {
       ValueRange valueRange = (ValueRange) operatorAndArgument.getArgument();
       valueRange.setIncludeLower(includeLower);
       return this;
    }
 
    @Override
-   public RangeConditionContext includeUpper(boolean includeUpper) {
+   public AttributeCondition includeUpper(boolean includeUpper) {
       ValueRange valueRange = (ValueRange) operatorAndArgument.getArgument();
       valueRange.setIncludeUpper(includeUpper);
       return this;

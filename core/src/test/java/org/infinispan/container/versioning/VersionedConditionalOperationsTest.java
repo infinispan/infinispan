@@ -1,5 +1,7 @@
 package org.infinispan.container.versioning;
 
+import static org.testng.Assert.assertNull;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,8 +9,6 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertNull;
 
 /**
  * This test checks behaivour of versioned caches

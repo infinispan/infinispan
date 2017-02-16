@@ -1,5 +1,8 @@
 package org.infinispan.distribution;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,9 +15,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Tests distributed caches with shared cache stores under transactional
@@ -56,6 +56,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       createCluster(getCB(), 1);
+      defineConfigurationOnAllManagers("P006", getCB());
       waitForClusterToForm();
    }
 
@@ -75,7 +76,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       Assert.assertEquals(keys.size(), 4);
 
       // now start 2nd node
-      addClusterEnabledCacheManager(getCB());
+      addClusterEnabledCacheManager(getCB()).defineConfiguration("P006", getCB().build());
       waitForClusterToForm("P006");
 
       cache = cacheManagers.get(1).getCache("P006");

@@ -1,11 +1,11 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Implementations decide what to do when the cache membership changes, either because new nodes joined, nodes left,
@@ -53,4 +53,3 @@ public interface AvailabilityStrategy {
     */
    void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode);
 }
-

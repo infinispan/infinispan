@@ -1,11 +1,11 @@
 package org.infinispan.test.integration.as.wildfly.util;
 
-import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.Search;
-
 import javax.enterprise.inject.Produces;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans

@@ -1,5 +1,12 @@
 package org.infinispan.context;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.Serializable;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,18 +14,13 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.io.Serializable;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * This is to test that contexts are properly constructed and cleaned up wven when using marshalled values and the
@@ -42,7 +44,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
       ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
-      assertTrue(c.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
+      assertTrue(c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
 
       c.put(new Key("k"), "v");
 
@@ -81,7 +83,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       }
    }
 
-   private static class Key implements Serializable {
+   private static class Key implements Serializable, ExternalPojo {
       String actualKey;
 
       private Key(String actualKey) {
@@ -106,4 +108,3 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       }
    }
 }
-

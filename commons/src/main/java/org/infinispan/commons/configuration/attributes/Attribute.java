@@ -204,7 +204,7 @@ public final class Attribute<T> implements Cloneable {
          if (klass == Class.class) {
             writer.writeAttribute(name, ((Class) value).getName());
          } else if (klass.isEnum()) {
-            writer.writeAttribute(name, ((Enum) value).name());
+            writer.writeAttribute(name, ((Enum) value).toString());
          } else if (Util.isBasicType(klass)) {
             writer.writeAttribute(name, value.toString());
          } else {

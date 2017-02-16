@@ -1,17 +1,15 @@
 package org.infinispan.stream.impl.termop.object;
 
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.AbstractForEachOperation;
-
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * Terminal operation that handles for each where no map operations are defined

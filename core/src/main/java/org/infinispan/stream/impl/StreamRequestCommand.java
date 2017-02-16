@@ -1,18 +1,19 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
@@ -84,7 +85,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       switch (type) {
          case TERMINAL:
             lsm.streamOperation(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,
@@ -103,7 +104,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
                     (KeyTrackingTerminalOperation) terminalOperation);
             break;
       }
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

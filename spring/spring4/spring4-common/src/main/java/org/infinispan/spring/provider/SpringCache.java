@@ -1,5 +1,8 @@
 package org.infinispan.spring.provider;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.cache.Cache;
 
 /**
@@ -53,12 +56,24 @@ public class SpringCache implements Cache {
       return cacheImplementation.get(key, type);
    }
 
+   @Override
+   public <T> T get(Object key, Callable<T> valueLoader) {
+      return cacheImplementation.get(key, valueLoader);
+   }
+
    /**
     * @see org.springframework.cache.Cache#put(java.lang.Object, java.lang.Object)
     */
    @Override
    public void put(final Object key, final Object value) {
       this.cacheImplementation.put(key, value);
+   }
+
+   /**
+    * @see CacheDelegate#put(Object, Object, long, TimeUnit).
+    */
+   public void put(final Object key, final Object value, long lifespan, TimeUnit unit) {
+      this.cacheImplementation.put(key, value, lifespan, unit);
    }
 
    @Override

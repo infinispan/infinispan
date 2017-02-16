@@ -1,20 +1,21 @@
 package org.infinispan.lock;
 
+import static org.testng.Assert.assertNull;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertNull;
 
 @Test(testName = "lock.StaleEagerLocksOnPrepareFailureTest", groups = "functional")
 @CleanupAfterMethod
@@ -32,7 +33,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
             .recovery()
                .disable()
          .locking()
-            .lockAcquisitionTimeout(100);
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);
@@ -53,7 +54,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(PrepareCommand.class);
-      SequentialInterceptorChain ic = c2.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain ic = c2.getAdvancedCache().getAsyncInterceptorChain();
       ic.addInterceptorBefore(interceptor, TxDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);
@@ -90,4 +91,3 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       assertEventuallyNotLocked(c2, k2);
    }
 }
-

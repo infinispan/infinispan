@@ -24,7 +24,6 @@ package org.infinispan.server.commons.controller;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 

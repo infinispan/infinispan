@@ -1,17 +1,9 @@
 package org.infinispan.stress;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -20,7 +12,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.*;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * @author Pedro Ruivo
@@ -44,7 +48,7 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
             .scheme(VersioningScheme.SIMPLE)
             .locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(100)
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .writeSkewCheck(true)
             .transaction()
             .lockingMode(LockingMode.OPTIMISTIC)

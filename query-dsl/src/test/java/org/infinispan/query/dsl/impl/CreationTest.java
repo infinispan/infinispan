@@ -62,7 +62,7 @@ public class CreationTest {
 
       Query q1 = qf1.from("MyDummyType")
             .not(fcc)
-            .toBuilder().build();
+            .build();
 
       expectedException.expect(IllegalArgumentException.class);
       expectedException.expectMessage("The given condition is already in use by another builder");
@@ -79,7 +79,7 @@ public class CreationTest {
 
       Query q1 = qf1.from("MyDummyType")
             .not(fcc)
-            .toBuilder().build();
+            .build();
 
       expectedException.expect(IllegalArgumentException.class);
       expectedException.expectMessage("The given condition is already in use by another builder");
@@ -97,7 +97,7 @@ public class CreationTest {
 
       Query q1 = qf1.from("MyDummyType")
             .not(fcc)
-            .toBuilder().build();
+            .build();
 
       expectedException.expect(IllegalArgumentException.class);
       expectedException.expectMessage("The given condition is already in use by another builder");

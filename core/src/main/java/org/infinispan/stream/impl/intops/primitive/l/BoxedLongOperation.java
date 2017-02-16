@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl.intops.primitive.l;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs boxed operation on a {@link LongStream}

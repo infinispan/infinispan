@@ -1,10 +1,10 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
+import java.util.Properties;
+
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
-
-import java.util.Properties;
 
 public class CustomStoreConfigurationWithoutBuilder implements StoreConfiguration {
 
@@ -40,6 +40,11 @@ public class CustomStoreConfigurationWithoutBuilder implements StoreConfiguratio
 
    @Override
    public boolean shared() {
+      return false;
+   }
+
+   @Override
+   public boolean transactional() {
       return false;
    }
 

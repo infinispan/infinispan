@@ -1,14 +1,13 @@
 package org.infinispan.tree.impl;
 
+import java.util.Map;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.tree.Fqn;
-import org.infinispan.tree.Fqn.Externalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific

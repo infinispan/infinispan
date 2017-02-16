@@ -9,9 +9,6 @@ import java.io.InputStream;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-
 /**
  * SaslInputStream.
  *
@@ -19,7 +16,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @since 7.0
  */
 public class SaslInputStream extends InputStream {
-   public static final Log LOG = LogFactory.getLog(SaslInputStream.class);
 
    private final SaslClient saslClient;
    private final DataInputStream inStream;
@@ -35,13 +31,7 @@ public class SaslInputStream extends InputStream {
 
    @Override
    public int read() throws IOException {
-      if (bufferPtr >= bufferLength) {
-         int i = 0;
-         while (i == 0)
-            i = fillBuffer();
-         if (i == -1)
-            return -1;
-      }
+      if (readBuffer()) return -1;
       return ((int) buffer[bufferPtr++] & 0xff);
    }
 
@@ -52,13 +42,7 @@ public class SaslInputStream extends InputStream {
 
    @Override
    public int read(byte[] b, int off, int len) throws IOException {
-      if (bufferPtr >= bufferLength) {
-         int i = 0;
-         while (i == 0)
-            i = fillBuffer();
-         if (i == -1)
-            return -1;
-      }
+      if (  readBuffer()) return -1;
       if (len <= 0) {
          return 0;
       }
@@ -70,6 +54,17 @@ public class SaslInputStream extends InputStream {
       }
       bufferPtr = bufferPtr + available;
       return available;
+   }
+
+   private boolean readBuffer() throws IOException {
+      if (bufferPtr >= bufferLength) {
+         int i = 0;
+         while (i == 0)
+            i = fillBuffer();
+         if (i == -1)
+            return true;
+      }
+      return false;
    }
 
    @Override

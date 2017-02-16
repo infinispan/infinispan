@@ -1,5 +1,10 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -11,11 +16,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests for MassIndexer on sharded indexes

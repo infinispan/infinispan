@@ -10,7 +10,6 @@ import org.infinispan.tasks.TaskExecutionMode;
 public class DistributedJSExecutingServerTask extends JSExecutingServerTask {
     public static final String NAME = "dist_jsexecutor_task";
     public static final String CACHE_NAME = "customTaskRepl";
-    public static final String DIST_CACHE_NAME = "customTaskDist";
 
     @Override
     public TaskExecutionMode getExecutionMode() {

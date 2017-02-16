@@ -1,5 +1,18 @@
 package org.infinispan.tx.exception;
 
+import static org.infinispan.test.Exceptions.expectException;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Collections;
+
+import javax.transaction.Status;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -10,17 +23,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.Collections;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-629.
@@ -36,7 +38,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
       config
          .transaction().lockingMode(LockingMode.PESSIMISTIC)
-         .locking().useLockStriping(false).lockAcquisitionTimeout(1000);
+         .locking().useLockStriping(false).lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
       cache = cm.getCache();
       return cm;
@@ -44,39 +46,19 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
 
 
    public void testPutTimeoutsInTx() throws Exception {
-      assertExpectedBehavior(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache.put("k1", "v2222");
-         }
-      });
+      assertExpectedBehavior(() -> cache.put("k1", "v2222"));
    }
 
    public void testRemoveTimeoutsInTx() throws Exception {
-      assertExpectedBehavior(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache.remove("k1");
-         }
-      });
+      assertExpectedBehavior(() -> cache.remove("k1"));
    }
 
    public void testReplaceTimeoutsInTx() throws Exception {
-      assertExpectedBehavior(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache.replace("k1", "newValue");
-         }
-      });
+      assertExpectedBehavior(() -> cache.replace("k1", "newValue"));
    }
 
    public void testPutAllTimeoutsInTx() throws Exception {
-      assertExpectedBehavior(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache.putAll(Collections.singletonMap("k1", "v22222"));
-         }
-      });
+      assertExpectedBehavior(() -> cache.putAll(Collections.singletonMap("k1", "v22222")));
    }
 
    private void assertExpectedBehavior(CacheOperation op) throws Exception {
@@ -93,13 +75,8 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       cache.put("k2", "v2");
       assertTrue(lm.isLocked("k2"));
       assertEquals(2, txTable.getLocalTxCount());
-      assert tm.getTransaction() != null;
-      try {
-         op.execute();
-         fail("TimeoutException expected.");
-      } catch (TimeoutException e) {
-         //expected
-      }
+      assertNotNull(tm.getTransaction());
+      expectException(TimeoutException.class, () -> op.execute());
 
       //make sure that locks acquired by that tx were released even before the transaction is rolled back, the tx object
       //was marked for rollback
@@ -108,12 +85,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       assertEquals(Status.STATUS_MARKED_ROLLBACK, transaction.getStatus());
       assertFalse(lm.isLocked("k2"));
       assertTrue(lm.isLocked("k1"));
-      try {
-         cache.put("k3", "v3");
-         fail("IllegalStateException expected.");
-      } catch (IllegalStateException e) {
-         //expected
-      }
+      expectException(CacheException.class, IllegalStateException.class, () -> cache.put("k3", "v3"));
       assertEquals(2, txTable.getLocalTxCount());
 
       //now the TM is expected to rollback the tx

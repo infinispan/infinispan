@@ -1,8 +1,10 @@
 package org.infinispan.spring.provider.sample;
 
 import javax.sql.XADataSource;
-import com.arjuna.ats.internal.jdbc.DynamicClass;
+
 import org.h2.jdbcx.JdbcDataSource;
+
+import com.arjuna.ats.internal.jdbc.DynamicClass;
 
 /**
  * Required by JBoss Transactions for DataSource resolving.

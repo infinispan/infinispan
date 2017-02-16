@@ -1,5 +1,13 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.lang.reflect.Method;
 
 import javax.management.InstanceNotFoundException;
@@ -7,15 +15,12 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -77,7 +82,8 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      EmbeddedCacheManager otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      otherContainer.defineConfiguration("galder", new ConfigurationBuilder().build());
       registerCacheManager(otherContainer);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});
@@ -112,16 +118,6 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
          assert e instanceof JmxDomainConflictException;
       } finally {
          TestingUtil.killCacheManagers(otherContainer);
-      }
-   }
-
-   public void testMalformedCacheName(Method m) throws Exception {
-      final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
-      try {
-         otherContainer.getCache("persistence.unit:unitName=#helloworld.MyRegion");
-      } finally {
-         otherContainer.stop();
       }
    }
 

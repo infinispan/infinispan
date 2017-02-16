@@ -1,19 +1,21 @@
 package org.infinispan.query.impl.massindex;
 
+import static java.util.Arrays.stream;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.function.BiConsumer;
+
 import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
-
-import java.util.Set;
-import java.util.function.BiConsumer;
-
-import static java.util.Arrays.stream;
 
 /**
  * Decorates {@link org.hibernate.search.backend.impl.batch.DefaultBatchBackend} adding capacity of doing
@@ -30,7 +32,7 @@ public class ExtendedBatchBackend implements BatchBackend {
    public ExtendedBatchBackend(SearchIntegrator integrator, MassIndexerProgressMonitor progressMonitor) {
       this.integrator = integrator;
       this.progressMonitor = progressMonitor;
-      this.defaultBatchBackend = new DefaultBatchBackend(integrator, progressMonitor);
+      this.defaultBatchBackend = new DefaultBatchBackend(integrator.unwrap(ExtendedSearchIntegrator.class), progressMonitor);
    }
 
    public void purge(Set<Class<?>> entityTypes) {
@@ -43,6 +45,11 @@ public class ExtendedBatchBackend implements BatchBackend {
    @Override
    public void enqueueAsyncWork(LuceneWork work) throws InterruptedException {
       defaultBatchBackend.enqueueAsyncWork(work);
+   }
+
+   @Override
+   public void awaitAsyncProcessingCompletion() {
+      defaultBatchBackend.awaitAsyncProcessingCompletion();
    }
 
    @Override

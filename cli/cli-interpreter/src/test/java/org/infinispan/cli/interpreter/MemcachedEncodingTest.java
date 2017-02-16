@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
 
-import net.spy.memcached.MemcachedClient;
-
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,6 +18,8 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import net.spy.memcached.MemcachedClient;
 /**
  * MemcachedEncodingTest.
  *

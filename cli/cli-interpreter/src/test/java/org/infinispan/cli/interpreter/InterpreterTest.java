@@ -10,10 +10,10 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.statement.CacheStatement;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -76,6 +76,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
    public void testCacheQualifier() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      cacheManager.defineConfiguration("otherCache", new ConfigurationBuilder().build());
       Cache<Object, Object> otherCache = cacheManager.getCache("otherCache");
       execute(interpreter, sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
       Object a = cache.get("a");
@@ -195,8 +196,14 @@ public class InterpreterTest extends SingleCacheManagerTest {
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
       Map<String, String> response = interpreter.execute(sessionId, "stats;");
       assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
+      String output = response.get(ResultKeys.OUTPUT.toString());
+      assertTrue(output.contains("Statistics: {"));
+      assertTrue(output.contains("Transactions: {"));
+      assertTrue(output.contains("LockManager: {"));
       response = interpreter.execute(sessionId, "stats --container;");
       assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
+      output = response.get(ResultKeys.OUTPUT.toString());
+      assertTrue(output.startsWith(String.format("%s: {", cacheManager.getClusterName())));
    }
 
    public void testParserErrors() throws Exception {

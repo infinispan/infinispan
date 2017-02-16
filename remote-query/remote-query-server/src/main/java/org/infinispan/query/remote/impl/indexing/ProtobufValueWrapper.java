@@ -1,15 +1,15 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.query.remote.impl.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
  * This is used to wrap binary values encoded with Protocol Buffers. ProtobufValueWrapperFieldBridge is used as a

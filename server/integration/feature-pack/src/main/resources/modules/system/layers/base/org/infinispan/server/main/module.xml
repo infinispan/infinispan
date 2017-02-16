@@ -12,13 +12,11 @@
    <dependencies>
       <module name="javax.api" />
       <module name="javax.transaction.api" />
-      <module name="javax.xml.bind.api" />
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan" />
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import"/>
       <module name="io.netty" />
-      <module name="org.scala-lang.library" />
       <module name="org.jgroups" />
    </dependencies>
 </module>

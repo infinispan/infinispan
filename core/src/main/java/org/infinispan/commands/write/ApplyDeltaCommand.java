@@ -1,5 +1,11 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
@@ -10,13 +16,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
+import org.infinispan.context.impl.FlagBitSets;
 
 
 /**
@@ -59,6 +59,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       if (contextEntry instanceof DeltaAwareCacheEntry) {
          DeltaAwareCacheEntry deltaAwareCacheEntry = (DeltaAwareCacheEntry) contextEntry;
          deltaAwareCacheEntry.appendDelta(delta);
+      } else {
+         throw new IllegalStateException();
       }
       return null;
    }
@@ -78,8 +80,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       output.writeObject(key);
       output.writeObject(delta);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(commandInvocationId);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -88,7 +90,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       delta = (Delta) input.readObject();
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       setFlagsBitSet(input.readLong());
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -110,26 +112,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      switch (status) {
-         case FAILED:
-         case INITIALIZING:
-         case STOPPING:
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-         }
-   }
-
-   @Override
-   public boolean readsExistingValues() {
-      return true;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override

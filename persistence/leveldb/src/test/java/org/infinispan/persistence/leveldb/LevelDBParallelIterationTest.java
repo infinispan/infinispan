@@ -1,13 +1,13 @@
 package org.infinispan.persistence.leveldb;
 
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 /**
  * @author Mircea Markus

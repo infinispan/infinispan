@@ -1,6 +1,10 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.SslConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,12 +18,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.SSLException;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-
 /**
  * @author Adrian Brock
  * @author Tristan Tarrant
@@ -30,6 +28,8 @@ import static org.testng.AssertJUnit.fail;
 public class SslTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(SslTest.class);
+   public static final char[] STORE_PASSWORD = "secret".toCharArray();
+   public static final char[] ALT_CERTIFICATE_PASSWORD = "changeme".toCharArray();
 
    RemoteCache<String, String> defaultRemote;
    protected RemoteCacheManager remoteCacheManager;
@@ -45,41 +45,55 @@ public class SslTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   protected void initServerAndClient(boolean sslServer, boolean sslClient) {
+   protected void initServerAndClient(boolean sslServer, boolean sslClient, boolean requireClientAuth, boolean clientAuth, boolean altCertPassword) {
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      String keyStoreFileName = tccl.getResource("keystore.jks").getPath();
-      String trustStoreFileName = tccl.getResource("truststore.jks").getPath();
-      serverBuilder.ssl()
-         .enabled(sslServer)
-         .keyStoreFileName(keyStoreFileName)
-         .keyStorePassword("secret".toCharArray())
-         .trustStoreFileName(trustStoreFileName)
-         .trustStorePassword("secret".toCharArray());
+      String serverKeyStore = tccl.getResource(altCertPassword ? "keystore_server_alt_cert_password.jks" : "keystore_server.jks").getPath();
+      String serverTrustStore = tccl.getResource("truststore_server.jks").getPath();
+      org.infinispan.server.core.configuration.SslConfigurationBuilder serverSSLConfig = serverBuilder.ssl()
+            .enabled(sslServer)
+            .keyStoreFileName(serverKeyStore)
+            .keyStorePassword(STORE_PASSWORD);
+      if (altCertPassword)
+         serverSSLConfig.keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
+      if (requireClientAuth) {
+         serverSSLConfig
+               .requireClientAuth(true)
+               .trustStoreFileName(serverTrustStore)
+               .trustStorePassword(STORE_PASSWORD);
+      }
       hotrodServer.start(serverBuilder.build(), cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
+      String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client_alt_cert_password.jks" : "keystore_client.jks").getPath();
+      String clientTrustStore = tccl.getResource("truststore_client.jks").getPath();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder
-         .addServer()
-            .host("127.0.0.1")
-            .port(hotrodServer.getPort())
+      SslConfigurationBuilder clientSSLConfig = clientBuilder
+            .addServer()
+               .host("127.0.0.1")
+               .port(hotrodServer.getPort())
             .socketTimeout(3000)
-         .connectionPool()
-            .maxActive(1)
-         .security()
+            .connectionPool()
+               .maxActive(1)
+               .timeBetweenEvictionRuns(2000)
+            .security()
             .authentication()
                .disable()
             .ssl()
                .enabled(sslClient)
-               .keyStoreFileName(keyStoreFileName)
-               .keyStorePassword("secret".toCharArray())
-               .trustStoreFileName(trustStoreFileName)
-               .trustStorePassword("secret".toCharArray())
-          .connectionPool()
-             .timeBetweenEvictionRuns(2000);
+               .trustStoreFileName(clientTrustStore)
+               .trustStorePassword(STORE_PASSWORD);
+      if (clientAuth) {
+         clientSSLConfig
+               .keyStoreFileName(clientKeyStore)
+               .keyStorePassword(STORE_PASSWORD);
+         if (altCertPassword) {
+            clientSSLConfig
+                  .keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
+         }
+      }
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       defaultRemote = remoteCacheManager.getCache();
    }
@@ -92,23 +106,36 @@ public class SslTest extends SingleCacheManagerTest {
    }
 
    public void testSSLServerSSLClient() throws Exception {
-      initServerAndClient(true, true);
-      defaultRemote.put("k","v");
-      assert defaultRemote.get("k").equals("v");
+      initServerAndClient(true, true, false, false, false);
+      defaultRemote.put("k", "v");
+      assertEquals("v", defaultRemote.get("k"));
    }
 
-   @Test(expectedExceptions = TransportException.class)
+   @Test(expectedExceptions = TransportException.class )
    public void testSSLServerPlainClient() throws Exception {
-      // The server just disconnect the client
-      initServerAndClient(true, false);
+      // The server just disconnects the client
+      initServerAndClient(true, false, false, false, false);
    }
 
+   @Test(expectedExceptions = TransportException.class )
    public void testPlainServerSSLClient() throws Exception {
-      try {
-         initServerAndClient(false, true);
-         fail("Expecting a SSLException");
-      } catch (TransportException e) {
-          assertTrue(e.getCause() instanceof SSLException);
-      }
+      initServerAndClient(false, true, false, false, false);
+   }
+
+   public void testClientAuth() throws Exception {
+      initServerAndClient(true, true, true, true, false);
+      defaultRemote.put("k", "v");
+      assertEquals("v", defaultRemote.get("k"));
+   }
+
+   @Test(expectedExceptions = TransportException.class, expectedExceptionsMessageRegExp = "javax.net.ssl.SSLHandshakeException.*")
+   public void testClientAuthWithAnonClient() throws Exception {
+      initServerAndClient(true, true, true, false, false);
+   }
+
+   public void testClientAuthAltCertPassowrd() throws Exception {
+      initServerAndClient(true, true, true, true, true);
+      defaultRemote.put("k", "v");
+      assertEquals("v", defaultRemote.get("k"));
    }
 }

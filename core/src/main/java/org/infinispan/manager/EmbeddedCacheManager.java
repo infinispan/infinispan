@@ -1,5 +1,8 @@
 package org.infinispan.manager;
 
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.Configuration;
@@ -9,14 +12,12 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheContainerStats;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * EmbeddedCacheManager is an CacheManager that runs in the same JVM as the client.
@@ -319,5 +320,11 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
       throw new UnsupportedOperationException();
    }
 
-
+   /**
+    * Returns an entry point for a Health Check API.
+    *
+    * @since 9.0
+    * @return Health API for this {@link EmbeddedCacheManager}.
+     */
+   Health getHealth();
 }

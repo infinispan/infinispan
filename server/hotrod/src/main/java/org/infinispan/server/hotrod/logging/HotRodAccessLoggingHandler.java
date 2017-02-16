@@ -1,17 +1,18 @@
 package org.infinispan.server.hotrod.logging;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufHolder;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.server.hotrod.HotRodOperation;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufHolder;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 
 /**
  * Logging handler for hotrod to log what requests have come into the server
@@ -20,7 +21,7 @@ import java.time.temporal.ChronoUnit;
  * @since 9.0
  */
 public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
-   private static final JavaLog log = LogFactory.getLog(HotRodAccessLoggingHandler.class, JavaLog.class);
+   private static final Log log = LogFactory.getLog(HotRodAccessLoggingHandler.class, Log.class);
 
    LocalDateTime startTime;
    private int bytesRead = 0;
@@ -52,10 +53,10 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
          // This is only null if an exception was thrown before we could decode a proper message
          if (cacheDecodeContext != null && exception == null) {
             // Method
-            op = cacheDecodeContext.header().op();
-            key = cacheDecodeContext.key();
+            op = cacheDecodeContext.getHeader().getOp();
+            key = cacheDecodeContext.getKey();
             // Cache name
-            cacheName = cacheDecodeContext.header().cacheName();
+            cacheName = cacheDecodeContext.getHeader().getCacheName();
             status = "OK";
          } else {
             op = ctx.channel().attr(LoggingContextHandler.OPERATION_KEY).get();
@@ -86,8 +87,8 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
                ms = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now());
             }
             log.tracef("%s [%s] \"%s %s\" \"%s\" %s %d %d %d ms", remoteAddress,
-                    checkForNull(startTime), checkForNull(op), checkForNull(cacheName),
-                    status, checkForNull(key), bytesRead, bytesWritten, ms);
+                  checkForNull(startTime), checkForNull(op), checkForNull(cacheName),
+                  status, checkForNull(key), bytesRead, bytesWritten, ms);
          }));
       } else {
          super.write(ctx, msg, promise);
@@ -95,10 +96,10 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
    }
 
    String checkForNull(Object obj) {
-      if (obj == null || obj instanceof String && ((String)obj).isEmpty()) {
+      if (obj == null || obj instanceof String && ((String) obj).isEmpty()) {
          return "-";
       } else if (obj instanceof byte[]) {
-         return Util.printArray((byte[])obj);
+         return Util.printArray((byte[]) obj);
       } else {
          return obj.toString();
       }

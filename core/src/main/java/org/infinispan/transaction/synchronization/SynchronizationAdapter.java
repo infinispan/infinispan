@@ -1,21 +1,10 @@
 package org.infinispan.transaction.synchronization;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.remoting.rpc.RpcManager;
+import javax.transaction.Synchronization;
+
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
-import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.xa.XAException;
 
 /**
  * {@link Synchronization} implementation for integrating with the TM.
@@ -25,52 +14,23 @@ import javax.transaction.xa.XAException;
  * @since 5.0
  */
 public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization {
-
-   private static final Log log = LogFactory.getLog(SynchronizationAdapter.class);
-   private static final boolean trace = log.isTraceEnabled();
-
    private final LocalTransaction localTransaction;
+   private final TransactionTable txTable;
 
-   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator,
-                                 CommandsFactory commandsFactory, RpcManager rpcManager,
-                                 TransactionTable transactionTable, ClusteringDependentLogic clusteringLogic,
-                                 Configuration configuration, PartitionHandlingManager partitionHandlingManager) {
-      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration, txCoordinator, partitionHandlingManager);
+   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionTable txTable) {
+      super(localTransaction);
       this.localTransaction = localTransaction;
+      this.txTable = txTable;
    }
 
    @Override
    public void beforeCompletion() {
-      log.tracef("beforeCompletion called for %s", localTransaction);
-      try {
-         txCoordinator.prepare(localTransaction);
-      } catch (XAException e) {
-         throw new CacheException("Could not prepare. ", e);//todo shall we just swallow this exception?
-      }
+      txTable.beforeCompletion(localTransaction);
    }
 
    @Override
    public void afterCompletion(int status) {
-      if (trace) {
-         log.tracef("afterCompletion(%s) called for %s.", status, localTransaction);
-      }
-      boolean isOnePhase;
-      if (status == Status.STATUS_COMMITTED) {
-         try {
-            isOnePhase = txCoordinator.commit(localTransaction, false);
-         } catch (XAException e) {
-            throw new CacheException("Could not commit.", e);
-         }
-         releaseLocksForCompletedTransaction(localTransaction, isOnePhase);
-      } else if (status == Status.STATUS_ROLLEDBACK) {
-         try {
-            txCoordinator.rollback(localTransaction);
-         } catch (XAException e) {
-            throw new CacheException("Could not commit.", e);
-         }
-      } else {
-         throw new IllegalArgumentException("Unknown status: " + status);
-      }
+      txTable.afterCompletion(localTransaction, status);
    }
 
    @Override

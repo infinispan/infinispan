@@ -3,22 +3,20 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -26,13 +24,13 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Issues a remote get call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
- * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
+ * interceptor chain.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
+public class ClusteredGetCommand extends BaseClusteredReadCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
@@ -42,13 +40,9 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
 
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
-   private InterceptorChain invoker;
-   private boolean acquireRemoteLock;
-   private GlobalTransaction gtx;
+   private AsyncInterceptorChain invoker;
 
-   private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-   private Equivalence keyEquivalence;
    //only used by extended statistics. this boolean is local.
    private boolean isWrite;
 
@@ -60,69 +54,51 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetCommand(Object key, ByteString cacheName, long flags,
-                              boolean acquireRemoteLock, GlobalTransaction gtx, Equivalence keyEquivalence) {
+   public ClusteredGetCommand(Object key, ByteString cacheName, long flags) {
       super(cacheName, flags);
       this.key = key;
-      this.acquireRemoteLock = acquireRemoteLock;
-      this.gtx = gtx;
-      this.keyEquivalence = keyEquivalence;
       this.isWrite = false;
-      if (acquireRemoteLock && (gtx == null))
-         throw new IllegalArgumentException("Cannot have null tx if we need to acquire locks");
    }
 
-   public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                          InterceptorChain interceptorChain, TransactionTable txTable,
-                          Equivalence keyEquivalence) {
+   public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory,
+                          InternalEntryFactory entryFactory, AsyncInterceptorChain interceptorChain) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
-      this.txTable = txTable;
       this.entryFactory = entryFactory;
-      this.keyEquivalence = keyEquivalence;
    }
 
    /**
     * Invokes a logical "get(key)" on a remote cache and returns results.
-    *
-    * @param context invocation context, ignored.
-    * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    @Override
-   public InternalCacheValue perform(InvocationContext context) throws Throwable {
-      acquireLocksIfNeeded();
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
+      // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
+      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
+      command.setTopologyId(topologyId);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
-      if (cacheEntry == null) {
-         if (trace) log.trace("Did not find anything, returning null");
-         return null;
-      }
-      //this might happen if the value was fetched from a cache loader
-      if (cacheEntry instanceof MVCCEntry) {
-         if (trace) log.trace("Handling an internal cache entry...");
-         MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
-         return entryFactory.createValue(mvccEntry);
-      } else {
-         InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
-         return internalCacheEntry.toInternalCacheValue();
-      }
+      CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
+      return future.thenApply(rv -> {
+         if (trace) log.tracef("Return value for key=%s is %s", key, rv);
+         //this might happen if the value was fetched from a cache loader
+         if (rv instanceof MVCCEntry) {
+            MVCCEntry mvccEntry = (MVCCEntry) rv;
+            return entryFactory.createValue(mvccEntry);
+         } else if (rv instanceof InternalCacheEntry) {
+            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
+            return internalCacheEntry.toInternalCacheValue();
+         } else { // null or Response
+            return rv;
+         }
+      });
    }
 
+   @Deprecated
    public GlobalTransaction getGlobalTransaction() {
-      return gtx;
-   }
-
-   private void acquireLocksIfNeeded() throws Throwable {
-      if (acquireRemoteLock) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, getFlagsBitSet(), gtx);
-         lockControlCommand.init(invoker, icf, txTable);
-         lockControlCommand.perform(null);
-      }
+      return null;
    }
 
    @Override
@@ -133,21 +109,13 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeBoolean(acquireRemoteLock);
-      if (acquireRemoteLock) {
-         output.writeObject(gtx);
-      }
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       setFlagsBitSet(input.readLong());
-      acquireRemoteLock = input.readBoolean();
-      if (acquireRemoteLock) {
-         gtx = (GlobalTransaction) input.readObject();
-      }
    }
 
    @Override
@@ -157,18 +125,12 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
 
       ClusteredGetCommand that = (ClusteredGetCommand) o;
 
-      return !(key != null ?
-         !(keyEquivalence != null ? keyEquivalence.equals(key, that.key) : key.equals(that.key))
-         : that.key != null);
+      return Objects.equals(key, that.key);
    }
 
    @Override
    public int hashCode() {
-      int result;
-      result = (key != null
-          ? (keyEquivalence != null ? keyEquivalence.hashCode(key) : key.hashCode())
-          : 0);
-      return result;
+      return Objects.hashCode(key);
    }
 
    @Override
@@ -202,4 +164,5 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    public boolean canBlock() {
       return false;
    }
+
 }

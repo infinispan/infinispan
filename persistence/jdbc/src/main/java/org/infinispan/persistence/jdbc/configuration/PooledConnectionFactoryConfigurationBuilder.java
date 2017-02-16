@@ -18,10 +18,16 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
       super(builder);
    }
 
+   private String propertyFile;
    private String connectionUrl;
    private String driverClass;
    private String username;
    private String password;
+
+   public PooledConnectionFactoryConfigurationBuilder<S> propertyFile(String propertyFile) {
+      this.propertyFile = propertyFile;
+      return this;
+   }
 
    public PooledConnectionFactoryConfigurationBuilder<S> connectionUrl(String connectionUrl) {
       this.connectionUrl = connectionUrl;
@@ -50,7 +56,8 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
 
    @Override
    public void validate() {
-      if (connectionUrl == null) {
+      // If a propertyFile is specified, then no exceptions are thrown for an incorrect config until the pool is created
+      if (propertyFile == null && connectionUrl == null) {
          throw new CacheConfigurationException("Missing connectionUrl parameter");
       }
    }
@@ -61,11 +68,12 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
 
    @Override
    public PooledConnectionFactoryConfiguration create() {
-      return new PooledConnectionFactoryConfiguration(connectionUrl, driverClass, username, password);
+      return new PooledConnectionFactoryConfiguration(propertyFile, connectionUrl, driverClass, username, password);
    }
 
    @Override
    public PooledConnectionFactoryConfigurationBuilder<S> read(PooledConnectionFactoryConfiguration template) {
+      this.propertyFile = template.propertyFile();
       this.connectionUrl = template.connectionUrl();
       this.driverClass = template.driverClass();
       this.username = template.username();

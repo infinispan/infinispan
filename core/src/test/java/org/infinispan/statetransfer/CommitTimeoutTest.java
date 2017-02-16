@@ -1,5 +1,18 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.RollbackException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -13,18 +26,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test that a commit command that has timed out on a backup owner cannot write entries after the locks have been

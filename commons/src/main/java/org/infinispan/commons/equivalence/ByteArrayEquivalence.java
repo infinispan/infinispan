@@ -7,6 +7,7 @@ import java.util.Arrays;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated
  */
 public class ByteArrayEquivalence implements Equivalence<byte[]> {
 

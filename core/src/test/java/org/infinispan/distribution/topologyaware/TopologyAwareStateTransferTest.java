@@ -1,5 +1,7 @@
 package org.infinispan.distribution.topologyaware;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,8 +15,6 @@ import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -140,22 +140,9 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       final List<Address> addresses = hash.locateOwners(key);
       log.debug(key + " should be present on = " + addresses);
 
-      int count = 0;
       for (Cache<? super K, ?> c : caches()) {
-         if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-            log.debug("It is here = " + address(c));
-            count++;
-         }
-      }
-      log.debug("count = " + count);
-      assert count == 2;
-
-      for (Cache<? super K, ?> c : caches()) {
-         if (addresses.contains(address(c))) {
-            assert c.getAdvancedCache().getDataContainer().containsKey(key);
-         } else {
-            assert !c.getAdvancedCache().getDataContainer().containsKey(key);
-         }
+         eventuallyEquals("Failure for key " + key + " on cache " + address(c), addresses.contains(address(c)),
+                          () -> c.getAdvancedCache().getDataContainer().containsKey(key));
       }
    }
 

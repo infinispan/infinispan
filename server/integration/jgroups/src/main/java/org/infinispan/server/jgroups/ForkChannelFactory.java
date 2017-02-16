@@ -35,7 +35,7 @@ import org.infinispan.server.jgroups.spi.RelayConfiguration;
 import org.infinispan.server.jgroups.spi.SaslConfiguration;
 import org.infinispan.server.jgroups.spi.TransportConfiguration;
 import org.jboss.modules.ModuleLoader;
-import org.jgroups.Channel;
+import org.jgroups.JChannel;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
@@ -49,20 +49,20 @@ public class ForkChannelFactory implements ChannelFactory {
 
     private final ChannelFactory parentFactory;
     private final List<ProtocolConfiguration> protocols;
-    private final Channel channel;
+    private final JChannel channel;
 
-    public ForkChannelFactory(Channel channel, ChannelFactory parentFactory, List<ProtocolConfiguration> protocols) {
+    public ForkChannelFactory(JChannel channel, ChannelFactory parentFactory, List<ProtocolConfiguration> protocols) {
         this.channel = channel;
         this.parentFactory = parentFactory;
         this.protocols = protocols;
     }
 
-    public ForkChannelFactory(Channel channel, ChannelFactory parentFactory, ProtocolConfiguration... protocols) {
+    public ForkChannelFactory(JChannel channel, ChannelFactory parentFactory, ProtocolConfiguration... protocols) {
         this(channel, parentFactory, Arrays.asList(protocols));
     }
 
     @Override
-    public Channel createChannel(String id) throws Exception {
+    public JChannel createChannel(String id) throws Exception {
         JGroupsLogger.ROOT_LOGGER.debugf("Creating fork channel %s from channel %s", id, this.channel.getClusterName());
 
         String stackName = this.protocols.isEmpty() ? this.channel.getClusterName() : id;

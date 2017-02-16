@@ -1,20 +1,20 @@
 package org.infinispan.container.entries.metadata;
 
-import org.infinispan.container.entries.ExpiryHelper;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.container.entries.AbstractInternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import static java.lang.Math.min;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static java.lang.Math.min;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.AbstractInternalCacheEntry;
+import org.infinispan.container.entries.ExpiryHelper;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A form of {@link org.infinispan.container.entries.TransientMortalCacheEntry}

@@ -3,14 +3,15 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
-
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Implements "putIfAbsent" operation as described in  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -27,8 +28,10 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
                                Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
-                               int flags, byte[] value, long lifespan,TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
+                               int flags, ClientIntelligence clientIntelligence, byte[] value, long lifespan,
+                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence, value,
+            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override

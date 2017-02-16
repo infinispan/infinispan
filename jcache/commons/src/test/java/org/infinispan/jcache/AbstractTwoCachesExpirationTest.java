@@ -1,21 +1,22 @@
 package org.infinispan.jcache;
 
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.ControlledTimeService;
-import org.testng.annotations.Test;
+import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.ControlledTimeService;
+import org.testng.annotations.Test;
 
 /**
  * Base class for clustered JCache expiration tests. Implementations must provide cache references.

@@ -1,14 +1,14 @@
 package org.infinispan.server.test.task.servertask;
 
+import java.util.Map;
+import java.util.Optional;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import javax.transaction.TransactionManager;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Task verifying that the marshaller is passed properly and the value is properly put into the cache.
@@ -21,10 +21,8 @@ public class DistributedCacheUsingTask implements ServerTask {
     public static final String CACHE_NAME = "customTaskReplTx";
     public static final String VALUE_PREFIX = "modified:";
     public static final String PARAM_KEY = "param";
-    public static final String NEW_VALUE = "newValue";
 
     private TaskContext taskContext;
-    private static AtomicInteger counter = new AtomicInteger(0);
 
     @Override
     @SuppressWarnings("unchecked")
@@ -38,7 +36,7 @@ public class DistributedCacheUsingTask implements ServerTask {
         TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
         transactionManager.begin();
         cache.getCacheManager().getCache(CACHE_NAME).getAdvancedCache().lock(entry.getKey());
-        
+
         cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(),
                 VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
         transactionManager.commit();

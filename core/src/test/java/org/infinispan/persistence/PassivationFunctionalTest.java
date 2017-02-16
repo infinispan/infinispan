@@ -1,28 +1,30 @@
 package org.infinispan.persistence;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -38,7 +40,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    CacheContainer cm;
    long lifespan = 6000000; // very large lifespan so nothing actually expires
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg
@@ -52,7 +54,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
    }
@@ -254,5 +256,20 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInCacheNotInStore("k1", "v1-NEW");
       assertInCacheNotInStore("k2", "v2-NEW");
       assertInCacheNotInStore("k3", "v3-NEW");
+   }
+
+   public void testClear() {
+      assertNotInCacheAndStore("k1", "k2", "k3");
+      cache.put("k1", "v1");
+      cache.put("k2", "v2");
+
+      cache.evict("k2");
+
+      assertInCacheNotInStore("k1", "v1");
+      assertInStoreNotInCache("k2", "v2");
+
+      cache.clear();
+
+      assertEquals(0, cache.size());
    }
 }

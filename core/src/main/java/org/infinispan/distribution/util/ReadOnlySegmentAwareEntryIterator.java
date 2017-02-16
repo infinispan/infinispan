@@ -10,9 +10,9 @@ import org.infinispan.distribution.ch.ConsistentHash;
  * Iterator implementation that shows a read only view of the provided iterator by only
  * allowing values that map to a given segment using the provided consistent hash.
  * <p>
- * This iterator is specifically used with the {@link ReadOnlySegmentAwareEntrySet} so
+ * This iterator is specifically used with the {@link ReadOnlySegmentAwareEntryCollection} so
  * that it will properly filter out entries by their key instead of by the entry instance
- * 
+ *
  * @author wburns
  * @since 7.2
  */

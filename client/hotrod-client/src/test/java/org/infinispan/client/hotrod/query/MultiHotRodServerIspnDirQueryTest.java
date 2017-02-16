@@ -1,12 +1,12 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * Verifying the functionality of queries using a local infinispan directory provider.
@@ -21,7 +21,7 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
-      createHotRodServers(2, defaultConfiguration);
+      createHotRodServers(3, defaultConfiguration);
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().index(Index.ALL)

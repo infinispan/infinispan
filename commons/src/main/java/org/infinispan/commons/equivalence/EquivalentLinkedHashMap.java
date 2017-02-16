@@ -19,6 +19,7 @@ import java.util.NoSuchElementException;
  *
  * @author Galder Zamarreño
  * @since 6.0
+ * @deprecated
  */
 public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
 

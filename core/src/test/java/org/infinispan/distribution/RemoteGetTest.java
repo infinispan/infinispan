@@ -1,12 +1,12 @@
 package org.infinispan.distribution;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 @Test(groups = "functional", testName = "distribution.RemoteGetTest")
 public class RemoteGetTest extends MultipleCacheManagersTest {

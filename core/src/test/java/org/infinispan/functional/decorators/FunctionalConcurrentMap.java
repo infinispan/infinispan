@@ -1,5 +1,26 @@
 package org.infinispan.functional.decorators;
 
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindIsPresent;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
@@ -13,19 +34,6 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.stream.CacheCollectors;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
 /**
  * A {@link ConcurrentMap} implementation that uses the operations exposed by
@@ -73,7 +81,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public boolean containsKey(Object key) {
-      return await(readOnly.eval(toK(key), e -> e.find().isPresent()));
+      return await(readOnly.eval(toK(key), returnReadOnlyFindIsPresent()));
    }
 
    @Override
@@ -83,7 +91,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public V get(Object key) {
-      return await(readOnly.eval(toK(key), e -> e.find().orElse(null)));
+      return await(readOnly.eval(toK(key), returnReadOnlyFindOrNull()));
    }
 
    @SuppressWarnings("unchecked")

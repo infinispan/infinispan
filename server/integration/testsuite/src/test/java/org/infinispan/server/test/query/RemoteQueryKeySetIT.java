@@ -1,5 +1,9 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Set;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -11,16 +15,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Tests for keySet() method on a distributed remote cache that uses protobuf marshalling.
  *
  * @author anistor@redhat.com
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryKeySetIT extends RemoteQueryBaseIT {
 

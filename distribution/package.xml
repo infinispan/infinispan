@@ -24,7 +24,7 @@
    <target name="all">
       <local name="output.dir"/>
       <property name="output.dir" value="${base.output.dir}-all" />
-      <base-distribution dir="${output.dir}" type="all" />
+      <base-distribution dir="${output.dir}" type="all" javadocs="all"/>
 
       <copy todir="${output.dir}">
          <file file="${org.infinispan:infinispan-remote:jar}" />
@@ -62,9 +62,12 @@
          </copy>
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
+         <base-distribution-javadocs dir="${output.dir}" type="remote" />
+         <delete dir="${output.dir}/docs-embedded" />
+         <delete dir="${output.dir}/docs-remote" />
+         <delete dir="${output.dir}/docs-all" />
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
-         <delete dir="${output.dir}/docs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
       </sequential>
    </target>
@@ -72,6 +75,7 @@
    <macrodef name="base-distribution">
       <attribute name="dir" />
       <attribute name="type" />
+      <attribute name="javadocs" default="embedded"/>
 
       <sequential>
          <mkdir dir="@{dir}" />
@@ -84,8 +88,11 @@
          <base-distribution-lib-embedded dir="@{dir}"/>
          <base-distribution-common-files dir="@{dir}" type="@{type}"/>
          <base-distribution-schema dir="@{dir}" />
-         <base-distribution-javadocs dir="@{dir}" />
+         <base-distribution-javadocs dir="@{dir}" type="@{javadocs}"/>
          <base-distribution-configdocs dir="@{dir}" />
+         <delete dir="@{dir}/docs-embedded" />
+         <delete dir="@{dir}/docs-remote" />
+         <delete dir="@{dir}/docs-all" />
       </sequential>
    </macrodef>
 
@@ -127,15 +134,15 @@
 
    <macrodef name="base-distribution-javadocs">
       <attribute name="dir" />
+      <attribute name="type" default="embedded" />
       <sequential>
          <mkdir dir="@{dir}/docs" />
          <copy todir="@{dir}/docs">
-            <fileset dir="src/main/release/common/docs">
+            <fileset dir="src/main/release/common/docs-@{type}">
                <include name="**" />
             </fileset>
          </copy>
-         <unjar src="${org.infinispan:infinispan-javadoc:jar:javadoc}" dest="@{dir}/docs/api">
-         </unjar>
+         <unjar src="${org.infinispan:infinispan-javadoc-@{type}:jar:javadoc}" dest="@{dir}/docs/api" />
       </sequential>
    </macrodef>
 
@@ -145,7 +152,7 @@
          <mkdir dir="@{dir}/schema" />
          <copy todir="@{dir}/schema">
             <fileset dir="${basedir}/..">
-               <include name="**/src/main/resources/schema/*-${infinispan.core.schema.version}.xsd" />
+               <include name="**/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                <include name="**/src/main/resources/org/infinispan/spring/config/*${infinispan.core.schema.version}.xsd" />
             </fileset>
             <mapper type="flatten" />

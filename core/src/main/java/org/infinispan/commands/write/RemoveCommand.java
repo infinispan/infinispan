@@ -1,23 +1,22 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
+
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -28,12 +27,11 @@ import java.io.ObjectOutput;
 public class RemoveCommand extends AbstractDataWriteCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
    public static final byte COMMAND_ID = 10;
-   protected CacheNotifier notifier;
-   boolean successful = true;
-   boolean nonExistent = false;
+   protected CacheNotifier<Object, Object> notifier;
+   protected boolean successful = true;
+   private boolean nonExistent = false;
 
    protected ValueMatcher valueMatcher;
-   protected Equivalence valueEquivalence;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -41,17 +39,18 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet, Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet,
+                        CommandInvocationId commandInvocationId) {
       super(key, flagsBitSet, commandInvocationId);
       this.value = value;
+      //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = valueEquivalence;
       this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
    }
 
-   public void init(CacheNotifier notifier, Configuration configuration) {
+   public void init(CacheNotifier notifier) {
+      //noinspection unchecked
       this.notifier = notifier;
-      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
    }
 
    public RemoveCommand() {
@@ -70,13 +69,17 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          return null;
       }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e == null || e.isNull() || e.isRemoved()) {
+      Object prevValue = e.getValue();
+      if (prevValue == null) {
          nonExistent = true;
-         if (valueMatcher.matches(e, value, null, valueEquivalence)) {
-            if (e != null) {
-               e.setChanged(true);
-               e.setRemoved(true);
+         if (valueMatcher.matches(null, value, null)) {
+            e.setChanged(true);
+            e.setRemoved(true);
+            e.setCreated(false);
+            if (this instanceof EvictCommand) {
+               e.setEvicted(true);
             }
+            e.setValue(null);
             return isConditional() ? true : null;
          } else {
             log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
@@ -85,7 +88,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          }
       }
 
-      if (!valueMatcher.matches(e, value, null, valueEquivalence)) {
+      if (!valueMatcher.matches(prevValue, value, null)) {
          successful = false;
          return false;
       }
@@ -94,7 +97,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          e.setEvicted(true);
       }
 
-      return performRemove(e, ctx);
+      return performRemove(e, prevValue, ctx);
    }
 
    public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata, boolean isPre) {
@@ -112,13 +115,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          return false;
       }
 
-   RemoveCommand that = (RemoveCommand) o;
+      RemoveCommand that = (RemoveCommand) o;
 
-      if (value != null ? !value.equals(that.value) : that.value != null) {
-         return false;
-      }
-
-      return true;
+      return Objects.equals(value, that.value);
    }
 
    @Override
@@ -133,8 +132,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public String toString() {
       return new StringBuilder()
          .append("RemoveCommand{key=")
-         .append(key)
-         .append(", value=").append(value)
+         .append(toStr(key))
+         .append(", value=").append(toStr(value))
          .append(", flags=").append(printFlags())
          .append(", valueMatcher=").append(valueMatcher)
          .append("}")
@@ -159,9 +158,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -170,7 +169,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       value = input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -192,13 +191,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
-   }
-
-   @Override
-   public boolean readsExistingValues() {
-      return value != null || !hasFlag(Flag.IGNORE_RETURN_VALUES);
+   public LoadType loadType() {
+      return isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? LoadType.PRIMARY : LoadType.DONT_LOAD;
    }
 
    public Object getValue() {
@@ -215,16 +209,33 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return isConditional() || super.isReturnValueExpected();
    }
 
-   protected Object performRemove(CacheEntry e, InvocationContext ctx) {
-      final Object removedValue = e.getValue();
-      notify(ctx, removedValue, e.getMetadata(), true);
+   @Override
+   public void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
+      command.setRemove(commandInvocationId, key, getFlagsBitSet(), getTopologyId());
+   }
+
+   @Override
+   public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
+      command.initCommandInvocationIdAndTopologyId(commandInvocationId, getTopologyId());
+      if (isConditional()) {
+         command.initWithBoolReturnValue(successful);
+      } else if (isReturnValueExpected()) {
+         command.initWithReturnValue(successful, localReturnValue);
+      } else {
+         command.initWithoutReturnValue(successful);
+      }
+   }
+
+   protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
+      notify(ctx, prevValue, e.getMetadata(), true);
 
       e.setRemoved(true);
       e.setValid(false);
       e.setChanged(true);
+      e.setValue(null);
 
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-         return isConditional() ? true : removedValue;
+         return isConditional() ? true : prevValue;
       } else {
          // Return the expected value when retrying
          return isConditional() ? true : value;

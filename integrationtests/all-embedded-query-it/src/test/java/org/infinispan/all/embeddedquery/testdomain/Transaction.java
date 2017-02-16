@@ -16,6 +16,10 @@ public interface Transaction {
 
    void setDescription(String description);
 
+   String getLongDescription();
+
+   void setLongDescription(String longDescription);
+
    int getAccountId();
 
    void setAccountId(int accountId);

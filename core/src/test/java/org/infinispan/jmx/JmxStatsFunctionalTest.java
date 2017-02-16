@@ -1,5 +1,16 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.existsDomains;
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+
+import java.lang.reflect.Method;
+import java.util.Properties;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -10,16 +21,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.lang.reflect.Method;
-import java.util.Properties;
-
-import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.infinispan.test.TestingUtil.existsObject;
-import static org.infinispan.test.TestingUtil.existsDomains;
 
 /**
  * Functional test for checking jmx statistics exposure.

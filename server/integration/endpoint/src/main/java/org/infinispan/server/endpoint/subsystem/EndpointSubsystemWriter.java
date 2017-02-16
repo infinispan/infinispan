@@ -18,6 +18,15 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.server.endpoint.subsystem.PrefixResource.PREFIX_ATTRIBUTES;
+import static org.infinispan.server.endpoint.subsystem.SniResource.SNI_ATTRIBUTES;
+
+import java.util.Collections;
+import java.util.List;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleListAttributeDefinition;
@@ -28,11 +37,6 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The XML writer for the endpoint subsystem configuration.
@@ -67,6 +71,9 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       }
       for (Property property : getConnectorsByType(node, ModelKeys.WEBSOCKET_CONNECTOR)) {
          writeWebSocketConnector(writer, property.getValue());
+      }
+      for (Property property : getConnectorsByType(node, ModelKeys.ROUTER_CONNECTOR)) {
+         writeRouterConnector(writer, property.getValue());
       }
    }
 
@@ -108,6 +115,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       for (SimpleAttributeDefinition attribute : RestConnectorResource.REST_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
+      writeEncryption(writer, connector);
       writer.writeEndElement();
    }
 
@@ -117,6 +125,46 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       writeCommonConnector(writer, connector);
       writeProtocolServerConnector(writer, connector);
       writer.writeEndElement();
+   }
+
+   private void writeRouterConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+           throws XMLStreamException {
+      writer.writeStartElement(Element.ROUTER_CONNECTOR.getLocalName());
+      for (SimpleAttributeDefinition attribute : RouterConnectorResource.ROUTER_CONNECTOR_ATTRIBUTES) {
+         attribute.marshallAsAttribute(connector, true, writer);
+      }
+      writer.writeStartElement(Element.MULTI_TENANCY.getLocalName());
+      ModelNode multiTenancy = connector.get(ModelKeys.MULTI_TENANCY, ModelKeys.MULTI_TENANCY_NAME);
+      writeHotrod(writer, multiTenancy);
+      writeRest(writer, multiTenancy);
+      writer.writeEndElement(); //multi-tenancy
+      writer.writeEndElement(); //router-connector
+   }
+
+   private void writeHotrod(XMLExtendedStreamWriter writer, ModelNode parentNode) throws XMLStreamException {
+      if (parentNode.hasDefined(ModelKeys.HOTROD)) {
+         for (ModelNode hotrodNode: parentNode.get(ModelKeys.HOTROD).asList()) {
+            writer.writeStartElement(Element.HOTROD.getLocalName());
+            for (SimpleAttributeDefinition hotrodAttribute : RouterHotRodResource.ROUTER_HOTROD_ATTRIBUTES) {
+               hotrodAttribute.marshallAsAttribute(hotrodNode.get(0), true, writer);
+            }
+            writeSni(writer, hotrodNode.get(0));
+            writer.writeEndElement();
+         }
+      }
+   }
+
+   private void writeRest(XMLExtendedStreamWriter writer, ModelNode parentNode) throws XMLStreamException {
+      if (parentNode.hasDefined(ModelKeys.REST)) {
+         for (ModelNode hotrodNode: parentNode.get(ModelKeys.REST).asList()) {
+            writer.writeStartElement(Element.REST.getLocalName());
+            for (SimpleAttributeDefinition hotrodAttribute : RouterRestResource.ROUTER_REST_ATTRIBUTES) {
+               hotrodAttribute.marshallAsAttribute(hotrodNode.get(0), true, writer);
+            }
+            writePrefix(writer, hotrodNode.get(0));
+            writer.writeEndElement();
+         }
+      }
    }
 
    private void writeCommonConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
@@ -148,12 +196,24 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       }
    }
 
-   private void writeSni(final XMLExtendedStreamWriter writer, final ModelNode encryption) throws XMLStreamException {
-      if (encryption.hasDefined(ModelKeys.SNI)) {
-         for (ModelNode mapping: encryption.get(ModelKeys.SNI).asList()) {
+   private void writeSni(final XMLExtendedStreamWriter writer, final ModelNode parentNode) throws XMLStreamException {
+      if (parentNode.hasDefined(ModelKeys.SNI)) {
+         for (ModelNode mapping: parentNode.get(ModelKeys.SNI).asList()) {
             writer.writeStartElement(Element.SNI.getLocalName());
-            for (SimpleAttributeDefinition sniMappingAttribute : SniResource.SNI_ATTRIBUTES) {
+            for (SimpleAttributeDefinition sniMappingAttribute : SNI_ATTRIBUTES) {
                sniMappingAttribute.marshallAsAttribute(mapping.get(0), true, writer);
+            }
+            writer.writeEndElement();
+         }
+      }
+   }
+
+   private void writePrefix(final XMLExtendedStreamWriter writer, final ModelNode parentNode) throws XMLStreamException {
+      if (parentNode.hasDefined(ModelKeys.PREFIX)) {
+         for (ModelNode mapping: parentNode.get(ModelKeys.PREFIX).asList()) {
+            writer.writeStartElement(Element.PREFIX.getLocalName());
+            for (SimpleAttributeDefinition prefixMappingAttribute : PREFIX_ATTRIBUTES) {
+               prefixMappingAttribute.marshallAsAttribute(mapping.get(0), true, writer);
             }
             writer.writeEndElement();
          }

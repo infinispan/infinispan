@@ -15,7 +15,11 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * cluster should interact with the underlying store. The coordinator of the cluster will be
     * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
     * CacheStore implementation. It always delegates reads to the real CacheStore.
+    *
+    * @deprecated Singleton writers will be removed in 10.0. If it is desirable that all nodes don't write to the underlying store
+    * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
     */
+   @Deprecated
    SingletonStoreConfigurationBuilder<S> singleton();
 
    /**
@@ -62,6 +66,20 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * store - perhaps local on-disk.
     */
    S shared(boolean b);
+
+   /**
+    * This setting should be set to true when the underlying cache store supports transactions and it is desirable for
+    * the underlying store and the cache to remain synchronized. With this enabled any Exceptions thrown whilst writing
+    * to the underlying store will result in both the store's and the cache's transaction rollingback.
+    * <p/>
+    * If enabled and this store is shared, then writes to this store will be performed at prepare time of the Infinispan Tx.
+    * If an exception is encountered by the store during prepare time, then this will result in the global Tx being
+    * rolledback along with this stores writes, otherwise writes to this store will be committed during the commit
+    * phase of 2PC. If this is not enabled, then writes to the cache store are performed during the commit phase of a Tx.
+    *<p/>
+    * Note that this requires {@link #shared(boolean)} to be set to true.
+    */
+   S transactional(boolean b);
 
    /**
     * <p>

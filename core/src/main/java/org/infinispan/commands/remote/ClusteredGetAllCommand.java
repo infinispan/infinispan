@@ -6,22 +6,22 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -30,11 +30,11 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Issues a remote getAll call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
- * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
+ * interceptor chain.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
+public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -44,10 +44,9 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
 
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
-   private InterceptorChain invoker;
+   private AsyncInterceptorChain invoker;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-   private Equivalence<? super K> keyEquivalence;
 
    ClusteredGetAllCommand() {
       super(null, EnumUtil.EMPTY_BIT_SET);
@@ -57,66 +56,65 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags,
-                                 GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
+   public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags, GlobalTransaction gtx) {
       super(cacheName, flags);
       this.keys = keys;
       this.gtx = gtx;
-      this.keyEquivalence = keyEquivalence;
    }
 
-   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory,
-         InternalEntryFactory entryFactory, InterceptorChain interceptorChain,
-         TransactionTable txTable, Equivalence<? super K> keyEquivalence) {
+   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
+                    AsyncInterceptorChain interceptorChain, TransactionTable txTable) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.txTable = txTable;
       this.entryFactory = entryFactory;
-      this.keyEquivalence = keyEquivalence;
    }
 
-   @SuppressWarnings("unchecked")
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      acquireLocksIfNeeded();
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      if (!hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)) {
+         return invokeGetAll();
+      } else {
+         return acquireLocks().thenCompose(o -> invokeGetAll());
+      }
+   }
+
+   private CompletableFuture<Object> invokeGetAll() {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, getFlagsBitSet(), true);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(invocationContext, command);
-      if (trace) log.trace("Found: " + map);
+      CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
+      return future.thenApply(rv -> {
+         if (trace) log.trace("Found: " + rv);
+         if (rv == null || rv instanceof Response) {
+            return rv;
+         }
 
-      if (map == null) {
-         return null;
-      }
-
-      List<InternalCacheValue<V>> values = new ArrayList<>(keys.size());
-      for (Object key : keys) {
-         if (map.containsKey(key)) {
+         Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) rv;
+         InternalCacheValue<V>[] values = new InternalCacheValue[keys.size()];
+         int i = 0;
+         for (Object key : keys) {
             CacheEntry<K, V> entry = map.get(key);
             InternalCacheValue<V> value;
-            if (entry instanceof InternalCacheEntry) {
+            if (entry == null) {
+               value = null;
+            } else if (entry instanceof InternalCacheEntry) {
                value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
-            } else if (entry != null) {
-               value = entryFactory.createValue(entry);
             } else {
-               value = new ImmortalCacheValue(null);
+               value = entryFactory.createValue(entry);
             }
-            values.add(value);
-         } else {
-            values.add(null);
+            values[i++] = value;
          }
-      }
-      return values;
+         return values;
+      });
    }
 
-   private void acquireLocksIfNeeded() throws Throwable {
-      if (hasFlag(Flag.FORCE_WRITE_LOCK)) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
-         lockControlCommand.init(invoker, icf, txTable);
-         lockControlCommand.perform(null);
-      }
+   private CompletableFuture<Object> acquireLocks() throws Throwable {
+      LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
+      lockControlCommand.init(invoker, icf, txTable);
+      return lockControlCommand.invokeAsync();
    }
 
    public List<?> getKeys() {
@@ -131,7 +129,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(gtx);
    }
 
@@ -170,11 +168,6 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
             return false;
       } else if (!gtx.equals(other.gtx))
          return false;
-      if (keyEquivalence == null) {
-         if (other.keyEquivalence != null)
-            return false;
-      } else if (!keyEquivalence.equals(other.keyEquivalence))
-         return false;
       if (keys == null) {
          if (other.keys != null)
             return false;
@@ -188,7 +181,6 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
       final int prime = 31;
       int result = 1;
       result = prime * result + ((gtx == null) ? 0 : gtx.hashCode());
-      result = prime * result + ((keyEquivalence == null) ? 0 : keyEquivalence.hashCode());
       result = prime * result + ((keys == null) ? 0 : keys.hashCode());
       return result;
    }

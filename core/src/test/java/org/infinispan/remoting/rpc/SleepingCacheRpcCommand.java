@@ -1,12 +1,12 @@
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * @author Pedro Ruivo

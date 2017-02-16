@@ -9,7 +9,6 @@ import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactor
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.jgroups.util.ExtendedUUID;
-import org.jgroups.util.TopologyUUID;
 import org.testng.annotations.Test;
 
 /**
@@ -46,7 +45,8 @@ public class TopologyAwareSyncConsistentHashFactoryKeyDistributionTest extends S
    protected List<Address> createAddresses(int numNodes) {
       ArrayList<Address> addresses = new ArrayList<Address>(numNodes);
       for (int i = 0; i < numNodes; i++) {
-         addresses.add(new IndexedTopologyAwareJGroupsAddress(TopologyUUID.randomUUID("s" + (i%2), null, "m" + i), i));
+         ExtendedUUID topologyAddress = JGroupsTopologyAwareAddress.randomUUID(null, "s" + (i % 2), null, "m" + i);
+         addresses.add(new IndexedTopologyAwareJGroupsAddress(topologyAddress, i));
       }
       return addresses;
    }

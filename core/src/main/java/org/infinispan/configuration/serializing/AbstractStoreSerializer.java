@@ -1,5 +1,7 @@
 package org.infinispan.configuration.serializing;
 
+import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
+
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -10,8 +12,6 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
-
-import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 /**
  * AbstractStoreSerializer.
  *
@@ -24,7 +24,9 @@ public abstract class AbstractStoreSerializer {
    }
 
    protected void writeCommonStoreElements(XMLExtendedStreamWriter writer, StoreConfiguration configuration) throws XMLStreamException {
-      writeStoreWriteBehind(writer, configuration);
+      if (configuration.async().enabled()) {
+         writeStoreWriteBehind(writer, configuration);
+      }
       writeTypedProperties(writer, TypedProperties.toTypedProperties(configuration.properties()));
    }
 

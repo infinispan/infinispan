@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -31,7 +32,7 @@ public class NodeKey implements Serializable {
       this.contents = contents;
       this.fqn = fqn;
    }
-   
+
    public Fqn getFqn() {
       return fqn;
    }
@@ -85,12 +86,12 @@ public class NodeKey implements Serializable {
          }
          output.write(type);
       }
-      
+
       @Override
       public NodeKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Fqn fqn = (Fqn) input.readObject();
          int typeb = input.readUnsignedByte();
-         NodeKey.Type type = null; 
+         NodeKey.Type type = null;
          switch (typeb) {
             case DATA_BYTE:
                type = DATA;
@@ -104,7 +105,7 @@ public class NodeKey implements Serializable {
 
       @Override
       public Set<Class<? extends NodeKey>> getTypeClasses() {
-         return Util.<Class<? extends NodeKey>>asSet(NodeKey.class);
+         return Collections.singleton(NodeKey.class);
       }
    }
 }

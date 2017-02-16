@@ -1,5 +1,8 @@
 package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
+import java.io.Serializable;
+import java.util.Date;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.DateBridge;
 import org.hibernate.search.annotations.EncodingType;
@@ -8,17 +11,15 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
-
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 @Indexed
-public class AccountHS implements Account, Serializable {
+public class AccountHS implements Account, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

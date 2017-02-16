@@ -96,16 +96,14 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-leveldb</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.fusesource.leveldbjni</groupId>
-         <artifactId>leveldbjni-all</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -129,6 +127,11 @@
       <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.zaxxer</groupId>
+         <artifactId>HikariCP</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -181,6 +184,11 @@
          <artifactId>org.apache.karaf.features.core</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <properties>
@@ -203,7 +211,7 @@
          </testResource>
       </testResources>
       <plugins>
-         
+
          <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
             <artifactId>depends-maven-plugin</artifactId>

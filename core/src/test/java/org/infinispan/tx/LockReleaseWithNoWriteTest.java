@@ -1,16 +1,16 @@
 package org.infinispan.tx;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.LockingMode;
-import org.testng.annotations.Test;
-
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.LockingMode;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.

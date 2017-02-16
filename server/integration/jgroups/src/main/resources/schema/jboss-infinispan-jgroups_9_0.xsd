@@ -86,7 +86,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="module" type="xs:string" default="org.wildfly.clustering.server">
+        <xs:attribute name="module" type="xs:string" default="${Server.ChannelDefinition.module}">
             <xs:annotation>
                 <xs:documentation>Indicates the module from which to load clustering services.</xs:documentation>
             </xs:annotation>
@@ -173,7 +173,7 @@
                 <xs:documentation>Provides an address/port binding for a protocol.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="module" type="xs:string" default="org.jgroups">
+        <xs:attribute name="module" type="xs:string" default="${Server.ProtocolDefinition.module}">
             <xs:annotation>
                 <xs:documentation>Indicates the module from which to load this protocol.</xs:documentation>
             </xs:annotation>
@@ -186,17 +186,7 @@
                 <xs:sequence>
                     <xs:element name="default-thread-pool" type="tns:thread-pool" minOccurs="0" maxOccurs="1">
                         <xs:annotation>
-                            <xs:documentation>Defines the thread pool used for default messages received by this transport.</xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                    <xs:element name="internal-thread-pool" type="tns:thread-pool" minOccurs="0" maxOccurs="1">
-                        <xs:annotation>
-                            <xs:documentation>Defines the thread pool used for internal messages used by this transport.</xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                    <xs:element name="oob-thread-pool" type="tns:thread-pool" minOccurs="0" maxOccurs="1">
-                        <xs:annotation>
-                            <xs:documentation>Defines the thread pool used for OOB messages received by this transport.</xs:documentation>
+                            <xs:documentation>Defines the thread pool used for messages received by this transport.</xs:documentation>
                         </xs:annotation>
                     </xs:element>
                     <xs:element name="timer-thread-pool" type="tns:thread-pool" minOccurs="0" maxOccurs="1">
@@ -205,7 +195,7 @@
                         </xs:annotation>
                     </xs:element>
                 </xs:sequence>
-                <xs:attribute name="shared" type="xs:boolean" default="true">
+                <xs:attribute name="shared" type="xs:boolean" default="${Server.TransportDefinition.shared}">
                     <xs:annotation>
                         <xs:documentation>Indicates whether or not the channels created for this stack should use a single, shared transport.</xs:documentation>
                     </xs:annotation>
@@ -217,17 +207,7 @@
                 </xs:attribute>
                 <xs:attribute name="default-executor" type="xs:string">
                     <xs:annotation>
-                        <xs:documentation>Defines the thread pool used for default messages received by this transport.</xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="oob-executor" type="xs:string">
-                    <xs:annotation>
-                        <xs:documentation>Defines the thread pool used for OOB messages received by this transport.</xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="timer-executor" type="xs:string">
-                    <xs:annotation>
-                        <xs:documentation>Defines the timer thread pool used by this transport.</xs:documentation>
+                        <xs:documentation>Defines the thread pool used for messages received by this transport.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute name="thread-factory" type="xs:string">

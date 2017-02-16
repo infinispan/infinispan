@@ -1,5 +1,7 @@
 package org.infinispan.server.test.util;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -9,18 +11,16 @@ import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheManagerIT;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Often repeated test code routines.
@@ -34,7 +34,7 @@ public class ITestUtils {
             + File.separator + "configuration";
     private static final String SERVER_CONFIG_PROPERTY = "serverConfig";
     private static final String DEFAULT_CLUSTERING_MODE = "dist";
-    
+
     public static final int SERVER1_MGMT_PORT = 9990;
     public static final int SERVER2_MGMT_PORT = 10090;
     public static final int SERVER3_MGMT_PORT = 10190;
@@ -46,7 +46,7 @@ public class ITestUtils {
      * @return New {@link RemoteCacheManager}
      */
     public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server) {
-        return createCacheManager(server, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createCacheManager(server, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server, String protocolVersion) {
@@ -55,7 +55,7 @@ public class ITestUtils {
     }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port) {
-        return createConfigBuilder(hostName, port, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        return createConfigBuilder(hostName, port, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port, String protocolVersion) {
@@ -75,7 +75,7 @@ public class ITestUtils {
     }
 
     public static String getAttribute(MBeanServerConnectionProvider provider, String mbean, String attr) throws Exception {
-        Object jmxAttr = provider.getConnection().getAttribute(new ObjectName(mbean), attr); 
+        Object jmxAttr = provider.getConnection().getAttribute(new ObjectName(mbean), attr);
         return jmxAttr != null ? jmxAttr.toString() : null;
     }
 

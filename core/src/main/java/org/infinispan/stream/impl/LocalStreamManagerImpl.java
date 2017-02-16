@@ -1,12 +1,22 @@
 package org.infinispan.stream.impl;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Stream;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
@@ -28,16 +38,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Stream;
-
 /**
  * Local stream manager implementation that handles injection of the stream supplier, invoking the operation and
  * subsequently notifying the operation if a rehash has changed one of its segments.
@@ -55,7 +55,6 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private RpcManager rpc;
    private CommandsFactory factory;
    private boolean hasLoader;
-   private Equivalence<? super K> keyEquivalence;
 
    private Address localAddress;
 
@@ -106,14 +105,16 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    @Inject
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
            Configuration configuration, CommandsFactory factory) {
-      this.cache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
+      // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
+      // stack in the operation itself.
+      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
       this.cacheName = ByteString.fromString(cache.getName());
       this.registry = registry;
       this.stm = stm;
       this.rpc = rpc;
       this.factory = factory;
       this.hasLoader = configuration.persistence().usingStores();
-      this.keyEquivalence = configuration.dataContainer().keyEquivalence();
    }
 
    @Start
@@ -181,15 +182,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       Stream<CacheEntry<K, V>> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
               .filterKeys(keysToInclude).filterKeySegments(segments);
       if (!keysToExclude.isEmpty()) {
-         // AnyEquivalence is how HashSet works so we don't need to worry then
-         if (!(keyEquivalence instanceof AnyEquivalence)) {
-            // We have to add all the keys into an equivalent hash set to make sure we are excluding them properly
-            Set<K> equivKeys = new EquivalentHashSet<>(keyEquivalence);
-            keysToExclude.forEach(equivKeys::add);
-            return stream.filter(e -> !equivKeys.contains(e.getKey()));
-         } else {
-            return stream.filter(e -> !keysToExclude.contains(e.getKey()));
-         }
+         return stream.filter(e -> !keysToExclude.contains(e.getKey()));
       }
       return stream;
    }

@@ -21,8 +21,8 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -56,6 +56,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private static final String HITS = "hits";
    private static final String MISSES = "misses";
    private static final String NUMBER_OF_ENTRIES = "numberOfEntries";
+   private static final String OFF_HEAP_MEMORY_USED = "offHeapMemoryUsed";
    private static final String STORES = "stores";
 
    //LockManager
@@ -92,6 +93,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private long hits;
    private long evictions;
    private long numberOfEntries;
+   private long offHeapMemoryUsed;
    private long averageWriteTime;
    private long averageReadTime;
    private long averageRemoveTime;
@@ -144,6 +146,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
    // -------------------------------------------- JMX information -----------------------------------------------
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
       if (isStatisticsEnabled()) {
@@ -174,6 +177,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return getStatisticsEnabled();
    }
 
+   @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a read operation on the cache",
          displayName = "Cluster wide total average read time",
          units = Units.MILLISECONDS,
@@ -187,6 +191,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
+   @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a remove operation in the cache",
          displayName = "Cluster wide total average remove time",
          units = Units.MILLISECONDS,
@@ -200,6 +205,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
+   @Override
    @ManagedAttribute(description = "Cluster wide average number of milliseconds for a write operation in the cache",
          displayName = "Cluster wide average write time",
          units = Units.MILLISECONDS,
@@ -255,6 +261,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
+   @Override
    @ManagedAttribute(description = "Cluster wide total number of cache attribute misses",
          displayName = "Cluster wide total number of cache misses",
          measurementType = MeasurementType.TRENDSUP,
@@ -350,6 +357,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
+   @Override
    @ManagedAttribute(
          description = "Number of seconds since the cluster-wide cache statistics were last reset",
          displayName = "Seconds since cluster-wide cache statistics were reset",
@@ -375,6 +383,21 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    }
 
    @Override
+   @ManagedAttribute(
+         description = "Amount in bytes of off-heap memory used across the cluster for this cache",
+         displayName = "Cluster wide off-sheap memory used",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getOffHeapMemoryUsed() {
+      if (isStatisticsEnabled()) {
+         fetchClusterWideStatsIfNeeded();
+         return offHeapMemoryUsed;
+      } else {
+         return -1;
+      }
+   }
+
+   @Override
    public long getRetrievals() {
       return getHits() + getMisses();
    }
@@ -389,6 +412,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       hits = 0;
       evictions = 0;
       numberOfEntries = 0;
+      offHeapMemoryUsed = 0;
       averageWriteTime = 0;
       averageReadTime = 0;
       averageRemoveTime = 0;
@@ -435,6 +459,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
+   @Override
    @ManagedAttribute(description = "The total number of invalidations in the cluster",
          displayName = "Cluster wide total number of invalidations",
          measurementType = MeasurementType.TRENDSUP,
@@ -547,6 +572,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       numberOfEntries = getCacheMode(cache).isReplicated() ?
             cache.getStats().getCurrentNumberOfEntries() :
             addLongAttributes(responseList, NUMBER_OF_ENTRIES);
+      offHeapMemoryUsed = addLongAttributes(responseList, OFF_HEAP_MEMORY_USED);
       removeHits = addLongAttributes(responseList, REMOVE_HITS);
       removeMisses = addLongAttributes(responseList, REMOVE_MISSES);
       stores = addLongAttributes(responseList, STORES);
@@ -639,8 +665,10 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return hitRatio;
    }
 
-   private static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?,?> cache, Class<T> interceptorClass) {
-      return interceptorClass.cast(cache.getSequentialInterceptorChain().findInterceptorExtending(interceptorClass));
+   private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
+         Class<T> interceptorClass) {
+      return interceptorClass
+            .cast(cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass));
    }
 
    private static CacheMode getCacheMode(Cache cache) {
@@ -675,6 +703,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
          } else if (!cacheMode.isReplicated()){
             map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries());
          }
+         map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
          map.put(STORES, stats.getStores());
          map.put(REMOVE_HITS, stats.getRemoveHits());
          map.put(REMOVE_MISSES, stats.getRemoveMisses());
@@ -706,15 +735,15 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
          //activations
          ActivationManager aManager = remoteCache.getComponentRegistry().getComponent(ActivationManager.class);
-         if (pManager != null) {
+         if (aManager != null) {
             map.put(ACTIVATIONS, aManager.getActivationCount());
          } else {
             map.put(ACTIVATIONS, 0);
          }
 
          //cache loaders
-         ActivationInterceptor
-               aInterceptor = getFirstInterceptorWhichExtends(remoteCache, ActivationInterceptor.class);
+         CacheLoaderInterceptor
+               aInterceptor = getFirstInterceptorWhichExtends(remoteCache, CacheLoaderInterceptor.class);
          if (aInterceptor != null) {
             map.put(CACHE_LOADER_LOADS, aInterceptor.getCacheLoaderLoads());
             map.put(CACHE_LOADER_MISSES, aInterceptor.getCacheLoaderMisses());

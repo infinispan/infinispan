@@ -1,14 +1,10 @@
 package org.infinispan.factories;
 
-import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.marshall.core.CacheMarshaller;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.core.GlobalMarshaller;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
-
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * MarshallerFactory.
@@ -17,25 +13,18 @@ import static org.infinispan.factories.KnownComponentNames.*;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StreamingMarshaller.class, Marshaller.class})
-public class MarshallerFactory extends NamedComponentFactory implements AutoInstantiableFactory {
+public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType, String componentName) {
+   public <T> T construct(Class<T> componentType) {
       Object comp;
       Marshaller configMarshaller =
             globalConfiguration.serialization().marshaller();
-      boolean isVersionAwareMarshaller =
-            configMarshaller instanceof VersionAwareMarshaller;
 
-      if (isVersionAwareMarshaller) {
-         if (componentName.equals(GLOBAL_MARSHALLER))
-            comp = new GlobalMarshaller((VersionAwareMarshaller) configMarshaller);
-         else if (componentName.equals(CACHE_MARSHALLER))
-            comp = new CacheMarshaller(new VersionAwareMarshaller());
-         else
-            throw new CacheException("Don't know how to handle type " + componentType);
+      if (configMarshaller == null) {
+         comp = new GlobalMarshaller();
       } else {
-         comp = configMarshaller;
+         comp = new GlobalMarshaller(configMarshaller);
       }
 
       try {

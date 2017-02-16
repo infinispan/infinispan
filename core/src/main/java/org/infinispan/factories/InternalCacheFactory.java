@@ -3,25 +3,34 @@ package org.infinispan.factories;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.cache.impl.CompatibilityAdvancedCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
+import org.infinispan.cache.impl.TypeConverterDelegatingAdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.compat.TypeConverter;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.interceptors.impl.MarshallerConverter;
+import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
-import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.stats.impl.StatsCollector;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
@@ -68,9 +77,31 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                               String cacheName) throws Exception {
+         String cacheName) throws Exception {
       AdvancedCache<K, V> cache = new CacheImpl<K, V>(cacheName);
-      bootstrap(cacheName, cache, configuration, globalComponentRegistry);
+      CompatibilityModeConfiguration compatibilityModeConfiguration = configuration.compatibility();
+      StorageType type = configuration.memory().storageType();
+      Marshaller marshaller;
+      TypeConverter converter;
+      if (compatibilityModeConfiguration.enabled()) {
+         converter = new WrappedByteArrayConverter();
+         marshaller = compatibilityModeConfiguration.marshaller();
+         cache = new CompatibilityAdvancedCache<>(cache, marshaller, converter);
+      } else if (type != StorageType.OBJECT) {
+         // Both other types require storing as byte[]
+         converter = new MarshallerConverter(globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class),
+               type == StorageType.OFF_HEAP);
+         marshaller = null;
+         cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
+      } else {
+         marshaller = null;
+         converter = new WrappedByteArrayConverter();
+         cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
+      }
+      bootstrap(cacheName, cache, configuration, globalComponentRegistry, converter);
+      if (marshaller != null) {
+         componentRegistry.wireDependencies(marshaller);
+      }
       return cache;
    }
 
@@ -86,12 +117,22 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          cache = new SimpleCacheImpl<>(cacheName);
       }
       this.configuration = configuration;
+      StorageType type = configuration.memory().storageType();
+      TypeConverter converter;
+      if (type != StorageType.OBJECT) {
+         converter = new MarshallerConverter(globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class),
+               type == StorageType.OFF_HEAP);
+      } else {
+         converter = new WrappedByteArrayConverter();
+      }
+      cache = new TypeConverterDelegatingAdvancedCache<>(cache, converter);
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override
          protected void bootstrapComponents() {
             if (statisticsAvailable) {
                registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
             }
+            registerComponent(converter, TypeConverter.class);
             registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
             registerComponent(new PassivationManagerStub(), PassivationManager.class);
             registerComponent(new ActivationManagerStub(), ActivationManager.class);
@@ -100,7 +141,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
          @Override
          public void cacheComponents() {
-            cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
             getOrCreateComponent(ExpirationManager.class);
          }
       };
@@ -108,6 +148,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
       componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+
       return cache;
    }
 
@@ -116,11 +157,16 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
-                          GlobalComponentRegistry globalComponentRegistry) {
+                          GlobalComponentRegistry globalComponentRegistry, TypeConverter converter) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
+         @Override
+         protected void bootstrapComponents() {
+            registerComponent(converter, TypeConverter.class);
+         }
+      };
 
       /*
          --------------------------------------------------------------------------------------------------------------

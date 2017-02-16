@@ -34,18 +34,18 @@ public final class AndExpr extends BooleanOperatorExpr {
          }
          sb.append(c);
       }
-      sb.append(")");
+      sb.append(')');
       return sb.toString();
    }
 
    @Override
-   public String toJpaString() {
+   public String toQueryString() {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < children.size(); i++) {
          if (i != 0) {
             sb.append(" AND ");
          }
-         sb.append("(").append(children.get(i).toJpaString()).append(")");
+         sb.append('(').append(children.get(i).toQueryString()).append(')');
       }
       return sb.toString();
    }

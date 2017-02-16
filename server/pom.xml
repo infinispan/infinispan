@@ -7,7 +7,7 @@
       <version>9.0.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
-   
+
    <artifactId>infinispan-server-parent</artifactId>
    <name>Parent pom for server modules</name>
    <packaging>pom</packaging>
@@ -18,7 +18,7 @@
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>org.scala-lang</groupId>
          <artifactId>scala-library</artifactId>
@@ -37,31 +37,6 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
-   
-   <profiles>
-      <profile>
-         <id>distribution</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                           <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                           <sources>
-                              <source>${project.build.directory}/genjavadoc</source>
-                           </sources>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
+
 </project>
+

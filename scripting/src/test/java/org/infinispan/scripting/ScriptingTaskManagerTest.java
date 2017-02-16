@@ -1,5 +1,9 @@
 package org.infinispan.scripting;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
@@ -13,10 +17,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
 @CleanupAfterMethod
@@ -35,6 +35,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+      cacheManager.defineConfiguration(ScriptingTest.CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
    }
 
    public void testTask() throws Exception {

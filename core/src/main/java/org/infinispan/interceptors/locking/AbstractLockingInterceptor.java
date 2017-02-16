@@ -1,11 +1,25 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -13,37 +27,39 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Base class for various locking interceptors in this package.
  *
  * @author Mircea Markus
  */
-public abstract class AbstractLockingInterceptor extends DDSequentialInterceptor {
+public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    protected LockManager lockManager;
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
+
+   protected final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+            Throwable throwable) throws Throwable {
+         lockManager.unlockAll(rCtx);
+      }
+   };
 
    protected abstract Log getLog();
 
@@ -56,135 +72,159 @@ public abstract class AbstractLockingInterceptor extends DDSequentialInterceptor
    }
 
    @Override
-   public final CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return ctx.continueInvocation();
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
-   protected abstract CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
+   protected abstract Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
 
-   protected abstract CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
+   protected abstract Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
 
    // We need this method in here because of putForExternalRead
-   protected final CompletableFuture<Void> visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+      if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
+         return invokeNext(ctx, command);
+      }
+
       try {
-         if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
          lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
+      } catch (Throwable t) {
+         lockManager.unlockAll(ctx);
+         throw t;
+      }
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+   }
+
+   @Override
+   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+      if (hasSkipLocking(command)) {
+         return invokeNext(ctx, command);
+      }
+      try {
+         lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
+      } catch (Throwable t) {
          lockManager.unlockAll(ctx);
       }
+      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
-   public final CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      try {
-         if (hasSkipLocking(command)) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
-         lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         if (!ctx.isInTxScope()) {
-            lockManager.unlockAll(ctx);
-         }
-      }
-   }
-
-   @Override
-   public final CompletableFuture<Void> visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+   public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
          if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
-         return ctx.shortCircuit(null);
+         return null;
       }
 
       if (hasSkipLocking(command)) {
-         return ctx.continueInvocation();
+         return invokeNext(ctx, command);
       }
 
       final Object[] keys = command.getKeys();
-      try {
-         if (keys != null && keys.length >= 1) {
-            ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
-            for (Object key : keys) {
-               try {
-                  lockAndRecord(ctx, key, 0);
-                  keysToInvalidate.add(key);
-               } catch (TimeoutException te) {
-                  getLog().unableToLockToInvalidate(key, cdl.getAddress());
-               }
-            }
-            if (keysToInvalidate.isEmpty()) {
-               return ctx.shortCircuit(null);
-            }
-            command.setKeys(keysToInvalidate.toArray());
-         }
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         command.setKeys(keys);
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+      if (keys == null || keys.length < 1) {
+         return null;
       }
+
+      ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
+      for (Object key : keys) {
+         try {
+            lockAndRecord(ctx, key, 0);
+            keysToInvalidate.add(key);
+         } catch (TimeoutException te) {
+            getLog().unableToLockToInvalidate(key, cdl.getAddress());
+         }
+      }
+      if (keysToInvalidate.isEmpty()) {
+         return null;
+      }
+
+      command.setKeys(keysToInvalidate.toArray());
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         ((InvalidateL1Command) rCommand).setKeys(keys);
+         if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded());
+   }
+
+   @Override
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
-   protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
-      lockManager.unlockAll(ctx);
-      return te;
+   @Override
+   public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
 
-   protected final long getLockTimeoutMillis(LocalFlagAffectedCommand command) {
-      return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 : cacheConfiguration.locking().lockAcquisitionTimeout();
+   @Override
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   protected abstract <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
+
+   protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
+      return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 :
+            cacheConfiguration.locking().lockAcquisitionTimeout();
    }
 
    protected final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
-      boolean shouldLock = LockUtil.getLockOwnership(key, cdl) == LockUtil.LockOwnership.PRIMARY;
-      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
+      boolean shouldLock = LockUtil.isLockOwner(key, cdl);
+      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
    }
 
@@ -202,7 +242,7 @@ public abstract class AbstractLockingInterceptor extends DDSequentialInterceptor
       lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
    }
 
-   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_LOCKING);
+   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
+      return command.hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 }

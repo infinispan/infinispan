@@ -2,13 +2,8 @@ package org.infinispan.tx.dld;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import javax.transaction.SystemException;
 
 /**
  * @author Mircea.Markus@jboss.com

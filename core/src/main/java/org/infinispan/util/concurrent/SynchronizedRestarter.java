@@ -1,10 +1,10 @@
 package org.infinispan.util.concurrent;
 
-import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+
+import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 /**
  * A class that handles restarts of components via multiple threads.  Specifically, if a component needs to be restarted

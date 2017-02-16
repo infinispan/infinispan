@@ -1,24 +1,25 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.ClientEvent;
-import org.infinispan.client.hotrod.event.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.commons.util.Either;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.ReflectionUtil;
-
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.Either;
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * @author Galder Zamarreño
@@ -43,10 +44,10 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    public final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, TransportFactory transportFactory,
-         String cacheName, AtomicInteger topologyId, int flags,
+         String cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence,
          ClientListenerNotifier listenerNotifier, Object listener,
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags);
+      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, clientIntelligence);
       this.listenerId = generateListenerId();
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
@@ -86,6 +87,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       HeaderParams params = writeHeader(transport, ADD_CLIENT_LISTENER_REQUEST);
       transport.writeArray(listenerId);
       codec.writeClientListenerParams(transport, clientListener, filterFactoryParams, converterFactoryParams);
+      codec.writeClientListenerInterests(transport, listenerNotifier.findMethods(this.listener).keySet());
       transport.flush();
 
       listenerNotifier.addClientListener(this);

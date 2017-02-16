@@ -1,5 +1,15 @@
 package org.infinispan.query.backend;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -14,16 +24,6 @@ import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Verifies ADD, DELETE and UPDATE behaviour under a custom {@link org.infinispan.query.backend.SearchWorkCreator} that

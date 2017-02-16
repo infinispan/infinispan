@@ -1,12 +1,12 @@
 package org.infinispan.distribution;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+
 import org.infinispan.Cache;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Distributed, transactional, shared cache store tests.
@@ -18,12 +18,9 @@ import static org.testng.AssertJUnit.assertNotNull;
 public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
 
    public DistSyncTxStoreSharedTest() {
-      sync = true;
-      tx = true;
+      transactional = true;
       testRetVals = true;
       shared = true;
-      INIT_CLUSTER_SIZE = 2;
-      numOwners = 1;
    }
 
    public void testPutFromNonOwner() throws Exception {

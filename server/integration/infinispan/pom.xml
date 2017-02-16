@@ -32,6 +32,10 @@
             <artifactId>wildfly-threads</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-transactions</artifactId>
         </dependency>
@@ -41,12 +45,22 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jboss.slf4j</groupId>
+                    <artifactId>slf4j-jboss-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -54,7 +68,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-leveldb</artifactId>
+            <artifactId>infinispan-cachestore-rocksdb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -84,7 +98,10 @@
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
@@ -152,6 +169,9 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                </configuration>
                 <executions>
                     <execution>
                         <id>serialize_component_metadata</id>
@@ -173,6 +193,23 @@
                                     <value>false</value>
                                 </systemProperty>
                             </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-defaults-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>extract-defaults</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>extract-defaults</goal>
+                        </goals>
+                        <configuration>
+                            <attributeDefType>SERVER</attributeDefType>
                         </configuration>
                     </execution>
                 </executions>

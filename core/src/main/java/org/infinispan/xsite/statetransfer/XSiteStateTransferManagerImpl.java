@@ -1,5 +1,29 @@
 package org.infinispan.xsite.statetransfer;
 
+import static java.lang.String.format;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
+import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.NO_RETRY;
+import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.CANCEL_SEND;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.CLEAR_STATUS;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.FINISH_RECEIVE;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.STATUS_REQUEST;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.CollectionFactory;
@@ -29,25 +53,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.*;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.*;
 
 /**
  * {@link org.infinispan.xsite.statetransfer.XSiteStateTransferManager} implementation.
@@ -156,12 +161,12 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public List<String> getRunningStateTransfers() {
-      return siteCollector.isEmpty() ? Collections.<String>emptyList() : new ArrayList<>(siteCollector.keySet());
+      return siteCollector.isEmpty() ? Collections.emptyList() : new ArrayList<>(siteCollector.keySet());
    }
 
    @Override
    public Map<String, String> getStatus() {
-      return status.isEmpty() ? Collections.<String, String>emptyMap() : new HashMap<>(status);
+      return status.isEmpty() ? Collections.emptyMap() : new HashMap<>(status);
    }
 
    @Override

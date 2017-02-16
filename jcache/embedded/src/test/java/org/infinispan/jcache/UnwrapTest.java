@@ -1,5 +1,13 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.net.URI;
+
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCache;
 import org.infinispan.jcache.embedded.JCacheManager;
@@ -7,17 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTrackingListener;
-import org.jboss.arquillian.testng.Arquillian;
-import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import java.net.URI;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "jcache.UnwrapTest")
 public class UnwrapTest extends AbstractInfinispanTest {

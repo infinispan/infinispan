@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.ArrayList;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -18,9 +20,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Wrapping Interceptor for Total Order protocol when versions are needed
  *
@@ -34,45 +33,44 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
    @Override
-   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-
+   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         Object retVal = ctx.forkInvocationSync(command);
-         if (shouldCommitDuringPrepare(command, ctx)) {
-            commitContextEntries(ctx, null, null);
-         }
-         return ctx.shortCircuit(retVal);
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
+               commitContextEntries(ctx, null, null);
+            }
+         });
       }
 
       //Remote context, delivered in total order
 
       wrapEntriesForPrepare(ctx, command);
 
-      Object retVal = ctx.forkInvocationSync(command);
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+         VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) rCommand;
+         EntryVersionsMap versionsMap =
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
+                     prepareCommand);
 
-      EntryVersionsMap versionsMap = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx,
-                                                                                (VersionedPrepareCommand) command);
+         if (prepareCommand.isOnePhaseCommit()) {
+            commitContextEntries(txInvocationContext, null, null);
+         } else {
+            if (trace)
+               log.tracef("Transaction %s will be committed in the 2nd phase",
+                     txInvocationContext.getGlobalTransaction().globalId());
+         }
 
-      if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, null, null);
-      } else {
-         if (trace)
-            log.tracef("Transaction %s will be committed in the 2nd phase", ctx.getGlobalTransaction().globalId());
-      }
-
-      return ctx.shortCircuit(versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet()));
+         return versionsMap == null ? rv : new ArrayList<Object>(versionsMap.keySet());
+      });
    }
 
    @Override
-   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         commitContextEntries(ctx, null, null);
-      }
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
    }
 
    @Override

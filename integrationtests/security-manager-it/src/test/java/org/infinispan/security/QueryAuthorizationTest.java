@@ -1,6 +1,6 @@
 package org.infinispan.security;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.security.Policy;
 import java.security.PrivilegedAction;
@@ -102,7 +102,7 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       SearchManager sm = Search.getSearchManager(cache);
       Query query = sm.buildQueryBuilderForClass(TestEntity.class)
             .get().keyword().onField("name").matching("Henry").createQuery();
-      CacheQuery q = sm.getQuery(query);
+      CacheQuery<TestEntity> q = sm.getQuery(query);
       assertEquals(1, q.getResultSize());
       assertEquals(TestEntity.class, q.list().get(0).getClass());
    }

@@ -1,5 +1,12 @@
 package org.infinispan.transaction.totalorder;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -8,13 +15,6 @@ import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class behaves as a synchronization point between incoming transactions (totally ordered) and between incoming
@@ -64,7 +64,7 @@ public class TotalOrderManager {
     *
     * @param state the total order prepare state
     */
-   public final void ensureOrder(TotalOrderRemoteTransactionState state, Collection<Object> keysModified) throws InterruptedException {
+   public final void ensureOrder(TotalOrderRemoteTransactionState state, Collection<?> keysModified) throws InterruptedException {
       //the retries due to state transfer re-uses the same state. we need that the keys previous locked to be release
       //in order to insert it again in the keys locked.
       //NOTE: this method does not need to be synchronized because it is invoked by a one thread at the time, namely

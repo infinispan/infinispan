@@ -1,10 +1,10 @@
 package org.infinispan.persistence.cli.configuration;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "persistence.remote.configuration.ConfigurationTest")
 public class ConfigurationTest {

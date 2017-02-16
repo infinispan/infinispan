@@ -1,10 +1,18 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.lang.reflect.Method;
+import java.net.SocketTimeoutException;
+
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -16,13 +24,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.net.SocketTimeoutException;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the behaviour of the client upon a socket timeout exception
@@ -91,7 +92,7 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
 
       private String unmarshall(Object key) throws Exception {
          Marshaller marshaller = new JBossMarshaller();
-         return (String) marshaller.objectFromByteBuffer((byte[]) key);
+         return (String) marshaller.objectFromByteBuffer(((WrappedByteArray) key).getBytes());
       }
    }
 

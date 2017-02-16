@@ -1,17 +1,7 @@
 package org.infinispan.stream;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.TransactionMode;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -21,8 +11,19 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.filter.CacheFilters;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionMode;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Test to verify distributed entry behavior when store as binary is used
@@ -102,7 +103,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       assertFalse(iterator.hasNext());
    }
 
-   private static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String>, Serializable {
+   private static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String>, Serializable, ExternalPojo {
       private final Map<MagicKey, String> allowedEntries;
 
       public MagicKeyStringFilter(Map<MagicKey, String> allowedEntries) {
@@ -116,4 +117,3 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       }
    }
 }
-

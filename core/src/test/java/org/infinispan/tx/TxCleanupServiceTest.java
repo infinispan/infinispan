@@ -1,6 +1,14 @@
 package org.infinispan.tx;
 
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,14 +23,6 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Test for https://issues.jboss.org/browse/ISPN-2383

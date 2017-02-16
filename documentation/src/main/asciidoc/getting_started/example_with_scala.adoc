@@ -1,9 +1,10 @@
 ==  Example with Scala
-This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
+This article shows how to use Infinispan with link:http://www.scala-lang.org/[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility.
 
 === Environment
 Running the shell
 
+[subs="attributes"]
 ----
  $ scala -cp infinispan-embedded-{infinispanversion}.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configurations.xml
 ----
@@ -11,7 +12,7 @@ Running the shell
 where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api_1.1_spec-1.0.1.Final.jar are shipped with the infinispan zip.
 
 .sample-configurations.xml
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -57,7 +58,7 @@ where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api
 === Testing Setup
 The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the Infinispan classes have been imported correctly, an import for all Infinispan classes will be attempted and then a request will be made to print the version of Infinispan:
 
-
+[subs="attributes"]
 ----
  $ scala -cp infinispan-embedded-{infinispanversion}.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configuration.xml
 Welcome to Scala version 2.11.1 (Java HotSpot(TM) 64-Bit Server VM, Java 1.7.0_60).
@@ -79,7 +80,7 @@ In this next example, a new cache manager will be created using the configuratio
 
 
 ----
-scala> import org.infinispan.manager._                                   
+scala> import org.infinispan.manager._                                  
 import org.infinispan.manager._
 
 scala> val manager = new DefaultCacheManager("sample-configurations.xml")
@@ -106,8 +107,6 @@ scala> val namedCache = manager.getCache[String, String]("NameOfCache")
 namedCache: org.infinispan.Cache[String,String] = Cache 'NameOfCache'@394890130
 ----
 
-[[sid-68355111_InfinispanwithScala-Basiccacheoperations]]
-
 
 === Basic cache operations
 
@@ -123,7 +122,7 @@ res0: Int = 0
 
 scala> localCache.put("aKey", "aValue")
 res1: String = null
-// This null was returned by put() indicating that 
+// This null was returned by put() indicating that
 // the key was not associated with any previous value.
 
 scala> localCache.size

@@ -1,5 +1,13 @@
 package org.infinispan.query.impl;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
@@ -8,14 +16,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * Simple test for checking the Iterator Initialization with wrong fetch size.
  *
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
  */
 @Test(groups = "functional", testName = "query.impl.InvalidIteratorTest")
 public class InvalidIteratorTest {
-   private List<EntityInfo> entityInfos = new ArrayList<EntityInfo>();
+   private List<EntityInfo> entityInfos = new ArrayList<>();
    private AdvancedCache<String, String> cache;
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -38,13 +38,13 @@ public class InvalidIteratorTest {
       });
 
       cache = mock(AdvancedCache.class);
-      new LazyIterator(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEagerIteratorInitWithInvalidFetchSize() throws IOException {
       cache = mock(AdvancedCache.class);
-      new EagerIterator(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      new EagerIterator<>(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
    }
 
    private int getFetchSize() {

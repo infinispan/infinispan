@@ -1,7 +1,6 @@
 package org.infinispan.query.clustered;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -13,15 +12,11 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
@@ -29,7 +24,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredCacheQueryImpl extends CacheQueryImpl {
+public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    private Sort sort;
 
@@ -43,32 +38,27 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private int firstResult = 0;
 
-   private Marshaller marshaller;
-
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
-      this.hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
-               .targetedEntities(Arrays.asList(classes));
-      this.marshaller = ComponentRegistryUtils.getComponent(cache,
-            StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      this.hSearchQuery = searchFactory.createHSQuery(luceneQuery, classes);
    }
 
    @Override
-   public CacheQuery maxResults(int maxResults) {
+   public CacheQuery<E> maxResults(int maxResults) {
       this.maxResults = maxResults;
       return super.maxResults(maxResults);
    }
 
    @Override
-   public CacheQuery firstResult(int firstResult) {
+   public CacheQuery<E> firstResult(int firstResult) {
       this.firstResult = firstResult;
       return this;
    }
 
    @Override
-   public CacheQuery sort(Sort sort) {
+   public CacheQuery<E> sort(Sort sort) {
       this.sort = sort;
       return super.sort(sort);
    }
@@ -94,14 +84,14 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    }
 
    @Override
-   public ResultIterator iterator(FetchOptions fetchOptions) throws SearchException {
+   public ResultIterator<E> iterator(FetchOptions fetchOptions) throws SearchException {
       hSearchQuery.maxResults(getNodeMaxResults());
       switch (fetchOptions.getFetchMode()) {
          case EAGER: {
             ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator(sort,
+            return new DistributedIterator<>(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, topDocsResponses, cache);
          }
@@ -111,7 +101,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
             // Make a sort copy to avoid reversed results
-            return new DistributedLazyIterator(sort,
+            return new DistributedLazyIterator<>(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
          }
@@ -128,7 +118,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    private HashMap<UUID, ClusteredTopDocs> broadcastQuery(ClusteredQueryCommand command) {
       ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
 
-      HashMap<UUID, ClusteredTopDocs> topDocsResponses = new HashMap<UUID, ClusteredTopDocs>();
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = new HashMap<>();
       int resultSize = 0;
       List<QueryResponse> responses = invoker.broadcast(command);
 
@@ -145,18 +135,18 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    }
 
    @Override
-   public List<Object> list() throws SearchException {
-      ResultIterator iterator = iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
-      List<Object> values = new ArrayList<Object>();
-      while (iterator.hasNext()) {
-         values.add(iterator.next());
+   public List<E> list() throws SearchException {
+      List<E> values = new ArrayList<>();
+      try (ResultIterator<E> iterator = iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+         while (iterator.hasNext()) {
+            values.add(iterator.next());
+         }
       }
-
       return values;
    }
 
    @Override
-   public CacheQuery timeout(long timeout, TimeUnit timeUnit) {
+   public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
       throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");   // TODO
    }
 }

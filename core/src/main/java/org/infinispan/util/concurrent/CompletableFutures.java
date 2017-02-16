@@ -4,13 +4,13 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import java.util.Map;
 
 /**
  * Utility methods connecting {@link CompletableFuture} futures.
@@ -21,15 +21,22 @@ import java.util.Map;
 public class CompletableFutures {
 
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
-   public static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
+   private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
+   private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
 
-   public static <K,V> CompletableFuture<Map<K, V>> returnEmptyMap() {
+   @SuppressWarnings("unchecked")
+   public static <K,V> CompletableFuture<Map<K, V>> completedEmptyMap() {
       return completedEmptyMapFuture;
+   }
+
+   @SuppressWarnings("unchecked")
+   public static <T> CompletableFuture<T> completedNull() {
+      return completedNullFuture;
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
       CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-      return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.<T> toList()));
+      return all.thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
    }
 
    public static <T> CompletableFuture<T> completedExceptionFuture(Throwable ex) {
@@ -76,5 +83,25 @@ public class CompletableFutures {
       } catch (java.util.concurrent.TimeoutException e) {
          throw new IllegalStateException("This should never happen!", e);
       }
+   }
+
+   public static CompletionException asCompletionException(Throwable t) {
+      if (t instanceof CompletionException) {
+         return ((CompletionException) t);
+      } else {
+         return new CompletionException(t);
+      }
+   }
+
+   public static void rethrowException(Throwable t) {
+      if (t != null) throw asCompletionException(t);
+   }
+
+   public static Throwable extractException(Throwable t) {
+      Throwable cause = t.getCause();
+      if (cause != null && t instanceof CompletionException) {
+         return cause;
+      }
+      return t;
    }
 }

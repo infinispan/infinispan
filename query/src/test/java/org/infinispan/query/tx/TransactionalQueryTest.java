@@ -1,5 +1,10 @@
 package org.infinispan.query.tx;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.test.TestingUtil.withTx;
+
+import java.util.concurrent.Callable;
+
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,11 +14,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
-import static org.infinispan.test.TestingUtil.withTx;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")
 public class TransactionalQueryTest extends SingleCacheManagerTest {

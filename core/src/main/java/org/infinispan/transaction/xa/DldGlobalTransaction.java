@@ -1,11 +1,5 @@
 package org.infinispan.transaction.xa;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -13,6 +7,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This class is used when deadlock detection is enabled.
@@ -29,9 +29,9 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected transient volatile Collection<Object> lockIntention = Collections.emptySet();
 
-   protected volatile Collection<Object> remoteLockIntention = Collections.emptySet();
+   protected volatile Collection<?> remoteLockIntention = Collections.emptySet();
 
-   protected volatile Set<Object> locksAtOrigin = Collections.emptySet();
+   protected volatile Collection<?> locksAtOrigin = Collections.emptySet();
 
    public DldGlobalTransaction() {
    }
@@ -78,7 +78,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    /**
-    * Returns the key this transaction intends to lock. 
+    * Returns the key this transaction intends to lock.
     */
    public Collection<Object> getLockIntention() {
       return lockIntention;
@@ -94,7 +94,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.coinToss < other.coinToss;
    }
 
-   public void setRemoteLockIntention(Collection<Object> remoteLockIntention) {
+   public void setRemoteLockIntention(Collection<?> remoteLockIntention) {
       Objects.requireNonNull(lockIntention, "Remote lock intention must be non-null.");
       if (trace) {
          log.tracef("Setting the remote lock intention: %s", remoteLockIntention);
@@ -102,7 +102,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       this.remoteLockIntention = remoteLockIntention;
    }
 
-   public Collection<Object> getRemoteLockIntention() {
+   public Collection<?> getRemoteLockIntention() {
       return remoteLockIntention;
    }
 
@@ -119,13 +119,13 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return false;
    }
 
-   public void setLocksHeldAtOrigin(Set<Object> locksAtOrigin) {
+   public void setLocksHeldAtOrigin(Collection<?> locksAtOrigin) {
       Objects.requireNonNull(locksAtOrigin, "Locks at origin must be non-null.");
       if (trace) log.tracef("Setting locks at origin for (%s) to %s", this, locksAtOrigin);
       this.locksAtOrigin = locksAtOrigin;
    }
 
-   public Set<Object> getLocksHeldAtOrigin() {
+   public Collection<?> getLocksHeldAtOrigin() {
       return this.locksAtOrigin;
    }
 

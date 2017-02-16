@@ -4,8 +4,6 @@ import org.infinispan.api.CacheAPITest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
-
 @Test(groups = "functional", testName = "api.mvcc.read_committed.CacheAPIOptimisticTest")
 public class CacheAPIOptimisticTest extends CacheAPITest {
    @Override

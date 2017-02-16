@@ -1,8 +1,5 @@
 package org.infinispan.executors;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -13,7 +10,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Executes tasks in the given executor, but never has more than {@code maxConcurrentTasks} tasks running at the same time.
@@ -27,12 +30,17 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
 
    private final Executor executor;
    private final CustomSemaphore semaphore;
-   private final BlockingQueue<QueueingTask> queue = new LinkedBlockingQueue<>();
+   private final BlockingQueue<QueueingTask> queue;
    private final BlockingQueue<QueueingTask> completionQueue = new LinkedBlockingQueue<>();
+   private final boolean blocking;
 
    public SemaphoreCompletionService(Executor executor, int maxConcurrentTasks) {
       this.executor = executor;
       this.semaphore = new CustomSemaphore(maxConcurrentTasks);
+      // Users of WithinThreadExecutor expect the tasks to execute in the thread that submitted them
+      // But with a LinkedBlockingQueue, they could execute on any thread calling backgroundTaskFinished.
+      this.blocking = executor instanceof WithinThreadExecutor;
+      this.queue = blocking ? new SynchronousQueue<>() : new LinkedBlockingQueue<>();
    }
 
    public List<? extends Future<T>> drainCompletionQueue() {
@@ -85,18 +93,34 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
    @Override
    public Future<T> submit(final Callable<T> task) {
       QueueingTask futureTask = new QueueingTask(task);
-      queue.add(futureTask);
-      if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
-      executeFront();
-      return futureTask;
+      return doSubmit(futureTask);
    }
 
    @Override
    public Future<T> submit(final Runnable task, T result) {
       QueueingTask futureTask = new QueueingTask(task, result);
-      queue.add(futureTask);
-      if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
-      executeFront();
+      return doSubmit(futureTask);
+   }
+
+   private Future<T> doSubmit(QueueingTask futureTask) {
+      if (blocking) {
+         try {
+            semaphore.acquire();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalLifecycleStateException();
+         }
+         try {
+            futureTask.run();
+         } finally {
+            semaphore.release();
+         }
+      } else {
+         queue.add(futureTask);
+         if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(),
+               semaphore.availablePermits());
+         executeFront();
+      }
       return futureTask;
    }
 
@@ -181,11 +205,11 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
     * Extend {@code Semaphore} to expose the {@code reducePermits(int)} method.
     */
    private static class CustomSemaphore extends Semaphore {
-      public CustomSemaphore(int permits) {
+      CustomSemaphore(int permits) {
          super(permits);
       }
 
-      protected void removePermit() {
+      void removePermit() {
          super.reducePermits(1);
       }
    }

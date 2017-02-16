@@ -1,17 +1,17 @@
 package org.infinispan.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 /**
  * Allows AND-composing several key/value filters.
@@ -46,7 +46,7 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
    public static class Externalizer extends AbstractExternalizer<CompositeKeyValueFilter> {
       @Override
       public Set<Class<? extends CompositeKeyValueFilter>> getTypeClasses() {
-         return Util.<Class<? extends CompositeKeyValueFilter>>asSet(CompositeKeyValueFilter.class);
+         return Collections.singleton(CompositeKeyValueFilter.class);
       }
 
       @Override

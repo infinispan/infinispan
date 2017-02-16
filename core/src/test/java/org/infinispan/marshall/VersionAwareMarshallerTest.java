@@ -1,16 +1,40 @@
 package org.infinispan.marshall;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.infinispan.Cache;
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.impl.AtomicHashMap;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -27,15 +51,20 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -45,21 +74,22 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
-import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -72,30 +102,14 @@ import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private org.infinispan.commons.marshall.AbstractDelegatingMarshaller marshaller;
+   private StreamingMarshaller marshaller;
    private EmbeddedCacheManager cm;
 
    private final TransactionFactory gtf = new TransactionFactory();
@@ -104,13 +118,17 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       gtf.init(false, false, true, false);
    }
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       // Use a clustered cache manager to be able to test global marshaller interaction too
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalAndInternal.Externalizer());
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalizer.Externalizer());
+      globalBuilder.serialization().addAdvancedExternalizer(new PojoWithMultiExternalizer.Externalizer());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
-      marshaller = extractCacheMarshaller(cm.getCache());
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
+      marshaller = extractGlobalMarshaller(cm);
    }
 
    @AfterClass
@@ -119,12 +137,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testJGroupsAddressMarshalling() throws Exception {
-      JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress address = new JGroupsAddress(UUID.randomUUID());
       marshallAndAssertEquality(address);
    }
 
    public void testGlobalTransactionMarshalling() throws Exception {
-      JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(12345));
+      JGroupsAddress jGroupsAddress = new JGroupsAddress(UUID.randomUUID());
       GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
       marshallAndAssertEquality(gtx);
    }
@@ -148,7 +166,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       Map<Integer, GlobalTransaction> m3 = new HashMap<Integer, GlobalTransaction>();
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
+         JGroupsAddress jGroupsAddress = new JGroupsAddress(UUID.randomUUID());
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
          m1.put(1000 * i, gtx);
          m2.put(1000 * i, gtx);
@@ -186,24 +204,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(treeSet);
    }
 
-   public void testMarshalledValueMarshalling() throws Exception {
-      Person p = new Person();
-      p.setName("Bob Dylan");
-      MarshalledValue mv = new MarshalledValue(p, marshaller);
-      marshallAndAssertEquality(mv);
-   }
-
-   public void testMarshalledValueGetMarshalling() throws Exception {
-      Pojo ext = new Pojo();
-      MarshalledValue mv = new MarshalledValue(ext, marshaller);
-      byte[] bytes = marshaller.objectToByteBuffer(mv);
-      MarshalledValue rmv = (MarshalledValue) marshaller.objectFromByteBuffer(bytes);
-      assert rmv.equals(mv) : "Writen[" + mv + "] and read[" + rmv + "] objects should be the same";
-      assert rmv.get() instanceof Pojo;
-   }
-
    public void testSingletonListMarshalling() throws Exception {
-      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(UUID.randomUUID()), false);
       List<GlobalTransaction> l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
@@ -215,7 +217,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testReplicableCommandsMarshalling() throws Exception {
       ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-                                                       EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.getInstance());
+                                                       EnumUtil.EMPTY_BIT_SET);
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -224,10 +226,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(c4);
 
       PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null,
-            new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
+                                                     new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET,
+                                                     CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c5);
 
-      RemoveCommand c6 = new RemoveCommand("key", null, null, EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
+      RemoveCommand c6 = new RemoveCommand("key", null, null, EnumUtil.EMPTY_BIT_SET,
+                                           CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c6);
 
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -239,7 +243,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(c71);
 
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue",
-            null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
+                                             null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET,
+                                             CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c8);
 
       ClearCommand c9 = new ClearCommand();
@@ -247,13 +252,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(UUID.randomUUID()), false);
          m1.put(1000 * i, gtx);
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c10);
 
-      Address local = new JGroupsAddress(new IpAddress(12345));
+      Address local = new JGroupsAddress(UUID.randomUUID());
       GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
       PrepareCommand c11 = new PrepareCommand(cacheName, gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
@@ -263,9 +268,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
-
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
-      marshallAndAssertEquality(c99);
 
       TotalOrderNonVersionedPrepareCommand c14 = new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, c5, c6, c8, c10);
       marshallAndAssertEquality(c14);
@@ -315,16 +317,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshaller.objectFromByteBuffer(bytes);
    }
 
-   public void testMultiRpcCommand() throws Exception {
-      ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-            EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.getInstance());
-      PutKeyValueCommand c5 = new PutKeyValueCommand(
-            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
-      marshallAndAssertEquality(c99);
-   }
-
    public void testInternalCacheEntryMarshalling() throws Exception {
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       marshallAndAssertEquality(entry1);
@@ -364,7 +356,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testLongPutKeyValueCommand() throws Exception {
       PutKeyValueCommand c = new PutKeyValueCommand(
             "SESSION_173", "@TSXMHVROYNOFCJVEUJQGBCENNQDEWSCYSOHECJOHEICBEIGJVTIBB@TVNCWLTQCGTEJ@NBJLTMVGXCHXTSVE@BCRYGWPRVLXOJXBRJDVNBVXPRTRLBMHPOUYQKDEPDSADUAWPFSIOCINPSSFGABDUXRMTMMJMRTGBGBOAMGVMTKUDUAJGCAHCYW@LAXMDSFYOSXJXLUAJGQKPTHUKDOXRWKEFIVRTH@VIMQBGYPKWMS@HPOESTPIJE@OTOTWUWIOBLYKQQPTNGWVLRRCWHNIMWDQNOO@JHHEVYVQEODMWKFKKKSWURVDLXPTFQYIHLIM@GSBFWMDQGDQIJONNEVHGQTLDBRBML@BEWGHOQHHEBRFUQSLB@@CILXEAVQQBTXSITMBXHMHORHLTJF@MKMHQGHTSENWILTAKCCPVSQIPBVRAFSSEXIOVCPDXHUBIBUPBSCGPRECXEPMQHRHDOHIHVBPNDKOVLPCLKAJMNOTSF@SRXYVUEMQRCXVIETXVHOVNGYERBNM@RIMGHC@FNTUXSJSKALGHAFHGTFEANQUMBPUYFDSGLUYRRFDJHCW@JBWOBGMGTITAICRC@TPVCRKRMFPUSRRAHI@XOYKVGPHEBQD@@APEKSBCTBKREWAQGKHTJ@IHJD@YFSRDQPA@HKKELIJGFDYFEXFCOTCQIHKCQBLVDFHMGOWIDOWMVBDSJQOFGOIAPURRHVBGEJWYBUGGVHE@PU@NMQFMYTNYJDWPIADNVNCNYCCCPGODLAO@YYLVITEMNNKIFSDXKORJYWMFGKNYFPUQIC@AIDR@IWXCVALQBDOXRWIBXLKYTWDNHHSCUROAU@HVNENDAOP@RPTRIGLLLUNDQIDXJDDNF@P@PA@FEIBQKSKFQITTHDYGQRJMWPRLQC@NJVNVSKGOGYXPYSQHKPALKLFWNAOSQFTLEPVOII@RPDNRCVRDUMMFIVSWGIASUBMTGQSDGB@TBBYECFBRBGILJFCJ@JIQIQRVJXWIPGNVXKYATSPJTIPGCMCNPOKNEHBNUIAEQFQTYVLGAR@RVWVA@RMPBX@LRLJUEBUWO@PKXNIP@FKIQSVWKNO@FOJWDSIOLXHXJFBQPPVKKP@YKXPOOMBTLXMEHPRLLSFSVGMPXXNBCYVVSPNGMFBJUDCVOVGXPKVNTOFKVJUJOSDHSCOQRXOKBVP@WCUUFGMJAUQ@GRAGXICFCFICBSNASUBPAFRIPUK@OXOCCNOGTTSFVQKBQNB@DWGVEFSGTAXAPLBJ@SYHUNXWXPMR@KPFAJCIXPDURELFYPMUSLTJSQNDHHKJTIWCGNEKJF@CUWYTWLPNHYPHXNOGLSICKEFDULIXXSIGFMCQGURSRTUJDKRXBUUXIDFECMPXQX@CVYLDABEMFKUGBTBNMNBPCKCHWRJKSOGJFXMFYLLPUVUHBCNULEFAXPVKVKQKYCEFRUYPBRBDBDOVYLIQMQBLTUK@PRDCYBOKJGVUADFJFAFFXKJTNAJTHISWOSMVAYLIOGIORQQWFAKNU@KHPM@BYKTFSLSRHBATQTKUWSFAQS@Y@QIKCUWQYTODBRCYYYIAFMDVRURKVYJXHNGVLSQQFCXKLNUPCTEJSWIJUBFELSBUHANELHSIWLVQSSAIJRUEDOHHX@CKEBPOJRLRHEPLENSCDGEWXRTVUCSPFSAJUXDJOIUWFGPKHBVRVDMUUCPUDKRKVAXPSOBOPKPRRLFCKTLH@VGWKERASJYU@JAVWNBJGQOVF@QPSGJVEPAV@NAD@@FQRYPQIOAURILWXCKINPMBNUHPUID@YDQBHWAVDPPWRFKKGWJQTI@@OPSQ@ROUGHFNHCJBDFCHRLRTEMTUBWVCNOPYXKSSQDCXTOLOIIOCXBTPAUYDICFIXPJRB@CHFNXUCXANXYKXAISDSSLJGQOLBYXWHG@@KPARPCKOXAYVPDGRW@LDCRQBNMJREHWDYMXHEXAJQKHBIRAVHJQIVGOIXNINYQMJBXKM@DXESMBHLKHVSFDLVPOSOVMLHPSHQYY@DNMCGGGAJMHPVDLBGJP@EVDGLYBMD@NWHEYTBPIBPUPYOPOJVV@IVJXJMHIWWSIRKUWSR@U@@TDVMG@GRXVLCNEIISEVIVPOMJHKOWMRMITYDUQASWJIKVNYUFQVDT@BHTOMFXVFRKAARLNOGX@ADWCKHOVEMIGBWXINCUXEMVHSJJQDU@INTHDJQPSAQNAYONDBBFYGBTNGUSJHRKLCPHQMNLDHUQJPLLCDVTYLXTHJCBUXCRDY@YI@IQDCLJBBJC@NXGANXFIWPPNFVTDJWQ@@BIYJONOFP@RHTQEYPVHPPUS@UUENSNNF@WVGTSAVKDSQNMHP@VJORGTVWXVBPWKQNRWLSQFSBMXQKWRYMXPAYREXYGONKEWJMBCSLB@KSHXMIWMSBDGQWPDMUGVNMEWKMJKQECIRRVXBPBLGAFTUFHYSHLF@TGYETMDXRFAXVEUBSTGLSMWJMXJWMDPPDAFGNBMTQEMBDLRASMUMU@QTCDCPEGODHESDQVEIQYBJJPFXDLWPUNFAREYCY@YDDSTMKWCANNPXF@@WLMEXRPUNTWNOX@YKFNNTGMXIBBDA@TYLPJFNFHPQKMSNCLBME@FBPOIYNSDFBLHITKIFEFNXXOJAAFMRTGPALOANXF@YPY@RYTVOW@AKNM@C@LJKGBJMUYGGTXRHQCPOLNOGPPS@YSKAJSTQHLRBXUACXJYBLJSEHDNMLLUBSOIHQUI@VUNF@XAVRXUCYNCBDDGUDNVRYP@TPFPKGVNPTEDOTTUUFKCHQ@WWASQXLCBHNRBVSD@NVYT@GJQYSQGYPJO@WSEYDVKCBWANAFUWLDXOQYCYP@BSJFCBTXGKUNWLWUCYL@TNOWGDFHQTWQVYLQBBRQVMGNDBVXEFXTMMVYSHNVTTQAJCHKULOAJUSGJRPHQFCROWE@OMFUVRKGCWED@IAQGRLADOJGQKLCL@FCKTSITGMJRCCMPLOS@ONPQWFUROXYAUJQXIYVDCYBPYHPYCXNCRKRKLATLWWXLBLNOPUJFUJEDOIRKS@MMYPXIJNXPFOQJCHSCBEBGDUQYXQAWEEJDOSINXYLDXUJCQECU@WQSACTDFLGELHPGDFVDXFSSFOSYDLHQFVJESNAVAHKTUPBTPLSFSHYKLEXJXGWESVQQUTUPU@QXRTIDQ@IXBBOYINNHPEMTPRVRNJPQJFACFXUBKXOFHQSPOTLCQ@PLWGEFNKYCYFMKWPFUP@GLHKNMASGIENCACUISTG@YNQCNSOSBKOIXORKSHEOXHSMJJRUICJTCK@PWFRBPLXU@MUEMPFGDLUJEKD@ROUFBLKATXUCHEAQHEYDLCFDIRJSAXTV@CYMPQNMLTMFAHPRBLNSCVFBJMKQLAHWYIOLRMTOY@@RNKTUXHFYUMHGKCCGNEOIOQCISJEHCEVTTWM@TLFRIFDREHFBTTDEJRUNTWAEETGSVDOR@@UQNKFERMBVFJBOAYHPOKMSMRIERDA@JXYSJ@ORER@MBAVWCVGFNA@FRRPQSIIOIUGAJKVQXGINUUKPJPLQRMHPUBETEEIMIBPM@PETR@XD@DOHGRIBVXKLXQWHUFMTWEDYWFWRLPGDS@TANUXGIDTRVXKVCVEXYRKXQCTI@WNSFRAHJJGG@NIPPAAOJXQRTCLBYKDA@FFGHNUIGBFKOQMEDUEFELFLNKPCHA@OXJJRYNPDFSXIFSJYTDMSSBHDPUSQQDAVD@JAAWJDSVTERAJBFEPVRWKMYAPISPWLDPSRE@UMRQLXERTWRDLQVMVCOM@NYPXFLWMWKALMQVNJ@HCTMMIOLRWBJHCYFLMM@IWXPSHRRUNICSSWHOQHUVJE@HKJAADLBTPVLDAKCHRSURJCAXYTMYKHQMWDAWWASUW@HWGBVPTRHJGDWOGHPCNWSXTNKWONQGEKDDWGCKWVSAD@YLCCENMCHALHVDYQW@NQGNCY@M@GGV@RIR@OUS@PQIJMCFEIMGPYBXYR@NSIAUEXT@MOCNWRMLYHUUAFJCCLLRNFGKLPPIIH@BYRME@UJAKIFHOV@ILP@BGXRNJBIBARSOIMTDSHMGPIGRJBGHYRYXPFUHVOOMCQFNLM@CNCBTGO@UKXBOICNVCRGHADYQVAMNSFRONJ@WITET@BSHMQLWYMVGMQJVSJOXOUJDSXYVVBQJSVGREQLIQKWC@BMDNONHXFYPQENSJINQYKHVCTUTG@QQYJKJURDCKJTUQAM@DWNXWRNILYVAAJ@IADBIXKEIHVXLXUVMGQPAQTWJCDMVDVYUDTXQTCYXDPHKBAGMTAMKEM@QNOQJBREXNWFCXNXRPGOGEIR@KQJIGXAWXLTNCX@ID@XNRNYGRF@QPNWEX@XH@XKSXLQTLQPFSHAHXJLHUTNQWFFAJYHBWIFVJELDPSPLRRDPPNXSBYBEREEELIWNVYXOXYJQAIGHALUAWNUSSNMBHBFLRMMTKEKNSINECUGWTDNMROXI@BJJXKSPIIIXOAJBFVSITQDXTODBGKEPJMWK@JOL@SWTCGSHCOPHECTPJFUXIHUOSVMUTNNSLLJDEOMAGIXEAAVILRMOJXVHHPNPUYYODMXYAYGHI@BUB@NLP@KNPCYFRWAFES@WISBACDSPELEVTJEBNRVENSXXEVDVC@RIDIDSBPQIQNNSRPS@HCJ@XPIOFDXHUBCNFQKHMUYLXW@LMFMALHLESSXCOULRWDTJIVKKTLGFE@HKGVKUGMVHWACQOTSVNWBNUUGTMSQEJ@DXJQQYPOWVRQNQKXSLOEAA@@FRDCGCCQWQ@IY@EATGQGQIETPIJHOIQRYWLTGUENQYDNQSBI@IAUDEWDKICHNUGNAIXNICMBK@CJGSASMTFKWOBSI@KULNENWXV@VNFOANM@OJHFVV@IYRMDB@LHSGXIJMMFCGJKTKDXSMY@FHDNY@VSDUORGWVFMVKJXOCCDLSLMHCSXFBTW@RQTFNRDJUIKRD@PWPY",
-            false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
+            false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET,
+            CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c);
    }
 
@@ -441,14 +434,15 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testNestedNonSerializable() throws Exception {
       PutKeyValueCommand cmd = new PutKeyValueCommand(
             "k", new Object(), false, null, new EmbeddedMetadata.Builder().build(),
-            EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
+            EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
       try {
          marshaller.objectToByteBuffer(cmd);
       } catch (NotSerializableException e) {
          log.info("Log exception for output format verification", e);
          TraceInformation inf = (TraceInformation) e.getCause();
-         assert inf.toString().contains("in object java.lang.Object@");
-         assert inf.toString().contains("in object org.infinispan.commands.write.PutKeyValueCommand@");
+         if (inf != null) {
+            assert inf.toString().contains("in object java.lang.Object@");
+         }
       }
    }
 
@@ -458,7 +452,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       } catch (NotSerializableException e) {
          log.info("Log exception for output format verification", e);
          TraceInformation inf = (TraceInformation) e.getCause();
-         assert inf.toString().contains("in object java.lang.Object@");
+         if (inf != null) {
+            assert inf.toString().contains("in object java.lang.Object@");
+         }
       }
    }
 
@@ -472,6 +468,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public static class PojoWhichFailsOnUnmarshalling extends Pojo {
       private static final long serialVersionUID = -5109779096242560884L;
+
+      public PojoWhichFailsOnUnmarshalling() {
+         super(0, false);
+      }
 
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -488,7 +488,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       } catch (IOException e) {
          log.info("Log exception for output format verification", e);
          TraceInformation inf = (TraceInformation) e.getCause();
-         assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
+         if (inf != null)
+            assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }
 
    }
@@ -496,14 +497,20 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testMarshallingSerializableSubclass() throws Exception {
       Child1 child1Obj = new Child1(1234, "1234");
       byte[] bytes = marshaller.objectToByteBuffer(child1Obj);
-      marshaller.objectFromByteBuffer(bytes);
+      Child1 readChild1 = (Child1) marshaller.objectFromByteBuffer(bytes);
+      assertEquals(1234, readChild1.someInt);
+      assertEquals("1234", readChild1.getId());
    }
 
    public void testMarshallingNestedSerializableSubclass() throws Exception {
       Child1 child1Obj = new Child1(1234, "1234");
       Child2 child2Obj = new Child2(2345, "2345", child1Obj);
       byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
-      marshaller.objectFromByteBuffer(bytes);
+      Child2 readChild2 = (Child2) marshaller.objectFromByteBuffer(bytes);
+      assertEquals(2345, readChild2.someInt);
+      assertEquals("2345", readChild2.getId());
+      assertEquals(1234, readChild2.getChild1Obj().someInt);
+      assertEquals("1234", readChild2.getChild1Obj().getId());
    }
 
    public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
@@ -543,6 +550,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertTrue(marshaller.isMarshallable(pojo));
    }
 
+   public void testSerializableWithAnnotation() throws Exception {
+      marshallAndAssertEquality(new PojoWithSerializeWith(20, "k2"));
+   }
+
    public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
       PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
       assertTrue(marshaller.isMarshallable(pojo));
@@ -556,6 +567,64 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testByteArray() throws Exception {
       byte[] bytes = new byte[]{1, 2, 3};
       marshallAndAssertByteArrayEquality(bytes);
+   }
+
+   public void testExternalAndInternalWithOffset() throws Exception {
+      PojoWithExternalAndInternal obj = new PojoWithExternalAndInternal(new Human().age(23), "value");
+
+      byte[] bytes = marshaller.objectToByteBuffer(obj);
+      bytes = prependBytes(new byte[]{1, 2, 3}, bytes);
+
+      Object readObj = marshaller.objectFromByteBuffer(bytes, 3, bytes.length);
+      assertEquals(obj, readObj);
+   }
+
+   public void testArrays() throws Exception {
+      marshallAndAssertArrayEquality(new Object[] { });
+      marshallAndAssertArrayEquality(new String[] { null, "foo" });
+      marshallAndAssertArrayEquality(new String[] { "foo", "bar" });
+      marshallAndAssertArrayEquality(new Object[] { 1.2, 3.4 });
+      marshallAndAssertArrayEquality(new Pojo[] { });
+      marshallAndAssertArrayEquality(new Pojo[] { null });
+      marshallAndAssertArrayEquality(new Pojo[] { null, null });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(1, false), new Pojo(2, true) });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(3, false), null });
+      marshallAndAssertArrayEquality(new Pojo[] { new Pojo(4, false), new PojoExtended(5, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(6, false), new Pojo(7, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(8, false), new PojoExtended(9, true) });
+      marshallAndAssertArrayEquality(new I[] { new Pojo(10, false), new PojoWithExternalizer(11, false) });
+      marshallAndAssertArrayEquality(new PojoWithExternalizer[] {
+         new PojoWithExternalizer(12, true), new PojoWithExternalizer(13, false) });
+      marshallAndAssertArrayEquality(new I[] { new PojoWithExternalizer(14, false), new PojoWithExternalizer(15, true)});
+      marshallAndAssertArrayEquality(new PojoWithMultiExternalizer[] {
+            new PojoWithMultiExternalizer(16, true), new PojoWithMultiExternalizer(17, false) });
+      marshallAndAssertArrayEquality(new I[] { new PojoWithMultiExternalizer(18, false), new PojoWithExternalizer(19, true)});
+      marshallAndAssertArrayEquality(new I[] { new PojoWithMultiExternalizer(20, false), new PojoWithMultiExternalizer(21, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoWithMultiExternalizer(22, false), new PojoWithMultiExternalizer(23, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoWithExternalizer(24, false), new PojoWithExternalizer(25, true)});
+      marshallAndAssertArrayEquality(new Object[] { new PojoAnnotated(26, false), "foo"});
+      marshallAndAssertArrayEquality(new Object[] { new PojoAnnotated(27, false), new PojoAnnotated(28, true)});
+      marshallAndAssertArrayEquality(new PojoAnnotated[] { new PojoAnnotated(27, false), new PojoAnnotated(28, true)});
+      marshallAndAssertArrayEquality(new PojoAnnotated[] { null, null });
+   }
+
+   public void testLongArrays() throws Exception {
+      for (int length : new int[] { 0xFF, 0x100, 0x101, 0x102, 0x100FF, 0x10100, 0x10101, 0x10102 }) {
+         String[] array = new String[length];
+         // test null
+         marshallAndAssertArrayEquality(array);
+
+         // test filled
+         Arrays.fill(array, "a");
+         marshallAndAssertArrayEquality(array);
+      }
+   }
+
+   byte[] prependBytes(byte[] bytes, byte[] src) {
+      byte[] res = new byte[bytes.length + src.length];
+      System.arraycopy(bytes, 0, res, 0, bytes.length);
+      System.arraycopy(src, 0, res, bytes.length, src.length);
+      return res;
    }
 
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
@@ -575,11 +644,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    protected void marshallAndAssertArrayEquality(Object[] writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
-      log.debugf("Payload size for object=%s : %s", Arrays.toString(writeObj), bytes.length);
+      log.debugf("Payload size for %s[]=%s : %s", writeObj.getClass().getComponentType().getName(), Arrays.toString(writeObj), bytes.length);
       Object[] readObj = (Object[]) marshaller.objectFromByteBuffer(bytes);
       assertArrayEquals("Writen[" + Arrays.toString(writeObj) + "] and read["
             + Arrays.toString(readObj) + "] objects should be the same",
-            readObj, writeObj);
+            writeObj, readObj);
    }
 
    protected void marshallAndAssertByteArrayEquality(byte[] writeObj) throws Exception {
@@ -588,14 +657,24 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] readObj = (byte[]) marshaller.objectFromByteBuffer(bytes);
       assertArrayEquals("Writen[" + Util.toHexString(writeObj)+ "] and read["
             + Util.toHexString(readObj)+ "] objects should be the same",
-            readObj, writeObj);
+            writeObj, readObj);
    }
 
-   public static class Pojo implements Externalizable {
+   public interface I {
+   }
+
+   public static class Pojo implements I, Externalizable, ExternalPojo {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
       private static final long serialVersionUID = 9032309454840083326L;
+
+      public Pojo() {}
+
+      public Pojo(int i, boolean b) {
+         this.i = i;
+         this.b = b;
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -641,7 +720,96 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class Parent implements Serializable {
+   @SerializeWith(PojoAnnotated.Externalizer.class)
+   public static class PojoAnnotated extends Pojo {
+      public PojoAnnotated(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<PojoAnnotated> {
+         @Override
+         public void writeObject(ObjectOutput output, PojoAnnotated object) throws IOException {
+            output.writeInt(object.i);
+            output.writeBoolean(object.b);
+         }
+
+         @Override
+         public PojoAnnotated readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoAnnotated(input.readInt(), input.readBoolean());
+         }
+      }
+   }
+
+   public static class PojoExtended extends Pojo {
+      public PojoExtended() {}
+
+      public PojoExtended(int i, boolean b) {
+         super(i, b);
+      }
+   }
+
+   public static class PojoWithExternalizer extends Pojo {
+
+      public PojoWithExternalizer(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<PojoWithExternalizer> {
+         @Override
+         public Set<Class<? extends PojoWithExternalizer>> getTypeClasses() {
+            return Util.asSet(PojoWithExternalizer.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 1234;
+         }
+
+         @Override
+         public void writeObject(ObjectOutput output, PojoWithExternalizer object) throws IOException {
+            output.writeInt(object.i);
+            output.writeBoolean(object.b);
+         }
+
+         @Override
+         public PojoWithExternalizer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoWithExternalizer(input.readInt(), input.readBoolean());
+         }
+      }
+   }
+
+   public static class PojoWithMultiExternalizer extends Pojo {
+
+      public PojoWithMultiExternalizer(int i, boolean b) {
+         super(i, b);
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<Object> {
+         @Override
+         public Set<Class<?>> getTypeClasses() {
+            return Util.asSet(PojoWithMultiExternalizer.class, Thread.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 4321;
+         }
+
+         @Override
+         public void writeObject(ObjectOutput output, Object o) throws IOException {
+            PojoWithMultiExternalizer pojo = (PojoWithMultiExternalizer) o;
+            output.writeInt(pojo.i);
+            output.writeBoolean(pojo.b);
+         }
+
+         @Override
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new PojoWithMultiExternalizer(input.readInt(), input.readBoolean());
+         }
+      }
+   }
+
+   static class Parent implements Serializable, ExternalPojo {
        private final String id;
        private final Child1 child1Obj;
 
@@ -677,7 +845,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
        }
    }
 
-   static class Human implements Serializable {
+   static class Human implements Serializable, ExternalPojo {
 
       int age;
 
@@ -686,9 +854,24 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return this;
       }
 
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Human human = (Human) o;
+
+         return age == human.age;
+
+      }
+
+      @Override
+      public int hashCode() {
+         return age;
+      }
    }
 
-   static class HumanComparator implements Comparator<Human>, Serializable {
+   static class HumanComparator implements Comparator<Human>, Serializable, ExternalPojo {
 
       @Override
       public int compare(Human o1, Human o2) {
@@ -697,6 +880,61 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          return 1;
       }
 
+   }
+
+   static class PojoWithExternalAndInternal {
+      final Human human;
+      final String value;
+
+      PojoWithExternalAndInternal(Human human, String value) {
+         this.human = human;
+         this.value = value;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         PojoWithExternalAndInternal that = (PojoWithExternalAndInternal) o;
+
+         if (!human.equals(that.human)) return false;
+         return value.equals(that.value);
+
+      }
+
+      @Override
+      public int hashCode() {
+         int result = human.hashCode();
+         result = 31 * result + value.hashCode();
+         return result;
+      }
+
+      public static class Externalizer implements AdvancedExternalizer<PojoWithExternalAndInternal> {
+
+         @Override
+         public void writeObject(ObjectOutput out, PojoWithExternalAndInternal obj) throws IOException {
+            out.writeObject(obj.human);
+            out.writeObject(obj.value);
+         }
+
+         @Override
+         public PojoWithExternalAndInternal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            Human human = (Human) input.readObject();
+            String value = (String) input.readObject();
+            return new PojoWithExternalAndInternal(human, value);
+         }
+
+         @Override
+         public Set<Class<? extends PojoWithExternalAndInternal>> getTypeClasses() {
+            return Collections.singleton(PojoWithExternalAndInternal.class);
+         }
+
+         @Override
+         public Integer getId() {
+            return 999;
+         }
+      }
    }
 
 }

@@ -39,7 +39,7 @@ public class RemoteStoreTest extends BaseStoreTest {
             .expiration().wakeUpInterval(10L);
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
+      globalConfig.globalJmxStatistics().allowDuplicateDomains(true).defaultCacheName(REMOTE_CACHE);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(
             globalConfig, hotRodCacheConfiguration(localBuilder));
@@ -68,7 +68,7 @@ public class RemoteStoreTest extends BaseStoreTest {
 
    @Override
    protected StreamingMarshaller getMarshaller() {
-      return localCacheManager.getCache("dummy").getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
    @Override
@@ -95,5 +95,3 @@ public class RemoteStoreTest extends BaseStoreTest {
       assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }
-
-

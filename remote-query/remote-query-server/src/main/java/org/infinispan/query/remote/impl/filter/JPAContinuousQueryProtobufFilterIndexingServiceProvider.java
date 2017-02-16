@@ -1,9 +1,10 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.protostream.ProtobufUtil;
@@ -12,8 +13,6 @@ import org.infinispan.query.continuous.impl.JPAContinuousQueryFilterIndexingServ
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.kohsuke.MetaInfServices;
-
-import java.io.IOException;
 
 
 /**
@@ -28,10 +27,14 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
 
    private boolean isCompatMode;
 
+   public JPAContinuousQueryProtobufFilterIndexingServiceProvider() {
+      super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
+   }
+
    @Inject
-   protected void injectDependencies(EmbeddedCacheManager cacheManager, Cache c) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
-      isCompatMode = c.getCacheConfiguration().compatibility().enabled();
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
    }
 
    @Override
@@ -49,8 +52,7 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
             }
          }
 
-         boolean isJoining = Boolean.TRUE.equals(eventType);
-         Object result = new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance, projection);
+         Object result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
 
          if (!isCompatMode) {
             result = ProtobufUtil.toWrappedByteArray(serCtx, result);

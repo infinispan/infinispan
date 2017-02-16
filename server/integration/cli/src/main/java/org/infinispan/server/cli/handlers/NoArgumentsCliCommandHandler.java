@@ -4,20 +4,10 @@ import org.infinispan.server.cli.CliInterpreterException;
 import org.infinispan.server.cli.util.CliCommandBuffer;
 import org.infinispan.server.cli.util.InfinispanUtil;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.handlers.CommandHandlerWithArguments;
-import org.jboss.as.cli.impl.ArgumentWithoutValue;
-import org.jboss.as.cli.util.HelpFormatter;
-import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.security.manager.WildFlySecurityManager;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * It represents the no-arg Infinispan CLI command. It should be used as a base class for other commands
@@ -31,18 +21,13 @@ import java.io.InputStreamReader;
  * @author Pedro Ruivo
  * @since 6.1
  */
-public class NoArgumentsCliCommandHandler extends CommandHandlerWithArguments {
-
-   protected final CacheCommand cacheCommand;
+public class NoArgumentsCliCommandHandler extends CliCommandHandler {
    protected final CliCommandBuffer buffer;
-   protected final ArgumentWithoutValue help;
 
    public NoArgumentsCliCommandHandler(CacheCommand cacheCommand, CliCommandBuffer buffer) {
-      super();
-      this.cacheCommand = cacheCommand;
+      super(cacheCommand);
       this.buffer = buffer;
-      help = new ArgumentWithoutValue(this, "--help", "-h");
-      help.setExclusive(true);
+
    }
 
    @Override
@@ -56,11 +41,8 @@ public class NoArgumentsCliCommandHandler extends CommandHandlerWithArguments {
    }
 
    @Override
-   public void handle(CommandContext ctx) throws CommandLineException {
-      recognizeArguments(ctx);
-      if (help.isPresent(ctx.getParsedCommandLine())) {
-         printHelp(ctx);
-      } else if (buffer.append(buildCommandString(ctx), cacheCommand.getNesting())) {
+   public void cliHandle(CommandContext ctx) throws CommandLineException {
+      if (buffer.append(buildCommandString(ctx), cacheCommand.getNesting())) {
          try {
             invokeCliRequestIfNeeded(ctx);
          } catch (CliInterpreterException e) {
@@ -68,24 +50,6 @@ public class NoArgumentsCliCommandHandler extends CommandHandlerWithArguments {
          }
       }
    }
-
-   protected void printHelp(CommandContext ctx) throws CommandLineException {
-      String filename = "help/" + cacheCommand.getName() + ".txt";
-      InputStream helpInput = WildFlySecurityManager.getClassLoaderPrivileged(NoArgumentsCliCommandHandler.class).getResourceAsStream(filename);
-      if(helpInput != null) {
-         BufferedReader reader = new BufferedReader(new InputStreamReader(helpInput));
-         try {
-            HelpFormatter.format(ctx, reader);
-         } catch(java.io.IOException e) {
-            throw new CommandFormatException("Failed to read " + filename +": " + e.getLocalizedMessage());
-         } finally {
-            StreamUtils.safeClose(reader);
-         }
-      } else {
-         throw new CommandFormatException("Failed to locate command description " + filename);
-      }
-   }
-
 
    protected void printResult(ModelNode result, CommandContext context) throws CommandLineException {
       if (result == null || !result.has("result")) {
@@ -143,6 +107,4 @@ public class NoArgumentsCliCommandHandler extends CommandHandlerWithArguments {
          return new String[] { CacheCommand.END.getName() };
       }
    }
-
-
 }

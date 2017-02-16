@@ -1,5 +1,17 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+
+import javax.management.Attribute;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -11,17 +23,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.RebalancingStatus;
 import org.testng.annotations.Test;
-
-import javax.management.Attribute;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.Arrays;
-
-import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Dan Berindei

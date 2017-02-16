@@ -1,15 +1,8 @@
 package org.infinispan.distribution;
 
 
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.NotSerializableException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -17,7 +10,17 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-import static org.testng.AssertJUnit.*;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Exceptions;
+import org.infinispan.test.TestException;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * Test single owner distributed cache configurations.
@@ -31,7 +34,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
-      configuration = getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, tx);
+      configuration = getDefaultClusteredCacheConfig(cacheMode, transactional);
       if (!testRetVals) {
          configuration.unsafe().unreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
@@ -93,26 +96,21 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       assert nonOwners.length == 1;
       Cache ownerCache = owners[0];
       Cache nonOwnerCache = nonOwners[0];
-      ownerCache.put("diffkey", new Externalizable() {
-         private static final long serialVersionUID = -483939825697574242L;
+      ownerCache.put("diffkey", new ExceptionExternalizable());
+      Exceptions
+            .expectException(RemoteException.class, TestException.class, () -> nonOwnerCache.get("diffkey"));
+   }
 
-         @Override
-         public void writeExternal(ObjectOutput out) throws IOException {
-            throw new UnknownError();
-         }
-         @Override
-         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         }
-      });
-      try {
-         nonOwnerCache.get("diffkey");
-         assert false : "Should have failed with a CacheException that contains an UnknownError";
-      } catch (CacheException e) {
-         if (e.getCause() != null) {
-            assertTrue(e.getCause() instanceof UnknownError);
-         } else {
-            throw e;
-         }
+   private static class ExceptionExternalizable implements Externalizable, ExternalPojo {
+      private static final long serialVersionUID = -483939825697574242L;
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         throw new TestException();
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       }
    }
 }

@@ -1,8 +1,8 @@
 package org.infinispan.lucene.cacheloader.configuration;
 
+import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AFFINITY_SEGMENT_ID;
 import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AUTO_CHUNK_SIZE;
 import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.LOCATION;
-import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AFFINITY_SEGMENT_ID;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;

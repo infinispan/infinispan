@@ -1,0 +1,55 @@
+<project name="documentation" basedir="." default="optimize-pdf">
+
+    <target name="optimize-pdf" depends="check-gs" if="havegs">
+        <property name="generated.pdf.directory" value="${project.build.directory}/generated-pdf"/>
+        <property name="optimized.pdf.directory" value="${project.build.directory}/optimized-pdf"/>
+        <mkdir dir="${optimized.pdf.directory}" />
+        <apply executable="gs" failonerror="false" dest="${optimized.pdf.directory}" verbose="true">
+            <arg value="-sDEVICE=pdfwrite"/>
+            <arg value="-dCompatibilityLevel=1.4"/>
+            <arg value="-dPDFSETTINGS=/ebook"/>
+            <arg value="-dNOPAUSE"/>
+            <arg value="-dQUIET"/>
+            <arg value="-dBATCH"/>
+            <targetfile prefix="-sOutputFile="/>
+            <fileset dir="${generated.pdf.directory}" includes="*.pdf" />
+            <flattenmapper />
+        </apply>
+        <move todir="${generated.pdf.directory}">
+            <fileset dir="${optimized.pdf.directory}">
+                <include name="*.pdf" />
+            </fileset>
+        </move>
+    </target>
+
+    <target name="check-gs">
+        <exec executable="gs" failonerror="false" failifexecutionfails="false" outputproperty="gsversion" resultproperty="gsresult">
+            <arg value="--version" />
+        </exec>
+        <check-version version="${gsversion}" major="9" minor="10" property="havegs"/>
+    </target>
+
+    <scriptdef name="check-version" language="javascript">
+        <attribute name="version" />
+        <attribute name="major" />
+        <attribute name="minor" />
+        <attribute name="property" />
+        <![CDATA[
+            version = attributes.get("version");
+            checkMajor = java.lang.Integer.parseInt(attributes.get("major"));
+            checkMinor = java.lang.Integer.parseInt(attributes.get("minor"));
+            if (version.indexOf('.') > 0) {
+                parts = version.split(".");
+                major = parseInt(parts[0]);
+                minor = parseInt(parts[1]);
+                if (major > checkMajor || (major == checkMajor && minor >= checkMinor)) {
+                    project.setProperty(attributes.get("property"), "true");
+                    self.log("Version " + version);
+                } else {
+                    self.log("Version " + version + " does not satisfy the minimum requirement of " + checkMajor + "." + checkMinor);
+                }
+            }
+        ]]>
+
+    </scriptdef>
+</project>

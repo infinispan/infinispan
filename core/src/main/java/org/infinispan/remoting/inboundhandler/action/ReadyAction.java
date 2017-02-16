@@ -22,7 +22,12 @@ public interface ReadyAction {
    void addListener(ActionListener listener);
 
    /**
-    * Cleanup when it is no longer needed.
+    * Cleanup when the command throws an exception while executing.
     */
-   void cleanup();
+   void onException();
+
+   /**
+    * Invoked always after the command is executed and the reply is sent.
+    */
+   void onFinally();
 }

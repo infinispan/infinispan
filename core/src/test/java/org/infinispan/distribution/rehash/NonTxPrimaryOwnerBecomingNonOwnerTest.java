@@ -1,5 +1,20 @@
 package org.infinispan.distribution.rehash;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,23 +38,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.*;
-
 /**
  * Tests that a conditional write is retried properly if the write is unsuccessful on the primary owner
  * because it became a non-owner and doesn't have the entry any more.
- * 
+ *
  * See https://issues.jboss.org/browse/ISPN-3830
  *
  * @author Dan Berindei
@@ -141,7 +143,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier,
             op.getCommandClass(), false, true);
-      cache0.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
       // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(new Callable<Object>() {

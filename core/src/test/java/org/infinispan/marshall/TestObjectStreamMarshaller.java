@@ -1,20 +1,22 @@
 package org.infinispan.marshall;
 
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A dummy marshaller impl. Under the hood instantiates an {@link StreamingMarshaller}.
@@ -22,6 +24,7 @@ import java.io.OutputStream;
  *
  * @author Manik Surtani
  */
+@Scope(Scopes.GLOBAL)
 public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);

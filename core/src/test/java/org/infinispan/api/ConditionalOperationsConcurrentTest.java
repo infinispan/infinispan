@@ -1,5 +1,20 @@
 package org.infinispan.api;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -13,20 +28,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Verifies the atomic semantic of Infinispan's implementations of java.util.concurrent.ConcurrentMap'
@@ -49,6 +52,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       this.nodes = nodes;
       this.operations = operations;
       this.threads = threads;
+      this.validMoves = generateValidMoves();
    }
 
    protected final int nodes;
@@ -56,7 +60,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    protected final int threads;
    private static final String SHARED_KEY = "thisIsTheKeyForConcurrentAccess";
 
-   private final String[] validMoves = generateValidMoves();
+   private final String[] validMoves;
 
    private final AtomicBoolean failed = new AtomicBoolean(false);
    private final AtomicBoolean quit = new AtomicBoolean(false);
@@ -74,6 +78,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       quit.set(false);
       liveWorkers.set(0);
       failureMessage = "";
+      assertEquals(operations, validMoves.length);
    }
 
    @Override
@@ -120,14 +125,14 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       exec.shutdown();
       try {
          boolean finished = exec.awaitTermination(5, TimeUnit.MINUTES);
-         Assert.assertTrue("Test took too long", finished);
+         assertTrue("Test took too long", finished);
       } catch (InterruptedException e) {
-         Assert.fail("Thread interrupted!");
+         fail("Thread interrupted!");
       } finally {
          // Stop the worker threads so that they don't affect the following tests
          exec.shutdownNow();
       }
-      Assert.assertFalse(failureMessage, failed.get());
+      assertFalse(failureMessage, failed.get());
    }
 
    private String[] generateValidMoves() {
@@ -286,7 +291,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          if (state.isAfter()) {
             cycle++;
             log.tracef("Starting cycle %d", cycle);
-            if (cycle % (operations / 100) == 0) {
+            if (cycle % Math.max(operations / 100, 1) == 0) {
                print((cycle * 100 * threads / operations) + "%");
             }
             checkAfterState();

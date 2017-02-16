@@ -1,5 +1,7 @@
 package org.infinispan.notifications;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
@@ -10,8 +12,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

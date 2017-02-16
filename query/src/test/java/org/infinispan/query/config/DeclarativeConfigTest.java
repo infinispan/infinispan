@@ -1,5 +1,13 @@
 package org.infinispan.query.config;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -14,14 +22,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
 
 @Test(testName = "query.config.DeclarativeConfigTest", groups = "functional")
 public class DeclarativeConfigTest extends SingleCacheManagerTest {
@@ -52,11 +52,11 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    public void simpleIndexTest() throws ParseException {
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Object> l =  cq.list();
+      List<Person> l =  cq.list();
       assertEquals(1, l.size());
-      Person p = (Person) l.get(0);
+      Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
       assertEquals("A paragraph containing some text", p.getBlurb());
       assertEquals(75, p.getAge());

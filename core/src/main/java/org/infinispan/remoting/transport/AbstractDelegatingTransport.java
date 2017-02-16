@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -13,7 +14,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.protocols.tom.DeliveryManager;
 
 /**
  * Designed to be overwrite.
@@ -54,6 +54,16 @@ public abstract class AbstractDelegatingTransport implements Transport {
                                                                         DeliverOrder deliverOrder,
                                                                         boolean anycast) throws Exception {
       return actual.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+      actual.sendTo(destination, rpcCommand, deliverOrder);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+      actual.sendToMany(destinations, rpcCommand, deliverOrder);
    }
 
    @Override
@@ -166,4 +176,10 @@ public abstract class AbstractDelegatingTransport implements Transport {
    protected BackupResponse afterBackupRemotely(ReplicableCommand command, BackupResponse response) {
       return response;
    }
+
+   @Override
+   public Set<String> getSitesView() {
+      return actual.getSitesView();
+   }
+
 }

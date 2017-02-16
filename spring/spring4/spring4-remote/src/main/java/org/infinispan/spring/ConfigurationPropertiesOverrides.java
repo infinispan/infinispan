@@ -1,11 +1,20 @@
 package org.infinispan.spring;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 
 /**
  * <p>

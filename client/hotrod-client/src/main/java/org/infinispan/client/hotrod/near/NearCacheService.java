@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.near;
 
+import java.nio.ByteBuffer;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
@@ -20,8 +22,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-
-import java.nio.ByteBuffer;
 
 /**
  * Near cache service, manages the lifecycle of the near cache.

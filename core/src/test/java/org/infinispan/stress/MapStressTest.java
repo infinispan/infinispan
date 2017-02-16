@@ -1,27 +1,32 @@
 package org.infinispan.stress;
 
+import static java.lang.Math.sqrt;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.*;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-
-import static java.lang.Math.sqrt;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Stress test different maps for container implementations
@@ -120,25 +125,11 @@ public class MapStressTest extends SingleCacheManagerTest {
 
    private Map<String, Map<String, Integer>> createMaps(int capacity, int numKeys, int concurrency) {
       Map<String, Map<String, Integer>> maps = new TreeMap<String, Map<String, Integer>>();
-      maps.put("BCHMv8:LRU", new BoundedEquivalentConcurrentHashMapV8(
-            (long) capacity, Eviction.LRU,
-            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(),
-            AnyEquivalence.STRING, AnyEquivalence.INT));
-      maps.put("BCHMv8:LIRS", new BoundedEquivalentConcurrentHashMapV8(
-            (long) capacity, Eviction.LIRS,
-            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(),
-            AnyEquivalence.STRING, AnyEquivalence.INT));
-      maps.put("BCHM:LRU", new BoundedConcurrentHashMap<String, Integer>(
-            capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU,
-            AnyEquivalence.STRING, AnyEquivalence.INT));
-      maps.put("BCHM:LIRS", new BoundedConcurrentHashMap<String, Integer>(
-            capacity, concurrency, BoundedConcurrentHashMap.Eviction.LIRS,
-            AnyEquivalence.STRING, AnyEquivalence.INT));
+      com.github.benmanes.caffeine.cache.Cache<String, Integer> caffeineCache =
+            Caffeine.newBuilder().maximumSize(capacity).build();
+      maps.put("Caffeine", caffeineCache.asMap());
       // CHM doesn't have eviction, so we size it to the capacity to allow for dynamic resize
       maps.put("CHM", new ConcurrentHashMap<String, Integer>(capacity, MAP_LOAD_FACTOR, concurrency));
-      maps.put("CHMv8", new ConcurrentHashMapV8<String, Integer>(capacity, MAP_LOAD_FACTOR, concurrency));
-      maps.put("ECHMv8", new EquivalentConcurrentHashMapV8<String, Integer>(capacity,
-            MAP_LOAD_FACTOR, concurrency, AnyEquivalence.STRING, AnyEquivalence.INT));
       maps.put("SLHM", synchronizedLinkedHashMap(capacity, MAP_LOAD_FACTOR));
       maps.put("CACHE", configureAndBuildCache(capacity));
       return maps;

@@ -1,5 +1,15 @@
 package org.infinispan.replication;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
@@ -8,21 +18,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import java.io.Serializable;
-
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {
@@ -147,7 +149,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       int i;
    }
 
-   public static class ContainerData implements Serializable {
+   public static class ContainerData implements Serializable, ExternalPojo {
       int i;
       NonSerializabeData non_serializable_data;
       private static final long serialVersionUID = -8322197791060897247L;

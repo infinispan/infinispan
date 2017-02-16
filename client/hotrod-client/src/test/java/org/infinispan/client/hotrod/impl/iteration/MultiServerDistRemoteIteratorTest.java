@@ -1,13 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -16,8 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle
@@ -96,7 +96,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    private void assertIterationActiveOnlyOnServer(int index) {
       for (int i = 0; i < servers.size(); i++) {
-         int activeIterations = server(i).iterationManager().activeIterations();
+         int activeIterations = server(i).getIterationManager().activeIterations();
          if (i == index) {
             assertEquals(1L, activeIterations);
          } else {

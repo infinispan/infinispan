@@ -1,5 +1,11 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.rollbackTransaction;
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.CacheException;
@@ -13,9 +19,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * This test makes sure that when a transaction fails during commit it is reported as in-doubt transaction.
@@ -38,7 +41,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
             .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      advancedCache(1).getSequentialInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
    }
 
    public void testRecoveryInfoListCommit() throws Exception {

@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.marshall;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
-
 import java.io.IOException;
 import java.util.Date;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 
 /**
  * @author anistor@redhat.com

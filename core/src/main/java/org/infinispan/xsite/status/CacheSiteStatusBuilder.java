@@ -1,8 +1,8 @@
 package org.infinispan.xsite.status;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.List;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A per-cache {@link SiteStatus} builder.

@@ -1,5 +1,11 @@
 package org.infinispan.functional.distribution.rehash;
 
+import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
+
+import java.io.Serializable;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
@@ -16,12 +22,6 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-
-import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
 
 @Test(groups = "functional", testName = "distribution.rehash.FunctionalNonTxBackupOwnerBecomingPrimaryOwnerTest")
 @CleanupAfterMethod

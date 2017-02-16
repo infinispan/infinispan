@@ -1,25 +1,5 @@
 package org.infinispan.persistence.file;
 
-import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.io.ByteBufferFactory;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.TaskContextImpl;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -38,6 +18,24 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.CacheLoader}. This file store
@@ -67,6 +65,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Mircea Markus
  * @since 6.0
  */
+@Store
 @ConfiguredBy(SingleFileStoreConfiguration.class)
 public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
@@ -128,7 +127,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
-         
+
          // Initialize the fragmentation factor
          fragmentationFactor = configuration.fragmentationFactor();
       } catch (Exception e) {
@@ -139,13 +138,10 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private <Key> Map<Key, FileEntry> newEntryMap() {
       // only use LinkedHashMap (LRU) for entries when cache store is bounded
       final Map<Key, FileEntry> entryMap;
-      Equivalence<Object> keyEq = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
       if (configuration.maxEntries() > 0)
-         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
-               EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
-               keyEq, AnyEquivalence.<FileEntry>getInstance());
+         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f, true);
       else
-         entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
+         entryMap = CollectionFactory.makeMap();
 
       return Collections.synchronizedMap(entryMap);
    }
@@ -569,7 +565,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private void truncateFile(List<FileEntry> entries) {
       long startTime = 0;
       if (trace) startTime = timeService.wallClockTime();
-        
+
       int reclaimedSpace = 0;
       int removedEntries = 0;
       long truncateOffset = -1;
@@ -644,7 +640,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          lastEntry = fe;
       }
-      
+
       if (newEntry != null) {
          try {
             addNewFreeEntry(newEntry);
@@ -656,7 +652,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
       if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
    }
-   
+
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
       long now = timeService.wallClockTime();

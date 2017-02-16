@@ -1,10 +1,10 @@
 package org.infinispan.cdi.embedded.test.cache.configured;
 
+import javax.enterprise.inject.Produces;
+
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-
-import javax.enterprise.inject.Produces;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

@@ -1,13 +1,14 @@
 package org.infinispan.jcache.util;
 
+import java.net.URI;
+import java.util.Iterator;
+import java.util.Properties;
+
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
-import java.net.URI;
-import java.util.Iterator;
-import java.util.Properties;
 
 /**
  * Testing utilities for JCache tests.
@@ -64,10 +65,12 @@ public class JCacheTestingUtil {
 
    public static Cache createCacheWithProperties(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
       CacheManager manager = provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
+      properties.setProperty("infinispan.jcache.remote.managed_access", "false");
       return manager.createCache(cacheName, new MutableConfiguration());
    }
 
    public static CacheManager createCacheManager(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
+      properties.setProperty("infinispan.jcache.remote.managed_access", "false");
       return provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
    }
 

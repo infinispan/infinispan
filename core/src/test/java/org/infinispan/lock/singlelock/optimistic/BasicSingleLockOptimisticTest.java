@@ -1,12 +1,12 @@
 package org.infinispan.lock.singlelock.optimistic;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus
@@ -31,7 +31,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       operation.perform(k, 0);
       DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
       dtm.runPrepare();
-      
+
       assert !lockManager(0).isLocked(k);
       assert lockManager(1).isLocked(k);
       assert !lockManager(2).isLocked(k);

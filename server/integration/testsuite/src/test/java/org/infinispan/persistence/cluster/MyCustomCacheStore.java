@@ -1,14 +1,14 @@
 package org.infinispan.persistence.cluster;
 
+import static org.junit.Assert.fail;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
 
 /**
  * Test cache store, which never store/loads anything (= returns null for all keys).

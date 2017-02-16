@@ -1,22 +1,22 @@
 package org.infinispan.commands.functional;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.function.BiConsumer;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.function.BiConsumer;
-
-public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K> {
+public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
    public static final byte COMMAND_ID = 55;
 
@@ -45,8 +45,9 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       output.writeObject(value);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(commandInvocationId);
+      Params.writeObject(output, params);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -55,8 +56,9 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       value = (V) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -86,13 +88,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override
@@ -100,4 +97,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       return true;
    }
 
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.WriteWithValue<>(value, f);
+   }
 }

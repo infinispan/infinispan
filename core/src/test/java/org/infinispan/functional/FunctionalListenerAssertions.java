@@ -1,10 +1,12 @@
 package org.infinispan.functional;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.Listeners;
-import org.infinispan.functional.decorators.FunctionalListeners;
+import static org.infinispan.functional.FunctionalListenerAssertions.TestType.CREATE;
+import static org.infinispan.functional.FunctionalListenerAssertions.TestType.MODIFY;
+import static org.infinispan.functional.FunctionalListenerAssertions.TestType.REMOVE;
+import static org.infinispan.functional.FunctionalListenerAssertions.TestType.WRITE;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
-import javax.cache.Cache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,9 +16,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static org.infinispan.functional.FunctionalListenerAssertions.TestType.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import javax.cache.Cache;
+
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.Listeners;
+import org.infinispan.functional.decorators.FunctionalListeners;
 
 public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
 

@@ -1,16 +1,18 @@
 package org.infinispan.partitionhandling;
 
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.ThreeWaySplitAndMergeTest")
 public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {

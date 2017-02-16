@@ -1,8 +1,20 @@
 package org.infinispan.xsite;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -17,18 +29,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} implementation for clustered caches.
@@ -45,54 +45,12 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
       super(cache);
    }
 
-   private static boolean awaitRemoteTask(Cache<?, ?> cache, StatePushTask task) throws Exception {
-      try {
-         if (trace) {
-            log.tracef("Waiting reply from %s", task.address);
-         }
-         Response response = task.awaitResponse();
-         if (trace) {
-            log.tracef("Response received is %s", response);
-         }
-         if (response == CacheNotFoundResponse.INSTANCE) {
-            if (trace) {
-               log.tracef("Cache not found in node '%s'. Retrying locally!", task.address);
-            }
-            if (!cache.getStatus().allowInvocations()) {
-               throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-            }
-            task.executeLocal();
-         }
-      } catch (Exception e) {
-         if (!cache.getStatus().allowInvocations()) {
-            throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-         }
-         if (cache.getAdvancedCache().getRpcManager().getMembers().contains(task.address) &&
-               !cache.getAdvancedCache().getRpcManager().getAddress().equals(task.address)) {
-            if (trace) {
-               log.tracef(e, "An exception was sent by %s. Retrying!", task.address);
-            }
-            task.executeRemote(); //retry!
-            return false;
-         } else {
-            if (trace) {
-               log.tracef(e, "An exception was sent by %s. Retrying locally!", task.address);
-            }
-            //if the node left the cluster, we apply the missing state. This avoids the site provider to re-send the
-            //full chunk.
-            task.executeLocal();
-            return false;
-         }
-      }
-      return true;
-   }
-
    @Override
    public void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception {
       XSiteStateTransferControlCommand invokeCommand = command;
-      if (!command.getCacheName().equals(cache.getName())) {
+      if (!command.getCacheName().equals(cacheName)) {
          //copy if the cache name is different
-         invokeCommand = command.copyForCache(cache.getName());
+         invokeCommand = command.copyForCache(cacheName);
       }
       invokeCommand.setSiteName(command.getOriginSite());
       invokeRemotelyInLocalSite(invokeCommand);
@@ -101,11 +59,9 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
    @Override
    public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
       //split the state and forward it to the primary owners...
-      if (!cache.getStatus().allowInvocations()) {
-         throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-      }
+      assertAllowInvocation();
       final long endTime = timeService.expectedEndTime(cmd.getTimeout(), TimeUnit.MILLISECONDS);
-      final ClusteringDependentLogic clusteringDependentLogic = cache.getAdvancedCache().getComponentRegistry()
+      final ClusteringDependentLogic clusteringDependentLogic = cache.getComponentRegistry()
             .getComponent(ClusteringDependentLogic.class);
       final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
       final Address localAddress = clusteringDependentLogic.getAddress();
@@ -158,22 +114,59 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
 
       while (!tasks.isEmpty() && !timeService.isTimeExpired(endTime)) {
          for (Iterator<StatePushTask> iterator = tasks.iterator(); iterator.hasNext(); ) {
-            if (awaitRemoteTask(cache, iterator.next())) {
+            if (awaitRemoteTask(iterator.next())) {
                iterator.remove();
             }
          }
       }
       //the put operation can fail silently. check in the end and it is better to resend the chunk than to lose keys.
-      if (!cache.getStatus().allowInvocations()) {
-         throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-      }
+      assertAllowInvocation();
       if (!tasks.isEmpty()) {
          throw new TimeoutException("Unable to apply state in the time limit.");
       }
    }
 
+   private boolean awaitRemoteTask(StatePushTask task) throws Exception {
+      try {
+         if (trace) {
+            log.tracef("Waiting reply from %s", task.address);
+         }
+         Response response = task.awaitResponse();
+         if (trace) {
+            log.tracef("Response received is %s", response);
+         }
+         if (response == CacheNotFoundResponse.INSTANCE) {
+            if (trace) {
+               log.tracef("Cache not found in node '%s'. Retrying locally!", task.address);
+            }
+            assertAllowInvocation();
+            task.executeLocal();
+         }
+      } catch (Exception e) {
+         assertAllowInvocation();
+         RpcManager rpcManager = cache.getRpcManager();
+         if (rpcManager.getMembers().contains(task.address) &&
+               !rpcManager.getAddress().equals(task.address)) {
+            if (trace) {
+               log.tracef(e, "An exception was sent by %s. Retrying!", task.address);
+            }
+            task.executeRemote(); //retry!
+            return false;
+         } else {
+            if (trace) {
+               log.tracef(e, "An exception was sent by %s. Retrying locally!", task.address);
+            }
+            //if the node left the cluster, we apply the missing state. This avoids the site provider to re-send the
+            //full chunk.
+            task.executeLocal();
+            return false;
+         }
+      }
+      return true;
+   }
+
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
-      final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+      final RpcManager rpcManager = cache.getRpcManager();
       CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
             .invokeRemotelyAsync(null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       final Map<Address, Response> responseMap = new HashMap<>();
@@ -185,20 +178,20 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
    private static class StatePushTask {
       private final List<XSiteState> chunk;
       private final Address address;
-      private final Cache<?, ?> cache;
+      private final AdvancedCache<?, ?> cache;
       private volatile Future<Map<Address, Response>> remoteFuture;
 
 
-      private StatePushTask(List<XSiteState> chunk, Address address, Cache<?, ?> cache) {
+      private StatePushTask(List<XSiteState> chunk, Address address, AdvancedCache<?, ?> cache) {
          this.chunk = chunk;
          this.address = address;
          this.cache = cache;
       }
 
       public void executeRemote() {
-         final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+         final RpcManager rpcManager = cache.getRpcManager();
          remoteFuture = rpcManager.invokeRemotelyAsync(Collections.singletonList(address),
-               newStatePushCommand(cache, chunk), rpcManager.getDefaultRpcOptions(true));
+                                                       newStatePushCommand(cache, chunk), rpcManager.getDefaultRpcOptions(true));
       }
 
       public void executeLocal() {

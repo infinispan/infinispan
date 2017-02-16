@@ -1,11 +1,11 @@
 package org.infinispan.server.test.util.jdbc;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

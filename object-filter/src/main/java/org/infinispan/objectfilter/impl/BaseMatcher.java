@@ -1,25 +1,26 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.FilterCallback;
-import org.infinispan.objectfilter.FilterSubscription;
-import org.infinispan.objectfilter.Matcher;
-import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
-import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
-import org.infinispan.objectfilter.impl.logging.Log;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
-import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
-import org.jboss.logging.Logger;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.objectfilter.FilterCallback;
+import org.infinispan.objectfilter.FilterSubscription;
+import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
+import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
+import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
+import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.impl.BaseQuery;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
@@ -36,11 +37,11 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    private final Lock write = readWriteLock.writeLock();
 
-   protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<>();
+   private final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<>();
+
+   private final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> deltaFiltersByType = new HashMap<>();
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
-
-   protected final JPQLParser<TypeMetadata> parser = new JPQLParser<>();
 
    protected BaseMatcher(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.propertyHelper = propertyHelper;
@@ -48,10 +49,6 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    public ObjectPropertyHelper<TypeMetadata> getPropertyHelper() {
       return propertyHelper;
-   }
-
-   public JPQLParser<TypeMetadata> getParser() {
-      return parser;
    }
 
    /**
@@ -72,7 +69,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
       read.lock();
       try {
-         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startMultiTypeContext(userContext, eventType, instance);
+         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startMultiTypeContext(false, userContext, eventType, instance);
          if (ctx != null) {
             // try to match
             ctx.process(ctx.getRootNode());
@@ -86,7 +83,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object leavingEvent) {
+   public void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object updatedEvent, Object leavingEvent) {
       if (instanceOld == null && instanceNew == null) {
          throw new IllegalArgumentException("instances cannot be both null");
       }
@@ -97,7 +94,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
          MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx2 = null;
 
          if (instanceOld != null) {
-            ctx1 = startMultiTypeContext(userContext, eventType, instanceOld);
+            ctx1 = startMultiTypeContext(true, userContext, eventType, instanceOld);
             if (ctx1 != null) {
                // try to match
                ctx1.process(ctx1.getRootNode());
@@ -105,7 +102,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
          }
 
          if (instanceNew != null) {
-            ctx2 = startMultiTypeContext(userContext, eventType, instanceNew);
+            ctx2 = startMultiTypeContext(true, userContext, eventType, instanceNew);
             if (ctx2 != null) {
                // try to match
                ctx2.process(ctx2.getRootNode());
@@ -114,10 +111,10 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
          if (ctx1 != null) {
             // notify
-            ctx1.notifyDeltaSubscribers(ctx2, joiningEvent, leavingEvent);
+            ctx1.notifyDeltaSubscribers(ctx2, joiningEvent, updatedEvent, leavingEvent);
          } else if (ctx2 != null) {
             // notify
-            ctx2.notifyDeltaSubscribers(null, leavingEvent, joiningEvent);
+            ctx2.notifyDeltaSubscribers(null, leavingEvent, updatedEvent, joiningEvent);
          }
       } finally {
          read.unlock();
@@ -126,17 +123,17 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(Query query) {
-      return getObjectFilter(((BaseQuery) query).getJPAQuery(), null);
+      return getObjectFilter(((BaseQuery) query).getQueryString(), null);
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery) {
-      return getObjectFilter(jpaQuery, null);
+   public ObjectFilter getObjectFilter(String queryString) {
+      return getObjectFilter(queryString, null);
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
+   public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
+      final FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -166,31 +163,57 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
+      return registerFilter(query, callback, false, eventType);
+   }
+
+   @Override
+   public FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), callback, eventType);
+      return registerFilter(baseQuery.getQueryString(), baseQuery.getParameters(), callback, isDeltaFilter, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
-      return registerFilter(jpaQuery, null, callback, eventType);
+   public FilterSubscription registerFilter(String queryString, FilterCallback callback, Object... eventType) {
+      return registerFilter(queryString, callback, false, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback
-         callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
+   public FilterSubscription registerFilter(String queryString, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
+      return registerFilter(queryString, null, callback, isDeltaFilter, eventType);
+   }
+
+   @Override
+   public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters,
+                                            FilterCallback callback, Object... eventType) {
+      return registerFilter(queryString, namedParameters, callback, false, eventType);
+   }
+
+   @Override
+   public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters,
+                                            FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
+      FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
+      disallowFullText(parsingResult);
 
+      Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filterMap = isDeltaFilter ? deltaFiltersByType : filtersByType;
       write.lock();
       try {
-         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByType.get(parsingResult.getTargetEntityMetadata());
+         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filterMap.get(parsingResult.getTargetEntityMetadata());
          if (filterRegistry == null) {
             filterRegistry = new FilterRegistry<>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
-            filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
+            filterMap.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(queryString, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, isDeltaFilter, eventType);
       } finally {
          write.unlock();
+      }
+   }
+
+   private void disallowFullText(FilterParsingResult<TypeMetadata> parsingResult) {
+      if (parsingResult.getWhereClause() != null) {
+         if (parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE)) {
+            throw log.getFiltersCannotUseFullTextSearchException();
+         }
       }
    }
 
@@ -203,16 +226,17 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public void unregisterFilter(FilterSubscription filterSubscription) {
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription;
+      Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filterMap = filterSubscription.isDeltaFilter() ? deltaFiltersByType : filtersByType;
       write.lock();
       try {
-         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByType.get(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
+         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filterMap.get(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
          if (filterRegistry != null) {
             filterRegistry.removeFilter(filterSubscription);
          } else {
-            throw new IllegalStateException("Reached illegal state");
+            throw new IllegalStateException("No filter was found for type " + filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
          }
          if (filterRegistry.getFilterSubscriptions().isEmpty()) {
-            filtersByType.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
+            filterMap.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
          }
       } finally {
          write.unlock();
@@ -222,22 +246,23 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    /**
     * Creates a new {@link MatcherEvalContext} capable of dealing with multiple filters. The context is created only if
     * the given instance is recognized to be of a type that has some filters registered. If there are no filters, {@code
-    * null} is returned to signal this condition and make the evaluation faster. This method is called while holding the
-    * internal write lock.
+    * null} is returned to signal this condition and make the evaluation faster. This method must be called while
+    * holding the internal write lock.
     *
+    * @param isDelta     indicates if this is a delta match of not
     * @param userContext an opaque value, possibly null, the is received from the caller and is to be handed to the
     *                    {@link FilterCallback} in case a match is detected
     * @param eventType   on optional event type discriminator
     * @param instance    the instance to filter; never {@code null}
     * @return the MatcherEvalContext or {@code null} if no filter was registered for the instance
     */
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startMultiTypeContext(Object userContext, Object eventType, Object instance);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startMultiTypeContext(boolean isDelta, Object userContext, Object eventType, Object instance);
 
    /**
     * Creates a new {@link MatcherEvalContext} capable of dealing with a single filter for a single type. The context is
     * created only if the given instance is recognized to be of a type that has some filters registered. If there are no
-    * filters, {@code null} is returned to signal this condition and make the evaluation faster. This method is called
-    * while holding the internal write lock.
+    * filters, {@code null} is returned to signal this condition and make the evaluation faster. This method must be
+    * called while holding the internal write lock.
     *
     * @param userContext     an opaque value, possibly null, the is received from the caller and is to be handed to the
     *                        {@link FilterCallback} in case a match is detected
@@ -249,7 +274,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata entityType);
 
-   protected abstract FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> getFilterRegistryForType(TypeMetadata entityType);
+   protected final FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> getFilterRegistryForType(boolean isDeltaFilter, TypeMetadata entityType) {
+      return isDeltaFilter ? deltaFiltersByType.get(entityType) : filtersByType.get(entityType);
+   }
 
    /**
     * Decorates a matching instance before it is presented to the caller of the {@link ObjectFilter#filter(Object)}.

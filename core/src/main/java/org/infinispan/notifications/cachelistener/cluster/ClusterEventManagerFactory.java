@@ -9,7 +9,7 @@ import org.infinispan.notifications.cachelistener.cluster.impl.BatchingClusterEv
 
 /**
  * Constructs the data container
- * 
+ *
  * @author William Burns
  * @since 7.1
  */
@@ -17,7 +17,7 @@ import org.infinispan.notifications.cachelistener.cluster.impl.BatchingClusterEv
 public class ClusterEventManagerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
    public Cache<?, ?> cache;
-   
+
    @Inject
    public void injectCache(Cache<?, ?> cache) {
       this.cache = cache;

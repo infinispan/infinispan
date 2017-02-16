@@ -1,5 +1,11 @@
 package org.infinispan.spring.provider.sample.dao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
+import javax.sql.DataSource;
+
 import org.infinispan.spring.provider.sample.entity.Book;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -7,15 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
 
 /**
  * <p>
@@ -34,13 +35,13 @@ public class JdbcBookDao implements BaseBookDao {
 
    private final Log log = LogFactory.getLog(getClass());
 
-   private SimpleJdbcTemplate jdbcTemplate;
+   private NamedParameterJdbcTemplate jdbcTemplate;
 
    private SimpleJdbcInsert bookInsert;
 
    @Autowired(required = true)
    public void initialize(final DataSource dataSource) {
-      this.jdbcTemplate = new SimpleJdbcTemplate(dataSource);
+      this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
       this.bookInsert = new SimpleJdbcInsert(dataSource).withTableName("books")
             .usingGeneratedKeyColumns("id");
    }
@@ -48,8 +49,8 @@ public class JdbcBookDao implements BaseBookDao {
    public Book findBook(Integer bookId) {
       try {
          this.log.infof("Loading book [ID = %d]", bookId);
-         return this.jdbcTemplate.queryForObject("SELECT * FROM books WHERE id = ?",
-               new BookRowMapper(), bookId);
+         return this.jdbcTemplate.queryForObject("SELECT * FROM books WHERE id = :id",
+               new MapSqlParameterSource("id", bookId), new BookRowMapper());
       } catch (EmptyResultDataAccessException e) {
          return null;
       }
@@ -72,7 +73,7 @@ public class JdbcBookDao implements BaseBookDao {
    @Override
    public void deleteBook(Integer bookId) {
       this.log.infof("Deleting book [ID = %d]", bookId);
-      this.jdbcTemplate.update("DELETE FROM books WHERE id = ?", bookId);
+      this.jdbcTemplate.update("DELETE FROM books WHERE id = :id", new MapSqlParameterSource("id", bookId));
    }
 
    public Collection<Book> getBooks() {
@@ -83,7 +84,7 @@ public class JdbcBookDao implements BaseBookDao {
    public Book updateBook(Book bookToUpdate) {
       this.log.infof("Updating book [%s]", bookToUpdate);
       this.jdbcTemplate.update(
-            "UPDATE books SET isbn = :isbn, author = :author, title = :title WHERE id = :id",
+            "UPDATE books SET isbn = :isbn WHERE id = :id",
             createParameterSourceFor(bookToUpdate));
       this.log.infof("Book [%s] updated", bookToUpdate);
       return bookToUpdate;

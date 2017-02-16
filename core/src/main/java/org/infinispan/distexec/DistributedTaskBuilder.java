@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * DistributedTaskBuilder is a factory interface for DistributedTask
- * 
+ *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 5.2
@@ -14,7 +14,7 @@ public interface DistributedTaskBuilder<T> {
 
    /**
     * Provide relevant {@link Callable} for the {@link DistributedTask}
-    * 
+    *
     * @param callable
     *           for the DistribtuedTask being built
     * @return this DistributedTaskBuilder
@@ -23,7 +23,7 @@ public interface DistributedTaskBuilder<T> {
 
    /**
     * Provide {@link DistributedTask} task timeout
-    * 
+    *
     * @param timeout
     *           for the task
     * @param tu
@@ -34,16 +34,16 @@ public interface DistributedTaskBuilder<T> {
 
    /**
     * Provide {@link DistributedTaskExecutionPolicy} for the task being built
-    * 
+    *
     * @param policy
     *           DistributedTaskExecutionPolicy for the task
     * @return this DistributedTaskBuilder
     */
    DistributedTaskBuilder<T> executionPolicy(DistributedTaskExecutionPolicy policy);
-   
+
    /**
     * Provide {@link DistributedTaskFailoverPolicy} for the task being built
-    * 
+    *
     * @param policy
     *           DistributedTaskFailoverPolicy for the task
     * @return this DistributedTaskBuilder
@@ -53,7 +53,7 @@ public interface DistributedTaskBuilder<T> {
    /**
     * Completes creation of DistributedTask with the currently provided attributes of this
     * DistributedTaskBuilder
-    * 
+    *
     * @return the built task ready for use
     */
    DistributedTask<T> build();

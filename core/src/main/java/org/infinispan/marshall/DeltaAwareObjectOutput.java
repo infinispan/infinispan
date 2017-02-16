@@ -1,10 +1,10 @@
 package org.infinispan.marshall;
 
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.commons.marshall.DelegatingObjectOutput;
-
 import java.io.IOException;
 import java.io.ObjectOutput;
+
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commons.marshall.DelegatingObjectOutput;
 
 /**
  * An {@link ObjectOutput} delegator that is aware of {@link DeltaAware}.

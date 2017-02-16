@@ -1,9 +1,9 @@
 package org.infinispan.query.remote.client;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com
@@ -34,6 +34,7 @@ public final class MarshallerRegistration {
       ctx.registerMarshaller(new QueryRequest.Marshaller());
       ctx.registerMarshaller(new QueryResponse.Marshaller());
       ctx.registerMarshaller(new FilterResult.Marshaller());
+      ctx.registerMarshaller(new ContinuousQueryResult.ResultType.Marshaller());
       ctx.registerMarshaller(new ContinuousQueryResult.Marshaller());
    }
 }

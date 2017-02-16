@@ -2,9 +2,12 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.clustering.infinispan.subsystem.ModelKeys.DEFAULT_CACHE;
 import static org.jboss.as.clustering.infinispan.subsystem.ModelKeys.JNDI_NAME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
-
-import static org.junit.Assert.*;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -161,9 +164,9 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return Util.getWriteAttributeOperation(cacheStoreAddress, name, new ModelNode().set(value));
     }
 
-    protected static ModelNode getMixedKeyedJDBCCacheStoreReadOperation(String containerName, String cacheType, String cacheName, String name) {
+    protected static ModelNode getStringKeyedJDBCCacheStoreReadOperation(String containerName, String cacheType, String cacheName, String name) {
         // create the address of the subsystem
-        PathAddress cacheAddress = getMixedKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
+        PathAddress cacheAddress = getStringKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
         ModelNode readOp = new ModelNode() ;
         readOp.get(OP).set(READ_ATTRIBUTE_OPERATION);
         readOp.get(OP_ADDR).set(cacheAddress.toModelNode());
@@ -172,13 +175,13 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return readOp ;
     }
 
-    protected static ModelNode getMixedKeyedJDBCCacheStoreWriteOperation(String containerName, String cacheType, String cacheName, String name, String value) {
-        PathAddress cacheStoreAddress = getMixedKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
+    protected static ModelNode getStringKeyedJDBCCacheStoreWriteOperation(String containerName, String cacheType, String cacheName, String name, String value) {
+        PathAddress cacheStoreAddress = getStringKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
         return Util.getWriteAttributeOperation(cacheStoreAddress, name, new ModelNode().set(value));
     }
 
-    protected static ModelNode getMixedKeyedJDBCCacheStoreWriteOperation(String containerName, String cacheType, String cacheName, String name, ModelNode value) {
-        PathAddress cacheStoreAddress = getMixedKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
+    protected static ModelNode getStringKeyedJDBCCacheStoreWriteOperation(String containerName, String cacheType, String cacheName, String name, ModelNode value) {
+        PathAddress cacheStoreAddress = getStringKeyedJDBCCacheStoreAddress(containerName, cacheType, cacheName);
         return Util.getWriteAttributeOperation(cacheStoreAddress, name, value);
     }
 
@@ -201,16 +204,8 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return getCacheStoreAddress(containerName, cacheType, cacheName).append(ModelKeys.PROPERTY, propertyName);
     }
 
-    protected static PathAddress getMixedKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.MIXED_KEYED_JDBC_STORE, JDBC_STORE_NAME);
-    }
-
-    protected static PathAddress getBinaryKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.BINARY_KEYED_JDBC_STORE, ModelKeys.BINARY_KEYED_JDBC_STORE_NAME);
-    }
-
     protected static PathAddress getStringKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.STRING_KEYED_JDBC_STORE_NAME);
+        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.STRING_KEYED_JDBC_STORE, JDBC_STORE_NAME);
     }
 
     protected static PathAddress getRemoteCacheStoreAddress(String containerName, String cacheType, String cacheName) {

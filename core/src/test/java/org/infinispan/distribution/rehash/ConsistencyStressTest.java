@@ -1,5 +1,25 @@
 package org.infinispan.distribution.rehash;
 
+import static java.lang.String.format;
+import static org.infinispan.test.TestingUtil.sleepRandom;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,25 +38,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
-import static java.lang.String.format;
-import static org.infinispan.test.TestingUtil.sleepRandom;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.*;
 
 // As this is a SLOW stress test, leave it disabled by default.  Only run it manually.
 @Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest")

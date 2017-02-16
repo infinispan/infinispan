@@ -1,15 +1,15 @@
 package org.infinispan.factories.components;
 
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.ManagedOperation;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 
 /**
  * A specialization of {@link ComponentMetadata}, this version also includes JMX related metadata, as expressed
@@ -29,7 +29,7 @@ public class ManageableComponentMetadata extends ComponentMetadata {
       super(component, injectMethods, startMethods, stopMethods, global, survivesRestarts);
       if ((managedAttributeFields != null && !managedAttributeFields.isEmpty()) || (managedAttributeMethods != null && !managedAttributeMethods.isEmpty())) {
          attributeMetadata =  new HashSet<JmxAttributeMetadata>((managedAttributeFields == null ? 0 : managedAttributeFields.size()) + (managedAttributeMethods == null ? 0 : managedAttributeMethods.size()));
-         
+
          if (managedAttributeFields != null) {
             for (Field f: managedAttributeFields) attributeMetadata.add(new JmxAttributeMetadata(f));
          }
@@ -38,12 +38,12 @@ public class ManageableComponentMetadata extends ComponentMetadata {
             for (Method m: managedAttributeMethods) attributeMetadata.add(new JmxAttributeMetadata(m));
          }
       }
-      
+
       if (managedOperationMethods != null && !managedOperationMethods.isEmpty()) {
          operationMetadata = new HashSet<JmxOperationMetadata>(managedOperationMethods.size());
          for (Method m: managedOperationMethods) operationMetadata.add(new JmxOperationMetadata(m));
       }
-      
+
       jmxObjectName = mbean.objectName();
       description = mbean.description();
    }

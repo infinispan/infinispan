@@ -1,11 +1,23 @@
 package org.infinispan.api.tree;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.api.mvcc.LockAssert;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -18,20 +30,10 @@ import org.infinispan.tree.Node;
 import org.infinispan.tree.impl.NodeKey;
 import org.infinispan.tree.impl.TreeCacheImpl;
 import org.infinispan.tree.impl.TreeStructureSupport;
-import org.infinispan.commons.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.*;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * Exercises and tests the new move() api.
@@ -553,7 +555,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       assert null != treeCache.getNode(D_B_C);
       assert "v".equals(treeCache.get(D_B_C, "k"));
    }
-   
+
    private Set<Object> asSet(Object... names) {
       return Util.asSet(names);
    }

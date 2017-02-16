@@ -2,7 +2,12 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.statetransfer.*;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateConsumerImpl;
+import org.infinispan.statetransfer.StateProvider;
+import org.infinispan.statetransfer.StateProviderImpl;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.statetransfer.StateTransferManagerImpl;
 
 /**
  * Constructs {@link org.infinispan.statetransfer.StateTransferManager},

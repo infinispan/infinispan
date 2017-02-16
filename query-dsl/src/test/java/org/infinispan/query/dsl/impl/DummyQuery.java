@@ -1,10 +1,10 @@
 package org.infinispan.query.dsl.impl;
 
-import org.infinispan.query.dsl.Query;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.query.dsl.Query;
 
 /**
  * @author anistor@redhat.com
@@ -35,5 +35,15 @@ class DummyQuery implements Query {
    @Override
    public int getResultSize() {
       return 0;
+   }
+
+   @Override
+   public Query startOffset(long startOffset) {
+      return this;
+   }
+
+   @Override
+   public Query maxResults(int maxResults) {
+      return this;
    }
 }

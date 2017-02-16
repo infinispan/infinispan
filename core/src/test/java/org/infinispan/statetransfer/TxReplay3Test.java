@@ -1,5 +1,14 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.wrapComponent;
+import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -23,15 +32,6 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for https://issues.jboss.org/browse/ISPN-6047
@@ -123,14 +123,15 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected void beforeInvokeRemotely(ReplicableCommand command) {
-         super.beforeInvokeRemotely(command);
+      protected Object beforeInvokeRemotely(ReplicableCommand command) {
+         Object arg = super.beforeInvokeRemotely(command);
          log.debugf("Before invoke remotely %s", command);
+         return arg;
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
-         Map<Address, Response> result = super.afterInvokeRemotely(command, responseMap);
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+         Map<Address, Response> result = super.afterInvokeRemotely(command, responseMap, argument);
          log.debugf("After invoke remotely %s. Responses=%s", command, result);
          if (!triggered && command instanceof PrepareCommand) {
             log.debugf("Triggering %s and %s", TX1_LOCKED, TX1_UNSURE);

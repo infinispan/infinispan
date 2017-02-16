@@ -18,6 +18,13 @@
  */
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.BUFFER_SIZE;
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.CONNECTION_TIMEOUT;
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.MAX_CONNECTIONS_PER_HOST;
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.MAX_TOTAL_CONNECTIONS;
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.SOCKET_TIMEOUT;
+import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.TCP_NO_DELAY;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -30,47 +37,41 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractRestStoreConfigurationChildBuilder<RestStoreConfigurationBuilder> implements
       Builder<ConnectionPoolConfiguration> {
-   private int connectionTimeout = 60000;
-   private int maxConnectionsPerHost = 4;
-   private int maxTotalConnections = 20;
-   private int bufferSize = 8192;
-   private int socketTimeout = 60000;
-   private boolean tcpNoDelay = true;
 
    ConnectionPoolConfigurationBuilder(RestStoreConfigurationBuilder builder) {
-      super(builder);
+      super(builder, ConnectionPoolConfiguration.attributeDefinitionSet());
    }
 
    /**
     * Controls the maximum number of connections per host.
     */
    public ConnectionPoolConfigurationBuilder maxConnectionsPerHost(int maxConnectionsPerHost) {
-      this.maxConnectionsPerHost = maxConnectionsPerHost;
+      attributes.attribute(MAX_CONNECTIONS_PER_HOST).set(maxConnectionsPerHost);
       return this;
    }
 
    public ConnectionPoolConfigurationBuilder maxTotalConnections(int maxTotalConnections) {
-      this.maxTotalConnections = maxTotalConnections;
+      attributes.attribute(MAX_TOTAL_CONNECTIONS).set(maxTotalConnections);
       return this;
    }
 
    public ConnectionPoolConfigurationBuilder connectionTimeout(int connectionTimeout) {
-      this.connectionTimeout = connectionTimeout;
+      attributes.attribute(CONNECTION_TIMEOUT).set(connectionTimeout);
       return this;
    }
 
    public ConnectionPoolConfigurationBuilder bufferSize(int bufferSize) {
-      this.bufferSize = bufferSize;
+      attributes.attribute(BUFFER_SIZE).set(bufferSize);
       return this;
    }
 
    public ConnectionPoolConfigurationBuilder socketTimeout(int socketTimeout) {
-      this.socketTimeout = socketTimeout;
+      attributes.attribute(SOCKET_TIMEOUT).set(socketTimeout);
       return this;
    }
 
    public ConnectionPoolConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
-      this.tcpNoDelay = tcpNoDelay;
+      attributes.attribute(TCP_NO_DELAY).set(tcpNoDelay);
       return this;
    }
 
@@ -84,17 +85,17 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRestStoreConfigu
 
    @Override
    public ConnectionPoolConfiguration create() {
-      return new ConnectionPoolConfiguration(connectionTimeout, maxConnectionsPerHost, maxTotalConnections, bufferSize, socketTimeout, tcpNoDelay);
+      return new ConnectionPoolConfiguration(attributes);
    }
 
    @Override
    public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template) {
-      this.connectionTimeout = template.connectionTimeout();
-      this.maxConnectionsPerHost = template.maxConnectionsPerHost();
-      this.maxTotalConnections = template.maxTotalConnections();
-      this.bufferSize = template.bufferSize();
-      this.socketTimeout = template.socketTimeout();
-      this.tcpNoDelay = template.tcpNoDelay();
+      maxConnectionsPerHost(template.maxConnectionsPerHost());
+      maxTotalConnections(template.maxTotalConnections());
+      connectionTimeout(template.connectionTimeout());
+      bufferSize(template.bufferSize());
+      socketTimeout(template.socketTimeout());
+      tcpNoDelay(template.tcpNoDelay());
       return this;
    }
 }

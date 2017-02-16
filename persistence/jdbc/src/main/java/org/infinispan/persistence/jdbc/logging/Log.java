@@ -1,19 +1,20 @@
 package org.infinispan.persistence.jdbc.logging;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.persistence.support.Bucket;
-import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageLogger;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
 
-import javax.naming.NamingException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.WARN;
+import javax.naming.NamingException;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the JDBC cache store. For this module, message ids
@@ -68,14 +69,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error while creating table; used DDL statement: '%s'", id = 8011)
    void errorCreatingTable(String sql, @Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure while inserting bucket: %s", id = 8012)
-   void sqlFailureInsertingBucket(Bucket bucket, @Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure while updating bucket: %s", id = 8013)
-   void sqlFailureUpdatingBucket(Bucket bucket, @Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Sql failure while loading key: %s", id = 8014)
@@ -144,4 +137,28 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Cannot specify a ConnectionFactory and manageConnectionFactory at the same time", id = 8030)
    CacheConfigurationException unmanagedConnectionFactory();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error committing JDBC transaction", id = 8031)
+   void sqlFailureTxCommit(@Cause SQLException e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error during rollback of JDBC transaction", id = 8032)
+   void sqlFailureTxRollback(@Cause SQLException e);
+
+   @Message(value = "Exception encountered when preparing JDBC store Tx", id = 8033)
+   PersistenceException prepareTxFailure(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error when creating Hikari connection pool", id = 8034)
+   void errorCreatingHikariCP(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error loading HikariCP properties file, only the properties set in %s will be loaded", id = 8035)
+   void errorLoadingHikariCPProperties(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to notify the PurgeListener of expired cache entries as the configured key2StringMapper " +
+         "does not implement %s", id = 8036)
+   void twoWayKey2StringMapperIsMissing(String className);
 }

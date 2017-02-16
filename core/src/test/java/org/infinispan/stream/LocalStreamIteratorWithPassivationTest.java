@@ -1,5 +1,21 @@
 package org.infinispan.stream;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,20 +39,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Test to verify distributed entry behavior when a loader with passivation is present in local mode
  *
@@ -45,7 +47,6 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 @Test(groups = "functional", testName = "stream.LocalStreamIteratorWithPassivationTest")
 public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIteratorWithPassivationTest {
-   protected final static String CACHE_NAME = "LocalStreamIteratorWithPassivationTest";
    protected ConfigurationBuilder builderUsed;
 
    public LocalStreamIteratorWithPassivationTest() {
@@ -112,7 +113,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          sm.stop();
       }
    }
-   
+
    @Test
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
@@ -173,7 +174,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          sm.stop();
       }
    }
-   
+
    @Test(enabled = false, description = "This requires supporting concurrent activation in cache loader interceptor")
    public void testConcurrentActivationWithConverter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
@@ -187,7 +188,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       final String loaderValue = "loader0";
 
       cache.putAll(originalValues);
-      
+
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 
@@ -322,4 +323,3 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       }
    }
 }
-

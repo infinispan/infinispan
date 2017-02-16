@@ -11,8 +11,8 @@ import org.infinispan.distribution.group.Grouper;
  *
  */
 public class KXGrouper implements Grouper<String> {
-    
-    private static Pattern kPattern = Pattern.compile("(^k)(\\d)$"); 
+
+    private static Pattern kPattern = Pattern.compile("(^k)(\\d)$");
 
     @Override
     public String computeGroup(String key, String group) {
@@ -24,11 +24,11 @@ public class KXGrouper implements Grouper<String> {
         else
             return null;
     }
-    
+
     @Override
     public Class<String> getKeyType() {
         return String.class;
     }
-    
-    
+
+
 }

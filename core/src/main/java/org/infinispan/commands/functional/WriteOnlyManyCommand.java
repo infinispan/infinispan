@@ -1,48 +1,53 @@
 package org.infinispan.commands.functional;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.function.Consumer;
+
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.lifecycle.ComponentStatus;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
+import org.infinispan.functional.impl.Params;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
    public static final byte COMMAND_ID = 56;
 
-   private Set<? extends K> keys;
+   private Collection<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+   public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
+      super(commandInvocationId);
       this.keys = keys;
       this.f = f;
+      this.params = params;
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
-      this.keys = command.getKeys();
+      this.commandInvocationId = command.commandInvocationId;
+      this.keys = command.keys;
       this.f = command.f;
+      this.params = command.params;
+      this.flags = command.flags;
    }
 
    public WriteOnlyManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
-      return keys;
+   public void setKeys(Collection<? extends K> keys) {
+      this.keys = keys;
    }
 
-   public void setKeys(Set<? extends K> keys) {
-      this.keys = keys;
+   public final WriteOnlyManyCommand<K, V> withKeys(Collection<? extends K> keys) {
+      setKeys(keys);
+      return this;
    }
 
    @Override
@@ -52,16 +57,24 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.writeObject(output, params);
+      output.writeInt(topologyId);
+      output.writeLong(flags);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      commandInvocationId = CommandInvocationId.readFrom(input);
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, ArrayList::new);
       f = (Consumer<WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.readObject(input);
+      topologyId = input.readInt();
+      flags = input.readLong();
    }
 
    @Override
@@ -71,58 +84,29 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
-
-      // TODO: Simplify with a collect() call
-      List<Void> returns = new ArrayList<>(keys.size());
-      keys.forEach(k -> {
+      for (K k : keys) {
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(k);
-
-         // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry != null) {
-            f.accept(EntryViews.writeOnly(cacheEntry));
-            returns.add(null);
+         if (cacheEntry == null) {
+            throw new IllegalStateException();
          }
-      });
-      return returns.stream();
+         f.accept(EntryViews.writeOnly(cacheEntry));
+      }
+      return null;
    }
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Set<Object> getAffectedKeys() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean readsExistingValues() {
       return false;
    }
 
    @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public Collection<?> getAffectedKeys() {
+      return keys;
+   }
+
+   @Override
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override
@@ -130,4 +114,24 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       return true;
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("WriteOnlyManyCommand{");
+      sb.append("keys=").append(keys);
+      sb.append(", f=").append(f.getClass().getName());
+      sb.append(", isForwarded=").append(isForwarded);
+      sb.append('}');
+      return sb.toString();
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      // TODO: fixup the generics
+      return (Collection<Object>) keys;
+   }
+
+   @Override
+   public Mutation<K, V, ?> toMutation(K key) {
+      return new Mutations.Write<>(f);
+   }
 }

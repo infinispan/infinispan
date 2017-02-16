@@ -1,6 +1,5 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.marshall.AdaptiveBufferSizePredictor;
 import org.testng.annotations.Test;
 
 /**

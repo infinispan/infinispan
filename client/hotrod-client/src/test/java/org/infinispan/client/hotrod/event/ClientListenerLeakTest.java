@@ -1,5 +1,9 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.detectThreadLeaks;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -7,11 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.detectThreadLeaks;
-
-@Test(groups = "functional", testName = "client.hotrod.event.ClientListenerLifecycleTest")
+@Test(groups = "functional", testName = "client.hotrod.event.ClientListenerLeakTest")
 public class ClientListenerLeakTest extends SingleHotRodServerTest {
 
    private String cacheName;

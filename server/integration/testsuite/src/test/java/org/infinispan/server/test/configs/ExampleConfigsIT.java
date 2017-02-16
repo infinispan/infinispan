@@ -1,5 +1,27 @@
 package org.infinispan.server.test.configs;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
+import static org.infinispan.server.test.client.rest.RESTHelper.delete;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.infinispan.server.test.util.ITestUtils.stopContainers;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
@@ -8,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.ObjectName;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
@@ -35,9 +57,9 @@ import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
-import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
@@ -48,15 +70,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
-import static org.infinispan.server.test.util.ITestUtils.eventually;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.infinispan.server.test.util.ITestUtils.stopContainers;
-import static org.junit.Assert.*;
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 
 /**
  * Tests for example configurations.
@@ -201,7 +214,7 @@ public class ExampleConfigsIT {
             post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
 
             //Source node entries should NOT be accessible from target node
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpServletResponse.SC_NOT_FOUND);
+            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
 
             //All remaining entries migrated?
             for (int i = 0; i < 50; i++) {
@@ -239,7 +252,7 @@ public class ExampleConfigsIT {
             // 2. Get with REST
             HttpGet get = new HttpGet(restUrl + "/" + key);
             HttpResponse getResponse = restClient.execute(get);
-            assertEquals(HttpServletResponse.SC_OK, getResponse.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
             assertArrayEquals("v1".getBytes(), EntityUtils.toByteArray(getResponse.getEntity()));
 
             // 3. Get with Memcached
@@ -251,7 +264,7 @@ public class ExampleConfigsIT {
             HttpPut put = new HttpPut(restUrl + "/" + key);
             put.setEntity(new ByteArrayEntity("<hey>ho</hey>".getBytes(), ContentType.APPLICATION_OCTET_STREAM));
             HttpResponse putResponse = restClient.execute(put);
-            assertEquals(HttpServletResponse.SC_OK, putResponse.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
 
             // 2. Get with Hot Rod
             assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[]) s1Cache.get(key));
@@ -298,11 +311,11 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "standalone-leveldb-cs-local")})
-    public void testLevelDBCacheStoreConfig() throws Exception {
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", DEFAULT_CACHE_NAME), "level-dcdefault", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", MEMCACHED_CACHE_NAME), "level-mcmemcachedCache", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", NAMED_CACHE_NAME), "leveldb-ncnamedCache", 2.1);
+    @WithRunningServer({@RunningServer(name = "standalone-rocksdb-cs-local")})
+    public void testRocksDBCacheStoreConfig() throws Exception {
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", DEFAULT_CACHE_NAME), "rocksdb-dcdefault", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", MEMCACHED_CACHE_NAME), "rocksdb-mcmemcachedCache", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", NAMED_CACHE_NAME), "rocksdb-ncnamedCache", 2.1);
     }
 
     @Test
@@ -530,23 +543,23 @@ public class ExampleConfigsIT {
         post(fullPathKey(0, KEY_A), "data", "text/plain");
         get(fullPathKey(1, KEY_A), "data");
         delete(fullPathKey(0, KEY_A));
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
         setUpREST(s1.server, s2.server);
         post(fullPathKey(0, KEY_A), "data", "text/plain");
         post(fullPathKey(0, KEY_B), "data", "text/plain");
         head(fullPathKey(0, KEY_A));
         head(fullPathKey(0, KEY_B));
         delete(fullPathKey(0, null));
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(1, KEY_B), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_B), HttpStatus.SC_NOT_FOUND);
         setUpREST(s1.server, s2.server);
-        post(fullPathKey(0, KEY_A), "data", "application/text", HttpServletResponse.SC_OK,
+        post(fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
         head(fullPathKey(1, KEY_A));
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -584,9 +597,9 @@ public class ExampleConfigsIT {
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
 
-        head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(KEY_C), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
+        head(fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
     }
 
     private void addServer(RemoteInfinispanServer server) {

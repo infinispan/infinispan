@@ -1,14 +1,14 @@
 package org.infinispan.objectfilter.impl;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
-import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
-import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
-import org.infinispan.objectfilter.impl.util.ReflectionHelper;
-
 import java.beans.IntrospectionException;
 import java.util.List;
+
+import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
+import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
+import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 /**
  * @author anistor@redhat.com
@@ -24,13 +24,13 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       this(new ReflectionEntityNamesResolver(classLoader));
    }
 
-   public ReflectionMatcher(EntityNamesResolver entityNamesResolver) {
-      super(new ReflectionPropertyHelper(entityNamesResolver));
+   public ReflectionMatcher(EntityNameResolver entityNameResolver) {
+      super(new ReflectionPropertyHelper(entityNameResolver));
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startMultiTypeContext(Object userContext, Object eventType, Object instance) {
-      FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(instance.getClass());
+   protected ReflectionMatcherEvalContext startMultiTypeContext(boolean isDeltaFilter, Object userContext, Object eventType, Object instance) {
+      FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(isDeltaFilter, instance.getClass());
       if (filterRegistry != null) {
          ReflectionMatcherEvalContext context = new ReflectionMatcherEvalContext(userContext, eventType, instance);
          context.initMultiFilterContext(filterRegistry);
@@ -46,11 +46,6 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       } else {
          return null;
       }
-   }
-
-   @Override
-   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
-      return filtersByType.get(entityType);
    }
 
    @Override

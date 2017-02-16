@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,8 +13,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests for Mass Indexer in a local cache.

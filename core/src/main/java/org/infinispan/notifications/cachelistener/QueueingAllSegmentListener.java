@@ -1,16 +1,15 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.commons.equivalence.Equivalence;
+import java.util.Iterator;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
-
-import java.util.Iterator;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This handler is to be used when all the events must be queued until the iteration process is complete.
@@ -26,21 +25,21 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
          new ConcurrentLinkedQueue<>();
    protected final InternalEntryFactory entryFactory;
 
-   QueueingAllSegmentListener(InternalEntryFactory entryFactory, Equivalence<? super K> keyEquivalence) {
-      super(keyEquivalence);
+   QueueingAllSegmentListener(InternalEntryFactory entryFactory) {
       this.entryFactory = entryFactory;
    }
 
    @Override
-   public boolean handleEvent(Event<K, V> event, ListenerInvocation<Event<K, V>> invocation) {
+   public boolean handleEvent(EventWrapper<K, V, Event<K, V>> wrapper, ListenerInvocation<Event<K, V>> invocation) {
       boolean queued = !completed.get();
       if (queued) {
          boolean continueQueueing = true;
+         Event<K, V> event = wrapper.getEvent();
          if (event instanceof CacheEntryEvent) {
             CacheEntryEvent<K, V> cacheEvent = (CacheEntryEvent<K, V>) event;
             CacheEntry<K, V> cacheEntry = entryFactory.create(cacheEvent.getKey(), cacheEvent.getValue(),
                                                               cacheEvent.getMetadata());
-            if (addEvent(cacheEntry.getKey(), cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
+            if (addEvent(wrapper.getKey(), cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
                continueQueueing = false;
             }
          }

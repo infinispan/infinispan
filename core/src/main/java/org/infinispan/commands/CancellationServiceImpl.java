@@ -9,9 +9,9 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * CancellationServiceImpl is a default implementation of {@link CancellationService}
- * 
+ *
  * @author Vladimir Blagojevic
- * @since 5.2 
+ * @since 5.2
  */
 public class CancellationServiceImpl implements CancellationService {
 
@@ -30,7 +30,7 @@ public class CancellationServiceImpl implements CancellationService {
 
    @Override
    public void cancel(UUID id) {
-      Thread thread = commandThreadMap.get(id);       
+      Thread thread = commandThreadMap.get(id);
       if (thread != null) {
          log.trace("Calling interrupt on thread " + thread);
          thread.interrupt();

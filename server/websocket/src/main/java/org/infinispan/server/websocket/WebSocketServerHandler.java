@@ -1,5 +1,25 @@
 package org.infinispan.server.websocket;
 
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
+import static io.netty.handler.codec.http.HttpHeaders.setContentLength;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
+import java.io.StringWriter;
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.server.core.CacheIgnoreAware;
+import org.infinispan.server.websocket.json.JsonConversionException;
+import org.infinispan.server.websocket.json.JsonObject;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -18,25 +38,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.util.CharsetUtil;
-import org.infinispan.Cache;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.server.core.CacheIgnoreAware;
-import org.infinispan.server.websocket.json.JsonConversionException;
-import org.infinispan.server.websocket.json.JsonObject;
-
-import java.io.StringWriter;
-import java.lang.invoke.MethodHandles;
-import java.util.Map;
-
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
-import static io.netty.handler.codec.http.HttpHeaders.setContentLength;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Web Socket Server Handler (Netty).

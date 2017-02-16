@@ -1,8 +1,8 @@
 package org.infinispan.remoting.inboundhandler.action;
 
-import org.infinispan.util.concurrent.locks.RemoteLockCommand;
-
 import java.util.List;
+
+import org.infinispan.commands.ReplicableCommand;
 
 /**
  * The state used by an {@link Action}.
@@ -14,20 +14,20 @@ import java.util.List;
  */
 public class ActionState {
 
-
-   private final RemoteLockCommand command;
+   private final ReplicableCommand command;
    private final int commandTopologyId;
    private volatile long timeout;
    private volatile List<Object> filteredKeys;
 
-   public ActionState(RemoteLockCommand command, int commandTopologyId, long timeout) {
+   public ActionState(ReplicableCommand command, int commandTopologyId, long timeout) {
       this.command = command;
       this.commandTopologyId = commandTopologyId;
       this.timeout = timeout;
    }
 
-   public final RemoteLockCommand getCommand() {
-      return command;
+   public final <T extends ReplicableCommand> T getCommand() {
+      //noinspection unchecked
+      return (T) command;
    }
 
    public final int getCommandTopologyId() {

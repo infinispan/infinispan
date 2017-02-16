@@ -1,8 +1,8 @@
 package org.infinispan.hibernate.search.sharedIndex;
 
-import org.hibernate.search.annotations.Indexed;
-
 import javax.persistence.Entity;
+
+import org.hibernate.search.annotations.Indexed;
 
 @Entity
 @Indexed(index = "device")

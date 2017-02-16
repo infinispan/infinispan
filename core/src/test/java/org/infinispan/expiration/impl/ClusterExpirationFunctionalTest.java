@@ -1,21 +1,22 @@
 package org.infinispan.expiration.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests to make sure that when expiration occurs it occurs across the cluster
@@ -24,6 +25,7 @@ import static org.testng.AssertJUnit.assertNull;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "expiration.impl.ClusterExpirationFunctionalTest")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
 public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    protected final Log log = LogFactory.getLog(getClass());
@@ -39,7 +41,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.clustering().cacheMode(cacheMode);
       createCluster(builder, 3);
       waitForClusterToForm();
       injectTimeServices();
@@ -90,10 +92,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       assertEquals(key.toString(), otherCache.get(key));
 
       // By calling get on an expired key it will remove it all over
-      assertNull(expiredCache.get(key));
-
+      Object expiredValue = expiredCache.get(key);
+      assertNull(expiredValue);
       // This should be expired on the other node soon - note expiration is done asynchronously on a get
       eventually(() -> !otherCache.containsKey(key), 10, TimeUnit.SECONDS);
+
    }
 
    public void testExpiredOnBoth() {

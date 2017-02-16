@@ -2,11 +2,12 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jcip.annotations.Immutable;
-
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Performs a step in the challenge/response authentication operation
@@ -21,8 +22,9 @@ public class AuthOperation extends HotRodOperation {
    private final String saslMechanism;
    private final byte[] response;
 
-   public AuthOperation(Codec codec, AtomicInteger topologyId, Transport transport, String saslMechanism, byte response[]) {
-      super(codec, 0, DEFAULT_CACHE_NAME_BYTES, topologyId);
+   public AuthOperation(Codec codec, AtomicInteger topologyId, ClientIntelligence clientIntelligence, Transport transport,
+                        String saslMechanism, byte response[]) {
+      super(codec, 0,  clientIntelligence, DEFAULT_CACHE_NAME_BYTES, topologyId);
       this.transport = transport;
       this.saslMechanism = saslMechanism;
       this.response = response;

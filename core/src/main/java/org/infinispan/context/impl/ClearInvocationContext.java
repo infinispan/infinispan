@@ -1,13 +1,13 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ClearCacheEntry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClearCacheEntry;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Implementation of {@link org.infinispan.context.InvocationContext} used by the {@link
@@ -20,7 +20,7 @@ public class ClearInvocationContext extends AbstractInvocationContext implements
 
    private static final Map<Object, CacheEntry> LOOKUP_ENTRIES = Collections.singletonMap((Object) "_clear_", (CacheEntry) ClearCacheEntry.getInstance());
 
-   public ClearInvocationContext(Address origin, SequentialInterceptorChain interceptorChain) {
+   public ClearInvocationContext(Address origin, AsyncInterceptorChain interceptorChain) {
       super(origin);
    }
 

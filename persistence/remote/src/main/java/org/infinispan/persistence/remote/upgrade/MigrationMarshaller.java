@@ -19,4 +19,3 @@ public class MigrationMarshaller extends AbstractJBossMarshaller {
    }
 
 }
-

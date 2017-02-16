@@ -11,8 +11,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Handles x-site data backups for non-transactional caches.
  *
@@ -32,44 +30,45 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command);
    }
 
    @Override
-   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
-   private CompletableFuture<Void> handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      Object result = ctx.forkInvocationSync(command);
-      if (skipXSiteBackup(command)) {
-         return ctx.shortCircuit(result);
-      } else if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey())) {
-         backupSender.processResponses(backupSender.backupWrite(transform(command)), command);
-      }
-      return ctx.shortCircuit(result);
+   private Object handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         if (!skipXSiteBackup(dataWriteCommand)) {
+            if (dataWriteCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(dataWriteCommand.getKey())) {
+               backupSender.processResponses(backupSender.backupWrite(transform(dataWriteCommand)), dataWriteCommand);
+            }
+         }
+      });
    }
 
    private WriteCommand transform(DataWriteCommand command) {
       if (command instanceof PutKeyValueCommand) {
          PutKeyValueCommand putCommand = (PutKeyValueCommand) command;
          return commandsFactory.buildPutKeyValueCommand(putCommand.getKey(), putCommand.getValue(),
-                                                        command.getMetadata(), command.getFlagsBitSet());
+                                                        putCommand.getMetadata(), putCommand.getFlagsBitSet());
       } else if (command instanceof ReplaceCommand) {
          ReplaceCommand replaceCommand = (ReplaceCommand) command;
          return commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(), replaceCommand.getNewValue(),
-                                                        command.getMetadata(), command.getFlagsBitSet());
+                                                        replaceCommand.getMetadata(), replaceCommand.getFlagsBitSet());
       } else if (command instanceof RemoveCommand) {
          return commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
       }

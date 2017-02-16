@@ -1,5 +1,10 @@
 package org.infinispan.query.continuous.impl;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -8,14 +13,10 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * A container of continuous query listeners for a cache.
@@ -24,7 +25,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 8.2
  */
-public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
+public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 
    private final Cache<K, V> cache;
 
@@ -38,10 +39,23 @@ public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    }
 
    @Override
-   public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
+   public <C> void addContinuousQueryListener(String queryString, ContinuousQueryListener<K, C> listener) {
+      addContinuousQueryListener(queryString, null, listener);
+   }
+
+   @Override
+   public <C> void addContinuousQueryListener(String queryString, Map<String, Object> namedParameters, ContinuousQueryListener<K, C> listener) {
       EntryListener<K, V, C> entryListener = new EntryListener<>(listener);
-      cache.addListener(entryListener, makeFilter(query), null);
+      JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> filterConverter
+            = new JPAContinuousQueryCacheEventFilterConverter<>(queryString, namedParameters, ReflectionMatcher.class);
+      cache.addListener(entryListener, filterConverter, null);
       listeners.add(entryListener);
+   }
+
+   @Override
+   public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
+      BaseQuery baseQuery = (BaseQuery) query;
+      addContinuousQueryListener(baseQuery.getQueryString(), baseQuery.getParameters(), listener);
    }
 
    @Override
@@ -73,11 +87,6 @@ public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       listeners.clear();
    }
 
-   private JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> makeFilter(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      return new JPAContinuousQueryCacheEventFilterConverter<>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
-   }
-
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
    private static final class EntryListener<K, V, C> {
 
@@ -93,11 +102,23 @@ public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       @CacheEntryExpired
       public void handleEvent(CacheEntryEvent<K, ContinuousQueryResult<V>> event) {
          ContinuousQueryResult<V> cqr = event.getValue();
-         if (cqr.isJoining()) {
-            C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
-            listener.resultJoining(event.getKey(), value);
-         } else {
-            listener.resultLeaving(event.getKey());
+         switch (cqr.getResultType()) {
+            case JOINING: {
+               C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
+               listener.resultJoining(event.getKey(), value);
+               break;
+            }
+            case UPDATED: {
+               C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
+               listener.resultUpdated(event.getKey(), value);
+               break;
+            }
+            case LEAVING: {
+               listener.resultLeaving(event.getKey());
+               break;
+            }
+            default:
+               throw new IllegalStateException("Unexpected result type : " + cqr.getResultType());
          }
       }
    }

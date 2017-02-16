@@ -1,6 +1,9 @@
 package org.infinispan.server.test.task;
 
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.*;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.EXECUTOR_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.EXECUTOR_PASSWORD;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -16,7 +19,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.LocalAuthTestServerTask;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -71,7 +74,7 @@ public class LocalAuthServerTaskIT {
 
     @Test
     public void shouldPassWithAuth() throws Exception {
-        SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+        SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
         config.forIspnServer(server).withServerName("node0");
         config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
@@ -84,7 +87,7 @@ public class LocalAuthServerTaskIT {
 
     @Test
     public void shouldThrowException() throws Exception {
-        SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
+        SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
         config.forIspnServer(server).withServerName("node0");
         config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);

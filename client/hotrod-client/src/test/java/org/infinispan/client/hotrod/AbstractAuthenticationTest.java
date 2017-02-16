@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -28,6 +31,10 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
    protected abstract SimpleServerAuthenticationProvider createAuthenticationProvider();
 
    protected ConfigurationBuilder initServerAndClient() {
+      return initServerAndClient(Collections.emptyMap());
+   }
+
+   protected ConfigurationBuilder initServerAndClient(Map<String, String> mechProperties) {
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder.authentication()
@@ -35,6 +42,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .serverName("localhost")
          .addAllowedMech("CRAM-MD5")
          .serverAuthenticationProvider(createAuthenticationProvider());
+      serverBuilder.authentication().mechProperties(mechProperties);
       hotrodServer.start(serverBuilder.build(), cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
@@ -51,7 +59,8 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .enable()
          .saslMechanism("CRAM-MD5")
          .connectionPool()
-         .timeBetweenEvictionRuns(2000);
+            .maxActive(1)
+            .timeBetweenEvictionRuns(2000);
       return clientBuilder;
    }
 

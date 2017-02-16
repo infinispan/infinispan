@@ -1,5 +1,15 @@
 package org.infinispan.server.test.security.cache;
 
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_CACHE_NAME;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_SERVER_NAME;
+
+import java.security.PrivilegedActionException;
+
+import javax.security.auth.login.LoginException;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -7,7 +17,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
+import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -15,13 +25,6 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.security.PrivilegedActionException;
-import javax.security.auth.login.LoginException;
-
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.*;
 
 /**
  *
@@ -59,7 +62,7 @@ public class ClusteredCacheAuthExteranlIT {
 
     public void initRCM() {
         controller.start(ARQ_NODE_1_ID);
-        final SaslConfigurationBuilder cb = new SaslConfigurationBuilder(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
+        final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
         rcm = new RemoteCacheManager(cb.forExternalAuth().build(), true);
         controller.stop(ARQ_NODE_1_ID);
         isInitialized = true;

@@ -1,16 +1,16 @@
 package org.infinispan.client.hotrod.xsite;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.testng.annotations.Test;
-
-import java.util.Optional;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-@Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
+import java.util.Optional;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.testng.annotations.Test;
+
+@Test(groups = "functional", testName = "client.hotrod.xsite.SiteManualSwitchTest")
 public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
 
    @Override

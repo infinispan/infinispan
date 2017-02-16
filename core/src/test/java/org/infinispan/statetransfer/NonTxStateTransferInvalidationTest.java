@@ -1,37 +1,29 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.topology.CacheJoinInfo;
-import org.infinispan.topology.ClusterTopologyManager;
-import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.Cache;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.test.Exceptions;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.Test;
 
 /**
  * Test if state transfer happens properly on a non-tx invalidation cache.
@@ -42,7 +34,7 @@ import static org.testng.AssertJUnit.fail;
 @CleanupAfterMethod
 public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTest {
 
-   public static final int NUM_KEYS = 100;
+   public static final int NUM_KEYS = 10;
    private ConfigurationBuilder dccc;
 
    @Override
@@ -67,7 +59,6 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       waitForClusterToForm();
 
       log.trace("Checking the values from caches...");
-      int keysOnJoiner = 0;
       for (Object key : keys) {
          log.tracef("Checking key: %s", key);
          // check them directly in data container
@@ -80,52 +71,57 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       }
    }
 
-   @Test(groups = "unstable", description = "See ISPN-4016")
-   public void testInvalidationDuringStateTransfer() throws Exception {
-      cache(0).put("key1", "value1");
+   public void testConfigValidation() {
+      ConfigurationBuilder builder1 = new ConfigurationBuilder();
+      builder1.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).stateTransfer();
+      builder1.validate();
 
-      CheckPoint checkPoint = new CheckPoint();
-      blockJoinResponse(manager(0), checkPoint);
+      ConfigurationBuilder builder2 = new ConfigurationBuilder();
+      builder2.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).stateTransfer().fetchInMemoryState(true);
+      Exceptions.expectException(CacheConfigurationException.class, builder2::validate);
 
-      addClusterEnabledCacheManager(dccc);
-      Future<Object> joinFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            // The cache only joins here
-            return cache(2);
-         }
-      });
+      ConfigurationBuilder builder3 = new ConfigurationBuilder();
+      builder3.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      builder3.validate();
 
-      checkPoint.awaitStrict("sending_join_response", 10, SECONDS);
-
-      // This will invoke an invalidation on the joiner
-      CompletableFuture<Object> putFuture = cache(0).putAsync("key2", "value2");
-      try {
-         putFuture.get(1, SECONDS);
-         fail("Put operation should have been blocked, but it finished successfully");
-      } catch (java.util.concurrent.TimeoutException e) {
-         // expected
-      }
-
-      checkPoint.trigger("resume_join_response");
-      putFuture.get(10, SECONDS);
+      ConfigurationBuilder builder4 = new ConfigurationBuilder();
+      builder4.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).fetchPersistentState(true);
+      Exceptions.expectException(CacheConfigurationException.class, builder4::validate);
    }
 
-   private void blockJoinResponse(final EmbeddedCacheManager manager, final CheckPoint checkPoint)
-         throws Exception {
-      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
-      ClusterTopologyManager mockManager = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer<Object>() {
+   public void testInvalidationDuringStateTransfer() throws Exception {
+      EmbeddedCacheManager node1 = manager(0);
+      Cache<String, Object> node1Cache = node1.getCache();
+      EmbeddedCacheManager node2 = manager(1);
+      Cache<String, Object> node2Cache = node2.getCache();
+      CountDownLatch latch = new CountDownLatch(1);
+      node2Cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
          @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object answer = forwardedAnswer.answer(invocation);
-            checkPoint.trigger("sending_join_response");
-            checkPoint.awaitStrict("resume_join_response", 10, SECONDS);
-            return answer;
+         public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws
+               Throwable {
+            latch.await(10, TimeUnit.SECONDS);
+            return super.visitInvalidateCommand(ctx, command);
          }
-      }).when(mockManager).handleJoin(anyString(), any(Address.class), any(CacheJoinInfo.class), anyInt());
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
+      }, 0);
+
+      String key = "key";
+      Future<?> future = fork(() -> {
+         node1Cache.putForExternalRead(key, new Object());
+         node1Cache.remove(key);
+      });
+
+      EmbeddedCacheManager node3 = addClusterEnabledCacheManager(dccc);
+      Cache<Object, Object> node3Cache = node3.getCache();
+      TestingUtil.waitForRehashToComplete(caches());
+      log.info("Node 3 started");
+      latch.countDown();
+
+      future.get(30, TimeUnit.SECONDS);
+      assertNull(node1Cache.get(key));
+      assertNull(node2Cache.get(key));
+      assertNull(node3Cache.get(key));
    }
 
 }

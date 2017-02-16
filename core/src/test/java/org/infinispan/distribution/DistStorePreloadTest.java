@@ -1,16 +1,18 @@
 package org.infinispan.distribution;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InTransactionMode;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test preloading with a distributed cache.
@@ -19,14 +21,13 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
+@InTransactionMode({ TransactionMode.TRANSACTIONAL, TransactionMode.NON_TRANSACTIONAL })
 public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
 
    public static final int NUM_KEYS = 10;
 
    public DistStorePreloadTest() {
       INIT_CLUSTER_SIZE = 1;
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = true;
       preload = true;

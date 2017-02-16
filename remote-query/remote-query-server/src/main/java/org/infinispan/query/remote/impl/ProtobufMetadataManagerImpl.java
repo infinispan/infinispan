@@ -1,12 +1,23 @@
 package org.infinispan.query.remote.impl;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.management.MBeanException;
+import javax.management.ObjectName;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -17,29 +28,19 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.query.remote.impl.indexing.IndexingMetadataCreator;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
-import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-
-import javax.management.MBeanException;
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -58,21 +59,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    private EmbeddedCacheManager cacheManager;
 
    public ProtobufMetadataManagerImpl() {
-      org.infinispan.protostream.config.Configuration.Builder configBuilder = new org.infinispan.protostream.config.Configuration.Builder();
-      configBuilder
-            .messageAnnotation(IndexingMetadata.INDEXED_ANNOTATION)
-               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-                  .booleanType()
-                  .defaultValue(true)
-               .annotationMetadataCreator(new IndexingMetadataCreator())
-            .fieldAnnotation(IndexingMetadata.INDEXED_FIELD_ANNOTATION)
-               .attribute("index")
-                  .booleanType()
-                  .defaultValue(true)
-               .attribute("store")
-                  .booleanType()
-                  .defaultValue(true);
-      serCtx = ProtobufUtil.newSerializationContext(configBuilder.build());
+      Configuration.Builder cfgBuilder = Configuration.builder();
+      IndexingMetadata.configure(cfgBuilder);
+      serCtx = ProtobufUtil.newSerializationContext(cfgBuilder.build());
       try {
          MarshallerRegistration.registerMarshallers(serCtx);
       } catch (IOException | DescriptorParserException e) {
@@ -84,8 +73,8 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    protected void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
-                                                  getProtobufMetadataCacheConfig().build(),
-                                                  EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
+            getProtobufMetadataCacheConfig().build(),
+            EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
    }
 
    /**
@@ -172,12 +161,13 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @ManagedAttribute(description = "The names of all Protobuf files", displayName = "Protofile Names")
    @Override
    public String[] getProtofileNames() {
-      Set<String> fileNames = new HashSet<>();
+      List<String> fileNames = new ArrayList<>();
       for (String k : getCache().keySet()) {
          if (k.endsWith(PROTO_KEY_SUFFIX)) {
             fileNames.add(k);
          }
       }
+      Collections.sort(fileNames);
       return fileNames.toArray(new String[fileNames.size()]);
    }
 
@@ -197,7 +187,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       if (filesWithErrors == null) {
          return null;
       }
-      return filesWithErrors.split("\n");
+      String[] fileNames = filesWithErrors.split("\n");
+      Arrays.sort(fileNames);
+      return fileNames;
    }
 
    @ManagedOperation(description = "Obtains the errors associated with a protobuf definition file", displayName = "Get Errors For A File")
@@ -225,10 +217,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          throw new IllegalStateException("ProtobufMetadataManager not initialised yet!");
       }
       return metadataManager;
-   }
-
-   public static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
-      return new DelegatingSerializationContext(getProtobufMetadataManager(cacheManager));
    }
 
    public static SerializationContext getSerializationContextInternal(EmbeddedCacheManager cacheManager) {

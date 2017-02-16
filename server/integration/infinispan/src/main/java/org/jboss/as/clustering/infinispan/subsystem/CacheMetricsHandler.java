@@ -22,13 +22,24 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
@@ -51,17 +62,6 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceController;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Handler which manages read-only access to cache runtime information (metrics)
@@ -90,6 +90,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         HITS(MetricKeys.HITS, ModelType.LONG, true),
         MISSES(MetricKeys.MISSES, ModelType.LONG, true),
         NUMBER_OF_ENTRIES(MetricKeys.NUMBER_OF_ENTRIES, ModelType.INT, true),
+        OFF_HEAP_MEMORY_USED(MetricKeys.OFF_HEAP_MEMORY_USED, ModelType.LONG, true),
         READ_WRITE_RATIO(MetricKeys.READ_WRITE_RATIO, ModelType.DOUBLE, true),
         REMOVE_HITS(MetricKeys.REMOVE_HITS, ModelType.LONG, true),
         REMOVE_MISSES(MetricKeys.REMOVE_MISSES, ModelType.LONG, true),
@@ -130,20 +131,20 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         final AttributeDefinition definition;
         final boolean clustered;
 
-        private CacheMetrics(final AttributeDefinition definition, final boolean clustered) {
+        CacheMetrics(final AttributeDefinition definition, final boolean clustered) {
             this.definition = definition;
             this.clustered = clustered;
         }
 
-        private CacheMetrics(String attributeName, ModelType type, boolean allowNull) {
+        CacheMetrics(String attributeName, ModelType type, boolean allowNull) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), false);
         }
 
-        private CacheMetrics(String attributeName, ModelType type, boolean allowNull, final boolean clustered) {
+        CacheMetrics(String attributeName, ModelType type, boolean allowNull, final boolean clustered) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), clustered);
         }
 
-        private CacheMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
+        CacheMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
             if (outerType != ModelType.LIST) {
                 throw new IllegalArgumentException();
             }
@@ -192,7 +193,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
             DefaultLockManager lockManager = (DefaultLockManager) SecurityActions.getLockManager(aCache);
             RpcManagerImpl rpcManager = (RpcManagerImpl) SecurityActions.getRpcManager(aCache);
-            List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
+            List<AsyncInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
             ComponentStatus status = SecurityActions.getCacheStatus(aCache);
             switch (metric) {
@@ -251,6 +252,11 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case NUMBER_OF_ENTRIES: {
                     CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getNumberOfEntries() : 0);
+                    break;
+                }
+                case OFF_HEAP_MEMORY_USED: {
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
+                    result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getOffHeapMemoryUsed() : 0);
                     break;
                 }
                 case READ_WRITE_RATIO: {
@@ -322,13 +328,13 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 }
                 case CACHE_LOADER_LOADS: {
-                    ActivationInterceptor
-                          interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
+                    CacheLoaderInterceptor
+                          interceptor = getFirstInterceptorWhichExtends(interceptors, CacheLoaderInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderLoads() : 0);
                     break;
                 }
                 case CACHE_LOADER_MISSES: {
-                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
+                    CacheLoaderInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, CacheLoaderInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderMisses() : 0);
                     break;
                 }
@@ -383,9 +389,9 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         }
     }
 
-    public static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(List<SequentialInterceptor> interceptors,
+    public static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(List<AsyncInterceptor> interceptors,
                                                                                     Class<T> interceptorClass) {
-        for (SequentialInterceptor interceptor : interceptors) {
+        for (AsyncInterceptor interceptor : interceptors) {
             boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
             if (isSubclass) {
                 return (T) interceptor;

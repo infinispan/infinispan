@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.near;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -8,9 +11,6 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.near.InvalidatedNearCacheTest")
 public class InvalidatedNearCacheTest extends SingleHotRodServerTest {

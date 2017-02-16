@@ -1,32 +1,32 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.infinispan.objectfilter.impl.util.StringHelper;
-
-import java.util.Arrays;
+import org.infinispan.objectfilter.impl.ql.PropertyPath;
 
 /**
+ * A property reference expression.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
 public class PropertyValueExpr implements ValueExpr {
 
-   protected final String[] propertyPath;
+   protected final PropertyPath<?> propertyPath;
 
    protected final boolean isRepeated;
 
    protected final Class<?> primitiveType;
 
-   public PropertyValueExpr(String[] propertyPath, boolean isRepeated, Class<?> primitiveType) {
+   public PropertyValueExpr(PropertyPath<?> propertyPath, boolean isRepeated, Class<?> primitiveType) {
       this.propertyPath = propertyPath;
       this.isRepeated = isRepeated;
       this.primitiveType = primitiveType;
    }
 
    public PropertyValueExpr(String propertyPath, boolean isRepeated, Class<?> primitiveType) {
-      this(StringHelper.split(propertyPath), isRepeated, primitiveType);
+      this(PropertyPath.make(propertyPath), isRepeated, primitiveType);
    }
 
-   public String[] getPropertyPath() {
+   public PropertyPath<?> getPropertyPath() {
       return propertyPath;
    }
 
@@ -48,27 +48,18 @@ public class PropertyValueExpr implements ValueExpr {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       PropertyValueExpr other = (PropertyValueExpr) o;
-      return Arrays.equals(propertyPath, other.propertyPath);
+      return propertyPath.equals(other.propertyPath);
    }
 
    @Override
    public int hashCode() {
-      return Arrays.hashCode(propertyPath);
+      return propertyPath.hashCode();
    }
 
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("PROP(");
-      boolean isFirst = true;
-      for (String p : propertyPath) {
-         if (isFirst) {
-            isFirst = false;
-         } else {
-            sb.append(',');
-         }
-         sb.append(p);
-      }
+      sb.append("PROP(").append(propertyPath);
       if (isRepeated) {
          sb.append('*');
       }
@@ -77,17 +68,7 @@ public class PropertyValueExpr implements ValueExpr {
    }
 
    @Override
-   public String toJpaString() {
-      StringBuilder sb = new StringBuilder();
-      boolean isFirst = true;
-      for (String p : propertyPath) {
-         if (isFirst) {
-            isFirst = false;
-         } else {
-            sb.append('.');
-         }
-         sb.append(p);
-      }
-      return sb.toString();
+   public String toQueryString() {
+      return propertyPath.toString();
    }
 }

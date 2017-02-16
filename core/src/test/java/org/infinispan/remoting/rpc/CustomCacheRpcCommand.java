@@ -1,16 +1,15 @@
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.util.ByteString;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * @author anistor@redhat.com
@@ -73,17 +72,8 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return true;
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
    }
 
-   @Override
-   public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
-   }
-
-   @Override
-   public boolean readsExistingValues() {
-      return false;
-   }
 }

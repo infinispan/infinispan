@@ -13,7 +13,7 @@ public class PaxExamUtils {
 
    /**
     *  Create a new probe, don't reuse the default.
-    * 
+    *
     *  PAX EXAM reuses the default one which means all the test addresses
     *  from the previous runs are present in the probe header. If some of them
     *  extend classes from dependencies which are not available for the current
@@ -22,7 +22,7 @@ public class PaxExamUtils {
    public static TestProbeBuilder probeIsolationWorkaround(TestProbeBuilder probeBuilder) {
       ReactorManager reactorManager = ReactorManager.getInstance();
       try {
-         
+
          Field fieldSystem = ReactorManager.class.getDeclaredField("system");
          fieldSystem.setAccessible(true);
          ExamSystem system = (ExamSystem) fieldSystem.get(reactorManager);
@@ -35,7 +35,7 @@ public class PaxExamUtils {
 
    public static TestProbeBuilder exportTestPackages(TestProbeBuilder probeBuilder) {
        StringBuilder builder = new StringBuilder();
-   
+
        /* Export all test subpackages. */
        Package[] pkgs = Package.getPackages();
        for (Package pkg : pkgs) {
@@ -47,7 +47,7 @@ public class PaxExamUtils {
                builder.append(pkgName);
            }
        }
-   
+
        probeBuilder.setHeader("Export-Package", builder.toString());
        return probeBuilder;
    }

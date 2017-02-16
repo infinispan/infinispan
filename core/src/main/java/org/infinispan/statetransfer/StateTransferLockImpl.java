@@ -1,16 +1,12 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.IllegalLifecycleStateException;
-import org.infinispan.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * {@code StateTransferLock} implementation.
@@ -27,12 +23,11 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
    private volatile int topologyId = -1;
-   private final Lock topologyLock = new ReentrantLock();
-   private final Condition topologyCondition = topologyLock.newCondition();
+   // future to topology equal to topologyId + 1
+   private CompletableFuture<Void> topologyFuture = new CompletableFuture<>();
 
    private volatile int transactionDataTopologyId = -1;
-   private final Lock transactionDataLock = new ReentrantLock();
-   private final Condition transactionDataCondition = transactionDataLock.newCondition();
+   private CompletableFuture<Void> transactionDataFuture = new CompletableFuture<>();
 
    public void stop() {
       notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
@@ -71,37 +66,35 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
       }
       transactionDataTopologyId = topologyId;
-      transactionDataLock.lock();
+
+      CompletableFuture<Void> oldFuture = null;
       try {
-         transactionDataCondition.signalAll();
+         synchronized (this) {
+            oldFuture = transactionDataFuture;
+            transactionDataFuture = new CompletableFuture<>();
+         }
       } finally {
-         transactionDataLock.unlock();
+         if (oldFuture != null) {
+            oldFuture.complete(null);
+         }
       }
    }
 
    @Override
-   public void waitForTransactionData(int expectedTopologyId, long timeout,
-                                      TimeUnit unit) throws InterruptedException {
+   public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) {
       if (transactionDataTopologyId >= expectedTopologyId)
-         return;
+         return CompletableFutures.completedNull();
 
       if (trace) {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
                     transactionDataTopologyId);
       }
-      transactionDataLock.lock();
-      try {
-         long timeoutNanos = unit.toNanos(timeout);
-         while (transactionDataTopologyId < expectedTopologyId && timeoutNanos > 0) {
-            timeoutNanos = transactionDataCondition.awaitNanos(timeoutNanos);
+      synchronized (this){
+         if (transactionDataTopologyId >= expectedTopologyId) {
+            return CompletableFutures.completedNull();
+         } else {
+            return transactionDataFuture.thenCompose(nil -> transactionDataFuture(expectedTopologyId));
          }
-         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
-      } finally {
-         transactionDataLock.unlock();
-      }
-      if (trace) {
-         log.tracef("Received transaction data for topology %d, expected topology was %d", transactionDataTopologyId,
-               expectedTopologyId);
       }
    }
 
@@ -122,44 +115,33 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling topology %d is installed", topologyId);
       }
       this.topologyId = topologyId;
-
-      topologyLock.lock();
+      CompletableFuture<Void> oldFuture = null;
       try {
-         topologyCondition.signalAll();
+         synchronized (this) {
+            oldFuture = topologyFuture;
+            topologyFuture = new CompletableFuture();
+         }
       } finally {
-         topologyLock.unlock();
+         if (oldFuture != null) {
+            oldFuture.complete(null);
+         }
       }
    }
 
    @Override
-   public void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException {
+   public CompletableFuture<Void> topologyFuture(int expectedTopologyId) {
       if (topologyId >= expectedTopologyId)
-         return;
+         return CompletableFutures.completedNull();
 
       if (trace) {
          log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
       }
-      topologyLock.lock();
-      try {
-         long timeoutNanos = unit.toNanos(timeout);
-         while (topologyId < expectedTopologyId && timeoutNanos > 0) {
-            timeoutNanos = topologyCondition.awaitNanos(timeoutNanos);
+      synchronized (this) {
+         if (topologyId >= expectedTopologyId) {
+            return CompletableFutures.completedNull();
+         } else {
+            return topologyFuture.thenCompose(nil -> topologyFuture(expectedTopologyId));
          }
-         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
-      } finally {
-         topologyLock.unlock();
-      }
-      if (trace) {
-         log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);
-      }
-   }
-
-   private void reportErrorAfterWait(int expectedTopologyId, long timeoutNanos) {
-      if (timeoutNanos <= 0) {
-         throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
-      }
-      if (topologyId == TOPOLOGY_ID_STOPPED) {
-         throw new IllegalLifecycleStateException("Cache was stopped while waiting for topology " + expectedTopologyId);
       }
    }
 

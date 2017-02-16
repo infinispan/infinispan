@@ -1,5 +1,14 @@
 package org.infinispan.server.test.jmx.suppress.statetransfer;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER3_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.getAttribute;
+import static org.infinispan.server.test.util.ITestUtils.setAttribute;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,15 +30,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER3_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.eventually;
-import static org.infinispan.server.test.util.ITestUtils.getAttribute;
-import static org.infinispan.server.test.util.ITestUtils.setAttribute;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Abstact class for testing state transfer suppress functionality

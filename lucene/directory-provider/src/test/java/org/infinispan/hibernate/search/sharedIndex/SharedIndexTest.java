@@ -1,5 +1,12 @@
 package org.infinispan.hibernate.search.sharedIndex;
 
+import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
+import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashSet;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.Transaction;
 import org.hibernate.search.FullTextSession;
@@ -17,13 +24,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.List;
-
-import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
-import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Test to verify HSEARCH-926
@@ -57,7 +57,7 @@ public class SharedIndexTest {
          QueryBuilder queryBuilder = fullTextSession.getSearchFactory().buildQueryBuilder()
                .forEntity(Toaster.class).get();
          Query query = queryBuilder.keyword().onField("serialNumber").matching("A1").createQuery();
-         List list = fullTextSession.createFullTextQuery(query).list();
+         List list = fullTextSession.createFullTextQuery(query).getResultList();
          assertEquals(1, list.size());
          Device device = (Device) list.get(0);
 

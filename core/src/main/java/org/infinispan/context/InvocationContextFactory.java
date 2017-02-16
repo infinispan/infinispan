@@ -1,5 +1,7 @@
 package org.infinispan.context;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -10,8 +12,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Factory for {@link InvocationContext} objects.
@@ -38,9 +38,6 @@ public interface InvocationContextFactory {
 
    /**
     * Creates an invocation context
-    *
-    * @param tx
-    * @return
     */
    InvocationContext createInvocationContext(Transaction tx, boolean implicitTransaction);
 
@@ -87,7 +84,7 @@ public interface InvocationContextFactory {
     * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)},
     * but returning the flags to the context from the Command if any Flag was set.
     *
-    * @param cacheCommand
+    * @param cacheCommand the remote command
     * @param origin       the origin of the command, or null if local
     */
    InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);

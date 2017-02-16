@@ -1,0 +1,373 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>9.0.0-SNAPSHOT</version>
+      <relativePath>../../parent/pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-wildfly-module-integrationtests</artifactId>
+   <name>Integration tests: Wildfly Module Integration Tests</name>
+   <description>Integration tests: Wildfly Module Integration Tests</description>
+
+   <properties>
+      <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/build/target/infinispan-server-${project.version}</server.build.dist>
+      <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
+      <server.jvm>${env.JAVA_HOME}</server.jvm>
+      <resources.dir>${basedir}/src/test/resources</resources.dir>
+      <jvm.memory.args>-Xmx1G</jvm.memory.args>
+      <jvm.x64.args />
+      <default.transport.stack>udp</default.transport.stack>
+      <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+      <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
+      <mcast.ip>234.99.54.14</mcast.ip>
+      <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
+      <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+      <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-client</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jpa</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-tree</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.arquillian.junit</groupId>
+         <artifactId>arquillian-junit-container</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.resolver</groupId>
+         <artifactId>shrinkwrap-resolver-depchain</artifactId>
+         <type>pom</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+         <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.arquillian</groupId>
+         <artifactId>wildfly-arquillian-container-managed</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.enterprise</groupId>
+         <artifactId>cdi-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.1-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+          <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.elasticsearch.plugin</groupId>
+         <artifactId>delete-by-query</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.elasticsearch</groupId>
+         <artifactId>elasticsearch</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <testResources>
+         <testResource>
+            <filtering>true</filtering>
+            <directory>src/test/resources</directory>
+         </testResource>
+      </testResources>
+
+      <plugins>
+         <plugin>
+             <artifactId>maven-clean-plugin</artifactId>
+             <configuration>
+                 <filesets>
+                     <fileset>
+                         <directory>Infinispan-LevelDBStore</directory>
+                     </fileset>
+                 </filesets>
+             </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>${junitListener}</value>
+                  </property>
+               </properties>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+                  <configuration>
+                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.wildfly</groupId>
+                           <artifactId>wildfly-dist</artifactId>
+                           <version>${version.org.wildfly}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.wildfly</groupId>
+                           <artifactId>wildfly-dist</artifactId>
+                           <version>${version.org.wildfly}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-wildfly-modules</artifactId>
+                           <version>${project.version}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-wildfly-modules</artifactId>
+                           <version>${project.version}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>configure-as-node1</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}</outputDirectory>
+                     <overwrite>true</overwrite>
+                     <resources>
+                        <resource>
+                           <directory>${basedir}/src/as-config</directory>
+                        </resource>
+                     </resources>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>configure-as-node2</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}</outputDirectory>
+                     <overwrite>true</overwrite>
+                     <resources>
+                        <resource>
+                           <directory>${basedir}/src/as-config</directory>
+                        </resource>
+                     </resources>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>generate-distros-and-configs</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>generate-resources</phase>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="create-distro">
+                           <property name="server.build.dist" value="${server.build.dist}" />
+                           <property name="server.dist" value="${ispnserver.dist}" />
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>infinispan-server-startup</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
+                           <property name="server.dist" value="${ispnserver.dist}" />
+                           <property name="port.offset" value="0" />
+                           <property name="management.port" value="9990" />
+                           <property name="hotrod.port" value="11222" />
+                           <property name="jboss.node.name" value="ispn-server" />
+                           <property name="jboss.config.file" value="standalone.xml" />
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>infinispan-server-shutdown</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
+                           <property name="hotrod.port" value="11222" />
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+
+
+      </plugins>
+   </build>
+</project>

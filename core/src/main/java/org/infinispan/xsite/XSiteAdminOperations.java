@@ -1,5 +1,11 @@
 package org.infinispan.xsite;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
@@ -17,14 +23,8 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
-import org.infinispan.xsite.status.SiteStatus;
 import org.infinispan.xsite.status.CacheSiteStatusBuilder;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.infinispan.xsite.status.SiteStatus;
 
 /**
  * Managed bean exposing sys admin operations for Cross-Site replication functionality.

@@ -15,13 +15,19 @@
 
    <dependencies>
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 
@@ -70,6 +76,20 @@
                   </Include-Resource>
                </instructions>
             </configuration>
+         </plugin>
+         <plugin>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>

@@ -1,16 +1,15 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.util.Collection;
+
+import javax.transaction.Status;
+
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-
-import java.util.Collection;
 
 /**
  * Extends {@link org.infinispan.transaction.impl.RemoteTransaction} and adds recovery related information and functionality.
@@ -30,13 +29,12 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
    private Integer status;
 
    public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
-                                         Equivalence<Object> keyEquivalence, long txCreationTime) {
-      super(modifications, tx, topologyId, keyEquivalence, txCreationTime);
+                                         long txCreationTime) {
+      super(modifications, tx, topologyId, txCreationTime);
    }
 
-   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence,
-                                         long txCreationTime) {
-      super(tx, topologyId, keyEquivalence, txCreationTime);
+   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
+      super(tx, topologyId, txCreationTime);
    }
 
    /**
