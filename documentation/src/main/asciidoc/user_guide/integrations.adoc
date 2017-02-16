@@ -551,7 +551,7 @@ Also, there will be no conflict with Wildfly's internal modules since the slot w
 
 The modules for Wildfly are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/org/infinispan/core`.
 
-==== Usage
+==== Application Dependencies
 
 If you are using Maven to build your application, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
 
@@ -662,6 +662,118 @@ The module `org.hibernate.search:{infinispanslot}` distributed with Infinispan i
 To use a Hibernate Search with a different version that is present in Wildfly, please consult the link:https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly[Hibernate Search documentation].
 
 Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with Infinispan.
+
+==== Usage
+There are two possible ways for your application to utilise infinispan within Wildfly: embedded mode and server mode.
+
+===== Embedded Mode
+All CacheManagers and cache instances are created in your application logic.  The lifecycle of your EmbeddedCacheManager
+is tightly coupled with your application's lifecycle, resulting in any manager instances created by your application being destroyed with your application.
+
+===== Server Mode
+In server mode, it is possible for cache containers and caches to be created before runtime as part of Wildfly's
+standalone/domain.xml configuration. This allows cache instances to be shared across multiple applications, with the
+lifecycle of the underlying cache container being independent of the deployed application.
+
+====== Configuration
+To enable server mode, it is necessary to make the following additions to your wildfly configuration in standalone/domain.xml.
+Note, that only steps 1-4 are required for local cache instances:
+
+. Add the infinispan extensions to your `<extensions>` section
+
+[source,xml,subs=attributes+]
+----
+<extensions>
+  <extension module="org.infinispan.extension:ispn-9.1"/>
+  <extension module="org.infinispan.server.endpoint:ispn-9.1"/>
+  <extension module="org.jgroups.extension:ispn-9.1"/>
+
+  <!--Other wildfly extensions-->
+</extensions>
+----
+
+[start=2]
+. Configure the infinispan subsystem, along with your required containers and caches, in the server profile which requires infinispan.
+Note, it's important that the module attribue is defined so that correct infinispan classes are loaded.
+
+[source,xml,subs=attributes+]
+----
+<subsystem xmlns="urn:infinispan:server:core:9.0">
+ <cache-container module="org.infinispan.extension:ispn-9.1" name="infinispan_container" default-cache="default">
+   <transport/>
+   <global-state/>
+   <distributed-cache name="default"/>
+   <distributed-cache name="memcachedCache"/>
+   <distributed-cache name="namedCache"/>
+ </cache-container>
+</subsystem>
+----
+
+[start=3]
+. Define the Wildfly https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
+
+. Configure any endpoints that you require via the endpoint subsystem:
+
+[source,xml,subs=attributes+]
+----
+<subsystem xmlns="urn:infinispan:server:endpoint:9.0">
+  <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
+    <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
+  </hotrod-connector>
+  <rest-connector socket-binding="rest" cache-container="infinispan_container">
+    <authentication security-realm="ApplicationRealm" auth-method="BASIC"/>
+  </rest-connector>
+</subsystem>
+----
+
+[start=5]
+. Define JGroups transport, ensuring that you define the model attribute for all protocols specified.
+
+[source,xml,subs=attributes+]
+----
+<subsystem xmlns="urn:infinispan:server:jgroups:9.0">
+ <channels default="cluster">
+   <channel name="cluster" stack="udp"/>
+ </channels>
+ <stacks>
+   <stack name="udp">
+     <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-9.1"/>
+     <protocol type="PING" module="org.jgroups:ispn-9.1"/>
+     <protocol type="MERGE3" module="org.jgroups:ispn-9.1"/>
+     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-9.1"/>
+     <protocol type="FD_ALL" module="org.jgroups:ispn-9.1"/>
+     <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-9.1"/>
+     <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-9.1"/>
+     <protocol type="UNICAST3" module="org.jgroups:ispn-9.1"/>
+     <protocol type="pbcast.STABLE" module="org.jgroups:ispn-9.1"/>
+     <protocol type="pbcast.GMS" module="org.jgroups:ispn-9.1"/>
+     <protocol type="UFC" module="org.jgroups:ispn-9.1"/>
+     <protocol type="MFC" module="org.jgroups:ispn-9.1"/>
+     <protocol type="FRAG2" module="org.jgroups:ispn-9.1"/>
+   </stack>
+ </stacks>
+</subsystem>
+----
+
+====== Accessing Containers and Caches
+Once a container has been defined in your server's configuration, it is possible to inject an instance of a CacheContainer
+or Cache into your application using the `@Resource` JNDI lookup. A container is accessed using the following string
+`java:jboss/datagrid-infinispan/container/<container_name>` and similarly a cache is
+accessed via `java:jboss/datagrid-infinispan/container/<container_name>/cache/<cache_name>`.
+
+The example below shows how to inject the CacheContainer
+called "infinispan_container" and the distributed cache "namedCache" into an application.
+
+[source,java]
+----
+public class ExampleApplication {
+    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container")
+    CacheContainer container;
+
+    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container/cache/namedCache")
+    Cache cache;
+}
+----
 
 ==== Troubleshooting
 
