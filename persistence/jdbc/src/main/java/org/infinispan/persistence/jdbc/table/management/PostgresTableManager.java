@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class PostgresTableManager extends AbstractTableManager {
 
-   private static final Log LOG = LogFactory.getLog(SybaseTableManager.class, Log.class);
+   private static final Log LOG = LogFactory.getLog(PostgresTableManager.class, Log.class);
 
    PostgresTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
       super(connectionFactory, config, metaData, LOG);
