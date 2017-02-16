@@ -95,7 +95,7 @@ public class RpcOptionsBuilder {
    }
 
    /**
-    * @deprecated Since 8.3, it no longer does anything.
+    * @deprecated Since 9.0, it no longer does anything.
     */
    @Deprecated
    public RpcOptionsBuilder skipReplicationQueue(boolean skipReplicationQueue) {

@@ -18,6 +18,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @see StoreAsBinaryConfiguration
  * @deprecated Please use {@link MemoryConfigurationBuilder#storageType(StorageType)} method instead
  */
+@Deprecated
 public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<StoreAsBinaryConfiguration> {
    private final AttributeSet attributes;
 
@@ -59,14 +60,17 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
     * @param storeKeysAsBinary if true, keys are stored as binary.  If false, keys are stored as object references.
     * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
+   @Deprecated
    public StoreAsBinaryConfigurationBuilder storeKeysAsBinary(boolean storeKeysAsBinary) {
       return this;
    }
+
    /**
     * Specify whether values are stored as binary or not.
     * @param storeValuesAsBinary if true, values are stored as binary.  If false, values are stored as object references.
     * @deprecated No longer supported, keys and values are both enabled if store as binary is
     */
+   @Deprecated
    public StoreAsBinaryConfigurationBuilder storeValuesAsBinary(boolean storeValuesAsBinary) {
       return this;
    }

@@ -115,6 +115,7 @@ public class Configuration {
     * @return
     * @deprecated please use {@link Configuration#memory()}
     */
+   @Deprecated
    public EvictionConfiguration eviction() {
       return evictionConfiguration;
    }

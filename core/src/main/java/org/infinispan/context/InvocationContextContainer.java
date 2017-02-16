@@ -10,6 +10,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Mircea.Markus@jboss.com
  * @deprecated Since 9.0, this interface is going to be moved to an internal package.
  */
+@Deprecated
 @Scope(Scopes.GLOBAL)
 public interface InvocationContextContainer {
    /**

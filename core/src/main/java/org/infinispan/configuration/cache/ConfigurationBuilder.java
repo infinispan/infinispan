@@ -102,6 +102,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
     * @return
     * @deprecated Use {@link ConfigurationBuilder#memory()} instead
     */
+   @Deprecated
    @Override
    public EvictionConfigurationBuilder eviction() {
       return eviction;

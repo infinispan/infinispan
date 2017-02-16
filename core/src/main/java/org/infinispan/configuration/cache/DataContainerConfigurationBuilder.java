@@ -16,8 +16,9 @@ import org.infinispan.container.DataContainer;
  * Controls the data container for the cache.
  *
  * @author pmuir
- * @Deprecated Please use {@link MemoryConfiguration}
+ * @deprecated Please use {@link MemoryConfiguration}
  */
+@Deprecated
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration> {
 
    private AttributeSet attributes;
@@ -33,6 +34,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return
     * @deprecated data container is no longer to exposed via configuration at a later point
     */
+   @Deprecated
    public DataContainerConfigurationBuilder dataContainer(DataContainer dataContainer) {
       attributes.attribute(DATA_CONTAINER).set(dataContainer);
       return this;
@@ -72,8 +74,9 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @param keyEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                     key types.
     * @return this configuration builder
-    * @Deprecated Equivalence is to be removed (byte[] are directly supported)
+    * @deprecated Equivalence is to be removed (byte[] are directly supported)
     */
+   @Deprecated
    public <K> DataContainerConfigurationBuilder keyEquivalence(Equivalence<K> keyEquivalence) {
       return this;
    }
@@ -87,8 +90,9 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @param valueEquivalence instance of {@link org.infinispan.commons.equivalence.Equivalence} used to compare
     *                       value types.
     * @return this configuration builder
-    * @Deprecated Equivalence is to be removed (byte[] are directly supported)
+    * @deprecated Equivalence is to be removed (byte[] are directly supported)
     */
+   @Deprecated
    public <V> DataContainerConfigurationBuilder valueEquivalence(Equivalence<V> valueEquivalence) {
       return this;
    }
