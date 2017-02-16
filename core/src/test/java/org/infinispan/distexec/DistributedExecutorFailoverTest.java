@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -63,7 +64,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
          CompletableFuture<Void> future = des.submit(builder.build());
          TriggerFailover(future);
-         eventuallyEquals(3, () -> sameNodeTaskFailoverPolicy.failoverCount);
+         eventuallyEquals(3, () -> sameNodeTaskFailoverPolicy.failoverCount.get());
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
       } finally {
@@ -169,7 +170,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
    static class SameNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {
       private final int maxFailoverCount;
-      private volatile int failoverCount = 0;
+      private volatile AtomicInteger failoverCount = new AtomicInteger();
 
       public SameNodeTaskFailoverPolicy(int maxFailoverCount) {
          super();
@@ -178,7 +179,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
       @Override
       public Address failover(FailoverContext fc) {
-         failoverCount++;
+         failoverCount.incrementAndGet();
          return fc.executionFailureLocation();
       }
 
