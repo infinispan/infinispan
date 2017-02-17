@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -45,6 +46,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.KnownComponentNames;
@@ -120,6 +122,7 @@ public class StateConsumerImpl implements StateConsumer {
    private CommitManager commitManager;
    private ExecutorService stateTransferExecutor;
    private CommandAckCollector commandAckCollector;
+   private TriangleOrderManager triangleOrderManager;
 
    private volatile CacheTopology cacheTopology;
 
@@ -195,7 +198,8 @@ public class StateConsumerImpl implements StateConsumer {
                     TotalOrderManager totalOrderManager,
                     @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
                     CommitManager commitManager,
-                    CommandAckCollector commandAckCollector) {
+                    CommandAckCollector commandAckCollector,
+                    TriangleOrderManager triangleOrderManager) {
       this.cache = cache;
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
@@ -215,6 +219,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.commitManager = commitManager;
       this.commandAckCollector = commandAckCollector;
+      this.triangleOrderManager = triangleOrderManager;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
 
@@ -301,6 +306,7 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
+      triangleOrderManager.updateCacheTopology(cacheTopology);
       if (startRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);

@@ -13,17 +13,16 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.distribution.AnotherTriangleOrderManager;
-import org.infinispan.distribution.CommandPosition;
+import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.ActionStatus;
-import org.infinispan.remoting.inboundhandler.action.AnotherTriangleOrderAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
+import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.locks.LockListener;
@@ -50,12 +49,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private long lockTimeout;
-   private AnotherTriangleOrderManager triangleOrderManager;
+   private TriangleOrderManager triangleOrderManager;
 
    @Inject
    public void inject(LockManager lockManager,
          @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic,
-         Configuration configuration, AnotherTriangleOrderManager anotherTriangleOrderManager) {
+         Configuration configuration, TriangleOrderManager anotherTriangleOrderManager) {
       this.lockManager = lockManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
@@ -153,15 +152,16 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    }
 
    private void handleBackupPutMapRpcCommand(BackupPutMapRcpCommand command, Reply reply) {
-      handleBackup(command, command.getTopologyId(), triangleOrderManager.orderMultipleKeys(command.getMap().keySet()), reply);
+      handleBackup(command, command.getTopologyId(), reply, command.getSequence(),
+            command.getMap().keySet().iterator().next());
    }
 
    private void handleBackupWriteRpcCommand(BackupWriteRcpCommand command, Reply reply) {
-      handleBackup(command, command.getTopologyId(), triangleOrderManager.orderKey(command.getKey()), reply);
+      handleBackup(command, command.getTopologyId(), reply, command.getSequence(), command.getKey());
    }
 
-   private void handleBackup(CacheRpcCommand command, int topologyId, CommandPosition position, Reply reply) {
-      ReadyAction readyAction = createTriangleOrderAction(command, topologyId, position);
+   private void handleBackup(CacheRpcCommand command, int topologyId, Reply reply, long sequence, Object key) {
+      ReadyAction readyAction = createTriangleOrderAction(command, topologyId, sequence, key);
       BlockingRunnable runnable = createNonNullReadyActionRunnable(command, reply, topologyId, false, readyAction);
       remoteCommandsExecutor.execute(runnable);
    }
@@ -254,8 +254,9 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             null;
    }
 
-   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, CommandPosition position) {
+   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, Object key) {
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), this,
-            new AnotherTriangleOrderAction(remoteCommandsExecutor, position));
+            new TriangleOrderAction(triangleOrderManager, remoteCommandsExecutor, clusteringDependentLogic, sequence,
+                  key));
    }
 }

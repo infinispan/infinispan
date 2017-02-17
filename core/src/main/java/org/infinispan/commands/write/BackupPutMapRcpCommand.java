@@ -38,6 +38,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
    private Metadata metadata;
    private long flags;
    private int topologyId;
+   private long sequence;
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;
    private CacheNotifier cacheNotifier;
@@ -108,6 +109,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
       MarshallUtil.marshallMap(map, output);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
+      output.writeLong(sequence);
 
    }
 
@@ -117,6 +119,7 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
       map = MarshallUtil.unmarshallMap(input, HashMap::new);
       metadata = (Metadata) input.readObject();
       flags = input.readLong();
+      sequence = input.readLong();
    }
 
    @Override
@@ -139,6 +142,15 @@ public class BackupPutMapRcpCommand extends BaseRpcCommand implements TopologyAf
             ", metadata=" + metadata +
             ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
             ", topologyId=" + topologyId +
+            ", sequence=" + sequence +
             '}';
+   }
+
+   public long getSequence() {
+      return sequence;
+   }
+
+   public void setSequence(long sequence) {
+      this.sequence = sequence;
    }
 }
