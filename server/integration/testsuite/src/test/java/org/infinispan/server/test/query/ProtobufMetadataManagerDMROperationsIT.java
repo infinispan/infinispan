@@ -10,7 +10,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanExtension;
 import org.jboss.as.controller.PathAddress;
@@ -48,8 +54,23 @@ public class ProtobufMetadataManagerDMROperationsIT {
 
    @After
    public void tearDown() throws Exception {
-      if (controller != null) {
-         controller.close();
+      try {
+         if (controller != null) {
+            controller.close();
+         }
+      } finally {
+         RemoteCacheManagerFactory rcmFactory = new RemoteCacheManagerFactory();
+         ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+         clientBuilder.addServer()
+               .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+               .port(server.getHotrodEndpoint().getPort())
+               .marshaller(new ProtoStreamMarshaller());
+         RemoteCacheManager remoteCacheManager = rcmFactory.createManager(clientBuilder);
+         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+         metadataCache.remove("test1.proto");
+         metadataCache.remove("test2.proto");
+         metadataCache.remove("test3.proto");
+         rcmFactory.stopManagers();
       }
    }
 
@@ -80,7 +101,7 @@ public class ProtobufMetadataManagerDMROperationsIT {
 
       // register a valid schema file
       op = getOperation("register-proto-schemas");
-      op.get("file-names").set(new ModelNode().add("test.proto"));
+      op.get("file-names").set(new ModelNode().add("test1.proto"));
       op.get("file-contents").set(new ModelNode().add("package test;"));
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
@@ -89,7 +110,7 @@ public class ProtobufMetadataManagerDMROperationsIT {
       op = getOperation("get-proto-schema-names");
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
-      assertEquals("[\"test.proto\"]", result.get(RESULT).asString());
+      assertEquals("[\"test1.proto\"]", result.get(RESULT).asString());
 
       // ensure there are no errors
       op = getOperation("get-proto-schemas-with-errors");
@@ -97,9 +118,9 @@ public class ProtobufMetadataManagerDMROperationsIT {
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
       assertEquals("[]", result.get(RESULT).asString());
 
-      // check the contents of test.proto
+      // check the contents of test1.proto
       op = getOperation("get-proto-schema");
-      op.get("file-name").set("test.proto");
+      op.get("file-name").set("test1.proto");
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
       assertEquals("package test;", result.get(RESULT).asString());
@@ -116,7 +137,7 @@ public class ProtobufMetadataManagerDMROperationsIT {
       op = getOperation("get-proto-schema-names");
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
-      assertEquals("[\"test.proto\",\"test2.proto\"]", result.get(RESULT).asString());
+      assertEquals("[\"test1.proto\",\"test2.proto\"]", result.get(RESULT).asString());
 
       // ensure there are no errors
       op = getOperation("get-proto-schemas-with-errors");
@@ -135,7 +156,7 @@ public class ProtobufMetadataManagerDMROperationsIT {
       op = getOperation("get-proto-schema-names");
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
-      assertEquals("[\"test.proto\",\"test2.proto\",\"test3.proto\"]", result.get(RESULT).asString());
+      assertEquals("[\"test1.proto\",\"test2.proto\",\"test3.proto\"]", result.get(RESULT).asString());
 
       // check the contents of test3.proto
       op = getOperation("get-proto-schema");
@@ -176,9 +197,9 @@ public class ProtobufMetadataManagerDMROperationsIT {
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
       assertEquals("[]", result.get(RESULT).asString());
 
-      // unregister test.proto and test2.proto
+      // unregister test1.proto and test2.proto
       op = getOperation("unregister-proto-schemas");
-      op.get("file-names").set(new ModelNode().add("test.proto").add("test2.proto"));
+      op.get("file-names").set(new ModelNode().add("test1.proto").add("test2.proto"));
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
    }
