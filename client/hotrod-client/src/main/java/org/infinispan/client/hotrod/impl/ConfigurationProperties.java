@@ -26,8 +26,6 @@ public class ConfigurationProperties {
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = "infinispan.client.hotrod.default_executor_factory.pool_size";
    public static final String TCP_NO_DELAY = "infinispan.client.hotrod.tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = "infinispan.client.hotrod.tcp_keep_alive";
-   @Deprecated
-   public static final String PING_ON_STARTUP = "infinispan.client.hotrod.ping_on_startup";
    public static final String REQUEST_BALANCING_STRATEGY = "infinispan.client.hotrod.request_balancing_strategy";
    public static final String KEY_SIZE_ESTIMATE = "infinispan.client.hotrod.key_size_estimate";
    public static final String VALUE_SIZE_ESTIMATE = "infinispan.client.hotrod.value_size_estimate";
