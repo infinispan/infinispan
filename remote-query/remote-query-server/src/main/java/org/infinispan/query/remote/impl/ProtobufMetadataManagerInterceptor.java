@@ -53,13 +53,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
     * A no-op callback.
     */
    private static final FileDescriptorSource.ProgressCallback EMPTY_CALLBACK = new FileDescriptorSource.ProgressCallback() {
-      @Override
-      public void handleError(String fileName, DescriptorParserException exception) {
-      }
-
-      @Override
-      public void handleSuccess(String fileName) {
-      }
    };
 
    private final class ProgressCallback implements FileDescriptorSource.ProgressCallback {
@@ -203,7 +196,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          if (shouldIntercept(key)) {
             if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
                if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-                  throw new CacheException("The key must end with \".proto\" : " + key);
+                  throw new CacheException("The key must be a string ending with \".proto\" : " + key);
                }
 
                // lock .errors key
@@ -266,7 +259,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
          if (shouldIntercept(key)) {
             if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-               throw new CacheException("The key must end with \".proto\" : " + key);
+               throw new CacheException("The key must be a string ending with \".proto\" : " + key);
             }
             source.addProtoFile((String) key, (String) value);
          }
@@ -365,7 +358,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          return invokeNext(ctx, command);
       }
       if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-         throw new CacheException("The key must end with \".proto\" : " + key);
+         throw new CacheException("The key must be a string ending with \".proto\" : " + key);
       }
 
       // lock .errors key
