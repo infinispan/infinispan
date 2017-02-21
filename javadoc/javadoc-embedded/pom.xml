@@ -200,8 +200,8 @@
                         <link>http://docs.jboss.org/jbosslogging/latest/</link>
                         <link>http://www.osgi.org/javadoc/r4v43/core/</link>
                         <link>http://jgroups.org/javadoc/</link>
-                        <link>http://lucene.apache.org/core/4_0_0/core/</link>
-                        <link>http://docs.jboss.org/hibernate/search/4.5/api/</link>
+                        <link>http://lucene.apache.org/core/5_5_0/core/</link>
+                        <link>http://docs.jboss.org/hibernate/search/5.7/api/</link>
                      </links>
                      <quiet>true</quiet>
                      <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
