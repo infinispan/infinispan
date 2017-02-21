@@ -2,19 +2,25 @@ package org.infinispan.manager;
 
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,15 +31,36 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.function.SerializableSupplier;
 import org.testng.annotations.Test;
 
 /**
  * @author Will Burns
  * @since 8.2
  */
-@Test(groups = {"functional", "smoke"}, testName = "manager.ClusterExecutorTest")
-public class ClusterExecutorTest extends AbstractInfinispanTest {
+@Test(groups = {"functional", "smoke"}, testName = "manager.AllClusterExecutorTest")
+public class AllClusterExecutorTest extends AbstractInfinispanTest {
    static AtomicInteger atomicInteger = new AtomicInteger();
+
+   ClusterExecutor executor(EmbeddedCacheManager cm) {
+      return cm.executor();
+   }
+
+   void assertSize(EmbeddedCacheManager[] cms, int receivedSize) {
+      assertEquals(cms.length, receivedSize);
+   }
+
+   void eventuallyAssertSize(EmbeddedCacheManager[] cms, Supplier<Integer> supplier) {
+      eventuallyEquals(cms.length, supplier);
+   }
+
+   void assertContains(EmbeddedCacheManager[] managers, Collection<Address> results) {
+      for (EmbeddedCacheManager manager : managers) {
+         assertTrue(results.contains(manager.getAddress()));
+      }
+   }
+
+   SerializableSupplier<AtomicInteger> atomicIntegerSupplier = () -> atomicInteger;
 
    public void testExecutorRunnable() {
       withCacheManagers(new MultiCacheManagerCallable(
@@ -43,9 +70,10 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().submit(() -> atomicInteger.getAndIncrement()).get(10, TimeUnit.SECONDS);
-            assertEquals(2, atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).submit(() -> supplier.get().getAndIncrement()).get(10, TimeUnit.SECONDS);
+            assertSize(cms, atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -57,9 +85,10 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().submit(() -> atomicInteger.getAndIncrement()).get(10, TimeUnit.SECONDS);
-            assertEquals(1, atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).submit(() -> supplier.get().getAndIncrement()).get(10, TimeUnit.SECONDS);
+            assertSize(cms, atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -73,9 +102,10 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().submit(() -> atomicInteger.getAndIncrement()).get(10, TimeUnit.SECONDS);
-            assertEquals(3, atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).submit(() -> supplier.get().getAndIncrement()).get(10, TimeUnit.SECONDS);
+            assertSize(cms, atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -88,10 +118,11 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().filterTargets(a -> a.equals(cm1.getAddress()))
-                  .submit(() -> atomicInteger.getAndIncrement()).get(10, TimeUnit.SECONDS);
-            assertEquals(1, atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).filterTargets(a -> a.equals(cm1.getAddress()))
+                  .submit(() -> supplier.get().getAndIncrement()).get(10, TimeUnit.SECONDS);
+            assertEquals(1, atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -105,10 +136,11 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             EmbeddedCacheManager cm1 = cms[0];
             EmbeddedCacheManager cm2 = cms[1];
 
-            atomicInteger.set(0);
-            cm1.executor().filterTargets(Collections.singleton(cm2.getAddress()))
-                  .submit(() -> atomicInteger.getAndIncrement()).get(10, TimeUnit.SECONDS);
-            assertEquals(1, atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).filterTargets(Collections.singleton(cm2.getAddress()))
+                  .submit(() -> supplier.get().getAndIncrement()).get(10, TimeUnit.SECONDS);
+            assertEquals(1, atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -121,10 +153,37 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            CompletableFuture<Void> future = cm1.executor().submit(() -> {
+            CompletableFuture<Void> future = executor(cm1).submit(() -> {
                throw new TestException();
             });
             Exceptions.expectExecutionException(TestException.class, future);
+         }
+      });
+   }
+
+   public void testExecutorRunnableExceptionWhenComplete() {
+      withCacheManagers(new MultiCacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+         @Override
+         public void call() throws InterruptedException, ExecutionException, TimeoutException {
+            EmbeddedCacheManager cm1 = cms[0];
+
+            CompletableFuture<Void> future = executor(cm1).submit(() -> {
+               throw new TestException();
+            });
+
+            Exchanger<Throwable> exchanger = new Exchanger<>();
+            future.whenCompleteAsync((v, t) -> {
+               try {
+                  exchanger.exchange(t, 10, TimeUnit.SECONDS);
+               } catch (InterruptedException | TimeoutException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+            Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
+            assertNotNull(t);
+            assertEquals(TestException.class, t.getClass());
          }
       });
    }
@@ -138,7 +197,24 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            CompletableFuture<Void> future = cm1.executor().submit(() -> {
+            CompletableFuture<Void> future = executor(cm1).submit(() -> {
+               throw new TestException();
+            });
+            Exceptions.expectExecutionException(TestException.class, future);
+         }
+      });
+   }
+
+   public void testExecutorRunnable3NodesExceptionExcludeLocal() {
+      withCacheManagers(new MultiCacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+         @Override
+         public void call() throws InterruptedException, ExecutionException, TimeoutException {
+            EmbeddedCacheManager cm1 = cms[0];
+
+            CompletableFuture<Void> future = executor(cm1).filterTargets(a -> !a.equals(cm1.getAddress())).submit(() -> {
                throw new TestException();
             });
             Exceptions.expectExecutionException(TestException.class, future);
@@ -148,19 +224,20 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTimeoutException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            CompletableFuture<Void> future = cm1.executor().timeout(10, TimeUnit.MILLISECONDS).submit(() -> {
+            CompletableFuture<Void> future = executor(cm1).timeout(10, TimeUnit.MILLISECONDS).submit(() -> {
                try {
-                  Thread.sleep(100);
+                  Thread.sleep(1000);
                } catch (InterruptedException e) {
                   fail("Unexpected interrupt: " + e);
                }
             });
+            // This fails when local node is invoked since timeout is not adhered to
             Exceptions
                   .expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
          }
@@ -176,9 +253,10 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().execute(() -> atomicInteger.getAndIncrement());
-            eventuallyEquals(2, () -> atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            SerializableSupplier<AtomicInteger> supplier = atomicIntegerSupplier;
+            executor(cm1).execute(() -> supplier.get().getAndIncrement());
+            eventuallyAssertSize(cms, () -> atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -190,9 +268,9 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            atomicInteger.set(0);
-            cm1.executor().execute(() -> atomicInteger.getAndIncrement());
-            eventuallyEquals(1, () -> atomicInteger.get());
+            atomicIntegerSupplier.get().set(0);
+            executor(cm1).execute(() -> atomicIntegerSupplier.get().getAndIncrement());
+            eventuallyEquals(1, () -> atomicIntegerSupplier.get().get());
          }
       });
    }
@@ -208,7 +286,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
             AtomicReference<Throwable> throwable = new AtomicReference<>();
             List<Address> addresses = Collections.synchronizedList(new ArrayList<>(2));
-            cm1.executor().submitConsumer(EmbeddedCacheManager::getAddress, (a, i, t) -> {
+            executor(cm1).submitConsumer(EmbeddedCacheManager::getAddress, (a, i, t) -> {
                if (t != null) {
                   throwable.set(t);
                } else {
@@ -219,9 +297,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             if (t != null) {
                throw new RuntimeException(t);
             }
-            assertEquals(2, addresses.size());
-            assertTrue(addresses.contains(cm1.getAddress()));
-            assertTrue(addresses.contains(cm2.getAddress()));
+            assertContains(cms, addresses);
          }
       });
    }
@@ -235,7 +311,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
             AtomicReference<Throwable> throwable = new AtomicReference<>();
             List<Address> addresses = Collections.synchronizedList(new ArrayList<>(2));
-            cm1.executor().submitConsumer(m -> m.getAddress(), (a, i, t) -> {
+            executor(cm1).submitConsumer(m -> m.getAddress(), (a, i, t) -> {
                if (t != null) {
                   throwable.set(t);
                } else {
@@ -254,18 +330,16 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutor3NodeTriConsumer() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
-            EmbeddedCacheManager cm2 = cms[1];
-            EmbeddedCacheManager cm3 = cms[2];
 
             AtomicReference<Throwable> throwable = new AtomicReference<>();
             List<Address> addresses = Collections.synchronizedList(new ArrayList<>(2));
-            cm1.executor().submitConsumer(m -> m.getAddress(), (a, i, t) -> {
+            executor(cm1).submitConsumer(m -> m.getAddress(), (a, i, t) -> {
                if (t != null) {
                   throwable.set(t);
                } else {
@@ -276,9 +350,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             if (t != null) {
                throw new RuntimeException(t);
             }
-            assertTrue(addresses.contains(cm1.getAddress()));
-            assertTrue(addresses.contains(cm2.getAddress()));
-            assertTrue(addresses.contains(cm3.getAddress()));
+            assertContains(cms, addresses);
          }
       });
    }
@@ -292,29 +364,28 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             EmbeddedCacheManager cm1 = cms[0];
 
             AtomicInteger exceptionCount = new AtomicInteger();
-            CompletableFuture<Void> future = cm1.executor().submitConsumer(m -> {
+            CompletableFuture<Void> future = executor(cm1).submitConsumer(m -> {
                throw new TestException();
             }, (a, i, t) -> {
-               assertTrue(t instanceof CompletionException || t instanceof CacheException);
-               Exceptions.assertException(TestException.class, t.getCause());
+               Exceptions.assertException(TestException.class, t);
                exceptionCount.incrementAndGet();
             });
             future.get(10, TimeUnit.SECONDS);
-            assertEquals(2, exceptionCount.get());
+            assertSize(cms, exceptionCount.get());
          }
       });
    }
 
    public void testExecutorTriConsumerTimeoutException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
             CompletableFuture<Void> future =
-                  cm1.executor().timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
+                  executor(cm1).timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
                      TestingUtil.sleepThread(100);
                      return null;
                   }, (a, i, t) -> { });
@@ -332,11 +403,39 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             EmbeddedCacheManager cm1 = cms[0];
 
             CompletableFuture<Void> future =
-                    cm1.executor().submitConsumer(m -> null,
+                    executor(cm1).submitConsumer(m -> null,
                             (a, i, t) -> {
                                throw new NullPointerException();
                             });
             Exceptions.expectExecutionException(NullPointerException.class, future);
+         }
+      });
+   }
+
+   public void testExecutorTriConsumerExceptionWhenComplete() {
+      withCacheManagers(new MultiCacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+         @Override
+         public void call() throws InterruptedException, ExecutionException, TimeoutException {
+            EmbeddedCacheManager cm1 = cms[0];
+
+            CompletableFuture<Void> future =
+                  executor(cm1).filterTargets(cm1.getAddress()::equals).submitConsumer(m -> null,
+                        (a, i, t) -> {
+                           throw new NullPointerException();
+                        });
+            Exchanger<Throwable> exchanger = new Exchanger<>();
+            future.whenCompleteAsync((v, t) -> {
+               try {
+                  exchanger.exchange(t, 10, TimeUnit.SECONDS);
+               } catch (InterruptedException | TimeoutException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+            Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
+            assertNotNull(t);
+            assertEquals(NullPointerException.class, t.getClass());
          }
       });
    }
