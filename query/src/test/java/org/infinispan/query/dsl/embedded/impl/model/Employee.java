@@ -35,11 +35,9 @@ public class Employee {
    @Field(analyze = Analyze.NO)
    public String title;
 
-   @Fields({
-         @Field(name = "analyzedInfo", analyze = Analyze.YES),
-         @Field(name = "someMoreInfo", analyze = Analyze.NO),
-         @Field(name = "sameInfo", analyze = Analyze.NO)
-   })
+   @Field(name = "analyzedInfo", analyze = Analyze.YES)
+   @Field(name = "someMoreInfo", analyze = Analyze.NO)
+   @Field(name = "sameInfo", analyze = Analyze.NO)
    public String otherInfo;
 
    @IndexedEmbedded(indexNullAs = Field.DEFAULT_NULL_TOKEN)
