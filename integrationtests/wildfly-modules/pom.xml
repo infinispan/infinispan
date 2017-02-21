@@ -230,6 +230,7 @@
                      <goal>unpack</goal>
                   </goals>
                   <configuration>
+                     <skip>${skipTests}</skip>
                      <artifactItems>
                         <artifactItem>
                            <groupId>org.wildfly</groupId>
@@ -281,6 +282,7 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
+                     <skip>${skipTests}</skip>
                      <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
@@ -297,6 +299,7 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
+                     <skip>${skipTests}</skip>
                      <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>

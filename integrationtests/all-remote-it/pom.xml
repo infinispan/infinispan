@@ -93,6 +93,7 @@
                      <goal>unpack</goal>
                   </goals>
                   <configuration>
+                     <skip>${skipTests}</skip>
                      <artifactItems>
                         <artifactItem>
                            <groupId>org.infinispan.server</groupId>
