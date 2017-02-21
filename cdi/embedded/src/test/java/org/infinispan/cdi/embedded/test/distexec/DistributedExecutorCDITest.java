@@ -89,8 +89,7 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       }
    }
 
-   static class ImpliedInputCacheCallable implements Callable<Integer>, Serializable {
-
+   static class ImpliedInputCacheCallable implements Callable<Integer>, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 5770069398989111268L;
@@ -108,8 +107,7 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       }
    }
 
-   static class ImpliedInputCacheRunnable implements Runnable, Serializable {
-
+   static class ImpliedInputCacheRunnable implements Runnable, Serializable, ExternalPojo {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 5770069398989111268L;
