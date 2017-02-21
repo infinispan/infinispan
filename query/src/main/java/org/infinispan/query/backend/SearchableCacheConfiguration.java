@@ -11,6 +11,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionProvider;
+import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionSourceService;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -51,6 +53,9 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final SearchMapping searchMapping;
    private final Map<Class<? extends Service>, Object> providedServices;
    private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
+
+   //TODO customize this to plug in custom analyzers
+   private final LuceneAnalyzerDefinitionProvider analyzerDefProvider = null;
    private boolean hasAffinity;
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
@@ -86,10 +91,11 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       }
    }
 
-   private static Map initializeProvidedServices(EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
+   private Map initializeProvidedServices(EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       //Register the SelfLoopedCacheManagerServiceProvider to allow custom IndexManagers to access the CacheManager
       final InfinispanLoopbackService loopService = new InfinispanLoopbackService(cr, uninitializedCacheManager);
-      HashMap map = new HashMap(2);
+      HashMap map = new HashMap(3);
+      map.put(LuceneAnalyzerDefinitionSourceService.class, new LuceneAnalyzerDefinitionsBuilderService(analyzerDefProvider));
       map.put(ComponentRegistryService.class, loopService);
       map.put(CacheManagerService.class, loopService);
       return Collections.unmodifiableMap(map);
