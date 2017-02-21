@@ -1,6 +1,8 @@
 package org.infinispan.server.test.query;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILED;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAILURE_DESCRIPTION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
@@ -67,9 +69,15 @@ public class ProtobufMetadataManagerDMROperationsIT {
                .marshaller(new ProtoStreamMarshaller());
          RemoteCacheManager remoteCacheManager = rcmFactory.createManager(clientBuilder);
          RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+
+         // remove all files that were potentially left behind by this test
          metadataCache.remove("test1.proto");
+         metadataCache.remove("test1.proto.errors");
          metadataCache.remove("test2.proto");
+         metadataCache.remove("test2.proto.errors");
          metadataCache.remove("test3.proto");
+         metadataCache.remove("test3.proto.errors");
+
          rcmFactory.stopManagers();
       }
    }
@@ -184,14 +192,21 @@ public class ProtobufMetadataManagerDMROperationsIT {
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
 
-      // check the are no more errors in test3.proto
+      // retrieving test3.proto should result in an error
+      op = getOperation("get-proto-schema");
+      op.get("file-name").set("test3.proto");
+      result = controller.execute(op);
+      assertEquals(FAILED, result.get(OUTCOME).asString());
+      assertEquals("DGISPN0118: Failed to invoke operation: File does not exist : test3.proto", result.get(FAILURE_DESCRIPTION).asString());
+
+      // retrieving test3.proto errors should result in an error
       op = getOperation("get-proto-schema-errors");
       op.get("file-name").set("test3.proto");
       result = controller.execute(op);
-      assertEquals(SUCCESS, result.get(OUTCOME).asString());
-      assertEquals("undefined", result.get(RESULT).asString());
+      assertEquals(FAILED, result.get(OUTCOME).asString());
+      assertEquals("DGISPN0118: Failed to invoke operation: File does not exist : test3.proto", result.get(FAILURE_DESCRIPTION).asString());
 
-      // ensure there are no errors
+      // ensure there are no errors globally
       op = getOperation("get-proto-schemas-with-errors");
       result = controller.execute(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());

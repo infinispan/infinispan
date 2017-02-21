@@ -147,14 +147,18 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @ManagedOperation(description = "Unregisters a Protobuf definition files", displayName = "Unregister a Protofiles")
    @Override
    public void unregisterProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
-      getCache().remove(fileName);
+      if (getCache().remove(fileName) == null) {
+         throw new IllegalArgumentException("File does not exist : " + fileName);
+      }
    }
 
    @ManagedOperation(description = "Unregisters multiple Protobuf definition files", displayName = "Unregister Protofiles")
    @Override
    public void unregisterProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] fileNames) {
       for (String fileName : fileNames) {
-         getCache().remove(fileName);
+         if (getCache().remove(fileName) == null) {
+            throw new IllegalArgumentException("File does not exist : " + fileName);
+         }
       }
    }
 
@@ -177,7 +181,11 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       if (!fileName.endsWith(PROTO_KEY_SUFFIX)) {
          throw new IllegalArgumentException("The file name must have \".proto\" suffix");
       }
-      return getCache().get(fileName);
+      String fileContents = getCache().get(fileName);
+      if (fileContents == null) {
+         throw new IllegalArgumentException("File does not exist : " + fileName);
+      }
+      return fileContents;
    }
 
    @ManagedAttribute(description = "The names of the files that have errors, if any", displayName = "Files With Errors")
@@ -197,6 +205,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    public String getFileErrors(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
       if (!fileName.endsWith(PROTO_KEY_SUFFIX)) {
          throw new IllegalArgumentException("The file name must have \".proto\" suffix");
+      }
+      if (!getCache().containsKey(fileName)) {
+         throw new IllegalArgumentException("File does not exist : " + fileName);
       }
       return getCache().get(fileName + ERRORS_KEY_SUFFIX);
    }

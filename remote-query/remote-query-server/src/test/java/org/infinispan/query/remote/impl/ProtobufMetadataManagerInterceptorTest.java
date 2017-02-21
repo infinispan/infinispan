@@ -75,7 +75,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
          cache0.put("some.xml", "import \"test.proto\";");
          fail();
       } catch (CacheException e) {
-         assertEquals("The key must end with \".proto\" : some.xml", e.getMessage());
+         assertEquals("The key must be a string ending with \".proto\" : some.xml", e.getMessage());
       }
 
       cache0.put("test.proto", "package x");
