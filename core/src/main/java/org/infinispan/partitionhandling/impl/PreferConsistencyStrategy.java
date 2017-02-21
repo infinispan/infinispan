@@ -179,10 +179,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          actualMembers.retainAll(mergedTopology.getMembers());
          mergedAvailabilityMode = AvailabilityMode.DEGRADED_MODE;
       } else {
-         log.debugf("No current topology, recovered only joiners for cache %s", context.getCacheName());
-         mergedTopology = null;
-         actualMembers = null;
-         mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
+         log.debugf("No current topology, recovered only joiners for cache %s. Skipping availability update.", context.getCacheName());
+         return;
       }
 
       // Increment the topology id so that it's bigger than any topology that might have been sent by the old
