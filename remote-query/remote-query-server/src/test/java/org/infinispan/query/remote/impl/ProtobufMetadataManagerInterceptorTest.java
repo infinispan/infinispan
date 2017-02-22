@@ -10,23 +10,20 @@ import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataManagerInterceptorTest")
 public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManagersTest {
-
-   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptorTest.class, Log.class);
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -48,6 +45,13 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
       return cfg;
+   }
+
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {
+      // the base method cleans only the data container without invoking the interceptor stack...
+      cache(0).clear();
    }
 
    public void testValidatePut() {
@@ -82,6 +86,11 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
+      cache0.remove("test.proto");
+
+      assertTrue(cache0.isEmpty());
+      assertTrue(cache1.isEmpty());
+
       Map<String, String> map = new HashMap<>();
       map.put("a.proto", "package a");
       map.put("b.proto", "package b;");
@@ -89,8 +98,8 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals("a.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertEquals("a.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-      assertEquals(6, cache0.size());
-      assertEquals(6, cache1.size());
+      assertEquals(4, cache0.size());
+      assertEquals(4, cache1.size());
 
       assertNoTransactionsAndLocks();
    }
