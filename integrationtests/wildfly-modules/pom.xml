@@ -268,7 +268,63 @@
                      </artifactItems>
                   </configuration>
                </execution>
+               <execution>
+                  <id>unpack-es-plugins</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.elasticsearch.plugin</groupId>
+                           <artifactId>delete-by-query</artifactId>
+                           <version>${version.elasticsearch}</version>
+                           <type>zip</type>
+                           <overWrite>true</overWrite>
+                           <outputDirectory>${project.build.directory}/plugins/delete-by-query
+                           </outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>com.github.alexcojocaru</groupId>
+            <artifactId>elasticsearch-maven-plugin</artifactId>
+            <version>2.3</version>
+            <configuration>
+               <skip>${skipTests}</skip>
+               <clusterName>test</clusterName>
+               <pluginsPath>${project.build.directory}/plugins/</pluginsPath>
+               <tcpPort>9300</tcpPort>
+               <httpPort>9200</httpPort>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>start-elasticsearch</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>start</goal>
+                  </goals>
+               </execution>
+               <execution>
+                  <id>stop-elasticsearch</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>stop</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.elasticsearch</groupId>
+                  <artifactId>elasticsearch</artifactId>
+                  <version>${version.elasticsearch}</version>
+               </dependency>
+            </dependencies>
          </plugin>
 
          <plugin>
@@ -310,6 +366,7 @@
                      </resources>
                   </configuration>
                </execution>
+
             </executions>
          </plugin>
 

@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.elasticsearch.plugin.deletebyquery.DeleteByQueryPlugin;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,8 +19,6 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.massindex.IndexUpdater;
-import org.infinispan.query.test.elasticsearch.ElasticSearchCluster;
-import org.infinispan.query.test.elasticsearch.ElasticSearchCluster.ElasticSearchClusterBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 
@@ -65,9 +61,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      if (INDEX_MANAGER == IndexManager.ELASTIC_SEARCH) {
-         startElasticsearch();
-      }
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
       cacheCfg.clustering().remoteTimeout(120000)
             .indexing().index(Index.LOCAL)
@@ -131,14 +124,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       test.createBeforeClass();
       test.createBeforeMethod();
       test.populate();
-   }
-
-   void startElasticsearch() throws IOException {
-      ElasticSearchCluster cluster = new ElasticSearchClusterBuilder()
-            .withNumberNodes(2)
-            .addPlugin(DeleteByQueryPlugin.class)
-            .build();
-      cluster.start();
    }
 
    public void populate() throws Exception {

@@ -88,6 +88,7 @@
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/osgi</module>
+      <module>integrationtests/elasticsearch-indexmanager-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/all-embedded-it</module>
       <module>integrationtests/all-embedded-query-it</module>
