@@ -65,6 +65,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.RECEIVE_BUFFER_SIZE)
                  .setRestartAllServices()
+                 .setDefaultValue(new ModelNode().set(0))
                  .build();
 
    static final SimpleAttributeDefinition SEND_BUFFER_SIZE =
@@ -72,6 +73,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.SEND_BUFFER_SIZE)
                  .setRestartAllServices()
+                 .setDefaultValue(new ModelNode().set(0))
                  .build();
 
    static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = { SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, WORKER_THREADS };

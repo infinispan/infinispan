@@ -69,6 +69,7 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                    .setAllowExpression(true)
                    .setXmlName(ModelKeys.RECEIVE_BUFFER_SIZE)
                    .setRestartAllServices()
+                   .setDefaultValue(new ModelNode().set(0))
                    .build();
 
    static final SimpleAttributeDefinition SEND_BUFFER_SIZE =
@@ -76,6 +77,7 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                    .setAllowExpression(true)
                    .setXmlName(ModelKeys.SEND_BUFFER_SIZE)
                    .setRestartAllServices()
+                   .setDefaultValue(new ModelNode().set(0))
                    .build();
 
    static final SimpleAttributeDefinition NAME =
