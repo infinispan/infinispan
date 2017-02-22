@@ -263,7 +263,6 @@
                               <exclude>META-INF/LICENSE.txt</exclude>
                               <exclude>META-INF/NOTICE</exclude>
                               <exclude>META-INF/NOTICE.txt</exclude>
-                              <exclude>schema/*.xsd</exclude>
                               <exclude>__redirected/*</exclude>
                            </excludes>
                         </filter>
