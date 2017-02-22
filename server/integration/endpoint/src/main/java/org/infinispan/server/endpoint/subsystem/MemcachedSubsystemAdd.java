@@ -19,7 +19,6 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.server.memcached.MemcachedServer;
-import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -58,12 +57,7 @@ class MemcachedSubsystemAdd extends ProtocolServiceSubsystemAdd {
       MemcachedServerConfigurationBuilder configurationBuilder = new MemcachedServerConfigurationBuilder();
       this.configureProtocolServer(configurationBuilder, config);
 
-      final String cacheName;
-      if (config.hasDefined(ModelKeys.CACHE)) {
-         cacheName = config.get(ModelKeys.CACHE).asString();
-      } else {
-         cacheName = MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE;
-      }
+      final String cacheName = MemcachedConnectorResource.CACHE.resolveModelAttribute(context, config).asString();
 
       // Create the service
       final ProtocolServerService service = new ProtocolServerService(getServiceName(operation), MemcachedServer.class, configurationBuilder, cacheName);

@@ -66,8 +66,7 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       // Create the builder
       HotRodServerConfigurationBuilder configurationBuilder = new HotRodServerConfigurationBuilder();
       configureProtocolServer(configurationBuilder, config);
-      configureProtocolServerAuthentication(configurationBuilder, config);
-      configureProtocolServerTopology(configurationBuilder, config);
+      configureProtocolServerTopology(context, configurationBuilder, config);
       // Create the service
       final ProtocolServerService service = new ProtocolServerService(getServiceName(operation), HotRodServer.class, configurationBuilder);
 
@@ -81,8 +80,8 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
 
-      EncryptableSubsystemHelper.processEncryption(config, service, builder);
-      processAuthentication(config, configurationBuilder, service, builder);
+      EncryptableSubsystemHelper.processEncryption(context, config, service, builder);
+      processAuthentication(context, configurationBuilder, service, builder, config);
 
       // Extension manager dependency
       builder.addDependency(Constants.EXTENSION_MANAGER_NAME, ExtensionManagerService.class, service.getExtensionManager());
@@ -90,21 +89,23 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       builder.install();
    }
 
-   private void processAuthentication(ModelNode config, HotRodServerConfigurationBuilder configurationBuilder, ProtocolServerService service, ServiceBuilder<?> builder) {
+   private void processAuthentication(OperationContext context, HotRodServerConfigurationBuilder configurationBuilder, ProtocolServerService service, ServiceBuilder<?> builder, ModelNode config) throws OperationFailedException {
       if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
+         configurationBuilder.authentication().enable();
          ModelNode authentication = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
-         EndpointUtils.addSecurityRealmDependency(builder, authentication.get(ModelKeys.SECURITY_REALM).asString(), service.getAuthenticationSecurityRealm());
+
+         EndpointUtils.addSecurityRealmDependency(builder, AuthenticationResource.SECURITY_REALM.resolveModelAttribute(context, authentication).asString(), service.getAuthenticationSecurityRealm());
          if (authentication.hasDefined(ModelKeys.SASL) && authentication.get(ModelKeys.SASL, ModelKeys.SASL_NAME).isDefined()) {
             AuthenticationConfigurationBuilder authenticationBuilder = configurationBuilder.authentication();
             ModelNode sasl = authentication.get(ModelKeys.SASL, ModelKeys.SASL_NAME);
             if (sasl.hasDefined(ModelKeys.SERVER_CONTEXT_NAME)) {
-               String serverContextName = sasl.get(ModelKeys.SERVER_CONTEXT_NAME).asString();
+               String serverContextName = SaslResource.SERVER_CONTEXT_NAME.resolveModelAttribute(context, sasl).asString();
                service.setServerContextName(serverContextName);
                EndpointUtils.addSecurityDomainDependency(builder, serverContextName, service.getSaslSecurityDomain()); // FIXME: needed ???
             }
 
             if (sasl.hasDefined(ModelKeys.SERVER_NAME)) {
-               authenticationBuilder.serverName(sasl.get(ModelKeys.SERVER_NAME).asString());
+               authenticationBuilder.serverName(SaslResource.SERVER_NAME.resolveModelAttribute(context, sasl).asString());
             }
             if (sasl.hasDefined(ModelKeys.MECHANISMS)) {
                for(ModelNode mech : sasl.get(ModelKeys.MECHANISMS).asList()) {
@@ -168,34 +169,27 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       }
    }
 
-   private void configureProtocolServerTopology(HotRodServerConfigurationBuilder builder, ModelNode config) {
+   private void configureProtocolServerTopology(OperationContext context, HotRodServerConfigurationBuilder builder, ModelNode config) throws OperationFailedException {
       if (config.hasDefined(ModelKeys.TOPOLOGY_STATE_TRANSFER) && config.get(ModelKeys.TOPOLOGY_STATE_TRANSFER, ModelKeys.TOPOLOGY_STATE_TRANSFER_NAME).isDefined()) {
          config = config.get(ModelKeys.TOPOLOGY_STATE_TRANSFER, ModelKeys.TOPOLOGY_STATE_TRANSFER_NAME);
          if (config.hasDefined(ModelKeys.LOCK_TIMEOUT)) {
-            builder.topologyLockTimeout(config.get(ModelKeys.LOCK_TIMEOUT).asLong());
+            builder.topologyLockTimeout(TopologyStateTransferResource.LOCK_TIMEOUT.resolveModelAttribute(context, config).asLong());
          }
          if (config.hasDefined(ModelKeys.REPLICATION_TIMEOUT)) {
-            builder.topologyReplTimeout(config.get(ModelKeys.REPLICATION_TIMEOUT).asLong());
+            builder.topologyReplTimeout(TopologyStateTransferResource.REPLICATION_TIMEOUT.resolveModelAttribute(context, config).asLong());
          }
          if (config.hasDefined(ModelKeys.EXTERNAL_HOST)) {
-            builder.proxyHost(config.get(ModelKeys.EXTERNAL_HOST).asString());
+            builder.proxyHost(TopologyStateTransferResource.EXTERNAL_HOST.resolveModelAttribute(context, config).asString());
          }
          if (config.hasDefined(ModelKeys.EXTERNAL_PORT)) {
-            builder.proxyPort(config.get(ModelKeys.EXTERNAL_PORT).asInt());
+            builder.proxyPort(TopologyStateTransferResource.EXTERNAL_PORT.resolveModelAttribute(context, config).asInt());
          }
          if (config.hasDefined(ModelKeys.LAZY_RETRIEVAL)) {
-            builder.topologyStateTransfer(!config.get(ModelKeys.LAZY_RETRIEVAL).asBoolean(false));
+            builder.topologyStateTransfer(!TopologyStateTransferResource.LAZY_RETRIEVAL.resolveModelAttribute(context, config).asBoolean());
          }
          if (config.hasDefined(ModelKeys.AWAIT_INITIAL_RETRIEVAL)) {
-            builder.topologyAwaitInitialTransfer(config.get(ModelKeys.AWAIT_INITIAL_RETRIEVAL).asBoolean());
+            builder.topologyAwaitInitialTransfer(TopologyStateTransferResource.AWAIT_INITIAL_RETRIEVAL.resolveModelAttribute(context, config).asBoolean());
          }
-      }
-   }
-
-   private void configureProtocolServerAuthentication(HotRodServerConfigurationBuilder builder, ModelNode config) {
-      if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
-         config = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
-         builder.authentication().enable();
       }
    }
 

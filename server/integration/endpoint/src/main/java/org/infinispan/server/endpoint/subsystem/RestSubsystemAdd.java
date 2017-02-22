@@ -55,13 +55,11 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
 
-
-
       builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
       if (config.hasDefined(ModelKeys.SECURITY_DOMAIN)) {
-         EndpointUtils.addSecurityDomainDependency(builder, config.get(ModelKeys.SECURITY_DOMAIN).asString(), service.getSecurityDomainContextInjector());
+         EndpointUtils.addSecurityDomainDependency(builder, RestConnectorResource.SECURITY_DOMAIN.resolveModelAttribute(context, config).asString(), service.getSecurityDomainContextInjector());
       }
-      EncryptableSubsystemHelper.processEncryption(config, service, builder);
+      EncryptableSubsystemHelper.processEncryption(context, config, service, builder);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();
    }
@@ -95,6 +93,4 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
    protected boolean requiresRuntimeVerification() {
       return false;
    }
-
-
 }

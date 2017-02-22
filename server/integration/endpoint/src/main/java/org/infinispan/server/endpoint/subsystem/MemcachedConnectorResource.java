@@ -18,6 +18,7 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -44,7 +45,7 @@ public class MemcachedConnectorResource extends ProtocolServerConnectorResource 
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.CACHE)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set("memcachedCache"))
+                 .setDefaultValue(new ModelNode().set(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE))
                  .build();
 
    static final SimpleAttributeDefinition[] MEMCACHED_CONNECTOR_ATTRIBUTES = { CACHE };

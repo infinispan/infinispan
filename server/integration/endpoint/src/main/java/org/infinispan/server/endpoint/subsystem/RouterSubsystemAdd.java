@@ -57,45 +57,48 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
 
       ModelNode multiTenancyInnerConfiguration = config.get(ModelKeys.MULTI_TENANCY, ModelKeys.MULTI_TENANCY_NAME);
 
-      addHotRod(multiTenancyInnerConfiguration, routerService, builder);
-      addRest(multiTenancyInnerConfiguration, routerService, builder);
+      addHotRod(context, multiTenancyInnerConfiguration, routerService, builder);
+      addRest(context, multiTenancyInnerConfiguration, routerService, builder);
 
       builder.install();
    }
 
-   private void addRest(ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) {
+   private void addRest(OperationContext context, ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if (config.get(ModelKeys.REST).isDefined()) {
-         config.get(ModelKeys.REST).asList().forEach(r -> {
-            String restName = r.get(0).get(ModelKeys.NAME).asString();
-            if (r.get(0).get(ModelKeys.PREFIX).isDefined()) {
-               r.get(0).get(ModelKeys.PREFIX).asList().forEach(prefix -> {
-                  String pathPrefix = prefix.get(0).get(ModelKeys.PATH).asString();
+         for (ModelNode r : config.get(ModelKeys.REST).asList()) {
+            ModelNode restNode = r.get(0);
+            String restName = RouterRestResource.NAME.resolveModelAttribute(context, restNode).asString();
+            if (restNode.get(ModelKeys.PREFIX).isDefined()) {
+               for (ModelNode prefixNode : restNode.get(ModelKeys.PREFIX).asList()) {
+                  String pathPrefix = PrefixResource.PATH.resolveModelAttribute(context, prefixNode.get(0)).asString();
                   MultiTenantRouterService.RestRouting restRouting = routerService.getRestRouting(pathPrefix, restName);
                   EndpointUtils.addRestDependency(builder, restName, restRouting.getRest());
-               });
+               }
             }
-         });
+         }
       }
    }
 
-   private void addHotRod(ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) {
+   private void addHotRod(OperationContext context, ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if(config.get(ModelKeys.HOTROD).isDefined()) {
-         config.get(ModelKeys.HOTROD).asList().forEach(hr -> {
-            String hotRodName = hr.get(0).get(ModelKeys.NAME).asString();
-            routerService.tcpNoDelay(hr.get(0).get(ModelKeys.TCP_NODELAY).asBoolean(true));
-            routerService.keepAlive(hr.get(0).get(ModelKeys.KEEP_ALIVE).asBoolean(false));
-            routerService.sendBufferSize(hr.get(0).get(ModelKeys.SEND_BUFFER_SIZE).asInt(0));
-            routerService.receiveBufferSize(hr.get(0).get(ModelKeys.RECEIVE_BUFFER_SIZE).asInt(0));
-            if(hr.get(0).get(ModelKeys.SNI).isDefined()) {
-               hr.get(0).get(ModelKeys.SNI).asList().forEach(sni -> {
-                  String sniHostName = sni.get(0).get(ModelKeys.HOST_NAME).asString();
-                  String securityRealm = sni.get(0).get(ModelKeys.SECURITY_REALM).asString();
+         for(ModelNode hr : config.get(ModelKeys.HOTROD).asList()) {
+            ModelNode hotRod = hr.get(0);
+            String hotRodName = RouterHotRodResource.NAME.resolveModelAttribute(context, hotRod).asString();
+            routerService.tcpNoDelay(RouterConnectorResource.TCP_NODELAY.resolveModelAttribute(context, hotRod).asBoolean());
+            routerService.keepAlive(RouterConnectorResource.KEEP_ALIVE.resolveModelAttribute(context, hotRod).asBoolean());
+            routerService.sendBufferSize(RouterConnectorResource.SEND_BUFFER_SIZE.resolveModelAttribute(context, hotRod).asInt());
+            routerService.receiveBufferSize(RouterConnectorResource.RECEIVE_BUFFER_SIZE.resolveModelAttribute(context, hotRod).asInt());
+            if(hotRod.get(ModelKeys.SNI).isDefined()) {
+               for(ModelNode sni : hotRod.get(ModelKeys.SNI).asList()) {
+                  ModelNode sniNode = sni.get(0);
+                  String sniHostName = SniResource.HOST_NAME.resolveModelAttribute(context, sniNode).asString();
+                  String securityRealm = SniResource.SECURITY_REALM.resolveModelAttribute(context, sniNode).asString();
                   MultiTenantRouterService.HotRodRouting hotRodRouting = routerService.getHotRodRouting(sniHostName);
                   EndpointUtils.addHotRodDependency(builder, hotRodName, hotRodRouting.getHotRod());
                   EndpointUtils.addSecurityRealmDependency(builder, securityRealm, hotRodRouting.getSecurityRealm());
-               });
+               }
             }
-         });
+         }
       }
    }
 
