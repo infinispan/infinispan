@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.NonTransactionalInvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
+import org.infinispan.distribution.AnotherTriangleOrderManager;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -68,7 +69,8 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
-                              FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class})
+                              FunctionalNotifier.class, CommandAckCollector.class, AnotherTriangleOrderManager.class,
+                              TriangleOrderManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -144,6 +146,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new FunctionalNotifierImpl<>();
          } else if (componentType.equals(CommandAckCollector.class)) {
             return componentType.cast(new CommandAckCollector());
+         } else if (componentType.equals(AnotherTriangleOrderManager.class)) {
+            return componentType.cast(new AnotherTriangleOrderManager());
          } else if (componentType.equals(TriangleOrderManager.class)) {
             return componentType.cast(new TriangleOrderManager(configuration.clustering().hash().numSegments()));
          }

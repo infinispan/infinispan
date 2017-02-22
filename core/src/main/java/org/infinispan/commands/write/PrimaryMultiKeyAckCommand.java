@@ -51,10 +51,8 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
       return CACHED_TYPE[index];
    }
 
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public void ack() {
       commandAckCollector.multiKeyPrimaryAck(commandInvocationId, getOrigin(), returnValue, topologyId);
-      return CompletableFutures.completedNull();
    }
 
    @Override
