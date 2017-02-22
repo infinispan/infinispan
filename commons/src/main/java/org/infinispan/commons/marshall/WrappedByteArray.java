@@ -16,11 +16,10 @@ import org.infinispan.commons.util.Util;
  */
 public class WrappedByteArray implements WrappedBytes {
    private final byte[] bytes;
-   private transient int hashCode;
+   private transient int hashCode = 0;
 
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;
-      this.hashCode = Arrays.hashCode(bytes);
    }
 
    public WrappedByteArray(byte[] bytes, int hashCode) {
@@ -74,7 +73,7 @@ public class WrappedByteArray implements WrappedBytes {
 
    @Override
    public int hashCode() {
-      return hashCode;
+      return hashCode == 0 ? (hashCode = Arrays.hashCode(bytes)) : hashCode;
    }
 
    @Override
