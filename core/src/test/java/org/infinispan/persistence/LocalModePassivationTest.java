@@ -4,21 +4,20 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -28,7 +27,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -40,8 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.LocalModePassivationTest")
 @CleanupAfterMethod
 public class LocalModePassivationTest extends SingleCacheManagerTest {
-
-   private File cacheStoreDir;
 
    private final boolean passivationEnabled;
 
@@ -59,29 +55,23 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheStoreDir = new File(TestingUtil.tmpDirectory(this.getClass()));
-      Util.recursiveFileRemove(cacheStoreDir);
-
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .eviction().maxEntries(150).strategy(EvictionStrategy.LIRS)
+            .memory().storageType(StorageType.BINARY).size(150)
             .locking().useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
-            .dataContainer().storeAsBinary()
-            .persistence().passivation(passivationEnabled).addSingleFileStore().location(cacheStoreDir.getAbsolutePath())
-            .fetchPersistentState(true)
-            .ignoreModifications(false)
-            .preload(false)
-            .purgeOnStartup(false);
+            .persistence()
+               .passivation(passivationEnabled)
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+                  .storeName(getClass().getName())
+               .fetchPersistentState(true)
+               .ignoreModifications(false)
+               .preload(false)
+               .purgeOnStartup(false);
 
       configureConfiguration(builder);
 
       return TestCacheManagerFactory.createCacheManager(builder);
-   }
-
-   @AfterClass
-   protected void clearTempDir() {
-      Util.recursiveFileRemove(cacheStoreDir);
    }
 
    public void testStoreAndLoad() throws Exception {
