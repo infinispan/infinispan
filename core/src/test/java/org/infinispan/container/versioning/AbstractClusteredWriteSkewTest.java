@@ -1,7 +1,6 @@
 package org.infinispan.container.versioning;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.HeuristicRollbackException;
@@ -14,12 +13,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -300,23 +297,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
          primaryOwner.put(key, "v2");
       }
 
-      DataContainer dataContainer = TestingUtil.extractComponent(primaryOwner, DataContainer.class);
-      int retryCount = 5;
-      int insertCount = 10;
-      for (int retry = 0; retry < 5; ++retry) {
-         MagicKey[] keys = new MagicKey[MAX_ENTRIES];
-         for (int i = 0; i < insertCount; ++i) {
-            for (int j = 0; j < MAX_ENTRIES; ++j) {
-               MagicKey tempKey = keys[j];
-               if (tempKey == null) {
-                  tempKey = new MagicKey("other-key-" + j, primaryOwner);
-                  keys[j] = tempKey;
-               }
-               primaryOwner.put(tempKey, "value");
-            }
-         }
-      }
-      assertTrue("The key was not evicted after " + insertCount + " inserts - retried " + retryCount, dataContainer.peek(key) == null);
+      primaryOwner.evict(key);
 
       log.debugf("It is going to try to commit the suspended transaction");
       try {
