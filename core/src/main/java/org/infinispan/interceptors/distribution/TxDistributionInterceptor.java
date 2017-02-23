@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.commands.functional.Mutation;
@@ -52,7 +52,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -78,7 +77,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
-   private static Log log = LogFactory.getLog(TxDistributionInterceptor.class);
+   private static final Log log = LogFactory.getLog(TxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private PartitionHandlingManager partitionHandlingManager;
@@ -87,16 +86,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
    private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper();
 
-   private boolean syncRollbackPhase;
-
    @Inject
    public void inject(PartitionHandlingManager partitionHandlingManager) {
       this.partitionHandlingManager = partitionHandlingManager;
-   }
-
-   @Start
-   public void start() {
-      syncRollbackPhase = cacheConfiguration.transaction().syncRollbackPhase();
    }
 
    @Override
@@ -205,16 +197,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         Collection<Address> recipients = getCommitNodes(ctx);
-         CompletableFuture<Map<Address, Response>>
-               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createCommitRpcOptions());
-         return asyncValue(remoteInvocation.thenApply(responses -> {
-            checkTxCommandResponses(responses, command, ctx, recipients);
-            return null;
-         }));
-      }
-      return invokeNext(ctx, command);
+      return handleSecondPhaseCommand(ctx, command);
    }
 
    @Override
@@ -244,7 +227,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
          CompletableFuture<Map<Address, Response>>
-               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createPrepareRpcOptions());
+               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRpcOptions());
          return remoteInvocation.handle((responses, t) -> {
             transactionRemotelyPrepared(ctx);
             CompletableFutures.rethrowException(t);
@@ -260,10 +243,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      return handleSecondPhaseCommand(ctx, command);
+   }
+
+   private Object handleSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
          CompletableFuture<Map<Address, Response>>
-               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRollbackRpcOptions());
+               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRpcOptions());
          return asyncValue(remoteInvocation.thenApply(responses -> {
             checkTxCommandResponses(responses, command, ctx, recipients);
             return null;
@@ -474,28 +461,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private RpcOptions createCommitRpcOptions() {
-      return createRpcOptionsFor2ndPhase(isSyncCommitPhase());
-   }
-
-   private RpcOptions createRollbackRpcOptions() {
-      return createRpcOptionsFor2ndPhase(syncRollbackPhase);
-   }
-
-   private RpcOptions createRpcOptionsFor2ndPhase(boolean sync) {
-      if (sync) {
-         return rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-      } else {
-         return rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS, DeliverOrder.NONE).build();
-      }
-   }
-
-   protected RpcOptions createPrepareRpcOptions() {
-      return defaultSynchronous ?
-              rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build() :
-              rpcManager.getDefaultRpcOptions(false);
-   }
-
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       return handleFunctionalReadManyCommand(ctx, command, txReadOnlyManyHelper);
@@ -509,11 +474,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()));
    }
 
+   protected RpcOptions createRpcOptions() {
+      return rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
+   }
+
    private static List<Mutation> getMutationsOnKey(TxInvocationContext ctx, Object key) {
-      TxInvocationContext txCtx = ctx;
       List<Mutation> mutations = new ArrayList<>();
       // We don't use getAllModifications() because this goes remote and local mods should not affect it
-      for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
+      for (WriteCommand write : ctx.getCacheTransaction().getModifications()) {
          if (write.getAffectedKeys().contains(key)) {
             if (write instanceof FunctionalCommand) {
                mutations.add(((FunctionalCommand) write).toMutation(key));

@@ -46,8 +46,8 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setUp() throws Exception {
-      caches = new ArrayList<Cache>();
-      cacheContainers = new ArrayList<EmbeddedCacheManager>();
+      caches = new ArrayList<>();
+      cacheContainers = new ArrayList<>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
@@ -63,7 +63,6 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       c.clustering().cacheMode(CacheMode.REPL_SYNC)
             .remoteTimeout(30000)
             .transaction().invocationBatching().enable()
-            .transaction().syncCommitPhase(true)
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(gc, c);
       cacheContainers.add(container);

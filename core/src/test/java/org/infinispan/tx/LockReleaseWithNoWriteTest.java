@@ -22,7 +22,7 @@ public class LockReleaseWithNoWriteTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      dcc.transaction().lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(false);
+      dcc.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

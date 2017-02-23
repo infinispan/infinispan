@@ -88,7 +88,7 @@ import org.testng.annotations.Factory;
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = Collections.synchronizedList(new ArrayList<EmbeddedCacheManager>());
-   protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<Cache<?, ?>, ReplListener>();
+   protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<>();
    // the cache mode set in configuration is shared in many tests, therefore we'll place the field,
    // fluent setter cacheMode(...) and parameters() to this class.
    protected CacheMode cacheMode;
@@ -137,27 +137,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } else {
          TestingUtil.killCacheManagers(true, cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
          cacheManagers.clear();
-      }
-   }
-
-   /**
-    * Reason: after a tm.commit is run, multiple tests assert that the new value (as within the committing transaction)
-    * is present on a remote cache (i.e. not on the cache on which tx originated). If we don't use sync commit,
-    * than this (i.e. actual commit of the tx on the remote cache) might happen after the tm.commit() returns,
-    * and result in an intermittent failure for the assertion
-    */
-   protected void assertSupportedConfig() {
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         for (Cache<?, ?> cache : TestingUtil.getRunningCaches(cm)) {
-            Configuration config = cache.getCacheConfiguration();
-            try {
-               assert config.transaction().syncCommitPhase() : "Must use a sync commit phase!";
-               assert config.transaction().syncRollbackPhase(): "Must use a sync rollback phase!";
-            } catch (AssertionError e) {
-               log.error("Invalid config for cache in test: " + getClass().getName());
-               throw e;
-            }
-         }
       }
    }
 
@@ -240,7 +219,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected  <K, V> List<Cache<K, V>> getCaches(String cacheName) {
-      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>();
+      List<Cache<K, V>> caches = new ArrayList<>();
       List<EmbeddedCacheManager> managers = new ArrayList<>(cacheManagers);
       for (EmbeddedCacheManager cm : managers) {
          Cache<K, V> c;
@@ -363,12 +342,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected ReplListener replListener(Cache<?, ?> cache) {
-      ReplListener listener = listeners.get(cache);
-      if (listener == null) {
-         listener = new ReplListener(cache);
-         listeners.put(cache, listener);
-      }
-      return listener;
+      return listeners.computeIfAbsent(cache, k -> new ReplListener(cache));
    }
 
    protected EmbeddedCacheManager manager(int i) {
@@ -441,7 +415,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
       }
-      Consumer<MultipleCacheManagersTest>[] cacheModeModifiers = getModifiers(InCacheMode.class, InCacheMode::value, (t, m) -> t.cacheMode(m));
+      Consumer<MultipleCacheManagersTest>[] cacheModeModifiers = getModifiers(InCacheMode.class, InCacheMode::value,
+            MultipleCacheManagersTest::cacheMode);
       Consumer<MultipleCacheManagersTest>[] transactionModifiers = getModifiers(InTransactionMode.class, InTransactionMode::value, (t, m) -> t.transactional(m.isTransactional()));
       List<Consumer<MultipleCacheManagersTest>[]> allModifiers = Arrays.asList(cacheModeModifiers, transactionModifiers);
 
@@ -478,8 +453,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    public List<MultipleCacheManagersTest> expand() {
-      List<MultipleCacheManagersTest> newTests = new ArrayList<>();
-      return newTests;
+      return new ArrayList<>();
    }
 
    private <Mode, A extends Annotation> Consumer<MultipleCacheManagersTest>[] getModifiers(Class<A> annotationClass, Function<A, Mode[]> methodRetriever, BiConsumer<MultipleCacheManagersTest, Mode> applier) {
@@ -520,9 +494,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          if (modes == null) {
             modes = new HashSet<>();
          }
-         for (Mode mode : modeRetriever.apply(annotation)) {
-            modes.add(mode);
-         }
+         Collections.addAll(modes, modeRetriever.apply(annotation));
       }
       return modes;
    }
@@ -705,22 +677,19 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            boolean aNodeIsLocked = false;
-            for (int i = 0; i < caches(cacheName).size(); i++) {
-               final boolean isLocked = lockManager(i, cacheName).isLocked(key);
-               if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i, cacheName).getOwner(key));
-               aNodeIsLocked = aNodeIsLocked || isLocked;
-            }
-            return !aNodeIsLocked;
+      eventually(() -> {
+         boolean aNodeIsLocked = false;
+         for (int i = 0; i < caches(cacheName).size(); i++) {
+            final boolean isLocked = lockManager(i, cacheName).isLocked(key);
+            if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i, cacheName).getOwner(key));
+            aNodeIsLocked = aNodeIsLocked || isLocked;
          }
+         return !aNodeIsLocked;
       });
    }
 
    protected void assertNotLocked(final Object key) {
-      assertNotLocked((String)null, key);
+      assertNotLocked(null, key);
    }
 
    protected boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {
@@ -778,7 +747,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    private <K, V> Cache<K, V> getCache(int index, String name) {
-      return name == null ? this.<K, V>cache(index) : this.<K, V>cache(index, name);
+      return name == null ? this.cache(index) : this.cache(index, name);
    }
 
    protected void forceTwoPhase(int cacheIndex) throws SystemException, RollbackException {
@@ -792,21 +761,18 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNoTransactions(final String cacheName) {
-      eventually("There are pending transactions!", new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache<?, ?> cache : caches(cacheName)) {
-               final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
-               int localTxCount = transactionTable.getLocalTxCount();
-               int remoteTxCount = transactionTable.getRemoteTxCount();
-               if (localTxCount != 0 || remoteTxCount != 0) {
-                  log.tracef("Local tx=%s, remote tx=%s, for cache %s ", transactionTable.getLocalGlobalTransaction(),
-                             transactionTable.getRemoteGlobalTransaction(), address(cache));
-                  return false;
-               }
+      eventually("There are pending transactions!", () -> {
+         for (Cache<?, ?> cache : caches(cacheName)) {
+            final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
+            int localTxCount = transactionTable.getLocalTxCount();
+            int remoteTxCount = transactionTable.getRemoteTxCount();
+            if (localTxCount != 0 || remoteTxCount != 0) {
+               log.tracef("Local tx=%s, remote tx=%s, for cache %s ", transactionTable.getLocalGlobalTransaction(),
+                          transactionTable.getRemoteGlobalTransaction(), address(cache));
+               return false;
             }
-            return true;
          }
+         return true;
       });
    }
 
@@ -817,14 +783,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void assertEventuallyEquals(
          final int cacheIndex, final Object key, final Object value) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return value == null
-                  ? null == cache(cacheIndex).get(key)
-                  : value.equals(cache(cacheIndex).get(key));
-         }
-      });
+      eventually(() -> value == null
+            ? null == cache(cacheIndex).get(key)
+            : value.equals(cache(cacheIndex).get(key)));
    }
 
    protected abstract static class AnnotationFilter<A extends Annotation, AM, CM> {
@@ -862,7 +823,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       private final String cacheModeString = System.getProperty("test.infinispan.cacheMode");
 
       public CacheModeFilter() {
-         super(InCacheMode.class, a -> a.value(), (m1, m2) -> m1 == m2);
+         super(InCacheMode.class, InCacheMode::value, (m1, m2) -> m1 == m2);
       }
 
       @Override
@@ -879,7 +840,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       private final String txModeString = System.getProperty("test.infinispan.transactional");
 
       public TransactionalModeFilter() {
-         super(InTransactionMode.class, a -> a.value(), (m, b) -> m.isTransactional() == b.booleanValue());
+         super(InTransactionMode.class, InTransactionMode::value, (m, b) -> m.isTransactional() == b);
       }
 
       @Override
@@ -906,7 +867,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       public boolean test(IMethodInstance method) {
          if (property == null) return true;
          T mode = getMode.apply((MultipleCacheManagersTest) method.getInstance());
-         return property == null || mode == null || mode.toString().equalsIgnoreCase(property);
+         return mode == null || mode.toString().equalsIgnoreCase(property);
       }
    }
 

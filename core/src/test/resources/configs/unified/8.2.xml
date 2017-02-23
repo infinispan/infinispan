@@ -55,13 +55,13 @@
             </file-store>
          </persistence>
       </local-cache>
-      <invalidation-cache name="invalid" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="true">
+      <invalidation-cache name="invalid" mode="SYNC" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <eviction size="20500" strategy="LRU" type="MEMORY"/>
          <expiration interval="10500" lifespan="11" max-idle="11"/>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="ASYNC" queue-flush-interval="11" queue-size="1500" start="EAGER" statistics="true">
+      <replicated-cache name="repl" mode="SYNC" queue-flush-interval="11" queue-size="1500" start="EAGER" statistics="true">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
          <eviction max-entries="21000" strategy="FIFO"/>
@@ -92,39 +92,39 @@
          <partition-handling enabled="true"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache>
-      <replicated-cache name="capedwarf-data" mode="ASYNC">
+      <replicated-cache name="capedwarf-data" mode="SYNC">
          <transaction mode="NON_XA"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="false">
             <file-store preload="true" purge="false"/>
          </persistence>
       </replicated-cache>
-      <replicated-cache name="capedwarf-metadata" mode="ASYNC">
+      <replicated-cache name="capedwarf-metadata" mode="SYNC">
          <transaction mode="NON_XA"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
             <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
          </persistence>
       </replicated-cache>
-      <replicated-cache name="capedwarf-memcache" mode="ASYNC">
+      <replicated-cache name="capedwarf-memcache" mode="SYNC">
          <transaction mode="NON_XA" locking="PESSIMISTIC"/>
          <eviction strategy="NONE" max-entries="-1"/>
       </replicated-cache>
-      <distributed-cache name="capedwarf-default" mode="ASYNC">
+      <distributed-cache name="capedwarf-default" mode="SYNC">
          <transaction mode="NON_XA"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
             <file-store preload="true" purge="false"/>
          </persistence>
       </distributed-cache>
-      <distributed-cache name="capedwarf-dist" mode="ASYNC">
+      <distributed-cache name="capedwarf-dist" mode="SYNC">
          <transaction mode="NON_XA" locking="PESSIMISTIC"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
             <file-store preload="true" purge="false"/>
          </persistence>
       </distributed-cache>
-      <distributed-cache name="capedwarf-tasks" mode="ASYNC">
+      <distributed-cache name="capedwarf-tasks" mode="SYNC">
          <transaction mode="NON_XA"/>
          <eviction strategy="LIRS" max-entries="10000"/>
          <persistence passivation="true">
@@ -199,7 +199,7 @@
          <expiration interval="11000"/>
       </local-cache>
 
-      <invalidation-cache-configuration name="invalidation-template" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" statistics="true">
+      <invalidation-cache-configuration name="invalidation-template" mode="SYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <eviction max-entries="20500" strategy="LRU"/>
@@ -207,7 +207,7 @@
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
 
-      <replicated-cache-configuration name="repl-template" mode="ASYNC" queue-flush-interval="11" queue-size="1500" start="EAGER" statistics="true"
+      <replicated-cache-configuration name="repl-template" mode="SYNC" queue-flush-interval="11" queue-size="1500" start="EAGER" statistics="true"
             segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>

@@ -45,7 +45,6 @@ public class VersionedConditionalOperationsTest extends MultipleCacheManagersTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
-      dcc.transaction().syncCommitPhase(syncCommit).syncRollbackPhase(syncCommit);
       dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
       dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
       createCluster(dcc, clusterSize);

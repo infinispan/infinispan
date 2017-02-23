@@ -35,9 +35,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
       dccc.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .lockingMode(LockingMode.PESSIMISTIC)
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true);
+            .lockingMode(LockingMode.PESSIMISTIC);
       dccc.clustering().hash().numOwners(1).l1().disable();
       dccc.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createCluster(dccc, 2);
@@ -45,7 +43,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
    }
 
    public void testStateTransfer() throws Exception {
-      Set<Object> keys = new HashSet<Object>();
+      Set<Object> keys = new HashSet<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
          if (!keys.add(key)) continue;

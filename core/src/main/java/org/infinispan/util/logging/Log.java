@@ -34,6 +34,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
@@ -819,9 +820,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Problems un-marshalling remote command from byte buffer", id = 220)
    void errorUnMarshallingCommand(@Cause Throwable throwable);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
-   void unexpectedResponse(String actual, String expected);
+   //@LogMessage(level = WARN)
+   //@Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
+   //void unexpectedResponse(String actual, String expected);
 
    @Message(value = "Custom interceptor missing class", id = 222)
    CacheConfigurationException customInterceptorMissingClass();
@@ -1355,11 +1356,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Recovery not supported with Synchronization", id = 392)
    CacheConfigurationException recoveryNotSupportedWithSynchronization();
 
-   @Message(value = "Recovery not supported with Asynchronous %s cache mode", id = 393)
-   CacheConfigurationException recoveryNotSupportedWithAsync(String cacheMode);
+   //@Message(value = "Recovery not supported with Asynchronous %s cache mode", id = 393)
+   //CacheConfigurationException recoveryNotSupportedWithAsync(String cacheMode);
 
-   @Message(value = "Recovery not supported with asynchronous commit phase", id = 394)
-   CacheConfigurationException recoveryNotSupportedWithAsyncCommit();
+   //@Message(value = "Recovery not supported with asynchronous commit phase", id = 394)
+   //CacheConfigurationException recoveryNotSupportedWithAsyncCommit();
 
    @LogMessage(level = INFO)
    @Message(value = "Transaction notifications are disabled.  This prevents cluster listeners from working properly!", id = 395)
@@ -1515,4 +1516,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error sending response for command %s", id = 440)
    void errorSendingResponse(ReplicableCommand command);
+
+   @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
+   CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheModed);
 }

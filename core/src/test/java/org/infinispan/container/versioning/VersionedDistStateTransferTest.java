@@ -44,8 +44,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
                .isolationLevel(IsolationLevel.REPEATABLE_READ)
                .writeSkewCheck(true)
             .transaction()
-               .lockingMode(LockingMode.OPTIMISTIC)
-               .syncCommitPhase(true);
+               .lockingMode(LockingMode.OPTIMISTIC);
 
       amendConfig(builder);
       createCluster(builder, 4);

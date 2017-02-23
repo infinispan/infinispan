@@ -44,17 +44,6 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       builder.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testRecoveryAndAsyncCommitPhaseCaches() {
-      //Note: this configuration uses Xa Enlistment (see configs/recovery-enabled-config.xml).
-      Configuration defaultConfig = cacheManager.getDefaultCacheConfiguration();
-      ConfigurationBuilder builder = new ConfigurationBuilder().read(defaultConfig);
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      builder.transaction().syncCommitPhase(false).recovery().enable();
-      //it should throw an exception when try to build this configuration.
-      builder.build();
-   }
-
    public void testRecoveryWithCacheConfigured() {
       Configuration withRecoveryAndCache = cacheManager.getCache("withRecoveryAndCache").getCacheConfiguration();
       assertTrue(withRecoveryAndCache.transaction().recovery().enabled(), "Recovery is supposed to be enabled.");

@@ -25,20 +25,18 @@ public class TransactionConfiguration {
    public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder("stop-timeout", TimeUnit.SECONDS.toMillis(30)).build();
    public static final AttributeDefinition<Boolean> EAGER_LOCKING_SINGLE_NODE = AttributeDefinition.builder("eager-locking-single-node", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("locking", LockingMode.OPTIMISTIC).build();
-   public static final AttributeDefinition<Boolean> SYNC_COMMIT_PHASE = AttributeDefinition.builder("sync-commit-phase", true).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Boolean> SYNC_ROLLBACK_PHASE = AttributeDefinition.builder("sync-rollback-phase", true).immutable().autoPersist(false).build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transaction-manager-lookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
    public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("mode", TransactionMode.NON_TRANSACTIONAL).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_EAGER_LOCKING = AttributeDefinition.builder("eager-locking", false).autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
-   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000l).immutable().xmlName("reaper-interval").build();
-   public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("complete-timeout", 60000l).immutable().build();
+   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000L).immutable().xmlName("reaper-interval").build();
+   public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("complete-timeout", 60000L).immutable().build();
    public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transaction-protocol", TransactionProtocol.DEFAULT).immutable().xmlName("protocol").build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder("notifications", true).immutable().build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, EAGER_LOCKING_SINGLE_NODE, LOCKING_MODE, SYNC_COMMIT_PHASE, SYNC_ROLLBACK_PHASE,
+      return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, EAGER_LOCKING_SINGLE_NODE, LOCKING_MODE,
             TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_EAGER_LOCKING, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
             REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL, NOTIFICATIONS);
    }
@@ -47,8 +45,6 @@ public class TransactionConfiguration {
    private final Attribute<Long> cacheStopTimeout;
    private final Attribute<Boolean> eagerLockingSingleNode;
    private final Attribute<LockingMode> lockingMode;
-   private final Attribute<Boolean> syncCommitPhase;
-   private final Attribute<Boolean> syncRollbackPhase;
    private final Attribute<TransactionManagerLookup> transactionManagerLookup;
    private final Attribute<TransactionSynchronizationRegistryLookup> transactionSynchronizationRegistryLookup;
    private final Attribute<TransactionMode> transactionMode;
@@ -68,8 +64,6 @@ public class TransactionConfiguration {
       cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
       eagerLockingSingleNode = attributes.attribute(EAGER_LOCKING_SINGLE_NODE);
       lockingMode = attributes.attribute(LOCKING_MODE);
-      syncCommitPhase = attributes.attribute(SYNC_COMMIT_PHASE);
-      syncRollbackPhase = attributes.attribute(SYNC_ROLLBACK_PHASE);
       transactionManagerLookup = attributes.attribute(TRANSACTION_MANAGER_LOOKUP);
       transactionSynchronizationRegistryLookup = attributes.attribute(TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP);
       transactionMode = attributes.attribute(TRANSACTION_MODE);
@@ -158,9 +152,12 @@ public class TransactionConfiguration {
     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions, but it can lead to inconsistencies when the primary owner releases
     * the lock before the backup commits the change.
+    *
+    * @deprecated since 9.0. no longer supported
     */
+   @Deprecated
    public boolean syncCommitPhase() {
-      return syncCommitPhase.get();
+      return true;
    }
 
    /**
@@ -183,10 +180,11 @@ public class TransactionConfiguration {
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions.
     *
-    * @return
+    * @deprecated since 9.0. no longer supported
     */
+   @Deprecated
    public boolean syncRollbackPhase() {
-      return syncRollbackPhase.get();
+      return true;
    }
 
    /**

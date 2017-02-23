@@ -315,9 +315,10 @@ public class Parser60 implements ConfigurationParser {
          switch (element) {
             case BACKUP: {
                parseBackup(reader, ccb);
+               break;
             }
             default: {
-               ParseUtils.unexpectedElement(reader);
+               throw ParseUtils.unexpectedElement(reader);
             }
          }
       }
@@ -406,10 +407,10 @@ public class Parser60 implements ConfigurationParser {
                builder.transaction().lockingMode(LockingMode.valueOf(value));
                break;
             case SYNC_COMMIT_PHASE:
-               builder.transaction().syncCommitPhase(Boolean.parseBoolean(value));
+               warnRemovedAttribute(Element.TRANSACTION.getLocalName(), Attribute.SYNC_COMMIT_PHASE.getLocalName());
                break;
             case SYNC_ROLLBACK_PHASE:
-               builder.transaction().syncRollbackPhase(Boolean.parseBoolean(value));
+               warnRemovedAttribute(Element.TRANSACTION.getLocalName(), Attribute.SYNC_ROLLBACK_PHASE.getLocalName());
                break;
             case TRANSACTION_MANAGER_LOOKUP_CLASS:
                builder.transaction().transactionManagerLookup(Util.<TransactionManagerLookup>getInstance(value, holder.getClassLoader()));

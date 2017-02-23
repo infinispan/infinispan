@@ -41,10 +41,6 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    private TcpTransportFactory tcpTransportFactory;
    private ConfigurationBuilder config;
 
-   @Override
-   protected void assertSupportedConfig() {
-   }
-
    @AfterMethod
    @Override
    protected void clearContent() throws Throwable {

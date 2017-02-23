@@ -51,8 +51,7 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .writeSkewCheck(true)
             .transaction()
-            .lockingMode(LockingMode.OPTIMISTIC)
-            .syncCommitPhase(true);
+            .lockingMode(LockingMode.OPTIMISTIC);
 
       decorate(builder);
 
@@ -80,7 +79,7 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
 
       //this will keep the values put by both threads. any duplicate value will be detected because of the
       //return value of add() method
-      final Set<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<Integer>();
+      final Set<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<>();
 
       //create both threads (each of them incrementing the counter on one node)
       Future<Boolean> f1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented));

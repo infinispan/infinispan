@@ -43,7 +43,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Start
    public void start() {
-      super.start();
       needToMarkReads = cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL &&
             cacheConfiguration.locking().writeSkewCheck() &&
             cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
@@ -80,9 +79,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       if (!command.isOnePhaseCommit()) {
          return invokeNext(ctx, command);
       }
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
-      });
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> releaseLockOnTxCompletion(((TxInvocationContext) rCtx)));
 
    }
 

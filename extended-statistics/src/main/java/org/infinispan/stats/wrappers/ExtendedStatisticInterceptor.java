@@ -4,10 +4,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.container.ExtendedStatistic.ABORT_RATE;
 import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
 import static org.infinispan.stats.container.ExtendedStatistic.ARRIVAL_RATE;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
@@ -307,28 +304,10 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
       return getAttribute(SYNC_ROLLBACK_TIME);
    }
 
-   @ManagedAttribute(description = "Average asynchronous Prepare duration (in microseconds)",
-                     displayName = "Average Prepare Async")
-   public double getAvgPrepareAsync() {
-      return getAttribute(ASYNC_PREPARE_TIME);
-   }
-
-   @ManagedAttribute(description = "Average asynchronous Commit duration (in microseconds)",
-                     displayName = "Average Commit Async")
-   public double getAvgCommitAsync() {
-      return getAttribute(ASYNC_COMMIT_TIME);
-   }
-
    @ManagedAttribute(description = "Average asynchronous Complete Notification duration (in microseconds)",
                      displayName = "Average Complete Notification Async")
    public double getAvgCompleteNotificationAsync() {
       return getAttribute(ASYNC_COMPLETE_NOTIFY_TIME);
-   }
-
-   @ManagedAttribute(description = "Average asynchronous Rollback duration (in microseconds)",
-                     displayName = "Average Rollback Async")
-   public double getAvgRollbackAsync() {
-      return getAttribute(ASYNC_ROLLBACK_TIME);
    }
 
    @ManagedAttribute(description = "Average number of nodes in Commit destination set",

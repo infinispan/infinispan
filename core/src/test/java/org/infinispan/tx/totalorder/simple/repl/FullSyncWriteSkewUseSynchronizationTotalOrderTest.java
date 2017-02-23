@@ -20,7 +20,7 @@ public class FullSyncWriteSkewUseSynchronizationTotalOrderTest extends BaseSimpl
    }
 
    protected FullSyncWriteSkewUseSynchronizationTotalOrderTest(int clusterSize) {
-      super(clusterSize, CacheMode.REPL_SYNC, true, true, true);
+      super(clusterSize, CacheMode.REPL_SYNC, true, true);
    }
 
    @Override

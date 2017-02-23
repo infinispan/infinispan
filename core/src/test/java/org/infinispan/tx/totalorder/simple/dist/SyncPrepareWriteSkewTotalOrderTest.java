@@ -21,7 +21,7 @@ public class SyncPrepareWriteSkewTotalOrderTest extends BaseSimpleTotalOrderTest
    }
 
    protected SyncPrepareWriteSkewTotalOrderTest(int clusterSize) {
-      super(clusterSize, CacheMode.DIST_SYNC, false, true, false);
+      super(clusterSize, CacheMode.DIST_SYNC, true, false);
    }
 
    @Override

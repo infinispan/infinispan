@@ -32,7 +32,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
             .transaction()
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .lockingMode(LockingMode.OPTIMISTIC).syncCommitPhase(true)
+            .lockingMode(LockingMode.OPTIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .writeSkewCheck(true)

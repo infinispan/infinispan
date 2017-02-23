@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +69,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cacheConfigBuilder = getDefaultClusteredCacheConfig(cacheMode, transactional, true);
       if (transactional) {
          cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-               .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-               .syncCommitPhase(true).syncRollbackPhase(true);
+               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
          cacheConfigBuilder.transaction().lockingMode(lockingMode);
          if (lockingMode == LockingMode.OPTIMISTIC) {
@@ -130,15 +128,12 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a REMOVE
-      Future<Object> getFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               return cache(1).remove("myKey");
-            } catch (Exception e) {
-               log.errorf(e, "PUT failed: %s", e.getMessage());
-               throw e;
-            }
+      Future<Object> getFuture = fork(() -> {
+         try {
+            return cache(1).remove("myKey");
+         } catch (Exception e) {
+            log.errorf(e, "PUT failed: %s", e.getMessage());
+            throw e;
          }
       });
 
@@ -213,15 +208,12 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a PUT
-      Future<Object> putFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               return cache(1).put("myKey", "newValue");
-            } catch (Exception e) {
-               log.errorf(e, "PUT failed: %s", e.getMessage());
-               throw e;
-            }
+      Future<Object> putFuture = fork(() -> {
+         try {
+            return cache(1).put("myKey", "newValue");
+         } catch (Exception e) {
+            log.errorf(e, "PUT failed: %s", e.getMessage());
+            throw e;
          }
       });
 
@@ -295,15 +287,12 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a REPLACE
-      Future<Object> getFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               return cache(1).replace("myKey", "newValue");
-            } catch (Exception e) {
-               log.errorf(e, "REPLACE failed: %s", e.getMessage());
-               throw e;
-            }
+      Future<Object> getFuture = fork(() -> {
+         try {
+            return cache(1).replace("myKey", "newValue");
+         } catch (Exception e) {
+            log.errorf(e, "REPLACE failed: %s", e.getMessage());
+            throw e;
          }
       });
 
@@ -393,12 +382,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a GET
-      Future<Object> getFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() {
-            return cache(1).get("myKey");
-         }
-      });
+      Future<Object> getFuture = fork(() -> cache(1).get("myKey"));
 
       // wait for GET command on node B to reach beyond *DistributionInterceptor, where it will block.
       // the value seen so far is null

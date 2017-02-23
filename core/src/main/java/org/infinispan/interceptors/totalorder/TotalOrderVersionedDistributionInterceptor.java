@@ -7,11 +7,10 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
-import org.infinispan.remoting.responses.KeysValidateFilter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -30,9 +29,8 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
    private static final boolean trace = log.isTraceEnabled();
    private boolean onePhaseTotalOrderCommit;
 
-   @Override
+   @Start
    public void start() {
-      super.start();
       onePhaseTotalOrderCommit = Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration);
    }
 
@@ -72,10 +70,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
       if (!(command instanceof VersionedPrepareCommand)) {
          throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
       }
-
-      KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
-            null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
-      return totalOrderPrepare(ctx, command, recipients, responseFilter);
+      return totalOrderPrepare(ctx, command, recipients);
    }
 
    @Override

@@ -6,10 +6,7 @@ import static org.infinispan.stats.CacheStatisticCollector.convertNanosToSeconds
 import static org.infinispan.stats.container.ExtendedStatistic.ABORT_RATE;
 import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
 import static org.infinispan.stats.container.ExtendedStatistic.ARRIVAL_RATE;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
@@ -26,10 +23,7 @@ import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_SU
 import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
@@ -154,18 +148,14 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
    private final TransactionTrackInterceptor[] transactionTrackInterceptors = new TransactionTrackInterceptor[NUM_NODES];
    private final ExtendedStatisticInterceptor[] extendedStatisticInterceptors = new ExtendedStatisticInterceptor[NUM_NODES];
    private final LockManager[] lockManagers = new LockManager[NUM_NODES];
-   private final boolean sync;
    private final boolean replicated;
-   private final boolean sync2ndPhase;
    private final boolean totalOrder;
    private final CacheMode cacheMode;
    private final List<Object> keys = new ArrayList<>(128);
 
-   protected BaseTxClusterExtendedStatisticLogicTest(CacheMode cacheMode, boolean sync2ndPhase, boolean totalOrder) {
-      this.sync = cacheMode.isSynchronous();
+   protected BaseTxClusterExtendedStatisticLogicTest(CacheMode cacheMode, boolean totalOrder) {
       this.replicated = cacheMode.isReplicated();
       this.cacheMode = cacheMode;
-      this.sync2ndPhase = sync2ndPhase;
       this.totalOrder = totalOrder;
    }
 
@@ -269,7 +259,6 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-         builder.transaction().syncCommitPhase(sync2ndPhase).syncRollbackPhase(sync2ndPhase);
          if (totalOrder) {
             builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
          }
@@ -445,16 +434,13 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
             assertTrue(transactionTrackInterceptors[i].awaitForRemoteCompletion(remoteTx, TX_TIMEOUT, TimeUnit.SECONDS));
          }
       }
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (LockManager lockManager : lockManagers) {
-               if (lockManager.getNumberOfLocksHeld() != 0) {
-                  return false;
-               }
+      eventually(() -> {
+         for (LockManager lockManager : lockManagers) {
+            if (lockManager.getNumberOfLocksHeld() != 0) {
+               return false;
             }
-            return true;
          }
+         return true;
       });
    }
 
@@ -527,14 +513,8 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
          assertAttributeValue(SYNC_PREPARE_TIME, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(NUM_SYNC_COMMIT, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(SYNC_COMMIT_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(NUM_SYNC_ROLLBACK, statsToValidate, sync2ndPhase && !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
-         assertAttributeValue(SYNC_ROLLBACK_TIME, statsToValidate, sync2ndPhase && numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(ASYNC_PREPARE_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_PREPARE, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(ASYNC_COMMIT_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_COMMIT, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(ASYNC_ROLLBACK_TIME, statsToValidate, (sync && sync2ndPhase) || numOfLocalWriteTx == 0 || totalOrder ? 0 : MICROSECONDS, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_ROLLBACK, statsToValidate, (sync && sync2ndPhase) || totalOrder ? 0 : numOfLocalWriteTx, 0, txExecutor);
+         assertAttributeValue(NUM_SYNC_ROLLBACK, statsToValidate, !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
+         assertAttributeValue(SYNC_ROLLBACK_TIME, statsToValidate, numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
          assertAttributeValue(ASYNC_COMPLETE_NOTIFY_TIME, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(NUM_ASYNC_COMPLETE_NOTIFY, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(NUM_NODES_PREPARE, statsToValidate, 0, 0, txExecutor);
@@ -565,32 +545,26 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
          assertAttributeValue(NUM_ROLLBACK_COMMAND, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(LOCAL_ROLLBACK_EXECUTION_TIME, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(REMOTE_ROLLBACK_EXECUTION_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(COMMIT_EXECUTION_TIME, statsToValidate, sync && (numOfReadTx != 0 || numOfLocalWriteTx != 0) && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(NUM_COMMIT_COMMAND, statsToValidate, sync && !totalOrder ? (numOfReadTx + numOfLocalWriteTx) : 0, sync && !totalOrder ? numOfRemoteWriteTx : 0, txExecutor);
-         assertAttributeValue(LOCAL_COMMIT_EXECUTION_TIME, statsToValidate, sync && (numOfReadTx != 0 || numOfLocalWriteTx != 0) && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(REMOTE_COMMIT_EXECUTION_TIME, statsToValidate, 0, sync && numOfRemoteWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, txExecutor);
+         assertAttributeValue(COMMIT_EXECUTION_TIME, statsToValidate, (numOfReadTx != 0 || numOfLocalWriteTx != 0) && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
+         assertAttributeValue(NUM_COMMIT_COMMAND, statsToValidate, !totalOrder ? numOfReadTx + numOfLocalWriteTx : 0, !totalOrder ? numOfRemoteWriteTx : 0, txExecutor);
+         assertAttributeValue(LOCAL_COMMIT_EXECUTION_TIME, statsToValidate, (numOfReadTx != 0 || numOfLocalWriteTx != 0) && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
+         assertAttributeValue(REMOTE_COMMIT_EXECUTION_TIME, statsToValidate, 0, numOfRemoteWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, txExecutor);
          assertAttributeValue(PREPARE_EXECUTION_TIME, statsToValidate, numOfReadTx + (totalOrder ? 2 * numOfLocalWriteTx : numOfLocalWriteTx), numOfRemoteWriteTx, txExecutor); // //not exposed via JMX
          assertAttributeValue(NUM_PREPARE_COMMAND, statsToValidate, numOfReadTx + (totalOrder ? 2 * numOfLocalWriteTx : numOfLocalWriteTx), numOfRemoteWriteTx, txExecutor);
          assertAttributeValue(LOCAL_PREPARE_EXECUTION_TIME, statsToValidate, (numOfReadTx != 0 || numOfLocalWriteTx != 0) ? MICROSECONDS : 0, 0, txExecutor);
          assertAttributeValue(REMOTE_PREPARE_EXECUTION_TIME, statsToValidate, totalOrder && numOfLocalWriteTx != 0 ? MICROSECONDS : 0, numOfRemoteWriteTx != 0 ? MICROSECONDS : 0, txExecutor);
-         assertAttributeValue(NUM_SYNC_PREPARE, statsToValidate, sync ? numOfLocalWriteTx : 0, 0, txExecutor);
-         assertAttributeValue(SYNC_PREPARE_TIME, statsToValidate, sync && numOfLocalWriteTx != 0 ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(NUM_SYNC_COMMIT, statsToValidate, sync2ndPhase && !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
-         assertAttributeValue(SYNC_COMMIT_TIME, statsToValidate, sync2ndPhase && numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
+         assertAttributeValue(NUM_SYNC_PREPARE, statsToValidate, numOfLocalWriteTx, 0, txExecutor);
+         assertAttributeValue(SYNC_PREPARE_TIME, statsToValidate, numOfLocalWriteTx != 0 ? MICROSECONDS : 0, 0, txExecutor);
+         assertAttributeValue(NUM_SYNC_COMMIT, statsToValidate, !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
+         assertAttributeValue(SYNC_COMMIT_TIME, statsToValidate, numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
          assertAttributeValue(NUM_SYNC_ROLLBACK, statsToValidate, 0, 0, txExecutor);
          assertAttributeValue(SYNC_ROLLBACK_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(ASYNC_PREPARE_TIME, statsToValidate, !sync && numOfLocalWriteTx != 0 ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_PREPARE, statsToValidate, sync ? 0 : numOfLocalWriteTx, 0, txExecutor);
-         assertAttributeValue(ASYNC_COMMIT_TIME, statsToValidate, (!sync || sync2ndPhase) || numOfLocalWriteTx == 0 || totalOrder ? 0 : MICROSECONDS, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_COMMIT, statsToValidate, (!sync || sync2ndPhase) || totalOrder ? 0 : numOfLocalWriteTx, 0, txExecutor);
-         assertAttributeValue(ASYNC_ROLLBACK_TIME, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_ROLLBACK, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(ASYNC_COMPLETE_NOTIFY_TIME, statsToValidate, sync2ndPhase && numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
-         assertAttributeValue(NUM_ASYNC_COMPLETE_NOTIFY, statsToValidate, sync2ndPhase && !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
+         assertAttributeValue(ASYNC_COMPLETE_NOTIFY_TIME, statsToValidate, numOfLocalWriteTx != 0 && !totalOrder ? MICROSECONDS : 0, 0, txExecutor);
+         assertAttributeValue(NUM_ASYNC_COMPLETE_NOTIFY, statsToValidate, !totalOrder ? numOfLocalWriteTx : 0, 0, txExecutor);
          assertAttributeValue(NUM_NODES_PREPARE, statsToValidate, replicated ? NUM_NODES : totalOrder && txExecutor == 1 ? 2 : 1, 0, txExecutor);
-         assertAttributeValue(NUM_NODES_COMMIT, statsToValidate, sync && !totalOrder ? (replicated ? NUM_NODES : 1) : 0, 0, txExecutor);
+         assertAttributeValue(NUM_NODES_COMMIT, statsToValidate, !totalOrder ? replicated ? NUM_NODES : 1 : 0, 0, txExecutor);
          assertAttributeValue(NUM_NODES_ROLLBACK, statsToValidate, 0, 0, txExecutor);
-         assertAttributeValue(NUM_NODES_COMPLETE_NOTIFY, statsToValidate, sync2ndPhase && !totalOrder ? (replicated ? NUM_NODES : 1) : 0, 0, txExecutor);
+         assertAttributeValue(NUM_NODES_COMPLETE_NOTIFY, statsToValidate, !totalOrder ? (replicated ? NUM_NODES : 1) : 0, 0, txExecutor);
          assertAttributeValue(RESPONSE_TIME, statsToValidate, numOfReadTx != 0 || numOfLocalWriteTx != 0 ? MICROSECONDS : 0, 0, txExecutor);
       }
    }

@@ -29,7 +29,6 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       c.clustering().cacheMode(CacheMode.REPL_SYNC)
             .remoteTimeout(30000)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .syncCommitPhase(true).syncRollbackPhase(true)
             .invocationBatching().enable()
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
 

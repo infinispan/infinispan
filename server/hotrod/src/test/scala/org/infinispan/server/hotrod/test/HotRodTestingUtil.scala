@@ -117,7 +117,6 @@ object HotRodTestingUtil {
                Thread.sleep(delay)
 
             val cfg = super.createTopologyCacheConfig(distSyncTimeout)
-            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
 
@@ -169,7 +168,6 @@ object HotRodTestingUtil {
       val server = new HotRodServer {
          override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
             val cfg = super.createTopologyCacheConfig(distSyncTimeout)
-            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false)
             cfg
          }
       }

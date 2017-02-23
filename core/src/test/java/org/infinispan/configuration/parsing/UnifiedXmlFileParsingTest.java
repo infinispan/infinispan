@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
@@ -263,8 +262,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Full XA
       assertFalse(c.transaction().useSynchronization()); // Full XA
       assertTrue(c.transaction().recovery().enabled()); // Full XA
-      assertTrue(c.transaction().syncCommitPhase()); // Full XA
-      assertTrue(c.transaction().syncRollbackPhase()); // Full XA
       assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
       assertTrue(c.transaction().transactionManagerLookup() instanceof JBossStandaloneJTAManagerLookup);
       assertEquals(60000, c.transaction().cacheStopTimeout());
@@ -285,7 +282,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(Index.NONE, c.indexing().index());
 
       c = cm.getCacheConfiguration("invalid");
-      assertEquals(CacheMode.INVALIDATION_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
       assertTrue(c.invocationBatching().enabled());
       assertTrue(c.jmxStatistics().enabled());
       assertEquals(30500, c.locking().lockAcquisitionTimeout());
@@ -295,8 +292,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
       assertEquals(60500, c.transaction().cacheStopTimeout());
       assertEquals(20500, c.memory().size());
@@ -306,7 +301,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(Index.NONE, c.indexing().index());
 
       c = cm.getCacheConfiguration("repl");
-      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertTrue(c.invocationBatching().enabled());
       assertTrue(c.jmxStatistics().enabled());
       assertEquals(31000, c.locking().lockAcquisitionTimeout());
@@ -316,8 +311,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Batching, non XA
       assertTrue(c.transaction().useSynchronization()); // Batching, non XA
       assertFalse(c.transaction().recovery().enabled()); // Batching, non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Batching, non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Batching, non XA - side effect of cache manager creation
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
       assertEquals(61000, c.transaction().cacheStopTimeout());
       assertEquals(21000, c.memory().size());
@@ -349,8 +342,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Full XA
       assertFalse(c.transaction().useSynchronization()); // Full XA
       assertTrue(c.transaction().recovery().enabled()); // Full XA
-      assertTrue(c.transaction().syncCommitPhase()); // Full XA
-      assertTrue(c.transaction().syncRollbackPhase()); // Full XA
       assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
       assertEquals(61500, c.transaction().cacheStopTimeout());
       assertEquals(21500, c.memory().size());
@@ -385,12 +376,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("LON", c.sites().backupFor().remoteSite());
 
       c = cm.getCacheConfiguration("capedwarf-data");
-      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
@@ -398,12 +387,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(fileStore.purgeOnStartup());
 
       c = cm.getCacheConfiguration("capedwarf-metadata");
-      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.memory().size());
       DummyInMemoryStoreConfiguration dummyStore = getStoreConfiguration(c, DummyInMemoryStoreConfiguration.class);
@@ -411,23 +398,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(dummyStore.purgeOnStartup());
 
       c = cm.getCacheConfiguration("capedwarf-memcache");
-      assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.memory().size());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
       c = cm.getCacheConfiguration("capedwarf-default");
-      assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
@@ -436,12 +419,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(Index.NONE, c.indexing().index());
 
       c = cm.getCacheConfiguration("capedwarf-dist");
-      assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.memory().size());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
@@ -450,12 +431,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(fileStore.purgeOnStartup());
 
       c = cm.getCacheConfiguration("capedwarf-tasks");
-      assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
+      assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(10000, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
@@ -468,8 +447,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.invocationBatching().enabled());
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
@@ -481,8 +458,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.invocationBatching().enabled());
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
@@ -494,8 +469,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.invocationBatching().enabled());
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertTrue(c.transaction().syncCommitPhase()); // Non XA - default configuration value
-      assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(-1, c.memory().size());
 
       c = cm.getCacheConfiguration("custom-interceptors");

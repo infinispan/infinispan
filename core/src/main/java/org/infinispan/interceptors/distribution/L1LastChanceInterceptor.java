@@ -117,7 +117,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
-            blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) rCtx)));
+            blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) rCtx)));
          }
          return rv;
       });
@@ -126,7 +126,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx));
+         blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx));
          return rv;
       });
    }
@@ -143,12 +143,6 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private boolean shouldFlushL1(TxInvocationContext ctx) {
       return !ctx.getAffectedKeys().isEmpty();
-   }
-
-   private void blockOnL1FutureIfNeededTx(Future<?> f) {
-      if (isSyncCommitPhase()) {
-         blockOnL1FutureIfNeeded(f);
-      }
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {

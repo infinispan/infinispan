@@ -34,8 +34,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache c1 = cache(0, "replSync");
       Cache c2 = cache(1, "replSync");
 
-      cache1 = new TreeCacheImpl<Object, Object>(c1);
-      cache2 = new TreeCacheImpl<Object, Object>(c2);
+      cache1 = new TreeCacheImpl<>(c1);
+      cache2 = new TreeCacheImpl<>(c2);
    }
 
    public void testBasicOperation() {
@@ -62,9 +62,6 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       Fqn fqn = Fqn.fromString("/JSESSIONID/1010.10.5:3000/1234567890/1");
-      cache1.getCache().getCacheConfiguration().transaction().syncCommitPhase(true);
-      cache2.getCache().getCacheConfiguration().transaction().syncCommitPhase(true);
-
 
       cache1.put(fqn, "age", 38);
       assertEquals("Value should be set", 38, cache1.get(fqn, "age"));
@@ -77,13 +74,13 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Fqn fqn = Fqn.fromString("/JSESSIONID/10.10.10.5:3000/1234567890/1");
       Fqn fqn1 = Fqn.fromString("/JSESSIONID/10.10.10.5:3000/1234567890/2");
 
-      Map<Object, Object> map = new HashMap<Object, Object>();
+      Map<Object, Object> map = new HashMap<>();
       map.put("1", "1");
       map.put("2", "2");
       cache1.getRoot().addChild(fqn).putAll(map, Flag.SKIP_LOCKING);
       assertEquals("Value should be set", "1", cache1.get(fqn, "1", Flag.SKIP_LOCKING));
 
-      map = new HashMap<Object, Object>();
+      map = new HashMap<>();
       map.put("3", "3");
       map.put("4", "4");
       cache1.getRoot().addChild(fqn1).putAll(map, Flag.SKIP_LOCKING);

@@ -29,7 +29,6 @@ import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
@@ -49,6 +48,7 @@ import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -59,26 +59,20 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -108,9 +102,9 @@ public class Parser implements ConfigurationParser {
 
    static final Log log = LogFactory.getLog(Parser.class);
 
-   private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<String, DefaultThreadFactory>();
-   private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
-   private final Map<String, String> threadPoolToThreadFactory = new HashMap<String, String>();
+   private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<>();
+   private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<>();
+   private final Map<String, String> threadPoolToThreadFactory = new HashMap<>();
 
    public Parser() {
    }
@@ -149,7 +143,7 @@ public class Parser implements ConfigurationParser {
 
          switch (attribute) {
             case MARSHALLER_CLASS: {
-               builder.serialization().marshaller(Util.<Marshaller>getInstance(value, holder.getClassLoader()));
+               builder.serialization().marshaller(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             case VERSION: {
@@ -666,7 +660,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case AUDIT_LOGGER: {
-               builder.auditLogger(Util.<AuditLogger>getInstance(value, holder.getClassLoader()));
+               builder.auditLogger(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             default: {
@@ -725,7 +719,7 @@ public class Parser implements ConfigurationParser {
    private PrincipalRoleMapper parseCustomMapper(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       String mapperClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
       ParseUtils.requireNoContent(reader);
-      return Util.<PrincipalRoleMapper>getInstance(mapperClass, holder.getClassLoader());
+      return Util.getInstance(mapperClass, holder.getClassLoader());
    }
 
    private void parseGlobalRole(XMLExtendedStreamReader reader, GlobalAuthorizationConfigurationBuilder builder) throws XMLStreamException {
@@ -763,7 +757,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case MBEAN_SERVER_LOOKUP: {
-               builder.globalJmxStatistics().mBeanServerLookup(Util.<MBeanServerLookup>getInstance(value, holder.getClassLoader()));
+               builder.globalJmxStatistics().mBeanServerLookup(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             case ALLOW_DUPLICATE_DOMAINS: {
@@ -1532,7 +1526,7 @@ public class Parser implements ConfigurationParser {
          switch (attribute) {
             case CLASS:
                log.dataContainerConfigurationDeprecated();
-               builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().dataContainer(Util.getInstance(value, holder.getClassLoader()));
                break;
             case KEY_EQUIVALENCE:
                builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
@@ -1686,7 +1680,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case MARSHALLER_CLASS:
-               builder.compatibility().marshaller(Util.<Marshaller>getInstance(value, holder.getClassLoader()));
+               builder.compatibility().marshaller(Util.getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1810,9 +1804,6 @@ public class Parser implements ConfigurationParser {
                builder.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());
                builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
                builder.invocationBatching().enable(txMode.isBatchingEnabled());
-               if (txMode.isRecoveryEnabled()) {
-                  builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
-               }
                break;
             }
             case LOCKING: {
@@ -1820,7 +1811,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case TRANSACTION_MANAGER_LOOKUP_CLASS: {
-               builder.transaction().transactionManagerLookup(Util.<TransactionManagerLookup>getInstance(value, holder.getClassLoader()));
+               builder.transaction().transactionManagerLookup(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             case REAPER_WAKE_UP_INTERVAL: {
@@ -2149,7 +2140,7 @@ public class Parser implements ConfigurationParser {
          switch (element) {
             case GROUPER:
                String value = ParseUtils.readStringAttributeElement(reader, "class");
-               builder.clustering().hash().groups().addGrouper(Util.<Grouper<?>>getInstance(value, holder.getClassLoader()));
+               builder.clustering().hash().groups().addGrouper(Util.getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -2584,7 +2575,7 @@ public class Parser implements ConfigurationParser {
       private final boolean recoveryEnabled;
       private final boolean batchingEnabled;
 
-      private TransactionMode(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled) {
+      TransactionMode(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled) {
          this.mode = mode;
          this.xaEnabled = xaEnabled;
          this.recoveryEnabled = recoveryEnabled;

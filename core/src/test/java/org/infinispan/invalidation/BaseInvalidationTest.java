@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
-   protected boolean isSync;
+   boolean isSync;
 
    protected BaseInvalidationTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -54,18 +54,19 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
        .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       createClusteredCaches(2, "invalidation", c);
 
-      c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, true);
-      c.clustering().stateTransfer().timeout(10000)
-       .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      defineConfigurationOnAllManagers("invalidationTx", c);
+      if (isSync) {
+         c = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true);
+         c.clustering().stateTransfer().timeout(10000)
+               .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
+         defineConfigurationOnAllManagers("invalidationTx", c);
 
-      waitForClusterToForm("invalidationTx");
-
+         waitForClusterToForm("invalidationTx");
+      }
    }
 
    public void testRemove() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value");
       assertEquals("value", cache1.get("key"));
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value");
@@ -79,8 +80,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testResurrectEntry() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
       replListener(cache2).waitForRpc();
@@ -118,8 +119,11 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testDeleteNonExistentEntry() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
+      if (!isSync) {
+         return;
+      }
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidationTx");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidationTx");
 
       assertNull("Should be null", cache1.get("key"));
       assertNull("Should be null", cache2.get("key"));
@@ -147,8 +151,11 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSyncUnableToInvalidate() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
+      if (!isSync) {
+         return;
+      }
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidationTx");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidationTx");
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
       replListener(cache2).waitForRpc();
@@ -191,8 +198,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testCacheMode() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport origTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
@@ -200,7 +206,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(mockTransport);
          Address addressOne = mock(Address.class);
          Address addressTwo = mock(Address.class);
-         List<Address> members = new ArrayList<Address>(2);
+         List<Address> members = new ArrayList<>(2);
          members.add(addressOne);
          members.add(addressTwo);
 
@@ -219,8 +225,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testPutIfAbsent() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       assert null == cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value");
       assert cache2.get("key").equals("value");
       assert cache1.get("key") == null;
@@ -244,8 +250,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoveIfPresent() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key").equals("value1");
@@ -265,8 +271,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testClear() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key").equals("value1");
@@ -281,8 +287,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testReplace() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
@@ -303,8 +309,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testReplaceWithOldVal() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
@@ -330,8 +336,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalOnlyClear() {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
       assert cache1.get("key").equals("value1");
@@ -345,8 +351,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testPutForExternalRead() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       cache1.putForExternalRead("key", "value1");
       Thread.sleep(500); // sleep so that async invalidation (result of PFER) is propagated
       cache2.putForExternalRead("key", "value2");

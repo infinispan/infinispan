@@ -64,14 +64,12 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                .replTimeout(30000)
          .transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
-            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true);
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
       GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gc.transport().distributedSyncTimeout(60000);
 
-      List<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
+      List<EmbeddedCacheManager> cacheManagers = new LinkedList<>();
 
       for (int i = 0; i < NUM_NODES; i++)
          cacheManagers.add(createClusteredCacheManager(gc, c));
@@ -80,8 +78,8 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
    }
 
    public void testConsistency() throws Throwable {
-      Set<Future<Void>> futures = new HashSet<Future<Void>>(NUM_NODES * WORKERS_PER_NODE);
-      Set<String> keysToIgnore = new HashSet<String>();
+      Set<Future<Void>> futures = new HashSet<>(NUM_NODES * WORKERS_PER_NODE);
+      Set<String> keysToIgnore = new HashSet<>();
 
       for (int i = 0; i < NUM_NODES; i++) {
          Cache<String, String> c = cache(i);
@@ -103,7 +101,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       // ... and ensure no data is lost.
       // Stressors encode data in the format nodeNumber|workerNumber|iterationNumber, and all have the value "value".
 
-      Map<Address, Cache<Object, Object>> cacheMap = new HashMap<Address, Cache<Object, Object>>();
+      Map<Address, Cache<Object, Object>> cacheMap = new HashMap<>();
       for (int i = 1; i < NUM_NODES; i++) {
          Cache<Object, Object> c = cache(i);
          cacheMap.put(address(c), c);
@@ -171,22 +169,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                tm.begin();
                cache.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, "value");
                tm.commit();
-            } catch (HeuristicRollbackException e) {
-               txError = true;
-               exception = e;
-            } catch (RollbackException e) {
-               txError = true;
-               exception = e;
-            } catch (SystemException e) {
-               txError = true;
-               exception = e;
-            } catch (HeuristicMixedException e) {
-               txError = true;
-               exception = e;
-            } catch (NotSupportedException e) {
-               txError = true;
-               exception = e;
-            } catch (TimeoutException e) {
+            } catch (HeuristicRollbackException | RollbackException | SystemException | HeuristicMixedException | NotSupportedException | TimeoutException e) {
                txError = true;
                exception = e;
             }

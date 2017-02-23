@@ -12,6 +12,6 @@ import org.testng.annotations.Test;
 public class SyncDistTxClusterExtendedStatisticLogicTest extends BaseTxClusterExtendedStatisticLogicTest {
 
    public SyncDistTxClusterExtendedStatisticLogicTest() {
-      super(CacheMode.DIST_SYNC, false, false);
+      super(CacheMode.DIST_SYNC, false);
    }
 }

@@ -45,7 +45,6 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
       cacheConfigBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .syncCommitPhase(true).syncRollbackPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .clustering().hash().numOwners(10)  // a number bigger than actual number of nodes will make this distributed cluster behave as if fully replicated
             .stateTransfer().fetchInMemoryState(true)

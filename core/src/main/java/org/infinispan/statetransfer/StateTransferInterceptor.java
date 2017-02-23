@@ -1,7 +1,5 @@
 package org.infinispan.statetransfer;
 
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -33,7 +31,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -66,10 +63,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private StateTransferManager stateTransferManager;
 
-   private boolean syncCommitPhase;
-   private boolean defaultSynchronous;
-
-   private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
    private final InvocationFinallyFunction handleReadCommandReturn = this::handleReadCommandReturn;
    private final InvocationFinallyFunction handleTxReturn = this::handleTxReturn;
    private final InvocationFinallyFunction handleTxWriteReturn = this::handleTxWriteReturn;
@@ -78,12 +71,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    @Inject
    public void init(StateTransferManager stateTransferManager) {
       this.stateTransferManager = stateTransferManager;
-   }
-
-   @Start
-   public void start() {
-      syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
    }
 
    @Override
@@ -291,13 +278,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throw t;
       }
 
-      // We need to forward the command to the new owners, if the command was asynchronous
-      boolean async = isTxCommandAsync(txCommand);
-      if (async) {
-         stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(ctx, txCommand), getOrigin((TxInvocationContext) ctx));
-         return rv;
-      }
-
       if (ctx.isOriginLocal()) {
          // On the originator, we only retry if we got an OutdatedTopologyException
          // Which could be caused either by an owner leaving or by an owner having a newer topology
@@ -320,16 +300,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          }
       }
       return rv;
-   }
-
-   private boolean isTxCommandAsync(TransactionBoundaryCommand command) {
-      boolean async = false;
-      if (command instanceof CommitCommand || command instanceof RollbackCommand) {
-         async = !syncCommitPhase;
-      } else if (command instanceof PrepareCommand) {
-         async = !defaultSynchronous;
-      }
-      return async;
    }
 
    protected Object handleWriteCommand(InvocationContext ctx, WriteCommand command)
@@ -471,20 +441,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private boolean isLocalOnly(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
-   }
-
-   @SuppressWarnings("unchecked")
-   private Set<Object> getAffectedKeys(InvocationContext ctx, VisitableCommand command) {
-      Set<Object> affectedKeys = null;
-      try {
-         affectedKeys = (Set<Object>) command.acceptVisitor(ctx, affectedKeysVisitor);
-      } catch (Throwable throwable) {
-         // impossible to reach this
-      }
-      if (affectedKeys == null) {
-         affectedKeys = Collections.emptySet();
-      }
-      return affectedKeys;
    }
 
    @Override

@@ -10,8 +10,8 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test(groups = "functional", testName = "tx.TransactionCleanupWithAsync2ndPhaseTest")
-public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "tx.TransactionCleanupTest")
+public class TransactionCleanupTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -21,9 +21,7 @@ public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManage
    }
 
    protected ConfigurationBuilder getConfiguration() {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      dcc.transaction().syncCommitPhase(false).syncRollbackPhase(true);
-      return dcc;
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
    }
 
    public void transactionCleanupTest1() throws Throwable {
@@ -52,14 +50,9 @@ public class TransactionCleanupWithAsync2ndPhaseTest extends MultipleCacheManage
       }
 
       assertNotLocked("k");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return (TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(0)).getLocalTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount() == 0) &&
-            (TestingUtil.getTransactionTable(cache(1)).getLocalTxCount() == 0);
-         }
-      });
+      eventually(() -> (TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount() == 0) &&
+      (TestingUtil.getTransactionTable(cache(0)).getLocalTxCount() == 0) &&
+      (TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount() == 0) &&
+      (TestingUtil.getTransactionTable(cache(1)).getLocalTxCount() == 0));
    }
 }
