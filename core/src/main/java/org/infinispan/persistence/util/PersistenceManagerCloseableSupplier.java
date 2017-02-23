@@ -42,7 +42,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
    private final Condition closeCondition = closeLock.newCondition();
 
    private boolean closed = false;
-   private AtomicReference<AdvancedCacheLoader.CacheLoaderTask<K, V>> taskRef = new AtomicReference<>();
+   private final AtomicReference<AdvancedCacheLoader.CacheLoaderTask<K, V>> taskRef = new AtomicReference<>();
 
    public PersistenceManagerCloseableSupplier(Executor executor, PersistenceManager manager,
                                               InternalEntryFactory factory, KeyFilter<K> filter, long timeout,
@@ -124,6 +124,11 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
          closeLock.lock();
          try {
             if (closed) {
+               // If is possible that this supplier was closed right after we polled the queue. In that case they may
+               // have also inserted a value. We need to double check that the queue is REALLY empty after being closed.
+               if ((entry = queue.poll()) != null) {
+                  break;
+               }
                break;
             }
             long targetTime = System.nanoTime() + unit.toNanos(timeout);
