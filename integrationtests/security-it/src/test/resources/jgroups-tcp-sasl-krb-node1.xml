@@ -5,7 +5,6 @@
    <TCP  bind_port="7800" port_range="10"
          recv_buf_size="20000000"
          send_buf_size="640000"
-         max_bundle_size="8500"
          bundler_type="no-bundler"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
@@ -46,7 +45,7 @@
    
 
    <MFC max_credits="2m" min_threshold="0.40"/>
-   <FRAG3 frag_size="200k"/>
+   <FRAG3/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
     
 </config>
