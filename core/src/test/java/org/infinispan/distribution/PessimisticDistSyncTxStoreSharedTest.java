@@ -38,9 +38,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
 
       cb.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .lockingMode(LockingMode.PESSIMISTIC)
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true);
+            .lockingMode(LockingMode.PESSIMISTIC);
 
       // cb.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 

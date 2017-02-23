@@ -12,6 +12,6 @@ import org.testng.annotations.Test;
 public class SyncDistExtendedStatisticTest extends BaseNonTotalOrderClusteredExtendedStatisticsTest {
 
    public SyncDistExtendedStatisticTest() {
-      super(CacheMode.DIST_SYNC, false, false);
+      super(CacheMode.DIST_SYNC, false);
    }
 }

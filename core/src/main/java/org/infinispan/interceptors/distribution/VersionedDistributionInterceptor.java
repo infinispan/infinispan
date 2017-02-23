@@ -15,7 +15,6 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -136,7 +135,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       // Perform the RPC
       CompletableFuture<Map<Address, Response>>
-            remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createPrepareRpcOptions());
+            remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRpcOptions());
       return remoteInvocation.handle((responses, t) -> {
          transactionRemotelyPrepared(ctx);
          CompletableFutures.rethrowException(t);

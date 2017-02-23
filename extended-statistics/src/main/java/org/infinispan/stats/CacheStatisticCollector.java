@@ -2,10 +2,7 @@ package org.infinispan.stats;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
@@ -14,10 +11,7 @@ import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMIT_COMMAND;
@@ -108,7 +102,7 @@ public class CacheStatisticCollector {
          log.tracef("Resetting Node Scope Statistics");
       }
       globalContainer.reset();
-      percentiles = new EnumMap<PercentileStatistic, ReservoirSampler>(PercentileStatistic.class);
+      percentiles = new EnumMap<>(PercentileStatistic.class);
       for (PercentileStatistic percentileStatistic : PercentileStatistic.values()) {
          percentiles.put(percentileStatistic, new ReservoirSampler());
       }
@@ -201,29 +195,20 @@ public class CacheStatisticCollector {
          case SYNC_GET_TIME:
             value = microAverageLocal(snapshot, SYNC_GET_TIME, NUM_SYNC_GET);
             break;
-         case ASYNC_COMMIT_TIME:
-            value = microAverageLocal(snapshot, ASYNC_COMMIT_TIME, NUM_ASYNC_COMMIT);
-            break;
          case ASYNC_COMPLETE_NOTIFY_TIME:
             value = microAverageLocal(snapshot, ASYNC_COMPLETE_NOTIFY_TIME, NUM_ASYNC_COMPLETE_NOTIFY);
             break;
-         case ASYNC_PREPARE_TIME:
-            value = microAverageLocal(snapshot, ASYNC_PREPARE_TIME, NUM_ASYNC_PREPARE);
-            break;
-         case ASYNC_ROLLBACK_TIME:
-            value = microAverageLocal(snapshot, ASYNC_ROLLBACK_TIME, NUM_ASYNC_ROLLBACK);
-            break;
          case NUM_NODES_COMMIT:
-            value = averageLocal(snapshot, NUM_NODES_COMMIT, NUM_SYNC_COMMIT, NUM_ASYNC_COMMIT);
+            value = averageLocal(snapshot, NUM_NODES_COMMIT, NUM_SYNC_COMMIT);
             break;
          case NUM_NODES_GET:
             value = averageLocal(snapshot, NUM_NODES_GET, NUM_SYNC_GET);
             break;
          case NUM_NODES_PREPARE:
-            value = averageLocal(snapshot, NUM_NODES_PREPARE, NUM_SYNC_PREPARE, NUM_ASYNC_PREPARE);
+            value = averageLocal(snapshot, NUM_NODES_PREPARE, NUM_SYNC_PREPARE);
             break;
          case NUM_NODES_ROLLBACK:
-            value = averageLocal(snapshot, NUM_NODES_ROLLBACK, NUM_SYNC_ROLLBACK, NUM_ASYNC_ROLLBACK);
+            value = averageLocal(snapshot, NUM_NODES_ROLLBACK, NUM_SYNC_ROLLBACK);
             break;
          case NUM_NODES_COMPLETE_NOTIFY:
             value = averageLocal(snapshot, NUM_NODES_COMPLETE_NOTIFY, NUM_ASYNC_COMPLETE_NOTIFY);
@@ -296,10 +281,10 @@ public class CacheStatisticCollector {
             value = microAverageLocal(snapshot, RO_TX_SUCCESSFUL_EXECUTION_TIME, NUM_COMMITTED_RO_TX);
             break;
          case PREPARE_COMMAND_SIZE:
-            value = averageLocal(snapshot, PREPARE_COMMAND_SIZE, NUM_SYNC_PREPARE, NUM_ASYNC_PREPARE);
+            value = averageLocal(snapshot, PREPARE_COMMAND_SIZE, NUM_SYNC_PREPARE);
             break;
          case COMMIT_COMMAND_SIZE:
-            value = averageLocal(snapshot, COMMIT_COMMAND_SIZE, NUM_SYNC_COMMIT, NUM_ASYNC_COMMIT);
+            value = averageLocal(snapshot, COMMIT_COMMAND_SIZE, NUM_SYNC_COMMIT);
             break;
          case CLUSTERED_GET_COMMAND_SIZE:
             value = averageLocal(snapshot, NUM_SYNC_GET, CLUSTERED_GET_COMMAND_SIZE);

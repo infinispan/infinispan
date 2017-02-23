@@ -59,8 +59,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
    protected ConfigurationBuilder createConfigurationBuilder(boolean isOptimistic) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .syncCommitPhase(true).syncRollbackPhase(true);
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
       if (isOptimistic) {
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC)
@@ -224,7 +223,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
                cache(0).put(i, "after_st_" + i);
             }
          } else if (op == Operation.PUT_MAP) {
-            Map<Integer, String> toPut = new HashMap<Integer, String>();
+            Map<Integer, String> toPut = new HashMap<>();
             for (int i = 0; i < numKeys; i++) {
                toPut.put(i, "after_st_" + i);
             }

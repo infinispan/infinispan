@@ -1,16 +1,10 @@
 package org.infinispan.stats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
@@ -176,19 +170,19 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       GlobalTransaction globalTransaction;
 
       if (command instanceof PrepareCommand) {
-         durationStat = sync ? SYNC_PREPARE_TIME : ASYNC_PREPARE_TIME;
-         counterStat = sync ? NUM_SYNC_PREPARE : NUM_ASYNC_PREPARE;
+         durationStat = SYNC_PREPARE_TIME;
+         counterStat = NUM_SYNC_PREPARE;
          recipientSizeStat = NUM_NODES_PREPARE;
          commandSizeStat = PREPARE_COMMAND_SIZE;
          globalTransaction = ((PrepareCommand) command).getGlobalTransaction();
       } else if (command instanceof RollbackCommand) {
-         durationStat = sync ? SYNC_ROLLBACK_TIME : ASYNC_ROLLBACK_TIME;
-         counterStat = sync ? NUM_SYNC_ROLLBACK : NUM_ASYNC_ROLLBACK;
+         durationStat = SYNC_ROLLBACK_TIME;
+         counterStat =  NUM_SYNC_ROLLBACK;
          recipientSizeStat = NUM_NODES_ROLLBACK;
          globalTransaction = ((RollbackCommand) command).getGlobalTransaction();
       } else if (command instanceof CommitCommand) {
-         durationStat = sync ? SYNC_COMMIT_TIME : ASYNC_COMMIT_TIME;
-         counterStat = sync ? NUM_SYNC_COMMIT : NUM_ASYNC_COMMIT;
+         durationStat = SYNC_COMMIT_TIME;
+         counterStat = NUM_SYNC_COMMIT;
          recipientSizeStat = NUM_NODES_COMMIT;
          commandSizeStat = COMMIT_COMMAND_SIZE;
          globalTransaction = ((CommitCommand) command).getGlobalTransaction();

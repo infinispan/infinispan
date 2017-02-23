@@ -53,8 +53,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       builder.
          clustering()
             .cacheMode(mode)
-         .transaction().syncCommitPhase(true).syncRollbackPhase(true)
-         .cacheStopTimeout(0L);
+         .transaction().cacheStopTimeout(0L);
 
       return builder;
    }
@@ -65,21 +64,13 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
 
    protected void assertEventuallyNotLocked(final Cache cache, final Object key) {
       //lock release happens async, hence the eventually...
-      eventually(format("Expected key '%s' to be unlocked on cache '%s'", key, cache), new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return !checkLocked(cache, key);
-         }
-      }, 20000, 500, TimeUnit.MILLISECONDS);
+      eventually(format("Expected key '%s' to be unlocked on cache '%s'", key, cache),
+            () -> !checkLocked(cache, key), 20000, 500, TimeUnit.MILLISECONDS);
    }
 
    protected void assertEventuallyLocked(final Cache cache, final Object key) {
-      eventually(format("Expected key '%s' to be locked on cache '%s'", key, cache), new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkLocked(cache, key);
-         }
-      }, 20000, 500, TimeUnit.MILLISECONDS);
+      eventually(format("Expected key '%s' to be locked on cache '%s'", key, cache),
+            () -> checkLocked(cache, key), 20000, 500, TimeUnit.MILLISECONDS);
    }
 
    protected void assertLocked(Cache cache, Object key) {

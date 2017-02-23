@@ -124,11 +124,11 @@ public class HotRodTestingUtils {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, host, port, 0l, false, builder);
+      return startHotRodServer(manager, host, port, 0L, false, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, serverPort(), 0l, builder);
+      return startHotRodServer(manager, serverPort(), 0L, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, long delay, HotRodServerConfigurationBuilder builder) {
@@ -151,9 +151,7 @@ public class HotRodTestingUtils {
                   throw new CacheException(e);
                }
 
-            ConfigurationBuilder cfg = super.createTopologyCacheConfig(distSyncTimeout);
-            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false);
-            return cfg;
+            return super.createTopologyCacheConfig(distSyncTimeout);
          }
 
          @Override
@@ -209,19 +207,6 @@ public class HotRodTestingUtils {
       } catch (SocketException e) {
          throw new CacheException(e);
       }
-   }
-
-   public static HotRodServer startCrashingHotRodServer(EmbeddedCacheManager manager, int port) {
-      HotRodServer server = new HotRodServer() {
-         @Override
-         protected ConfigurationBuilder createTopologyCacheConfig(long distSyncTimeout) {
-            ConfigurationBuilder cfg = super.createTopologyCacheConfig(distSyncTimeout);
-            cfg.transaction().syncCommitPhase(false).syncRollbackPhase(false);
-            return cfg;
-         }
-      };
-      server.start(new HotRodServerConfigurationBuilder().proxyHost(host).proxyPort(port).host(host).port(port).idleTimeout(0).build(), manager);
-      return server;
    }
 
    public static byte[] k(Method m, String prefix) {

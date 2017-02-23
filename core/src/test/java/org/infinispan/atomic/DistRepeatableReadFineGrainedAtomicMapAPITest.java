@@ -22,7 +22,6 @@ public class DistRepeatableReadFineGrainedAtomicMapAPITest extends RepeatableRea
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       c.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .syncCommitPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());

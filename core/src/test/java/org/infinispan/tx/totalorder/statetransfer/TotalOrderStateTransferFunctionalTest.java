@@ -14,29 +14,26 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.totalorder.statetransfer.TotalOrderStateTransferFunctionalTest")
 public class TotalOrderStateTransferFunctionalTest extends StateTransferFunctionalTest {
 
-   protected final boolean syncCommit;
    protected final boolean writeSkew;
    protected final boolean useSynchronization;
 
    @Override
    public Object[] factory() {
       return new Object[] {
-         new TotalOrderStateTransferFunctionalTest("dist-to-1pc-nbst", CacheMode.DIST_SYNC, true, false, false),
-         new TotalOrderStateTransferFunctionalTest("dist-to-2pc-nbst", CacheMode.DIST_SYNC, true, true, false),
-         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst", CacheMode.REPL_SYNC, true, true, true),
-         new TotalOrderStateTransferFunctionalTest("repl-to-2pc-nbst", CacheMode.REPL_SYNC, true, true, false),
+         new TotalOrderStateTransferFunctionalTest("dist-to-1pc-nbst", CacheMode.DIST_SYNC, false, false),
+         new TotalOrderStateTransferFunctionalTest("dist-to-2pc-nbst", CacheMode.DIST_SYNC, true, false),
+         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst", CacheMode.REPL_SYNC, true, true),
+         new TotalOrderStateTransferFunctionalTest("repl-to-2pc-nbst", CacheMode.REPL_SYNC, true, false),
       };
    }
 
    public TotalOrderStateTransferFunctionalTest() {
-      this(null, null, false, false, false);
+      this(null, null, false, false);
    }
 
-   public TotalOrderStateTransferFunctionalTest(String cacheName, CacheMode mode, boolean syncCommit,
-                                                boolean writeSkew, boolean useSynchronization) {
+   public TotalOrderStateTransferFunctionalTest(String cacheName, CacheMode mode, boolean writeSkew, boolean useSynchronization) {
       super(cacheName);
       this.cacheMode = mode;
-      this.syncCommit = syncCommit;
       this.writeSkew = writeSkew;
       this.useSynchronization = useSynchronization;
    }
@@ -48,7 +45,7 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
 
    protected void createCacheManagers() throws Throwable {
       configurationBuilder = getDefaultClusteredCacheConfig(cacheMode, true);
-      configurationBuilder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(syncCommit)
+      configurationBuilder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER)
          .useSynchronization(useSynchronization)
          .recovery().disable();
       if (writeSkew) {

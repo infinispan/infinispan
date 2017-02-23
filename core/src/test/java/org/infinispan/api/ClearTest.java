@@ -51,7 +51,6 @@ public class ClearTest extends MultipleCacheManagersTest {
       if (transactional) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .syncCommitPhase(true).syncRollbackPhase(true)
             .lockingMode(lockingMode);
       }
       createCluster(builder, 3);

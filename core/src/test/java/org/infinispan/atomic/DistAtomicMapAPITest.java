@@ -21,7 +21,6 @@ public class DistAtomicMapAPITest extends AtomicMapAPITest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .syncCommitPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       configurationBuilder.clustering().hash().numOwners(1);

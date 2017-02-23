@@ -40,14 +40,6 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
    }
 
    public void testSync() throws Throwable {
-      doTest(CacheMode.DIST_SYNC);
-   }
-
-   public void testAsync() throws Throwable {
-      doTest(CacheMode.DIST_ASYNC);
-   }
-
-   private void doTest(CacheMode cacheMode) throws Throwable {
       final StateSequencer sequencer = new StateSequencer();
       sequencer.logicalThread("st", "st:block_get_transactions", "st:resume_get_transactions",
             "st:block_ch_update_on_0", "st:block_ch_update_on_1", "st:resume_ch_update_on_0", "st:resume_ch_update_on_1");
@@ -59,7 +51,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       sequencer.order("st:block_ch_update_on_1", "tx:resume_remote_lock", "tx:after_commit", "st:resume_ch_update_on_0");
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.clustering().cacheMode(cacheMode)
+      cfg.clustering().cacheMode(CacheMode.DIST_SYNC)
             .stateTransfer().awaitInitialTransfer(false)
             .transaction().lockingMode(LockingMode.PESSIMISTIC);
       manager(0).defineConfiguration(CACHE_NAME, cfg.build());
@@ -113,12 +105,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       // Check for stale locks
       final TransactionTable tt0 = TestingUtil.extractComponent(cache0, TransactionTable.class);
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0;
-         }
-      });
+      eventually(() -> tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0);
 
       sequencer.stop();
    }
@@ -126,7 +113,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
    private static class CacheTopologyMatcher extends BaseMatcher<Object> {
       private final int topologyId;
 
-      public CacheTopologyMatcher(int topologyId) {
+      CacheTopologyMatcher(int topologyId) {
          this.topologyId = topologyId;
       }
 

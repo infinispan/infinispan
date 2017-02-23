@@ -219,7 +219,6 @@ public abstract class BaseClusterTopKeyTest extends AbstractTopKeyTest {
                .before(TxInterceptor.class)
                .interceptor(new CacheUsageInterceptor());
          builder.versioning().enabled(true).scheme(VersioningScheme.SIMPLE);
-         builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
          builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
                 .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
          addClusterEnabledCacheManager(builder);

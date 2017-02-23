@@ -96,11 +96,6 @@ public class DatagridManager extends MultipleCacheManagersTest
 
    /* ===================== MultipleCacheManagersTest methods ==================== */
 
-   @Override
-   public void assertSupportedConfig() {
-      super.assertSupportedConfig();
-   }
-
    //name change
    public void registerCacheManagers(CacheContainer... cacheContainers) {
       registerCacheManager(cacheContainers);

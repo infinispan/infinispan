@@ -6,10 +6,7 @@ import static org.infinispan.stats.CacheStatisticCollector.convertNanosToSeconds
 import static org.infinispan.stats.container.ExtendedStatistic.ABORT_RATE;
 import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
 import static org.infinispan.stats.container.ExtendedStatistic.ARRIVAL_RATE;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
 import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
@@ -26,10 +23,7 @@ import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_SU
 import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_TX;
 import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
@@ -147,7 +141,7 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
    private static final double MICROSECONDS = convertNanosToMicro(TEST_TIME_SERVICE.timeDuration(0, NANOSECONDS));
    private static final double SECONDS = convertNanosToSeconds(TEST_TIME_SERVICE.timeDuration(0, NANOSECONDS));
    //private final TransactionInterceptor[] transactionInterceptors = new TransactionInterceptor[NUM_NODES];
-   private final List<Object> keys = new ArrayList<Object>(128);
+   private final List<Object> keys = new ArrayList<>(128);
    private ExtendedStatisticInterceptor extendedStatisticInterceptor;
 
    public final void testPutTxAndReadOnlyTx() throws Exception {
@@ -375,12 +369,6 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
          assertAttributeValue(SYNC_COMMIT_TIME, statsToValidate, 0);
          assertAttributeValue(NUM_SYNC_ROLLBACK, statsToValidate, 0);
          assertAttributeValue(SYNC_ROLLBACK_TIME, statsToValidate, 0);
-         assertAttributeValue(ASYNC_PREPARE_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_PREPARE, statsToValidate, 0);
-         assertAttributeValue(ASYNC_COMMIT_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_COMMIT, statsToValidate, 0);
-         assertAttributeValue(ASYNC_ROLLBACK_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_ROLLBACK, statsToValidate, 0);
          assertAttributeValue(ASYNC_COMPLETE_NOTIFY_TIME, statsToValidate, 0);
          assertAttributeValue(NUM_ASYNC_COMPLETE_NOTIFY, statsToValidate, 0);
          assertAttributeValue(NUM_NODES_PREPARE, statsToValidate, 0);
@@ -423,12 +411,6 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
          assertAttributeValue(SYNC_COMMIT_TIME, statsToValidate, 0);
          assertAttributeValue(NUM_SYNC_ROLLBACK, statsToValidate, 0);
          assertAttributeValue(SYNC_ROLLBACK_TIME, statsToValidate, 0);
-         assertAttributeValue(ASYNC_PREPARE_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_PREPARE, statsToValidate, 0);
-         assertAttributeValue(ASYNC_COMMIT_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_COMMIT, statsToValidate, 0);
-         assertAttributeValue(ASYNC_ROLLBACK_TIME, statsToValidate, 0);
-         assertAttributeValue(NUM_ASYNC_ROLLBACK, statsToValidate, 0);
          assertAttributeValue(ASYNC_COMPLETE_NOTIFY_TIME, statsToValidate, 0);
          assertAttributeValue(NUM_ASYNC_COMPLETE_NOTIFY, statsToValidate, 0);
          assertAttributeValue(NUM_NODES_PREPARE, statsToValidate, 0);

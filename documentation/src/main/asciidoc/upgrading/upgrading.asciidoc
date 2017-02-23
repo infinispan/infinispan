@@ -9,6 +9,15 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
 
+=== Remove async transaction support
+
+Asynchronous mode is no longer supported in transactional caches and it will automatically use the synchronous cache mode.
+In addition, the second phase of a transaction commit is done synchronously.
+The following methods (and related) are deprecated:
+
+* `TransactionConfigurationBuilder.syncCommitPhase(boolean)`
+* `TransactionConfigurationBuilder.syncRollbackPhase(boolean)`
+
 === Deprecated all the dummy related transaction classes.
 The following classes have been deprecated and they will be removed in the future:
 

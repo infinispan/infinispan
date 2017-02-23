@@ -7,8 +7,6 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.EAGER_
 import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
-import static org.infinispan.configuration.cache.TransactionConfiguration.SYNC_COMMIT_PHASE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.SYNC_ROLLBACK_PHASE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_PROTOCOL;
@@ -128,9 +126,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions, but it can lead to inconsistencies when a backup owner
     * only commits the transaction after the primary owner released the lock.
+    *
+    * @deprecated since 9.0. no longer supported
     */
+   @Deprecated
    public TransactionConfigurationBuilder syncCommitPhase(boolean b) {
-      attributes.attribute(SYNC_COMMIT_PHASE).set(b);
       return this;
    }
 
@@ -138,9 +138,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * See {@link #syncCommitPhase(boolean)}
     *
     * @return {@code true} if sync commit phase is enabled
+    * @deprecated since 9.0. no longer supported
     */
+   @Deprecated
    boolean syncCommitPhase() {
-      return attributes.attribute(SYNC_COMMIT_PHASE).get();
+      return true;
    }
 
    /**
@@ -150,9 +152,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     *
     * Keeping it as false can lead to inconsistencies when a transaction is rolled back because of
     * a commit timeout, as a backup owner could commit the transaction after the primary released the lock.
+    *
+    * @deprecated since 9.0. no longer supported
     */
+   @Deprecated
    public TransactionConfigurationBuilder syncRollbackPhase(boolean b) {
-      attributes.attribute(SYNC_ROLLBACK_PHASE).set(b);
       return this;
    }
 
@@ -229,7 +233,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    /**
     * This method allows configuration of the transaction recovery cache. When this method is
     * called, it automatically enables recovery. So, if you want it to be disabled, make sure you
-    * call {@link org.infinispan.config.FluentConfiguration.RecoveryConfig#disable()}
+    * call {@link RecoveryConfigurationBuilder#disable()} )}
     */
    public RecoveryConfigurationBuilder recovery() {
       return recovery;
@@ -301,6 +305,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          throw log.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
       if (completedTxTimeout.get() < 0)
          throw log.invalidCompletedTxTimeout(completedTxTimeout.get());
+      CacheMode cacheMode = clustering().cacheMode();
       if(attributes.attribute(TRANSACTION_PROTOCOL).get() == TransactionProtocol.TOTAL_ORDER) {
          //total order only supports transactional caches
          if(transactionMode() != TransactionMode.TRANSACTIONAL) {
@@ -308,7 +313,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          }
 
          //total order only supports replicated and distributed mode
-         if(!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
+         if(!cacheMode.isReplicated() && !cacheMode.isDistributed()) {
             throw log.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
          }
 
@@ -318,6 +323,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       }
       if (!attributes.attribute(NOTIFICATIONS).get()) {
          log.transactionNotificationsDisabled();
+      }
+      if (attributes.attribute(TRANSACTION_MODE).get() == TransactionMode.TRANSACTIONAL && !cacheMode.isSynchronous()) {
+         throw log.unsupportedAsyncCacheMode(cacheMode);
       }
       recovery.validate();
    }

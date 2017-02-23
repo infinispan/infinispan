@@ -40,7 +40,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
             .clustering().cacheMode(CacheMode.REPL_SYNC)
             .clustering().sync()
             .stateTransfer().fetchInMemoryState(true)
-            .transaction().lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(true).syncRollbackPhase(true)
+            .transaction().lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);

@@ -11,12 +11,10 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -30,12 +28,11 @@ import org.infinispan.util.logging.Log;
  * @author Mircea.Markus@jboss.com
  */
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
-   protected boolean trace = getLog().isTraceEnabled();
+   protected final boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
    private PartitionHandlingManager partitionHandlingManager;
    private PendingLockManager pendingLockManager;
-   private boolean secondPhaseAsync;
 
    @Inject
    public void setDependencies(RpcManager rpcManager,
@@ -44,11 +41,6 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       this.rpcManager = rpcManager;
       this.partitionHandlingManager = partitionHandlingManager;
       this.pendingLockManager = pendingLockManager;
-   }
-
-   @Start
-   public void start() {
-      secondPhaseAsync = Configurations.isSecondPhaseAsync(cacheConfiguration);
    }
 
    @Override
@@ -188,8 +180,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    protected void releaseLockOnTxCompletion(TxInvocationContext ctx) {
       boolean shouldReleaseLocks = ctx.isOriginLocal() &&
-            !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) ||
-            (!ctx.isOriginLocal() && secondPhaseAsync);
+            !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction());
       if (shouldReleaseLocks) {
          lockManager.unlockAll(ctx);
       }

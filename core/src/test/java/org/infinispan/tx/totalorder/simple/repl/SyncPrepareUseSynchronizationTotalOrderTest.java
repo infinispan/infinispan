@@ -17,7 +17,7 @@ public class SyncPrepareUseSynchronizationTotalOrderTest extends BaseSimpleTotal
    }
 
    protected SyncPrepareUseSynchronizationTotalOrderTest(int clusterSize) {
-      super(clusterSize, CacheMode.REPL_SYNC, false, false, true);
+      super(clusterSize, CacheMode.REPL_SYNC, false, true);
    }
 
    @Override

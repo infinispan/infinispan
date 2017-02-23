@@ -46,18 +46,15 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
    private static final int TX_TIMEOUT = 15; //seconds
    private final int clusterSize;
    private final CacheMode mode;
-   private final boolean syncCommit;
    private final boolean writeSkew;
    private final boolean useSynchronization;
    private final TransactionTrackInterceptor[] transactionTrackInterceptors;
    private final int index1;
    private final int index2;
 
-   protected BaseSimpleTotalOrderTest(int clusterSize, CacheMode mode, boolean syncCommit, boolean writeSkew,
-                                      boolean useSynchronization) {
+   protected BaseSimpleTotalOrderTest(int clusterSize, CacheMode mode, boolean writeSkew, boolean useSynchronization) {
       this.clusterSize = clusterSize;
       this.mode = mode;
-      this.syncCommit = syncCommit;
       this.writeSkew = writeSkew;
       this.useSynchronization = useSynchronization;
       this.transactionTrackInterceptors = new TransactionTrackInterceptor[clusterSize];
@@ -313,8 +310,7 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
    @Override
    protected final void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
-      dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(syncCommit)
-            .syncRollbackPhase(syncCommit);
+      dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
       dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(writeSkew);
       dcc.transaction().useSynchronization(useSynchronization);
       dcc.clustering().hash().numOwners(2);

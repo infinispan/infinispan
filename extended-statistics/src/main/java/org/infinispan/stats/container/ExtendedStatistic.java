@@ -113,12 +113,6 @@ public enum ExtendedStatistic {
    SYNC_GET_TIME(true, false), //response time of synchronous cluster get command
 
    //ASYNC: local && asynchronous communication
-   ASYNC_PREPARE_TIME(true, false), //send-and-forget time for prepare command
-   NUM_ASYNC_PREPARE(true, false), //number of asynchronous prepare command sent
-   ASYNC_COMMIT_TIME(true, false), //send-and-forget time for commit command
-   NUM_ASYNC_COMMIT(true, false), //number of asynchronous commit command sent
-   ASYNC_ROLLBACK_TIME(true, false), //send-and-forget time for rollback command
-   NUM_ASYNC_ROLLBACK(true, false), //number of asynchronous rollback command sent
    ASYNC_COMPLETE_NOTIFY_TIME(true, false), //send-and-forget time for tx completion notify command
    NUM_ASYNC_COMPLETE_NOTIFY(true, false), //number of asynchronous tx completion notify command sent
 

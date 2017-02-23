@@ -80,15 +80,6 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       if (transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
          throw log.unavailableTotalOrderWithTxRecovery();
       }
-      if (!clustering().cacheMode().isSynchronous()) {
-         throw log.recoveryNotSupportedWithAsync(clustering().cacheMode().friendlyCacheModeString());
-      }
-      if (!transaction().syncCommitPhase()) {
-         //configuration not supported because the Transaction Manager would not retain any transaction log information to
-         //allow it to perform useful recovery anyhow. Usually you just log it in the hope a human notices and sorts
-         //out the mess. Of course properly paranoid humans don't use async commit in the first place.
-         throw log.recoveryNotSupportedWithAsyncCommit();
-      }
    }
 
    @Override

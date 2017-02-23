@@ -15,12 +15,6 @@ public class Configurations {
    private Configurations() {
    }
 
-   public static boolean isSecondPhaseAsync(Configuration cfg) {
-      ClusteringConfiguration clusteringCfg = cfg.clustering();
-      return !cfg.transaction().syncCommitPhase()
-            || !clusteringCfg.cacheMode().isSynchronous();
-   }
-
    public static boolean isOnePhaseCommit(Configuration cfg) {
       return !cfg.clustering().cacheMode().isSynchronous() ||
             cfg.transaction().lockingMode() == LockingMode.PESSIMISTIC;

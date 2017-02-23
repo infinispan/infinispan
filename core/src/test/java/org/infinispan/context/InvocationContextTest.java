@@ -42,7 +42,6 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.transaction()
-            .syncCommitPhase(true).syncRollbackPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             // TODO: Default values have for synchronization and recovery have changed
             // These two calls are requires to make test behave as before
@@ -82,17 +81,15 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       tm.begin();
       cache.put("k", "v2");
       Transaction tx = tm.suspend();
-      final List<Throwable> throwables = new LinkedList<Throwable>();
+      final List<Throwable> throwables = new LinkedList<>();
 
-      Thread th = new Thread() {
-         public void run() {
-            try {
-               cache.put("k", "v3");
-            } catch (Throwable th) {
-               throwables.add(th);
-            }
+      Thread th = new Thread(() -> {
+         try {
+            cache.put("k", "v3");
+         } catch (Throwable th1) {
+            throwables.add(th1);
          }
-      };
+      });
 
       th.start();
       // th will now block trying to acquire the lock.
@@ -114,9 +111,9 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       CountDownLatch lockAquiredSignal = new CountDownLatch(1);
       DelayingListener dl = new DelayingListener(lockAquiredSignal, willTimeoutLatch);
       cache.addListener(dl);
-      final List<Throwable> throwables = new LinkedList<Throwable>();
+      final List<Throwable> throwables = new LinkedList<>();
 
-      Future<?> future = fork((Runnable) () -> {
+      Future<?> future = fork(() -> {
          try {
             cache.put("k", "v3");
          } catch (Throwable th) {

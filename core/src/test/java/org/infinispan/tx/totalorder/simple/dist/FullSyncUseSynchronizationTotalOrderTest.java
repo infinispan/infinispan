@@ -18,7 +18,7 @@ public class FullSyncUseSynchronizationTotalOrderTest extends BaseSimpleTotalOrd
    }
 
    protected FullSyncUseSynchronizationTotalOrderTest(int clusterSize) {
-      super(clusterSize, CacheMode.DIST_SYNC, true, false, true);
+      super(clusterSize, CacheMode.DIST_SYNC, false, true);
    }
 
    @Override

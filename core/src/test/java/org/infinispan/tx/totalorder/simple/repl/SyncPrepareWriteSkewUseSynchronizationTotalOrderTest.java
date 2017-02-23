@@ -20,7 +20,7 @@ public class SyncPrepareWriteSkewUseSynchronizationTotalOrderTest extends BaseSi
    }
 
    protected SyncPrepareWriteSkewUseSynchronizationTotalOrderTest(int clusterSize) {
-      super(clusterSize, CacheMode.REPL_SYNC, false, true, true);
+      super(clusterSize, CacheMode.REPL_SYNC, true, true);
    }
 
    @Override

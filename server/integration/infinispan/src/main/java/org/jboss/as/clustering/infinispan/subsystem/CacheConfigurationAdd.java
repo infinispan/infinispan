@@ -429,9 +429,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 .recovery().enabled(txMode.isRecoveryEnabled())
         ;
 
-        if (txMode.isRecoveryEnabled()) {
-            builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
-        }
         if (mode.isSynchronous() && lockingMode == LockingMode.OPTIMISTIC && isolationLevel == IsolationLevel.REPEATABLE_READ) {
             builder.locking().writeSkewCheck(true);
             builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
@@ -764,7 +761,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                     }
                 }
             };
-            dependencies.add(new Dependency<PathManager>(PathManagerService.SERVICE_NAME, PathManager.class, injector));
+            dependencies.add(new Dependency<>(PathManagerService.SERVICE_NAME, PathManager.class, injector));
 
             final boolean expirationDefined = store.hasDefined(ModelKeys.EXPIRATION) && store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME).isDefined();
             final String expirationPath;

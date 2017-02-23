@@ -37,7 +37,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -105,7 +104,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected PartitionHandlingManager partitionHandlingManager;
    private ScheduledExecutorService timeoutExecutor;
 
-   private boolean isSecondPhaseAsync;
    private boolean isPessimisticLocking;
    private boolean isTotalOrder;
 
@@ -143,7 +141,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @Start(priority = 9) // Start before cache loader manager
    public void start() {
-      this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 
@@ -442,7 +439,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     */
    public void remoteTransactionCommitted(GlobalTransaction gtx, boolean onePc) {
       boolean optimisticWih1Pc = onePc && (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC);
-      if (Configurations.isSecondPhaseAsync(configuration) || configuration.transaction().transactionProtocol().isTotalOrder() || optimisticWih1Pc) {
+      if (configuration.transaction().transactionProtocol().isTotalOrder() || optimisticWih1Pc) {
          removeRemoteTransaction(gtx);
       }
    }
@@ -847,8 +844,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
-      if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync &&
-            !partitionHandlingManager.isTransactionPartiallyCommitted(gtx)) {
+      if (mayHaveRemoteLocks(localTransaction) && !partitionHandlingManager.isTransactionPartiallyCommitted(gtx)) {
          final TxCompletionNotificationCommand command =
                commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          final Collection<Address> owners =

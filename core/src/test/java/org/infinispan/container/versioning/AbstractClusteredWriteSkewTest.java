@@ -1,6 +1,7 @@
 package org.infinispan.container.versioning;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.HeuristicRollbackException;
@@ -20,7 +21,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(testName = "container.versioning.AbstractClusteredWriteSkewTest", groups = "functional")
@@ -255,7 +255,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       final TransactionManager tm = executeOnPrimaryOwner ? tm(0, PASSIVATION_CACHE) : tm(1, PASSIVATION_CACHE);
 
       for (Cache cache : caches(PASSIVATION_CACHE)) {
-         AssertJUnit.assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
       }
 
       switch (operation) {
@@ -343,8 +343,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .writeSkewCheck(true)
             .transaction()
-            .lockingMode(LockingMode.OPTIMISTIC)
-            .syncCommitPhase(true);
+            .lockingMode(LockingMode.OPTIMISTIC);
       return builder;
    }
 
@@ -355,7 +354,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       final TransactionManager tm = executeOnPrimaryOwner ? tm(0) : tm(1);
 
       for (Cache cache : caches()) {
-         AssertJUnit.assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
       }
 
       log.debugf("Initialize the key? %s", initKey);
@@ -434,7 +433,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       }
    }
 
-   private static enum Operation {
+   private enum Operation {
       PUT, REMOVE, REPLACE,
       CONDITIONAL_PUT, CONDITIONAL_REMOVE, CONDITIONAL_REPLACE
    }

@@ -42,11 +42,6 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    }
 
    @Override
-   protected void assertSupportedConfig() {
-      // no-op
-   }
-
-   @Override
    protected void createCacheManagers() throws Throwable {
       config = hotRodCacheConfiguration(getCacheConfig());
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);

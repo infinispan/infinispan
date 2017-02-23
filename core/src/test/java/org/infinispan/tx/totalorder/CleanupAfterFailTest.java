@@ -105,8 +105,6 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction()
             .transactionProtocol(TransactionProtocol.TOTAL_ORDER)
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true)
             .useSynchronization(false)
             .recovery().disable();
       dcc.locking()
@@ -130,16 +128,13 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
    }
 
    private void assertNoLocks() {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache cache : caches()) {
-               if (TestingUtil.extractComponent(cache, TotalOrderManager.class).hasAnyLockAcquired()) {
-                  return false;
-               }
+      eventually(() -> {
+         for (Cache cache : caches()) {
+            if (TestingUtil.extractComponent(cache, TotalOrderManager.class).hasAnyLockAcquired()) {
+               return false;
             }
-            return true;
          }
+         return true;
       });
    }
 

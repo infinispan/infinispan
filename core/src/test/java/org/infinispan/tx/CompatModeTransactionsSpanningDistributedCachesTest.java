@@ -21,8 +21,7 @@ public class CompatModeTransactionsSpanningDistributedCachesTest extends Transac
             .clustering()
             .cacheMode(CacheMode.DIST_SYNC)
             .stateTransfer().fetchInMemoryState(false)
-            .transaction().syncCommitPhase(true).syncRollbackPhase(true)
-            .cacheStopTimeout(0L);
+            .transaction().cacheStopTimeout(0L);
       return builder;
    }
 

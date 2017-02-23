@@ -56,12 +56,6 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
    private WorkerThread workerThread5;
    private WorkerThread workerThread6;
 
-
-   @Override
-   protected void assertSupportedConfig() {
-      // No-op
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       // The caches are not configured to form a cluster
@@ -98,7 +92,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       remoteCache = remoteCacheManager.getCache();
 
       TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
-      connectionPool = (GenericKeyedObjectPool<?, ?>) tcpConnectionFactory.getConnectionPool();
+      connectionPool = tcpConnectionFactory.getConnectionPool();
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
@@ -178,29 +172,19 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          workerThread2.putAsync("k4", "v4");
          log.info("Async calls for k3 and k4 is done.");
 
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return 1 == connectionPool.getNumActive(hrServ1Addr) &&
-               1 == connectionPool.getNumActive(hrServ2Addr) &&
-               0 == connectionPool.getNumIdle(hrServ1Addr) &&
-               0 == connectionPool.getNumIdle(hrServ2Addr);
-            }
-         });
+         eventually(() -> 1 == connectionPool.getNumActive(hrServ1Addr) &&
+         1 == connectionPool.getNumActive(hrServ2Addr) &&
+         0 == connectionPool.getNumIdle(hrServ1Addr) &&
+         0 == connectionPool.getNumIdle(hrServ2Addr));
 
 
          // another operation for each server, creating new connections
          workerThread3.putAsync("k5", "v5");
          workerThread4.putAsync("k6", "v6");
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return 2 == connectionPool.getNumActive(hrServ1Addr) &&
-                     2 == connectionPool.getNumActive(hrServ2Addr) &&
-                     0 == connectionPool.getNumIdle(hrServ1Addr) &&
-                     0 == connectionPool.getNumIdle(hrServ2Addr);
-            }
-         });
+         eventually(() -> 2 == connectionPool.getNumActive(hrServ1Addr) &&
+               2 == connectionPool.getNumActive(hrServ2Addr) &&
+               0 == connectionPool.getNumIdle(hrServ1Addr) &&
+               0 == connectionPool.getNumIdle(hrServ2Addr));
 
          // we've reached the connection pool limit, the new operations will block
          // until a connection is released
@@ -221,12 +205,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       }
 
       // give the servers some time to process the operations
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return connectionPool.getNumActive() == 0;
-         }
-      }, 1000);
+      eventually(() -> connectionPool.getNumActive() == 0, 1000);
 
       assertExistKeyValue("k3", "v3");
       assertExistKeyValue("k4", "v4");

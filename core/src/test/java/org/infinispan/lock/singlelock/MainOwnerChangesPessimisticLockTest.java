@@ -37,8 +37,6 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
       dccc.transaction()
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .clustering().hash().numOwners(1).numSegments(3)
             .l1().disable()

@@ -64,14 +64,11 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    private static final String VALUE_4 = "value_4";
    private final List<ControlledPerCacheInboundInvocationHandler> inboundHandlerList = new ArrayList<>(NUM_NODES);
    private final CacheMode mode;
-   private final boolean sync2ndPhase;
    private final boolean writeSkew;
    private final boolean totalOrder;
 
-   protected BaseClusteredExtendedStatisticTest(CacheMode mode, boolean sync2ndPhase, boolean writeSkew,
-                                                boolean totalOrder) {
+   protected BaseClusteredExtendedStatisticTest(CacheMode mode, boolean writeSkew, boolean totalOrder) {
       this.mode = mode;
-      this.sync2ndPhase = sync2ndPhase;
       this.writeSkew = writeSkew;
       this.totalOrder = totalOrder;
    }
@@ -286,7 +283,6 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < 2; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
-         builder.transaction().syncCommitPhase(sync2ndPhase).syncRollbackPhase(sync2ndPhase);
          if (totalOrder) {
             builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
          }
@@ -314,7 +310,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    protected void assertCacheValue(Object key, Object value) {
       for (int index = 0; index < caches().size(); ++index) {
-         if (mode.isSynchronous() && sync2ndPhase) {
+         if (mode.isSynchronous()) {
             assertEquals(index, key, value);
          } else {
             assertEventuallyEquals(index, key, value);

@@ -146,8 +146,6 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .useSynchronization(false)
-            .syncCommitPhase(true)
-            .syncRollbackPhase(true)
             .recovery()
             .disable();
       configuration.clustering()

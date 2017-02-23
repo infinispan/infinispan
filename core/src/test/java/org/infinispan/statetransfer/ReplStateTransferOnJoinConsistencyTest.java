@@ -27,8 +27,7 @@ public class ReplStateTransferOnJoinConsistencyTest extends DistStateTransferOnJ
    protected ConfigurationBuilder createConfigurationBuilder(boolean isOptimistic) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .syncCommitPhase(true).syncRollbackPhase(true);
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
 
       if (isOptimistic) {
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC)
