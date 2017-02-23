@@ -50,8 +50,6 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = SecurityActions.getBooleanProperty("infinispan.unsafe.force_multicast");
-   private static long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(
-         SecurityActions.getIntProperty("infinispan.stagger.delay", 5));
    public static final short REPLY_FLAGS_TO_CLEAR = (short) (Message.Flag.RSVP.value() | Message.Flag.INTERNAL.value());
    public static final short REPLY_FLAGS_TO_SET =
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
@@ -102,7 +100,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
                                                             DeliverOrder deliverOrder) {
       CompletableFuture<Responses> future;
       try {
-         if (recipients != null && mode == ResponseMode.GET_FIRST && STAGGER_DELAY_NANOS > 0) {
+         if (recipients != null && recipients.size() > 1 && mode == ResponseMode.GET_FIRST) {
             future = new CompletableFuture<>();
             // This isn't really documented, but some of our internal code uses timeout = 0 as no timeout.
             long nanoTimeout = timeout > 0 ? TimeUnit.MILLISECONDS.toNanos(timeout) : Long.MAX_VALUE;
@@ -328,10 +326,11 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
             }
          });
          if (!subFuture.isDone()) {
+            // If this is the last recipient, schedule a timeout task to cancel the request at the deadline
+            // Otherwise, schedule a timeout task to send a staggered request to the next recipient
             long delayNanos = timeService.remainingTime(deadline, TimeUnit.NANOSECONDS);
             if (destIndex < dests.size() - 1) {
-               // Not the last recipient, wait for STAGGER_DELAY_NANOS only
-               delayNanos = Math.min(STAGGER_DELAY_NANOS, delayNanos);
+               delayNanos = delayNanos / 10 / dests.size();
             }
             ScheduledFuture<?> timeoutTask = timeoutExecutor.schedule(
                   () -> staggeredProcessNext(command, filter, dests, mode, deliverOrder, theFuture, destIndex, deadline,
