@@ -133,19 +133,37 @@ These isolation levels determine when readers see a concurrent write, and are in
 Here's a more detailed example that should help understand the difference between `READ_COMMITTED` and `REPEATABLE_READ` in the context of Infinispan.
 With `READ_COMMITTED`, if between two consecutive read calls on the same key, the key has been updated by another transaction, the second read may return the new updated value:
 
-[source, java]
+[source,java]
 ----
-Thread1: tx.begin()
-Thread1: cache.get(k) returns v
-Thread2: tx.begin()
-Thread2: cache.get(k) returns v
-Thread2: cache.put(k, v2)
-Thread2: tx.commit()
-Thread1: cache.get(k) returns v2! //Final get
+Thread1: tx1.begin()
+Thread1: cache.get(k) // returns v
+Thread2:                                       tx2.begin()
+Thread2:                                       cache.get(k) // returns v
+Thread2:                                       cache.put(k, v2)
+Thread2:                                       tx2.commit()
+Thread1: cache.get(k) // returns v2!
+Thread1: tx1.commit()
 ----
 
 With `REPEATABLE_READ`, the final get will still return `v`.
 So, if you're going to retrieve the same key multiple times within a transaction, you should use `REPEATABLE_READ`.
+
+However, as read-locks are not acquired even for `REPEATABLE_READ`, this phenomena can occur:
+
+[source,java]
+----
+cache.get("A") // returns 1
+cache.get("B") // returns 1
+
+Thread1: tx1.begin()
+Thread1: cache.put("A", 2)
+Thread1: cache.put("B", 2)
+Thread2:                                       tx2.begin()
+Thread2:                                       cache.get("A") // returns 1
+Thread1: tx1.commit()
+Thread2:                                       cache.get("B") // returns 2
+Thread2:                                       tx2.commit()
+----
 
 === Transaction locking [[tx:locking]]
 

@@ -241,6 +241,7 @@ Implicit eager locking is enabled as follows:
 
 ==== What isolation levels does Infinispan support?
 Infinispan only supports the isolation levels link:../glossary/glossary.html#read_committed[*READ_COMMITTED*] and link:../glossary/glossary.html#repeatable_read[*REPEATABLE_READ*].
+Note that exact definition of these levels may differ from traditional database definitions.
 
 The default isolation mode is *READ_COMMITTED*.
 We consider *READ_COMMITTED* to be good enough for most applications and hence its use as a default.
