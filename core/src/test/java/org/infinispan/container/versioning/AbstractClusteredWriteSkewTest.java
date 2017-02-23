@@ -300,23 +300,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
          primaryOwner.put(key, "v2");
       }
 
-      DataContainer dataContainer = TestingUtil.extractComponent(primaryOwner, DataContainer.class);
-      int retryCount = 5;
-      int insertCount = 10;
-      for (int retry = 0; retry < 5; ++retry) {
-         MagicKey[] keys = new MagicKey[MAX_ENTRIES];
-         for (int i = 0; i < insertCount; ++i) {
-            for (int j = 0; j < MAX_ENTRIES; ++j) {
-               MagicKey tempKey = keys[j];
-               if (tempKey == null) {
-                  tempKey = new MagicKey("other-key-" + j, primaryOwner);
-                  keys[j] = tempKey;
-               }
-               primaryOwner.put(tempKey, "value");
-            }
-         }
-      }
-      assertTrue("The key was not evicted after " + insertCount + " inserts - retried " + retryCount, dataContainer.peek(key) == null);
+      primaryOwner.evict(key);
 
       log.debugf("It is going to try to commit the suspended transaction");
       try {
