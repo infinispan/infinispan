@@ -39,9 +39,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
-                <protocol type="FRAG3">
-                    <property name="frag_size">200k</property>
-                </protocol>
+                <protocol type="FRAG3"/>
                 <?AUTH?>
             </stack>
             <stack name="tcp-gossip">
@@ -60,9 +58,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
-                <protocol type="FRAG3">
-                    <property name="frag_size">200k</property>
-                </protocol>
+                <protocol type="FRAG3"/>
                 <?AUTH?>
             </stack>
         </stacks>
