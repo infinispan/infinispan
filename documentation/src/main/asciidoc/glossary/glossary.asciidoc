@@ -304,10 +304,28 @@ link:http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads[non-repea
 phenomenon, because once data has been written, no other transaction can read
 it, so there's no chance of re-reading the data and finding different data.
 
+Some definitions of +REPEATABLE_READ+ say that this isolation level places shared
+locks on read data; such lock could not be acquired when the entry is being written.
 However, Infinispan has an +MVCC+ concurrency model that allows it to have
 non-blocking reads. Infinispan provides +REPEATABLE_READ+ semantics by keeping
 the previous value whenever an entry is modified. This allows Infinispan to
-retrieve the previous value if a second read happens within the same transaction.
+retrieve the previous value if a second read happens within the same transaction,
+but it allows following phenomena:
+
+[source,java]
+----
+cache.get("A") // returns 1
+cache.get("B") // returns 1
+
+Thread1: tx1.begin()
+Thread1: cache.put("A", 2)
+Thread1: cache.put("B", 2)
+Thread2:                                       tx2.begin()
+Thread2:                                       cache.get("A") // returns 1
+Thread1: tx1.commit()
+Thread2:                                       cache.get("B") // returns 2
+Thread2:                                       tx2.commit()
+----
 
 == Representational State Transfer (ReST)
 ReST is a software architectural style that promotes accessing resources via a
