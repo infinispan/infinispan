@@ -45,6 +45,7 @@
    
 
    <MFC max_credits="2m" min_threshold="0.40"/>
+   <FRAG3 frag_size="200k"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
     
 </config>

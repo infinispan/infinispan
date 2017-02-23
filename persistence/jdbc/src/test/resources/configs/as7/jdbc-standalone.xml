@@ -208,6 +208,7 @@
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>
+                <protocol type="FRAG3"/>
                 <protocol type="RSVP">
                     <property name="timeout">60000</property>
                     <property name="resend_interval">500</property>
