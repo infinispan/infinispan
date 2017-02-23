@@ -182,6 +182,16 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    @Override
    public void validate() {
+      validate(false);
+   }
+
+   protected void validate(boolean skipClassChecks) {
+      if (!skipClassChecks)
+         validateStoreWithAnnotations();
+      validateStoreAttributes();
+   }
+
+   private void validateStoreAttributes() {
       async.validate();
       singletonStore.validate();
       boolean shared = attributes.attribute(SHARED).get();
@@ -190,21 +200,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       boolean preload = attributes.attribute(PRELOAD).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       ConfigurationBuilder builder = getBuilder();
-
-      Class configKlass = attributes.getKlass();
-      if (configKlass != null && configKlass.isAnnotationPresent(ConfigurationFor.class)) {
-         Class storeKlass = ((ConfigurationFor) configKlass.getAnnotation(ConfigurationFor.class)).value();
-         if (storeKlass.isAnnotationPresent(Store.class)) {
-            Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
-            if (!storeProps.shared() && shared) {
-               throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
-            }
-         } else {
-            log.warnStoreAnnotationMissing(storeKlass.getSimpleName());
-         }
-      } else {
-         log.warnConfigurationForAnnotationMissing(attributes.getName());
-      }
 
       if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered())
@@ -224,6 +219,23 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
       if (transactional && builder.persistence().passivation())
          throw log.transactionalStoreInPassivatedCache();
+   }
+
+   private void validateStoreWithAnnotations() {
+      Class configKlass = attributes.getKlass();
+      if (configKlass != null && configKlass.isAnnotationPresent(ConfigurationFor.class)) {
+         Class storeKlass = ((ConfigurationFor) configKlass.getAnnotation(ConfigurationFor.class)).value();
+         if (storeKlass.isAnnotationPresent(Store.class)) {
+            Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
+            if (!storeProps.shared() && shared) {
+               throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
+            }
+         } else {
+            log.warnStoreAnnotationMissing(storeKlass.getSimpleName());
+         }
+      } else {
+         log.warnConfigurationForAnnotationMissing(attributes.getName());
+      }
    }
 
    @Override
