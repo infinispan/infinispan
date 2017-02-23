@@ -556,7 +556,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          while ((viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) &&
                clusterManagerStatus.isRunning()) {
             if (nanosTimeout <= 0) {
-               throw log.timeoutWaitingForView(joinerViewId, transport.getViewId(), clusterManagerStatus);
+               throw log.coordinatorTimeoutWaitingForView(joinerViewId, transport.getViewId(), clusterManagerStatus);
             }
             nanosTimeout = clusterStateChanged.awaitNanos(nanosTimeout);
          }

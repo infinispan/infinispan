@@ -6,9 +6,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Version;
 import org.infinispan.commands.ReplicableCommand;
@@ -79,7 +81,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Inject
    public void inject(Transport transport,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager, PersistentUUIDManager persistentUUIDManager) {
+                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager,
+                      PersistentUUIDManager persistentUUIDManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
@@ -149,6 +152,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
                if (initialStatus == null) {
                   log.debug("Ignoring null join response, coordinator is probably shutting down");
+                  waitForView(viewId + 1, cacheStatus.getJoinInfo().getTimeout(), TimeUnit.MILLISECONDS);
                   continue;
                }
 
@@ -213,14 +217,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    public ManagerStatusResponse handleStatusRequest(int viewId) {
       try {
          // As long as we have an older view, we can still process topologies from the old coordinator
-         waitForView(viewId);
+         waitForView(viewId, getGlobalTimeout(), TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          // Shutting down, send back an empty status
          Thread.currentThread().interrupt();
          return new ManagerStatusResponse(Collections.emptyMap(), true);
       }
 
-      Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
+      Map<String, CacheStatusResponse> caches = new HashMap<>();
       synchronized (runningCaches) {
          latestStatusResponseViewId = viewId;
 
@@ -265,8 +269,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return;
       }
 
-      cacheStatus.getTopologyUpdatesExecutor().execute(
-            () -> doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus));
+      cacheStatus.getTopologyUpdatesExecutor().execute(() -> {
+         try {
+            doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
+         } catch (Throwable t) {
+            log.topologyUpdateError(cacheName, t);
+         }
+      });
    }
 
    /**
@@ -278,7 +287,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                           AvailabilityMode availabilityMode, int viewId, Address sender,
                                           LocalCacheStatus cacheStatus) {
       try {
-         waitForView(viewId);
+         waitForView(viewId, cacheStatus.getJoinInfo().getTimeout(), TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          // Shutting down, ignore the exception and the rebalance
          return false;
@@ -457,7 +466,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private void doHandleRebalance(int viewId, LocalCacheStatus cacheStatus, CacheTopology cacheTopology,
                                   String cacheName, Address sender) {
       try {
-         waitForView(viewId);
+         waitForView(viewId, cacheStatus.getJoinInfo().getTimeout(), TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          // Shutting down, ignore the exception and the rebalance
          return;
@@ -520,8 +529,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       return totalOrder;
    }
 
-   private void waitForView(int viewId) throws InterruptedException {
-      transport.waitForView(viewId);
+   private void waitForView(int viewId, long timeout, TimeUnit timeUnit) throws InterruptedException {
+      try {
+         transport.withView(viewId).get(timeout, timeUnit);
+      } catch (ExecutionException e) {
+         // The view future should never complete with an exception
+         throw new CacheException(e.getCause());
+      } catch (TimeoutException e) {
+         throw log.timeoutWaitingForView(viewId, transport.getViewId());
+      }
    }
 
    @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",
@@ -539,15 +555,32 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public boolean isCacheRebalancingEnabled(String cacheName) throws Exception {
       int viewId = transport.getViewId();
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+                                                                  CacheTopologyControlCommand.Type.POLICY_GET_STATUS,
+                                                                  transport.getAddress(), viewId);
+      return executeOnCoordinatorRetry(command, viewId);
+   }
+
+   public <T> T executeOnCoordinatorRetry(ReplicableCommand command, int viewId) throws Exception {
+      boolean retried = false;
+      long endNanos = timeService.expectedEndTime(getGlobalTimeout(), TimeUnit.MILLISECONDS);
       while (true) {
-         ReplicableCommand command = new CacheTopologyControlCommand(cacheName, CacheTopologyControlCommand.Type.POLICY_GET_STATUS,
-               transport.getAddress(), viewId);
          try {
-            return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
+            long remainingMillis = timeService.remainingTime(endNanos, TimeUnit.MILLISECONDS);
+            return (T) executeOnCoordinator(command, remainingMillis);
          } catch (SuspectException e) {
-            if (trace) log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
-            viewId = Math.max(viewId + 1, transport.getViewId());
-            transport.waitForView(viewId);
+            if (trace)
+               log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
+            // The view information in JGroupsTransport is not updated atomically, so we could have sent the request
+            // to the old coordinator. We work around this by sending the request a second time, with the same view id.
+            if (retried) {
+               viewId = Math.max(viewId + 1, transport.getViewId());
+               long remainingNanos = timeService.remainingTime(endNanos, TimeUnit.NANOSECONDS);
+               waitForView(viewId, remainingNanos, TimeUnit.NANOSECONDS);
+               retried = false;
+            } else {
+               retried = true;
+            }
          }
       }
    }
@@ -564,16 +597,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public RebalancingStatus getRebalancingStatus(String cacheName) throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.REBALANCING_GET_STATUS, transport.getAddress(), transport.getViewId());
-      while (true) {
-         int nextViewId = transport.getViewId() + 1;
-         try {
-            return (RebalancingStatus) executeOnCoordinator(command, getGlobalTimeout());
-         } catch (SuspectException e) {
-            if (trace) log.tracef("Coordinator left the cluster while querying rebalancing progress, retrying");
-            transport.waitForView(nextViewId);
-         }
-      }
+                                                                  CacheTopologyControlCommand.Type.REBALANCING_GET_STATUS,
+                                                                  transport.getAddress(), transport.getViewId());
+      int viewId = transport.getViewId();
+      return executeOnCoordinatorRetry(command, viewId);
    }
 
    @ManagedAttribute(description = "Cluster availability", displayName = "Cluster availability",
@@ -713,7 +740,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    private Map<Address, Object> parseResponses(Map<Address, Response> responseMap) {
-      Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+      Map<Address, Object> responseValues = new HashMap<>(transport.getMembers().size());
       for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
          Address address = entry.getKey();
          Response response = entry.getValue();
