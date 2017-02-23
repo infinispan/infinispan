@@ -14,7 +14,7 @@ public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration 
    static final AttributeDefinition<Boolean> SLOW = AttributeDefinition.builder("slow", false).immutable().build();
    static final AttributeDefinition<String> STORE_NAME = AttributeDefinition.builder("storeName", null, String.class).immutable().build();
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(DummyInMemoryStore.class, AbstractStoreConfiguration.attributeDefinitionSet(), SLOW, STORE_NAME);
+      return new AttributeSet(DummyInMemoryStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), SLOW, STORE_NAME);
    }
 
    public DummyInMemoryStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
