@@ -19,7 +19,7 @@ public class ClusteringConfiguration {
          AttributeDefinition.builder("remoteTimeout", TimeUnit.SECONDS.toMillis(15)).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT);
    }
 
    private final Attribute<CacheMode> cacheMode;
