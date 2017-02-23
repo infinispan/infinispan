@@ -44,6 +44,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
+                <protocol type="FRAG3" />
             </stack>
             <stack name="s3-presigned">
                 <?TCP-TRANSPORT?>
@@ -62,6 +63,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
+                <protocol type="FRAG3" />
             </stack>
             <stack name="s3-public">
                 <?TCP-TRANSPORT?>
@@ -79,6 +81,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
+                <protocol type="FRAG3" />
             </stack>
             <stack name="google">
                 <?TCP-TRANSPORT?>
@@ -98,6 +101,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
+                <protocol type="FRAG3" />
             </stack>
             <stack name="kubernetes">
                 <?TCP-TRANSPORT?>
@@ -113,6 +117,7 @@
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
                 <protocol type="MFC" />
+                <protocol type="FRAG3" />
             </stack>
         </stacks>
     </subsystem>

@@ -45,4 +45,5 @@
                 view_bundling="true"/>
     <MFC max_credits="2M"
          min_threshold="0.4"/>
+    <FRAG3 frag_size="200k"/>
 </config>
