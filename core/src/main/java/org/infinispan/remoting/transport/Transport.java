@@ -146,6 +146,15 @@ public interface Transport extends Lifecycle {
     */
    int getViewId();
 
+   /**
+    * @return A {@link CompletableFuture} that completes when the transport has installed the expected view.
+    */
+   CompletableFuture<Void> withView(int expectedViewId);
+
+   /**
+    * @deprecated Since 9.0, please use {@link #withView(int)} instead.
+    */
+   @Deprecated
    void waitForView(int viewId) throws InterruptedException;
 
    Log getLog();

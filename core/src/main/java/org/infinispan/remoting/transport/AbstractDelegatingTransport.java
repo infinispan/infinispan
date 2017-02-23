@@ -119,6 +119,11 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public CompletableFuture<Void> withView(int expectedViewId) {
+      return actual.withView(expectedViewId);
+   }
+
+   @Override
    public void waitForView(int viewId) throws InterruptedException {
       actual.waitForView(viewId);
    }

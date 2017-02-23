@@ -1386,8 +1386,8 @@ public interface Log extends BasicLogger {
    TimeoutException remoteNodeTimedOut(Address address, long time, TimeUnit unit);
 
    @Message(value = "Timeout waiting for view %d. Current view is %d, current status is %s", id = 402)
-   TimeoutException timeoutWaitingForView(int expectedViewId, int currentViewId,
-         Object clusterManagerStatus);
+   TimeoutException coordinatorTimeoutWaitingForView(int expectedViewId, int currentViewId,
+                                                     Object clusterManagerStatus);
 
    @LogMessage(level = WARN)
    @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 9.0).", id = 403)
@@ -1546,4 +1546,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "XSite state transfer waiting time between retries must be higher or equals than 1 (one).", id = 450)
    CacheConfigurationException invalidXSiteStateTransferWaitTime();
+
+   @Message(value = "Timed out waiting for view %d, current view is %d", id = 451)
+   TimeoutException timeoutWaitingForView(int expectedViewId, int currentViewId);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to update topology for cache %s", id = 452)
+   void topologyUpdateError(String cacheName, @Cause Throwable cause);
 }
