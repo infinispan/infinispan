@@ -16,6 +16,7 @@
    <packaging>pom</packaging>
 
    <modules>
+      <module>license</module>
       <module>bom</module>
       <module>checkstyle</module>
       <module>parent</module>

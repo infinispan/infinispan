@@ -1487,7 +1487,7 @@
                   <inherited>true</inherited>
                   <configuration>
                      <resourceBundles>
-                        <resourceBundle>org.infinispan:infinispan-license:1</resourceBundle>
+                        <resourceBundle>org.infinispan:infinispan-license:${project.version}</resourceBundle>
                      </resourceBundles>
                   </configuration>
                </execution>
