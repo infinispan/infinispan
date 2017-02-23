@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +39,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -53,38 +51,16 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.jgroups.JChannel;
 import org.jgroups.View;
 import org.jgroups.protocols.pbcast.GMS;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 @CleanupAfterMethod
 public class RemoteGetFailureTest extends MultipleCacheManagersTest {
-   private boolean staggered;
    private Object key;
 
    @Override
-   public Object[] factory() {
-      return new Object[] {
-         new RemoteGetFailureTest().staggered(true),
-         new RemoteGetFailureTest().staggered(false)
-      };
-   }
-
-   @Override
-   protected String parameters() {
-      return "[staggered=" + staggered + "]";
-   }
-
-   protected RemoteGetFailureTest staggered(boolean staggered) {
-      this.staggered = staggered;
-      return this;
-   }
-
-
-   @Override
    protected void createCacheManagers() throws Throwable {
-      setStaggered(staggered);
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       // cache stop takes quite long when the view splits
       builder.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
@@ -92,22 +68,6 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       createCluster(builder, 3);
       waitForClusterToForm();
       key = getKeyForCache(cache(1), cache(2));
-   }
-
-   private static void setStaggered(boolean staggered) {
-      try {
-         Field staggerDelayNanos = CommandAwareRpcDispatcher.class.getDeclaredField("STAGGER_DELAY_NANOS");
-         staggerDelayNanos.setAccessible(true);
-         staggerDelayNanos.setLong(null, staggered ? TimeUnit.MILLISECONDS.toNanos(5) : 0L);
-      } catch (Exception e) {
-         throw new IllegalStateException(e);
-      }
-   }
-
-   @AfterClass
-   @Override
-   protected void destroy() {
-      setStaggered(true); // the default
    }
 
    @AfterMethod(alwaysRun = true)
