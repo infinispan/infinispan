@@ -43,4 +43,9 @@ public class DeployedStoreConfigurationBuilder extends AbstractStoreConfiguratio
       this.customStoreClassName = customStoreClassName;
       return this;
    }
+
+   @Override
+   public void validate() {
+      super.validate(true);
+   }
 }
