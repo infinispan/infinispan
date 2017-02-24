@@ -298,9 +298,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception while marshalling object: %s", id = 65)
    void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
-//   @LogMessage(level = ERROR)
-//   @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
-//   void unableToReadVersionId();
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
+   void unableToReadVersionId();
 
 //   @LogMessage(level = INFO)
 //   @Message(value = "Will try and wait for the cache %s to start", id = 67)
@@ -886,20 +886,20 @@ public interface Log extends BasicLogger {
 //   @Message(value="Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)", id = 241)
 //   CacheException cannotResolveExternalizerReader(ComponentStatus status, int readerIndex);
 
-//   @Message(value="Missing foreign externalizer with id=%s, either externalizer was not configured by client, or module lifecycle implementation adding externalizer was not loaded properly", id = 242)
-//   CacheException missingForeignExternalizer(int foreignId);
+   @Message(value="Missing foreign externalizer with id=%s, either externalizer was not configured by client, or module lifecycle implementation adding externalizer was not loaded properly", id = 242)
+   CacheException missingForeignExternalizer(int foreignId);
 
-//   @Message(value="Type of data read is unknown. Id=%d is not amongst known reader indexes.", id = 243)
-//   CacheException unknownExternalizerReaderIndex(int readerIndex);
+   @Message(value="Type of data read is unknown. Id=%d is not amongst known reader indexes.", id = 243)
+   CacheException unknownExternalizerReaderIndex(int readerIndex);
 
-//   @Message(value="AdvancedExternalizer's getTypeClasses for externalizer %s must return a non-empty set", id = 244)
-//   CacheConfigurationException advanceExternalizerTypeClassesUndefined(String className);
+   @Message(value="AdvancedExternalizer's getTypeClasses for externalizer %s must return a non-empty set", id = 244)
+   CacheConfigurationException advanceExternalizerTypeClassesUndefined(String className);
 
-//   @Message(value="Duplicate id found! AdvancedExternalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d", id = 245)
-//   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, Class<?> typeClass, String otherExternalizer, int readerIndex);
+   @Message(value="Duplicate id found! AdvancedExternalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d", id = 245)
+   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, Class<?> typeClass, String otherExternalizer, int readerIndex);
 
-//   @Message(value="Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", id = 246)
-//   CacheConfigurationException internalExternalizerIdLimitExceeded(AdvancedExternalizer<?> ext, int externalizerId, int maxId);
+   @Message(value="Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", id = 246)
+   CacheConfigurationException internalExternalizerIdLimitExceeded(AdvancedExternalizer<?> ext, int externalizerId, int maxId);
 
    @Message(value="Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", id = 247)
    CacheConfigurationException foreignExternalizerUsingNegativeId(AdvancedExternalizer<?> ext, int externalizerId);

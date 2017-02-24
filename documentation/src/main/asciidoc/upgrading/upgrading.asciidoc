@@ -37,6 +37,12 @@ Additionally, the default cache configuration affected all other cache configura
 Since 9.0, the default cache only exists if it has been explicitly configured. Additionally, even if it has been specified,
 it will never act as base template for other caches.
 
+=== Marshalling Enhancements and Store Compatibility
+Internally Infinispan 9.x has introduced many improvements to its marshalling codebase in order to improve performance
+and allow for greater flexibility. Consequently, data marshalled and persisted by Infinispan 8.x is no longer compatible with Infinispan 9.0.
+To aid you in migrating your existing stores to 9.0, we have provided a link:../user_guide/user_guide.html#jdbc_migrator[Store Migrator],
+however at present this only allows the migration of JDBC stores.
+
 === New Cloud module for library mode
 In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
 
@@ -120,7 +126,7 @@ The JDBC Mixed and Binary stores have been removed due to the poor performance a
 Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
 deserialised, updated, serialised and then re-inserted back into the db.  If you were previously using one of the removed
 stores, we have provided a migrator tool to assist in migrating data from an existing binary table to a JDBC string based
-store. See link:../user_guide/persistence_jdbc.adoc#JDBC_Migrator[JDBC Migrator Guide] for more details.
+store. See link:../user_guide/user_guide.html#jdbc_migrator[JDBC Migrator Guide] for more details.
 
 === @Store Annotation Introduced
 A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
