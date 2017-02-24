@@ -312,7 +312,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       }
    }
 
-   private class ImmutableSubList<E> extends AbstractList<E> {
+   public class ImmutableSubList<E> extends AbstractList<E> {
       private int offset;
       private int size;
 

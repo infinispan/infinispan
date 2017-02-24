@@ -125,8 +125,9 @@ deserialised, updated, serialised and then re-inserted back into the db. To assi
 `JDBCMigrator.java`, that reads data from an existing Mixed/Binary store and then stores it in a string keyed table via the
 <<_JDBC_String_based_Cache_Store, JdbcStringBasedStore>>.
 
-NOTE: The migrator can also be used to migrate existing string based tables to new database tables if you wish to use a
-new marshaller or TwoWayKeyToStringMapper for the store's content.
+NOTE: The marshaller changes introduced in Infinispan 9 mean that existing stores that were populated by 8.x are no longer
+compatible. The JDBCMigrator can be used to migrate existing JdbcStringBasedStores from the legacy 8.x marshaller to the latest
+9.x compatible marshaller.
 
 ===== Usage
 The Jdbc migrator `org.infinispan.tools.jdbc.migrator.JDBCMigrator` takes a single argument, the path to a
@@ -190,12 +191,18 @@ All migrator properties are configured within the context of a source or target 
 with either `source.` or `target.`.  All of the properties listed below are applicable to both source and target stores,
 with the exception of `table.binary.*` properties as it is not possible to migrate to a binary table.
 
+The property `*.marshaller.type` denotes whether the marshaller from infinispan 8.2x (LEGACY), 9.x (CURRENT) or a custom
+marshaller should be utilised. Note, that the LEGACY marshaller can only be specified for the source store.
+
 [options="header"]
 |===============
 |Property|Description|Example value|Required
-|type | Store type enum: [STRING,BINARY,MIXED] | MIXED | TRUE
+|type | [STRING,BINARY,MIXED] | MIXED | TRUE
 |cache_name | The name of the cache associated with the store | persistentMixedCache | TRUE
 |dialect | The dialect of the underlying database | POSTGRES | TRUE
+|marshaller.type | [LEGACY,CURRENT,CUSTOM] | CURRENT | TRUE
+|marshaller.class | The class of the marshaller if type=CUSTOM | org.example.CustomMarshaller |
+|marshaller.externalizers | A comma-separated list of custom AdvancedExternalizer implementations to load[id]:<Externalizer class> | 25:Externalizer1,org.example.Externalizer2 |
 |connection_pool.connection_url | The JDBC connection url | jdbc:postgresql:postgres | TRUE
 |connection_pool.driver_class | The class of the JDBC driver | org.postrgesql.Driver | TRUE
 |connection_pool.username | Database username | | TRUE
