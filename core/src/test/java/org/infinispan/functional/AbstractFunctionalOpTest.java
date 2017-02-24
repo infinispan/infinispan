@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
@@ -52,6 +53,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    FunctionalMap.ReadOnlyMap<Integer, String> lro;
    WriteOnlyMap<Object, String> wo;
    ReadWriteMap<Object, String> rw;
+   AdvancedCache<Object, String> cache;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
    List<CountingCARD> countingCARDs;
@@ -113,6 +115,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       this.lro = ReadOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
       this.wo = WriteOnlyMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
       this.rw = ReadWriteMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
+      this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
       this.lwo = WriteOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
       this.lrw = ReadWriteMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
    }

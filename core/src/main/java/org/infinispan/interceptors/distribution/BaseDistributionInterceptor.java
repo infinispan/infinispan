@@ -146,7 +146,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   protected final <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(
+   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
       CacheTopology cacheTopology = checkTopologyId(command);
       int topologyId = cacheTopology.getTopologyId();
@@ -387,6 +387,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
+      CompletableFuture<Void> allFuture = remoteGetAll(ctx, command, requestedKeys);
+      return asyncInvokeNext(ctx, command, allFuture);
+   }
+
+   protected CompletableFuture<Void> remoteGetAll(InvocationContext ctx, GetAllCommand command, Map<Address, List<Object>> requestedKeys) {
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
       CompletableFutureWithCounter allFuture = new CompletableFutureWithCounter(requestedKeys.size());
 
@@ -421,7 +426,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
          });
       }
-      return asyncInvokeNext(ctx, command, allFuture);
+      return allFuture;
    }
 
    @Override
