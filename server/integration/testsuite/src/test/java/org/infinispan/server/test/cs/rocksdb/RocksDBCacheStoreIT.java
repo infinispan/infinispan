@@ -26,6 +26,8 @@ import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -58,18 +60,15 @@ public class RocksDBCacheStoreIT {
 
     private final TestMarshaller clientMarshaller = new TestMarshaller();
 
-    private void removeDataFilesIfExists() {
-        if (dataDir.exists()) {
-            Util.recursiveFileRemove(dataDir);
-        }
-        if (expiredDir.exists()) {
-            Util.recursiveFileRemove(expiredDir);
-        }
+    @Before
+    @After
+    public void removeDataFilesIfExists() {
+        Util.recursiveFileRemove(dataDir);
+        Util.recursiveFileRemove(expiredDir);
     }
 
     @Test
     public void testDataSurvivesRestart() throws Exception {
-        removeDataFilesIfExists();
         controller.start(CONTAINER);
         RemoteInfinispanCacheManager managerJmx = server.getCacheManager("local");
         RemoteInfinispanCache cacheJmx = managerJmx.getCache("testcache");
@@ -97,7 +96,6 @@ public class RocksDBCacheStoreIT {
 
     @Test
     public void testDataRetrievableViaRocksDbApi() throws Exception {
-        removeDataFilesIfExists();
         controller.start(CONTAINER);
         RemoteInfinispanCacheManager managerJmx = server.getCacheManager("local");
         RemoteInfinispanCache cacheJmx = managerJmx.getCache("testcache");

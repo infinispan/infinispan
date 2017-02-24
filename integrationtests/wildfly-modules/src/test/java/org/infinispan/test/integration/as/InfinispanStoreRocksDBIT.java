@@ -3,8 +3,11 @@ package org.infinispan.test.integration.as;
 import static java.io.File.separator;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+
 import org.infinispan.Cache;
 import org.infinispan.Version;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -19,6 +22,8 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,6 +35,8 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class InfinispanStoreRocksDBIT {
+   private static String dataDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-testcache";
+   private static String expiredDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-expiredtestcache";
 
    @Deployment
    public static Archive<?> deployment() {
@@ -40,6 +47,13 @@ public class InfinispanStoreRocksDBIT {
       String manifest = Descriptors.create(ManifestDescriptor.class)
             .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, org.infinispan.persistence.rocksdb:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
+   }
+
+   @Before
+   @After
+   public void removeDataFilesIfExists() {
+      Util.recursiveFileRemove(dataDir);
+      Util.recursiveFileRemove(expiredDir);
    }
 
    /**
@@ -56,8 +70,10 @@ public class InfinispanStoreRocksDBIT {
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addStore(RocksDBStoreConfigurationBuilder.class)
-            .location(tmpDirectory(this.getClass()));
+      builder.persistence()
+             .addStore(RocksDBStoreConfigurationBuilder.class)
+             .location(dataDir)
+             .expiredLocation(expiredDir);
 
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
       Cache<String, String> cache = cm.getCache();
