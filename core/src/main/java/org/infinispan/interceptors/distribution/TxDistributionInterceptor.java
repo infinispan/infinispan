@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +34,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -45,13 +47,16 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -472,6 +477,58 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return command;
       }
       return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()));
+   }
+
+   @Override
+   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(InvocationContext ctx, C command, Object key, boolean isWrite) {
+      CompletableFuture<Void> cf = super.remoteGet(ctx, command, key, isWrite);
+      if (!ctx.isInTxScope()) {
+         return cf;
+      }
+      List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
+      if (mutationsOnKey.isEmpty()) {
+         return cf;
+      }
+      return cf.thenRun(() -> {
+         entryFactory.wrapEntryForWriting(ctx, key, false, true);
+         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry);
+         for (Mutation mutation : mutationsOnKey) {
+            mutation.apply(readWriteEntryView);
+            cacheEntry.updatePreviousValue();
+         }
+      });
+   }
+
+   @Override
+   protected CompletableFuture<Void> remoteGetAll(InvocationContext ctx, GetAllCommand command, Map<Address, List<Object>> requestedKeys) {
+      CompletableFuture<Void> cf = super.remoteGetAll(ctx, command, requestedKeys);
+      if (!ctx.isInTxScope()) {
+         return cf;
+      }
+      for (List<Object> keys : requestedKeys.values()) {
+         List<List<Mutation>> mutations = getMutations(ctx, keys);
+         if (mutations == null || mutations.isEmpty()) {
+            continue;
+         }
+         cf = cf.thenRun(() -> {
+            Iterator<Object> keysIterator = keys.iterator();
+            Iterator<List<Mutation>> mutationsIterator = mutations.iterator();
+            for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
+               Object key = keysIterator.next();
+               entryFactory.wrapEntryForWriting(ctx, key, false, true);
+               MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
+               EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry);
+               for (Mutation mutation : mutationsIterator.next()) {
+                  mutation.apply(readWriteEntryView);
+                  cacheEntry.updatePreviousValue();
+               }
+            }
+            assert !keysIterator.hasNext();
+            assert !mutationsIterator.hasNext();
+         });
+      }
+      return cf;
    }
 
    protected RpcOptions createRpcOptions() {

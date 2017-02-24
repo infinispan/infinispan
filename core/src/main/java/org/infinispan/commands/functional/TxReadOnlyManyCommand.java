@@ -12,8 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.commons.api.functional.EntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
@@ -98,7 +97,7 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
       Iterator<List<Mutation<K, V, ?>>> mutIt = mutations.iterator();
       for (K k : keys) {
          List<Mutation<K, V, ?>> mutations = mutIt.next();
-         CacheEntry<K, V> entry = lookupCacheEntry(ctx, k);
+         MVCCEntry<K, V> entry = (MVCCEntry<K, V>) lookupCacheEntry(ctx, k);
          EntryView.ReadEntryView<K, V> ro;
          Object ret = null;
          if (mutations.isEmpty()) {
@@ -107,6 +106,7 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
             EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry);
             for (Mutation<K, V, ?> mutation : mutations) {
                ret = mutation.apply(rw);
+               entry.updatePreviousValue();
             }
             ro = rw;
          }

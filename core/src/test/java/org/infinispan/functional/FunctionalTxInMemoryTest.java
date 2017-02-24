@@ -2,6 +2,7 @@ package org.infinispan.functional;
 
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
@@ -108,6 +109,48 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       assertEquals("abc", method.action.eval(KEY, wo, rw,
             MarshallableFunctions.returnReadOnlyFindOrNull(),
             (BiConsumer<EntryView.WriteEntryView<String>, String> & Serializable) (e, prev) -> {}, getClass()));
+      tm.commit();
+   }
+
+   public void testNonFunctionalReadsAfterMods() throws Exception {
+      Object KEY = getKey(false);
+      cache(0, DIST).put(KEY, "a");
+
+      tm.begin();
+      assertEquals("a", rw.eval(KEY, append("b")).join());
+      assertEquals("ab", cache.get(KEY));
+      // try second time to make sure the modification is not applied twice
+      assertEquals("ab", cache.get(KEY));
+      tm.commit();
+
+      tm.begin();
+      assertEquals("ab", rw.evalMany(Collections.singleton(KEY), append("c")).findAny().get());
+      assertEquals("abc", cache.put(KEY, "abcd"));
+      tm.commit();
+
+      tm.begin();
+      assertEquals("abcd", cache.get(KEY));
+      tm.commit();
+
+      tm.begin();
+      wo.eval(KEY, "x", MarshallableFunctions.setValueConsumer()).join();
+      assertEquals("x", cache.putIfAbsent(KEY, "otherValue"));
+      tm.commit();
+
+      tm.begin();
+      wo.eval(KEY, MarshallableFunctions.removeConsumer());
+      assertNull(cache.putIfAbsent(KEY, "y"));
+      assertEquals("y", ro.eval(KEY, MarshallableFunctions.returnReadOnlyFindOrNull()).join());
+      tm.commit();
+
+      tm.begin();
+      assertEquals("y", rw.eval(KEY, "z", MarshallableFunctions.setValueReturnPrevOrNull()).join());
+      assertTrue(cache.replace(KEY, "z", "a"));
+      tm.commit();
+
+      tm.begin();
+      assertEquals("a", rw.eval(KEY, append("b")).join());
+      assertEquals("ab", cache.getAll(Collections.singleton(KEY)).get(KEY));
       tm.commit();
    }
 

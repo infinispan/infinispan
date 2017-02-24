@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
@@ -54,13 +54,12 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
       if (mutations == null || mutations.isEmpty()) {
          return super.perform(ctx);
       }
-      CacheEntry<K, V> entry = ctx.lookupEntry(key);
-
-      if (entry == null) throw new IllegalStateException();
+      MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
       EntryView.ReadWriteEntryView<K, V> rw = EntryViews.readWrite(entry);
       Object ret = null;
       for (Mutation<K, V, ?> mutation : mutations) {
          ret = mutation.apply(rw);
+         entry.updatePreviousValue();
       }
       if (f != null) {
          ret = f.apply(rw);
