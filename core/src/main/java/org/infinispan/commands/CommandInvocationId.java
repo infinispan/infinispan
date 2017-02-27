@@ -87,4 +87,8 @@ public final class CommandInvocationId {
       return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
    }
 
+   public static String show(CommandInvocationId id) {
+      return id == DUMMY_INVOCATION_ID ? "" : id.toString();
+   }
+
 }

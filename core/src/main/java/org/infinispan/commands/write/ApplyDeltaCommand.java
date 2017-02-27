@@ -72,7 +72,12 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    @Override
    public String toString() {
-      return "ApplyDeltaCommand[key=" + key + ", delta=" + delta + ", keys=" + keys+ ']';
+      return "ApplyDeltaCommand[" +
+            "key=" + key +
+            ", delta=" + delta +
+            ", keys=" + keys +
+            ", commandInvocationId=" + CommandInvocationId.show(commandInvocationId) +
+            + ']';
    }
 
    @Override
