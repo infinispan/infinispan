@@ -1,5 +1,7 @@
 package org.infinispan.util.concurrent;
 
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,11 +16,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -45,7 +46,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 9.0
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.GLOBAL)
 public class CommandAckCollector {
 
    private static final Log log = LogFactory.getLog(CommandAckCollector.class);
@@ -53,32 +54,32 @@ public class CommandAckCollector {
 
    private final ConcurrentHashMap<Long, BaseCollector<?>> collectorMap;
    private ScheduledExecutorService timeoutExecutor;
-   private long timeoutNanoSeconds;
 
    public CommandAckCollector() {
       collectorMap = new ConcurrentHashMap<>();
    }
 
    @Inject
-   public void inject(
-         @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-         Configuration configuration) {
+   public void inject(@ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
       this.timeoutExecutor = timeoutExecutor;
-      this.timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
    }
 
    /**
     * Creates a collector for a single key write operation.
     *
+    * @param cacheName    the cache name.
     * @param id           the id from {@link CommandInvocationId}.
-    * @param backupOwners the backup owners of the key.
     * @param topologyId   the current topology id.
+    * @param timeout      the timeout value.
+    * @param timeUnit     the timeout value's {@link TimeUnit}.
+    * @param backupOwners the backup owners of the key.
     */
-   public Collector<Object> create(long id, Collection<Address> backupOwners, int topologyId) {
+   public Collector<Object> create(String cacheName, long id, int topologyId, long timeout, TimeUnit timeUnit,
+         Collection<Address> backupOwners) {
       if (backupOwners.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
-      SingleKeyCollector collector = new SingleKeyCollector(id, backupOwners, topologyId);
+      SingleKeyCollector collector = new SingleKeyCollector(cacheName, id, topologyId, timeout, timeUnit, backupOwners);
       collectorMap.put(id, collector);
       if (trace) {
          log.tracef("Created new collector for %s. BackupOwners=%s", id, backupOwners);
@@ -89,17 +90,22 @@ public class CommandAckCollector {
    /**
     * Creates a collector for {@link org.infinispan.commands.write.PutMapCommand}.
     *
+    * @param cacheName  the cache name.
     * @param id         the id from {@link CommandInvocationId#getId()}.
+    * @param topologyId the current topology id.
+    * @param timeout    the timeout value.
+    * @param timeUnit   the timeout value's {@link TimeUnit}.
     * @param primary    a primary owners collection..
     * @param backups    a map between a backup owner and its segments affected.
-    * @param topologyId the current topology id.
     */
-   public Collector<Map<Object, Object>> createMultiKeyCollector(long id, Collection<Address> primary,
-         Map<Address, Collection<Integer>> backups, int topologyId) {
+   public Collector<Map<Object, Object>> createMultiKeyCollector(String cacheName, long id, int topologyId,
+         long timeout, TimeUnit timeUnit, Collection<Address> primary,
+         Map<Address, Collection<Integer>> backups) {
       if (backups.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
-      MultiKeyCollector collector = new MultiKeyCollector(id, backups, topologyId);
+      MultiKeyCollector collector = new MultiKeyCollector(cacheName, id, topologyId, timeout, timeUnit,
+            backups);
       collectorMap.put(id, collector);
       if (trace) {
          log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
@@ -174,15 +180,14 @@ public class CommandAckCollector {
     *
     * @param members the new cluster members.
     */
-   public void onMembersChange(Collection<Address> members) {
+   public void onMembersChange(String cacheName, Collection<Address> members) {
       Set<Address> currentMembers = new HashSet<>(members);
-      for (BaseCollector<?> collector : collectorMap.values()) {
-         collector.onMembersChange(currentMembers);
-      }
+      collectorMap.values().stream().filter(collector -> collector.cacheName.equals(cacheName))
+            .forEach(collector -> collector.onMembersChange(currentMembers));
    }
 
-   private TimeoutException createTimeoutException(long id) {
-      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), id);
+   private TimeoutException createTimeoutException(long id, long timeout, TimeUnit timeUnit) {
+      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeout, timeUnit), id);
    }
 
    private abstract class BaseCollector<T> implements Callable<Void>, BiConsumer<T, Throwable>, Collector<T> {
@@ -190,15 +195,19 @@ public class CommandAckCollector {
       final long id;
       final CompletableFuture<T> future;
       final int topologyId;
+      final String cacheName;
+      final Supplier<TimeoutException> timeoutExceptionSupplier;
       private final ScheduledFuture<?> timeoutTask;
       volatile T primaryResult;
       volatile boolean primaryResultReceived = false;
 
-      BaseCollector(long id, int topologyId) {
+      BaseCollector(String cacheName, long id, int topologyId, long timeout, TimeUnit timeUnit) {
+         this.cacheName = cacheName;
          this.id = id;
          this.topologyId = topologyId;
+         this.timeoutExceptionSupplier = () -> createTimeoutException(id, timeout, timeUnit);
          this.future = new CompletableFuture<>();
-         this.timeoutTask = timeoutExecutor.schedule(this, timeoutNanoSeconds, TimeUnit.NANOSECONDS);
+         this.timeoutTask = timeoutExecutor.schedule(this, timeout, timeUnit);
       }
 
       /**
@@ -208,7 +217,7 @@ public class CommandAckCollector {
        */
       @Override
       public final synchronized Void call() throws Exception {
-         future.completeExceptionally(createTimeoutException(id));
+         future.completeExceptionally(timeoutExceptionSupplier.get());
          return null;
       }
 
@@ -259,8 +268,9 @@ public class CommandAckCollector {
    private class SingleKeyCollector extends BaseCollector<Object> {
       private final Collection<Address> owners;
 
-      private SingleKeyCollector(long id, Collection<Address> owners, int topologyId) {
-         super(id, topologyId);
+      private SingleKeyCollector(String cacheName, long id, int topologyId, long timeout, TimeUnit timeUnit,
+            Collection<Address> owners) {
+         super(cacheName, id, topologyId, timeout, timeUnit);
          this.owners = Collections.synchronizedSet(new HashSet<>(owners)); //removal is fast
       }
 
@@ -313,9 +323,9 @@ public class CommandAckCollector {
       @GuardedBy("this")
       private final Map<Address, Collection<Integer>> backups;
 
-      MultiKeyCollector(long id, Map<Address, Collection<Integer>> backups,
-            int topologyId) {
-         super(id, topologyId);
+      MultiKeyCollector(String cacheName, long id, int topologyId, long timeout, TimeUnit timeUnit,
+            Map<Address, Collection<Integer>> backups) {
+         super(cacheName, id, topologyId, timeout, timeUnit);
          this.backups = backups;
       }
 

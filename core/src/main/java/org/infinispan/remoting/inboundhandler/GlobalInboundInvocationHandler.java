@@ -10,6 +10,9 @@ import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -23,6 +26,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
@@ -53,6 +57,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    private ExecutorService remoteCommandsExecutor;
    private BackupReceiverRepository backupReceiverRepository;
    private GlobalComponentRegistry globalComponentRegistry;
+   private CommandAckCollector commandAckCollector;
 
    private static Response shuttingDownResponse() {
       return CacheNotFoundResponse.INSTANCE;
@@ -64,11 +69,11 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
    @Inject
    public void injectDependencies(@ComponentName(REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
-                                  GlobalComponentRegistry globalComponentRegistry,
-                                  BackupReceiverRepository backupReceiverRepository) {
+         GlobalComponentRegistry globalComponentRegistry, BackupReceiverRepository backupReceiverRepository, CommandAckCollector collector) {
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.globalComponentRegistry = globalComponentRegistry;
       this.backupReceiverRepository = backupReceiverRepository;
+      this.commandAckCollector = collector;
    }
 
    @Override
@@ -142,6 +147,36 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       if (trace) {
          log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]", command, origin);
       }
+
+      switch (command.getCommandId()) {
+         case BackupAckCommand.COMMAND_ID:
+            handleBackupAckCommand((BackupAckCommand) command, origin);
+            return;
+         case BackupMultiKeyAckCommand.COMMAND_ID:
+            handleBackupMultiKeyAckCommand((BackupMultiKeyAckCommand) command, origin);
+            return;
+         case ExceptionAckCommand.COMMAND_ID:
+            handleExceptionAckCommand((ExceptionAckCommand) command);
+            return;
+         default:
+            handleDefaultReplicableCommand(command, reply, order);
+      }
+   }
+
+   private void handleExceptionAckCommand(ExceptionAckCommand command) {
+      commandAckCollector.completeExceptionally(command.getId(), command.getThrowable(), command.getTopologyId());
+   }
+
+   private void handleBackupMultiKeyAckCommand(BackupMultiKeyAckCommand command, Address origin) {
+      commandAckCollector.multiKeyBackupAck(command.getId(), origin, command.getSegment(), command.getTopologyId());
+   }
+
+   private void handleBackupAckCommand(BackupAckCommand command, Address origin) {
+      commandAckCollector.backupAck(command.getId(), origin, command.getTopologyId());
+   }
+
+   private void handleDefaultReplicableCommand(ReplicableCommand command, Reply reply,
+         DeliverOrder order) {
       if (order.preserveOrder() || !command.canBlock()) {
          runReplicableCommand(command, reply, order.preserveOrder());
       } else {

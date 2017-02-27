@@ -9,11 +9,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.write.BackupAckCommand;
-import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
-import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
@@ -26,8 +23,8 @@ import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
@@ -57,7 +54,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private ClusteringDependentLogic clusteringDependentLogic;
    private long lockTimeout;
    private TriangleOrderManager triangleOrderManager;
-   private RpcManager rpcManager;
+   private Transport transport;
    private CommandAckCollector commandAckCollector;
    private CommandsFactory commandsFactory;
    private Address localAddress;
@@ -65,20 +62,20 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    @Inject
    public void inject(LockManager lockManager,
          @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic,
-         Configuration configuration, TriangleOrderManager anotherTriangleOrderManager, RpcManager rpcManager,
+         Configuration configuration, TriangleOrderManager anotherTriangleOrderManager, Transport transport,
          CommandAckCollector commandAckCollector, CommandsFactory commandsFactory) {
       this.lockManager = lockManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
       this.triangleOrderManager = anotherTriangleOrderManager;
-      this.rpcManager = rpcManager;
+      this.transport = transport;
       this.commandAckCollector = commandAckCollector;
       this.commandsFactory = commandsFactory;
    }
 
    @Start
    public void start() {
-      localAddress = rpcManager.getAddress();
+      localAddress = transport.getAddress();
    }
 
    @Override
@@ -96,15 +93,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                return;
             case BackupPutMapRcpCommand.COMMAND_ID:
                handleBackupPutMapRpcCommand((BackupPutMapRcpCommand) command);
-               return;
-            case BackupAckCommand.COMMAND_ID:
-               handleBackupAckCommand((BackupAckCommand) command);
-               return;
-            case BackupMultiKeyAckCommand.COMMAND_ID:
-               handleBackupMultiKeyAckCommand((BackupMultiKeyAckCommand) command);
-               return;
-            case ExceptionAckCommand.COMMAND_ID:
-               handleExceptionAck((ExceptionAckCommand) command);
                return;
             case StateRequestCommand.COMMAND_ID:
                handleStateRequestCommand((StateRequestCommand) command, reply, order);
@@ -201,18 +189,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       remoteCommandsExecutor.execute(runnable);
    }
 
-   private void handleExceptionAck(ExceptionAckCommand command) {
-      command.ack();
-   }
-
-   private void handleBackupMultiKeyAckCommand(BackupMultiKeyAckCommand command) {
-      command.ack();
-   }
-
-   private void handleBackupAckCommand(BackupAckCommand command) {
-      command.ack();
-   }
-
    private void handleSingleRpcCommand(SingleRpcCommand command, Reply reply, DeliverOrder order) {
       if (executeOnExecutorService(order, command)) {
          int commandTopologyId = extractCommandTopologyId(command);
@@ -233,7 +209,11 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (origin.equals(localAddress)) {
          commandAckCollector.completeExceptionally(id.getId(), throwable, topologyId);
       } else {
-         rpcManager.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId), NONE);
+         try {
+            transport.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId), NONE);
+         } catch (Exception e) {
+            log.error(e); //TODO
+         }
       }
    }
 
@@ -246,7 +226,11 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (isLocal) {
          commandAckCollector.backupAck(id.getId(), origin, topologyId);
       } else {
-         rpcManager.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), topologyId), NONE);
+         try {
+            transport.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), topologyId), NONE);
+         } catch (Exception e) {
+            log.error(e); //TODO
+         }
       }
    }
 
@@ -285,8 +269,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (id.getAddress().equals(localAddress)) {
          commandAckCollector.multiKeyBackupAck(id.getId(), localAddress, segment, topologyId);
       } else {
-         rpcManager
-               .sendTo(origin, commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId), NONE);
+         try {
+            transport
+                  .sendTo(origin, commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId), NONE);
+         } catch (Exception e) {
+            log.error(e); //TODO
+         }
       }
    }
 

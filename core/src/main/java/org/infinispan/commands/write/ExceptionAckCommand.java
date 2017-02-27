@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.commands.ReplicableCommand;
 
 /**
  * A command that represents an exception acknowledge sent by any owner.
@@ -16,31 +14,21 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class ExceptionAckCommand extends BaseRpcCommand {
+public class ExceptionAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 42;
-   private CommandAckCollector commandAckCollector;
    private Throwable throwable;
    private long id;
    private int topologyId;
 
    public ExceptionAckCommand() {
-      super(null);
    }
 
-   public ExceptionAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
 
-   public ExceptionAckCommand(ByteString cacheName, long id, Throwable throwable, int topologyId) {
-      super(cacheName);
+   public ExceptionAckCommand(long id, Throwable throwable, int topologyId) {
       this.id = id;
       this.throwable = throwable;
       this.topologyId = topologyId;
-   }
-
-   public void ack() {
-      commandAckCollector.completeExceptionally(id, throwable, topologyId);
    }
 
    @Override
@@ -72,8 +60,16 @@ public class ExceptionAckCommand extends BaseRpcCommand {
       topologyId = input.readInt();
    }
 
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
+   public Throwable getThrowable() {
+      return throwable;
+   }
+
+   public long getId() {
+      return id;
+   }
+
+   public int getTopologyId() {
+      return topologyId;
    }
 
    @Override

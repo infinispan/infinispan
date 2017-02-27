@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -86,6 +87,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private CommandsFactory commandsFactory;
    private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
+   private String cacheName;
 
    private static Map<Object, Object> mergeMaps(Map<Address, Response> responses, Map<Object, Object> resultMap) {
       //noinspection unchecked
@@ -96,10 +98,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    @Inject
    public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
-         TriangleOrderManager triangleOrderManager) {
+         TriangleOrderManager triangleOrderManager, Cache cache) {
       this.commandAckCollector = commandAckCollector;
       this.commandsFactory = commandsFactory;
       this.triangleOrderManager = triangleOrderManager;
+      this.cacheName = cache.getName();
    }
 
    @Start
@@ -185,8 +188,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
       if (sync) {
          Collector<Map<Object, Object>> collector = commandAckCollector
-               .createMultiKeyCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
-                     filter.backups, command.getTopologyId());
+               .createMultiKeyCollector(cacheName, command.getCommandInvocationId().getId(), command.getTopologyId(),
+                     defaultSyncOptions.timeout(), defaultSyncOptions.timeUnit(), filter.primaries.keySet(),
+                     filter.backups);
          CompletableFuture<Map<Object, Object>> localResult = new CompletableFuture<>();
          final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
          forwardToPrimaryOwners(command, filter, localResult).handle((map, throwable) -> {
@@ -347,7 +351,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          }
          final int topologyId = dwCommand.getTopologyId();
          if (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected()) {
-            Collector<Object> collector = commandAckCollector.create(id.getId(), backupOwners, topologyId);
+            Collector<Object> collector = commandAckCollector
+                  .create(cacheName, id.getId(), topologyId, defaultSyncOptions.timeout(),
+                        defaultSyncOptions.timeUnit(), backupOwners);
             //check the topology after registering the collector.
             //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
             checkTopologyId(topologyId, collector);
@@ -408,7 +414,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             .hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          final int topologyId = command.getTopologyId();
          Collector<Object> collector = commandAckCollector
-               .create(invocationId.getId(), distributionInfo.backups(), topologyId);
+               .create(cacheName, invocationId.getId(), topologyId, defaultSyncOptions.timeout(),
+                     defaultSyncOptions.timeUnit(), distributionInfo.backups());
          //check the topology after registering the collector.
          //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
          checkTopologyId(topologyId, collector);
