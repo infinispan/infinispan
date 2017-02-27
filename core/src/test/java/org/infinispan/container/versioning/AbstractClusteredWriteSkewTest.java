@@ -221,6 +221,36 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       doTestWriteSkewWithPassivation(false, Operation.CONDITIONAL_REPLACE, true);
    }
 
+   public final void testIgnorePreviousValueAndReadOnPrimary() throws Exception {
+      doTestIgnoreReturnValueAndRead(false);
+   }
+
+   public final void testIgnorePreviousValueAndReadOnNonOwner() throws Exception {
+      doTestIgnoreReturnValueAndRead(true);
+   }
+
+   protected void doTestIgnoreReturnValueAndRead(boolean executeOnPrimaryOwner) throws Exception {
+      final Object key = new MagicKey("ignore-previous-value", cache(0));
+      final AdvancedCache<Object, Object> c = executeOnPrimaryOwner ? advancedCache(0) : advancedCache(1);
+      final TransactionManager tm = executeOnPrimaryOwner ? tm(0) : tm(1);
+
+      for (Cache cache : caches()) {
+         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+      }
+
+      c.put("k", "init");
+
+      tm.begin();
+      c.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).put("k", "v1");
+      assertEquals("v1", c.put("k", "v2"));
+      Transaction tx = tm.suspend();
+
+      assertEquals("init", c.put("k", "other"));
+
+      tm.resume(tx);
+      tm.commit();
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = defaultConfigurationBuilder();

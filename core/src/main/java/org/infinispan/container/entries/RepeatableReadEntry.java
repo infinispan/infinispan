@@ -29,7 +29,8 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       this.oldValue = value;
    }
 
-   public void performLocalWriteSkewCheck(DataContainer container, boolean alreadyCopied) {
+   // TODO: ISPN-7527 reference-based check is insufficient if we're using persistence
+   public void performLocalWriteSkewCheck(DataContainer container) {
       // check for write skew.
       InternalCacheEntry ice = container.get(key);
 
@@ -83,5 +84,11 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    @Override
    public void updatePreviousValue() {
       oldValue = value;
+   }
+
+   @Override
+   public void updateInitialValue(Object value) {
+      assert !skipLookup();
+      initialValue = value;
    }
 }

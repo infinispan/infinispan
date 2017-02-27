@@ -11,6 +11,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -26,12 +27,12 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-//         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
-//         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
          new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
-//         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true),
-//         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
-//         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true),
       };
    }
 
@@ -60,11 +61,17 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
       testCache.primaryOwner.put(key(1), value(-1));
 
       tm.resume(tx);
-      testCache.testCache.removeGroup(GROUP);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet.clear();
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-      assertCommitFail(tm); //write skew should abort the transaction
+      try {
+         testCache.testCache.removeGroup(GROUP);
+         groupKeySet = testCache.testCache.getGroup(GROUP);
+         expectedGroupSet.clear();
+         AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+         assertCommitFail(tm); //write skew should abort the transaction
+      } catch (WriteSkewException e) {
+         // On non-owner, the second retrieval of keys within the group will find out that one of the entries
+         // has different value and will throw WSE
+         tm.rollback();
+      }
 
 
       groupKeySet = testCache.testCache.getGroup(GROUP);

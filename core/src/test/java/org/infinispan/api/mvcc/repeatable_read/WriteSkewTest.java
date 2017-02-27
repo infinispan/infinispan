@@ -350,6 +350,26 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       }
    }
 
+   // Write skew should not fire when the read is based purely on previously written value
+   // (the first put does not read the value)
+   // This test actually tests only local write skew check
+   public void testPreviousValueIgnored() throws Exception {
+      setCacheWithWriteSkewCheck();
+      postStart();
+
+      cache.put("k", "init");
+
+      tm.begin();
+      cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).put("k", "v1");
+      assertEquals("v1", cache.put("k", "v2"));
+      Transaction tx = tm.suspend();
+
+      assertEquals("init", cache.put("k", "other"));
+
+      tm.resume(tx);
+      tm.commit();
+   }
+
    public void testWriteSkewWithOnlyPut() throws Exception {
       setCacheWithWriteSkewCheck();
       postStart();
