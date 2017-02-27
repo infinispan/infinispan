@@ -166,6 +166,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
 
             <configuration>
+               <trimStackTrace>false</trimStackTrace>
                <threadCount>1</threadCount>
             </configuration>
          </plugin>

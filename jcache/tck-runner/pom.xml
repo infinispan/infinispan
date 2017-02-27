@@ -194,6 +194,9 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <trimStackTrace>false</trimStackTrace>
+            </configuration>
             <executions>
                <execution>
                   <id>default-test</id>
@@ -348,6 +351,9 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <trimStackTrace>false</trimStackTrace>
+                  </configuration>
                   <executions>
                      <execution>
                         <id>default-test</id>
