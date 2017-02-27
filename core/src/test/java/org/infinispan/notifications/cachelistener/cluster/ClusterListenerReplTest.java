@@ -17,9 +17,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
@@ -70,15 +67,10 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       // Maybe some day this can work properly
       assertEquals(null, future.get(10, TimeUnit.SECONDS));
 
-      // We should have received an event that was marked as retried
-      assertEquals(clusterListener.events.size(), 1);
-      CacheEntryEvent<Object, String> event = clusterListener.events.get(0);
-      // Since it was a retry but the backup got the write the event isn't a CREATE!!
-      assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-      CacheEntryCreatedEvent<Object, String> modEvent = (CacheEntryCreatedEvent<Object, String>)event;
-      assertTrue(modEvent.isCommandRetried());
-      assertEquals(modEvent.getKey(), key);
-      assertEquals(modEvent.getValue(), FIRST_VALUE);
+      // We should have received an event that was marked as retried - maybe even two!
+      assertTrue(clusterListener.events.size() >= 1);
+      assertTrue(clusterListener.events.size() <= 2);
+      checkEvent(clusterListener.events.get(0), key, true, true);
    }
 
    public void testPrimaryOwnerGoesDownAfterBackupRaisesEvent() throws InterruptedException, TimeoutException,
@@ -122,10 +114,13 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       String returnValue = future.get(10, TimeUnit.SECONDS);
       assertEquals(FIRST_VALUE, returnValue);
 
-      assertEquals(2, clusterListener.events.size());
+      assertTrue(clusterListener.events.size() >= 2);
+      assertTrue(clusterListener.events.size() <= 3);
+      // First create should not be retried since it was sent before node failure.
       checkEvent(clusterListener.events.get(0), key, true, false);
 
-      // We should have received an event that was marked as retried
+      // We should receive a retry event since it doesn't know the exact state, but it will be a MODIFY since
+      // CREATE was already done
       checkEvent(clusterListener.events.get(1), key, false, true);
    }
 }
