@@ -257,8 +257,8 @@ The last thing to figure out is which id to give to the message. Each module tha
 |redis cache store|25001 - 26000
 |extended statistics|25001 - 26000
 |infinispan directory provider|26001 - 27000
-|scripting|26001 - 27000
-|tasks|27001 - 28000
+|tasks|27001 - 27500
+|scripting|27501 - 28000
 |remote query server|28001 - 28500
 |object filter|28501 - 29000
 |===============

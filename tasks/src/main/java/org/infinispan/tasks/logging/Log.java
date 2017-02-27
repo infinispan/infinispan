@@ -5,7 +5,7 @@ import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the Tasks module. For this module, message ids ranging from 27001 to
- * 28000 inclusively have been reserved.
+ * 27500 inclusively have been reserved.
  *
  * @author Tristan Tarrant
  * @since 8.1
