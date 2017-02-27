@@ -335,7 +335,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (entry == null) {
             if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
                // in transactional mode, we always need the entry wrapped
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
                // we need to retrieve the value locally regardless of load type; in transactional mode all operations
                // execute on origin
@@ -365,7 +365,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (ctx.lookupEntry(key) == null) {
                if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(
                      FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
-                  entryFactory.wrapExternalEntry(ctx, key, null, true);
+                  entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
                   if (remoteGets == null) {
                      remoteGets = new ArrayList<>();
@@ -390,7 +390,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       for (K key : keys) {
          if (ctx.isOriginLocal() || cdl.localNodeIsOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             }
             filtered.add(key);
          }
@@ -405,7 +405,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (entry == null) {
             if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)
                   || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             } else {
                CacheTopology cacheTopology = checkTopologyId(command);

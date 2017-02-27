@@ -87,7 +87,7 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    boolean hasLockedKey(Object key);
 
    /**
-    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, boolean)} instead.
+    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, boolean, boolean)} instead.
     */
    @Deprecated
    default boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {

@@ -118,9 +118,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // The entry must be in the context
          CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
          cacheEntry.setSkipLookup(true);
-         TxInvocationContext txCtx;
-         if (writeSkewCheck && (txCtx = (TxInvocationContext) rCtx).getCacheTransaction().keyRead(dataCommand.getKey())) {
-            addVersionRead(txCtx, cacheEntry, dataCommand.getKey());
+         if (writeSkewCheck && ((MVCCEntry) cacheEntry).isRead()) {
+            addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
          }
       }
 
@@ -258,7 +257,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // TODO: move this to distribution interceptors?
             // we need to try to wrap the entry to get it removed
             // for the removal itself, wrapping null would suffice, but listeners need previous value
-            entryFactory.wrapEntryForWriting(ctx, key, true);
+            entryFactory.wrapEntryForWriting(ctx, key, true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -293,7 +292,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // TODO: move to distribution interceptors?
          // we need to try to wrap the entry to get it removed
          // for the removal itself, wrapping null would suffice, but listeners need previous value
-         entryFactory.wrapEntryForWriting(ctx, key, false);
+         entryFactory.wrapEntryForWriting(ctx, key, false, false);
          if (trace)
            log.tracef("Entry to be removed: %s", toStr(key));
       }
@@ -311,7 +310,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
-      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
    }
 
    private void removeFromContextOnRetry(InvocationContext ctx, Object key) {
@@ -377,7 +376,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getKey());
       }
       // When retrying, we might still need to perform the command even if the previous value was removed
-      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
@@ -389,7 +388,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       for (Object key : command.getMap().keySet()) {
          // as listeners may need the value, we'll load the previous value
-         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
@@ -410,11 +409,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, false);
-               // TODO: remove with ISPN-7528
-               if (ctx.isInTxScope()) {
-                  ((TxInvocationContext) ctx).getCacheTransaction().addReadKey(internalCacheEntry.getKey());
-               }
+               entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, true, false);
             }
          });
       }
@@ -426,7 +421,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
                CacheEntry cacheEntry = keyEntry.getValue();
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck && txCtx.getCacheTransaction().keyRead(keyEntry.getKey())) {
+               if (writeSkewCheck && ((MVCCEntry) cacheEntry).isRead()) {
                   addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
                }
             }
@@ -440,7 +435,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       if (command instanceof TxReadOnlyKeyCommand) {
          // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()), true);
       } else {
          entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
       }
@@ -458,7 +453,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command instanceof TxReadOnlyManyCommand) {
          // TxReadOnlyManyCommand may apply some mutations on the entry in context so we need to always wrap it
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership(command) || canRead(key));
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership(command) || canRead(key), true);
          }
       } else {
          for (Object key : command.getKeys()) {
@@ -499,7 +494,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getEntries().keySet()) {
          //the put map never reads the keys
-         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), false);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
@@ -512,7 +507,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), false);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
@@ -532,7 +527,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), true);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
@@ -545,7 +540,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), true);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
@@ -653,7 +648,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
                if (cacheEntry != null) {
                   cacheEntry.setSkipLookup(true);
-                  if (addVersionRead && txCtx.getCacheTransaction().keyRead(key)) {
+                  if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
                      addVersionRead(txCtx, cacheEntry, key);
                   }
                   ((MVCCEntry) cacheEntry).updatePreviousValue();
@@ -694,10 +689,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
-               TxInvocationContext txCtx;
                if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
-                     && (txCtx = (TxInvocationContext) rCtx).getCacheTransaction().keyRead(dataWriteCommand.getKey())) {
-                  addVersionRead(txCtx, cacheEntry, dataWriteCommand.getKey());
+                     && ((MVCCEntry) cacheEntry).isRead()) {
+                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
                }
                ((MVCCEntry) cacheEntry).updatePreviousValue();
             }
@@ -784,14 +778,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
 
       private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
          return invokeNext(ctx, command);
       }
 
       private Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command) {
          boolean ignoreOwnership = ignoreOwnership(command);
          for (Object key : command.getAffectedKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
          }
          return invokeNext(ctx, command);
       }

@@ -214,7 +214,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapExternalEntry(ctx, marshalledEntry.getKey(), convert(marshalledEntry, iceFactory), false);
+               entryFactory.wrapExternalEntry(ctx, marshalledEntry.getKey(), convert(marshalledEntry, iceFactory), true, false);
             }
          }
       }, true, true);
@@ -352,7 +352,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       if (entry != null) {
-         entryFactory.wrapExternalEntry(ctx, key, entry, cmd instanceof WriteCommand);
+         entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
 
          if (isLoadedValue != null && isLoadedValue.booleanValue()) {
             Object value = entry.getValue();

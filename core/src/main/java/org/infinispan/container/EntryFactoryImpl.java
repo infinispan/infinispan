@@ -80,7 +80,9 @@ public class EntryFactoryImpl implements EntryFactory {
             // With repeatable read, we need to create a RepeatableReadEntry as internal cache entries are mutable
             // Otherwise we can store the InternalCacheEntry directly in the context
             if (useRepeatableRead) {
-               cacheEntry = createWrappedEntry(key, cacheEntry);
+               MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry);
+               mvccEntry.setRead();
+               cacheEntry = mvccEntry;
             }
             ctx.putLookedUpEntry(key, cacheEntry);
          }
@@ -92,7 +94,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public void wrapEntryForWriting(InvocationContext ctx, Object key, boolean isOwner) {
+   public void wrapEntryForWriting(InvocationContext ctx, Object key, boolean isOwner, boolean isRead) {
       CacheEntry contextEntry = getFromContext(ctx, key);
       if (contextEntry instanceof MVCCEntry) {
          // Nothing to do, already wrapped.
@@ -113,6 +115,9 @@ public class EntryFactoryImpl implements EntryFactory {
          if (cacheEntry.isNull()) {
             mvccEntry.setCreated(true);
          }
+         if (isRead) {
+            mvccEntry.setRead();
+         }
          ctx.putLookedUpEntry(key, mvccEntry);
          if (trace)
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
@@ -120,7 +125,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public void wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isWrite) {
+   public void wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isRead, boolean isWrite) {
       // For a write operation, the entry is always already wrapped. For a read operation, the entry may be
       // in the context as an InternalCacheEntry, as null, or missing altogether.
       CacheEntry contextEntry = getFromContext(ctx, key);
@@ -146,6 +151,9 @@ public class EntryFactoryImpl implements EntryFactory {
       } else if (contextEntry == null || contextEntry.isNull()) {
          if (isWrite || useRepeatableRead) {
             MVCCEntry mvccEntry = createWrappedEntry(key, externalEntry);
+            if (isRead) {
+               mvccEntry.setRead();
+            }
             ctx.putLookedUpEntry(key, mvccEntry);
             if (trace)
                log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
@@ -175,13 +183,16 @@ public class EntryFactoryImpl implements EntryFactory {
       } else if (cacheEntry != null) {
          // Wrap the existing context entry inside a DeltaAwareCacheEntry
          deltaAwareEntry = createWrappedDeltaEntry(deltaKey, (DeltaAware) cacheEntry.getValue(), cacheEntry, ctx);
+         if (cacheEntry instanceof MVCCEntry && ((MVCCEntry) cacheEntry).isRead()) {
+            deltaAwareEntry.setRead();
+         }
          ctx.putLookedUpEntry(deltaKey, deltaAwareEntry);
       } else {
          // Read the value from the container and wrap it
          cacheEntry = getFromContainer(deltaKey, isOwner, false);
          DeltaAwareCacheEntry deltaEntry =
                createWrappedDeltaEntry(deltaKey, cacheEntry != null ? (DeltaAware) cacheEntry.getValue() : null, null, ctx);
-
+         deltaEntry.setRead();
          ctx.putLookedUpEntry(deltaKey, deltaEntry);
          deltaAwareEntry = deltaEntry;
       }

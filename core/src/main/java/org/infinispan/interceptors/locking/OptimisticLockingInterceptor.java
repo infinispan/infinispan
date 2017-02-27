@@ -7,9 +7,7 @@ import java.util.Collection;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -21,7 +19,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -36,8 +33,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private DataContainer dataContainer;
 
-   private boolean writeSkewCheck;
-   private boolean isLocal;
+   private boolean isLocalWriteSkew;
 
    @Override
    protected Log getLog() {
@@ -51,20 +47,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Start
    public void start() {
-      writeSkewCheck = cacheConfiguration.locking().writeSkewCheck() &&
-            cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
-      isLocal = cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL;
-   }
-
-   private void markKeyAsRead(InvocationContext ctx, DataCommand command) {
-      if (writeSkewCheck && ctx.isInTxScope() && command.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
-         // If the key is already in the context, we may have inserted the value
-         // through write-only command and then we don't have to test for write skew
-         if (ctx.lookupEntry(command.getKey()) == null) {
-            TxInvocationContext tctx = (TxInvocationContext) ctx;
-            tctx.getCacheTransaction().addReadKey(command.getKey());
-         }
-      }
+      isLocalWriteSkew = cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL
+            && cacheConfiguration.locking().writeSkewCheck();
    }
 
    @Override
@@ -79,7 +63,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
          Collection<Object> lockedKeys = lockAllOrRegisterBackupLock(ctx, keysToLock,
                                                                      cacheConfiguration.locking().lockAcquisitionTimeout());
-         if (isLocal && !lockedKeys.isEmpty()) {
+         if (isLocalWriteSkew && !lockedKeys.isEmpty()) {
             for (Object key : lockedKeys) {
                performLocalWriteSkewCheck(ctx, key);
             }
@@ -95,40 +79,16 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    protected Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
-      markKeyAsRead(ctx, command);
-      return invokeNext(ctx, command);
-   }
-
-   private void markAllKeysAsRead(InvocationContext ctx, Collection<?> keys) {
-      if (writeSkewCheck && ctx.isInTxScope()) {
-         TxInvocationContext tctx = (TxInvocationContext) ctx;
-         for (Object key : keys) {
-            // If the key is already in the context, we may have inserted the value
-            // through write-only command and then we don't have to test for write skew
-            if (ctx.lookupEntry(key) == null) {
-               tctx.getCacheTransaction().addReadKey(key);
-            }
-         }
-      }
-   }
-
-   @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      markAllKeysAsRead(ctx, command.getKeys());
       return invokeNext(ctx, command);
    }
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      markKeyAsRead(ctx, command);
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      // Regardless of whether is conditional so that
-      // write skews can be detected in both cases.
-      markKeyAsRead(ctx, command);
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
@@ -136,9 +96,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
                                                Collection<K> keys, boolean forwarded) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
-      if (command.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
-         markAllKeysAsRead(ctx, keys);
-      }
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }
 
@@ -149,7 +106,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
       CacheEntry ce = ctx.lookupEntry(key);
-      if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
+      if (ce instanceof RepeatableReadEntry && ((RepeatableReadEntry) ce).isRead()) {
          if (trace) {
             log.tracef("Performing local write skew check for key %s", toStr(key));
          }

@@ -91,4 +91,12 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       assert !skipLookup();
       initialValue = value;
    }
+
+   public void setRead() {
+      setFlag(Flags.READ);
+   }
+
+   public boolean isRead() {
+      return isFlagSet(Flags.READ);
+   }
 }
