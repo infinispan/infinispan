@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.commands.VisitableCommand.LoadType.DONT_LOAD;
 import static org.infinispan.commands.VisitableCommand.LoadType.OWNER;
 import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
@@ -242,7 +243,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          for (Object key : keys) {
             CacheEntry cacheEntry = ctx.lookupEntry(key);
             if (cacheEntry == null && consistentHash.isKeyLocalToNode(localAddress, key)) {
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             }
          }
          return CompletableFutures.completedNull();
@@ -266,7 +267,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private <C extends FlagAffectedCommand & TopologyAffectedCommand> void wrapKeyExternally(InvocationContext ctx,
          C command, Object key, List<CompletableFuture<?>> futureList) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
-         entryFactory.wrapExternalEntry(ctx, key, null, true);
+         entryFactory.wrapExternalEntry(ctx, key, null, false, true);
       } else {
          GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
          fakeGetCommand.setTopologyId(command.getTopologyId());
@@ -307,7 +308,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                   if (command.loadType() == OWNER) {
                      return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
                   }
-                  entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
+                  entryFactory.wrapExternalEntry(context, command.getKey(), null, false, true);
                }
                return invokeNext(context, command);
             }

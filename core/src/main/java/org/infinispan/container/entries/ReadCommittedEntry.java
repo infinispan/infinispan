@@ -52,6 +52,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       EVICTED(1 << 4),
       EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
+      READ(1 << 7),
       ;
 
       final byte mask;

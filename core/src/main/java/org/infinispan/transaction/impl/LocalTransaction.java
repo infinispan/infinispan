@@ -14,6 +14,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.remoting.transport.Address;
@@ -34,7 +35,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private static final boolean trace = log.isTraceEnabled();
 
    private Set<Address> remoteLockedNodes;
-   private Set<Object> readKeys = null;
 
    private final Transaction transaction;
 
@@ -153,13 +153,20 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public void addReadKey(Object key) {
-      if (readKeys == null) readKeys = new HashSet<>(2);
-      readKeys.add(key);
+      CacheEntry entry = lookupEntry(key);
+      if (entry instanceof RepeatableReadEntry) {
+         ((RepeatableReadEntry) entry).setRead();
+      }
    }
 
    @Override
    public boolean keyRead(Object key) {
-      return readKeys != null && readKeys.contains(key);
+      CacheEntry entry = lookupEntry(key);
+      if (entry instanceof RepeatableReadEntry) {
+         return ((RepeatableReadEntry) entry).isRead();
+      } else {
+         return false;
+      }
    }
 
    public void setStateTransferFlag(Flag stateTransferFlag) {

@@ -203,7 +203,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    protected void wrapRemoteEntry(InvocationContext ctx, Object key, CacheEntry ice, boolean isWrite) {
-      entryFactory.wrapExternalEntry(ctx, key, ice, isWrite);
+      entryFactory.wrapExternalEntry(ctx, key, ice, true, isWrite);
    }
 
    protected final Object handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
@@ -213,7 +213,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       if (isLocalModeForced(command)) {
          if (entry == null) {
-            entryFactory.wrapExternalEntry(ctx, key, null, true);
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          }
          return invokeNext(ctx, command);
       }
@@ -230,7 +230,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                CompletableFuture<?> getFuture = remoteGet(ctx, command, command.getKey(), true);
                return asyncInvokeNext(ctx, command, getFuture);
             } else {
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             }
          }
@@ -472,7 +472,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private Object handleLocalOnlyReadManyCommand(InvocationContext ctx, VisitableCommand command, Collection<?> keys) {
       for (Object key : keys) {
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false);
+            entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
          }
       }
       return invokeNext(ctx, command);
@@ -764,7 +764,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }));
       } else {
          // This has LOCAL flags, just wrap NullCacheEntry and let the command run
-         entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false);
+         entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
          return invokeNext(ctx, command);
       }
    }

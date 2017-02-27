@@ -82,7 +82,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
             return mvccEntry;
          }
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), anyObject(),
-            anyBoolean());
+            anyBoolean(), anyBoolean());
 
       Future<?> killMemberResult = fork(new Runnable() {
          @Override

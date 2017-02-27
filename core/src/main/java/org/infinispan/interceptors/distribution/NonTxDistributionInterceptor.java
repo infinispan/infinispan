@@ -250,7 +250,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       for (Item item : helper.getItems(command)) {
          Object key = helper.item2key(item);
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapExternalEntry(ctx, key, null, true);
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          }
       }
 
@@ -272,7 +272,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             helper.accumulate(myItems, item);
             CacheEntry entry = ctx.lookupEntry(key);
             if (entry == null) {
-               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               // executed only be write-only commands
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             }
          }
       }
@@ -409,7 +410,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (cacheEntry == null) {
          // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
          if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-            entryFactory.wrapExternalEntry(ctx, key, null, true);
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          } else {
             if (retrievals == null) {
                retrievals = new ArrayList<>();

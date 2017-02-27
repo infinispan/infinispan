@@ -92,7 +92,6 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
-    * @return The entry in context after the call
     */
    void wrapEntryForReading(InvocationContext ctx, Object key, boolean isOwner);
 
@@ -104,7 +103,6 @@ public interface EntryFactory {
     * @param deltaKey key to look up and wrap
     * @param delta the delta of the executed command
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
-    * @return The entry in context after the call
     */
    void wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta, boolean isOwner);
 
@@ -116,10 +114,10 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
-    * @return The entry in context after the call
+    * @param isRead true if this operation is expected to read the value of the entry
     * @since 8.1
     */
-   void wrapEntryForWriting(InvocationContext ctx, Object key, boolean isOwner);
+   void wrapEntryForWriting(InvocationContext ctx, Object key, boolean isOwner, boolean isRead);
 
    /**
     * Insert an external entry (e.g. loaded from a cache loader or from a remote node) into the context.
@@ -127,8 +125,9 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param externalEntry the value to be inserted into context
+    * @param isRead true if this operation is expected to read the value of the entry
     * @param isWrite if this is executed within a write command
     * @since 8.1
     */
-   void wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isWrite);
+   void wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isRead, boolean isWrite);
 }

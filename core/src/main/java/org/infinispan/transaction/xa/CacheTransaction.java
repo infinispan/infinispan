@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
@@ -114,8 +115,16 @@ public interface CacheTransaction {
    @Deprecated
    default EntryVersion getLookedUpRemoteVersion(Object key) { return null; }
 
+   /**
+    * @deprecated  since 9.1 Use {@link MVCCEntry#isRead()} instead
+    */
+   @Deprecated
    boolean keyRead(Object key);
 
+   /**
+    * @deprecated since 9.1 Use {@link MVCCEntry#setRead()} instead
+    */
+   @Deprecated
    void addReadKey(Object key);
 
    boolean isMarkedForRollback();

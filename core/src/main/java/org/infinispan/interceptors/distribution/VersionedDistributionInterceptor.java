@@ -52,7 +52,6 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    protected void wrapRemoteEntry(InvocationContext ctx, Object key, CacheEntry ice, boolean isWrite) {
       if (ctx.isInTxScope()) {
          AbstractCacheTransaction cacheTransaction = ((TxInvocationContext) ctx).getCacheTransaction();
-         cacheTransaction.addReadKey(key);
          EntryVersion seenVersion = cacheTransaction.getVersionsRead().get(key);
          if (seenVersion != null) {
             EntryVersion newVersion = null;
