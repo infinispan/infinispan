@@ -78,7 +78,7 @@
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.1.8.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
-      <version.rocksdb>4.11.2</version.rocksdb>
+      <version.rocksdb>5.1.2</version.rocksdb>
       <version.scala.major>2.11</version.scala.major>
       <version.scala>${version.scala.major}.7</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
