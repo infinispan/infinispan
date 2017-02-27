@@ -2,8 +2,6 @@ package org.infinispan.container.entries;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
@@ -27,7 +25,6 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
 
    private static final Log log = LogFactory.getLog(ClusteredRepeatableReadEntry.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final AtomicReference<Boolean> ignored = new AtomicReference<>();
 
    public ClusteredRepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
@@ -82,7 +79,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
       InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
-            ctx, timeService, ignored);
+            ctx, timeService, null);
       if (ice == null) {
          if (trace) {
             log.tracef("No entry for key %s found in data container", toStr(key));

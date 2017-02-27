@@ -49,4 +49,14 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
     * source.
     */
    void updatePreviousValue();
+
+   /**
+    * Update initial value to the current value. This is executed when the value is loaded from an external location
+    * (such as cache store) before the first invocation of the command. Afterwards, {@link #skipLookup()} should be
+    * sent to true and therefore this will not be invoked.
+    *
+    * Implementation for other MVCC modes but repeatable reads is no-op.
+    * @param value
+    */
+   default void updateInitialValue(V value) {}
 }

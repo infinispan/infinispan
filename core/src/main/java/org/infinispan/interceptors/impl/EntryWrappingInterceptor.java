@@ -118,8 +118,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // The entry must be in the context
          CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
          cacheEntry.setSkipLookup(true);
-         if (writeSkewCheck) {
-            addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
+         TxInvocationContext txCtx;
+         if (writeSkewCheck && (txCtx = (TxInvocationContext) rCtx).getCacheTransaction().keyRead(dataCommand.getKey())) {
+            addVersionRead(txCtx, cacheEntry, dataCommand.getKey());
          }
       }
 
@@ -410,6 +411,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
                entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, false);
+               // TODO: remove with ISPN-7528
+               if (ctx.isInTxScope()) {
+                  ((TxInvocationContext) ctx).getCacheTransaction().addReadKey(internalCacheEntry.getKey());
+               }
             }
          });
       }
@@ -421,7 +426,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
                CacheEntry cacheEntry = keyEntry.getValue();
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck) {
+               if (writeSkewCheck && txCtx.getCacheTransaction().keyRead(keyEntry.getKey())) {
                   addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
                }
             }
@@ -648,7 +653,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
                if (cacheEntry != null) {
                   cacheEntry.setSkipLookup(true);
-                  if (addVersionRead) {
+                  if (addVersionRead && txCtx.getCacheTransaction().keyRead(key)) {
                      addVersionRead(txCtx, cacheEntry, key);
                   }
                   ((MVCCEntry) cacheEntry).updatePreviousValue();
@@ -689,8 +694,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
-                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
+               TxInvocationContext txCtx;
+               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
+                     && (txCtx = (TxInvocationContext) rCtx).getCacheTransaction().keyRead(dataWriteCommand.getKey())) {
+                  addVersionRead(txCtx, cacheEntry, dataWriteCommand.getKey());
                }
                ((MVCCEntry) cacheEntry).updatePreviousValue();
             }

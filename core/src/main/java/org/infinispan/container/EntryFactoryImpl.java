@@ -125,19 +125,23 @@ public class EntryFactoryImpl implements EntryFactory {
       // in the context as an InternalCacheEntry, as null, or missing altogether.
       CacheEntry contextEntry = getFromContext(ctx, key);
       if (contextEntry instanceof MVCCEntry) {
+         MVCCEntry mvccEntry = (MVCCEntry) contextEntry;
          // Already wrapped for a write. Update the value and the metadata.
-         if (contextEntry.skipLookup()) {
+         if (mvccEntry.skipLookup()) {
             // This can happen during getGroup() invocations, which request the whole group from remote nodes
             // even if some keys are already in the context.
             if (trace)
                log.tracef("Ignored update for context entry %s", contextEntry);
             return;
          }
-         contextEntry.setValue(externalEntry.getValue());
-         contextEntry.setCreated(externalEntry.getCreated());
-         contextEntry.setLastUsed(externalEntry.getLastUsed());
-         contextEntry.setMetadata(externalEntry.getMetadata());
-         ((MVCCEntry) contextEntry).updatePreviousValue();
+         // Without updating initial value a local write skew check would fail when the entry is loaded
+         // from the cache store. This shouldn't be called more than once since afterwards we set skipLookup
+         mvccEntry.updateInitialValue(externalEntry.getValue());
+         mvccEntry.setValue(externalEntry.getValue());
+         mvccEntry.setCreated(externalEntry.getCreated());
+         mvccEntry.setLastUsed(externalEntry.getLastUsed());
+         mvccEntry.setMetadata(externalEntry.getMetadata());
+         mvccEntry.updatePreviousValue();
          if (trace) log.tracef("Updated context entry %s", contextEntry);
       } else if (contextEntry == null || contextEntry.isNull()) {
          if (isWrite || useRepeatableRead) {

@@ -76,19 +76,25 @@ public class PersistenceUtil {
       return dataContainer.compute(key, (k, oldEntry, factory) -> {
          //under the lock, check if the entry exists in the DataContainer
          if (oldEntry != null && (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
-            isLoaded.set(null); //not loaded
+            if (isLoaded != null) {
+               isLoaded.set(null); //not loaded
+            }
             return oldEntry; //no changes in container
          }
 
          MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, k, ctx, timeService);
          if (loaded == null) {
-            isLoaded.set(Boolean.FALSE); //not loaded
+            if (isLoaded != null) {
+               isLoaded.set(Boolean.FALSE); //not loaded
+            }
             return null; //no changed in container
          }
 
          InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
 
-         isLoaded.set(Boolean.TRUE); //loaded!
+         if (isLoaded != null) {
+            isLoaded.set(Boolean.TRUE); //loaded!
+         }
          return newEntry;
       });
    }
