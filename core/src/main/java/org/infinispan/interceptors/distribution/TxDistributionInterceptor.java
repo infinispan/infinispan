@@ -423,7 +423,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                mutationsOnKey.add(command.toMutation(key));
                TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey);
 
-               return asyncValue(rpcManager.invokeRemotelyAsync(owners, remoteRead, staggeredOptions).thenApply(responses -> {
+               return asyncValue(rpcManager.invokeRemotelyAsync(owners, remoteRead, getStaggeredOptions(owners.size())).thenApply(responses -> {
                   for (Response r : responses.values()) {
                      if (r instanceof SuccessfulResponse) {
                         SuccessfulResponse response = (SuccessfulResponse) r;
