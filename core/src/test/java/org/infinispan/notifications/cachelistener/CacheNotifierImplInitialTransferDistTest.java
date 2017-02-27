@@ -13,6 +13,7 @@ import static org.testng.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -583,9 +584,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertEquals(event.getValue(), value);
          }
       } finally {
+         cache.removeListener(listener);
          TestingUtil.replaceComponent(cache, CacheNotifier.class, notifier, true);
          TestingUtil.replaceComponent(cache, ClusterCacheNotifier.class, notifier, true);
-         cache.removeListener(listener);
       }
    }
 
@@ -660,12 +661,12 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
    }
 
    protected static abstract class StateListener<K, V> {
-      final List<CacheEntryEvent<K, V>> events = new ArrayList<>();
+      final List<CacheEntryEvent<K, V>> events = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
-      public synchronized void onCacheNotification(CacheEntryEvent<K, V> event) {
+      public void onCacheNotification(CacheEntryEvent<K, V> event) {
          events.add(event);
       }
    }
