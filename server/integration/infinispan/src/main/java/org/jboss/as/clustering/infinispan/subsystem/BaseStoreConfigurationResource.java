@@ -22,6 +22,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -45,28 +47,28 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setXmlName(Attribute.FETCH_STATE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.FETCH_PERSISTENT_STATE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition PASSIVATION =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PASSIVATION, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.PASSIVATION.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(PersistenceConfiguration.PASSIVATION.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition PURGE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PURGE, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.PURGE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.PURGE_ON_STARTUP.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition READ_ONLY =
             new SimpleAttributeDefinitionBuilder(ModelKeys.READ_ONLY, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.READ_ONLY.getLocalName())
                     .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.IGNORE_MODIFICATIONS.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition SINGLETON =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SINGLETON, ModelType.BOOLEAN, true)

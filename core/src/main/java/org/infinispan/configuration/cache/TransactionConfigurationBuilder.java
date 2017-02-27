@@ -321,7 +321,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             throw log.invalidLockingModeForTotalOrder(lockingMode());
          }
       }
-      if (!attributes.attribute(NOTIFICATIONS).get()) {
+      if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          log.transactionNotificationsDisabled();
       }
       if (attributes.attribute(TRANSACTION_MODE).get() == TransactionMode.TRANSACTIONAL && !cacheMode.isSynchronous()) {

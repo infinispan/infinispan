@@ -1518,5 +1518,32 @@ public interface Log extends BasicLogger {
    void errorSendingResponse(ReplicableCommand command);
 
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
-   CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheModed);
+   CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheMode);
+
+   @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!", id = 442)
+   CacheConfigurationException singletonStoreCannotBeShared(String name);
+
+   @Message(value = "Invalid cache loader configuration for '%s'. In order for a cache loader to be transactional, it must also be shared.", id = 443)
+   CacheConfigurationException clusteredTransactionalStoreMustBeShared(String simpleName);
+
+   @Message(value = "Invalid cache loader configuration for '%s'. A cache loader cannot be both Asynchronous and transactional.", id = 444)
+   CacheConfigurationException transactionalStoreCannotBeAsync(String simpleName);
+
+   @Message(value = "At most one store can be set to 'fetchPersistentState'!", id = 445)
+   CacheConfigurationException onlyOneFetchPersistentStoreAllowed();
+
+   @Message(value = "Multiple sites with name '%s' are configured. That is not allowed!", id = 446)
+   CacheConfigurationException multipleSitesWithSameName(String site);
+
+   @Message(value = "The site '%s' must be defined within the set of backups!", id = 447)
+   CacheConfigurationException siteMustBeInBackups(String site);
+
+   @Message(value = "'awaitInitialTransfer' can be enabled only if cache mode is distributed or replicated.", id = 448)
+   CacheConfigurationException awaitInitialTransferOnlyForDistOrRepl();
+
+   @Message(value = "XSite state transfer timeout must be higher or equals than 1 (one).", id = 449)
+   CacheConfigurationException invalidXSiteStateTransferTimeout();
+
+   @Message(value = "XSite state transfer waiting time between retries must be higher or equals than 1 (one).", id = 450)
+   CacheConfigurationException invalidXSiteStateTransferWaitTime();
 }

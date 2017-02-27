@@ -5,10 +5,11 @@ import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configuration Builder to configure the state transfer between sites.
@@ -18,6 +19,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class XSiteStateTransferConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<XSiteStateTransferConfiguration> {
+   private static final Log log = LogFactory.getLog(XSiteStateTransferConfigurationBuilder.class);
    private final BackupConfigurationBuilder backupConfigurationBuilder;
    private final AttributeSet attributes;
 
@@ -31,10 +33,10 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    @Override
    public void validate() {
       if (attributes.attribute(TIMEOUT).get() <= 0) {
-         throw new CacheConfigurationException("Timeout must be higher or equals than 1 (one).");
+         throw log.invalidXSiteStateTransferTimeout();
       }
       if (attributes.attribute(WAIT_TIME).get() <= 0) {
-         throw new CacheConfigurationException("Waiting time between retries must be higher or equals than 1 (one).");
+         throw log.invalidXSiteStateTransferWaitTime();
       }
    }
 

@@ -12,12 +12,15 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder  implements Builder<SitesConfiguration> {
+   private final static Log log = LogFactory.getLog(SitesConfigurationBuilder.class);
    private final AttributeSet attributes;
    private final List<BackupConfigurationBuilder> backups = new ArrayList<>(2);
    private final BackupForBuilder backupForBuilder;
@@ -72,7 +75,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
 
       for (BackupConfigurationBuilder bcb : backups) {
          if (!backupNames.add(bcb.site())) {
-            throw new CacheConfigurationException("Multiple sites with name '" + bcb.site() + "' are configured. That is not allowed!");
+            throw log.multipleSitesWithSameName(bcb.site());
          }
          bcb.validate();
       }
@@ -83,7 +86,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
             if (bcb.site().equals(site)) found = true;
          }
          if (!found) {
-            throw new CacheConfigurationException("The site '" + site + "' should be defined within the set of backups!");
+            throw log.siteMustBeInBackups(site);
          }
       }
    }
