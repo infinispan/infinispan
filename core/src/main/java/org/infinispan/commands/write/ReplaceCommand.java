@@ -224,6 +224,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             ", newValue=" + toStr(newValue) +
             ", metadata=" + metadata +
             ", flags=" + printFlags() +
+            ", commandInvocationId=" + CommandInvocationId.show(commandInvocationId) +
             ", successful=" + successful +
             ", valueMatcher=" + valueMatcher +
             ", topologyId=" + getTopologyId() +

@@ -135,6 +135,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append(toStr(key))
          .append(", value=").append(toStr(value))
          .append(", flags=").append(printFlags())
+         .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
          .append(", valueMatcher=").append(valueMatcher)
          .append(", topologyId=").append(getTopologyId())
          .append("}")

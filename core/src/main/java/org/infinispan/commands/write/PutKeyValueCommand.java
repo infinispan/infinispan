@@ -183,6 +183,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(toStr(key))
             .append(", value=").append(toStr(value))
             .append(", flags=").append(printFlags())
+            .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
