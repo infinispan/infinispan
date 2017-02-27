@@ -198,7 +198,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          if (clustering().cacheMode().isInvalidation()) {
             throw log.invalidConfigurationIndexingWithInvalidation();
          }
-         if (indexedEntities().isEmpty()) {
+         if (indexedEntities().isEmpty() && !getBuilder().template()) {
             //TODO [anistor] This warning will become a CacheConfigurationException in infinispan 9; do nothing if there are some programmatically defined entity mappings
             log.noIndexableClassesDefined();
          }

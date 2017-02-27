@@ -107,22 +107,19 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          b.validate();
          StoreConfiguration storeConfiguration = b.create();
          if (storeConfiguration.shared() && storeConfiguration.singletonStore().enabled()) {
-            throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
-                                                        + "  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
+            throw log.singletonStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
          }
          if (!storeConfiguration.shared() && storeConfiguration.transactional() && !isLocalCache) {
-            throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
-                                                        + ". In order for a cache loader to be transactional, it must also be shared.");
+            throw log.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
          }
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
-            throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
-                                                        + ". A cache loader cannot be both Asynchronous and transactional.");
+            throw log.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
          }
          if (storeConfiguration.fetchPersistentState())
             numFetchPersistentState++;
       }
       if (numFetchPersistentState > 1)
-         throw new CacheConfigurationException("Maximum one store can be set to 'fetchPersistentState'!");
+         throw log.onlyOneFetchPersistentStoreAllowed();
 
       // If we have a store we have to guarantee the reaper expiration thread is enabled
       if (!stores.isEmpty()) {

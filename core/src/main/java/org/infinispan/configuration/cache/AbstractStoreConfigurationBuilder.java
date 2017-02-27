@@ -202,7 +202,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       ConfigurationBuilder builder = getBuilder();
 
       if (!shared && !fetchPersistentState && !purgeOnStartup
-            && builder.clustering().cacheMode().isClustered())
+            && builder.clustering().cacheMode().isClustered() && !getBuilder().template())
          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
       if (fetchPersistentState && attributes.attribute(FETCH_PERSISTENT_STATE).isModified() &&
@@ -211,7 +211,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       }
 
       if (shared && !preload && builder.indexing().enabled()
-            && builder.indexing().indexLocalOnly())
+            && builder.indexing().indexLocalOnly() && !getBuilder().template())
          log.localIndexingWithSharedCacheLoaderRequiresPreload();
 
       if (transactional && !builder.transaction().transactionMode().isTransactional())

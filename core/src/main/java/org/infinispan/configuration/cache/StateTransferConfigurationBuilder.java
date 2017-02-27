@@ -100,8 +100,7 @@ public class StateTransferConfigurationBuilder extends
       Attribute<Boolean> awaitInitialTransfer = attributes.attribute(AWAIT_INITIAL_TRANSFER);
       if (awaitInitialTransfer.isModified() && awaitInitialTransfer.get()
             && !getClusteringBuilder().cacheMode().needsStateTransfer())
-         throw new CacheConfigurationException(
-               "awaitInitialTransfer can be enabled only if cache mode is distributed or replicated.");
+         throw log.awaitInitialTransferOnlyForDistOrRepl();
    }
 
    @Override

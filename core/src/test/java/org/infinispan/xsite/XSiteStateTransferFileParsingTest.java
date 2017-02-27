@@ -73,22 +73,22 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
       assertEquals("SFO", dcc.sites().backupFor().remoteSite());
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "Timeout must be higher or equals than 1 \\(one\\).")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
    public void testNegativeTimeout() throws IOException {
       testInvalidConfiguration(String.format(XML_FORMAT, -1, DEFAULT_WAIT_TIME));
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "Timeout must be higher or equals than 1 \\(one\\).")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
    public void testZeroTimeout() throws IOException {
       testInvalidConfiguration(String.format(XML_FORMAT, 0, DEFAULT_WAIT_TIME));
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "Waiting time between retries must be higher or equals than 1 \\(one\\).")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
    public void testNegativeWaitTime() throws IOException {
       testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, -1));
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "Waiting time between retries must be higher or equals than 1 \\(one\\).")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
    public void testZeroWaitTime() throws IOException {
       testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0));
    }

@@ -202,6 +202,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return this;
    }
 
+   public boolean template() {
+      return template;
+   }
+
    @SuppressWarnings("unchecked")
    public void validate() {
       if (attributes.attribute(SIMPLE_CACHE).get()) {
