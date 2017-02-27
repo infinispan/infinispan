@@ -11,8 +11,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.ByteString;
@@ -30,8 +28,7 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
 
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       //noinspection unchecked
-      return Util.asSet(PrimaryAckCommand.class, BackupAckCommand.class, ExceptionAckCommand.class,
-            PrimaryMultiKeyAckCommand.class, BackupMultiKeyAckCommand.class);
+      return Util.asSet(BackupAckCommand.class, ExceptionAckCommand.class, BackupMultiKeyAckCommand.class);
    }
 
    public Integer getId() {
@@ -46,14 +43,10 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
 
    public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       switch (input.readByte()) {
-         case PrimaryAckCommand.COMMAND_ID:
-            return primaryAckCommand(input);
          case BackupAckCommand.COMMAND_ID:
             return backupAckCommand(input);
          case ExceptionAckCommand.COMMAND_ID:
             return exceptionAckCommand(input);
-         case PrimaryMultiKeyAckCommand.COMMAND_ID:
-            return primaryMultiKeyAckCommand(input);
          case BackupMultiKeyAckCommand.COMMAND_ID:
             return backupMultiKeyAckCommand(input);
          default:
@@ -61,14 +54,9 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
       }
    }
 
-   private BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+   private BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input)
+         throws IOException, ClassNotFoundException {
       BackupMultiKeyAckCommand command = new BackupMultiKeyAckCommand(ByteString.readObject(input));
-      command.readFrom(input);
-      return command;
-   }
-
-   private PrimaryMultiKeyAckCommand primaryMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrimaryMultiKeyAckCommand command = new PrimaryMultiKeyAckCommand(ByteString.readObject(input));
       command.readFrom(input);
       return command;
    }
@@ -81,12 +69,6 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
 
    private BackupAckCommand backupAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
       BackupAckCommand command = new BackupAckCommand(ByteString.readObject(input));
-      command.readFrom(input);
-      return command;
-   }
-
-   private PrimaryAckCommand primaryAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrimaryAckCommand command = new PrimaryAckCommand(ByteString.readObject(input));
       command.readFrom(input);
       return command;
    }

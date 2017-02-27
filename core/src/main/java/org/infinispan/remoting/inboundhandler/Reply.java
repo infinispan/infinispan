@@ -8,6 +8,8 @@ package org.infinispan.remoting.inboundhandler;
  */
 public interface Reply {
 
+   Reply NO_OP = returnValue -> {};
+
    /**
     * Sends back the return value to the sender.
     *
