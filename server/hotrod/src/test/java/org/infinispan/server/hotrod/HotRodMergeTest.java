@@ -85,7 +85,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       TestingUtil.waitForStableTopology(cache(p0.node(0)));
       expectPartialTopology(client, initialTopology + 1);
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 6);
+      eventuallyExpectCompleteTopology(client, initialTopology + 8);
    }
 
    public void testNewTopologySentAfterOverlappingMerge(Method m) {

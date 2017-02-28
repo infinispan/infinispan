@@ -77,7 +77,7 @@ public class HotRod11ReplicationTest extends HotRodMultiNodeTest {
       assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
 
       resp = client1.put(k(m), 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"));
@@ -120,7 +120,7 @@ public class HotRod11ReplicationTest extends HotRodMultiNodeTest {
       }
 
       resp = client2.put(k(m), 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
 
