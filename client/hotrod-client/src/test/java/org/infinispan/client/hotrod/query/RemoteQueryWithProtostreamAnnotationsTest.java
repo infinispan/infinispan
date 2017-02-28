@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -113,10 +112,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE)
-            .indexing().index(Index.ALL)
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

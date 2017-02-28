@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -21,7 +20,6 @@ public class SingleServerCompatibilityRemoteIteratorTest extends SingleServerRem
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = HotRodTestingUtil.hotRodCacheConfiguration();
-      cb.dataContainer().keyEquivalence(AnyEquivalence.INT).valueEquivalence(AnyEquivalence.STRING); //reset default byte array equivalence
       cb.compatibility().enable();
       return TestCacheManagerFactory.createCacheManager(cb);
    }

@@ -16,7 +16,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -203,7 +202,6 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testStoreByteArrays(final Method m) throws PersistenceException {
       ConfigurationBuilder base = new ConfigurationBuilder();
-      base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
       // we need to purge the container when loading, because we could try to compare
       // some old entry using ByteArrayEquivalence and this throws ClassCastException
       // for non-byte[] arguments

@@ -2,7 +2,6 @@ package org.infinispan.lock;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -49,7 +48,6 @@ public class KeyLockTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL);
       builder.locking().lockAcquisitionTimeout(100, TimeUnit.MILLISECONDS);
-      builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       for (CacheName cacheName : CacheName.values()) {
          cacheName.configure(builder);

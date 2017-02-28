@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -49,10 +48,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
 
    public Configuration buildIndexedConfig(String lockCache, String dataCache, String metadataCache) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.dataContainer()
-              .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-              .valueEquivalence(ByteArrayEquivalence.INSTANCE)
-              .indexing().index(Index.LOCAL)
+      builder.indexing().index(Index.LOCAL)
               .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
               .addProperty("default.metadata_cachename", metadataCache)
               .addProperty("default.data_cachename", dataCache)

@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
@@ -24,10 +23,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE)
-            .indexing().index(Index.ALL)
+      builder.indexing().index(Index.ALL)
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("default.exclusive_index_use", "true")

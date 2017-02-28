@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.query;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -13,8 +12,6 @@ public class HotRodNonIndexedQueryTest extends HotRodQueryTest {
 
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
-      return builder;
+      return new ConfigurationBuilder();
    }
 }

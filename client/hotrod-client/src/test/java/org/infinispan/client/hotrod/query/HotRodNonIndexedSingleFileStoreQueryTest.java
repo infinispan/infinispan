@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.query;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -34,8 +33,7 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .persistence()
+      builder.persistence()
             .addStore(SingleFileStoreConfigurationBuilder.class)
             .location(tmpDirectory);
 
