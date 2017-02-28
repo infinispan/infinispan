@@ -424,8 +424,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private void forwardToPrimary(DataWriteCommand command, DistributionInfo distributionInfo,
          Collector<Object> collector) {
       CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager
-            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command,
-                  rpcManager.getDefaultRpcOptions(true));
+            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command, defaultSyncOptions);
       remoteInvocation.handle((responses, throwable) -> {
          if (throwable != null) {
             collector.primaryException(CompletableFutures.extractException(throwable));

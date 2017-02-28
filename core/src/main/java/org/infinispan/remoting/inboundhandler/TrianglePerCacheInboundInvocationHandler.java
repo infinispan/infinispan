@@ -256,19 +256,15 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          protected void onException(Throwable throwable) {
             super.onException(throwable);
             readyAction.onException();
+            readyAction.onFinally();
             sendExceptionAck(((BackupWriteRcpCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
-            sendBackupAck(((BackupWriteRcpCommand) command).getCommandInvocationId(), commandTopologyId);
-         }
-
-         @Override
-         protected void onFinally() {
-            super.onFinally();
             readyAction.onFinally();
+            sendBackupAck(((BackupWriteRcpCommand) command).getCommandInvocationId(), commandTopologyId);
          }
       };
    }
@@ -300,22 +296,18 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          protected void onException(Throwable throwable) {
             super.onException(throwable);
             readyAction.onException();
+            readyAction.onFinally();
             sendExceptionAck(((BackupPutMapRcpCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
+            readyAction.onFinally();
             final int segment = clusteringDependentLogic
                   .getSegmentForKey(((BackupPutMapRcpCommand) command).getMap().keySet().iterator().next());
             sendPutMapBackupAck(((BackupPutMapRcpCommand) command).getCommandInvocationId(), commandTopologyId,
                   segment);
-         }
-
-         @Override
-         protected void onFinally() {
-            super.onFinally();
-            readyAction.onFinally();
          }
       };
    }

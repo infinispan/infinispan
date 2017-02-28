@@ -120,8 +120,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
       CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
-            Collections.singleton(groupManager.getPrimaryOwner(groupName)), command,
-            rpcManager.getDefaultRpcOptions(true));
+            Collections.singleton(groupManager.getPrimaryOwner(groupName)), command, defaultSyncOptions);
       return asyncInvokeNext(ctx, command, future.thenAccept(responses -> {
          if (!responses.isEmpty()) {
             Response response = responses.values().iterator().next();
@@ -280,7 +279,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       CompletableFuture<Map<Address, Response>> remoteInvocation;
       try {
          remoteInvocation = rpcManager.invokeRemotelyAsync(Collections.singletonList(primaryOwner), command,
-               rpcManager.getDefaultRpcOptions(isSyncForwarding));
+               isSyncForwarding ? defaultSyncOptions : defaultAsyncOptions);
       } catch (Throwable t) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
          throw t;
@@ -335,10 +334,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (recipients == null) {
             options = rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).build();
          } else {
-            options = rpc.getDefaultRpcOptions(true);
+            options = defaultSyncOptions;
          }
       } else {
-         options = rpc.getDefaultRpcOptions(false);
+         options = defaultAsyncOptions;
       }
       return options;
    }
