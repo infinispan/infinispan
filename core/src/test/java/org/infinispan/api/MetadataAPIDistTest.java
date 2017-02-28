@@ -6,8 +6,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -20,9 +18,7 @@ public class MetadataAPIDistTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      Equivalence<byte[]> eq = ByteArrayEquivalence.INSTANCE;
-      builder.dataContainer().keyEquivalence(eq).valueEquivalence(eq)
-             .clustering().hash().numOwners(1);
+      builder.clustering().hash().numOwners(1);
       createCluster(builder, 2);
       waitForClusterToForm();
    }

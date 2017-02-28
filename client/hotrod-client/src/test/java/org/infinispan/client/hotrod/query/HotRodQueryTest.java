@@ -20,7 +20,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -91,9 +90,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .indexing().index(Index.ALL)
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;

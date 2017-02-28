@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -448,14 +447,7 @@ public class HotRodTestingUtils {
    }
 
    public static ConfigurationBuilder hotRodCacheConfiguration() {
-      return hotRodCacheConfiguration(new ConfigurationBuilder());
-   }
-
-   public static ConfigurationBuilder hotRodCacheConfiguration(ConfigurationBuilder base) {
-      base.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE);
-      return base;
+      return new ConfigurationBuilder();
    }
 
    public static InternalCacheEntry assertHotRodEquals(EmbeddedCacheManager cm, byte[] key, byte[] expectedValue) {
