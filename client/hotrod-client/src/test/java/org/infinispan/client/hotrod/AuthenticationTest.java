@@ -63,12 +63,32 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions=HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")
-   public void testAuthenticationFailNoAuth() {
+   public void testAuthenticationAnonymousNotAllowed() {
       ConfigurationBuilder clientBuilder = initServerAndClient(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "true"));
       clientBuilder.security().authentication().disable();
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<String, String> cache = remoteCacheManager.getCache();
       cache.put("a", "a");
+   }
+
+   @Test
+   public void testAuthenticationAnonymousAllowed() {
+      ConfigurationBuilder clientBuilder = initServerAndClient(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "false"));
+      clientBuilder.security().authentication().disable();
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      RemoteCache<String, String> cache = remoteCacheManager.getCache();
+      cache.put("a", "a");
+      assertEquals("a", cache.get("a"));
+   }
+
+   @Test
+   public void testAuthenticationAnonymousNotSet() {
+      ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().disable();
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      RemoteCache<String, String> cache = remoteCacheManager.getCache();
+      cache.put("a", "a");
+      assertEquals("a", cache.get("a"));
    }
 
    @Test
