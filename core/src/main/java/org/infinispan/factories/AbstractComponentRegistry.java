@@ -148,6 +148,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
                invokeInjectionMethod(target, injectMetadata);
             }
          }
+      } catch (IllegalLifecycleStateException e) {
+        throw e;
       } catch (Exception e) {
          throw new CacheConfigurationException("Unable to configure component (type: " + target.getClass() + ", instance " + target + ")", e);
       }
