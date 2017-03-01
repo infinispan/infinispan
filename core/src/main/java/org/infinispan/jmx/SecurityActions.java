@@ -3,12 +3,12 @@ package org.infinispan.jmx;
 import org.infinispan.security.Security;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.QueryExp;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.HashSet;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 
 /**
@@ -21,41 +21,41 @@ import java.util.Set;
  * @since 9.0
  */
 final class SecurityActions {
-    private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(action);
-        } else {
-            return Security.doPrivileged(action);
-        }
-    }
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      return (System.getSecurityManager() != null) ? AccessController.doPrivileged(action) : Security.doPrivileged(action);
+   }
 
-    static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
-        doPrivileged((PrivilegedAction<Void>) () -> {
-            try {
-                mBeanServer.registerMBean(mbean, objectName);
-            } catch (Exception e) {
-            }
-            return null;
-        });
-    }
+   private static void doPrivileged(PrivilegedExceptionAction<Void> action) throws Exception {
+      try {
+         if (System.getSecurityManager() != null) {
+            AccessController.doPrivileged(action);
+         } else {
+            Security.doPrivileged(action);
+         }
+      } catch (PrivilegedActionException e) {
+         throw e.getException();
+      }
+   }
 
-    static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
-        doPrivileged((PrivilegedAction<Void>) () -> {
-            try {
-                mBeanServer.unregisterMBean(objectName);
-            } catch (Exception e) {
-            }
-            return null;
-        });
-    }
+   static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+      doPrivileged(() -> {
+         mBeanServer.registerMBean(mbean, objectName);
+         return null;
+      });
+   }
 
-    static Set<ObjectName> queryNames(ObjectName target, QueryExp query, MBeanServer mBeanServer) throws MalformedObjectNameException {
-        final Set<ObjectName> results = new HashSet<>();
+   static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+      doPrivileged(() -> {
+         mBeanServer.unregisterMBean(objectName);
+         return null;
+      });
+   }
 
-        return doPrivileged(() -> {
-            results.addAll(mBeanServer.queryNames(target, query));
-            return results;
-        });
+   static Set<ObjectName> queryNames(ObjectName target, QueryExp query, MBeanServer mBeanServer) {
+      return doPrivileged(() -> mBeanServer.queryNames(target, query));
+   }
 
-    }
+   private SecurityActions() {
+      // Hide
+   }
 }

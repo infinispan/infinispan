@@ -3,11 +3,13 @@ package org.infinispan.jcache;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.QueryExp;
-import java.security.PrivilegedAction;
-import java.util.HashSet;
+
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 
-import static java.security.AccessController.doPrivileged;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * SecurityActions for the org.infinispan.jcache package.
@@ -19,36 +21,41 @@ import static java.security.AccessController.doPrivileged;
  * @since 9.0
  */
 final class SecurityActions {
-    static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
-        doPrivileged((PrivilegedAction<Void>) () -> {
-            try {
-                mBeanServer.registerMBean(mbean, objectName);
-            } catch (Exception e) {
-            }
-            return null;
-        });
-    }
+   private static void doPrivileged(PrivilegedExceptionAction<Void> action) throws Exception {
+      try {
+         if (System.getSecurityManager() != null) {
+            AccessController.doPrivileged(action);
+         } else {
+            action.run();
+         }
+      } catch (PrivilegedActionException e) {
+         throw e.getException();
+      }
+   }
 
-    static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
-        doPrivileged((PrivilegedAction<Void>) () -> {
-            try {
-                mBeanServer.unregisterMBean(objectName);
-            } catch (Exception e) {
-            }
-            return null;
-        });
-    }
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      return (System.getSecurityManager() != null) ? AccessController.doPrivileged(action) : action.run();
+   }
 
-    static Set<ObjectName> queryNames(ObjectName target, QueryExp query, MBeanServer mBeanServer) {
-        final Set<ObjectName> results = new HashSet<>();
+   static void registerMBean(Object mbean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+      doPrivileged(() -> {
+         mBeanServer.registerMBean(mbean, objectName);
+         return null;
+      });
+   }
 
-        try {
-            return doPrivileged((PrivilegedAction<Set<ObjectName>>) () -> {
-                results.addAll(mBeanServer.queryNames(target, query));
-                return results;
-            });
-        } catch (Exception e) {
-            return results;
-        }
-    }
+   static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+      doPrivileged(() -> {
+         mBeanServer.unregisterMBean(objectName);
+         return null;
+      });
+   }
+
+   static Set<ObjectName> queryNames(ObjectName target, QueryExp query, MBeanServer mBeanServer) {
+      return doPrivileged(() -> mBeanServer.queryNames(target, query));
+   }
+
+   private SecurityActions() {
+      // Hide
+   }
 }
