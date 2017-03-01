@@ -109,3 +109,108 @@ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -
 
 After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.
 
+==  Using Kubernetes and OpenShift Rolling Updates
+
+Since Pods in Kubernetes and OpenShift are immutable, the only way to alter the configuration is to roll out a new deployment. There are several
+different strategies to do that but we suggest using link:https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#when-to-use-a-rolling-deployment[Rolling Updates].
+
+An example Deployment Configuration (Kubernetes uses very similar concept called `Deployment`) looks like the following:
+
+.DeploymentConfiguration for Rolling Updates
+[source,yaml]
+----
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: infinispan-cluster
+  spec:
+    replicas: 3
+    strategy:
+      type: Rolling
+      rollingParams:
+        updatePeriodSeconds: 10
+        intervalSeconds: 20
+        timeoutSeconds: 600
+        maxUnavailable: 1
+        maxSurge: 1
+    template:
+      spec:
+        containers:
+        - args:
+          - -Djboss.default.jgroups.stack=kubernetes
+          image: jboss/infinispan-server:latest
+          name: infinispan-server
+          ports:
+          - containerPort: 8181
+            protocol: TCP
+          - containerPort: 8888
+            protocol: TCP
+          - containerPort: 9990
+            protocol: TCP
+          - containerPort: 11211
+            protocol: TCP
+          - containerPort: 11222
+            protocol: TCP
+          - containerPort: 57600
+            protocol: TCP
+          - containerPort: 7600
+            protocol: TCP
+          - containerPort: 8080
+            protocol: TCP
+          env:
+          - name: OPENSHIFT_KUBE_PING_NAMESPACE
+            valueFrom: {fieldRef: {apiVersion: v1, fieldPath: metadata.namespace}}
+          terminationMessagePath: /dev/termination-log
+          terminationGracePeriodSeconds: 90
+          livenessProbe:
+            exec:
+              command:
+              - /usr/local/bin/is_running.sh
+            initialDelaySeconds: 10
+            timeoutSeconds: 80
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+             exec:
+                command:
+                - /usr/local/bin/is_healthy.sh
+             initialDelaySeconds: 10
+             timeoutSeconds: 40
+             periodSeconds: 30
+             successThreshold: 2
+             failureThreshold: 5
+
+----
+
+It is also highly recommended to adjust the JGroups stack to discover new nodes (or leaves) more quickly. One should at least
+adjust the value of `FD_ALL` timeout and adjust it to the longest GC Pause.
+
+.Other hints for tuning configuration parameters are:
+* OpenShift should replace running nodes one by one. This can be achieved by adjusting `rollingParams` (`maxUnavailable: 1` and `maxSurge: 1`).
+* Depending on the cluster size, one needs to adjust `updatePeriodSeconds` and `intervalSeconds`. The bigger cluster size is, the bigger those values should be used.
+* When using Initial State Transfer, the `initialDelaySeconds` value for both probes should be set to higher value.
+* During Initial State Transfer nodes might not respond to probes. The best results are achieved with higher values of `failureThreshold` and `successThreshold` values.
+
+==  Rolling upgrades with Kubernetes and OpenShift
+
+Even though Rolling Upgrades and Rolling Update may sound similarly, they mean different things. The link:$$https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#rolling-strategy[Rolling Update]
+is a process of replacing old Pods with new ones. In other words it is a process of rolling out new version of an application. A typical example is a configuration change. Since Pods are immutable, Kubernetes/OpenShift needs to replace them one by one
+in order to use the updated configuration bits. On the other hand the <<_Rolling_chapter,Rolling Upgrade>> is a process of migrating data from one Infinispan cluster to another one.
+A typical example is migrating from one version to another.
+
+For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the same. It is based on a standard <<_Rolling_chapter,Rolling Upgrade procedure>> with small changes.
+
+.Key differences when upgrading using OpenShift/Kubernetes are:
+* When forming a new cluster, make sure you use labels. Labels can be used by link:$$https://github.com/jgroups-extras/jgroups-kubernetes$$[Kubernetes PING Protocol] (see `OPENSHIFT_KUBE_PING_LABELS` environment variable) and they allow controlling which nodes are assigned to which clusters.
+* Depending on configuration, it is a good practice to use link:$$https://docs.openshift.org/latest/architecture/core_concepts/routes.html$$[OpenShift Routes] or link:$$http://kubernetes.io/docs/user-guide/ingress$$[Kubernetes Ingress API] to expose services to the clients. During the upgrade the Route (or Ingress) used by the clients can be altered to point to the new cluster.
+* Invoking CLI commands can be done by using Kubernetes (`kubectl exec`) or OpenShift clients (`oc exec`). Here is an example: `oc exec <POD_NAME> -- '/opt/jboss/infinispan-server/bin/ispn-cli.sh' '-c' '--controller=$(hostname -i):9990' '/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=default:disconnect-source(migrator-name=hotrod)'`
+
+.Key differences when upgrading using the library mode:
+* Client application needs to expose JMX. It usually depends on application and environment type but the easiest way to do it is to add the following switches into the Java boostrap script `-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<PORT>`.
+* Connecting to the JMX can be done by forwarding ports. With OpenShift this might be achieved by using `oc port-forward` command whereas in Kubernetes by `kubectl port-forward`.
+
+The last step in the Rolling Upgrade (removing a Remote Cache Store) needs to be performed differently. We need to use link:$$http://kubernetes.io/docs/user-guide/rolling-updates/$$[Kubernetes/OpenShift Rolling update] command and replace Pods configuration with the one which does not contain Remote Cache Store.
+
+A detailed instruction might be found in link:$$https://issues.jboss.org/browse/ISPN-6673[ISPN-6673] ticket.
