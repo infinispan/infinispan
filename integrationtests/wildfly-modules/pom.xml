@@ -398,6 +398,9 @@
                   <configuration>
                      <skip>${skipTests}</skip>
                      <target>
+                        <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
+                           <property name="hotrod.port" value="11222"/>
+                        </ant>
                         <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
                            <property name="server.dist" value="${ispnserver.dist}" />
                            <property name="port.offset" value="0" />
