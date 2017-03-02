@@ -304,13 +304,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
-      // check if a single owner has been configured and the target for the key is the local address
-      boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
-      if (isSingleOwnerAndLocal) {
+      CacheTopology cacheTopology = checkTopologyId(command);
+      ConsistentHash writeCH = cacheTopology.getWriteConsistentHash();
+      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), writeCH, rpcManager.getAddress());
+      Collection<Address> owners = distributionInfo.owners();
+      if (owners.size() == 1) {
+         // There are no backups, skip the replication part.
          return localResult;
       }
-      ConsistentHash writeCH = checkTopologyId(command).getWriteConsistentHash();
-      List<Address> recipients = writeCH.isReplicated() ? null : writeCH.locateOwners(command.getKey());
+      Collection<Address> recipients = writeCH.isReplicated() ? null : owners;
 
       // Cache the matcher and reset it if we get OOTE (or any other exception) from backup
       ValueMatcher originalMatcher = command.getValueMatcher();
@@ -327,7 +329,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }));
    }
 
-   private RpcOptions determineRpcOptionsForBackupReplication(RpcManager rpc, boolean isSync, List<Address> recipients) {
+   private RpcOptions determineRpcOptionsForBackupReplication(RpcManager rpc, boolean isSync, Collection<Address> recipients) {
       if (isSync) {
          // If no recipients, means a broadcast, so we can ignore leavers
          return recipients == null ?

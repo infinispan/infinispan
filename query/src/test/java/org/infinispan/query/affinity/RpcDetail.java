@@ -29,7 +29,7 @@ class RpcDetail {
    }
 
    boolean isRpcToItself() {
-      return destination.size() == 1 && destination.iterator().next().equals(originator);
+      return destination != null && destination.size() == 1 && destination.iterator().next().equals(originator);
    }
 
    @Override
