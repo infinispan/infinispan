@@ -339,7 +339,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Configuration defineConfiguration(String name, Configuration configuration) {
-      return defineConfiguration(name, true, configuration);
+      return actualDefineConfiguration(name, configuration);
    }
 
    @Override
@@ -349,13 +349,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (c == null) {
             throw log.undeclaredConfiguration(template, name);
          } else {
-            return defineConfiguration(name, false, configurationOverride, c);
+            return actualDefineConfiguration(name, configurationOverride, c);
          }
       }
-      return defineConfiguration(name, configurationOverride);
+      return actualDefineConfiguration(name, configurationOverride);
    }
 
-   private Configuration defineConfiguration(String name, boolean checkExisting, Configuration... configurations) {
+   private Configuration actualDefineConfiguration(String name, Configuration... configurations) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       assertIsNotTerminated();
       if (name == null || configurations == null)
@@ -363,12 +363,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
       if (name.equals(DEFAULT_CACHE_NAME))
          throw log.illegalCacheName(DEFAULT_CACHE_NAME);
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      if (checkExisting) {
-         Configuration existing = configurationManager.getConfiguration(name);
-         if (existing != null)
-            builder.read(existing);
+      Configuration existing = configurationManager.getConfiguration(name);
+      if (existing != null) {
+         throw log.configAlreadyDefined(name);
       }
+      ConfigurationBuilder builder = new ConfigurationBuilder();
       boolean template = true;
       for (Configuration configuration : configurations) {
          if (configuration != null) {
@@ -610,15 +609,23 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             if (existingCacheWrapper != null) {
                return null; //signal that the cache was created by someone else
             }
+            boolean sameCache = cacheName.equals(configurationName);
             c = configurationManager.getConfiguration(configurationName, defaultCacheName);
             if (c == null) {
                throw log.noSuchCacheConfiguration(configurationName);
+            } else if (!sameCache) {
+               Configuration definedConfig = configurationManager.getConfiguration(cacheName);
+               if (definedConfig != null) {
+                  log.warnAttemptToOverrideExistingConfiguration(cacheName);
+                  c = definedConfig;
+               }
             }
+
             if (c.security().authorization().enabled()) {
                // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
                authzHelper.checkPermission(c.security().authorization(), AuthorizationPermission.LIFECYCLE);
             }
-            if (c.isTemplate() && cacheName.equals(configurationName)) {
+            if (c.isTemplate() && sameCache) {
                throw log.templateConfigurationStartAttempt(cacheName);
             }
             createdCacheWrapper = new CacheWrapper();

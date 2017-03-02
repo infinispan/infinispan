@@ -46,43 +46,36 @@ import org.infinispan.stats.CacheContainerStats;
 public interface EmbeddedCacheManager extends CacheContainer, Listenable {
 
    /**
-    * Defines a named cache's configuration using the following algorithm:
+    * Defines a named cache's configuration by using the provided configuration
     * <p/>
     * Unlike previous versions of Infinispan, this method does not build on an existing configuration (default or named).
     * If you want this behavior, then use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
     * <p/>
     * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
-    * manager.  This method enables you to override certain properties that have previously been defined via XML.
+    * manager.
     * <p/>
-    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
-    * effectively return the named cache's configuration since no overrides where passed to it.
-    *
+    * If this cache was already configured either declaritively or programmatically this method will throw a
+    * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined
-    * @param configurationOverride configuration overrides to use
+    * @param configuration configuration overrides to use
     * @return a cloned configuration instance
     */
-   Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
+   Configuration defineConfiguration(String cacheName, Configuration configuration);
 
    /**
-    * Defines a named cache's configuration using the following algorithm:
-    * <p/>
-    * Regardless of whether the cache name has been defined or not, this method creates a clone of the configuration of
-    * the cache whose name matches the given template cache name, then applies a clone of the configuration overrides
-    * passed in and finally returns this configuration instance.
+    * Defines a named cache's configuration using by first reading the template configuration and then applying
+    * the override afterwards to generate a configuration.
     * <p/>
     * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
-    * manager. This method enables you to override certain properties that have previously been defined via XML.
-    * <p/>
-    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
-    * effectively return the named cache's configuration since no overrides where passed to it.
+    * manager.
     * <p/>
     * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
-    * #defineConfiguration(String, Configuration)} in the sense that the base configuration used is the default cache
-    * configuration.
-    *
+    * #defineConfiguration(String, Configuration)}.
+    * <p/>
+    * If this cache was already configured either declaritively or programmatically this method will throw a
+    * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined
-    * @param templateCacheName     name of cache to which to which apply overrides if cache name has not been previously
-    *                              defined
+    * @param templateCacheName     name of cache to use as a template before overrides are applied to it
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
     */
@@ -239,6 +232,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param configurationName name of the configuration template to use
     * @return null if no configuration exists as per rules set above, otherwise
     *         returns a cache instance identified by cacheName
+    * @deprecated Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
+    * {@link EmbeddedCacheManager#getCache(String)} instead
     */
    <K, V> Cache<K, V> getCache(String cacheName, String configurationName);
 
@@ -258,6 +253,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *        #getCache(String, String)}
     * @return null if no configuration exists as per rules set above, otherwise
     *         returns a cache instance identified by cacheName
+    * @deprecated Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
+    * {@link EmbeddedCacheManager#getCache(String, boolean)} instead
     */
    <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent);
 

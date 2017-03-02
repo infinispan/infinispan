@@ -29,6 +29,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
@@ -198,6 +199,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilderHolder builderHolder) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builderHolder);
+      cacheManagers.add(cm);
+      return cm;
+   }
+
    protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, TransportFlags flags) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder, flags);
       cacheManagers.add(cm);
@@ -206,6 +213,25 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void createCluster(ConfigurationBuilder builder, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
+   }
+
+   /**
+    * Allows multiple configurations to be defined for a cache manager before it is started, using the supplied
+    * {@link ConfigurationBuilderHolder}.  These cannot be shared per node so this method doesn't allow the user to make
+    * the mistake and instead will give you one instance per node.
+    * <p>
+    * This method will wait until all nodes are up before returning
+    * @param consumer consumer to configure the caches
+    * @param count how many nodes to bring up
+    */
+   protected void createCluster(Consumer<ConfigurationBuilderHolder> consumer, int count) {
+      for (int i = 0; i < count; ++i) {
+         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+         holder.getGlobalConfigurationBuilder().clusteredDefault();
+         consumer.accept(holder);
+         addClusterEnabledCacheManager(holder);
+      }
+      waitForClusterToForm();
    }
 
    protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
