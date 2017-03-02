@@ -10,6 +10,8 @@ import static org.testng.Assert.assertEquals;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -23,6 +25,11 @@ public class AffinityRpcTest extends BaseAffinityTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createClusteredCaches(3, getDefaultCacheConfigBuilder());
+   }
+
+   @Override
+   protected Configuration getLockCacheConfig() {
+      return getBaseIndexCacheConfig(CacheMode.DIST_SYNC).build();
    }
 
    @Override
