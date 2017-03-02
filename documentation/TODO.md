@@ -91,9 +91,6 @@
 * Azure
 * ...
 
-### WildFly Modules (Gustavo)
-* Move under an overarching Integrations chapter
-
 ### Default values for properties (Ryan)
 * Remove this chapter and find a way to generate the information into the configuration reference
 
