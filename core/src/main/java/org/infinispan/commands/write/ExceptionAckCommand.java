@@ -3,12 +3,10 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A command that represents an exception acknowledge sent by any owner.
@@ -41,10 +39,8 @@ public class ExceptionAckCommand extends BaseRpcCommand {
       this.topologyId = topologyId;
    }
 
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public void ack() {
       commandAckCollector.completeExceptionally(id, throwable, topologyId);
-      return CompletableFutures.completedNull();
    }
 
    @Override

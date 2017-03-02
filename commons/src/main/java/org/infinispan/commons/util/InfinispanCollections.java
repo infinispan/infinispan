@@ -157,4 +157,15 @@ public final class InfinispanCollections {
       Supplier<String> entrySupplier = () -> "Collection '" + name + "' contains null entry.";
       collection.forEach(k -> Objects.requireNonNull(k, entrySupplier));
    }
+
+   public static <K, V> Map<K, V> mergeMaps(Map<K, V> one, Map<K, V> second) {
+      if (one == null) {
+         return second;
+      } else if (second == null) {
+         return one;
+      } else {
+         one.putAll(second);
+         return one;
+      }
+   }
 }
