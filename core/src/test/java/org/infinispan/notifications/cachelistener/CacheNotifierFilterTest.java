@@ -129,7 +129,6 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       cache0.addListener(listener, new CollectionKeyFilter<>(Collections.emptyList(), true));
 
       addClusterEnabledCacheManager(builderUsed);
-      defineConfigurationOnAllManagers(CACHE_NAME, builderUsed);
 
       waitForClusterToForm(CACHE_NAME);
 

@@ -1553,4 +1553,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to update topology for cache %s", id = 452)
    void topologyUpdateError(String cacheName, @Cause Throwable cause);
+
+   @Message(value = "Attempt to define configuration for cache %s which already exists", id = 453)
+   CacheConfigurationException configAlreadyDefined(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
+   void warnAttemptToOverrideExistingConfiguration(String cacheName);
 }

@@ -150,51 +150,65 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
 
    private void validateCacheManagerConfiguration() {
       if (cacheManager.getCacheConfiguration(metadataCacheName) == null) {
-         log.missingIndexCacheConfiguration(metadataCacheName);
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
-            // Clustered Metadata cache configuration
-            builder
-                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
-                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
-            ;
-         } else {
-            builder.simpleCache(true);
+         // Synchronizes on the class instead of instance, since multiple caches may have the provider
+         // and only 1 can define this cache
+         synchronized (InfinispanDirectoryProvider.class) {
+            if (cacheManager.getCacheConfiguration(metadataCacheName) == null) {
+               log.missingIndexCacheConfiguration(metadataCacheName);
+               ConfigurationBuilder builder = new ConfigurationBuilder();
+               if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+                  // Clustered Metadata cache configuration
+                  builder
+                        .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                        .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                  ;
+               } else {
+                  builder.simpleCache(true);
+               }
+               cacheManager.defineConfiguration(metadataCacheName, builder.build());
+            }
          }
-         cacheManager.defineConfiguration(metadataCacheName, builder.build());
       }
 
       if (cacheManager.getCacheConfiguration(dataCacheName) == null) {
-         log.missingIndexCacheConfiguration(dataCacheName);
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
-            // Clustered Metadata cache configuration
-            builder
-                  .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(25000)
-                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
-            ;
-         } else {
-            builder.simpleCache(true);
+         synchronized (InfinispanDirectoryProvider.class) {
+            if (cacheManager.getCacheConfiguration(dataCacheName) == null) {
+               log.missingIndexCacheConfiguration(dataCacheName);
+               ConfigurationBuilder builder = new ConfigurationBuilder();
+               if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+                  // Clustered Metadata cache configuration
+                  builder
+                        .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(25000)
+                        .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                  ;
+               } else {
+                  builder.simpleCache(true);
+               }
+               cacheManager.defineConfiguration(dataCacheName, builder.build());
+            }
          }
-         cacheManager.defineConfiguration(dataCacheName, builder.build());
       }
 
       if (cacheManager.getCacheConfiguration(lockingCacheName) == null) {
-         log.missingIndexCacheConfiguration(lockingCacheName);
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         if (cacheManager.getCacheManagerConfiguration().isClustered()) {
-            // Clustered Metadata cache configuration
-            builder
-                  .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
-                  .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                  .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
-            ;
-         } else {
-            builder.simpleCache(true);
+         synchronized (InfinispanDirectoryProvider.class) {
+            if (cacheManager.getCacheConfiguration(lockingCacheName) == null) {
+               log.missingIndexCacheConfiguration(lockingCacheName);
+               ConfigurationBuilder builder = new ConfigurationBuilder();
+               if (cacheManager.getCacheManagerConfiguration().isClustered()) {
+                  // Clustered Metadata cache configuration
+                  builder
+                        .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
+                        .stateTransfer().awaitInitialTransfer(true).timeout(480000)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                  ;
+               } else {
+                  builder.simpleCache(true);
+               }
+               cacheManager.defineConfiguration(lockingCacheName, builder.build());
+            }
          }
-         cacheManager.defineConfiguration(lockingCacheName, builder.build());
       }
    }
 

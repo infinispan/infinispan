@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -85,13 +86,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       });
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testClashingNames() {
       EmbeddedCacheManager cm = createCacheManager(false);
       try {
          ConfigurationBuilder c = new ConfigurationBuilder();
-         Configuration firstDef = cm.defineConfiguration("aCache", c.build());
-         Configuration secondDef = cm.defineConfiguration("aCache", c.build());
-         assert firstDef.equals(secondDef);
+         cm.defineConfiguration("aCache", c.build());
+         cm.defineConfiguration("aCache", c.build());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -185,42 +186,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       } finally {
          cm.stop();
       }
-   }
-
-   public void testGetCacheConfigurationAfterDefiningSameOldConfigurationTwice() {
-      withCacheManager(new CacheManagerCallable(createCacheManager(false)) {
-         @Override
-         public void call() {
-            ConfigurationBuilder c = new ConfigurationBuilder();
-            c.invocationBatching().enable(false);
-            Configuration newConfig = cm.defineConfiguration("new-cache", c.build());
-            assert !newConfig.invocationBatching().enabled();
-
-            c = new ConfigurationBuilder();
-            c.invocationBatching().enable();
-            Configuration newConfig2 = cm.defineConfiguration("new-cache", c.build());
-            assert newConfig2.invocationBatching().enabled();
-            assert cm.getCache("new-cache").getCacheConfiguration().invocationBatching().enabled();
-         }
-      });
-   }
-
-   public void testGetCacheConfigurationAfterDefiningSameNewConfigurationTwice() {
-      withCacheManager(new CacheManagerCallable(createCacheManager(false)) {
-         @Override
-         public void call() {
-            ConfigurationBuilder builder = new ConfigurationBuilder();
-            builder.invocationBatching().disable();
-            Configuration newConfig = cm.defineConfiguration("new-cache", builder.build());
-            assert !newConfig.invocationBatching().enabled();
-
-            builder = new ConfigurationBuilder();
-            builder.invocationBatching().enable();
-            Configuration newConfig2 = cm.defineConfiguration("new-cache", builder.build());
-            assert newConfig2.invocationBatching().enabled();
-            assert cm.getCache("new-cache").getCacheConfiguration().invocationBatching().enabled();
-         }
-      });
    }
 
    public void testGetCacheNames() {
@@ -399,6 +364,26 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          killCacheManagers(cm);
          assertEquals(ComponentStatus.TERMINATED, cm.getStatus());
       }
+   }
+
+   public void testGetCacheWithTemplateAlreadyDefinedConfiguration() {
+      withCacheManager(new CacheManagerCallable(createClusteredCacheManager()) {
+         @Override
+         public void call() {
+            ConfigurationBuilder builder = new ConfigurationBuilder();
+            CacheMode cacheMode = CacheMode.DIST_ASYNC;
+            // DIST_ASYNC isn't default so it should stay applied
+            builder.clustering().cacheMode(cacheMode);
+            String distCacheName = "dist-cache";
+            cm.defineConfiguration(distCacheName, builder.build());
+
+            String templateName = "template";
+            cm.defineConfiguration(templateName, new ConfigurationBuilder().template(true).build());
+
+            Cache cache = cm.getCache(distCacheName, templateName);
+            assertEquals(cacheMode, cache.getCacheConfiguration().clustering().cacheMode());
+         }
+      });
    }
 
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared) {

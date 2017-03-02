@@ -2,6 +2,7 @@ package org.infinispan.query.distributed;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,17 +17,17 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true, false, "default");
+      caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true, false,
+            "default", holder -> {
+               Configuration cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+                     .clustering().stateTransfer().fetchInMemoryState(true).build();
+               holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
+               holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME).read(cacheCfg1);
+            });
 
       for(Object cache : caches) {
          Cache cacheObj = (Cache) cache;
-         EmbeddedCacheManager cm1 = cacheObj.getCacheManager();
-         ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-         cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
-         cm1.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
-         cm1.defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
-
-         cacheManagers.add(cm1);
+         cacheManagers.add(cacheObj.getCacheManager());
       }
 
       waitForClusterToForm(neededCacheNames);

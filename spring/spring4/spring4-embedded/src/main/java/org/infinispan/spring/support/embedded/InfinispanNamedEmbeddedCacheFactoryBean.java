@@ -172,12 +172,6 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
             break;
          case NAMED:
             this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
-            Configuration cacheConfiguration = infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
-            if (cacheConfiguration != null) {
-               builder = new ConfigurationBuilder();
-               builder.read(cacheConfiguration);
-               this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
-            }
             break;
          case DEFAULT:
             this.logger.debug("ConfigurationTemplateMode is DEFAULT.");

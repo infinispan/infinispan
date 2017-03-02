@@ -38,7 +38,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    protected void startInternal(MemcachedServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
-      if (!cacheManager.cacheExists(configuration.defaultCacheName())) {
+      if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
          // Define the Memcached cache as clone of the default one
          cacheManager.defineConfiguration(configuration.defaultCacheName(),
             new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration()).build());
