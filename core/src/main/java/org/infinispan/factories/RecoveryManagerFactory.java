@@ -50,7 +50,9 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
             }
          } else {
             InternalCacheRegistry internalCacheRegistry = componentRegistry.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-            internalCacheRegistry.registerInternalCache(recoveryCacheName, getDefaultRecoveryCacheConfig());
+            if (!internalCacheRegistry.isInternalCache(recoveryCacheName)) {
+               internalCacheRegistry.registerInternalCache(recoveryCacheName, getDefaultRecoveryCacheConfig());
+            }
          }
          return (RecoveryManager) buildRecoveryManager(componentRegistry.getCacheName(),
                recoveryCacheName, cm, useDefaultCache);

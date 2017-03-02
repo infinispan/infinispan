@@ -37,6 +37,7 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
+import org.infinispan.manager.ConfigurationAlreadyDefinedException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
@@ -1519,4 +1520,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
    CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheModed);
+
+   @Message(value = "Attempt to define configuration for cache %s which already exists", id = 442)
+   ConfigurationAlreadyDefinedException configAlreadyDefined(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 443)
+   void warnAttemptToOverrideExistingConfiguration(String cacheName);
 }
