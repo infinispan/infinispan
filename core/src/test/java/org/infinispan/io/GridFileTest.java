@@ -38,13 +38,14 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager.defineConfiguration("data", cacheManager.getDefaultCacheConfiguration());
+      cacheManager.defineConfiguration("metadata", cacheManager.getDefaultCacheConfiguration());
+      return cacheManager;
    }
 
    @BeforeMethod
    protected void setUp() throws Exception {
-      cacheManager.defineConfiguration("data", cacheManager.getDefaultCacheConfiguration());
-      cacheManager.defineConfiguration("metadata", cacheManager.getDefaultCacheConfiguration());
       dataCache = cacheManager.getCache("data");
       metadataCache = cacheManager.getCache("metadata");
       fs = new GridFilesystem(dataCache, metadataCache);
