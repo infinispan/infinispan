@@ -114,7 +114,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private DataContainer<K, V> dataContainer;
    private CacheNotifier<K, V> cacheNotifier;
    private TimeService timeService;
-   private InternalEntryFactory entryFactory;
 
    private Metadata defaultMetadata;
 
@@ -130,15 +129,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                                   EmbeddedCacheManager cacheManager,
                                   DataContainer dataContainer,
                                   CacheNotifier cacheNotifier,
-                                  TimeService timeService,
-                                  InternalEntryFactory entryFactory) {
+                                  TimeService timeService) {
       this.componentRegistry = componentRegistry;
       this.configuration = configuration;
       this.cacheManager = cacheManager;
       this.dataContainer = dataContainer;
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
-      this.entryFactory = entryFactory;
    }
 
    @Override
@@ -455,7 +452,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       ArrayList<InternalCacheEntry<K, V>> copyEntries = null;
       if (hasListeners) {
-         copyEntries = new ArrayList<>(dataContainer.size());
+         copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
          for (InternalCacheEntry<K, V> entry : dataContainer.entrySet()) {
             copyEntries.add(entry);
             cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), true, ImmutableContext.INSTANCE, null);
@@ -1353,7 +1350,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
 
       @Override
-      public <T> T[] toArray(T[] a) {
+      public <U> U[] toArray(U[] a) {
          return delegate.toArray(a);
       }
 
@@ -1408,8 +1405,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableSpliterator<Entry<K, V>> spliterator() {
-         return Closeables.spliterator(iterator(), dataContainer.size(),
-               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+         return Closeables.spliterator(iterator(), dataContainer.sizeIncludingExpired(),
+                                       Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
       @Override
@@ -1448,8 +1445,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return Closeables.spliterator(iterator(), dataContainer.size(),
-               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+         return Closeables.spliterator(iterator(), dataContainer.sizeIncludingExpired(),
+                                       Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
       @Override
@@ -1614,21 +1611,22 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public CacheStream<K> stream() {
          Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
-         return new LocalCacheStream<K>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
                  () -> supplier.get().map(CacheEntry::getKey)), false, componentRegistry);
       }
 
       @Override
       public CacheStream<K> parallelStream() {
          Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(true);
-         return new LocalCacheStream<K>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
                  () -> supplier.get().map(CacheEntry::getKey)), true, componentRegistry);
       }
    }
 
    protected Supplier<Stream<CacheEntry<K, V>>> getStreamSupplier(boolean parallel) {
-      CloseableSpliterator<CacheEntry<K, V>> spliterator = Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
-            Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+      CloseableSpliterator<CacheEntry<K, V>> spliterator =
+            Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.sizeIncludingExpired(),
+                                   Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       return () -> StreamSupport.stream(spliterator, parallel);
    }
 
