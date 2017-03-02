@@ -5,6 +5,7 @@ import org.infinispan.remoting.inboundhandler.NonTotalOrderPerCacheInboundInvoca
 import org.infinispan.remoting.inboundhandler.NonTotalOrderTxPerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.TotalOrderTxPerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.TrianglePerCacheInboundInvocationHandler;
 
 /**
  * Factory class that creates instances of {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler}.
@@ -13,20 +14,21 @@ import org.infinispan.remoting.inboundhandler.TotalOrderTxPerCacheInboundInvocat
  * @since 7.1
  */
 @DefaultFactoryFor(classes = PerCacheInboundInvocationHandler.class)
-public class InboundInvocationHandlerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+public class InboundInvocationHandlerFactory extends AbstractNamedCacheComponentFactory implements
+      AutoInstantiableFactory {
 
    @Override
    public <T> T construct(Class<T> componentType) {
       if (!configuration.clustering().cacheMode().isClustered()) {
          return null;
       } else if (configuration.transaction().transactionMode().isTransactional()) {
-         //noinspection unchecked
          return configuration.transaction().transactionProtocol().isTotalOrder() ?
-               (T) new TotalOrderTxPerCacheInboundInvocationHandler() :
-               (T) new NonTotalOrderTxPerCacheInboundInvocationHandler();
+               componentType.cast(new TotalOrderTxPerCacheInboundInvocationHandler()) :
+               componentType.cast(new NonTotalOrderTxPerCacheInboundInvocationHandler());
       } else {
-         //noinspection unchecked
-         return (T) new NonTotalOrderPerCacheInboundInvocationHandler();
+         return configuration.clustering().cacheMode().isDistributed() ?
+               componentType.cast(new TrianglePerCacheInboundInvocationHandler()) :
+               componentType.cast(new NonTotalOrderPerCacheInboundInvocationHandler());
       }
    }
 }

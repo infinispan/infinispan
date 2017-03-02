@@ -15,6 +15,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -48,7 +49,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return NO_TOPOLOGY_COMMAND;
    }
 
-   protected static int extractCommandTopologyId(CacheRpcCommand command) {
+   static int extractCommandTopologyId(CacheRpcCommand command) {
       switch (command.getCommandId()) {
          case SingleRpcCommand.COMMAND_ID:
             return extractCommandTopologyId((SingleRpcCommand) command);
@@ -126,11 +127,11 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return new ExceptionResponse(new CacheException("Cache is shutting down"));
    }
 
-   protected final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {
+   final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {
       throw new IllegalArgumentException(String.format("Unexpected deliver mode %s for command%s", deliverOrder, command));
    }
 
-   protected final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
+   final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
       if (onExecutorService) {
          remoteCommandsExecutor.execute(runnable);
       } else {
@@ -148,17 +149,17 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return false;
    }
 
-   protected final BlockingRunnable createDefaultRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
-                                                          boolean waitTransactionalData, boolean onExecutorService,
-                                                          boolean sync) {
+   final BlockingRunnable createDefaultRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
+         boolean waitTransactionalData, boolean onExecutorService,
+         boolean sync) {
       return new DefaultTopologyRunnable(this, command, reply,
                                          TopologyMode.create(onExecutorService, waitTransactionalData),
                                          commandTopologyId, sync);
    }
 
-   protected final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
-                                                          final int commandTopologyId, TopologyMode topologyMode,
-                                                          boolean sync) {
+   final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
+         final int commandTopologyId, TopologyMode topologyMode,
+         boolean sync) {
       return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
    }
 
@@ -166,7 +167,39 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    protected abstract boolean isTraceEnabled();
 
-   protected final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
+   final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
       return !order.preserveOrder() && command.canBlock();
+   }
+
+   final BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
+         boolean sync, ReadyAction readyAction) {
+      if (readyAction != null) {
+         return createNonNullReadyActionRunnable(command, reply, commandTopologyId, sync, readyAction);
+      } else {
+         return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync);
+      }
+   }
+
+   final BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
+         boolean sync, ReadyAction readyAction) {
+      readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
+      return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync) {
+         @Override
+         public boolean isReady() {
+            return super.isReady() && readyAction.isReady();
+         }
+
+         @Override
+         protected void onException(Throwable throwable) {
+            super.onException(throwable);
+            readyAction.onException();
+         }
+
+         @Override
+         protected void onFinally() {
+            super.onFinally();
+            readyAction.onFinally();
+         }
+      };
    }
 }
