@@ -160,7 +160,7 @@
                             <attributes>
                                 <idprefix/>
                                 <sectanchors>true</sectanchors>
-                                <toclevels>3</toclevels>
+                                <toclevels>5</toclevels>
                                 <numbered>true</numbered>
                                 <icons>font</icons>
                                 <docinfo>true</docinfo>
